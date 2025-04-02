@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Product, useProducts } from "@/contexts/ProductContext";
 import { loadMockProducts, loadSavedProducts } from "../utils/productLoader";
+import { toast } from "sonner";
 
 export const useProductLoader = (initialProducts: Product[] = []) => {
   const { products: contextProducts, isLoading: contextLoading, setProducts: setContextProducts } = useProducts();
@@ -17,7 +18,7 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
       
       // First priority: Use products from context (if available)
       if (contextProducts && contextProducts.length > 0) {
-        console.log("Using products from context");
+        console.log("Using products from context:", contextProducts.length);
         setProducts(contextProducts);
         setIsLoading(false);
         return;
@@ -25,7 +26,7 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
       
       // Second priority: Use initial products passed as props
       if (initialProducts && initialProducts.length > 0) {
-        console.log("Using initial products");
+        console.log("Using initial products:", initialProducts.length);
         setProducts(initialProducts);
         // Also update context to make these products available app-wide
         setContextProducts(initialProducts);
@@ -36,7 +37,7 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
       // Third priority: Try to load from localStorage
       const savedProducts = loadSavedProducts();
       if (savedProducts && savedProducts.length > 0) {
-        console.log("Using saved products from localStorage");
+        console.log("Using saved products from localStorage:", savedProducts.length);
         setProducts(savedProducts);
         // Also update context to make these products available app-wide
         setContextProducts(savedProducts);
@@ -53,8 +54,10 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
           setProducts(mockProducts);
           // Also update context to make these products available app-wide
           setContextProducts(mockProducts);
+          toast.success(`Loaded ${mockProducts.length} products`);
         } else {
           console.error("Failed to load mock products or empty array returned");
+          toast.error("Failed to load products. Please try refreshing the page.");
         }
         setIsLoading(false);
       }, 500);

@@ -10,7 +10,7 @@ export const useFilteredProducts = (
 ) => {
   const filteredProducts = useMemo(() => {
     console.log("Filtering products:", { 
-      totalProducts: products.length,
+      totalProducts: products?.length || 0,
       searchTerm,
       selectedCategory,
       priceRange
@@ -26,7 +26,9 @@ export const useFilteredProducts = (
       const matchesSearch = 
         searchTerm === "" || 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
+        product.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
       

@@ -2,6 +2,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { useProducts } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 
 type BrandsProps = {
   brands: {
@@ -13,6 +15,8 @@ type BrandsProps = {
 };
 
 const FeaturedBrands = ({ brands }: BrandsProps) => {
+  const { products } = useProducts();
+  
   // Use real brands data if not provided
   const defaultBrands = [
     { id: 1, name: "Nike", logoUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=128&q=80", productCount: 245 },
@@ -25,12 +29,23 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
   
   const displayBrands = brands && brands.length > 0 ? brands : defaultBrands;
 
+  const handleBrandClick = (brandName: string) => {
+    if (products.length === 0) {
+      toast.info("Loading products...");
+    }
+  };
+
   return (
     <div className="mb-12">
       <h2 className="text-2xl font-bold mb-6">Featured Brands</h2>
       <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
         {displayBrands.map((brand) => (
-          <Link to="/gifting?tab=products" key={brand.id} state={{ brandFilter: brand.name }}>
+          <Link 
+            to="/gifting?tab=products" 
+            key={brand.id} 
+            state={{ brandFilter: brand.name }}
+            onClick={() => handleBrandClick(brand.name)}
+          >
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-6 flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">

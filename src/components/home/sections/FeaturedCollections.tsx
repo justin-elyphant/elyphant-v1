@@ -1,6 +1,8 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
+import { useProducts } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 
 type CollectionProps = {
   collections: {
@@ -12,12 +14,24 @@ type CollectionProps = {
 };
 
 const FeaturedCollections = ({ collections }: CollectionProps) => {
+  const { products } = useProducts();
+  
+  const handleCollectionClick = () => {
+    if (products.length === 0) {
+      toast.info("Loading products...");
+    }
+  };
+
   return (
     <div className="mb-12">
       <h2 className="text-2xl font-bold mb-6">Shop by Occasion</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {collections.map((collection) => (
-          <Link to="/gifting" key={collection.id}>
+          <Link 
+            to="/gifting?tab=products" 
+            key={collection.id}
+            onClick={handleCollectionClick}
+          >
             <div className="group relative overflow-hidden rounded-lg">
               <div className="aspect-[4/3]">
                 <img 

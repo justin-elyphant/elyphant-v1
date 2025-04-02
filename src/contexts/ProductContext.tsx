@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 
 // Product type definition (matches existing type in ProductGallery)
 export type Product = {
@@ -25,6 +26,35 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load products when context is initialized
+  useEffect(() => {
+    const loadProducts = async () => {
+      console.log("ProductContext: Loading products");
+      
+      // First try to load from localStorage
+      const savedProducts = loadSavedProducts();
+      if (savedProducts && savedProducts.length > 0) {
+        console.log(`ProductContext: Loaded ${savedProducts.length} products from localStorage`);
+        setProducts(savedProducts);
+        setIsLoading(false);
+        return;
+      }
+      
+      // If no saved products, load mock products
+      console.log("ProductContext: Loading mock products");
+      const mockProducts = loadMockProducts();
+      if (mockProducts && mockProducts.length > 0) {
+        console.log(`ProductContext: Loaded ${mockProducts.length} mock products`);
+        setProducts(mockProducts);
+      } else {
+        console.error("ProductContext: Failed to load mock products");
+      }
+      setIsLoading(false);
+    };
+
+    loadProducts();
+  }, []);
 
   return (
     <ProductContext.Provider value={{ products, setProducts, isLoading, setIsLoading }}>

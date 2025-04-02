@@ -82,24 +82,60 @@ export const loadMockProducts = (): Product[] => {
       vendor: "WellnessHub",
       description: "Ultrasonic essential oil diffuser with LED lights"
     },
+    // Add some additional products with variations
+    {
+      id: 9,
+      name: "Allbirds Wool Runners",
+      price: 95.00,
+      category: "Footwear",
+      image: "https://images.unsplash.com/photo-1560072810-1cffb09faf0f?w=500&q=80",
+      vendor: "Allbirds",
+      variants: ["Natural Gray", "Natural Black", "Natural White"],
+      description: "Comfortable and sustainable wool runners"
+    },
+    {
+      id: 10,
+      name: "Lululemon Yoga Mat",
+      price: 78.00,
+      category: "Fitness",
+      image: "https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=500&q=80",
+      vendor: "Lululemon",
+      variants: ["Black", "Purple", "Blue"],
+      description: "Premium non-slip yoga mat for all yoga styles"
+    }
   ];
   console.log(`Returning ${mockProducts.length} mock products`);
+  localStorage.setItem('mockProducts', JSON.stringify(mockProducts));
   return mockProducts;
 };
 
 export const loadSavedProducts = (): Product[] | null => {
   console.log("Attempting to load saved products from localStorage");
-  const savedProducts = localStorage.getItem('shopifyProducts');
-  if (savedProducts) {
+  
+  // First try shopify products
+  const shopifyProducts = localStorage.getItem('shopifyProducts');
+  if (shopifyProducts) {
     try {
-      const parsed = JSON.parse(savedProducts);
-      console.log(`Found ${parsed.length} saved products in localStorage`);
+      const parsed = JSON.parse(shopifyProducts);
+      console.log(`Found ${parsed.length} Shopify products in localStorage`);
       return parsed;
     } catch (e) {
-      console.error("Error parsing saved products:", e);
-      return null;
+      console.error("Error parsing Shopify products:", e);
     }
   }
+  
+  // Then try mock products
+  const mockProducts = localStorage.getItem('mockProducts');
+  if (mockProducts) {
+    try {
+      const parsed = JSON.parse(mockProducts);
+      console.log(`Found ${parsed.length} mock products in localStorage`);
+      return parsed;
+    } catch (e) {
+      console.error("Error parsing mock products:", e);
+    }
+  }
+  
   console.log("No saved products found in localStorage");
   return null;
 };

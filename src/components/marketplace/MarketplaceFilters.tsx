@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Filter, SlidersHorizontal } from "lucide-react";
+import { Filter, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Product } from "@/contexts/ProductContext";
 
@@ -39,7 +39,7 @@ const MarketplaceFilters = ({
             onClick={() => setViewMode('grid')}
             className="rounded-r-none"
           >
-            <Filter className="h-4 w-4" />
+            <LayoutGrid className="h-4 w-4" />
           </Button>
           <Button 
             variant={viewMode === 'list' ? 'default' : 'ghost'} 
@@ -47,7 +47,7 @@ const MarketplaceFilters = ({
             onClick={() => setViewMode('list')}
             className="rounded-l-none"
           >
-            <Filter className="h-4 w-4" />
+            <List className="h-4 w-4" />
           </Button>
         </div>
       </div>

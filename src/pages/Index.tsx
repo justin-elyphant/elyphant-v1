@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Gift, Award, Heart } from "lucide-react";
+import { ShoppingBag, Gift, Award, Heart, Calendar, Clock } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -111,22 +111,22 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center">
               <div className="md:w-1/2 mb-8 md:mb-0">
-                <h2 className="text-4xl font-bold mb-4">Discover Perfect Gifts</h2>
+                <h2 className="text-4xl font-bold mb-4">The Future of Gifting is Automated</h2>
                 <p className="text-xl text-gray-700 mb-6">
-                  Create wishlists, connect with loved ones, and never miss 
-                  an important celebration again.
+                  Create wishlists, automate gift-giving, and never miss 
+                  an important celebration again. Our platform handles everything from selection to delivery.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700">
                     <Link to="/gifting">
-                      <Gift className="mr-2 h-5 w-5" />
-                      Explore Wishlists
+                      <ShoppingBag className="mr-2 h-5 w-5" />
+                      Start Gifting
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="lg">
                     <Link to="/gifting">
-                      <ShoppingBag className="mr-2 h-5 w-5" />
-                      Shop Now
+                      <Gift className="mr-2 h-5 w-5" />
+                      Create Wishlist
                     </Link>
                   </Button>
                 </div>
@@ -234,33 +234,33 @@ const Index = () => {
 
           {/* Key Features */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-center">Why Choose Elyphant?</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">The Power of Automated Gifting</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="mx-auto w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                  <Gift className="h-7 w-7 text-purple-600" />
+                  <Calendar className="h-7 w-7 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">Create Wishlists</h3>
+                <h3 className="text-lg font-bold mb-2">Scheduled Gifts</h3>
                 <p className="text-muted-foreground">
-                  Create personalized wishlists for any occasion and share them with friends and family.
+                  Set up recurring gifts for birthdays, anniversaries, or any special occasion with automated scheduling.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="mx-auto w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                  <Clock className="h-7 w-7 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Hands-Free Delivery</h3>
+                <p className="text-muted-foreground">
+                  Our system automatically handles selection, payment, and delivery so you never miss an important date.
                 </p>
               </div>
               <div className="text-center">
                 <div className="mx-auto w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                   <Heart className="h-7 w-7 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">Connect with Loved Ones</h3>
+                <h3 className="text-lg font-bold mb-2">Perfect Matches</h3>
                 <p className="text-muted-foreground">
-                  Never miss an important date and coordinate group gifts for special occasions.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="mx-auto w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                  <ShoppingBag className="h-7 w-7 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">Automated Gifting</h3>
-                <p className="text-muted-foreground">
-                  Set up automatic gifting for important events, from selection to delivery.
+                  Our smart algorithm ensures recipients get exactly what they want from their wishlists.
                 </p>
               </div>
             </div>
@@ -268,15 +268,38 @@ const Index = () => {
 
           {/* Call to Action */}
           <div className="bg-purple-100 rounded-xl p-8 mb-12">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="md:w-2/3 mb-6 md:mb-0">
-                <h2 className="text-2xl font-bold mb-2">Ready to start gifting?</h2>
-                <p className="text-muted-foreground mb-0">
-                  Create your first wishlist and share it with friends and family.
-                </p>
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="md:w-1/2 mb-6 md:mb-0">
+                <h2 className="text-2xl font-bold mb-6">Two Ways to Get Started</h2>
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <Gift className="h-6 w-6 text-purple-600 mr-3 mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold mb-1">Need a gift for someone?</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Browse gifts, set up automated gifting, and never miss an important date.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <ShoppingBag className="h-6 w-6 text-purple-600 mr-3 mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold mb-1">Want to receive gifts?</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Create a wishlist and share it with friends and family to get exactly what you want.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700">
+              <div className="md:w-1/2 flex justify-end space-y-3 md:space-y-0 md:space-x-3 flex-col md:flex-row">
+                <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 w-full md:w-auto">
+                  <Link to="/gifting">
+                    <ShoppingBag className="mr-2 h-5 w-5" />
+                    Start Gifting
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="w-full md:w-auto">
                   <Link to="/gifting">
                     <Gift className="mr-2 h-5 w-5" />
                     Create Wishlist
@@ -294,8 +317,8 @@ const Index = () => {
             <div className="mb-6 md:mb-0">
               <h3 className="text-lg font-semibold mb-2">Elyphant</h3>
               <p className="text-gray-400 text-sm max-w-md">
-                Connect with loved ones through meaningful gifts and never miss
-                an important celebration again.
+                The future of gifting is automated. Connect with loved ones and let our platform handle 
+                everything from selection to delivery.
               </p>
             </div>
             

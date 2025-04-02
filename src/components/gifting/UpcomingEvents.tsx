@@ -1,11 +1,12 @@
-
 import React, { useState } from "react";
-import { Shield, ShieldCheck, ShieldOff } from "lucide-react";
+import { Shield, ShieldCheck, ShieldOff, LayoutGrid, CalendarDays } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import EventHeader from "./events/EventHeader";
 import EventCard, { EventData } from "./events/EventCard";
 import EventEditDrawer from "./events/EventEditDrawer";
+import EventCalendarView from "./events/EventCalendarView";
 import { toast } from "sonner";
 
 export interface ExtendedEventData extends EventData {
@@ -76,6 +77,7 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   const [events, setEvents] = useState<ExtendedEventData[]>(upcomingEvents);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
   
   const handleAddEvent = () => {
     if (onAddEvent) {
@@ -201,6 +203,11 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
     );
   };
 
+  const handleEventClick = (event: ExtendedEventData) => {
+    setCurrentEvent(event);
+    setIsEditDrawerOpen(true);
+  };
+
   return (
     <div>
       <EventHeader title="Upcoming Gift Occasions" onAddEvent={handleAddEvent} />
@@ -211,33 +218,60 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map((event) => (
-          <EventCard 
-            key={event.id}
-            event={event}
-            onSendGift={handleSendGift}
-            onToggleAutoGift={handleToggleAutoGift}
-            onEdit={handleEditEvent}
-            extraContent={
-              <>
-                {event.privacyLevel && renderPrivacyBadge(event.privacyLevel, event.isVerified)}
-                {event.needsVerification && (
-                  <div className="mt-2">
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer hover:bg-amber-50 border-amber-300"
-                      onClick={() => handleVerifyEvent(event.id)}
-                    >
-                      Verify Event
-                    </Badge>
-                  </div>
-                )}
-              </>
-            }
-          />
-        ))}
+      <div className="flex justify-end mb-4">
+        <div className="inline-flex rounded-md shadow-sm" role="group">
+          <Button
+            variant={viewMode === "cards" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("cards")}
+            className="rounded-l-md rounded-r-none"
+          >
+            <LayoutGrid className="h-4 w-4 mr-2" />
+            Cards
+          </Button>
+          <Button
+            variant={viewMode === "calendar" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("calendar")}
+            className="rounded-r-md rounded-l-none"
+          >
+            <CalendarDays className="h-4 w-4 mr-2" />
+            Calendar
+          </Button>
+        </div>
       </div>
+      
+      {viewMode === "cards" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((event) => (
+            <EventCard 
+              key={event.id}
+              event={event}
+              onSendGift={handleSendGift}
+              onToggleAutoGift={handleToggleAutoGift}
+              onEdit={handleEditEvent}
+              extraContent={
+                <>
+                  {event.privacyLevel && renderPrivacyBadge(event.privacyLevel, event.isVerified)}
+                  {event.needsVerification && (
+                    <div className="mt-2">
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-amber-50 border-amber-300"
+                        onClick={() => handleVerifyEvent(event.id)}
+                      >
+                        Verify Event
+                      </Badge>
+                    </div>
+                  )}
+                </>
+              }
+            />
+          ))}
+        </div>
+      ) : (
+        <EventCalendarView events={events} onEventClick={handleEventClick} />
+      )}
 
       <EventEditDrawer 
         event={currentEvent}

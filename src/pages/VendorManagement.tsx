@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ChevronRight, Info, Plus, Settings } from "lucide-react";
+import { ChevronRight, ExternalLink, Info, Plus, Settings } from "lucide-react";
 import ShopifyIntegration from "@/components/marketplace/ShopifyIntegration";
 import DirectAPIIntegration from "@/components/marketplace/DirectAPIIntegration";
 import AdvertisingDashboard from "@/components/marketplace/AdvertisingDashboard";
@@ -55,9 +55,9 @@ const VendorManagement = () => {
         {!showPartnerInfo && (
           <Alert className="mb-6">
             <Info className="h-4 w-4" />
-            <AlertTitle>Shopify Partner Testing</AlertTitle>
+            <AlertTitle>Shopify Development Store Options</AlertTitle>
             <AlertDescription>
-              No Shopify store? You can test integration by entering "development" as the store URL.{" "}
+              No Shopify store yet? Use "development" as the store URL to test, or create a real development store through your Shopify Partners account.{" "}
               <Button variant="link" className="p-0 h-auto" onClick={() => setShowPartnerInfo(true)}>
                 Learn more
               </Button>
@@ -70,30 +70,64 @@ const VendorManagement = () => {
             <CardHeader>
               <CardTitle>Shopify Partner Testing Options</CardTitle>
               <CardDescription>
-                Ways to test Shopify integration without your own store
+                Ways to test Shopify integration without a production store
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium">Development Store Option</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Connect to a simulated Shopify store by entering <strong>"development"</strong> in the store URL field.
-                  </p>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <h3 className="font-medium">Option 1: Quick Simulated Store</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Enter <strong>"development"</strong> in the store URL field to connect to our simulated store with test products.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium">Option 2: Real Development Store</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Create a free development store in your Shopify Partners account for full API testing.
+                    </p>
+                    <a 
+                      href="https://partners.shopify.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-sm text-primary hover:underline mt-1"
+                    >
+                      Go to Shopify Partners <ExternalLink className="ml-1 h-3 w-3" />
+                    </a>
+                  </div>
                 </div>
                 
                 <div>
-                  <h3 className="font-medium">For Shopify Partners</h3>
-                  <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mt-2">
-                    {partnerOptions.partnerInfo.options.map((option, index) => (
-                      <li key={index}>{option}</li>
-                    ))}
+                  <h3 className="font-medium mb-2">Development Store Benefits:</h3>
+                  <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                    <li>Free to create through Shopify Partners program</li>
+                    <li>Full access to Shopify APIs and testing tools</li>
+                    <li>Test payment gateways with test credit cards</li>
+                    <li>Can be converted to a paid store later if needed</li>
+                    <li>No time limit for development testing</li>
                   </ul>
                 </div>
                 
-                <Button size="sm" variant="outline" onClick={() => setShowPartnerInfo(false)}>
-                  Hide Info
-                </Button>
+                <div className="flex justify-between items-center">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => setShowPartnerInfo(false)}
+                  >
+                    Hide Info
+                  </Button>
+                  
+                  <a 
+                    href="https://help.shopify.com/en/partners/dashboard/development-stores" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-sm text-primary hover:underline"
+                  >
+                    Shopify Development Store Documentation <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </div>
               </div>
             </CardContent>
           </Card>

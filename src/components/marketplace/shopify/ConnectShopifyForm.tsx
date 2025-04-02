@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ConnectShopifyFormProps {
   onConnect: (url: string) => void;
@@ -23,25 +24,46 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Connect Your Shopify Store</h3>
         <p className="text-sm text-muted-foreground">
-          Connect your Shopify store to import products. We'll handle all customer interactions and payments within the Elyphant platform.
+          Connect your Shopify store to import products. We'll handle customer interactions and payments within the platform.
         </p>
       </div>
       
       <Alert className="bg-blue-50 border-blue-200">
         <AlertCircle className="h-4 w-4 text-blue-500" />
         <AlertDescription className="text-sm">
-          For this demo, you can enter any valid-looking store URL. In production, you'd need to go through Shopify's OAuth flow.
+          <span className="font-medium">Testing options:</span>
+          <ul className="list-disc ml-5 mt-1">
+            <li>Enter <strong>development</strong> to connect to a simulated store</li>
+            <li>Enter your development store URL from Shopify Partners</li>
+            <li>Enter a production store URL for a live integration</li>
+          </ul>
         </AlertDescription>
       </Alert>
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div className="flex flex-col space-y-2">
-            <label htmlFor="shopify-url" className="text-sm font-medium">Store URL</label>
+            <div className="flex items-center">
+              <label htmlFor="shopify-url" className="text-sm font-medium">Store URL</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 ml-1">
+                      <HelpCircle className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      For testing, enter "development" or create a free development store in your Shopify Partners account
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <div className="flex space-x-2">
               <Input
                 id="shopify-url"
-                placeholder="yourstore.myshopify.com"
+                placeholder="yourstore.myshopify.com or development"
                 value={shopifyUrl}
                 onChange={(e) => setShopifyUrl(e.target.value)}
                 disabled={isLoading}
@@ -51,7 +73,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Example: yourstore.myshopify.com or your-custom-domain.com
+              Examples: yourstore.myshopify.com, development, your-custom-domain.com
             </p>
           </div>
           

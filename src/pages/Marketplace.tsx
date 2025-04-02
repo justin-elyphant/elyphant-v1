@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +25,6 @@ const Marketplace = () => {
     
     if (categoryParam) {
       const filtered = products.filter(product => 
-        product.categories?.includes(categoryParam) || 
         product.category === categoryParam
       );
       setFilteredProducts(filtered.length ? filtered : products);
@@ -157,7 +157,7 @@ const Marketplace = () => {
               }`}>
                 <div className={`${viewMode === 'list' ? 'w-1/3' : 'w-full'}`}>
                   <img 
-                    src={product.imageUrl || '/placeholder.svg'} 
+                    src={product.image || '/placeholder.svg'} 
                     alt={product.name} 
                     className="w-full h-48 object-cover"
                   />
@@ -213,3 +213,4 @@ const Marketplace = () => {
 };
 
 export default Marketplace;
+

@@ -30,7 +30,7 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
       <h2 className="text-2xl font-bold mb-6">Featured Brands</h2>
       <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
         {displayBrands.map((brand) => (
-          <Link to="/gifting?tab=products" key={brand.id}>
+          <Link to="/gifting?tab=products" key={brand.id} state={{ brandFilter: brand.name }}>
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-6 flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">

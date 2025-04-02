@@ -1,11 +1,11 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import ProductCatalog from "./ProductCatalog";
+import { useProducts } from "@/contexts/ProductContext";
 import {
   Select,
   SelectContent,
@@ -25,11 +25,20 @@ const ShopifyIntegration = () => {
     importVariants: true,
   });
   
-  // Mock products for demonstration
-  const [products, setProducts] = useState([]);
+  const { products, setProducts } = useProducts();
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  
+  useEffect(() => {
+    const savedConnection = localStorage.getItem('shopifyConnection');
+    if (savedConnection) {
+      const { url, connected, syncTime } = JSON.parse(savedConnection);
+      setShopifyUrl(url || "");
+      setIsConnected(connected || false);
+      setLastSyncTime(syncTime ? new Date(syncTime) : null);
+    }
+  }, []);
   
   const handleConnect = () => {
-    // This would typically involve API integration with Shopify
     if (!shopifyUrl) {
       toast.error("Please enter a valid Shopify store URL");
       return;
@@ -37,14 +46,18 @@ const ShopifyIntegration = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
-      // Simulate successful connection and product import
       setIsConnected(true);
       setIsLoading(false);
+      setLastSyncTime(new Date());
       
-      // Mock product data
-      setProducts([
+      localStorage.setItem('shopifyConnection', JSON.stringify({
+        url: shopifyUrl,
+        connected: true,
+        syncTime: new Date().toISOString()
+      }));
+      
+      const mockProducts = [
         {
           id: 1,
           name: "Wireless Headphones",
@@ -105,7 +118,11 @@ const ShopifyIntegration = () => {
           variants: ["Small", "Medium", "Large"],
           description: "Ceramic plant pot with drainage hole"
         },
-      ]);
+      ];
+      
+      setProducts(mockProducts);
+      
+      localStorage.setItem('shopifyProducts', JSON.stringify(mockProducts));
       
       toast.success("Shopify store connected successfully! We've imported your catalog.");
     }, 1500);
@@ -115,6 +132,11 @@ const ShopifyIntegration = () => {
     setIsConnected(false);
     setShopifyUrl("");
     setProducts([]);
+    setLastSyncTime(null);
+    
+    localStorage.removeItem('shopifyConnection');
+    localStorage.removeItem('shopifyProducts');
+    
     toast.info("Shopify store disconnected");
   };
   
@@ -122,6 +144,14 @@ const ShopifyIntegration = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      setLastSyncTime(new Date());
+      
+      const connection = JSON.parse(localStorage.getItem('shopifyConnection') || '{}');
+      localStorage.setItem('shopifyConnection', JSON.stringify({
+        ...connection,
+        syncTime: new Date().toISOString()
+      }));
+      
       toast.success("Product sync completed. Your catalog is up to date.");
     }, 1500);
   };
@@ -132,6 +162,26 @@ const ShopifyIntegration = () => {
       [key]: value
     });
     toast.success(`Updated ${key} setting`);
+  };
+  
+  const formatLastSyncTime = () => {
+    if (!lastSyncTime) return 'Never';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - lastSyncTime.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins === 1) return '1 min ago';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return '1 day ago';
+    return `${diffDays} days ago`;
   };
   
   return (
@@ -177,7 +227,7 @@ const ShopifyIntegration = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Last Sync</p>
-                  <p className="font-medium">5 mins ago</p>
+                  <p className="font-medium">{formatLastSyncTime()}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Price Markup</p>
@@ -221,7 +271,6 @@ const ShopifyIntegration = () => {
             </Button>
           </div>
           
-          {/* Display imported products */}
           <ProductCatalog products={products} />
         </div>
       )}

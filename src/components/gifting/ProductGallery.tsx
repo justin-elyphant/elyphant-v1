@@ -4,7 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Heart, Filter, X } from "lucide-react";
+import { Search, Heart, Filter, X, ShoppingBag } from "lucide-react";
+import { useProducts } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -36,7 +38,10 @@ const ProductGallery = ({
   isGifteeView = true,
   onProductSelect 
 }: ProductGalleryProps) => {
-  // Mock products if none provided
+  // Get products from context
+  const { products: contextProducts, isLoading: contextLoading } = useProducts();
+  
+  // Use either the products from context, initialProducts prop, or empty array
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -47,12 +52,33 @@ const ProductGallery = ({
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [wishlistedProducts, setWishlistedProducts] = useState<number[]>([]);
   
-  // Load mock products if none provided
+  // Effect to check for Shopify products in localStorage
   useEffect(() => {
+    // Try to load from context first
+    if (contextProducts && contextProducts.length > 0) {
+      setProducts(contextProducts);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Try to load from props second
     if (initialProducts.length > 0) {
       setProducts(initialProducts);
       setIsLoading(false);
       return;
+    }
+    
+    // Try to load from localStorage third
+    const savedProducts = localStorage.getItem('shopifyProducts');
+    if (savedProducts) {
+      try {
+        const parsedProducts = JSON.parse(savedProducts);
+        setProducts(parsedProducts);
+        setIsLoading(false);
+        return;
+      } catch (e) {
+        console.error("Error parsing saved products:", e);
+      }
     }
     
     // Simulate API call to fetch products
@@ -143,7 +169,7 @@ const ProductGallery = ({
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, [initialProducts]);
+  }, [contextProducts, initialProducts]);
   
   // Calculate unique categories for filtering
   const categories = ["all", ...Array.from(new Set(products.map(p => p.category)))];
@@ -169,12 +195,36 @@ const ProductGallery = ({
     return matchesSearch && matchesCategory && matchesPrice;
   });
   
+  // Load wishlisted products from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('wishlistedProducts');
+    if (saved) {
+      try {
+        setWishlistedProducts(JSON.parse(saved));
+      } catch (e) {
+        console.error("Error parsing saved wishlisted products:", e);
+      }
+    }
+  }, []);
+  
   const handleWishlistToggle = (productId: number) => {
-    setWishlistedProducts(prev => 
-      prev.includes(productId) 
+    setWishlistedProducts(prev => {
+      const newWishlisted = prev.includes(productId) 
         ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
+        : [...prev, productId];
+      
+      // Save to localStorage
+      localStorage.setItem('wishlistedProducts', JSON.stringify(newWishlisted));
+      
+      // Show toast
+      if (newWishlisted.includes(productId)) {
+        toast.success("Added to wishlist");
+      } else {
+        toast.info("Removed from wishlist");
+      }
+      
+      return newWishlisted;
+    });
   };
   
   const clearFilters = () => {
@@ -201,8 +251,32 @@ const ProductGallery = ({
     );
   }
   
+  // Show message if no products (with link to vendor page)
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-xl font-medium mb-2">No products available</h3>
+        <p className="text-muted-foreground mb-6">
+          Connect your Shopify store in the Vendor Management section to import products.
+        </p>
+        <Button asChild>
+          <a href="/vendor-management">Go to Vendor Management</a>
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-4">
+      {/* Shopify source indicator */}
+      {contextProducts.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm flex items-center">
+          <Badge className="bg-green-500 mr-2">Shopify</Badge>
+          <span>Showing products from your connected Shopify store</span>
+        </div>
+      )}
+      
       {/* Search and filter bar */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-grow">

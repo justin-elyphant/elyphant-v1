@@ -1,19 +1,11 @@
 
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import ProductCatalog from "./ProductCatalog";
-import { useProducts, Product } from "@/contexts/ProductContext"; // Import the Product type from context
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useProducts, Product } from "@/contexts/ProductContext";
+import ConnectShopifyForm from "./shopify/ConnectShopifyForm";
+import ConnectionStatus from "./shopify/ConnectionStatus";
+import SyncSettingsPanel from "./shopify/SyncSettingsPanel";
 
 const ShopifyIntegration = () => {
   const [shopifyUrl, setShopifyUrl] = useState("");
@@ -39,13 +31,14 @@ const ShopifyIntegration = () => {
     }
   }, []);
   
-  const handleConnect = () => {
-    if (!shopifyUrl) {
+  const handleConnect = (url: string) => {
+    if (!url) {
       toast.error("Please enter a valid Shopify store URL");
       return;
     }
     
     setIsLoading(true);
+    setShopifyUrl(url);
     
     setTimeout(() => {
       setIsConnected(true);
@@ -53,7 +46,7 @@ const ShopifyIntegration = () => {
       setLastSyncTime(new Date());
       
       localStorage.setItem('shopifyConnection', JSON.stringify({
-        url: shopifyUrl,
+        url,
         connected: true,
         syncTime: new Date().toISOString()
       }));
@@ -157,7 +150,7 @@ const ShopifyIntegration = () => {
     }, 1500);
   };
 
-  const handleSyncSettingChange = (key, value) => {
+  const handleSyncSettingChange = (key: string, value: any) => {
     setSyncSettings({
       ...syncSettings,
       [key]: value
@@ -165,112 +158,26 @@ const ShopifyIntegration = () => {
     toast.success(`Updated ${key} setting`);
   };
   
-  const formatLastSyncTime = () => {
-    if (!lastSyncTime) return 'Never';
-    
-    const now = new Date();
-    const diffMs = now.getTime() - lastSyncTime.getTime();
-    const diffMins = Math.round(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins === 1) return '1 min ago';
-    if (diffMins < 60) return `${diffMins} mins ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours === 1) return '1 hour ago';
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return '1 day ago';
-    return `${diffDays} days ago`;
-  };
-  
   return (
     <div>
       {!isConnected ? (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Connect your Shopify store to import products. We'll handle all customer interactions and payments within the Elyphant platform.
-          </p>
-          <div className="flex space-x-2">
-            <Input
-              placeholder="yourstorename.myshopify.com"
-              value={shopifyUrl}
-              onChange={(e) => setShopifyUrl(e.target.value)}
-              disabled={isLoading}
-            />
-            <Button onClick={handleConnect} disabled={isLoading}>
-              {isLoading ? "Connecting..." : "Connect"}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Products will be listed with a 30% markup as part of our convenience fee model. You'll receive orders directly to fulfill.
-          </p>
-        </div>
+        <ConnectShopifyForm onConnect={handleConnect} isLoading={isLoading} />
       ) : (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Badge className="bg-green-500">Connected</Badge>
-              <span className="font-medium">{shopifyUrl}</span>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={isLoading}>
-              Disconnect
-            </Button>
-          </div>
+          <ConnectionStatus 
+            shopifyUrl={shopifyUrl} 
+            onDisconnect={handleDisconnect} 
+            isLoading={isLoading} 
+          />
           
-          <Card className="bg-muted/50">
-            <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Products</p>
-                  <p className="font-medium">{products.length}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Last Sync</p>
-                  <p className="font-medium">{formatLastSyncTime()}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Price Markup</p>
-                  <div className="flex items-center gap-2">
-                    <Select 
-                      defaultValue={syncSettings.markup.toString()} 
-                      onValueChange={(value) => handleSyncSettingChange('markup', parseInt(value))}
-                    >
-                      <SelectTrigger className="h-7 w-20">
-                        <SelectValue placeholder="Markup" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="10">10%</SelectItem>
-                        <SelectItem value="20">20%</SelectItem>
-                        <SelectItem value="30">30%</SelectItem>
-                        <SelectItem value="40">40%</SelectItem>
-                        <SelectItem value="50">50%</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Auto-Sync</p>
-                  <p className="font-medium">{syncSettings.autoSync ? 'Enabled' : 'Disabled'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSyncNow} 
-              disabled={isLoading}
-            >
-              {isLoading ? "Syncing..." : "Sync Now"}
-            </Button>
-            <Button variant="outline" size="sm">
-              Product Settings
-            </Button>
-          </div>
+          <SyncSettingsPanel 
+            products={products}
+            lastSyncTime={lastSyncTime}
+            syncSettings={syncSettings}
+            onSyncSettingChange={handleSyncSettingChange}
+            onSyncNow={handleSyncNow}
+            isLoading={isLoading}
+          />
           
           <ProductCatalog products={products} />
         </div>

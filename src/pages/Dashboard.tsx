@@ -1,26 +1,13 @@
 
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { 
-  Gift, 
-  ShoppingBag, 
-  Calendar, 
-  UserRound, 
-  Settings, 
-  Heart, 
-  LogOut,
-  Search
-} from "lucide-react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardGrid from "@/components/dashboard/DashboardGrid";
 
 const Dashboard = () => {
   const [userData] = useLocalStorage("userData", null);
-  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   
   // Redirect to sign-up if not logged in
@@ -29,13 +16,6 @@ const Dashboard = () => {
       navigate("/sign-up");
     }
   }, [userData, navigate]);
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
-    }
-  };
 
   if (!userData) {
     return null; // Don't render anything while redirecting
@@ -50,196 +30,8 @@ const Dashboard = () => {
 
   return (
     <div className="container max-w-6xl mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            {userData?.profileImage ? (
-              <AvatarImage src={userData.profileImage} alt={userData.name} />
-            ) : (
-              <AvatarFallback className="bg-purple-100 text-purple-600 text-xl">
-                {userData.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <div>
-            <h1 className="text-2xl font-bold">Welcome, {userData.name}</h1>
-            <p className="text-muted-foreground">What would you like to do today?</p>
-          </div>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link to={`/profile/${userData.id}`}>
-              <UserRound className="h-4 w-4 mr-2" />
-              View Profile
-            </Link>
-          </Button>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Find Gifts - Now first and with search bar */}
-        <Card className="border-2 border-purple-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <Gift className="h-5 w-5 mr-2 text-purple-500" />
-              Find Gifts
-            </CardTitle>
-            <CardDescription>
-              Discover perfect gifts for anyone
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input 
-                  placeholder="Search for gifts..." 
-                  className="pl-10 w-full bg-purple-50 focus:bg-white transition-colors"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </form>
-              <p className="text-sm text-muted-foreground">
-                Browse our marketplace for curated gift ideas for any occasion.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate("/marketplace?category=birthday")}>
-                  Birthday
-                </Button>
-                <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate("/marketplace?category=anniversary")}>
-                  Anniversary
-                </Button>
-                <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate("/marketplace?category=wedding")}>
-                  Wedding
-                </Button>
-              </div>
-              <Button className="w-full" asChild>
-                <Link to="/marketplace">Explore Marketplace</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* My Wishlists - Now second */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <Heart className="h-5 w-5 mr-2 text-pink-500" />
-              My Wishlists
-            </CardTitle>
-            <CardDescription>
-              Keep track of things you want
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Create and manage your wishlists to share with friends and family.
-              </p>
-              <Button className="w-full" asChild>
-                <Link to="/wishlists">View My Wishlists</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Upcoming Events */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-blue-500" />
-              Upcoming Events
-            </CardTitle>
-            <CardDescription>
-              Important dates to remember
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Track birthdays, holidays, and special occasions to never miss a gift.
-              </p>
-              <Button className="w-full" asChild>
-                <Link to="/events">Manage Events</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* My Orders */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <ShoppingBag className="h-5 w-5 mr-2 text-emerald-500" />
-              My Orders
-            </CardTitle>
-            <CardDescription>
-              Track your purchases
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                View and manage your order history and delivery status.
-              </p>
-              <Button className="w-full" asChild>
-                <Link to="/orders">View Orders</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Friends & Following */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <UserRound className="h-5 w-5 mr-2 text-orange-500" />
-              Friends & Following
-            </CardTitle>
-            <CardDescription>
-              Connect with others
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Discover friends' wishlists and follow people with similar interests.
-              </p>
-              <Button className="w-full" asChild>
-                <Link to="/connections">Manage Connections</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Account Settings */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center">
-              <Settings className="h-5 w-5 mr-2 text-gray-500" />
-              Account Settings
-            </CardTitle>
-            <CardDescription>
-              Manage your preferences
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Update your profile, privacy settings, and notification preferences.
-              </p>
-              <Button className="w-full" asChild>
-                <Link to="/settings">Account Settings</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardHeader userData={userData} onLogout={handleLogout} />
+      <DashboardGrid />
     </div>
   );
 };

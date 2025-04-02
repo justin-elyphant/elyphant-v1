@@ -1,8 +1,6 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/contexts/ProductContext";
-import { toast } from "sonner";
 
 import ProductCard from "./ProductCard";
 import ProductFilters from "./ProductFilters";

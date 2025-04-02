@@ -26,9 +26,6 @@ const Header = () => {
           </div>
           
           <nav className="flex items-center space-x-3">
-            <Link to="/gifting" className="text-sm font-medium hover:text-primary">
-              Wishlists
-            </Link>
             <Button variant="outline" size="sm" asChild>
               <Link to="/sign-in">
                 <LogIn className="mr-2 h-4 w-4" />

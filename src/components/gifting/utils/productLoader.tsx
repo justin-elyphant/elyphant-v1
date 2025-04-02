@@ -2,7 +2,8 @@
 import { Product } from "@/contexts/ProductContext";
 
 export const loadMockProducts = (): Product[] => {
-  return [
+  console.log("Loading mock products data");
+  const mockProducts = [
     {
       id: 1,
       name: "Wireless Headphones",
@@ -82,17 +83,23 @@ export const loadMockProducts = (): Product[] => {
       description: "Ultrasonic essential oil diffuser with LED lights"
     },
   ];
+  console.log(`Returning ${mockProducts.length} mock products`);
+  return mockProducts;
 };
 
 export const loadSavedProducts = (): Product[] | null => {
+  console.log("Attempting to load saved products from localStorage");
   const savedProducts = localStorage.getItem('shopifyProducts');
   if (savedProducts) {
     try {
-      return JSON.parse(savedProducts);
+      const parsed = JSON.parse(savedProducts);
+      console.log(`Found ${parsed.length} saved products in localStorage`);
+      return parsed;
     } catch (e) {
       console.error("Error parsing saved products:", e);
       return null;
     }
   }
+  console.log("No saved products found in localStorage");
   return null;
 };

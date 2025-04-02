@@ -10,28 +10,38 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
 
   useEffect(() => {
     const loadProducts = async () => {
+      console.log("Loading products:", { 
+        contextProductsLength: contextProducts?.length || 0,
+        initialProductsLength: initialProducts?.length || 0
+      });
+      
       if (contextProducts && contextProducts.length > 0) {
+        console.log("Using products from context");
         setProducts(contextProducts);
         setIsLoading(false);
         return;
       }
       
-      if (initialProducts.length > 0) {
+      if (initialProducts && initialProducts.length > 0) {
+        console.log("Using initial products");
         setProducts(initialProducts);
         setIsLoading(false);
         return;
       }
       
       const savedProducts = loadSavedProducts();
-      if (savedProducts) {
+      if (savedProducts && savedProducts.length > 0) {
+        console.log("Using saved products from localStorage");
         setProducts(savedProducts);
         setIsLoading(false);
         return;
       }
       
       // Simulate a network request
+      console.log("Loading mock products");
       setTimeout(() => {
         const mockProducts = loadMockProducts();
+        console.log("Loaded mock products:", mockProducts.length);
         setProducts(mockProducts);
         setIsLoading(false);
       }, 1000);

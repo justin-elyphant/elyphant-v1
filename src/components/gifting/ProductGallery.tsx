@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/contexts/ProductContext";
 
@@ -36,6 +37,14 @@ const ProductGallery = ({
     handleWishlistToggle,
     clearFilters
   } = useProductManagement(initialProducts);
+  
+  useEffect(() => {
+    console.log("ProductGallery render:", { 
+      isLoading, 
+      filteredProductsLength: filteredProducts.length,
+      initialProductsLength: initialProducts.length 
+    });
+  }, [isLoading, filteredProducts.length, initialProducts.length]);
   
   if (isLoading) {
     return <ProductLoading />;

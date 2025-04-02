@@ -9,6 +9,13 @@ export const useFilteredProducts = (
   priceRange: string
 ) => {
   const filteredProducts = useMemo(() => {
+    console.log("Filtering products:", { 
+      totalProducts: products.length,
+      searchTerm,
+      selectedCategory,
+      priceRange
+    });
+
     return products.filter(product => {
       const matchesSearch = 
         searchTerm === "" || 

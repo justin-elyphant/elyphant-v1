@@ -68,7 +68,22 @@ export const connectToShopify = async (storeUrl: string): Promise<{ success: boo
       };
     }
     
-    // Mock successful response
+    // Detect if this is a development store request
+    const isDevelopmentStore = storeUrl.toLowerCase() === "development" || storeUrl.toLowerCase() === "dev";
+    
+    if (isDevelopmentStore) {
+      return {
+        success: true,
+        message: "Connected to Shopify Development Store",
+        data: {
+          shop: "development-store.myshopify.com",
+          accessToken: "dev_token_for_testing",
+          scopes: ["read_products", "write_products", "read_orders", "write_orders"]
+        }
+      };
+    }
+    
+    // Mock successful response for regular store connections
     return {
       success: true,
       message: "Successfully connected to Shopify store",
@@ -96,8 +111,25 @@ export const fetchShopifyProducts = async (storeUrl: string, syncSettings: SyncS
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // In a real implementation, this would call the Shopify API
-    // For now, generate more realistic mock products
+    // Check if this is a development store
+    const isDevelopmentStore = storeUrl.includes("development");
+    
+    // For development stores, generate products that look more like test products
+    if (isDevelopmentStore) {
+      const devProducts = generateDevelopmentStoreProducts();
+      
+      // Apply markup based on sync settings
+      if (syncSettings.markup > 0) {
+        return devProducts.map(product => ({
+          ...product,
+          price: product.price * (1 + (syncSettings.markup / 100))
+        }));
+      }
+      
+      return devProducts;
+    }
+    
+    // For regular stores, use our standard mock products
     const products = generateShopifyProductsFromRealData();
     
     // Apply markup based on sync settings
@@ -114,6 +146,64 @@ export const fetchShopifyProducts = async (storeUrl: string, syncSettings: SyncS
     toast.error("Failed to fetch products from Shopify");
     return null;
   }
+};
+
+// Generate development store products
+export const generateDevelopmentStoreProducts = (): Product[] => {
+  const mockProducts: Product[] = [
+    {
+      id: 1001,
+      name: "Test Product 1",
+      price: 19.99,
+      category: "Test Category",
+      image: "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png",
+      vendor: "Shopify",
+      variants: ["Small", "Medium", "Large"],
+      description: "This is a test product for development purposes"
+    },
+    {
+      id: 1002,
+      name: "Test Product 2",
+      price: 29.99,
+      category: "Test Category",
+      image: "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png",
+      vendor: "Shopify",
+      variants: ["Red", "Blue", "Green"],
+      description: "This is another test product for development purposes"
+    },
+    {
+      id: 1003,
+      name: "Sample Product",
+      price: 39.99,
+      category: "Sample Category",
+      image: "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png",
+      vendor: "Shopify",
+      variants: ["Option 1", "Option 2", "Option 3"],
+      description: "This is a sample product with multiple options"
+    },
+    {
+      id: 1004,
+      name: "Development Item",
+      price: 49.99,
+      category: "Development",
+      image: "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png",
+      vendor: "Shopify",
+      variants: ["Test Variant"],
+      description: "A development item for testing the store functionality"
+    },
+    {
+      id: 1005,
+      name: "API Test Product",
+      price: 59.99,
+      category: "API Testing",
+      image: "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png",
+      vendor: "Shopify",
+      variants: ["Default"],
+      description: "Used for testing API integration"
+    }
+  ];
+  
+  return mockProducts;
 };
 
 // Generate more realistic mock products
@@ -315,4 +405,23 @@ export const generateMockShopifyProducts = (): Product[] => {
     ...product,
     vendor: "Shopify"
   }));
+};
+
+// Information for Shopify Partners without a store
+export const getShopifyPartnerOptions = () => {
+  return {
+    developmentStore: {
+      name: "Development Store",
+      description: "Connect to a simulated development store for testing",
+      url: "development"
+    },
+    partnerInfo: {
+      description: "As a Shopify Partner, you can test the API using:",
+      options: [
+        "Use 'development' as the store URL to connect to a simulated store",
+        "Create a free development store through the Shopify Partners program",
+        "Use the Shopify CLI to create a development store for local testing"
+      ]
+    }
+  };
 };

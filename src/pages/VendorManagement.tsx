@@ -1,16 +1,21 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ChevronRight, Plus, Settings } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ChevronRight, Info, Plus, Settings } from "lucide-react";
 import ShopifyIntegration from "@/components/marketplace/ShopifyIntegration";
 import DirectAPIIntegration from "@/components/marketplace/DirectAPIIntegration";
 import AdvertisingDashboard from "@/components/marketplace/AdvertisingDashboard";
 import { ProductProvider } from "@/contexts/ProductContext";
+import { getShopifyPartnerOptions } from "@/components/marketplace/shopify/shopifyUtils";
 
 const VendorManagement = () => {
+  const [showPartnerInfo, setShowPartnerInfo] = useState(false);
+  const partnerOptions = getShopifyPartnerOptions();
+  
   return (
     <ProductProvider>
       <div className="container mx-auto py-8">
@@ -46,6 +51,53 @@ const VendorManagement = () => {
             </SheetContent>
           </Sheet>
         </div>
+        
+        {!showPartnerInfo && (
+          <Alert className="mb-6">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Shopify Partner Testing</AlertTitle>
+            <AlertDescription>
+              No Shopify store? You can test integration by entering "development" as the store URL.{" "}
+              <Button variant="link" className="p-0 h-auto" onClick={() => setShowPartnerInfo(true)}>
+                Learn more
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {showPartnerInfo && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Shopify Partner Testing Options</CardTitle>
+              <CardDescription>
+                Ways to test Shopify integration without your own store
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium">Development Store Option</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Connect to a simulated Shopify store by entering <strong>"development"</strong> in the store URL field.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium">For Shopify Partners</h3>
+                  <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mt-2">
+                    {partnerOptions.partnerInfo.options.map((option, index) => (
+                      <li key={index}>{option}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <Button size="sm" variant="outline" onClick={() => setShowPartnerInfo(false)}>
+                  Hide Info
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         <Tabs defaultValue="integrations">
           <TabsList className="mb-6">

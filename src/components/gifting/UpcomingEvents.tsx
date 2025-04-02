@@ -36,10 +36,18 @@ const upcomingEvents = [
   }
 ];
 
-const UpcomingEvents = () => {
+interface UpcomingEventsProps {
+  onAddEvent?: () => void;
+}
+
+const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   const handleAddEvent = () => {
-    console.log("Add new event");
-    // Implementation for adding a new event
+    if (onAddEvent) {
+      onAddEvent();
+    } else {
+      console.log("Add new event");
+      // Default implementation for adding a new event
+    }
   };
 
   const handleSendGift = (id: number) => {

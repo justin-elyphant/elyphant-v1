@@ -1,18 +1,19 @@
 
 import React from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Users } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -21,30 +22,49 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
-const eventSchema = z.object({
-  eventType: z.string().min(1, { message: "Please select an event type" }),
-  person: z.string().min(1, { message: "Please select a person" }),
-  date: z.date({ required_error: "Please select a date" }),
-  enableAutoGift: z.boolean().default(false),
-  autoGiftAmount: z.number().optional(),
+const eventTypes = [
+  { value: "birthday", label: "Birthday" },
+  { value: "anniversary", label: "Anniversary" },
+  { value: "holiday", label: "Holiday" },
+  { value: "graduation", label: "Graduation" },
+  { value: "wedding", label: "Wedding" },
+  { value: "other", label: "Other" }
+];
+
+const formSchema = z.object({
+  eventType: z.string({
+    required_error: "Please select an event type",
+  }),
+  personName: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  date: z.date({
+    required_error: "Please select a date.",
+  }),
+  autoGift: z.boolean().default(false),
+  autoGiftAmount: z.coerce.number().min(0).optional(),
+  privacyLevel: z.enum(["private", "shared", "public"]).default("private"),
 });
 
-type EventFormValues = z.infer<typeof eventSchema>;
+type EventFormValues = z.infer<typeof formSchema>;
 
 interface AddEventDialogProps {
   open: boolean;
@@ -53,28 +73,31 @@ interface AddEventDialogProps {
 
 const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
   const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       eventType: "",
-      person: "",
-      enableAutoGift: false,
+      personName: "",
+      autoGift: false,
+      privacyLevel: "private",
     },
   });
-  
-  const watchAutoGift = form.watch("enableAutoGift");
 
-  const onSubmit = (values: EventFormValues) => {
-    console.log("Event values:", values);
-    // In a real app, this would connect to a database
+  const watchAutoGift = form.watch("autoGift");
+  const watchPrivacyLevel = form.watch("privacyLevel");
+
+  function onSubmit(data: EventFormValues) {
+    console.log("Event data:", data);
+    
+    // Display different messages based on privacy level
+    if (data.privacyLevel === "shared" || data.privacyLevel === "public") {
+      toast.success(`Event added with ${data.privacyLevel} visibility`);
+    } else {
+      toast.success("Event added successfully");
+    }
+    
     onOpenChange(false);
-  };
-
-  // Mock data for people - in a real app, this would come from user connections
-  const people = [
-    { id: "1", name: "Alex Johnson", image: "/placeholder.svg" },
-    { id: "2", name: "Jamie Smith", image: "/placeholder.svg" },
-    { id: "3", name: "Taylor Wilson", image: "/placeholder.svg" },
-  ];
+    form.reset();
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,12 +105,12 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
         <DialogHeader>
           <DialogTitle>Add New Event</DialogTitle>
           <DialogDescription>
-            Track important dates and set up automated gifting for special occasions.
+            Add important dates to remember or set up auto-gifting.
           </DialogDescription>
         </DialogHeader>
-
+        
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="eventType"
@@ -101,51 +124,32 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="birthday">Birthday</SelectItem>
-                      <SelectItem value="anniversary">Anniversary</SelectItem>
-                      <SelectItem value="holiday">Holiday</SelectItem>
-                      <SelectItem value="graduation">Graduation</SelectItem>
-                      <SelectItem value="wedding">Wedding</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="person"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Person</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a person" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {people.map((person) => (
-                        <SelectItem key={person.id} value={person.id}>
-                          <div className="flex items-center">
-                            <Avatar className="h-6 w-6 mr-2">
-                              <AvatarImage src={person.image} />
-                              <AvatarFallback>{person.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            {person.name}
-                          </div>
+                      {eventTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
                         </SelectItem>
                       ))}
-                      <SelectItem value="add_new">+ Add New Person</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
+            <FormField
+              control={form.control}
+              name="personName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Person's Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <FormField
               control={form.control}
               name="date"
@@ -157,10 +161,9 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
                       <FormControl>
                         <Button
                           variant={"outline"}
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
+                          className={`w-full pl-3 text-left font-normal ${
+                            !field.value ? "text-muted-foreground" : ""
+                          }`}
                         >
                           {field.value ? (
                             format(field.value, "PPP")
@@ -184,14 +187,51 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
-              name="enableAutoGift"
+              name="privacyLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Privacy Level</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select privacy level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="private">
+                        Private (Only you can see)
+                      </SelectItem>
+                      <SelectItem value="shared">
+                        Shared (Only with connected users)
+                      </SelectItem>
+                      <SelectItem value="public">
+                        Public (Visible to all)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Controls who can see this event. Shared events are verified with connected users.
+                  </FormDescription>
+                  {watchPrivacyLevel === "shared" && (
+                    <FormDescription className="text-amber-600">
+                      Only the event type and date will be shared. Person's name remains private.
+                    </FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="autoGift"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Enable Auto-Gift</FormLabel>
+                    <FormLabel className="text-base">Automated Gifting</FormLabel>
                     <FormDescription>
                       Automatically send a gift when this event occurs
                     </FormDescription>
@@ -205,7 +245,7 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
                 </FormItem>
               )}
             />
-
+            
             {watchAutoGift && (
               <FormField
                 control={form.control}
@@ -215,12 +255,14 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
                     <FormLabel>Gift Budget</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                        <Input
-                          type="number"
-                          className="pl-8"
-                          placeholder="50"
-                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <span className="text-gray-500">$</span>
+                        </div>
+                        <Input 
+                          type="number" 
+                          placeholder="0.00" 
+                          className="pl-7" 
+                          {...field}
                         />
                       </div>
                     </FormControl>
@@ -229,9 +271,9 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
                 )}
               />
             )}
-
+            
             <DialogFooter>
-              <Button type="submit" className="bg-purple-600 hover:bg-purple-700">Add Event</Button>
+              <Button type="submit">Add Event</Button>
             </DialogFooter>
           </form>
         </Form>

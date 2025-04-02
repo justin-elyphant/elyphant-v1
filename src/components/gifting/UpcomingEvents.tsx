@@ -1,7 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
+import { Shield, ShieldCheck, ShieldOff } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import EventHeader from "./events/EventHeader";
 import EventCard, { EventData } from "./events/EventCard";
+import { toast } from "sonner";
 
 // Mock data for upcoming events
 const upcomingEvents = [
@@ -13,7 +17,9 @@ const upcomingEvents = [
     daysAway: 14,
     avatarUrl: "/placeholder.svg",
     autoGiftEnabled: true,
-    autoGiftAmount: 75
+    autoGiftAmount: 75,
+    privacyLevel: "shared",
+    isVerified: true
   },
   {
     id: 2,
@@ -22,7 +28,8 @@ const upcomingEvents = [
     date: "June 22, 2023",
     daysAway: 30,
     avatarUrl: "/placeholder.svg",
-    autoGiftEnabled: false
+    autoGiftEnabled: false,
+    privacyLevel: "private"
   },
   {
     id: 3,
@@ -32,7 +39,20 @@ const upcomingEvents = [
     daysAway: 90,
     avatarUrl: "/placeholder.svg",
     autoGiftEnabled: true,
-    autoGiftAmount: 100
+    autoGiftAmount: 100,
+    privacyLevel: "public"
+  },
+  {
+    id: 4, 
+    type: "Wedding Anniversary",
+    person: "Chris & Robin",
+    date: "July 15, 2023",
+    daysAway: 45,
+    avatarUrl: "/placeholder.svg",
+    autoGiftEnabled: false,
+    privacyLevel: "shared",
+    isVerified: false,
+    needsVerification: true
   }
 ];
 
@@ -41,6 +61,8 @@ interface UpcomingEventsProps {
 }
 
 const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
+  const [events, setEvents] = useState(upcomingEvents);
+  
   const handleAddEvent = () => {
     if (onAddEvent) {
       onAddEvent();
@@ -52,25 +74,112 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
 
   const handleSendGift = (id: number) => {
     console.log(`Send gift for event ${id}`);
+    toast.success("Gift selection opened");
     // Implementation for sending a gift
   };
 
   const handleToggleAutoGift = (id: number) => {
     console.log(`Toggle auto-gift for event ${id}`);
-    // Implementation for toggling auto-gift
+    setEvents(events.map(event => 
+      event.id === id 
+        ? { ...event, autoGiftEnabled: !event.autoGiftEnabled } 
+        : event
+    ));
+    
+    const event = events.find(e => e.id === id);
+    if (event) {
+      toast.success(`Auto-gift ${event.autoGiftEnabled ? 'disabled' : 'enabled'} for ${event.person}'s ${event.type}`);
+    }
+  };
+  
+  const handleVerifyEvent = (id: number) => {
+    console.log(`Verify event ${id}`);
+    // In a real implementation, this would send a verification request
+    setEvents(events.map(event => 
+      event.id === id 
+        ? { ...event, isVerified: true, needsVerification: false } 
+        : event
+    ));
+    toast.success("Event verified successfully");
+  };
+
+  // Helper function to render privacy badge with tooltip
+  const renderPrivacyBadge = (privacyLevel: string, isVerified?: boolean) => {
+    let icon = null;
+    let label = "";
+    let variant = "outline";
+    
+    switch(privacyLevel) {
+      case "private":
+        icon = <ShieldOff className="h-3 w-3 mr-1" />;
+        label = "Private";
+        break;
+      case "shared":
+        icon = isVerified 
+          ? <ShieldCheck className="h-3 w-3 mr-1 text-green-500" /> 
+          : <Shield className="h-3 w-3 mr-1 text-amber-500" />;
+        label = isVerified ? "Verified" : "Shared";
+        variant = isVerified ? "success" : "warning";
+        break;
+      case "public":
+        icon = <Shield className="h-3 w-3 mr-1" />;
+        label = "Public";
+        break;
+    }
+    
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant={variant as any} className="ml-2 cursor-help">
+              {icon}
+              {label}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            {privacyLevel === "private" && "Only visible to you"}
+            {privacyLevel === "shared" && isVerified && "Event has been verified by the other person"}
+            {privacyLevel === "shared" && !isVerified && "Shared but awaiting verification"}
+            {privacyLevel === "public" && "Visible to everyone"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
   return (
     <div>
       <EventHeader title="Upcoming Gift Occasions" onAddEvent={handleAddEvent} />
       
+      <div className="mb-6">
+        <p className="text-sm text-muted-foreground">
+          Manage important dates and automate gift-giving. Shared events can be verified by connected users for accuracy.
+        </p>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {upcomingEvents.map((event: EventData) => (
+        {events.map((event: EventData & { privacyLevel?: string, isVerified?: boolean, needsVerification?: boolean }) => (
           <EventCard 
             key={event.id}
             event={event}
             onSendGift={handleSendGift}
             onToggleAutoGift={handleToggleAutoGift}
+            extraContent={
+              <>
+                {event.privacyLevel && renderPrivacyBadge(event.privacyLevel, event.isVerified)}
+                {event.needsVerification && (
+                  <div className="mt-2">
+                    <Badge 
+                      variant="outline" 
+                      className="cursor-pointer hover:bg-amber-50 border-amber-300"
+                      onClick={() => handleVerifyEvent(event.id)}
+                    >
+                      Verify Event
+                    </Badge>
+                  </div>
+                )}
+              </>
+            }
           />
         ))}
       </div>

@@ -40,8 +40,8 @@ const CategoriesDropdown: React.FC<CategoriesDropdownProps> = ({
   const navigate = useNavigate();
 
   const handleCategorySelect = (category: string) => {
-    // Updated navigation to go to marketplace with category parameter
-    navigate(`/marketplace?category=${category.toLowerCase()}`);
+    // Navigate to marketplace with category parameter
+    navigate(`/marketplace?category=${category}`);
     onOpenChange(false);
   };
 

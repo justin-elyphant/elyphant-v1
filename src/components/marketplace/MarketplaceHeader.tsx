@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Link } from "react-router-dom";
 import { 
   Command,
   CommandInput,
@@ -13,6 +12,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { categories } from "@/components/home/components/CategoriesDropdown";
 
 const MarketplaceHeader = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,9 +46,24 @@ const MarketplaceHeader = () => {
         />
         <h1 className="text-4xl font-bold">Product Marketplace</h1>
       </div>
-      <p className="text-muted-foreground mb-6">
-        Discover products from our partner retailers and vendors
-      </p>
+      
+      <div className="flex flex-wrap gap-3 mb-6">
+        {categories.slice(0, 6).map((category, index) => (
+          <a 
+            key={index}
+            href={`/marketplace?category=${category.url}`}
+            className="text-sm px-3 py-1 border rounded-full hover:bg-accent transition-colors"
+          >
+            {category.name}
+          </a>
+        ))}
+        <a 
+          href="/marketplace"
+          className="text-sm px-3 py-1 border rounded-full hover:bg-accent transition-colors"
+        >
+          View All
+        </a>
+      </div>
       
       <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <PopoverTrigger asChild>
@@ -90,16 +105,6 @@ const MarketplaceHeader = () => {
                 <CommandItem onSelect={() => handleSearchItemSelect("Deluxe Chocolates")}>
                   <Search className="mr-2 h-4 w-4" />
                   Deluxe Chocolates
-                </CommandItem>
-              </CommandGroup>
-              <CommandGroup heading="Experiences">
-                <CommandItem onSelect={() => handleSearchItemSelect("Virtual Wine Tasting")}>
-                  <Search className="mr-2 h-4 w-4" />
-                  Virtual Wine Tasting
-                </CommandItem>
-                <CommandItem onSelect={() => handleSearchItemSelect("Spa Day Package")}>
-                  <Search className="mr-2 h-4 w-4" />
-                  Spa Day Package
                 </CommandItem>
               </CommandGroup>
             </CommandList>

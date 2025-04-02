@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
@@ -71,7 +72,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         toast.info(`Removed ${itemToRemove.product.name} from your cart`, {
           action: {
             label: "Continue Shopping",
-            onClick: () => window.location.href = "/gifting"
+            onClick: () => window.location.href = "/marketplace"
           }
         });
       }

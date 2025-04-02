@@ -14,6 +14,7 @@ import Cart from "./pages/Cart";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
+import Wishlists from "./pages/Wishlists";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
 
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/sign-up" element={<SignUp />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile/:userId" element={<UserProfile />} />
+              <Route path="/wishlists" element={<Wishlists />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

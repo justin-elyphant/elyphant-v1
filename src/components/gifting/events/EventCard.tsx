@@ -1,10 +1,11 @@
 
 import React from "react";
-import { Gift, Calendar, DollarSign, Bell } from "lucide-react";
+import { Gift, Calendar, DollarSign, Bell, MoreVertical, Edit } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export interface EventData {
   id: number;
@@ -15,17 +16,19 @@ export interface EventData {
   avatarUrl: string;
   autoGiftEnabled: boolean;
   autoGiftAmount?: number;
+  giftSource?: "wishlist" | "ai" | "both";
 }
 
 interface EventCardProps {
   event: EventData;
   onSendGift: (id: number) => void;
   onToggleAutoGift: (id: number) => void;
+  onEdit?: (id: number) => void;
   extraContent?: React.ReactNode; // New prop for additional content like privacy badges
 }
 
-const EventCard = ({ event, onSendGift, onToggleAutoGift, extraContent }: EventCardProps) => {
-  const { id, type, person, date, daysAway, avatarUrl, autoGiftEnabled, autoGiftAmount } = event;
+const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }: EventCardProps) => {
+  const { id, type, person, date, daysAway, avatarUrl, autoGiftEnabled, autoGiftAmount, giftSource } = event;
   
   const getUrgencyClass = (days: number) => {
     if (days <= 7) return "text-red-600 font-semibold";
@@ -47,7 +50,25 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, extraContent }: EventC
               <p className="text-sm text-muted-foreground">{person}</p>
             </div>
           </div>
-          {extraContent}
+          <div className="flex">
+            {extraContent}
+            {onEdit && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">More options</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(id)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </CardHeader>
       
@@ -73,6 +94,15 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, extraContent }: EventC
             <div className="flex items-center text-sm">
               <DollarSign className="h-4 w-4 mr-2 text-green-500" />
               <span>Auto-gift: ${autoGiftAmount}</span>
+              {giftSource && (
+                <span className="ml-1 text-xs text-muted-foreground">
+                  ({giftSource === "wishlist" 
+                    ? "From wishlist" 
+                    : giftSource === "ai" 
+                      ? "AI selected" 
+                      : "Wishlist + AI"})
+                </span>
+              )}
             </div>
           )}
         </div>

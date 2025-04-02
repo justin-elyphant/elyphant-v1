@@ -5,12 +5,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge";
 import EventHeader from "./events/EventHeader";
 import EventCard, { EventData } from "./events/EventCard";
+import EventEditDrawer from "./events/EventEditDrawer";
 import { toast } from "sonner";
 
-interface ExtendedEventData extends EventData {
+export interface ExtendedEventData extends EventData {
   privacyLevel: string;
   isVerified?: boolean;
   needsVerification?: boolean;
+  giftSource?: "wishlist" | "ai" | "both";
 }
 
 // Mock data for upcoming events
@@ -25,7 +27,8 @@ const upcomingEvents: ExtendedEventData[] = [
     autoGiftEnabled: true,
     autoGiftAmount: 75,
     privacyLevel: "shared",
-    isVerified: true
+    isVerified: true,
+    giftSource: "wishlist"
   },
   {
     id: 2,
@@ -35,7 +38,8 @@ const upcomingEvents: ExtendedEventData[] = [
     daysAway: 30,
     avatarUrl: "/placeholder.svg",
     autoGiftEnabled: false,
-    privacyLevel: "private"
+    privacyLevel: "private",
+    giftSource: "wishlist"
   },
   {
     id: 3,
@@ -46,7 +50,8 @@ const upcomingEvents: ExtendedEventData[] = [
     avatarUrl: "/placeholder.svg",
     autoGiftEnabled: true,
     autoGiftAmount: 100,
-    privacyLevel: "public"
+    privacyLevel: "public",
+    giftSource: "both"
   },
   {
     id: 4, 
@@ -58,7 +63,8 @@ const upcomingEvents: ExtendedEventData[] = [
     autoGiftEnabled: false,
     privacyLevel: "shared",
     isVerified: false,
-    needsVerification: true
+    needsVerification: true,
+    giftSource: "wishlist"
   }
 ];
 
@@ -68,6 +74,8 @@ interface UpcomingEventsProps {
 
 const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   const [events, setEvents] = useState<ExtendedEventData[]>(upcomingEvents);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   
   const handleAddEvent = () => {
     if (onAddEvent) {
@@ -107,6 +115,22 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
         : event
     ));
     toast.success("Event verified successfully");
+  };
+
+  const handleEditEvent = (id: number) => {
+    const eventToEdit = events.find(event => event.id === id);
+    if (eventToEdit) {
+      setCurrentEvent(eventToEdit);
+      setIsEditDrawerOpen(true);
+    }
+  };
+
+  const handleSaveEvent = (eventId: number, updatedEvent: Partial<ExtendedEventData>) => {
+    setEvents(events.map(event => 
+      event.id === eventId 
+        ? { ...event, ...updatedEvent } 
+        : event
+    ));
   };
 
   // Helper function to render privacy badge with tooltip
@@ -170,6 +194,7 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
             event={event}
             onSendGift={handleSendGift}
             onToggleAutoGift={handleToggleAutoGift}
+            onEdit={handleEditEvent}
             extraContent={
               <>
                 {event.privacyLevel && renderPrivacyBadge(event.privacyLevel, event.isVerified)}
@@ -189,6 +214,13 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
           />
         ))}
       </div>
+
+      <EventEditDrawer 
+        event={currentEvent}
+        open={isEditDrawerOpen}
+        onOpenChange={setIsEditDrawerOpen}
+        onSave={handleSaveEvent}
+      />
     </div>
   );
 };

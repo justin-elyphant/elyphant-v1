@@ -11,6 +11,9 @@ import VendorSignup from "./pages/VendorSignup";
 import VendorManagement from "./pages/VendorManagement";
 import Gifting from "./pages/Gifting";
 import Cart from "./pages/Cart";
+import SignUp from "./pages/SignUp";
+import Dashboard from "./pages/Dashboard";
+import UserProfile from "./pages/UserProfile";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
 
@@ -32,6 +35,9 @@ const App = () => (
               <Route path="/vendor-management" element={<VendorManagement />} />
               <Route path="/gifting" element={<Gifting />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile/:userId" element={<UserProfile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

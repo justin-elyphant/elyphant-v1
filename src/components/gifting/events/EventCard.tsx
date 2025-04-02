@@ -119,7 +119,7 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }
           <Switch 
             checked={autoGiftEnabled} 
             onCheckedChange={() => onToggleAutoGift(id)}
-            className="scale-75"
+            className="scale-75" // Use class instead of invalid size prop
           />
         </div>
       </CardFooter>

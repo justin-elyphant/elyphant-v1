@@ -21,11 +21,6 @@ const GiftingHeader = () => {
               <Home className="h-4 w-4 mr-1" />
               <span>Home</span>
             </Link>
-            
-            <Link to="/marketplace" className="hidden md:flex items-center text-sm text-gray-500 hover:text-gray-900">
-              <Search className="h-4 w-4 mr-1" />
-              <span>Explore</span>
-            </Link>
           </div>
           
           <div className="hidden md:block w-full max-w-md mx-6">

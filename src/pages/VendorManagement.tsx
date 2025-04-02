@@ -5,22 +5,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ChevronRight, ExternalLink, Info, Plus, Settings } from "lucide-react";
+import { ChevronRight, ExternalLink, Info, Plus, Settings, ArrowLeft } from "lucide-react";
 import ShopifyIntegration from "@/components/marketplace/ShopifyIntegration";
 import DirectAPIIntegration from "@/components/marketplace/DirectAPIIntegration";
 import AdvertisingDashboard from "@/components/marketplace/AdvertisingDashboard";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { getShopifyPartnerOptions } from "@/components/marketplace/shopify/shopifyUtils";
+import { useNavigate } from "react-router-dom";
 
 const VendorManagement = () => {
   const [showPartnerInfo, setShowPartnerInfo] = useState(false);
   const partnerOptions = getShopifyPartnerOptions();
+  const navigate = useNavigate();
   
   return (
     <ProductProvider>
       <div className="container mx-auto py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Vendor Management</h1>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center gap-1" 
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <h1 className="text-4xl font-bold">Vendor Management</h1>
+          </div>
           <Sheet>
             <SheetTrigger asChild>
               <Button>

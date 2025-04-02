@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import WishlistCard, { WishlistData } from "./wishlist/WishlistCard";
 import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LightbulbIcon } from "lucide-react";
+import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 
 // Mock data for wishlists
 const initialWishlists = [
@@ -33,6 +35,8 @@ const initialWishlists = [
 
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentWishlist, setCurrentWishlist] = useState<WishlistData | null>(null);
   const [wishlists, setWishlists] = useLocalStorage<WishlistData[]>("userWishlists", initialWishlists);
 
   const handleCreateWishlist = () => {
@@ -53,7 +57,24 @@ const MyWishlists = () => {
 
   const handleEditWishlist = (id: number) => {
     console.log(`Edit wishlist ${id}`);
-    // Implementation for editing a wishlist
+    const wishlistToEdit = wishlists.find(wishlist => wishlist.id === id);
+    if (wishlistToEdit) {
+      setCurrentWishlist(wishlistToEdit);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleEditDialogSubmit = (values: { title: string; description?: string }) => {
+    if (currentWishlist) {
+      const updatedWishlists = wishlists.map(wishlist => 
+        wishlist.id === currentWishlist.id 
+          ? { ...wishlist, title: values.title, description: values.description || "" } 
+          : wishlist
+      );
+      
+      setWishlists(updatedWishlists);
+      toast.success("Wishlist updated successfully!");
+    }
   };
 
   const handleShareWishlist = (id: number) => {
@@ -92,6 +113,13 @@ const MyWishlists = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSubmit={handleDialogSubmit}
+      />
+
+      <EditWishlistDialog 
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSubmit={handleEditDialogSubmit}
+        wishlist={currentWishlist}
       />
     </div>
   );

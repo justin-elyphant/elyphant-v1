@@ -41,6 +41,8 @@ const FeaturedProducts = ({ products }: ProductProps) => {
                       src={product.image} 
                       alt={product.name}
                       className="object-cover w-full h-full"
+                      loading="lazy" // Added lazy loading for performance
+                      decoding="async" // Enhanced image decoding
                     />
                   </div>
                   <CardContent className="p-4">

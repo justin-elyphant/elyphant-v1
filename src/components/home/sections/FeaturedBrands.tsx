@@ -26,6 +26,9 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
                     src={brand.logoUrl} 
                     alt={brand.name} 
                     className="w-10 h-10 object-contain"
+                    loading="lazy" 
+                    width="40" 
+                    height="40"
                   />
                 </div>
                 <h3 className="font-medium text-center text-sm">{brand.name}</h3>

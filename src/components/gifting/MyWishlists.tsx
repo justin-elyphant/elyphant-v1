@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
+import { useLocalStorage } from "./hooks/useLocalStorage";
+import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";
 import WishlistCard, { WishlistData } from "./wishlist/WishlistCard";
+import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 
 // Mock data for wishlists
-const myWishlists = [
+const initialWishlists = [
   {
     id: 1,
     title: "Birthday Wishlist",
@@ -27,9 +30,22 @@ const myWishlists = [
 ];
 
 const MyWishlists = () => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [wishlists, setWishlists] = useLocalStorage<WishlistData[]>("userWishlists", initialWishlists);
+
   const handleCreateWishlist = () => {
-    console.log("Create new wishlist");
-    // Implementation for creating a new wishlist
+    setDialogOpen(true);
+  };
+
+  const handleDialogSubmit = (values: { title: string; description?: string }) => {
+    const newWishlist: WishlistData = {
+      id: Date.now(),
+      title: values.title,
+      description: values.description || "",
+      items: []
+    };
+
+    setWishlists((prev) => [...prev, newWishlist]);
   };
 
   const handleEditWishlist = (id: number) => {
@@ -50,7 +66,7 @@ const MyWishlists = () => {
         <CreateWishlistCard onCreateNew={handleCreateWishlist} />
         
         {/* Existing wishlists */}
-        {myWishlists.map((wishlist: WishlistData) => (
+        {wishlists.map((wishlist: WishlistData) => (
           <WishlistCard 
             key={wishlist.id}
             wishlist={wishlist}
@@ -59,6 +75,12 @@ const MyWishlists = () => {
           />
         ))}
       </div>
+
+      <CreateWishlistDialog 
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={handleDialogSubmit}
+      />
     </div>
   );
 };

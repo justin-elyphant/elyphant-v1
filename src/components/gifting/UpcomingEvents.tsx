@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { toast } from "sonner";
 import EventHeader from "./events/EventHeader";
@@ -177,7 +176,13 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
           onVerifyEvent={handleVerifyEvent}
         />
       ) : (
-        <EventCalendarView events={events} onEventClick={handleEventClick} />
+        <EventCalendarView 
+          events={events} 
+          onEventClick={handleEventClick}
+          onSendGift={handleSendGift}
+          onToggleAutoGift={handleToggleAutoGift}
+          onVerifyEvent={handleVerifyEvent} 
+        />
       )}
 
       <EventEditDrawer 

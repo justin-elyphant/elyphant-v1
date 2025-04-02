@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, Copy } from "lucide-react";

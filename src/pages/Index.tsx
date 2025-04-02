@@ -142,9 +142,59 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Featured Products Carousel */}
+        {/* REORDERED SECTIONS */}
         <div className="container mx-auto py-12 px-4">
-          <div className="mb-8">
+          {/* 1. Gift Collections (Shop by Occasion) */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Shop by Occasion</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {collections.map((collection) => (
+                <Link to="/gifting" key={collection.id}>
+                  <div className="group relative overflow-hidden rounded-lg">
+                    <div className="aspect-[4/3]">
+                      <img 
+                        src={collection.image} 
+                        alt={collection.name}
+                        className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                      <div>
+                        <h3 className="text-white font-semibold">{collection.name}</h3>
+                        <p className="text-white/80 text-sm">{collection.count} items</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. Top Brands */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Featured Brands</h2>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+              {topBrands.map((brand) => (
+                <Link to="/gifting" key={brand.id}>
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6 flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                        <img 
+                          src={brand.logoUrl} 
+                          alt={brand.name} 
+                          className="w-10 h-10 object-contain"
+                        />
+                      </div>
+                      <h3 className="font-medium text-center text-sm">{brand.name}</h3>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Featured Products Carousel */}
+          <div className="mb-12">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Featured Products</h2>
               <Link to="/gifting" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
@@ -182,32 +232,6 @@ const Index = () => {
             </Carousel>
           </div>
 
-          {/* Gift Collections */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Shop by Occasion</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {collections.map((collection) => (
-                <Link to="/gifting" key={collection.id}>
-                  <div className="group relative overflow-hidden rounded-lg">
-                    <div className="aspect-[4/3]">
-                      <img 
-                        src={collection.image} 
-                        alt={collection.name}
-                        className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                      <div>
-                        <h3 className="text-white font-semibold">{collection.name}</h3>
-                        <p className="text-white/80 text-sm">{collection.count} items</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-
           {/* Key Features */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-center">Why Choose Elyphant?</h2>
@@ -239,29 +263,6 @@ const Index = () => {
                   Set up automatic gifting for important events, from selection to delivery.
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Top Brands */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Featured Brands</h2>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-              {topBrands.map((brand) => (
-                <Link to="/gifting" key={brand.id}>
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6 flex flex-col items-center justify-center">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                        <img 
-                          src={brand.logoUrl} 
-                          alt={brand.name} 
-                          className="w-10 h-10 object-contain"
-                        />
-                      </div>
-                      <h3 className="font-medium text-center text-sm">{brand.name}</h3>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
             </div>
           </div>
 

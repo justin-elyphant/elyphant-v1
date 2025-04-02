@@ -32,7 +32,23 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     const loadProducts = async () => {
       console.log("ProductContext: Loading products");
       
-      // First try to load from localStorage
+      // First try to load shopify products
+      const shopifyProducts = localStorage.getItem('shopifyProducts');
+      if (shopifyProducts) {
+        try {
+          const parsed = JSON.parse(shopifyProducts);
+          console.log(`ProductContext: Loaded ${parsed.length} Shopify products from localStorage`);
+          setProducts(parsed);
+          setIsLoading(false);
+          return;
+        } catch (e) {
+          console.error("ProductContext: Error parsing Shopify products:", e);
+        }
+      } else {
+        console.log("ProductContext: No Shopify products found in localStorage");
+      }
+      
+      // If no shopify products, try to load saved products
       const savedProducts = loadSavedProducts();
       if (savedProducts && savedProducts.length > 0) {
         console.log(`ProductContext: Loaded ${savedProducts.length} products from localStorage`);

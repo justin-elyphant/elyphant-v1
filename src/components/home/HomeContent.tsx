@@ -5,24 +5,27 @@ import FeaturedBrands from "./sections/FeaturedBrands";
 import FeaturedProducts from "./sections/FeaturedProducts";
 import AutomationFeatures from "./sections/AutomationFeatures";
 import HomeCTA from "./sections/HomeCTA";
-import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
-import { Product } from "@/contexts/ProductContext";
+import { useProducts } from "@/contexts/ProductContext";
 
 const HomeContent = () => {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  // Use the ProductContext instead of directly loading products
+  const { products } = useProducts();
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   
   useEffect(() => {
-    // Try to load products from localStorage or fallback to mock data
-    const savedProducts = loadSavedProducts();
-    if (savedProducts && savedProducts.length > 0) {
-      console.log("HomeContent: Using saved products from localStorage");
-      setFeaturedProducts(savedProducts.slice(0, 4));
-    } else {
-      console.log("HomeContent: Using mock products");
-      const mockProducts = loadMockProducts();
-      setFeaturedProducts(mockProducts.slice(0, 4));
+    console.log("HomeContent: Products from context:", products.length);
+    if (products && products.length > 0) {
+      // Use shopify products first if available
+      const shopifyProducts = products.filter(p => p.vendor === "Shopify");
+      if (shopifyProducts.length > 0) {
+        console.log("HomeContent: Using Shopify products:", shopifyProducts.length);
+        setFeaturedProducts(shopifyProducts.slice(0, 4));
+      } else {
+        console.log("HomeContent: Using regular products:", products.length);
+        setFeaturedProducts(products.slice(0, 4));
+      }
     }
-  }, []);
+  }, [products]);
 
   // Featured collections
   const collections = [

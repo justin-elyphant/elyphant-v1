@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ProductCatalog from "./ProductCatalog";
@@ -37,10 +36,16 @@ const ShopifyIntegration = () => {
           if (savedProducts) {
             try {
               const parsedProducts = JSON.parse(savedProducts);
-              console.log(`Loaded ${parsedProducts.length} products from localStorage`);
-              setProducts(parsedProducts);
+              console.log(`ShopifyIntegration: Loaded ${parsedProducts.length} products from localStorage`);
+              
+              // Only update products if we found Shopify products
+              if (parsedProducts && parsedProducts.length > 0) {
+                setProducts(parsedProducts);
+                toast.success(`Successfully loaded ${parsedProducts.length} Shopify products`);
+              }
             } catch (e) {
               console.error("Error parsing saved products:", e);
+              toast.error("Failed to load saved products");
             }
           }
         }
@@ -146,11 +151,10 @@ const ShopifyIntegration = () => {
   const handleDisconnect = () => {
     setIsConnected(false);
     setShopifyUrl("");
-    setProducts([]);
     setLastSyncTime(null);
     
+    // Clear shopify connection but keep products for reference
     localStorage.removeItem('shopifyConnection');
-    localStorage.removeItem('shopifyProducts');
     
     toast.info("Shopify store disconnected");
   };

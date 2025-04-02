@@ -7,7 +7,6 @@ import { categories } from "@/components/home/components/CategoriesDropdown";
 import MarketplaceFilters from "@/components/marketplace/MarketplaceFilters";
 import FiltersSidebar from "@/components/marketplace/FiltersSidebar";
 import ProductGrid from "@/components/marketplace/ProductGrid";
-import VendorPortalCard from "@/components/marketplace/VendorPortalCard";
 
 const Marketplace = () => {
   const location = useLocation();
@@ -66,10 +65,6 @@ const Marketplace = () => {
               viewMode={viewMode} 
             />
           </div>
-        </div>
-        
-        <div className="mt-12">
-          <VendorPortalCard />
         </div>
       </div>
     </div>

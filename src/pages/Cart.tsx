@@ -45,7 +45,7 @@ const Cart = () => {
           <h2 className="text-2xl font-medium mb-4">Your cart is empty</h2>
           <p className="text-muted-foreground mb-8">Add some items to your cart to get started.</p>
           <Button asChild>
-            <Link to="/gifting">Browse Products</Link>
+            <Link to="/marketplace">Continue Shopping</Link>
           </Button>
         </div>
       </div>
@@ -56,7 +56,7 @@ const Cart = () => {
     <div className="container mx-auto py-8 px-4">
       <div className="flex items-center mb-8">
         <Button variant="ghost" className="mr-4" asChild>
-          <Link to="/">
+          <Link to="/marketplace">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Continue Shopping
           </Link>
@@ -127,7 +127,7 @@ const Cart = () => {
                   Clear Cart
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link to="/gifting">
+                  <Link to="/marketplace">
                     Continue Shopping
                   </Link>
                 </Button>

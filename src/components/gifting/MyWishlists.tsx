@@ -1,8 +1,7 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Share2, Gift } from "lucide-react";
-import GiftItemCard from "./GiftItemCard";
+import WishlistHeader from "./wishlist/WishlistHeader";
+import CreateWishlistCard from "./wishlist/CreateWishlistCard";
+import WishlistCard, { WishlistData } from "./wishlist/WishlistCard";
 
 // Mock data for wishlists
 const myWishlists = [
@@ -28,69 +27,36 @@ const myWishlists = [
 ];
 
 const MyWishlists = () => {
+  const handleCreateWishlist = () => {
+    console.log("Create new wishlist");
+    // Implementation for creating a new wishlist
+  };
+
+  const handleEditWishlist = (id: number) => {
+    console.log(`Edit wishlist ${id}`);
+    // Implementation for editing a wishlist
+  };
+
+  const handleShareWishlist = (id: number) => {
+    console.log(`Share wishlist ${id}`);
+    // Implementation for sharing a wishlist
+  };
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">My Wishlists</h2>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Wishlist
-        </Button>
-      </div>
+      <WishlistHeader title="My Wishlists" onCreateNew={handleCreateWishlist} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Create a new wishlist card */}
-        <Card className="border-dashed border-2 border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors">
-          <CardContent className="flex flex-col items-center justify-center h-64 p-6">
-            <Plus className="h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-lg font-medium text-gray-600">Create New Wishlist</p>
-            <p className="text-sm text-gray-500 text-center mt-2">
-              Add items you'd like to receive as gifts
-            </p>
-            <Button variant="ghost" className="mt-4">
-              <Plus className="mr-2 h-4 w-4" />
-              Get Started
-            </Button>
-          </CardContent>
-        </Card>
+        <CreateWishlistCard onCreateNew={handleCreateWishlist} />
         
         {/* Existing wishlists */}
-        {myWishlists.map((wishlist) => (
-          <Card key={wishlist.id}>
-            <CardHeader>
-              <CardTitle>{wishlist.title}</CardTitle>
-              <CardDescription>{wishlist.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                {wishlist.items.slice(0, 4).map((item) => (
-                  <GiftItemCard 
-                    key={item.id}
-                    name={item.name}
-                    price={item.price}
-                    brand={item.brand}
-                    imageUrl={item.imageUrl}
-                    mini
-                  />
-                ))}
-              </div>
-              {wishlist.items.length > 4 && (
-                <p className="text-sm text-gray-500 mt-2">
-                  +{wishlist.items.length - 4} more items
-                </p>
-              )}
-            </CardContent>
-            <CardFooter className="justify-between">
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-3 w-3" />
-                Edit
-              </Button>
-              <Button variant="outline" size="sm">
-                <Share2 className="mr-2 h-3 w-3" />
-                Share
-              </Button>
-            </CardFooter>
-          </Card>
+        {myWishlists.map((wishlist: WishlistData) => (
+          <WishlistCard 
+            key={wishlist.id}
+            wishlist={wishlist}
+            onEdit={handleEditWishlist}
+            onShare={handleShareWishlist}
+          />
         ))}
       </div>
     </div>

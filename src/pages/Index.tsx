@@ -10,7 +10,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-gray-100">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto py-4 px-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Vendor Marketplace</h1>
+          <h1 className="text-2xl font-bold">Elyphant Marketplace</h1>
           <nav className="flex items-center space-x-4">
             <Link to="/marketplace" className="text-sm font-medium hover:text-primary">
               Marketplace

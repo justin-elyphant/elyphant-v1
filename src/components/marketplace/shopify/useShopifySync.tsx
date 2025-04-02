@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
 import { SyncSettings } from "./types";
-import { loadShopifyProducts, saveShopifyConnection } from "./shopifyUtils";
+import { loadShopifyProducts, saveShopifyConnection, fetchShopifyProducts } from "./shopifyUtils";
 
 export const useShopifySync = (
   isConnected: boolean,
@@ -31,26 +31,47 @@ export const useShopifySync = (
     return false;
   }, [setProducts]);
   
-  const handleSyncNow = () => {
+  const handleSyncNow = async () => {
     if (!isConnected) return;
     
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      const now = new Date();
-      setLastSyncTime(now);
-      
-      // Add any new sync actions here
-      loadShopifyProductsToState();
-      
+    try {
+      // Get connection details
       const connection = JSON.parse(localStorage.getItem('shopifyConnection') || '{}');
-      saveShopifyConnection({
-        ...connection,
-        syncTime: now.toISOString()
-      });
       
-      toast.success("Product sync completed. Your catalog is up to date.");
-    }, 1500);
+      if (!connection.url) {
+        toast.error("No Shopify store URL found");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Real API call to fetch products
+      const products = await fetchShopifyProducts(connection.url, syncSettings);
+      
+      if (products && products.length > 0) {
+        // Save products to state and localStorage
+        setProducts(products);
+        localStorage.setItem('shopifyProducts', JSON.stringify(products));
+        
+        // Update sync time
+        const now = new Date();
+        setLastSyncTime(now);
+        
+        saveShopifyConnection({
+          ...connection,
+          syncTime: now.toISOString()
+        });
+        
+        toast.success(`Product sync completed. Imported ${products.length} products.`);
+      } else {
+        toast.error("No products found or sync failed");
+      }
+    } catch (error) {
+      console.error("Error during sync:", error);
+      toast.error("Failed to sync products");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSyncSettingChange = (key: string, value: any) => {

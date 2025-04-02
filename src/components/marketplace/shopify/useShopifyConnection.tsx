@@ -1,11 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
 import { 
   loadShopifyConnection, 
-  saveShopifyConnection, 
-  generateMockShopifyProducts 
+  saveShopifyConnection,
+  connectToShopify,
+  fetchShopifyProducts
 } from "./shopifyUtils";
+import { SyncSettings } from "./types";
 
 export const useShopifyConnection = () => {
   const [shopifyUrl, setShopifyUrl] = useState("");
@@ -25,7 +28,7 @@ export const useShopifyConnection = () => {
     }
   }, []);
   
-  const handleConnect = (url: string) => {
+  const handleConnect = async (url: string) => {
     if (!url) {
       toast.error("Please enter a valid Shopify store URL");
       return;
@@ -34,28 +37,51 @@ export const useShopifyConnection = () => {
     setIsLoading(true);
     setShopifyUrl(url);
     
-    setTimeout(() => {
-      setIsConnected(true);
+    try {
+      // Connect to the store
+      const result = await connectToShopify(url);
+      
+      if (result.success) {
+        setIsConnected(true);
+        const now = new Date();
+        setLastSyncTime(now);
+        
+        // Save connection info to localStorage
+        saveShopifyConnection({
+          url,
+          connected: true,
+          syncTime: now.toISOString()
+        });
+        
+        // Fetch products (real API call in production)
+        const defaultSyncSettings: SyncSettings = {
+          autoSync: true,
+          markup: 30,
+          importImages: true,
+          importVariants: true
+        };
+        
+        const shopifyProducts = await fetchShopifyProducts(url, defaultSyncSettings);
+        
+        if (shopifyProducts) {
+          // Save products to state and localStorage
+          setProducts(shopifyProducts);
+          localStorage.setItem('shopifyProducts', JSON.stringify(shopifyProducts));
+          
+          toast.success("Shopify store connected successfully! We've imported your catalog.");
+        } else {
+          toast.warning("Connected to Shopify, but couldn't fetch products. Try syncing manually.");
+        }
+      } else {
+        toast.error(result.message || "Failed to connect to Shopify store");
+        setIsConnected(false);
+      }
+    } catch (error) {
+      console.error("Error connecting to Shopify:", error);
+      toast.error("An unexpected error occurred while connecting to Shopify");
+    } finally {
       setIsLoading(false);
-      const now = new Date();
-      setLastSyncTime(now);
-      
-      // Save connection info to localStorage
-      saveShopifyConnection({
-        url,
-        connected: true,
-        syncTime: now.toISOString()
-      });
-      
-      // Create mock Shopify products
-      const shopifyProducts = generateMockShopifyProducts();
-      
-      // Save products to state and localStorage
-      setProducts(shopifyProducts);
-      localStorage.setItem('shopifyProducts', JSON.stringify(shopifyProducts));
-      
-      toast.success("Shopify store connected successfully! We've imported your catalog.");
-    }, 1500);
+    }
   };
   
   const handleDisconnect = () => {

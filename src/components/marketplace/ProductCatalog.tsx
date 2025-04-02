@@ -1,9 +1,12 @@
+
 import React, { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, ShoppingCart } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
+import { useCart } from "@/contexts/CartContext";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,6 +23,7 @@ const ProductCatalog = ({ products }: ProductCatalogProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedVendor, setSelectedVendor] = useState("all");
+  const { addToCart } = useCart();
   
   const categories = useMemo(() => {
     const uniqueCategories = [...new Set(products.map(product => product.category))];
@@ -87,7 +91,7 @@ const ProductCatalog = ({ products }: ProductCatalogProps) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} addToCart={addToCart} />
           ))
         ) : (
           <div className="col-span-full text-center py-8 text-muted-foreground">
@@ -99,7 +103,7 @@ const ProductCatalog = ({ products }: ProductCatalogProps) => {
   );
 };
 
-const ProductCard = ({ product }: { product: Product }) => {
+const ProductCard = ({ product, addToCart }: { product: Product, addToCart: (product: Product) => void }) => {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <div className="aspect-square relative overflow-hidden">
@@ -128,6 +132,14 @@ const ProductCard = ({ product }: { product: Product }) => {
             ))}
           </div>
         )}
+        
+        <Button 
+          className="w-full mt-3" 
+          onClick={() => addToCart(product)}
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Add to Cart
+        </Button>
       </CardContent>
     </Card>
   );

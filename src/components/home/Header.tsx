@@ -1,12 +1,17 @@
 
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { ShoppingCart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Logo from "./components/Logo";
 import SearchBar from "./components/SearchBar";
 import CategoriesDropdown from "./components/CategoriesDropdown";
 import AuthButtons from "./components/AuthButtons";
+import { useCart } from "@/contexts/CartContext";
 
 const Header = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const { itemCount } = useCart();
   
   return (
     <header className="bg-white shadow-sm sticky top-0 z-40">
@@ -26,7 +31,17 @@ const Header = () => {
             </div>
           </div>
           
-          <AuthButtons />
+          <div className="flex items-center gap-4">
+            <Link to="/cart" className="relative">
+              <ShoppingCart className="h-6 w-6" />
+              {itemCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-purple-600 text-white text-xs rounded-full">
+                  {itemCount}
+                </Badge>
+              )}
+            </Link>
+            <AuthButtons />
+          </div>
         </div>
       </div>
     </header>

@@ -3,8 +3,9 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
+import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 
 interface ProductCardProps {
@@ -22,9 +23,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onToggleWishlist,
   onClick,
 }) => {
+  const { addToCart } = useCart();
+  
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleWishlist(product.id);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(product);
   };
 
   return (
@@ -41,18 +49,29 @@ const ProductCard: React.FC<ProductCardProps> = ({
           loading="lazy"
         />
         
-        {isGifteeView && (
+        <div className="absolute top-2 right-2 flex flex-col gap-2">
+          {isGifteeView && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="bg-white/80 hover:bg-white rounded-full h-8 w-8"
+              onClick={handleWishlistToggle}
+            >
+              <Heart 
+                className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} 
+              />
+            </Button>
+          )}
+          
           <Button 
             variant="ghost" 
             size="icon" 
-            className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full h-8 w-8"
-            onClick={handleWishlistToggle}
+            className="bg-white/80 hover:bg-white rounded-full h-8 w-8"
+            onClick={handleAddToCart}
           >
-            <Heart 
-              className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} 
-            />
+            <ShoppingCart className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </div>
       <CardContent className="p-3">
         <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>

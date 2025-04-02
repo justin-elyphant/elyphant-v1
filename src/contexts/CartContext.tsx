@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
@@ -25,7 +24,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartTotal, setCartTotal] = useState(0);
   const [itemCount, setItemCount] = useState(0);
 
-  // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -38,11 +36,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     
-    // Calculate totals
     const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     const count = cartItems.reduce((sum, item) => sum + item.quantity, 0);
     
@@ -72,7 +68,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCartItems(prevItems => {
       const itemToRemove = prevItems.find(item => item.product.id === productId);
       if (itemToRemove) {
-        toast.info(`Removed ${itemToRemove.product.name} from your cart`);
+        toast.info(`Removed ${itemToRemove.product.name} from your cart`, {
+          action: {
+            label: "Continue Shopping",
+            onClick: () => window.location.href = "/gifting"
+          }
+        });
       }
       return prevItems.filter(item => item.product.id !== productId);
     });

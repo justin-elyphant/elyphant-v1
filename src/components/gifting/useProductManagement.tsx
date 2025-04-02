@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useProductLoader } from "./hooks/useProductLoader";
 import { useProductFilter } from "./hooks/useProductFilter";
@@ -6,6 +7,11 @@ import { useWishlist } from "./hooks/useWishlist";
 
 export const useProductManagement = (initialProducts: Product[] = []) => {
   const { products, isLoading } = useProductLoader(initialProducts);
+  
+  // Log whenever products change
+  useEffect(() => {
+    console.log(`useProductManagement: received ${products?.length || 0} products from loader`);
+  }, [products]);
   
   const {
     filteredProducts,

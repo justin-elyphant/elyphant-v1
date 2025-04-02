@@ -1,4 +1,5 @@
 
+import { useCallback } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useSearchFilter } from "./useSearchFilter";
 import { useCategoryFilter } from "./useCategoryFilter";
@@ -12,13 +13,16 @@ export const useProductFilter = (products: Product[]) => {
   const { priceRange, setPriceRange } = usePriceFilter();
   const { filtersVisible, setFiltersVisible } = useFilterVisibility();
   
-  const filteredProducts = useFilteredProducts(products, searchTerm, selectedCategory, priceRange);
+  // Log the incoming products
+  console.log(`useProductFilter: received ${products?.length || 0} products`);
   
-  const clearFilters = () => {
+  const filteredProducts = useFilteredProducts(products || [], searchTerm, selectedCategory, priceRange);
+  
+  const clearFilters = useCallback(() => {
     setSearchTerm("");
     setSelectedCategory("all");
     setPriceRange("all");
-  };
+  }, [setSearchTerm, setSelectedCategory, setPriceRange]);
 
   return {
     filteredProducts,

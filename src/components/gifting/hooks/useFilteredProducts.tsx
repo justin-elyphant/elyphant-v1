@@ -16,7 +16,13 @@ export const useFilteredProducts = (
       priceRange
     });
 
-    return products.filter(product => {
+    // If there are no products, return an empty array immediately
+    if (!products || products.length === 0) {
+      console.log("No products to filter");
+      return [];
+    }
+
+    const filtered = products.filter(product => {
       const matchesSearch = 
         searchTerm === "" || 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,6 +38,9 @@ export const useFilteredProducts = (
       
       return matchesSearch && matchesCategory && matchesPrice;
     });
+
+    console.log(`Filtered products result: ${filtered.length} products`);
+    return filtered;
   }, [products, searchTerm, selectedCategory, priceRange]);
 
   return filteredProducts;

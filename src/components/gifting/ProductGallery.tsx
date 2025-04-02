@@ -41,13 +41,19 @@ const ProductGallery = ({
   useEffect(() => {
     console.log("ProductGallery render:", { 
       isLoading, 
-      filteredProductsLength: filteredProducts.length,
-      initialProductsLength: initialProducts.length 
+      filteredProductsLength: filteredProducts?.length || 0,
+      initialProductsLength: initialProducts?.length || 0 
     });
-  }, [isLoading, filteredProducts.length, initialProducts.length]);
+  }, [isLoading, filteredProducts, initialProducts]);
   
   if (isLoading) {
     return <ProductLoading />;
+  }
+  
+  // Debugging check for filteredProducts
+  if (!filteredProducts) {
+    console.error("filteredProducts is undefined or null");
+    return <div>Error loading products. Please try refreshing the page.</div>;
   }
   
   if (filteredProducts.length === 0 && searchTerm === "" && selectedCategory === "all" && priceRange === "all") {

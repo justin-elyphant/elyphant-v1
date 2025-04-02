@@ -42,13 +42,22 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
       setTimeout(() => {
         const mockProducts = loadMockProducts();
         console.log("Loaded mock products:", mockProducts.length);
-        setProducts(mockProducts);
+        if (mockProducts && mockProducts.length > 0) {
+          setProducts(mockProducts);
+        } else {
+          console.error("Failed to load mock products or empty array returned");
+        }
         setIsLoading(false);
-      }, 1000);
+      }, 800); // Slightly reduced timeout for testing
     };
 
     loadProducts();
   }, [contextProducts, initialProducts]);
+
+  // Log when products state changes
+  useEffect(() => {
+    console.log(`useProductLoader: products state updated with ${products.length} products`);
+  }, [products]);
 
   return {
     products,

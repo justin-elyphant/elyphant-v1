@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, LogIn, Menu, Gift, Baby, Sofa, Bike, Cake, PartyPopper, Briefcase, ChevronDown } from "lucide-react";
+import { Search, User, LogIn, Gift, Baby, Sofa, Bike, Cake, PartyPopper, Briefcase, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
   Command,
@@ -13,15 +13,6 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose
-} from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -65,21 +56,12 @@ const Header = () => {
     { name: "Clothing", url: "clothing" },
     { name: "Craft Supplies & Tools", url: "craft-supplies" },
     { name: "Electronics & Accessories", url: "electronics" },
+    { name: "Experiences", url: "experiences" },
     { name: "Gifts", url: "gifts" },
     { name: "Home & Living", url: "home-living" },
     { name: "Jewelry", url: "jewelry" },
     { name: "Toys & Games", url: "toys-games" },
     { name: "Wedding & Party", url: "wedding-party" }
-  ];
-
-  const categoryFilters = [
-    { name: "Experiences", icon: PartyPopper },
-    { name: "Baby", icon: Baby },
-    { name: "Furniture", icon: Sofa },
-    { name: "Sports", icon: Bike },
-    { name: "Birthday", icon: Cake },
-    { name: "Professional", icon: Briefcase },
-    { name: "Holidays", icon: Gift }
   ];
 
   return (
@@ -98,53 +80,6 @@ const Header = () => {
           </div>
           
           <div className="flex items-center space-x-3">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="mr-2">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Categories</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                <SheetHeader>
-                  <SheetTitle>Category Filters</SheetTitle>
-                  <SheetDescription>
-                    Browse gifts by category
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="grid gap-4 py-6">
-                  {categoryFilters.map((category) => (
-                    <SheetClose asChild key={category.name}>
-                      <Link 
-                        to={`/gifting?category=${category.name.toLowerCase()}`}
-                        className="flex items-center p-3 rounded-md hover:bg-accent transition-colors"
-                      >
-                        <category.icon className="mr-3 h-5 w-5 text-purple-600" />
-                        <span>{category.name}</span>
-                      </Link>
-                    </SheetClose>
-                  ))}
-                </div>
-                <div className="mt-6">
-                  <Badge variant="outline" className="mb-2">Popular Categories</Badge>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/gifting?category=birthday">Birthday</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/gifting?category=anniversary">Anniversary</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/gifting?category=easter">Easter</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/gifting?category=mothers-day">Mother's Day</Link>
-                    </Button>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-            
             <DropdownMenu open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-1">

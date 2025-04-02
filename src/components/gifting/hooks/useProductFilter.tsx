@@ -1,5 +1,6 @@
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Product } from "@/contexts/ProductContext";
 import { useSearchFilter } from "./useSearchFilter";
 import { useCategoryFilter } from "./useCategoryFilter";
@@ -12,9 +13,46 @@ export const useProductFilter = (products: Product[]) => {
   const { categories, selectedCategory, setSelectedCategory } = useCategoryFilter(products);
   const { priceRange, setPriceRange } = usePriceFilter();
   const { filtersVisible, setFiltersVisible } = useFilterVisibility();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Log the incoming products
   console.log(`useProductFilter: received ${products?.length || 0} products`);
+  
+  // Initialize filters from URL params
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    const categoryParam = searchParams.get("category");
+    const priceParam = searchParams.get("price");
+    
+    if (searchParam) setSearchTerm(searchParam);
+    if (categoryParam) setSelectedCategory(categoryParam);
+    if (priceParam) setPriceRange(priceParam);
+  }, [searchParams, setSearchTerm, setSelectedCategory, setPriceRange]);
+  
+  // Update URL when filters change
+  useEffect(() => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    if (searchTerm) {
+      newParams.set("search", searchTerm);
+    } else {
+      newParams.delete("search");
+    }
+    
+    if (selectedCategory && selectedCategory !== "all") {
+      newParams.set("category", selectedCategory);
+    } else {
+      newParams.delete("category");
+    }
+    
+    if (priceRange && priceRange !== "all") {
+      newParams.set("price", priceRange);
+    } else {
+      newParams.delete("price");
+    }
+    
+    setSearchParams(newParams, { replace: true });
+  }, [searchTerm, selectedCategory, priceRange, searchParams, setSearchParams]);
   
   const filteredProducts = useFilteredProducts(products || [], searchTerm, selectedCategory, priceRange);
   
@@ -22,7 +60,14 @@ export const useProductFilter = (products: Product[]) => {
     setSearchTerm("");
     setSelectedCategory("all");
     setPriceRange("all");
-  }, [setSearchTerm, setSelectedCategory, setPriceRange]);
+    
+    // Clear filter params from URL
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("search");
+    newParams.delete("category");
+    newParams.delete("price");
+    setSearchParams(newParams, { replace: true });
+  }, [setSearchTerm, setSelectedCategory, setPriceRange, searchParams, setSearchParams]);
 
   return {
     filteredProducts,

@@ -1,13 +1,19 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Gift, ShoppingBag } from "lucide-react";
+import { Gift, ShoppingBag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useProducts } from "@/contexts/ProductContext";
 
 const HomeCTA = () => {
+  const { products } = useProducts();
+  
+  // Get up to 4 featured products for display
+  const featuredProducts = products.slice(0, 4);
+
   return (
     <div className="bg-purple-100 rounded-xl p-8 mb-12">
-      <div className="flex flex-col md:flex-row justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="md:w-1/2 mb-6 md:mb-0">
           <h2 className="text-2xl font-bold mb-6">Two Ways to Get Started</h2>
           <div className="space-y-4">
@@ -46,6 +52,37 @@ const HomeCTA = () => {
           </Button>
         </div>
       </div>
+      
+      {featuredProducts.length > 0 && (
+        <div className="mt-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Featured Products</h3>
+            <Link to="/gifting" className="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center">
+              View all <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {featuredProducts.map((product) => (
+              <Link key={product.id} to={`/gifting?product=${product.id}`} className="group">
+                <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div className="aspect-square relative overflow-hidden">
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="object-cover w-full h-full group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
+                    <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

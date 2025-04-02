@@ -1,12 +1,32 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gift, Home, Search, User, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const GiftingHeader = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract search from URL when component mounts or location changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get("search");
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
+  }, [location.search]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams(location.search);
+    params.set("search", searchTerm);
+    navigate(`${location.pathname}?${params.toString()}`);
+  };
+
   return (
     <header className="bg-white border-b sticky top-0 z-10">
       <div className="container mx-auto px-4 py-3">
@@ -24,14 +44,18 @@ const GiftingHeader = () => {
           </div>
           
           <div className="hidden md:block w-full max-w-md mx-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input 
-                type="search" 
-                placeholder="Search gifts, friends, or brands..." 
-                className="pl-10 bg-gray-100 border-gray-200 focus:bg-white"
-              />
-            </div>
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input 
+                  type="search" 
+                  placeholder="Search gifts, friends, or brands..." 
+                  className="pl-10 bg-gray-100 border-gray-200 focus:bg-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </form>
           </div>
           
           <div className="flex items-center space-x-4">

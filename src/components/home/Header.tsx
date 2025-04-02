@@ -14,15 +14,6 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -32,7 +23,6 @@ import {
   SheetClose
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,122 +115,6 @@ const Header = () => {
                 </div>
               </SheetContent>
             </Sheet>
-            
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 w-[400px] md:w-[500px] lg:w-[600px] grid-cols-2">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-purple-500 to-purple-700 p-6 no-underline outline-none focus:shadow-md"
-                            href="/gifting"
-                          >
-                            <div className="mt-4 mb-2 text-lg font-medium text-white">
-                              Popular Categories
-                            </div>
-                            <p className="text-sm leading-tight text-white/90">
-                              Explore our most loved gift categories
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <Link
-                          to="/gifting?category=birthday"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Birthday</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Perfect gifts for birthdays
-                          </p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="/gifting?category=anniversary"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Anniversary</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Celebrate special moments
-                          </p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="/gifting?category=wedding"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Wedding</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Wedding gifts and registry items
-                          </p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="/gifting?category=holidays"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Holidays</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Holiday season favorites
-                          </p>
-                        </Link>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Occasions</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px]">
-                      <li>
-                        <Link
-                          to="/gifting?occasion=birthday"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Birthday Gifts</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Find the perfect birthday gift
-                          </p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="/gifting?occasion=graduation"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Graduation</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Celebrate their achievement
-                          </p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="/gifting?occasion=housewarming"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Housewarming</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Welcome them to their new home
-                          </p>
-                        </Link>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/marketplace" className={navigationMenuTriggerStyle()}>
-                    Marketplace
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
           </div>
           
           <div className="w-full md:w-2/5 lg:w-1/3">

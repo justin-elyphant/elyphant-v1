@@ -5,7 +5,7 @@ import { useShopifyConnection } from "./useShopifyConnection";
 import { useShopifySync } from "./useShopifySync";
 import { SyncSettings } from "./types";
 
-// Change from "export { SyncSettings }" to "export type { SyncSettings }"
+// Export the SyncSettings type for use in other components
 export type { SyncSettings };
 
 export const useShopifyIntegration = () => {

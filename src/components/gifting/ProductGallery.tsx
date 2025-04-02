@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Heart, Filter, X, ShoppingBag } from "lucide-react";
-import { useProducts } from "@/contexts/ProductContext";
+import { useProducts, Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 import {
   Select,
@@ -14,18 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-// Product type definition
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  category: string;
-  image: string;
-  vendor: string;
-  variants?: string[];
-  description?: string;
-};
 
 interface ProductGalleryProps {
   initialProducts?: Product[];
@@ -38,37 +25,30 @@ const ProductGallery = ({
   isGifteeView = true,
   onProductSelect 
 }: ProductGalleryProps) => {
-  // Get products from context
   const { products: contextProducts, isLoading: contextLoading } = useProducts();
   
-  // Use either the products from context, initialProducts prop, or empty array
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Filtering states
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [wishlistedProducts, setWishlistedProducts] = useState<number[]>([]);
   
-  // Effect to check for Shopify products in localStorage
   useEffect(() => {
-    // Try to load from context first
     if (contextProducts && contextProducts.length > 0) {
       setProducts(contextProducts);
       setIsLoading(false);
       return;
     }
     
-    // Try to load from props second
     if (initialProducts.length > 0) {
       setProducts(initialProducts);
       setIsLoading(false);
       return;
     }
     
-    // Try to load from localStorage third
     const savedProducts = localStorage.getItem('shopifyProducts');
     if (savedProducts) {
       try {
@@ -81,7 +61,6 @@ const ProductGallery = ({
       }
     }
     
-    // Simulate API call to fetch products
     const timer = setTimeout(() => {
       const mockProducts = [
         {
@@ -171,21 +150,16 @@ const ProductGallery = ({
     return () => clearTimeout(timer);
   }, [contextProducts, initialProducts]);
   
-  // Calculate unique categories for filtering
   const categories = ["all", ...Array.from(new Set(products.map(p => p.category)))];
   
-  // Filter products based on search and filters
   const filteredProducts = products.filter(product => {
-    // Search filter
     const matchesSearch = 
       searchTerm === "" || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    // Category filter
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
     
-    // Price range filter
     let matchesPrice = true;
     if (priceRange === "under25") matchesPrice = product.price < 25;
     else if (priceRange === "25to50") matchesPrice = product.price >= 25 && product.price <= 50;
@@ -195,7 +169,6 @@ const ProductGallery = ({
     return matchesSearch && matchesCategory && matchesPrice;
   });
   
-  // Load wishlisted products from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('wishlistedProducts');
     if (saved) {
@@ -213,10 +186,8 @@ const ProductGallery = ({
         ? prev.filter(id => id !== productId)
         : [...prev, productId];
       
-      // Save to localStorage
       localStorage.setItem('wishlistedProducts', JSON.stringify(newWishlisted));
       
-      // Show toast
       if (newWishlisted.includes(productId)) {
         toast.success("Added to wishlist");
       } else {
@@ -233,7 +204,6 @@ const ProductGallery = ({
     setPriceRange("all");
   };
   
-  // Render loading state
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -251,7 +221,6 @@ const ProductGallery = ({
     );
   }
   
-  // Show message if no products (with link to vendor page)
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
@@ -269,7 +238,6 @@ const ProductGallery = ({
   
   return (
     <div className="space-y-4">
-      {/* Shopify source indicator */}
       {contextProducts.length > 0 && (
         <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm flex items-center">
           <Badge className="bg-green-500 mr-2">Shopify</Badge>
@@ -277,7 +245,6 @@ const ProductGallery = ({
         </div>
       )}
       
-      {/* Search and filter bar */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -308,7 +275,6 @@ const ProductGallery = ({
         </div>
       </div>
       
-      {/* Filter options */}
       {filtersVisible && (
         <div className="flex flex-wrap gap-4 p-4 bg-muted/50 rounded-md">
           <div>
@@ -345,12 +311,10 @@ const ProductGallery = ({
         </div>
       )}
       
-      {/* Results count */}
       <div className="text-sm text-muted-foreground">
         {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
       </div>
       
-      {/* Product grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {filteredProducts.map((product) => (
           <Card 
@@ -359,7 +323,6 @@ const ProductGallery = ({
             onClick={() => onProductSelect && onProductSelect(product)}
           >
             <div className="aspect-square relative overflow-hidden">
-              {/* Image with lazy loading for performance */}
               <img 
                 src={product.image} 
                 alt={product.name}
@@ -367,7 +330,6 @@ const ProductGallery = ({
                 loading="lazy"
               />
               
-              {/* Wishlist button for giftee view */}
               {isGifteeView && (
                 <Button 
                   variant="ghost" 

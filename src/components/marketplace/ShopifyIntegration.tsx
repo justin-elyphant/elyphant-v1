@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import ProductCatalog from "./ProductCatalog";
-import { useProducts } from "@/contexts/ProductContext";
+import { useProducts, Product } from "@/contexts/ProductContext"; // Import the Product type from context
 import {
   Select,
   SelectContent,
@@ -57,7 +58,7 @@ const ShopifyIntegration = () => {
         syncTime: new Date().toISOString()
       }));
       
-      const mockProducts = [
+      const mockProducts: Product[] = [
         {
           id: 1,
           name: "Wireless Headphones",

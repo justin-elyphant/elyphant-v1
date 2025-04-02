@@ -1,9 +1,9 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import { Product } from "@/contexts/ProductContext";
 import {
   Select,
   SelectContent,
@@ -11,17 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  category: string;
-  image: string;
-  vendor: string;
-  variants: string[];
-  description: string;
-};
 
 interface ProductCatalogProps {
   products: Product[];
@@ -32,7 +21,6 @@ const ProductCatalog = ({ products }: ProductCatalogProps) => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedVendor, setSelectedVendor] = useState("all");
   
-  // Get unique categories and vendors for filters
   const categories = useMemo(() => {
     const uniqueCategories = [...new Set(products.map(product => product.category))];
     return ["all", ...uniqueCategories];
@@ -43,11 +31,10 @@ const ProductCatalog = ({ products }: ProductCatalogProps) => {
     return ["all", ...uniqueVendors];
   }, [products]);
   
-  // Filter products based on search term and selected filters
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
+                          (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
       const matchesVendor = selectedVendor === "all" || product.vendor === selectedVendor;
       
@@ -112,7 +99,6 @@ const ProductCatalog = ({ products }: ProductCatalogProps) => {
   );
 };
 
-// Product Card component for better organization
 const ProductCard = ({ product }: { product: Product }) => {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -121,7 +107,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           src={product.image} 
           alt={product.name}
           className="object-cover w-full h-full transform transition-transform hover:scale-105"
-          loading="lazy" // Lazy loading for better performance
+          loading="lazy"
         />
       </div>
       <CardContent className="p-4">
@@ -133,7 +119,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         <p className="font-semibold mb-2">${product.price.toFixed(2)}</p>
         <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{product.description}</p>
         
-        {product.variants.length > 0 && (
+        {product.variants && product.variants.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {product.variants.map((variant, idx) => (
               <Badge key={idx} variant="secondary" className="text-xs">

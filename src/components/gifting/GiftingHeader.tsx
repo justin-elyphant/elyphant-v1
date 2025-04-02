@@ -17,7 +17,7 @@ const GiftingHeader = () => {
               <span className="font-bold text-xl">Elyphant</span>
             </Link>
             
-            <Link to="/" className="hidden md:flex items-center text-sm text-gray-500 hover:text-gray-900">
+            <Link to="/" className="flex items-center text-sm text-gray-500 hover:text-gray-900">
               <Home className="h-4 w-4 mr-1" />
               <span>Home</span>
             </Link>

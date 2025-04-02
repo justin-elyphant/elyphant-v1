@@ -36,6 +36,21 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }
     return "text-muted-foreground";
   };
 
+  // Use explicit handlers to prevent event bubbling issues
+  const handleSendGift = () => {
+    onSendGift(id);
+  };
+
+  const handleToggleAutoGift = () => {
+    onToggleAutoGift(id);
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(id);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -61,7 +76,7 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(id)}>
+                  <DropdownMenuItem onClick={handleEdit}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
@@ -109,7 +124,7 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }
       </CardContent>
       
       <CardFooter className="pt-2 justify-between">
-        <Button variant="outline" size="sm" onClick={() => onSendGift(id)}>
+        <Button variant="outline" size="sm" onClick={handleSendGift}>
           <Gift className="h-4 w-4 mr-2" />
           Send Gift
         </Button>
@@ -118,8 +133,8 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }
           <span className="text-xs text-muted-foreground">Auto</span>
           <Switch 
             checked={autoGiftEnabled} 
-            onCheckedChange={() => onToggleAutoGift(id)}
-            className="scale-75" // Use class instead of invalid size prop
+            onCheckedChange={handleToggleAutoGift}
+            className="scale-75"
           />
         </div>
       </CardFooter>

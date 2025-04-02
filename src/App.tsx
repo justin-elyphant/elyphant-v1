@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Marketplace from "./pages/Marketplace";
 import VendorSignup from "./pages/VendorSignup";
 import VendorManagement from "./pages/VendorManagement";
+import Gifting from "./pages/Gifting";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/vendor-signup" element={<VendorSignup />} />
           <Route path="/vendor-management" element={<VendorManagement />} />
+          <Route path="/gifting" element={<Gifting />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

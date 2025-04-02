@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Store, Users } from "lucide-react";
+import { ShoppingBag, Store, Users, Gift } from "lucide-react";
 
 const Index = () => {
   return (
@@ -13,6 +14,9 @@ const Index = () => {
           <nav className="flex items-center space-x-4">
             <Link to="/marketplace" className="text-sm font-medium hover:text-primary">
               Marketplace
+            </Link>
+            <Link to="/gifting" className="text-sm font-medium hover:text-primary">
+              Gifting
             </Link>
             <Link to="/vendor-signup" className="text-sm font-medium hover:text-primary">
               Become a Vendor
@@ -40,9 +44,9 @@ const Index = () => {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/vendor-signup">
-                  <Store className="mr-2 h-5 w-5" />
-                  Become a Vendor
+                <Link to="/gifting">
+                  <Gift className="mr-2 h-5 w-5" />
+                  Explore Gifting
                 </Link>
               </Button>
             </div>
@@ -137,6 +141,7 @@ const Index = () => {
                 <h4 className="font-medium mb-3">Platform</h4>
                 <ul className="space-y-2">
                   <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm">Marketplace</Link></li>
+                  <li><Link to="/gifting" className="text-gray-400 hover:text-white text-sm">Gifting</Link></li>
                   <li><Link to="/vendor-signup" className="text-gray-400 hover:text-white text-sm">Become a Vendor</Link></li>
                   <li><Link to="/vendor-management" className="text-gray-400 hover:text-white text-sm">Vendor Management</Link></li>
                 </ul>

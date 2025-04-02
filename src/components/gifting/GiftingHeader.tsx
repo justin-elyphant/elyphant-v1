@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Gift, Home, Search, User, Bell } from "lucide-react";
+import { Home, Search, User, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const GiftingHeader = () => {
@@ -33,7 +32,11 @@ const GiftingHeader = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link to="/" className="flex items-center">
-              <Gift className="h-6 w-6 text-purple-600 mr-2" />
+              <img 
+                src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
+                alt="Elyphant" 
+                className="h-8 w-8 mr-2" 
+              />
               <span className="font-bold text-xl">Elyphant</span>
             </Link>
             
@@ -68,7 +71,11 @@ const GiftingHeader = () => {
             </Button>
             
             <Button className="bg-purple-600 hover:bg-purple-700">
-              <Gift className="mr-2 h-4 w-4" />
+              <img 
+                src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
+                alt="Gift" 
+                className="mr-2 h-4 w-4"
+              />
               Create Wishlist
             </Button>
             

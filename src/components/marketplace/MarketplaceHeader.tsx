@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const MarketplaceHeader = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,7 +19,14 @@ const MarketplaceHeader = () => {
 
   return (
     <div className="mb-8">
-      <h1 className="text-4xl font-bold mb-4">Vendor Marketplace</h1>
+      <div className="flex items-center mb-4">
+        <img 
+          src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
+          alt="Elyphant" 
+          className="h-10 w-10 mr-3" 
+        />
+        <h1 className="text-4xl font-bold">Vendor Marketplace</h1>
+      </div>
       <p className="text-muted-foreground mb-6">
         Discover products from our partner retailers and vendors
       </p>

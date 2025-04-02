@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { Gift, Search, User, LogIn } from "lucide-react";
+import { Search, User, LogIn } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const Header = () => {
@@ -21,8 +21,12 @@ const Header = () => {
       <div className="container mx-auto py-4 px-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-3">
           <div className="flex items-center">
-            <Link to="/">
-              <Gift className="h-6 w-6 text-purple-600 mr-2" />
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
+                alt="Elyphant" 
+                className="h-8 w-8 mr-2"
+              />
               <h1 className="text-2xl font-bold">Elyphant</h1>
             </Link>
           </div>

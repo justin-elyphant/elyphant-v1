@@ -26,14 +26,14 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="w-full md:w-2/5 lg:w-1/3">
+    <div className="w-full">
       <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <PopoverTrigger asChild>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input 
               placeholder="Search products, friends, or experiences..." 
-              className="pl-10"
+              className="pl-10 w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onClick={() => setIsSearchOpen(true)}

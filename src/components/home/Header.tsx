@@ -16,12 +16,14 @@ const Header = () => {
             <Logo />
           </div>
           
-          <div className="flex items-center gap-3 w-full md:w-auto justify-center">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-center">
             <CategoriesDropdown 
               open={isCategoriesOpen} 
               onOpenChange={setIsCategoriesOpen} 
             />
-            <SearchBar />
+            <div className="w-full md:w-[400px] lg:w-[500px]">
+              <SearchBar />
+            </div>
           </div>
           
           <AuthButtons />

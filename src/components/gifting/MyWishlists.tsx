@@ -5,6 +5,8 @@ import WishlistHeader from "./wishlist/WishlistHeader";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";
 import WishlistCard, { WishlistData } from "./wishlist/WishlistCard";
 import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LightbulbIcon } from "lucide-react";
 
 // Mock data for wishlists
 const initialWishlists = [
@@ -46,6 +48,7 @@ const MyWishlists = () => {
     };
 
     setWishlists((prev) => [...prev, newWishlist]);
+    toast.success("Wishlist created successfully!");
   };
 
   const handleEditWishlist = (id: number) => {
@@ -55,12 +58,21 @@ const MyWishlists = () => {
 
   const handleShareWishlist = (id: number) => {
     console.log(`Share wishlist ${id}`);
-    // Implementation for sharing a wishlist
+    toast.info("Sharing feature coming soon!");
   };
 
   return (
     <div>
       <WishlistHeader title="My Wishlists" onCreateNew={handleCreateWishlist} />
+      
+      {wishlists.length > 0 && (
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <LightbulbIcon className="h-4 w-4 text-blue-600" />
+          <AlertDescription>
+            Create wishlists for different occasions and share them with friends and family. Browse the marketplace to add items to your wishlists.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <CreateWishlistCard onCreateNew={handleCreateWishlist} />

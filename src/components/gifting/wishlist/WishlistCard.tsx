@@ -3,8 +3,9 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, ShoppingBag } from "lucide-react";
+import { Edit, Share2, ShoppingBag, Trash2 } from "lucide-react";
 import GiftItemCard from "../GiftItemCard";
+import { toast } from "sonner";
 
 export interface WishlistItem {
   id: number;
@@ -28,6 +29,28 @@ interface WishlistCardProps {
 }
 
 const WishlistCard = ({ wishlist, onEdit, onShare }: WishlistCardProps) => {
+  const handleRemoveItem = (itemId: number) => {
+    // Create an updated copy of the wishlist with the item removed
+    const updatedWishlist = {
+      ...wishlist,
+      items: wishlist.items.filter(item => item.id !== itemId)
+    };
+    
+    // Update the wishlist in localStorage
+    const storedWishlists = JSON.parse(localStorage.getItem("userWishlists") || "[]");
+    const updatedWishlists = storedWishlists.map((wl: WishlistData) => 
+      wl.id === wishlist.id ? updatedWishlist : wl
+    );
+    
+    localStorage.setItem("userWishlists", JSON.stringify(updatedWishlists));
+    
+    // Force a reload to update the UI
+    window.location.reload();
+    
+    // Show toast notification
+    toast.success("Item removed from wishlist");
+  };
+
   return (
     <Card key={wishlist.id}>
       <CardHeader>
@@ -37,14 +60,22 @@ const WishlistCard = ({ wishlist, onEdit, onShare }: WishlistCardProps) => {
       <CardContent>
         <div className="grid grid-cols-2 gap-2">
           {wishlist.items.slice(0, 4).map((item) => (
-            <GiftItemCard 
-              key={item.id}
-              name={item.name}
-              price={item.price}
-              brand={item.brand}
-              imageUrl={item.imageUrl}
-              mini
-            />
+            <div key={item.id} className="relative group">
+              <GiftItemCard 
+                name={item.name}
+                price={item.price}
+                brand={item.brand}
+                imageUrl={item.imageUrl}
+                mini
+              />
+              <button
+                onClick={() => handleRemoveItem(item.id)}
+                className="absolute top-1 right-1 bg-white/80 hover:bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label={`Remove ${item.name} from wishlist`}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </button>
+            </div>
           ))}
         </div>
         {wishlist.items.length > 4 && (

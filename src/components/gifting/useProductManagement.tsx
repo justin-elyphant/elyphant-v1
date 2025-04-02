@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Product, useProducts } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 
 export const useProductManagement = (initialProducts: Product[] = []) => {
   const { products: contextProducts, isLoading: contextLoading } = useProducts();

@@ -21,7 +21,7 @@ const Header = () => {
               open={isCategoriesOpen} 
               onOpenChange={setIsCategoriesOpen} 
             />
-            <div className="w-full md:w-[400px] lg:w-[500px]">
+            <div className="w-full md:w-[500px] lg:w-[600px]">
               <SearchBar />
             </div>
           </div>

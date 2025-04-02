@@ -1,20 +1,12 @@
+
 import React, { useState } from "react";
-import { Shield, ShieldCheck, ShieldOff, LayoutGrid, CalendarDays } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import EventHeader from "./events/EventHeader";
-import EventCard, { EventData } from "./events/EventCard";
 import EventEditDrawer from "./events/EventEditDrawer";
 import EventCalendarView from "./events/EventCalendarView";
-import { toast } from "sonner";
-
-export interface ExtendedEventData extends EventData {
-  privacyLevel: string;
-  isVerified?: boolean;
-  needsVerification?: boolean;
-  giftSource?: "wishlist" | "ai" | "both";
-}
+import EventCardsView from "./events/EventCardsView";
+import EventViewToggle from "./events/EventViewToggle";
+import { ExtendedEventData } from "./events/types";
 
 // Mock data for upcoming events
 const upcomingEvents: ExtendedEventData[] = [
@@ -159,50 +151,6 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
     toast.success("Event updated successfully");
   };
 
-  // Helper function to render privacy badge with tooltip
-  const renderPrivacyBadge = (privacyLevel: string, isVerified?: boolean) => {
-    let icon = null;
-    let label = "";
-    let variant = "outline";
-    
-    switch(privacyLevel) {
-      case "private":
-        icon = <ShieldOff className="h-3 w-3 mr-1" />;
-        label = "Private";
-        break;
-      case "shared":
-        icon = isVerified 
-          ? <ShieldCheck className="h-3 w-3 mr-1 text-green-500" /> 
-          : <Shield className="h-3 w-3 mr-1 text-amber-500" />;
-        label = isVerified ? "Verified" : "Shared";
-        variant = isVerified ? "success" : "warning";
-        break;
-      case "public":
-        icon = <Shield className="h-3 w-3 mr-1" />;
-        label = "Public";
-        break;
-    }
-    
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge variant={variant as any} className="ml-2 cursor-help">
-              {icon}
-              {label}
-            </Badge>
-          </TooltipTrigger>
-          <TooltipContent>
-            {privacyLevel === "private" && "Only visible to you"}
-            {privacyLevel === "shared" && isVerified && "Event has been verified by the other person"}
-            {privacyLevel === "shared" && !isVerified && "Shared but awaiting verification"}
-            {privacyLevel === "public" && "Visible to everyone"}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
-
   const handleEventClick = (event: ExtendedEventData) => {
     setCurrentEvent(event);
     setIsEditDrawerOpen(true);
@@ -218,57 +166,16 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
         </p>
       </div>
       
-      <div className="flex justify-end mb-4">
-        <div className="inline-flex rounded-md shadow-sm" role="group">
-          <Button
-            variant={viewMode === "cards" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("cards")}
-            className="rounded-l-md rounded-r-none"
-          >
-            <LayoutGrid className="h-4 w-4 mr-2" />
-            Cards
-          </Button>
-          <Button
-            variant={viewMode === "calendar" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("calendar")}
-            className="rounded-r-md rounded-l-none"
-          >
-            <CalendarDays className="h-4 w-4 mr-2" />
-            Calendar
-          </Button>
-        </div>
-      </div>
+      <EventViewToggle viewMode={viewMode} setViewMode={setViewMode} />
       
       {viewMode === "cards" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
-            <EventCard 
-              key={event.id}
-              event={event}
-              onSendGift={handleSendGift}
-              onToggleAutoGift={handleToggleAutoGift}
-              onEdit={handleEditEvent}
-              extraContent={
-                <>
-                  {event.privacyLevel && renderPrivacyBadge(event.privacyLevel, event.isVerified)}
-                  {event.needsVerification && (
-                    <div className="mt-2">
-                      <Badge 
-                        variant="outline" 
-                        className="cursor-pointer hover:bg-amber-50 border-amber-300"
-                        onClick={() => handleVerifyEvent(event.id)}
-                      >
-                        Verify Event
-                      </Badge>
-                    </div>
-                  )}
-                </>
-              }
-            />
-          ))}
-        </div>
+        <EventCardsView 
+          events={events}
+          onSendGift={handleSendGift}
+          onToggleAutoGift={handleToggleAutoGift}
+          onEdit={handleEditEvent}
+          onVerifyEvent={handleVerifyEvent}
+        />
       ) : (
         <EventCalendarView events={events} onEventClick={handleEventClick} />
       )}

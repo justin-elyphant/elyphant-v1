@@ -1,6 +1,5 @@
 
 import React from "react";
-import { format, parseISO } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -9,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import { ExtendedEventData } from "../UpcomingEvents";
+import { ExtendedEventData } from "./types";
 
 interface EventCalendarViewProps {
   events: ExtendedEventData[];

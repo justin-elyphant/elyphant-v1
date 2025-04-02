@@ -6,25 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-export interface EventData {
-  id: number;
-  type: string;
-  person: string;
-  date: string;
-  daysAway: number;
-  avatarUrl: string;
-  autoGiftEnabled: boolean;
-  autoGiftAmount?: number;
-  giftSource?: "wishlist" | "ai" | "both";
-}
+import { EventData } from "./types";
 
 interface EventCardProps {
   event: EventData;
   onSendGift: (id: number) => void;
   onToggleAutoGift: (id: number) => void;
   onEdit?: (id: number) => void;
-  extraContent?: React.ReactNode; // New prop for additional content like privacy badges
+  extraContent?: React.ReactNode; // Additional content like privacy badges
 }
 
 const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }: EventCardProps) => {
@@ -134,7 +123,6 @@ const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }
           <Switch 
             checked={autoGiftEnabled} 
             onCheckedChange={handleToggleAutoGift}
-            className="scale-75"
           />
         </div>
       </CardFooter>

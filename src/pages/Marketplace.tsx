@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import MarketplaceHeader from "@/components/marketplace/MarketplaceHeader";
+import Header from "@/components/home/Header";
 import { useProducts } from "@/contexts/ProductContext";
 import { categories } from "@/components/home/components/CategoriesDropdown";
 import MarketplaceFilters from "@/components/marketplace/MarketplaceFilters";
@@ -35,41 +35,42 @@ const Marketplace = () => {
   const categoryName = categories.find(c => c.url === currentCategory)?.name || "All Products";
 
   return (
-    <div className="container mx-auto py-8">
-      <MarketplaceHeader />
-      
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{categoryName}</h1>
-        <p className="text-muted-foreground">
-          Browse our collection of {currentCategory ? categoryName.toLowerCase() : "products"} from trusted vendors
-        </p>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-6">
-        {showFilters && (
-          <div className="w-full md:w-1/4 space-y-6">
-            <FiltersSidebar />
-          </div>
-        )}
-        
-        <div className={`w-full ${showFilters ? 'md:w-3/4' : 'w-full'}`}>
-          <MarketplaceFilters 
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            totalItems={filteredProducts.length}
-          />
-          
-          <ProductGrid 
-            products={filteredProducts} 
-            viewMode={viewMode} 
-          />
+    <div>
+      <Header />
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">{categoryName}</h1>
+          <p className="text-muted-foreground">
+            Browse our collection of {currentCategory ? categoryName.toLowerCase() : "products"} from trusted vendors
+          </p>
         </div>
-      </div>
-      
-      <div className="mt-12">
-        <VendorPortalCard />
+        
+        <div className="flex flex-col md:flex-row gap-6">
+          {showFilters && (
+            <div className="w-full md:w-1/4 space-y-6">
+              <FiltersSidebar />
+            </div>
+          )}
+          
+          <div className={`w-full ${showFilters ? 'md:w-3/4' : 'w-full'}`}>
+            <MarketplaceFilters 
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              totalItems={filteredProducts.length}
+            />
+            
+            <ProductGrid 
+              products={filteredProducts} 
+              viewMode={viewMode} 
+            />
+          </div>
+        </div>
+        
+        <div className="mt-12">
+          <VendorPortalCard />
+        </div>
       </div>
     </div>
   );

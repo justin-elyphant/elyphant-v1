@@ -58,7 +58,7 @@ const WishlistCard = ({ wishlist, onEdit, onShare }: WishlistCardProps) => {
             <p className="text-muted-foreground text-center mb-4">
               This wishlist is empty. Start adding items!
             </p>
-            <Button asChild variant="outline" className="w-full">
+            <Button asChild variant="default" className="w-full bg-purple-600 hover:bg-purple-700">
               <Link to="/marketplace">
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Start Shopping
@@ -67,17 +67,20 @@ const WishlistCard = ({ wishlist, onEdit, onShare }: WishlistCardProps) => {
           </div>
         )}
       </CardContent>
-      <CardFooter className={wishlist.items.length > 0 ? "justify-between" : "justify-between flex-wrap gap-2"}>
-        <Button variant="outline" size="sm" onClick={() => onEdit(wishlist.id)}>
-          <Edit className="mr-2 h-3 w-3" />
-          Edit
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => onShare(wishlist.id)}>
-          <Share2 className="mr-2 h-3 w-3" />
-          Share
-        </Button>
+      <CardFooter className="flex flex-col space-y-3">
+        <div className="flex w-full justify-between">
+          <Button variant="outline" size="sm" onClick={() => onEdit(wishlist.id)}>
+            <Edit className="mr-2 h-3 w-3" />
+            Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onShare(wishlist.id)}>
+            <Share2 className="mr-2 h-3 w-3" />
+            Share
+          </Button>
+        </div>
+        
         {wishlist.items.length > 0 && (
-          <Button asChild variant="outline" size="sm" className="mt-2 w-full">
+          <Button asChild variant="default" size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
             <Link to="/marketplace">
               <ShoppingBag className="mr-2 h-3 w-3" />
               Add More Items

@@ -6,6 +6,8 @@ import { useCart } from "@/contexts/CartContext";
 import { Heart, ShoppingCart, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import WishlistSelectionPopover from "./WishlistSelectionPopover";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +26,7 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [userData] = useLocalStorage("userData", null);
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
@@ -32,7 +35,9 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowSignUpDialog(true);
+    if (!userData) {
+      setShowSignUpDialog(true);
+    }
   };
 
   const handleSignUp = () => {
@@ -67,14 +72,30 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
                 alt={product.name} 
                 className="w-full h-48 object-cover"
               />
-              <Button 
-                size="icon"
-                variant="ghost" 
-                className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full h-8 w-8" 
-                onClick={handleWishlistClick}
-              >
-                <Heart className="h-4 w-4" />
-              </Button>
+              {userData ? (
+                <WishlistSelectionPopover 
+                  productId={product.id}
+                  productName={product.name}
+                  trigger={
+                    <Button 
+                      size="icon"
+                      variant="ghost" 
+                      className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full h-8 w-8" 
+                    >
+                      <Heart className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              ) : (
+                <Button 
+                  size="icon"
+                  variant="ghost" 
+                  className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full h-8 w-8" 
+                  onClick={handleWishlistClick}
+                >
+                  <Heart className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             
             <div className={`p-4 ${viewMode === 'list' ? 'w-2/3' : 'w-full'}`}>

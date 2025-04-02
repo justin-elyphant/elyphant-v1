@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +27,7 @@ const Index = () => {
       <main className="flex-1">
         <div className="container mx-auto py-12 px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Welcome to Vendor Marketplace</h2>
+            <h2 className="text-4xl font-bold mb-4">Welcome to Elyphant's Marketplace</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Connect retailers and vendors, integrate with Shopify and Amazon, and create 
               a powerful product marketplace with sponsored placements.

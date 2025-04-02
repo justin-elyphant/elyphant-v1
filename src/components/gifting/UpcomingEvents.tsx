@@ -7,8 +7,14 @@ import EventHeader from "./events/EventHeader";
 import EventCard, { EventData } from "./events/EventCard";
 import { toast } from "sonner";
 
+interface ExtendedEventData extends EventData {
+  privacyLevel: string;
+  isVerified?: boolean;
+  needsVerification?: boolean;
+}
+
 // Mock data for upcoming events
-const upcomingEvents = [
+const upcomingEvents: ExtendedEventData[] = [
   {
     id: 1,
     type: "Birthday",
@@ -61,7 +67,7 @@ interface UpcomingEventsProps {
 }
 
 const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
-  const [events, setEvents] = useState(upcomingEvents);
+  const [events, setEvents] = useState<ExtendedEventData[]>(upcomingEvents);
   
   const handleAddEvent = () => {
     if (onAddEvent) {
@@ -158,7 +164,7 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map((event: EventData & { privacyLevel?: string, isVerified?: boolean, needsVerification?: boolean }) => (
+        {events.map((event) => (
           <EventCard 
             key={event.id}
             event={event}

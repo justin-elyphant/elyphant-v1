@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, LogIn, Menu, Gift, Baby, Sofa, Bike, Cake, PartyPopper, Briefcase } from "lucide-react";
+import { Search, User, LogIn, Menu, Gift, Baby, Sofa, Bike, Cake, PartyPopper, Briefcase, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
   Command,
@@ -23,10 +23,17 @@ import {
   SheetClose
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const navigate = useNavigate();
   
   const handleSearch = (e: React.FormEvent) => {
@@ -42,6 +49,28 @@ const Header = () => {
     navigate(`/gifting?search=${encodeURIComponent(value)}`);
     setIsSearchOpen(false);
   };
+
+  const handleCategorySelect = (category: string) => {
+    navigate(`/gifting?category=${category.toLowerCase()}`);
+    setIsCategoriesOpen(false);
+  };
+
+  const categories = [
+    { name: "Accessories", url: "accessories" },
+    { name: "Art & Collectibles", url: "art-collectibles" },
+    { name: "Baby", url: "baby" },
+    { name: "Bags & Purses", url: "bags-purses" },
+    { name: "Bath & Beauty", url: "bath-beauty" },
+    { name: "Books, Movies & Music", url: "books-movies-music" },
+    { name: "Clothing", url: "clothing" },
+    { name: "Craft Supplies & Tools", url: "craft-supplies" },
+    { name: "Electronics & Accessories", url: "electronics" },
+    { name: "Gifts", url: "gifts" },
+    { name: "Home & Living", url: "home-living" },
+    { name: "Jewelry", url: "jewelry" },
+    { name: "Toys & Games", url: "toys-games" },
+    { name: "Wedding & Party", url: "wedding-party" }
+  ];
 
   const categoryFilters = [
     { name: "Experiences", icon: PartyPopper },
@@ -68,7 +97,7 @@ const Header = () => {
             </Link>
           </div>
           
-          <div className="flex items-center space-x-3 mr-4">
+          <div className="flex items-center space-x-3">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="mr-2">
@@ -115,6 +144,28 @@ const Header = () => {
                 </div>
               </SheetContent>
             </Sheet>
+            
+            <DropdownMenu open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-1">
+                  Categories <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="w-56 bg-white p-0 max-h-[70vh] overflow-y-auto z-50" 
+                align="start"
+              >
+                {categories.map((category, index) => (
+                  <DropdownMenuItem 
+                    key={index} 
+                    className="px-4 py-2 hover:bg-accent cursor-pointer"
+                    onClick={() => handleCategorySelect(category.url)}
+                  >
+                    {category.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div className="w-full md:w-2/5 lg:w-1/3">

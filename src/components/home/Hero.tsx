@@ -33,7 +33,7 @@ const Hero = () => {
           <div className="md:w-1/2 flex justify-end">
             <div className="relative">
               <img 
-                src="https://images.unsplash.com/photo-1680574457491-7ca28abd3df6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                src="https://images.unsplash.com/photo-1500673922987-e212871fec22" 
                 alt="Easter Celebrations" 
                 className="rounded-lg shadow-lg max-w-full h-auto"
               />

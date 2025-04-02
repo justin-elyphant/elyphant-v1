@@ -6,10 +6,11 @@ import FeaturedProducts from "./sections/FeaturedProducts";
 import AutomationFeatures from "./sections/AutomationFeatures";
 import HomeCTA from "./sections/HomeCTA";
 import { useProducts } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 
 const HomeContent = () => {
   // Use the ProductContext instead of directly loading products
-  const { products } = useProducts();
+  const { products, isLoading } = useProducts();
   const [featuredProducts, setFeaturedProducts] = useState([]);
   
   useEffect(() => {
@@ -19,10 +20,13 @@ const HomeContent = () => {
       const shopifyProducts = products.filter(p => p.vendor === "Shopify");
       if (shopifyProducts.length > 0) {
         console.log("HomeContent: Using Shopify products:", shopifyProducts.length);
-        setFeaturedProducts(shopifyProducts.slice(0, 4));
+        setFeaturedProducts(shopifyProducts.slice(0, 6));
+        toast.success(`Showing ${shopifyProducts.length} products from your Shopify store`, {
+          id: "shopify-products-loaded"
+        });
       } else {
         console.log("HomeContent: Using regular products:", products.length);
-        setFeaturedProducts(products.slice(0, 4));
+        setFeaturedProducts(products.slice(0, 6));
       }
     }
   }, [products]);
@@ -74,7 +78,9 @@ const HomeContent = () => {
       <FeaturedBrands brands={topBrands} />
 
       {/* 3. Featured Products Carousel */}
-      <FeaturedProducts products={featuredProducts} />
+      {products.length > 0 && (
+        <FeaturedProducts products={featuredProducts} />
+      )}
 
       {/* Key Features */}
       <AutomationFeatures />

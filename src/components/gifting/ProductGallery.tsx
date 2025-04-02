@@ -42,7 +42,8 @@ const ProductGallery = ({
     console.log("ProductGallery render:", { 
       isLoading, 
       filteredProductsLength: filteredProducts?.length || 0,
-      initialProductsLength: initialProducts?.length || 0 
+      initialProductsLength: initialProducts?.length || 0,
+      hasShopifyProducts: filteredProducts?.some(p => p.vendor === "Shopify") || false
     });
   }, [isLoading, filteredProducts, initialProducts]);
   
@@ -60,9 +61,12 @@ const ProductGallery = ({
     return <ProductEmpty />;
   }
   
+  // Check if we have any Shopify products
+  const hasShopifyProducts = filteredProducts.some(product => product.vendor === "Shopify");
+  
   return (
     <div className="space-y-4">
-      {filteredProducts.length > 0 && filteredProducts[0].vendor === "Shopify" && (
+      {hasShopifyProducts && (
         <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm flex items-center">
           <Badge className="bg-green-500 mr-2">Shopify</Badge>
           <span>Showing products from your connected Shopify store</span>

@@ -38,7 +38,14 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         try {
           const parsed = JSON.parse(shopifyProducts);
           console.log(`ProductContext: Loaded ${parsed.length} Shopify products from localStorage`);
-          setProducts(parsed);
+          
+          // Make sure each product has vendor: "Shopify"
+          const shopifyProductsWithVendor = parsed.map((product: Product) => ({
+            ...product,
+            vendor: "Shopify"
+          }));
+          
+          setProducts(shopifyProductsWithVendor);
           setIsLoading(false);
           return;
         } catch (e) {

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { useProducts, Product } from "@/contexts/ProductContext";
 
@@ -23,6 +24,7 @@ export const useShopifyIntegration = () => {
   const { products, setProducts } = useProducts();
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
+  // Load saved connection and products on mount
   useEffect(() => {
     // Check if we have a saved Shopify connection
     const savedConnection = localStorage.getItem('shopifyConnection');
@@ -35,27 +37,40 @@ export const useShopifyIntegration = () => {
         
         // If we're connected, also try to load saved products
         if (connected) {
-          const savedProducts = localStorage.getItem('shopifyProducts');
-          if (savedProducts) {
-            try {
-              const parsedProducts = JSON.parse(savedProducts);
-              console.log(`ShopifyIntegration: Loaded ${parsedProducts.length} products from localStorage`);
-              
-              // Only update products if we found Shopify products
-              if (parsedProducts && parsedProducts.length > 0) {
-                setProducts(parsedProducts);
-                toast.success(`Successfully loaded ${parsedProducts.length} Shopify products`);
-              }
-            } catch (e) {
-              console.error("Error parsing saved products:", e);
-              toast.error("Failed to load saved products");
-            }
-          }
+          loadShopifyProducts();
         }
       } catch (e) {
         console.error("Error parsing saved connection:", e);
       }
     }
+  }, []);
+  
+  // Load Shopify products from localStorage
+  const loadShopifyProducts = useCallback(() => {
+    const savedProducts = localStorage.getItem('shopifyProducts');
+    if (savedProducts) {
+      try {
+        const parsedProducts = JSON.parse(savedProducts);
+        console.log(`ShopifyIntegration: Loaded ${parsedProducts.length} products from localStorage`);
+        
+        // Only update products if we found Shopify products
+        if (parsedProducts && parsedProducts.length > 0) {
+          // Make sure each product has the Shopify vendor
+          const shopifyProducts = parsedProducts.map((product: Product) => ({
+            ...product,
+            vendor: "Shopify"
+          }));
+          
+          setProducts(shopifyProducts);
+          console.log("Shopify products set in context:", shopifyProducts.length);
+          return true;
+        }
+      } catch (e) {
+        console.error("Error parsing saved products:", e);
+        toast.error("Failed to load saved products");
+      }
+    }
+    return false;
   }, [setProducts]);
   
   const handleConnect = (url: string) => {
@@ -143,9 +158,15 @@ export const useShopifyIntegration = () => {
         },
       ];
       
+      // Make sure vendor is set to "Shopify" for all products
+      const shopifyProducts = mockProducts.map(product => ({
+        ...product,
+        vendor: "Shopify"  // Ensure vendor is set
+      }));
+      
       // Save products to state and localStorage
-      setProducts(mockProducts);
-      localStorage.setItem('shopifyProducts', JSON.stringify(mockProducts));
+      setProducts(shopifyProducts);
+      localStorage.setItem('shopifyProducts', JSON.stringify(shopifyProducts));
       
       toast.success("Shopify store connected successfully! We've imported your catalog.");
     }, 1500);
@@ -167,6 +188,9 @@ export const useShopifyIntegration = () => {
     setTimeout(() => {
       setIsLoading(false);
       setLastSyncTime(new Date());
+      
+      // Add any new sync actions here
+      loadShopifyProducts();
       
       const connection = JSON.parse(localStorage.getItem('shopifyConnection') || '{}');
       localStorage.setItem('shopifyConnection', JSON.stringify({
@@ -196,6 +220,7 @@ export const useShopifyIntegration = () => {
     handleConnect,
     handleDisconnect,
     handleSyncNow,
-    handleSyncSettingChange
+    handleSyncSettingChange,
+    loadShopifyProducts
   };
 };

@@ -16,7 +16,7 @@ const Header = () => {
             <Logo />
           </div>
           
-          <div className="flex items-center gap-2 w-full md:w-auto justify-center">
+          <div className="flex items-center gap-4 w-full md:w-auto justify-center">
             <CategoriesDropdown 
               open={isCategoriesOpen} 
               onOpenChange={setIsCategoriesOpen} 

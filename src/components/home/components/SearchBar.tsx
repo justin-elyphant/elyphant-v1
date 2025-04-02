@@ -14,14 +14,14 @@ const SearchBar = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/gifting?search=${encodeURIComponent(searchTerm)}`);
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
       setIsSearchOpen(false);
     }
   };
 
   const handleSearchItemSelect = (value: string) => {
     setSearchTerm(value);
-    navigate(`/gifting?search=${encodeURIComponent(value)}`);
+    navigate(`/marketplace?search=${encodeURIComponent(value)}`);
     setIsSearchOpen(false);
   };
 

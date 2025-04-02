@@ -12,6 +12,8 @@ const ShopifyIntegration = () => {
   const [syncSettings, setSyncSettings] = useState({
     autoSync: true,
     markup: 30, // Default 30% markup
+    importImages: true,
+    importVariants: true,
   });
   
   const handleConnect = () => {
@@ -52,7 +54,7 @@ const ShopifyIntegration = () => {
             <Button onClick={handleConnect}>Connect</Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Note: Products will be listed with a 30% markup as part of our convenience fee model.
+            Products will be listed with a 30% markup as part of our convenience fee model. You'll receive orders directly to fulfill.
           </p>
         </div>
       ) : (

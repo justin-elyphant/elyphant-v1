@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 const formSchema = z.object({
   companyName: z.string().min(2, {
@@ -30,6 +32,9 @@ const formSchema = z.object({
   acceptTerms: z.boolean().refine(val => val === true, {
     message: "You must accept the terms and conditions.",
   }),
+  markupAcknowledgment: z.boolean().refine(val => val === true, {
+    message: "You must acknowledge our markup model.",
+  }),
 });
 
 const VendorSignup = () => {
@@ -42,12 +47,13 @@ const VendorSignup = () => {
       integrationType: "",
       productCategories: "",
       acceptTerms: false,
+      markupAcknowledgment: false,
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
-    toast.success("Vendor application submitted successfully! We'll be in touch soon.");
+    toast.success("Vendor application submitted successfully! We'll begin the onboarding process to import your products.");
   }
 
   return (
@@ -59,7 +65,7 @@ const VendorSignup = () => {
             <CardHeader>
               <CardTitle>Vendor Application</CardTitle>
               <CardDescription>
-                Fill out this form to apply to become a vendor on our marketplace.
+                Apply to have your products featured on the Elyphant marketplace.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -122,14 +128,13 @@ const VendorSignup = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="shopify">Shopify</SelectItem>
+                            <SelectItem value="shopify">Shopify Store</SelectItem>
                             <SelectItem value="directapi">Direct API</SelectItem>
                             <SelectItem value="manual">Manual Product Upload</SelectItem>
-                            <SelectItem value="other">Other (Please specify)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Choose how you'll connect your products to our marketplace.
+                          Choose how we'll import your products to our marketplace.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -148,6 +153,68 @@ const VendorSignup = () => {
                         <FormDescription>
                           List the main categories of products you sell.
                         </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Card className="bg-muted/30 border-muted">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold mb-2">Our Marketplace Model</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Elyphant handles all customer interactions, payments, and fulfillment coordination:
+                      </p>
+                      <ul className="text-sm text-muted-foreground space-y-2 mb-3">
+                        <li className="flex items-start">
+                          <span className="mr-2">•</span>
+                          <span>We import your products and display them on our marketplace</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="mr-2">•</span>
+                          <span>Products are listed with a 30% markup as our convenience fee</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="mr-2">•</span>
+                          <span>We handle all customer payments through our integrated checkout</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="mr-2">•</span>
+                          <span>You receive orders directly and fulfill them to the customer</span>
+                        </li>
+                      </ul>
+                      
+                      <Collapsible className="w-full">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-medium text-left">
+                          <span>Payment Details</span>
+                          <ChevronDown className="h-4 w-4" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="text-sm text-muted-foreground pt-2">
+                          <p>We process the full payment from customers (including our 30% markup). Your share (70% of the original product price) is transferred to you within 3-5 business days of successful delivery.</p>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </CardContent>
+                  </Card>
+                  
+                  <FormField
+                    control={form.control}
+                    name="markupAcknowledgment"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            I understand the 30% markup model
+                          </FormLabel>
+                          <FormDescription>
+                            I acknowledge that Elyphant will list my products with a 30% 
+                            markup and handle all customer interactions and payments.
+                          </FormDescription>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -197,18 +264,18 @@ const VendorSignup = () => {
               </div>
               
               <div>
-                <h3 className="font-semibold mb-1">Sponsored Placements</h3>
-                <p className="text-sm text-muted-foreground">Boost visibility with premium ad placements and featured listings.</p>
+                <h3 className="font-semibold mb-1">Focus on Your Products</h3>
+                <p className="text-sm text-muted-foreground">We handle customer service, payments, and the shopping experience.</p>
               </div>
               
               <div>
                 <h3 className="font-semibold mb-1">Easy Integration</h3>
-                <p className="text-sm text-muted-foreground">Connect your existing store with our simple integration options.</p>
+                <p className="text-sm text-muted-foreground">Simple connection with Shopify or other platforms.</p>
               </div>
               
               <div>
                 <h3 className="font-semibold mb-1">Analytics Dashboard</h3>
-                <p className="text-sm text-muted-foreground">Get insights into performance and customer behavior.</p>
+                <p className="text-sm text-muted-foreground">Get insights into your products' performance on our platform.</p>
               </div>
             </CardContent>
           </Card>

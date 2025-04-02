@@ -31,7 +31,7 @@ const VendorManagement = () => {
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
-            <h1 className="text-4xl font-bold">Vendor Management</h1>
+            <h1 className="text-4xl font-bold">Vendor Portal</h1>
           </div>
           <IntegrationAddSheet />
         </div>

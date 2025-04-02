@@ -28,6 +28,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/vendor-signup" element={<VendorSignup />} />
+              <Route path="/vendor-portal" element={<VendorManagement />} />
               <Route path="/vendor-management" element={<VendorManagement />} />
               <Route path="/gifting" element={<Gifting />} />
               <Route path="/cart" element={<Cart />} />

@@ -17,7 +17,7 @@ const VendorSignup = () => {
   
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-4xl font-bold mb-8">Vendor Portal</h1>
+      <h1 className="text-4xl font-bold mb-8">Vendor Portal Sign Up</h1>
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-8">
         <TabsList className="grid w-full max-w-md grid-cols-2">

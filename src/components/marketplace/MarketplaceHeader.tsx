@@ -44,7 +44,7 @@ const MarketplaceHeader = () => {
           alt="Elyphant" 
           className="h-12 w-12 mr-3" 
         />
-        <h1 className="text-4xl font-bold">Vendor Marketplace</h1>
+        <h1 className="text-4xl font-bold">Product Marketplace</h1>
       </div>
       <p className="text-muted-foreground mb-6">
         Discover products from our partner retailers and vendors

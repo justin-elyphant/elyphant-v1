@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, LogIn, Menu } from "lucide-react";
+import { Search, User, LogIn, Menu, Gift, Baby, Sofa, Bike, Cake, PartyPopper, Briefcase } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
   Command,
@@ -22,6 +22,17 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose
+} from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,8 +53,18 @@ const Header = () => {
     setIsSearchOpen(false);
   };
 
+  const categoryFilters = [
+    { name: "Experiences", icon: PartyPopper },
+    { name: "Baby", icon: Baby },
+    { name: "Furniture", icon: Sofa },
+    { name: "Sports", icon: Bike },
+    { name: "Birthday", icon: Cake },
+    { name: "Professional", icon: Briefcase },
+    { name: "Holidays", icon: Gift }
+  ];
+
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-10">
+    <header className="bg-white shadow-sm sticky top-0 z-40">
       <div className="container mx-auto py-4 px-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-3">
           <div className="flex items-center">
@@ -51,13 +72,60 @@ const Header = () => {
               <img 
                 src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
                 alt="Elyphant" 
-                className="h-14 w-14 mr-2" 
+                className="h-16 w-16 mr-2" 
               />
               <h1 className="text-2xl font-bold">Elyphant</h1>
             </Link>
           </div>
           
-          <div className="hidden md:flex items-center space-x-2 mr-4">
+          <div className="flex items-center space-x-3 mr-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="mr-2">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Categories</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle>Category Filters</SheetTitle>
+                  <SheetDescription>
+                    Browse gifts by category
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="grid gap-4 py-6">
+                  {categoryFilters.map((category) => (
+                    <SheetClose asChild key={category.name}>
+                      <Link 
+                        to={`/gifting?category=${category.name.toLowerCase()}`}
+                        className="flex items-center p-3 rounded-md hover:bg-accent transition-colors"
+                      >
+                        <category.icon className="mr-3 h-5 w-5 text-purple-600" />
+                        <span>{category.name}</span>
+                      </Link>
+                    </SheetClose>
+                  ))}
+                </div>
+                <div className="mt-6">
+                  <Badge variant="outline" className="mb-2">Popular Categories</Badge>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/gifting?category=birthday">Birthday</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/gifting?category=anniversary">Anniversary</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/gifting?category=easter">Easter</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/gifting?category=mothers-day">Mother's Day</Link>
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+            
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -211,6 +279,14 @@ const Header = () => {
                         <Search className="mr-2 h-4 w-4" />
                         Handmade Jewelry
                       </CommandItem>
+                      <CommandItem onSelect={() => handleSearchItemSelect("Easter Basket")}>
+                        <Search className="mr-2 h-4 w-4" />
+                        Easter Basket
+                      </CommandItem>
+                      <CommandItem onSelect={() => handleSearchItemSelect("Mother's Day Flowers")}>
+                        <Search className="mr-2 h-4 w-4" />
+                        Mother's Day Flowers
+                      </CommandItem>
                     </CommandGroup>
                     <CommandGroup heading="Friends">
                       <CommandItem onSelect={() => handleSearchItemSelect("Alex's Wishlist")}>
@@ -230,6 +306,10 @@ const Header = () => {
                       <CommandItem onSelect={() => handleSearchItemSelect("Spa Day Package")}>
                         <Search className="mr-2 h-4 w-4" />
                         Spa Day Package
+                      </CommandItem>
+                      <CommandItem onSelect={() => handleSearchItemSelect("Easter Egg Hunt")}>
+                        <Search className="mr-2 h-4 w-4" />
+                        Easter Egg Hunt
                       </CommandItem>
                     </CommandGroup>
                   </CommandList>

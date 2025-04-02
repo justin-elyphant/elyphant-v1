@@ -31,11 +31,16 @@ const Hero = () => {
             </div>
           </div>
           <div className="md:w-1/2 flex justify-end">
-            <img 
-              src="https://placehold.co/600x400/e2e8f0/64748b?text=Gift+Giving" 
-              alt="Gift Giving" 
-              className="rounded-lg shadow-lg max-w-full h-auto"
-            />
+            <div className="relative">
+              <img 
+                src="https://images.unsplash.com/photo-1680574457491-7ca28abd3df6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                alt="Easter Celebrations" 
+                className="rounded-lg shadow-lg max-w-full h-auto"
+              />
+              <div className="absolute bottom-4 right-4 bg-white bg-opacity-80 rounded-lg px-3 py-2 text-sm font-medium text-purple-800 shadow-sm">
+                Easter Gifts & Celebrations
+              </div>
+            </div>
           </div>
         </div>
       </div>

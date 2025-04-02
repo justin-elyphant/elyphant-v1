@@ -4,7 +4,7 @@ import { Product, useProducts } from "@/contexts/ProductContext";
 import { loadMockProducts, loadSavedProducts } from "../utils/productLoader";
 
 export const useProductLoader = (initialProducts: Product[] = []) => {
-  const { products: contextProducts, isLoading: contextLoading } = useProducts();
+  const { products: contextProducts, isLoading: contextLoading, setProducts: setContextProducts } = useProducts();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -15,6 +15,7 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
         initialProductsLength: initialProducts?.length || 0
       });
       
+      // First priority: Use products from context (if available)
       if (contextProducts && contextProducts.length > 0) {
         console.log("Using products from context");
         setProducts(contextProducts);
@@ -22,37 +23,45 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
         return;
       }
       
+      // Second priority: Use initial products passed as props
       if (initialProducts && initialProducts.length > 0) {
         console.log("Using initial products");
         setProducts(initialProducts);
+        // Also update context to make these products available app-wide
+        setContextProducts(initialProducts);
         setIsLoading(false);
         return;
       }
       
+      // Third priority: Try to load from localStorage
       const savedProducts = loadSavedProducts();
       if (savedProducts && savedProducts.length > 0) {
         console.log("Using saved products from localStorage");
         setProducts(savedProducts);
+        // Also update context to make these products available app-wide
+        setContextProducts(savedProducts);
         setIsLoading(false);
         return;
       }
       
-      // Simulate a network request
+      // Last resort: Load mock products
       console.log("Loading mock products");
       setTimeout(() => {
         const mockProducts = loadMockProducts();
         console.log("Loaded mock products:", mockProducts.length);
         if (mockProducts && mockProducts.length > 0) {
           setProducts(mockProducts);
+          // Also update context to make these products available app-wide
+          setContextProducts(mockProducts);
         } else {
           console.error("Failed to load mock products or empty array returned");
         }
         setIsLoading(false);
-      }, 800); // Slightly reduced timeout for testing
+      }, 500);
     };
 
     loadProducts();
-  }, [contextProducts, initialProducts]);
+  }, [contextProducts, initialProducts, setContextProducts]);
 
   // Log when products state changes
   useEffect(() => {

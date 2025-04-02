@@ -1,80 +1,65 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import FeaturedCollections from "./sections/FeaturedCollections";
 import FeaturedBrands from "./sections/FeaturedBrands";
 import FeaturedProducts from "./sections/FeaturedProducts";
 import AutomationFeatures from "./sections/AutomationFeatures";
 import HomeCTA from "./sections/HomeCTA";
+import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
+import { Product } from "@/contexts/ProductContext";
 
 const HomeContent = () => {
-  // Featured products data (would come from API in production)
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Premium Headphones",
-      price: 149.99,
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=Headphones",
-      vendor: "Audio Shop",
-    },
-    {
-      id: 2,
-      name: "Smart Watch Series 5",
-      price: 299.99,
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=Watch",
-      vendor: "Tech Store",
-    },
-    {
-      id: 3,
-      name: "Wireless Earbuds",
-      price: 89.99,
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=Earbuds",
-      vendor: "Audio Shop",
-    },
-    {
-      id: 4,
-      name: "Fitness Tracker",
-      price: 79.99,
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=Tracker",
-      vendor: "Health Gadgets",
-    },
-  ];
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  
+  useEffect(() => {
+    // Try to load products from localStorage or fallback to mock data
+    const savedProducts = loadSavedProducts();
+    if (savedProducts && savedProducts.length > 0) {
+      console.log("HomeContent: Using saved products from localStorage");
+      setFeaturedProducts(savedProducts.slice(0, 4));
+    } else {
+      console.log("HomeContent: Using mock products");
+      const mockProducts = loadMockProducts();
+      setFeaturedProducts(mockProducts.slice(0, 4));
+    }
+  }, []);
 
   // Featured collections
   const collections = [
     { 
       id: 1, 
       name: "Birthday Gifts", 
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=Birthday", 
+      image: "https://images.unsplash.com/photo-1577998474517-7eeeed4e448a?w=500&q=80", 
       count: 120 
     },
     { 
       id: 2, 
       name: "Anniversary", 
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=Anniversary", 
+      image: "https://images.unsplash.com/photo-1548353866-8befc7a7233e?w=500&q=80", 
       count: 85 
     },
     { 
       id: 3, 
       name: "For Her", 
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=For+Her", 
+      image: "https://images.unsplash.com/photo-1588012886078-94edc2c72087?w=500&q=80", 
       count: 150 
     },
     { 
       id: 4, 
       name: "For Him", 
-      image: "https://placehold.co/600x400/e2e8f0/64748b?text=For+Him", 
+      image: "https://images.unsplash.com/photo-1574634534894-89d7576c8259?w=500&q=80", 
       count: 145 
     },
   ];
 
-  // Top brands data
+  // Top brands data - use real image URLs
   const topBrands = [
-    { id: 1, name: "Nike", logoUrl: "/placeholder.svg", productCount: 245 },
-    { id: 2, name: "Apple", logoUrl: "/placeholder.svg", productCount: 189 },
-    { id: 3, name: "Samsung", logoUrl: "/placeholder.svg", productCount: 167 },
-    { id: 4, name: "Sony", logoUrl: "/placeholder.svg", productCount: 142 },
-    { id: 5, name: "Adidas", logoUrl: "/placeholder.svg", productCount: 134 },
-    { id: 6, name: "Bose", logoUrl: "/placeholder.svg", productCount: 98 },
+    { id: 1, name: "Nike", logoUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=128&q=80", productCount: 245 },
+    { id: 2, name: "Apple", logoUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=128&q=80", productCount: 189 },
+    { id: 3, name: "Samsung", logoUrl: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=128&q=80", productCount: 167 },
+    { id: 4, name: "Sony", logoUrl: "https://images.unsplash.com/photo-1593344484362-83d5fa2a98dd?w=128&q=80", productCount: 142 },
+    { id: 5, name: "Adidas", logoUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=128&q=80", productCount: 134 },
+    { id: 6, name: "Bose", logoUrl: "https://images.unsplash.com/photo-1610041819557-a370a7dfa3f5?w=128&q=80", productCount: 98 },
   ];
 
   return (

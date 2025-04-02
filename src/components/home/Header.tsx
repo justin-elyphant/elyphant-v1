@@ -25,7 +25,7 @@ const Header = () => {
               <img 
                 src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
                 alt="Elyphant" 
-                className="h-8 w-8 mr-2"
+                className="h-10 w-10 mr-2" 
               />
               <h1 className="text-2xl font-bold">Elyphant</h1>
             </Link>

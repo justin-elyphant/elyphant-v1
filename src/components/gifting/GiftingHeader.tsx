@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ const GiftingHeader = () => {
               <img 
                 src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
                 alt="Elyphant" 
-                className="h-8 w-8 mr-2" 
+                className="h-10 w-10 mr-2" 
               />
               <span className="font-bold text-xl">Elyphant</span>
             </Link>
@@ -52,7 +53,7 @@ const GiftingHeader = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input 
                   type="search" 
-                  placeholder="Search gifts, friends, or brands..." 
+                  placeholder="Search gifts, friends, or experiences..." 
                   className="pl-10 bg-gray-100 border-gray-200 focus:bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

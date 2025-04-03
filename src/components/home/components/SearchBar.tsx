@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -10,10 +10,21 @@ const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Initialize search term from URL on mount or location change
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get("search");
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
+  }, [location.search]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
+      console.log(`SearchBar: Navigating to marketplace with search term "${searchTerm}"`);
       navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
       setIsSearchOpen(false);
     }
@@ -29,8 +40,15 @@ const SearchBar = () => {
 
   const handleSearchItemSelect = (value: string) => {
     setSearchTerm(value);
+    console.log(`SearchBar: Selected search item "${value}"`);
     navigate(`/marketplace?search=${encodeURIComponent(value)}`);
     setIsSearchOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch(e as unknown as React.FormEvent);
+    }
   };
 
   return (
@@ -45,11 +63,7 @@ const SearchBar = () => {
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
               onClick={() => setIsSearchOpen(true)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch(e);
-                }
-              }}
+              onKeyDown={handleKeyDown}
             />
           </div>
         </PopoverTrigger>

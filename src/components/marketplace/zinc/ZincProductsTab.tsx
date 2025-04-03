@@ -1,11 +1,12 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useZincIntegration } from "./useZincIntegration";
+import { toast } from "@/hooks/use-toast";
 
 const ZincProductsTab = () => {
   const { products } = useProducts();
@@ -19,6 +20,13 @@ const ZincProductsTab = () => {
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   const searchInProgressRef = useRef(false);
   
+  // Set local search term when searchTerm changes
+  useEffect(() => {
+    if (searchTerm && searchTerm !== localSearchTerm) {
+      setLocalSearchTerm(searchTerm);
+    }
+  }, [searchTerm]);
+  
   const amazonProducts = products.filter(p => p.vendor === "Amazon via Zinc");
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,8 +34,26 @@ const ZincProductsTab = () => {
     
     if (localSearchTerm.trim() && !searchInProgressRef.current) {
       searchInProgressRef.current = true;
-      await handleSearch(localSearchTerm);
-      searchInProgressRef.current = false;
+      console.log(`ZincProductsTab: Submitting search for "${localSearchTerm}"`);
+      
+      try {
+        await handleSearch(localSearchTerm);
+      } catch (error) {
+        console.error("Search error:", error);
+        toast({
+          title: "Search Failed",
+          description: "There was an error processing your search",
+          variant: "destructive"
+        });
+      } finally {
+        searchInProgressRef.current = false;
+      }
+    }
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e as unknown as React.FormEvent);
     }
   };
   
@@ -42,6 +68,7 @@ const ZincProductsTab = () => {
             className="pl-8"
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
             disabled={isLoading}
           />
         </div>

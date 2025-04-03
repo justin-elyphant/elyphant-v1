@@ -87,3 +87,23 @@ export const processImages = (images: string[]): string[] => {
     return finalImages;
   }
 };
+
+/**
+ * Create image variations from a single base image
+ * This is a special utility for creating varied images without actually modifying them
+ * for display purposes only
+ */
+export const generateImageVariations = (baseImage: string, productName: string): string[] => {
+  // Implement a simplified version that's different from the one in imageGenerationService
+  if (!baseImage || baseImage === "/placeholder.svg") {
+    return ["/placeholder.svg"];
+  }
+  
+  const timestamp = Date.now();
+  
+  return [
+    baseImage,
+    `${baseImage}${baseImage.includes('?') ? '&' : '?'}v=alt&t=${timestamp}`,
+    `${baseImage}${baseImage.includes('?') ? '&' : '?'}v=main&t=${timestamp+1}`,
+  ];
+};

@@ -1,7 +1,7 @@
 
 import { Product } from "@/contexts/ProductContext";
 import { useEffect, useState } from "react";
-import { createImageVariations } from "./imageUtils";
+import { generateImageVariations } from "./carousel/utils/imageUtils";
 
 /**
  * Custom hook to manage product images with improved organization and uniqueness
@@ -52,7 +52,7 @@ function getProcessedImages(product: Product): string[] {
       
       // If we have too few unique images, generate more variations
       if (uniqueImages.length < 3 && product.image) {
-        const extraVariations = createImageVariations(product.image, product.name)
+        const extraVariations = generateImageVariations(product.image, product.name)
           .filter(img => !uniqueImages.includes(img));
         uniqueImages.push(...extraVariations.slice(0, 3)); // Add up to 3 extras
       }
@@ -65,7 +65,7 @@ function getProcessedImages(product: Product): string[] {
   // Case 2: Product only has a single image
   if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
     // Generate variations with distinct parameters to ensure uniqueness
-    const imageVariations = createImageVariations(product.image, product.name);
+    const imageVariations = generateImageVariations(product.image, product.name);
     console.log("Using single product.image with enhanced variations:", imageVariations);
     return imageVariations;
   }

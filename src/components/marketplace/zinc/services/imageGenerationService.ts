@@ -1,6 +1,6 @@
 
 import { ZincProduct } from '../types';
-import { createImageVariations, extractAmazonProductId } from '../../product-details/carousel/utils/imageUtils';
+import { processImages } from '../../product-details/carousel/utils/imageUtils';
 
 /**
  * Generate product detail images for a zinc product
@@ -117,6 +117,20 @@ export function createImageVariations(baseImage: string, productName: string): s
     `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=zoom&view=detail&t=${timestamp + 1}`,
     `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=other&view=front&t=${timestamp + 2}`,
   ].filter(Boolean); // Remove any falsy values
+}
+
+/**
+ * Extract Amazon product ID from image URL
+ */
+function extractAmazonProductId(url: string): string | null {
+  const regex = /\/images\/I\/([A-Za-z0-9]+)(\._.*)?/;
+  const match = url.match(regex);
+  
+  if (match && match[1]) {
+    return match[1];
+  }
+  
+  return null;
 }
 
 /**

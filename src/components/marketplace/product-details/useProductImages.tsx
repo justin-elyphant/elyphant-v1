@@ -26,16 +26,16 @@ export const useProductImages = (product: Product | null) => {
       // Try to fetch additional images for Amazon products
       if (product.vendor === "Amazon via Zinc" && product.image && product.image.includes('amazon.com')) {
         try {
-          // If it's an Amazon product with an asin/product_id, try to fetch more details
-          if (product.product_id) {
-            console.log("Fetching additional product details for Amazon product:", product.product_id);
-            const details = await fetchProductDetails(product.product_id);
-            
-            if (details && details.images && details.images.length > 0) {
-              console.log("Found additional images from product details:", details.images.length);
-              setImages([...new Set(details.images)]);
-              return;
-            }
+          // If it's an Amazon product, try to fetch more details using the product's ID
+          const productIdToUse = String(product.id); // Convert the numeric ID to string
+          
+          console.log("Fetching additional product details for Amazon product:", productIdToUse);
+          const details = await fetchProductDetails(productIdToUse);
+          
+          if (details && details.images && details.images.length > 0) {
+            console.log("Found additional images from product details:", details.images.length);
+            setImages([...new Set(details.images)]);
+            return;
           }
         } catch (error) {
           console.error("Error fetching additional product images:", error);
@@ -104,3 +104,4 @@ function getProcessedImages(product: Product): string[] {
   console.log("Using placeholder image");
   return ["/placeholder.svg"];
 }
+

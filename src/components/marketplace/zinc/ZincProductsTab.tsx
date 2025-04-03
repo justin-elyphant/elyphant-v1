@@ -27,7 +27,8 @@ const ZincProductsTab = () => {
     }
   }, [searchTerm]);
   
-  const amazonProducts = products.filter(p => p.vendor === "Amazon via Zinc");
+  // Get only products from our marketplace integration
+  const marketplaceProducts = products.filter(p => p.vendor === "Elyphant");
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +65,7 @@ const ZincProductsTab = () => {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search Amazon products..."
+            placeholder="Search products..."
             className="pl-8"
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
@@ -100,17 +101,17 @@ const ZincProductsTab = () => {
         <div className="flex justify-center py-8">
           <p className="text-muted-foreground">Loading products...</p>
         </div>
-      ) : amazonProducts.length === 0 ? (
+      ) : marketplaceProducts.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-6">
             <p className="text-center text-muted-foreground">
-              No Amazon products found. Search for products or sync with Amazon to import products.
+              No products found. Search for products or sync to import products.
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {amazonProducts.map(product => (
+          {marketplaceProducts.map(product => (
             <Card key={product.id}>
               <CardContent className="p-4 flex gap-4">
                 <div className="w-20 h-20 rounded overflow-hidden shrink-0">

@@ -15,6 +15,7 @@ export const useMarketplaceSearch = () => {
   const toastShownRef = useRef(false);
   const searchIdRef = useRef<string | null>(null);
   const lastSearchTermRef = useRef<string | null>(null);
+  const RESULTS_LIMIT = 100; // Set limit to 100 products
 
   // Reset toast shown flag when component unmounts or after a delay
   useEffect(() => {
@@ -58,6 +59,7 @@ export const useMarketplaceSearch = () => {
         const searchZincProducts = async () => {
           setIsLoading(true);
           try {
+            // Request more products (we'll get up to 100 now)
             const results = await searchProducts(searchParam);
             
             if (results.length > 0) {
@@ -68,26 +70,27 @@ export const useMarketplaceSearch = () => {
                 price: product.price,
                 category: product.category || "Electronics",
                 image: product.image || "/placeholder.svg",
-                vendor: "Amazon via Zinc",
+                vendor: "Elyphant", // Changed from "Amazon via Zinc"
                 description: product.description || ""
               }));
               
               // Update products in context
               setProducts(prevProducts => {
                 // Filter out any existing Amazon products
-                const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
-                // Add the new Amazon products
-                return [...nonAmazonProducts, ...amazonProducts];
+                const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
+                // Add the new Amazon products, limit to RESULTS_LIMIT
+                return [...nonAmazonProducts, ...amazonProducts.slice(0, RESULTS_LIMIT)];
               });
               
               // Set filtered products to include amazonProducts and any matching store products
               const storeProducts = products.filter(product => 
-                product.vendor !== "Amazon via Zinc" && 
+                product.vendor !== "Amazon via Zinc" && product.vendor !== "Elyphant" && 
                 (product.name.toLowerCase().includes(searchParam.toLowerCase()) || 
                 (product.description && product.description.toLowerCase().includes(searchParam.toLowerCase())))
               );
               
-              setFilteredProducts([...amazonProducts, ...storeProducts]);
+              // Combine and limit to RESULTS_LIMIT
+              setFilteredProducts([...amazonProducts.slice(0, RESULTS_LIMIT), ...storeProducts]);
               
               // Show only ONE toast notification with a summary if it's a new search
               if (!toastShownRef.current && searchChanged) {
@@ -97,7 +100,7 @@ export const useMarketplaceSearch = () => {
                     toastShownRef.current = true;
                     toast({
                       title: "Search Complete",
-                      description: `Found ${amazonProducts.length} products matching "${searchParam}"`,
+                      description: `Found ${Math.min(amazonProducts.length, RESULTS_LIMIT)} products matching "${searchParam}"`,
                       id: "search-complete", // Use consistent ID
                       duration: 3000 // Show for 3 seconds only
                     });
@@ -111,7 +114,7 @@ export const useMarketplaceSearch = () => {
                 (product.description && product.description.toLowerCase().includes(searchParam.toLowerCase()))
               );
               
-              setFilteredProducts(storeProducts);
+              setFilteredProducts(storeProducts.slice(0, RESULTS_LIMIT));
               
               // Only show toast if we have no results at all and haven't shown one yet for this search
               if (storeProducts.length === 0 && !toastShownRef.current && searchChanged) {
@@ -141,7 +144,7 @@ export const useMarketplaceSearch = () => {
                   toastShownRef.current = true;
                   toast({
                     title: "Search Error",
-                    description: "Error searching for Amazon products",
+                    description: "Error searching for products",
                     variant: "destructive",
                     id: "search-error", // Use consistent ID
                     duration: 3000 // Show for 3 seconds only
@@ -156,7 +159,7 @@ export const useMarketplaceSearch = () => {
               (product.description && product.description.toLowerCase().includes(searchParam.toLowerCase()))
             );
             
-            setFilteredProducts(filteredStoreProducts);
+            setFilteredProducts(filteredStoreProducts.slice(0, RESULTS_LIMIT));
           } finally {
             setIsLoading(false);
           }
@@ -166,10 +169,10 @@ export const useMarketplaceSearch = () => {
       } else if (categoryParam) {
         // Filter by category if no search term
         const filtered = products.filter(product => product.category === categoryParam);
-        setFilteredProducts(filtered.length ? filtered : products);
+        setFilteredProducts(filtered.length ? filtered.slice(0, RESULTS_LIMIT) : products.slice(0, RESULTS_LIMIT));
       } else {
         // No search term or category, show all products
-        setFilteredProducts(products);
+        setFilteredProducts(products.slice(0, RESULTS_LIMIT));
       }
     }
   }, [location.search, products, setProducts]);
@@ -182,7 +185,7 @@ export const useMarketplaceSearch = () => {
     const pageTitle = searchParam ? `Search results for "${searchParam}"` : categoryName;
     const subtitle = searchParam 
       ? `Found ${filteredProducts.length} items matching your search`
-      : `Browse our collection of ${currentCategory ? categoryName.toLowerCase() : "products"} from trusted vendors`;
+      : `Browse our collection of ${currentCategory ? categoryName.toLowerCase() : "products"}`;
 
     return { pageTitle, subtitle };
   };

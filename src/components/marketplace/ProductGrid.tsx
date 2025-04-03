@@ -24,6 +24,7 @@ interface ProductGridProps {
 
 const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+  const [showProductDetails, setShowProductDetails] = useState<number | null>(null);
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [userData] = useLocalStorage("userData", null);
@@ -44,6 +45,14 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
     setShowSignUpDialog(false);
     navigate("/sign-up");
   };
+  
+  const handleProductClick = (productId: number) => {
+    setShowProductDetails(productId);
+  };
+  
+  const selectedProduct = showProductDetails !== null 
+    ? products.find(p => p.id === showProductDetails)
+    : null;
 
   if (products.length === 0) {
     return (
@@ -61,11 +70,15 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
         : 'space-y-4'}`}
       >
         {products.map((product, index) => (
-          <div key={index} className={`${
-            viewMode === 'grid' 
-              ? 'group border rounded-md overflow-hidden hover:shadow-md transition-shadow' 
-              : 'flex border rounded-md overflow-hidden hover:shadow-md transition-shadow'
-          }`}>
+          <div 
+            key={index} 
+            className={`${
+              viewMode === 'grid' 
+                ? 'group border rounded-md overflow-hidden hover:shadow-md transition-shadow cursor-pointer' 
+                : 'flex border rounded-md overflow-hidden hover:shadow-md transition-shadow cursor-pointer'
+            }`}
+            onClick={() => handleProductClick(product.id)}
+          >
             <div className={`${viewMode === 'list' ? 'w-1/3' : 'w-full'} relative`}>
               <img 
                 src={product.image || '/placeholder.svg'} 
@@ -100,7 +113,7 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
             
             <div className={`p-4 ${viewMode === 'list' ? 'w-2/3' : 'w-full'}`}>
               <h3 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h3>
-              <div className="text-sm text-muted-foreground mb-2">{product.vendor}</div>
+              {/* Vendor information hidden as requested */}
               <div className="font-bold">${product.price?.toFixed(2)}</div>
               <div className="mt-2 flex justify-between items-center">
                 <span className="text-xs text-green-600">Free shipping</span>
@@ -118,6 +131,58 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
         ))}
       </div>
 
+      {/* Product Details Dialog */}
+      {selectedProduct && (
+        <Dialog open={showProductDetails !== null} onOpenChange={(open) => !open && setShowProductDetails(null)}>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl">{selectedProduct.name}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+              <div className="relative overflow-hidden rounded-md">
+                <img 
+                  src={selectedProduct.image} 
+                  alt={selectedProduct.name} 
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+              
+              <div className="flex flex-col space-y-4">
+                <div>
+                  <h3 className="text-2xl font-bold">${selectedProduct.price.toFixed(2)}</h3>
+                  <span className="text-green-600 text-sm">Free shipping</span>
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  <p className="mb-2">{selectedProduct.description || "No product description available."}</p>
+                </div>
+                
+                <div className="mt-auto pt-4 flex flex-col space-y-2">
+                  <Button 
+                    onClick={() => {
+                      addToCart(selectedProduct);
+                      toast.success("Product added to cart!");
+                    }}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
+                  
+                  {userData && (
+                    <Button variant="outline">
+                      <Heart className="h-4 w-4 mr-2" />
+                      Add to Wishlist
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Sign Up Dialog */}
       <Dialog open={showSignUpDialog} onOpenChange={setShowSignUpDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

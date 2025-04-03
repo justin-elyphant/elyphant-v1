@@ -27,7 +27,7 @@ export const useZincProducts = () => {
     price: zincProduct.price,
     category: zincProduct.category || "Electronics",
     image: zincProduct.image || "/placeholder.svg",
-    vendor: "Amazon via Zinc",
+    vendor: "Elyphant", // Changed from "Amazon via Zinc"
     description: zincProduct.description || ""
   });
 
@@ -39,7 +39,7 @@ export const useZincProducts = () => {
     if (results.length > 0) {
       setProducts(prevProducts => {
         // Filter out any existing Amazon products
-        const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
+        const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
         
         // Convert ZincProduct to Product format
         const amazonProducts = results.map(convertZincProductToProduct);
@@ -59,7 +59,7 @@ export const useZincProducts = () => {
     if (results.length > 0) {
       setProducts(prevProducts => {
         // Filter out any existing Amazon products
-        const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
+        const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
         
         // Convert ZincProduct to Product format
         const amazonProducts = results.map(convertZincProductToProduct);

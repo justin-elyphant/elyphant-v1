@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AddEventDialog from "@/components/gifting/events/AddEventDialog";
+import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
 
 const Events = () => {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);

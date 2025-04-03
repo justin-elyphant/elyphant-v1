@@ -5,23 +5,47 @@ import { ZincProduct } from '../types';
  * Generate product detail images for a zinc product
  */
 export function generateProductDetailImages(data: any, mainImage: string): string[] {
-  // Start with any existing images
-  const existingImages = Array.isArray(data.images) ? data.images : [];
+  // Start with any existing images from the product data
+  const existingImages: string[] = [];
   
-  // For Amazon images, just use the original image to avoid showing wrong products
-  if (typeof mainImage === 'string' && 
-      (mainImage.includes('amazon.com') || mainImage.includes('m.media-amazon.com'))) {
-    return [mainImage];
+  // Extract images from the product data
+  if (data) {
+    // If data.images is an array and has content, use those images
+    if (Array.isArray(data.images) && data.images.length > 0) {
+      data.images.forEach((img: string) => {
+        if (img && typeof img === 'string' && !existingImages.includes(img)) {
+          existingImages.push(img);
+        }
+      });
+    }
+    
+    // If data has additional_images array, add those too
+    if (Array.isArray(data.additional_images) && data.additional_images.length > 0) {
+      data.additional_images.forEach((img: string) => {
+        if (img && typeof img === 'string' && !existingImages.includes(img)) {
+          existingImages.push(img);
+        }
+      });
+    }
+    
+    // If there's a main product image and it's not in our array yet, add it
+    if (data.image && typeof data.image === 'string' && !existingImages.includes(data.image)) {
+      existingImages.push(data.image);
+    }
   }
   
-  // Generate variations from the main image only if not an Amazon URL
-  const variations = generateBasicVariations(mainImage);
+  // If we have the main image and it's not already included, add it
+  if (mainImage && typeof mainImage === 'string' && !existingImages.includes(mainImage)) {
+    existingImages.push(mainImage);
+  }
   
-  // Combine and deduplicate
-  const allImages = [...existingImages, ...variations];
+  // If we still have no images, use the main image or placeholder
+  if (existingImages.length === 0) {
+    return mainImage ? [mainImage] : ['/placeholder.svg'];
+  }
   
-  // Return unique set
-  return [...new Set(allImages)];
+  // Return our collection of unique images
+  return existingImages;
 }
 
 /**
@@ -32,36 +56,8 @@ export function generateProductImages(mainImage: string, productTitle: string): 
     return ["/placeholder.svg"];
   }
   
-  // For Amazon images, just return the original to avoid showing wrong products
-  if (mainImage.includes('amazon.com') || mainImage.includes('m.media-amazon.com')) {
-    return [mainImage];
-  }
-  
-  // Generate simple variations
-  return generateBasicVariations(mainImage);
-}
-
-/**
- * Create basic image variations that won't result in wrong products
- */
-function generateBasicVariations(baseImage: string): string[] {
-  // Return placeholder if no base image
-  if (!baseImage) {
-    return ["/placeholder.svg"];
-  }
-  
-  // Just use the original image for Amazon to avoid showing wrong products
-  if (typeof baseImage === 'string' && 
-      (baseImage.includes('amazon.com') || baseImage.includes('m.media-amazon.com'))) {
-    return [baseImage];
-  }
-  
-  // For non-Amazon images, add minimal URL parameters
-  const timestamp = Date.now();
-  return [
-    baseImage,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}t=${timestamp}`
-  ];
+  // For product listings, just return the main image
+  return [mainImage];
 }
 
 /**

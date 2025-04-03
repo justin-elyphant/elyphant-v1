@@ -27,8 +27,15 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
     // Create a base image URL - ensure it's not undefined
     const mainImage = (data.images && data.images[0]) || data.image || '/placeholder.svg';
     
-    // Generate images for the product detail
+    // Generate images for the product detail by collecting all available images
     const images = generateProductDetailImages(data, mainImage);
+    
+    // Log image collection results
+    console.log(`Collected ${images.length} images for product:`, {
+      productId,
+      title: data.title,
+      imageCount: images.length
+    });
     
     return {
       product_id: data.product_id || data.asin,

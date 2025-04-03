@@ -1,8 +1,9 @@
 
 import { Product } from "@/contexts/ProductContext";
 import { useEffect, useState } from "react";
-import { generateImageVariations } from "./carousel/utils/imageUtils";
+import { processImages } from "./carousel/utils/imageUtils";
 import { getExactProductImage } from "../zinc/utils/images/productImageUtils";
+import { searchProducts, fetchProductDetails } from "../zinc/zincService";
 
 /**
  * Custom hook to manage product images with improved organization and uniqueness
@@ -21,15 +22,38 @@ export const useProductImages = (product: Product | null) => {
       image: product.image
     });
     
-    // Process images from the product
-    const processedImages = getProcessedImages(product);
+    async function loadAndSetImages() {
+      // Try to fetch additional images for Amazon products
+      if (product.vendor === "Amazon via Zinc" && product.image && product.image.includes('amazon.com')) {
+        try {
+          // If it's an Amazon product with an asin/product_id, try to fetch more details
+          if (product.product_id) {
+            console.log("Fetching additional product details for Amazon product:", product.product_id);
+            const details = await fetchProductDetails(product.product_id);
+            
+            if (details && details.images && details.images.length > 0) {
+              console.log("Found additional images from product details:", details.images.length);
+              setImages([...new Set(details.images)]);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching additional product images:", error);
+        }
+      }
+      
+      // Process images from the product if we couldn't fetch additional ones
+      const processedImages = getProcessedImages(product);
+      
+      // Ensure we have unique images by using Set
+      const uniqueImages = Array.from(new Set(processedImages));
+      
+      // Set the final image array
+      console.log("Final unique image array length:", uniqueImages.length);
+      setImages(uniqueImages);
+    }
     
-    // Ensure we have unique images by using Set
-    const uniqueImages = Array.from(new Set(processedImages));
-    
-    // Set the final image array
-    console.log("Final unique image array length:", uniqueImages.length);
-    setImages(uniqueImages);
+    loadAndSetImages();
   }, [product]);
 
   return images;
@@ -48,27 +72,6 @@ function getProcessedImages(product: Product): string[] {
     
     // If we have valid images after filtering, use them
     if (filteredImages.length > 0) {
-      // For Amazon images, only use the original image from the array to avoid mixing products
-      const isAmazonImage = filteredImages[0]?.includes('amazon.com') || filteredImages[0]?.includes('m.media-amazon.com');
-      
-      if (isAmazonImage) {
-        // For Amazon, just use the first image and maybe one category-specific image
-        const baseImage = filteredImages[0];
-        const result = [baseImage];
-        
-        // Try to add a category-specific image if applicable
-        if (product.category) {
-          const specificImage = getExactProductImage(product.name, product.category);
-          if (specificImage && !result.includes(specificImage)) {
-            result.push(specificImage);
-          }
-        }
-        
-        console.log("Using Amazon product with minimal variations:", result);
-        return result;
-      }
-      
-      // For non-Amazon images, use the array as-is
       console.log("Using product.images array:", filteredImages);
       return filteredImages;
     }
@@ -76,29 +79,25 @@ function getProcessedImages(product: Product): string[] {
   
   // Case 2: Product only has a single image
   if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
-    // For Amazon images, be very conservative with variations
-    const isAmazonImage = product.image.includes('amazon.com') || product.image.includes('m.media-amazon.com');
-    
-    if (isAmazonImage) {
-      // For Amazon, just use the original image plus maybe one category image
+    // For Amazon products, try to add a category-specific image as well
+    if (product.image.includes('amazon.com') || product.image.includes('m.media-amazon.com')) {
       const result = [product.image];
       
-      // Try to add a category-specific image if we have one
+      // Try to add a category-specific image if applicable
       if (product.category) {
         const specificImage = getExactProductImage(product.name, product.category);
-        if (specificImage && !result.includes(specificImage)) {
+        if (specificImage && specificImage !== product.image) {
           result.push(specificImage);
         }
       }
       
-      console.log("Using single Amazon image with minimal variations:", result);
+      console.log("Using Amazon product image with category image:", result);
       return result;
     }
     
-    // For non-Amazon images, generate variations more safely
-    const imageVariations = generateImageVariations(product.image, product.name);
-    console.log("Using single product.image with variations:", imageVariations);
-    return imageVariations;
+    // For non-Amazon images, just use the single image
+    console.log("Using single product.image:", [product.image]);
+    return [product.image];
   }
   
   // Case 3: Fallback to placeholder only if no valid product images

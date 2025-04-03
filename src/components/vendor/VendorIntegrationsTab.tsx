@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import ShopifyIntegration from "@/components/marketplace/ShopifyIntegration";
 import DirectAPIIntegration from "@/components/marketplace/DirectAPIIntegration";
+import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
 
 const VendorIntegrationsTab = () => {
   return (
@@ -49,14 +50,11 @@ const VendorIntegrationsTab = () => {
         <CardHeader>
           <CardTitle>Amazon Integration via Zinc</CardTitle>
           <CardDescription>
-            Connect to Amazon's product catalog using Zinc API
+            Connect to Amazon's product catalog, process orders, handle returns, and manage Elephant Credits
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Use Zinc's API to access Amazon products and process orders. Note: Zinc charges $1 per transaction.
-          </p>
-          <Button variant="outline">Configure Zinc API</Button>
+          <ZincIntegration />
         </CardContent>
       </Card>
     </>

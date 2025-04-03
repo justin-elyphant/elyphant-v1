@@ -178,7 +178,8 @@ function createMockResults(term: string, category: string, count = 10): ZincProd
   
   for (let i = 0; i < count; i++) {
     const brand = brands[i % brands.length];
-    const price = 19.99 + (i * 10) + (Math.random() * 5).toFixed(2);
+    // Fix: Convert the calculation to a number first, then use toFixed
+    const price = 19.99 + (i * 10) + parseFloat((Math.random() * 5).toFixed(2));
     
     results.push({
       product_id: `mock-${term.replace(/\s+/g, '-')}-${i}`,

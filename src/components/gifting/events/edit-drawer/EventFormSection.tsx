@@ -45,10 +45,10 @@ const EventFormSection = ({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-1.5">
-        <Label htmlFor="occasion-type">
-          <Tag className="h-4 w-4 mr-2 inline-block" />
+    <div className="space-y-2">
+      <div className="space-y-1">
+        <Label htmlFor="occasion-type" className="flex items-center text-sm font-medium">
+          <Tag className="h-3.5 w-3.5 mr-1.5" />
           Occasion Type
         </Label>
         <Input
@@ -56,12 +56,13 @@ const EventFormSection = ({
           value={type}
           onChange={(e) => setType(e.target.value)}
           placeholder="Birthday, Anniversary, etc."
+          className="h-8"
         />
       </div>
       
-      <div className="space-y-1.5">
-        <Label htmlFor="person">
-          <User className="h-4 w-4 mr-2 inline-block" />
+      <div className="space-y-1">
+        <Label htmlFor="person" className="flex items-center text-sm font-medium">
+          <User className="h-3.5 w-3.5 mr-1.5" />
           Person
         </Label>
         <Input
@@ -69,12 +70,13 @@ const EventFormSection = ({
           value={person}
           onChange={(e) => setPerson(e.target.value)}
           placeholder="Name of the person"
+          className="h-8"
         />
       </div>
       
-      <div className="space-y-1.5">
-        <Label htmlFor="date" className="flex items-center">
-          <CalendarIcon className="h-4 w-4 mr-2" />
+      <div className="space-y-1">
+        <Label htmlFor="date" className="flex items-center text-sm font-medium">
+          <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
           Date
         </Label>
         <Popover>
@@ -82,12 +84,12 @@ const EventFormSection = ({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal",
+                "w-full justify-start text-left font-normal h-8",
                 !date && "text-muted-foreground",
                 "border-input"
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="mr-2 h-3.5 w-3.5" />
               {date ? date : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>

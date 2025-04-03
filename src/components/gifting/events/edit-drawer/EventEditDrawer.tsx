@@ -67,7 +67,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
           </DrawerDescription>
         </DrawerHeader>
         
-        <div className="px-4 pt-0 pb-0 space-y-3">
+        <div className="px-4 py-2 space-y-3">
           <EventFormSection 
             type={type}
             person={person}
@@ -77,7 +77,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setDate={setDate}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20" />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-2" />
           
           <AutoGiftSection 
             autoGiftEnabled={autoGiftEnabled}
@@ -88,7 +88,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setGiftSource={setGiftSource}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20" />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-2" />
           
           <PrivacySection 
             privacyLevel={privacyLevel}
@@ -96,7 +96,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
           />
         </div>
         
-        <DrawerFooter className="pt-3 pb-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+        <DrawerFooter className="pt-2 pb-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
           <div className="flex items-center justify-between w-full gap-3">
             <Button 
               onClick={handleSave} 

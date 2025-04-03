@@ -11,11 +11,11 @@ interface AutoGiftToggleProps {
 
 const AutoGiftToggle = ({ enabled, setEnabled }: AutoGiftToggleProps) => {
   return (
-    <Card className="p-2.5 border border-primary/20 bg-gradient-to-r from-purple-50/50 to-white dark:from-purple-900/10 dark:to-transparent">
+    <Card className="p-2 border border-primary/20 bg-gradient-to-r from-purple-50/50 to-white dark:from-purple-900/10 dark:to-transparent">
       <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
+        <div className="space-y-0">
           <Label htmlFor="auto-gift" className="font-medium">Enable Auto-Gifting</Label>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Automatically send a gift for this occasion
           </p>
         </div>

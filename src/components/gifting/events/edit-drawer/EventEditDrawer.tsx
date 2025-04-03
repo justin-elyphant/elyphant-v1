@@ -59,7 +59,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[60vh] overflow-y-auto max-w-md mx-auto rounded-t-xl">
+      <DrawerContent className="max-h-[400px] overflow-y-auto max-w-md mx-auto rounded-t-xl top-[20vh]">
         <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl py-2">
           <DrawerTitle className="text-primary text-lg">Edit Gift Occasion</DrawerTitle>
           <DrawerDescription className="text-muted-foreground text-sm">
@@ -77,7 +77,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setDate={setDate}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1.5" />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />
           
           <AutoGiftSection 
             autoGiftEnabled={autoGiftEnabled}
@@ -88,7 +88,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setGiftSource={setGiftSource}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1.5" />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />
           
           <PrivacySection 
             privacyLevel={privacyLevel}

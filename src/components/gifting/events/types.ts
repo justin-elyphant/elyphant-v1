@@ -16,6 +16,7 @@ export interface ExtendedEventData extends EventData {
   isVerified?: boolean;
   needsVerification?: boolean;
   giftSource?: "wishlist" | "ai" | "both";
+  dateObj?: Date | null; // Add this property to fix the type error
 }
 
 export type FilterOption = "all" | string;

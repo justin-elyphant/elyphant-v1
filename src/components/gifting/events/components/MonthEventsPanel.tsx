@@ -57,7 +57,7 @@ const MonthEventsPanel = ({
               <div className="flex justify-between items-center">
                 <span className="font-medium">{event.person}</span>
                 <span className="text-xs text-muted-foreground">
-                  {event.dateObj ? formatEventDate(event.dateObj) : event.date}
+                  {formatEventDate(event.dateObj || null)}
                 </span>
               </div>
               <div className="flex justify-between items-center mt-1">

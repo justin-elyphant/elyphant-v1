@@ -13,6 +13,7 @@ export type ZincProduct = {
   review_count?: number;
   features?: string[];
   specifications?: Record<string, string>;
+  isBestSeller?: boolean;
 };
 
 // Zinc Order type (used by orderService.ts)

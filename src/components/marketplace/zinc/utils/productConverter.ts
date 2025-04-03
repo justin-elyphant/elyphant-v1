@@ -42,6 +42,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct, index: num
     description: productDescription,
     features: features,
     specifications: specifications,
-    images: productImages
+    images: productImages,
+    isBestSeller: zincProduct.isBestSeller || false
   };
 };

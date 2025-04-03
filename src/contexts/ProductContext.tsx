@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
@@ -18,6 +17,7 @@ export type Product = {
   images?: string[];
   features?: string[];
   specifications?: Record<string, string>;
+  isBestSeller?: boolean;
 };
 
 type ProductContextType = {
@@ -99,7 +99,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
             description: product.description || generateDescription(product.name, product.category || "Electronics"),
             images: product.images || [product.image],
             features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
-            specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics")
+            specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
+            isBestSeller: product.isBestSeller || false
           }));
           
           setProducts(shopifyProductsWithVendor);
@@ -123,7 +124,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
           description: product.description || generateDescription(product.name, product.category || "Electronics"),
           images: product.images || [product.image],
           features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
-          specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics")
+          specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
+          isBestSeller: product.isBestSeller || false
         }));
         
         setProducts(enrichedProducts);
@@ -138,12 +140,13 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         console.log(`ProductContext: Loaded ${mockProducts.length} mock products`);
         
         // Enrich mock products with descriptions and images if missing
-        const enrichedMockProducts = mockProducts.map(product => ({
+        const enrichedMockProducts = mockProducts.map((product, index) => ({
           ...product,
           description: product.description || generateDescription(product.name, product.category || "Electronics"),
           images: product.images || [product.image],
           features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
-          specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics")
+          specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
+          isBestSeller: product.isBestSeller || (index < Math.ceil(mockProducts.length * 0.1)) // Mark top 10% as best sellers
         }));
         
         setProducts(enrichedMockProducts);

@@ -131,7 +131,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       (correctedQuery.includes("nike") && correctedQuery.includes("shoe"))) {
     console.log(`SearchUtils: Found special match for Nike Shoes`);
     // Return more products (minimum 100)
-    return createMockResults("Nike Shoes", "Footwear", 100);
+    return createMockResults("Nike Shoes", "Footwear", 100, 4.5, 5.0, "Nike", true);
   }
   
   // Apple products special handling
@@ -140,7 +140,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       correctedQuery.includes("macbook") || 
       correctedQuery.includes("ipad")) {
     console.log(`SearchUtils: Found special match for Apple products`);
-    return createMockResults("Apple Products", "Apple", 100, 4.2, 5.0, "Apple");
+    return createMockResults("Apple Products", "Apple", 100, 4.2, 5.0, "Apple", true);
   }
   
   // Check for well-known brands and products
@@ -166,26 +166,26 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       if (specificProducts[mappedTerm]) {
         // For Nike, always create a larger set of results
         if (term === "nike") {
-          return createMockResults("Nike Products", "Nike", 100, 4.0, 5.0, "Nike");
+          return createMockResults("Nike Products", "Nike", 100, 4.0, 5.0, "Nike", true);
         }
         return specificProducts[mappedTerm];
       }
       
       // If not, let's create some fallback results for common searches
       if (mappedTerm === "dallas cowboys") {
-        return createMockResults(mappedTerm, "Sports", 100, 4.3, 5.0, "Sports");
+        return createMockResults(mappedTerm, "Sports", 100, 4.3, 5.0, "Sports", true);
       } else if (mappedTerm.includes("shoes")) {
-        return createMockResults(mappedTerm, "Footwear", 100, 4.1, 5.0, mappedTerm.split(' ')[0]);
+        return createMockResults(mappedTerm, "Footwear", 100, 4.1, 5.0, mappedTerm.split(' ')[0], true);
       } else if (mappedTerm.includes("samsung") || mappedTerm.includes("iphone")) {
-        return createMockResults(mappedTerm, mappedTerm.includes("samsung") ? "Samsung" : "Apple", 100, 4.4, 5.0, mappedTerm.split(' ')[0]);
+        return createMockResults(mappedTerm, mappedTerm.includes("samsung") ? "Samsung" : "Apple", 100, 4.4, 5.0, mappedTerm.split(' ')[0], true);
       } else if (mappedTerm.includes("xbox") || mappedTerm.includes("playstation")) {
-        return createMockResults(mappedTerm, "Gaming", 100, 4.7, 5.0, mappedTerm.split(' ')[0]);
+        return createMockResults(mappedTerm, "Gaming", 100, 4.7, 5.0, mappedTerm.split(' ')[0], true);
       }
     }
   }
   
   // Generic search - always return at least 100 items
-  return createMockResults(correctedQuery, imageCategory, 100, 3.5, 5.0);
+  return createMockResults(correctedQuery, imageCategory, 100, 3.5, 5.0, undefined, true);
 };
 
 /**

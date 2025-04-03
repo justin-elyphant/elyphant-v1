@@ -40,6 +40,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
     });
   };
 
+  // Format price to always show 2 decimal places
+  const formatPrice = (price: number) => {
+    return price.toFixed(2);
+  };
+
   // Render star ratings if available
   const renderRating = () => {
     if (!product.rating) return null;
@@ -104,8 +109,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </div>
       <CardContent className="p-3">
         <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
-        {/* Vendor information hidden as requested */}
-        <p className="font-semibold text-sm">${product.price.toFixed(2)}</p>
+        <p className="font-semibold text-sm">${formatPrice(product.price)}</p>
         
         {renderRating()}
         

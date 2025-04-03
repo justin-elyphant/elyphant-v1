@@ -38,6 +38,11 @@ const ProductItem = ({
     setImageError(true);
   };
 
+  // Format price to always show 2 decimal places
+  const formatPrice = (price: number) => {
+    return price.toFixed(2);
+  };
+
   // Render star ratings
   const renderRating = (rating?: number, reviewCount?: number) => {
     if (!rating) return null;
@@ -202,7 +207,7 @@ const ProductItem = ({
       <div className={`p-4 ${viewMode === 'list' ? 'w-2/3' : 'w-full'}`}>
         <h3 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h3>
         {renderRating(product.rating, product.reviewCount)}
-        <div className="font-bold mt-1">${product.price?.toFixed(2)}</div>
+        <div className="font-bold mt-1">${formatPrice(product.price)}</div>
         <div className="mt-2 flex justify-between items-center">
           <span className="text-xs text-green-600">Free shipping</span>
           <Button 

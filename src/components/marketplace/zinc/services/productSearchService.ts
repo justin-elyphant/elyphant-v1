@@ -47,7 +47,8 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
           review_count: item.num_reviews || item.review_count || 0,
           features: item.features || item.bullet_points || [],
           specifications: item.specifications || {},
-          isBestSeller: isBestSeller
+          isBestSeller: isBestSeller,
+          images: item.images || [item.image || '/placeholder.svg']
         };
       });
     }

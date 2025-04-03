@@ -1,7 +1,8 @@
+
 import React, { useState } from "react";
 import { toast } from "sonner";
 import EventHeader from "./events/EventHeader";
-import EventEditDrawer from "./events/EventEditDrawer";
+import EventEditDrawer from "./events/edit-drawer/EventEditDrawer";
 import EventCalendarView from "./events/EventCalendarView";
 import EventCardsView from "./events/EventCardsView";
 import EventViewToggle from "./events/EventViewToggle";

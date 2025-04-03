@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Filter, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Product } from "@/contexts/ProductContext";
+import { getSortOptions } from "./hooks/utils/categoryUtils";
 
 interface MarketplaceFiltersProps {
   showFilters: boolean;
@@ -11,6 +11,8 @@ interface MarketplaceFiltersProps {
   viewMode: "grid" | "list";
   setViewMode: (mode: "grid" | "list") => void;
   totalItems: number;
+  sortOption: string;
+  onSortChange: (option: string) => void;
 }
 
 const MarketplaceFilters = ({
@@ -18,8 +20,16 @@ const MarketplaceFilters = ({
   setShowFilters,
   viewMode,
   setViewMode,
-  totalItems
+  totalItems,
+  sortOption,
+  onSortChange
 }: MarketplaceFiltersProps) => {
+  const sortOptions = getSortOptions();
+  
+  const handleSortChange = (value: string) => {
+    onSortChange(value);
+  };
+  
   return (
     <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
       <div className="flex items-center gap-2">
@@ -56,15 +66,16 @@ const MarketplaceFilters = ({
         <span className="text-sm text-muted-foreground">
           {totalItems} items
         </span>
-        <Select defaultValue="relevance">
+        <Select value={sortOption} onValueChange={handleSortChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="relevance">Relevance</SelectItem>
-            <SelectItem value="price-low">Price: Low to High</SelectItem>
-            <SelectItem value="price-high">Price: High to Low</SelectItem>
-            <SelectItem value="newest">Newest</SelectItem>
+            {sortOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

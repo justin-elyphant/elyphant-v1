@@ -1,13 +1,14 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
-import { Heart, ShoppingCart, AlertCircle } from "lucide-react";
+import { Heart, ShoppingCart, AlertCircle, Star, StarHalf } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import WishlistSelectionPopover from "./WishlistSelectionPopover";
+import { sortProducts } from "./hooks/utils/categoryUtils";
 import {
   Dialog,
   DialogContent,
@@ -20,18 +21,27 @@ import {
 interface ProductGridProps {
   products: Product[];
   viewMode: "grid" | "list";
+  sortOption?: string;
 }
 
-const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
+const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [showProductDetails, setShowProductDetails] = useState<number | null>(null);
+  const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [userData] = useLocalStorage("userData", null);
 
+  // Sort products when the sort option or products change
+  useEffect(() => {
+    setSortedProducts(sortProducts(products, sortOption));
+  }, [products, sortOption]);
+
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
     addToCart(product);
+    
+    toast.success(`${product.name} added to cart`);
   };
 
   const handleWishlistClick = (e: React.MouseEvent) => {
@@ -54,7 +64,31 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
     ? products.find(p => p.id === showProductDetails)
     : null;
 
-  if (products.length === 0) {
+  // Render star ratings
+  const renderRating = (rating?: number, reviewCount?: number) => {
+    if (!rating) return null;
+    
+    // Calculate full and half stars
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    return (
+      <div className="flex items-center gap-1 mt-1">
+        <div className="flex text-yellow-500">
+          {[...Array(fullStars)].map((_, i) => (
+            <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+          ))}
+          {hasHalfStar && <StarHalf className="h-4 w-4 fill-yellow-500 text-yellow-500" />}
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {rating.toFixed(1)}
+          {reviewCount && ` (${reviewCount})`}
+        </span>
+      </div>
+    );
+  };
+
+  if (sortedProducts.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-lg font-medium">No products found</p>
@@ -69,7 +103,7 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
         ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' 
         : 'space-y-4'}`}
       >
-        {products.map((product, index) => (
+        {sortedProducts.map((product, index) => (
           <div 
             key={index} 
             className={`${
@@ -113,8 +147,8 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
             
             <div className={`p-4 ${viewMode === 'list' ? 'w-2/3' : 'w-full'}`}>
               <h3 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h3>
-              {/* Vendor information hidden as requested */}
-              <div className="font-bold">${product.price?.toFixed(2)}</div>
+              {renderRating(product.rating, product.reviewCount)}
+              <div className="font-bold mt-1">${product.price?.toFixed(2)}</div>
               <div className="mt-2 flex justify-between items-center">
                 <span className="text-xs text-green-600">Free shipping</span>
                 <Button 
@@ -151,7 +185,8 @@ const ProductGrid = ({ products, viewMode }: ProductGridProps) => {
               <div className="flex flex-col space-y-4">
                 <div>
                   <h3 className="text-2xl font-bold">${selectedProduct.price.toFixed(2)}</h3>
-                  <span className="text-green-600 text-sm">Free shipping</span>
+                  {renderRating(selectedProduct.rating, selectedProduct.reviewCount)}
+                  <span className="text-green-600 text-sm block mt-2">Free shipping</span>
                 </div>
                 
                 <div className="text-sm text-muted-foreground">

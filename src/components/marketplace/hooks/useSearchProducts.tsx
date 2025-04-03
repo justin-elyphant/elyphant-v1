@@ -25,7 +25,9 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
           category: product.category || "Electronics",
           image: product.image || "/placeholder.svg",
           vendor: "Elyphant",
-          description: product.description || ""
+          description: product.description || "",
+          rating: product.rating,
+          reviewCount: product.review_count
         }));
         
         // Update products in context

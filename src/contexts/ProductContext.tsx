@@ -12,6 +12,8 @@ export type Product = {
   vendor: string;
   variants?: string[];
   description?: string;
+  rating?: number;
+  reviewCount?: number;
 };
 
 type ProductContextType = {

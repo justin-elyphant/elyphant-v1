@@ -1,5 +1,7 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
+import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
 
 // Product type definition (matches existing type in ProductGallery)
 export type Product = {
@@ -43,10 +45,12 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
           const parsed = JSON.parse(shopifyProducts);
           console.log(`ProductContext: Loaded ${parsed.length} Shopify products from localStorage`);
           
-          // Make sure each product has vendor: "Shopify"
+          // Make sure each product has vendor: "Shopify" and enrich with descriptions if missing
           const shopifyProductsWithVendor = parsed.map((product: Product) => ({
             ...product,
-            vendor: "Shopify"
+            vendor: "Shopify",
+            description: product.description || generateDescription(product.name, product.category || "Electronics"),
+            images: product.images || [product.image]
           }));
           
           setProducts(shopifyProductsWithVendor);
@@ -63,7 +67,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       const savedProducts = loadSavedProducts();
       if (savedProducts && savedProducts.length > 0) {
         console.log(`ProductContext: Loaded ${savedProducts.length} products from localStorage`);
-        setProducts(savedProducts);
+        
+        // Enrich saved products with descriptions if missing
+        const enrichedProducts = savedProducts.map(product => ({
+          ...product,
+          description: product.description || generateDescription(product.name, product.category || "Electronics"),
+          images: product.images || [product.image]
+        }));
+        
+        setProducts(enrichedProducts);
         setIsLoading(false);
         return;
       }
@@ -73,7 +85,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       const mockProducts = loadMockProducts();
       if (mockProducts && mockProducts.length > 0) {
         console.log(`ProductContext: Loaded ${mockProducts.length} mock products`);
-        setProducts(mockProducts);
+        
+        // Enrich mock products with descriptions if missing
+        const enrichedMockProducts = mockProducts.map(product => ({
+          ...product,
+          description: product.description || generateDescription(product.name, product.category || "Electronics"),
+          images: product.images || [product.image]
+        }));
+        
+        setProducts(enrichedMockProducts);
       } else {
         console.error("ProductContext: Failed to load mock products");
       }

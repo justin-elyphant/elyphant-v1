@@ -1,11 +1,18 @@
 
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
 import { Heart, ShoppingCart, Star, StarHalf, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { 
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
+} from "@/components/ui/carousel";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -27,14 +34,6 @@ const ProductDetailsDialog = ({
 
   // Safely access images array or create a single-item array from image if images is undefined
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const previousImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
 
   const renderRating = (rating?: number, reviewCount?: number) => {
     if (!rating) return null;
@@ -63,38 +62,42 @@ const ProductDetailsDialog = ({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-xl">{product.name}</DialogTitle>
+          {product.description && (
+            <DialogDescription className="text-sm text-muted-foreground line-clamp-2">
+              {product.description.substring(0, 120)}{product.description.length > 120 ? '...' : ''}
+            </DialogDescription>
+          )}
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="relative overflow-hidden rounded-md">
-            <div className="aspect-square relative">
-              <img 
-                src={images[currentImageIndex]} 
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-              
-              {images.length > 1 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full"
-                    onClick={previousImage}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full"
-                    onClick={nextImage}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
+            {images.length > 1 ? (
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {images.map((img, idx) => (
+                    <CarouselItem key={idx}>
+                      <div className="aspect-square relative">
+                        <img 
+                          src={img} 
+                          alt={`${product.name} view ${idx + 1}`}
+                          className="w-full h-full object-cover rounded-md"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-2" />
+                <CarouselNext className="right-2" />
+              </Carousel>
+            ) : (
+              <div className="aspect-square relative">
+                <img 
+                  src={images[0]} 
+                  alt={product.name}
+                  className="w-full h-full object-cover rounded-md"
+                />
+              </div>
+            )}
             
             {images.length > 1 && (
               <div className="flex gap-2 mt-2 overflow-x-auto">
@@ -125,10 +128,12 @@ const ProductDetailsDialog = ({
             </div>
             
             <div className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">Description</h4>
-                <p className="text-sm text-muted-foreground">{product.description}</p>
-              </div>
+              {product.description && (
+                <div>
+                  <h4 className="font-medium mb-2">Description</h4>
+                  <p className="text-sm text-muted-foreground">{product.description}</p>
+                </div>
+              )}
 
               {product.features && product.features.length > 0 && (
                 <div>
@@ -140,6 +145,20 @@ const ProductDetailsDialog = ({
                   </ul>
                 </div>
               )}
+              
+              {product.specifications && Object.keys(product.specifications).length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Specifications</h4>
+                  <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-2">
+                    {Object.entries(product.specifications).map(([key, value], idx) => (
+                      <React.Fragment key={idx}>
+                        <span className="text-muted-foreground">{key}:</span>
+                        <span>{value}</span>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="mt-auto pt-4 flex flex-col space-y-2">
@@ -148,13 +167,14 @@ const ProductDetailsDialog = ({
                   addToCart(product);
                   toast.success("Product added to cart!");
                 }}
+                className="w-full"
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Add to Cart
               </Button>
               
               {userData && (
-                <Button variant="outline">
+                <Button variant="outline" className="w-full">
                   <Heart className="h-4 w-4 mr-2" />
                   Add to Wishlist
                 </Button>

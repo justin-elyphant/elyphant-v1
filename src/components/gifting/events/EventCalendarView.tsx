@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ExtendedEventData, FilterOption } from "./types";
 import EventPrivacyBadge from "./EventPrivacyBadge";
 import EventTypeFilter from "./EventTypeFilter";
+import { format } from "date-fns";
 
 interface EventCalendarViewProps {
   events: ExtendedEventData[];
@@ -35,25 +36,28 @@ const EventCalendarView = ({
 }: EventCalendarViewProps) => {
   // Get unique event types for the filter
   const eventTypes = Array.from(new Set(events.map(event => event.type)));
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   
   // Filter events based on selected type
   const filteredEvents = selectedEventType === "all" 
     ? events 
     : events.filter(event => event.type === selectedEventType);
 
-  // Convert string dates to Date objects for the calendar
-  const eventDates = filteredEvents.map(event => ({
-    ...event,
-    dateObj: parseDateString(event.date)
-  }));
+  // Parse dates more effectively
+  const eventDates = useMemo(() => {
+    return filteredEvents.map(event => ({
+      ...event,
+      dateObj: parseDateString(event.date)
+    }));
+  }, [filteredEvents]);
 
   // Function to parse various date formats
   function parseDateString(dateStr: string): Date | null {
     try {
-      // Try to parse formatted dates like "May 15, 2023"
-      const parsedDate = new Date(dateStr);
-      if (!isNaN(parsedDate.getTime())) {
-        return parsedDate;
+      // Handle formats like "May 15, 2023"
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        return date;
       }
       return null;
     } catch (e) {
@@ -71,6 +75,25 @@ const EventCalendarView = ({
       event.dateObj.getFullYear() === day.getFullYear()
     );
   };
+
+  // Get events for the currently selected date
+  const selectedDateEvents = selectedDate ? getEventsForDay(selectedDate) : [];
+
+  // Get all events for the current month
+  const currentMonthEvents = useMemo(() => {
+    if (!selectedDate) return [];
+    
+    return eventDates
+      .filter(event => 
+        event.dateObj && 
+        event.dateObj.getMonth() === selectedDate.getMonth() &&
+        event.dateObj.getFullYear() === selectedDate.getFullYear()
+      )
+      .sort((a, b) => {
+        if (!a.dateObj || !b.dateObj) return 0;
+        return a.dateObj.getTime() - b.dateObj.getTime();
+      });
+  }, [eventDates, selectedDate]);
 
   // Function to determine urgency class for dates
   const getUrgencyClass = (days: number) => {
@@ -217,6 +240,12 @@ const EventCalendarView = ({
     );
   };
 
+  // Format date for display
+  const formatEventDate = (date: Date | null) => {
+    if (!date) return "";
+    return format(date, "MMMM d, yyyy");
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
       <div className="mb-4">
@@ -232,24 +261,127 @@ const EventCalendarView = ({
         />
       </div>
       
-      <Calendar 
-        mode="single"
-        modifiers={{
-          hasEvent: (date) => getEventsForDay(date).length > 0
-        }}
-        modifiersClassNames={{
-          hasEvent: "font-bold text-primary"
-        }}
-        components={{
-          DayContent: (props) => (
-            <div className="relative">
-              <div>{props.date.getDate()}</div>
-              {renderDay(props.date)}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Calendar 
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            modifiers={{
+              hasEvent: (date) => getEventsForDay(date).length > 0
+            }}
+            modifiersClassNames={{
+              hasEvent: "font-bold text-primary bg-blue-50"
+            }}
+            components={{
+              DayContent: (props) => (
+                <div className="relative">
+                  <div>{props.date.getDate()}</div>
+                  {renderDay(props.date)}
+                </div>
+              ),
+            }}
+            className="rounded-md border pointer-events-auto"
+          />
+        </div>
+        
+        <div className="border rounded-md p-4">
+          <h3 className="font-medium mb-2">
+            {selectedDate ? format(selectedDate, "MMMM yyyy") : "Event Summary"}
+          </h3>
+          
+          {currentMonthEvents.length > 0 ? (
+            <div className="space-y-3 mt-4">
+              <h4 className="text-sm font-medium">Upcoming Events This Month</h4>
+              {currentMonthEvents.map(event => (
+                <div 
+                  key={event.id}
+                  className="p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
+                  onClick={() => onEventClick(event)}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{event.person}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {event.dateObj ? formatEventDate(event.dateObj) : event.date}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-sm">{event.type}</span>
+                    <span className={`text-xs ${getUrgencyClass(event.daysAway)}`}>
+                      {event.daysAway === 0 
+                        ? "Today!" 
+                        : event.daysAway === 1 
+                          ? "Tomorrow!" 
+                          : `In ${event.daysAway} days`}
+                    </span>
+                  </div>
+                  
+                  {event.autoGiftEnabled && (
+                    <div className="mt-1 text-xs text-green-600">
+                      Auto-gift {event.autoGiftAmount ? `$${event.autoGiftAmount}` : "enabled"}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          ),
-        }}
-        className="rounded-md border pointer-events-auto"
-      />
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              No events scheduled this month
+            </div>
+          )}
+          
+          {selectedDateEvents.length > 0 && (
+            <div className="mt-4 pt-4 border-t">
+              <h4 className="text-sm font-medium mb-2">
+                Events on {selectedDate ? format(selectedDate, "MMMM d, yyyy") : "selected date"}
+              </h4>
+              {selectedDateEvents.map(event => (
+                <div 
+                  key={event.id}
+                  className="p-2 border rounded-md bg-blue-50 mb-2 cursor-pointer"
+                  onClick={() => onEventClick(event)}
+                >
+                  <div className="font-medium">{event.person} - {event.type}</div>
+                  {event.autoGiftEnabled ? (
+                    <div className="text-xs text-green-600 mt-1">
+                      Auto-gift {event.autoGiftAmount ? `$${event.autoGiftAmount}` : "enabled"}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Auto-gift disabled
+                    </div>
+                  )}
+                  
+                  <div className="flex mt-2">
+                    {onSendGift && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-6 text-xs mr-2"
+                        onClick={(e) => handleSendGift(event.id, e)}
+                      >
+                        <Gift className="h-3 w-3 mr-1" />
+                        Send Gift
+                      </Button>
+                    )}
+                    
+                    {onToggleAutoGift && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 text-xs"
+                        onClick={(e) => handleToggleAutoGift(event.id, e)}
+                      >
+                        Auto: {event.autoGiftEnabled ? 'On' : 'Off'}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

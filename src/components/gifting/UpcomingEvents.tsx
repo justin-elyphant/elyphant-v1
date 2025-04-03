@@ -6,6 +6,7 @@ import EventEditDrawer from "./events/edit-drawer/EventEditDrawer";
 import EventCalendarView from "./events/EventCalendarView";
 import EventCardsView from "./events/EventCardsView";
 import EventViewToggle from "./events/EventViewToggle";
+import EventTypeFilter from "./events/EventTypeFilter";
 import { ExtendedEventData, FilterOption } from "./events/types";
 
 // Mock data for upcoming events
@@ -71,6 +72,9 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
   const [selectedEventType, setSelectedEventType] = useState<FilterOption>("all");
+  
+  // Get unique event types for the filter
+  const eventTypes = Array.from(new Set(events.map(event => event.type)));
   
   const handleAddEvent = () => {
     if (onAddEvent) {
@@ -172,11 +176,23 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
         </p>
       </div>
       
-      <EventViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+      <div className="flex justify-between items-center mb-4">
+        <EventViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        
+        {viewMode === "cards" && (
+          <EventTypeFilter 
+            eventTypes={eventTypes} 
+            selectedType={selectedEventType}
+            onTypeChange={handleEventTypeChange}
+          />
+        )}
+      </div>
       
       {viewMode === "cards" ? (
         <EventCardsView 
-          events={events}
+          events={selectedEventType === "all" 
+            ? events 
+            : events.filter(event => event.type === selectedEventType)}
           onSendGift={handleSendGift}
           onToggleAutoGift={handleToggleAutoGift}
           onEdit={handleEditEvent}

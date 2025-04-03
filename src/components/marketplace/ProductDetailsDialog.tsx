@@ -77,6 +77,10 @@ const ProductDetailsDialog = ({
             src={images[0]} 
             alt={product.name}
             className="w-full h-full object-cover rounded-md"
+            onError={(e) => {
+              console.error("Image failed to load:", images[0]);
+              e.currentTarget.src = "/placeholder.svg";
+            }}
           />
         </div>
       );
@@ -92,6 +96,10 @@ const ProductDetailsDialog = ({
                   src={img} 
                   alt={`${product.name} view ${idx + 1}`}
                   className="w-full h-full object-cover rounded-md"
+                  onError={(e) => {
+                    console.error("Image failed to load:", img);
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
                 />
               </div>
             </CarouselItem>
@@ -103,16 +111,19 @@ const ProductDetailsDialog = ({
     );
   };
 
+  // Ensure description exists with a fallback
+  const description = product.description || "No description available for this product.";
+  const features = product.features || [];
+  const specifications = product.specifications || {};
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-xl">{product.name}</DialogTitle>
-          {product.description && (
-            <DialogDescription className="text-sm text-muted-foreground line-clamp-2">
-              {product.description}
-            </DialogDescription>
-          )}
+          <DialogDescription className="text-sm text-muted-foreground line-clamp-2">
+            {description}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
@@ -128,29 +139,27 @@ const ProductDetailsDialog = ({
             </div>
             
             <div className="space-y-4">
-              {product.description && (
-                <div>
-                  <h4 className="font-medium mb-2">Description</h4>
-                  <p className="text-sm text-muted-foreground">{product.description}</p>
-                </div>
-              )}
+              <div>
+                <h4 className="font-medium mb-2">Description</h4>
+                <p className="text-sm text-muted-foreground">{description}</p>
+              </div>
 
-              {product.features && product.features.length > 0 && (
+              {features.length > 0 && (
                 <div>
                   <h4 className="font-medium mb-2">Features</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground">
-                    {product.features.map((feature, idx) => (
+                    {features.map((feature, idx) => (
                       <li key={idx}>{feature}</li>
                     ))}
                   </ul>
                 </div>
               )}
               
-              {product.specifications && Object.keys(product.specifications).length > 0 && (
+              {Object.keys(specifications).length > 0 && (
                 <div>
                   <h4 className="font-medium mb-2">Specifications</h4>
                   <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-2">
-                    {Object.entries(product.specifications).map(([key, value], idx) => (
+                    {Object.entries(specifications).map(([key, value], idx) => (
                       <React.Fragment key={idx}>
                         <span className="text-muted-foreground">{key}:</span>
                         <span>{value}</span>

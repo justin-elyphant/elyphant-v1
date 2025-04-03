@@ -1,112 +1,53 @@
 
-import { useState, useRef } from "react";
-import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { useProducts } from "@/contexts/ProductContext";
-import { searchProducts } from "../zincService";
-import { ZincProduct } from "../types";
+import { useZincProductSync as useOriginalZincProductSync } from "./useZincProductSync";
+import { convertZincProductToProduct } from "../utils/productConverter";
 
-export const useZincProductSync = (updateLastSync: () => void) => {
+export const useZincSync = () => {
   const { setProducts } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const toastShownRef = useRef<{ [key: string]: boolean }>({});
+  
+  // For the useZincProductSync hook, we'll provide an updateLastSync function
+  const updateLastSync = () => {
+    // In a real implementation, this would update the last sync time in the context or localStorage
+    const connection = JSON.parse(localStorage.getItem("zincConnection") || "{}");
+    connection.lastSync = Date.now();
+    localStorage.setItem("zincConnection", JSON.stringify(connection));
+  };
+  
+  // Use the original sync hook
+  const { syncProducts: syncZincProducts, error: syncError } = useOriginalZincProductSync(updateLastSync);
 
-  // Clear toast tracking periodically
-  setInterval(() => {
-    toastShownRef.current = {};
-  }, 3000);
-
-  const syncProducts = async (): Promise<ZincProduct[]> => {
-    // Avoid duplicate toasts
-    if (toastShownRef.current['syncing']) return [];
-    
+  // Wrapper for syncProducts that handles the type conversion
+  const syncProducts = async () => {
     setIsLoading(true);
-    setError(null);
-    toastShownRef.current['syncing'] = true;
     
     try {
-      toast({
-        title: "Syncing Products",
-        description: "Fetching products from Amazon...",
-        id: "sync-in-progress"
-      });
+      const results = await syncZincProducts();
       
-      // Search for some popular products
-      const searchTerms = ["kindle", "echo dot", "fire tv"];
-      let allProducts: ZincProduct[] = [];
-      
-      // Perform searches for each term
-      for (const term of searchTerms) {
-        const results = await searchProducts(term);
-        allProducts = [...allProducts, ...results.slice(0, 10)]; // Take first 10 results from each search
-      }
-      
-      if (allProducts.length === 0) {
-        throw new Error("No products found");
-      }
-      
-      // Convert to Product format
-      const amazonProducts = allProducts.map((product, index) => ({
-        id: 2000 + index, // Use a different ID range to avoid conflicts
-        name: product.title,
-        price: product.price,
-        category: product.category || "Electronics",
-        image: product.image || "/placeholder.svg",
-        vendor: "Amazon via Zinc",
-        description: product.description || "",
-        rating: product.rating,
-        reviewCount: product.review_count
-      }));
-      
-      // Update products in context
-      setProducts(prevProducts => {
-        // Filter out any existing Amazon products
-        const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
-        // Add the new Amazon products
-        return [...nonAmazonProducts, ...amazonProducts];
-      });
-      
-      // Update last sync time
-      updateLastSync();
-      
-      // Only show ONE summary toast
-      if (!toastShownRef.current['sync-complete']) {
-        toast({
-          title: "Products Synced",
-          description: `Successfully synced ${allProducts.length} products from Amazon`,
-          id: "products-synced" // Use a fixed ID to ensure only one appears
+      if (results.length > 0) {
+        setProducts(prevProducts => {
+          // Filter out any existing Amazon products
+          const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
+          
+          // Convert ZincProduct to Product format
+          const amazonProducts = results.map(convertZincProductToProduct);
+          
+          // Add the new Amazon products
+          return [...nonAmazonProducts, ...amazonProducts];
         });
-        toastShownRef.current['sync-complete'] = true;
       }
       
-      return allProducts;
-    } catch (err) {
-      console.error("Error syncing products:", err);
-      setError("Failed to sync products. Please try again later.");
-      
-      if (!toastShownRef.current['sync-error']) {
-        toast({
-          title: "Sync Failed",
-          description: "Failed to fetch products from Amazon. Please try again later.",
-          variant: "destructive",
-          id: "sync-error" // Use a fixed ID to ensure only one appears
-        });
-        toastShownRef.current['sync-error'] = true;
-      }
-      
-      return [];
+      return results;
     } finally {
       setIsLoading(false);
-      // Reset syncing flag after a delay
-      setTimeout(() => {
-        toastShownRef.current['syncing'] = false;
-      }, 1000);
     }
   };
 
   return {
     syncProducts,
     isLoading,
-    error
+    error: syncError
   };
 };

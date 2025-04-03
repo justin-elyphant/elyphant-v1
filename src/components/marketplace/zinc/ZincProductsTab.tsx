@@ -1,11 +1,10 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useZincIntegration } from "./useZincIntegration";
+import { useZincProducts } from "./hooks/useZincProducts";
 import { toast } from "@/hooks/use-toast";
 
 const ZincProductsTab = () => {
@@ -16,18 +15,16 @@ const ZincProductsTab = () => {
     setSearchTerm, 
     handleSearch, 
     syncProducts 
-  } = useZincIntegration();
+  } = useZincProducts();
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   const searchInProgressRef = useRef(false);
   
-  // Set local search term when searchTerm changes
   useEffect(() => {
     if (searchTerm && searchTerm !== localSearchTerm) {
       setLocalSearchTerm(searchTerm);
     }
   }, [searchTerm]);
   
-  // Get only products from our marketplace integration
   const marketplaceProducts = products.filter(p => p.vendor === "Elyphant");
   
   const handleSubmit = async (e: React.FormEvent) => {

@@ -47,18 +47,21 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
           >
             <Card className="hover:shadow-md transition-shadow border border-gray-200">
               <CardContent className="p-6 flex flex-col items-center justify-center">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3 overflow-hidden">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3 overflow-hidden p-2">
                   <img 
                     src={brand.logoUrl} 
                     alt={brand.name} 
-                    className="w-full h-full object-contain"
+                    className="max-w-full max-h-full object-contain"
                     loading="lazy" 
-                    width="40" 
-                    height="40"
                     onError={(e) => {
-                      // Fallback in case image fails to load
-                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                      console.log(`Brand image failed to load: ${brand.name}`);
+                      // Fix Bose logo specifically
+                      if (brand.name === "Bose") {
+                        (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Bose_logo.svg/1200px-Bose_logo.svg.png";
+                      } else {
+                        // Fallback for other brand images
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }
+                      console.log(`Brand image fallback used for: ${brand.name}`);
                     }}
                   />
                 </div>

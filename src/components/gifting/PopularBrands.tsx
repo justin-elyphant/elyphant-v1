@@ -39,7 +39,7 @@ const popularBrands = [
   { 
     id: 6, 
     name: "Bose", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Bose_logo.svg/2560px-Bose_logo.svg.png", 
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Bose_logo.svg/1200px-Bose_logo.svg.png", 
     productCount: 98 
   },
   { 
@@ -67,17 +67,16 @@ const PopularBrands = () => {
             <Link to={`/marketplace?brand=${encodeURIComponent(brand.name)}`} key={brand.id}>
               <Card key={brand.id} className="min-w-[180px] hover:shadow-md transition-shadow">
                 <CardContent className="p-6 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 overflow-hidden">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 overflow-hidden p-2">
                     <img 
                       src={brand.logoUrl} 
                       alt={brand.name} 
-                      className="w-10 h-10 object-contain"
+                      className="max-w-full max-h-full object-contain"
                       loading="lazy"
-                      width="40"
-                      height="40"
                       onError={(e) => {
                         // Fallback in case image fails to load
                         (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        console.log(`Brand image fallback used for: ${brand.name}`);
                       }}
                     />
                   </div>

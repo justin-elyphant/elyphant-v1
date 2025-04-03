@@ -31,29 +31,29 @@ const GiftAmountInput = ({ amount, setAmount }: GiftAmountInputProps) => {
   };
 
   return (
-    <div className="space-y-0 py-0.5">
-      <Label htmlFor="gift-amount" className="flex items-center text-[7px] font-medium leading-none">
-        <DollarSign className="h-1.5 w-1.5 mr-0.5 text-primary" />
+    <div className="space-y-1 py-2">
+      <Label htmlFor="gift-amount" className="flex items-center text-xs font-medium">
+        <DollarSign className="h-3 w-3 mr-1 text-primary" />
         Gift Amount
       </Label>
-      <div className="flex items-center space-x-0.5 mt-0.5">
+      <div className="flex items-center space-x-1">
         <Button 
           variant="outline" 
           size="icon" 
           type="button" 
           onClick={decrementAmount}
-          className="h-2.5 w-2.5 border-primary/20 text-primary p-0"
+          className="h-7 w-7 border-primary/20 text-primary"
         >
-          <Minus className="h-1.5 w-1.5" />
+          <Minus className="h-3 w-3" />
         </Button>
         <div className="relative flex-1">
-          <DollarSign className="absolute left-1 top-1/2 -translate-y-1/2 h-1.5 w-1.5 text-muted-foreground" />
+          <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
           <Input
             id="gift-amount"
             type="number"
             value={amount}
             onChange={handleAmountChange}
-            className="pl-3 text-center focus-visible:ring-primary/50 border-primary/20 h-2.5 text-[7px] py-0"
+            className="pl-6 text-center focus-visible:ring-primary/50 border-primary/20 h-7 text-sm"
             min={0}
             max={500}
           />
@@ -63,9 +63,9 @@ const GiftAmountInput = ({ amount, setAmount }: GiftAmountInputProps) => {
           size="icon" 
           type="button" 
           onClick={incrementAmount}
-          className="h-2.5 w-2.5 border-primary/20 text-primary p-0"
+          className="h-7 w-7 border-primary/20 text-primary"
         >
-          <Plus className="h-1.5 w-1.5" />
+          <Plus className="h-3 w-3" />
         </Button>
       </div>
     </div>

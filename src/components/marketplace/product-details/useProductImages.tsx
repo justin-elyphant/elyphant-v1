@@ -37,22 +37,29 @@ export const useProductImages = (product: Product | null) => {
 function getProcessedImages(product: Product): string[] {
   // Case 1: Product has an 'images' array with content
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    const filteredImages = product.images.filter(img => !!img);
+    // Filter out any invalid image URLs and placeholders
+    const filteredImages = product.images.filter(img => 
+      !!img && img !== '/placeholder.svg' && !img.includes('unsplash.com')
+    );
     
-    // Ensure no duplicate images in the array
-    const uniqueImages = Array.from(new Set(filteredImages));
-    console.log("Using product.images array:", uniqueImages);
-    return uniqueImages;
+    // If we have valid images after filtering, use them
+    if (filteredImages.length > 0) {
+      // Ensure no duplicate images in the array
+      const uniqueImages = Array.from(new Set(filteredImages));
+      console.log("Using product.images array:", uniqueImages);
+      return uniqueImages;
+    }
   } 
   
   // Case 2: Product only has a single image
-  if (product.image) {
+  if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
+    // Generate variations without adding generic fallbacks
     const imageVariations = createImageVariations(product.image, product.name);
     console.log("Using single product.image with enhanced variations:", imageVariations);
     return imageVariations;
   }
   
-  // Case 3: Fallback to placeholder
+  // Case 3: Fallback to placeholder only if no valid product images
   console.log("Using placeholder image");
   return ["/placeholder.svg"];
 }

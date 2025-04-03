@@ -33,43 +33,23 @@ export function createImageVariations(baseImage: string, productName: string): s
       variations.push(`${baseUrl}?angle=back&f=fdfdfd`); // Back view with slight background
     }
     
-    // Add a secondary image for better variation
-    const secondaryImage = getFallbackImage(productNameLower);
-    if (secondaryImage && !variations.includes(secondaryImage)) {
-      variations.push(secondaryImage);
-    }
-    
+    // Return only Amazon variations, without any fallback images
     return variations;
   } 
   
   // For non-Amazon images, create more distinct variations
-  // Use a more substantial set of variations for non-Amazon images
+  // But don't add generic fallback images
   return [
     baseImage,
     `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=alt&view=side`,
     `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=zoom&view=detail`,
-    getFallbackImage(productName.toLowerCase()) // Add a completely different image
   ].filter(Boolean); // Remove any falsy values
 }
 
 /**
- * Get a fallback image based on product category or name
+ * Get a fallback image based on product category or name - only used if no images at all
  */
 export function getFallbackImage(productNameOrCategory: string): string {
-  // More detailed product type detection for better fallback images
-  if (productNameOrCategory.includes('food') || productNameOrCategory.includes('container') || 
-      productNameOrCategory.includes('kitchen') || productNameOrCategory.includes('storage')) {
-    return 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=500&h=500&fit=crop'; // Food containers image
-  }
-  if (productNameOrCategory.includes('electronics')) {
-    return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
-  }
-  if (productNameOrCategory.includes('footwear') || productNameOrCategory.includes('shoes')) {
-    return 'https://m.media-amazon.com/images/I/61-Ww4OnWIL._AC_UX695_.jpg';
-  }
-  if (productNameOrCategory.includes('clothing')) {
-    return 'https://m.media-amazon.com/images/I/71zny7BTRlL._AC_SL1500_.jpg';
-  }
-  // Default fallback
-  return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop';
+  // Generic placeholder that's clearly a placeholder
+  return '/placeholder.svg';
 }

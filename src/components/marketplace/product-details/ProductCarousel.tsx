@@ -20,11 +20,17 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
   const [uniqueImages, setUniqueImages] = useState<string[]>([]);
   
-  // Process images to ensure they're unique
+  // Process images to ensure they're unique and relevant
   useEffect(() => {
+    // Filter out any unsplash fallback images to avoid showing unrelated content
+    const filteredImages = images.filter(img => 
+      !img.includes('unsplash.com') && img !== '/placeholder.svg'
+    );
+    
     // Use a Set to ensure uniqueness
-    const uniqueImageSet = new Set(images);
+    const uniqueImageSet = new Set(filteredImages.length > 0 ? filteredImages : images);
     const uniqueImageArray = Array.from(uniqueImageSet);
+    
     console.log(`ProcessedImages: ${uniqueImageArray.length} unique from ${images.length} total`);
     setUniqueImages(uniqueImageArray);
   }, [images]);

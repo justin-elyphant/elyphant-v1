@@ -23,7 +23,7 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
       return;
     }
     
-    // Create temporary branded products if none exist
+    // Check if we have any products for this brand with a more flexible matching
     const productsByBrand = products.filter(p => 
       p.name.toLowerCase().includes(brandName.toLowerCase()) || 
       (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase()))
@@ -40,9 +40,10 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
           tempProducts.push({
             ...randomProduct,
             id: 10000 + products.length + i, // Ensure unique ID
-            name: `${brandName} ${randomProduct.name}`,
+            name: `${brandName} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
             vendor: brandName,
-            category: randomProduct.category || "Clothing"
+            category: randomProduct.category || "Clothing",
+            description: `Premium ${brandName} ${randomProduct.category || "item"} with exceptional quality and style.`
           });
         }
       }

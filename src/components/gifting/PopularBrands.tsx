@@ -67,7 +67,7 @@ const PopularBrands = () => {
       return;
     }
     
-    // Create temporary branded products if none exist
+    // More flexible brand matching
     const productsByBrand = products.filter(p => 
       p.name.toLowerCase().includes(brandName.toLowerCase()) || 
       (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase()))
@@ -84,9 +84,10 @@ const PopularBrands = () => {
           tempProducts.push({
             ...randomProduct,
             id: 10000 + products.length + i, // Ensure unique ID
-            name: `${brandName} ${randomProduct.name}`,
+            name: `${brandName} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
             vendor: brandName,
-            category: randomProduct.category || "Clothing"
+            category: randomProduct.category || "Clothing",
+            description: `Premium ${brandName} ${randomProduct.category || "item"} with exceptional quality and style.`
           });
         }
       }

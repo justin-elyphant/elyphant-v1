@@ -33,10 +33,26 @@ const ProductDetailsDialog = ({
 
   console.log("ProductDetailsDialog rendering with product:", product);
   
-  // Safely access images array or create a single-item array from image if images is undefined
-  const images = product.images && product.images.length > 0 ? product.images : [product.image];
+  // Create a proper images array, ensuring it always has values
+  let images = [];
   
-  console.log("Images to display:", images);
+  // 1. Check if product has an 'images' array with content
+  if (product.images && product.images.length > 0) {
+    images = product.images;
+    console.log("Using product.images array:", images);
+  } 
+  // 2. If no images array or it's empty, use the single image
+  else if (product.image) {
+    images = [product.image];
+    console.log("Using single product.image:", images);
+  } 
+  // 3. Fallback to placeholder if no images are available
+  else {
+    images = ["/placeholder.svg"];
+    console.log("Using placeholder image");
+  }
+  
+  console.log("Final images to display:", images);
 
   const renderRating = (rating?: number, reviewCount?: number) => {
     if (!rating) return null;
@@ -62,7 +78,8 @@ const ProductDetailsDialog = ({
 
   // Create a function to render the carousel
   const renderCarousel = () => {
-    if (!images || images.length === 0) {
+    // If no images available, show placeholder
+    if (images.length === 0) {
       return (
         <div className="aspect-square relative bg-gray-100 flex items-center justify-center">
           <span className="text-muted-foreground">No image available</span>
@@ -70,6 +87,7 @@ const ProductDetailsDialog = ({
       );
     }
     
+    // If only one image, just show it directly
     if (images.length === 1) {
       return (
         <div className="aspect-square relative">
@@ -86,6 +104,7 @@ const ProductDetailsDialog = ({
       );
     }
 
+    // If multiple images, show carousel with navigation
     return (
       <Carousel className="w-full">
         <CarouselContent>
@@ -105,8 +124,12 @@ const ProductDetailsDialog = ({
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2" />
-        <CarouselNext className="right-2" />
+        {images.length > 1 && (
+          <>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </>
+        )}
       </Carousel>
     );
   };

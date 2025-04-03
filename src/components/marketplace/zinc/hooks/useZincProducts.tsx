@@ -21,6 +21,29 @@ export const useZincProducts = () => {
   
   const { syncProducts: syncZincProducts, isLoading: isSyncLoading, error: syncError } = useZincProductSync(updateLastSync);
 
+  // Helper function to create multiple images for a product
+  const createProductImages = (mainImage: string, productTitle: string): string[] => {
+    if (!mainImage || mainImage === "/placeholder.svg") {
+      return ["/placeholder.svg"];
+    }
+    
+    // Generate 3-5 mock images based on the main image
+    // In a real app these would come from the API
+    const numImages = Math.floor(Math.random() * 3) + 3; // 3-5 images
+    const images = [mainImage];
+    
+    // Create variation of the main image URL to simulate different product views
+    for (let i = 1; i < numImages; i++) {
+      // Add a parameter to the URL to make it look like a different image
+      const imageUrl = mainImage.includes('?') 
+        ? `${mainImage}&view=${i}` 
+        : `${mainImage}?view=${i}`;
+      images.push(imageUrl);
+    }
+    
+    return images;
+  };
+
   // Helper function to convert ZincProduct to Product
   const convertZincProductToProduct = (zincProduct: ZincProduct, index: number): Product => {
     // Generate a description if one doesn't exist
@@ -41,6 +64,12 @@ export const useZincProducts = () => {
       "Origin": "Imported"
     };
     
+    // Generate mock multiple images for the product
+    const productImages = createProductImages(
+      zincProduct.image || "/placeholder.svg", 
+      zincProduct.title
+    );
+    
     return {
       id: 1000 + index,
       name: zincProduct.title,
@@ -50,7 +79,8 @@ export const useZincProducts = () => {
       vendor: "Elyphant", // Changed from "Amazon via Zinc"
       description: productDescription,
       features: features,
-      specifications: specifications
+      specifications: specifications,
+      images: productImages // Add multiple images
     };
   };
 

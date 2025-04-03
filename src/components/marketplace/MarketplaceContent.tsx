@@ -37,7 +37,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         brand: brandParam
       }));
       
-      // Check if we have any products for this brand
+      // Check if we have any products for this brand with a more flexible matching
       const brandProducts = products.filter(p => 
         p.name.toLowerCase().includes(brandParam.toLowerCase()) || 
         (p.vendor && p.vendor.toLowerCase().includes(brandParam.toLowerCase()))
@@ -54,9 +54,10 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
             tempProducts.push({
               ...randomProduct,
               id: 10000 + products.length + i, // Ensure unique ID
-              name: `${brandParam} ${randomProduct.name}`,
+              name: `${brandParam} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
               vendor: brandParam,
-              category: randomProduct.category || "Clothing"
+              category: randomProduct.category || "Clothing",
+              description: `Premium ${brandParam} ${randomProduct.category || "item"} with exceptional quality and style.`
             });
           }
         }
@@ -97,22 +98,22 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         // All products have free shipping in our demo
       }
       
-      // Apply brand filter if present - make it more flexible
+      // Apply brand filter if present - make it case-insensitive and more flexible
       if (activeFilters.brand && activeFilters.brand !== 'all') {
-        // More relaxed brand filtering
         const brandName = activeFilters.brand.toLowerCase();
+        
+        // Use more relaxed brand filtering
         result = result.filter(product => 
-          product.name.toLowerCase().includes(brandName) ||
+          (product.name && product.name.toLowerCase().includes(brandName)) ||
           (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
           (product.description && product.description.toLowerCase().includes(brandName))
         );
         
-        // If still no results, don't filter by brand
+        // If still no results after filtering, create temporary brand products
         if (result.length === 0) {
-          console.log(`No products found for brand ${activeFilters.brand}, showing all products`);
-          result = [...products];
+          console.log(`No products found for brand ${activeFilters.brand}, creating temporary products`);
           
-          // Create temporary products for this brand
+          // Create 5 temporary products for this brand
           for (let i = 0; i < 5; i++) {
             const randomProduct = products[Math.floor(Math.random() * products.length)];
             if (randomProduct) {
@@ -121,11 +122,15 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
                 id: 20000 + i, // Ensure unique ID
                 name: `${activeFilters.brand} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
                 vendor: activeFilters.brand,
-                category: randomProduct.category || "Clothing"
+                category: randomProduct.category || "Clothing",
+                description: `Premium ${activeFilters.brand} ${randomProduct.category || "item"} with exceptional quality and style.`
               };
               result.push(newProduct);
             }
           }
+          
+          // Add these new products to the context
+          setProducts(prev => [...prev, ...result]);
         }
       }
     }
@@ -134,7 +139,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     result = sortProducts(result, sortOption);
     
     setFilteredProducts(result);
-  }, [products, activeFilters, sortOption]);
+  }, [products, activeFilters, sortOption, setProducts]);
   
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);

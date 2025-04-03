@@ -69,8 +69,9 @@ const PopularBrands = () => {
     
     // More flexible brand matching
     const productsByBrand = products.filter(p => 
-      p.name.toLowerCase().includes(brandName.toLowerCase()) || 
-      (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase()))
+      (p.name && p.name.toLowerCase().includes(brandName.toLowerCase())) || 
+      (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase())) ||
+      (p.description && p.description.toLowerCase().includes(brandName.toLowerCase()))
     );
     
     if (productsByBrand.length === 0) {

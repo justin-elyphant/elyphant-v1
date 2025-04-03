@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
@@ -13,7 +12,6 @@ const SearchBar = () => {
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Initialize search term from URL on mount or location change
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const searchParam = params.get("search");
@@ -35,7 +33,6 @@ const SearchBar = () => {
     const value = e.target.value;
     setSearchTerm(value);
     
-    // Open the search results popover when the user starts typing
     if (value.trim().length > 0 && !isSearchOpen) {
       setIsSearchOpen(true);
     } else if (value.trim().length === 0) {
@@ -50,7 +47,6 @@ const SearchBar = () => {
     console.log(`SearchBar: Selected search item "${value}"`);
     setIsSearchOpen(false);
     
-    // Brief timeout to ensure the UI updates before navigating
     setTimeout(() => {
       navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     }, 10);
@@ -58,7 +54,7 @@ const SearchBar = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent default form submission behavior
+      e.preventDefault();
       handleSearch(e as unknown as React.FormEvent);
     } else if (e.key === 'Escape') {
       setIsSearchOpen(false);
@@ -66,19 +62,15 @@ const SearchBar = () => {
   };
 
   const handlePopoverOpenChange = (open: boolean) => {
-    // Only allow opening the popover if we have a search term
     if (open && searchTerm.trim().length === 0) {
       return;
     }
     setIsSearchOpen(open);
     
-    // Focus the input when the popover opens
     if (open && inputRef.current) {
-      // Use setTimeout to ensure the focus happens after React's rendering cycle
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          // Place cursor at the end
           const length = inputRef.current.value.length;
           inputRef.current.setSelectionRange(length, length);
         }
@@ -91,7 +83,6 @@ const SearchBar = () => {
       setIsSearchOpen(true);
     }
     
-    // Fix: Make sure to position cursor correctly and prevent auto-selection
     setTimeout(() => {
       if (inputRef.current) {
         const length = inputRef.current.value.length;
@@ -104,18 +95,14 @@ const SearchBar = () => {
     setSearchTerm("");
     setIsSearchOpen(false);
     
-    // Focus the input after clearing
     if (inputRef.current) {
       inputRef.current.focus();
     }
   };
 
-  // Fix: Set the input to focused initially to avoid auto-selection issues
   useEffect(() => {
-    // Use a slight delay to ensure the component is fully rendered
     const timer = setTimeout(() => {
       if (inputRef.current && document.activeElement === inputRef.current) {
-        // If the input is already focused, position cursor at the end
         const length = inputRef.current.value.length;
         inputRef.current.setSelectionRange(length, length);
       }
@@ -132,17 +119,14 @@ const SearchBar = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input 
               ref={inputRef}
-              placeholder="Search products, friends, or experiences..." 
+              placeholder="Search products, brands, friends, or experiences..." 
               className="pl-10 w-full"
               value={searchTerm}
               onChange={handleSearchTermChange}
               onClick={handleInputClick}
               onKeyDown={handleKeyDown}
-              // Fix: Prevent auto-selection by setting autoComplete
               autoComplete="off"
-              // Fix: Use "text" type explicitly to help prevent auto-selection issues
               type="text"
-              // Fix: Prevent autocorrect/suggestion features that could interfere
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck="false"

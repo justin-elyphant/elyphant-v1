@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import ProductItem from "./ProductItem";
+import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
 import { sortProducts } from "./hooks/utils/categoryUtils";

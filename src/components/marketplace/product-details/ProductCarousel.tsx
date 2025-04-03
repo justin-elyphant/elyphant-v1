@@ -53,10 +53,13 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
     setFailedImages(prev => ({...prev, [idx]: true}));
   };
   
-  // Track carousel slide changes
-  const handleSlideChange = (idx: number) => {
-    setActiveIndex(idx);
-    console.log(`Carousel changed to image ${idx}:`, images[idx]);
+  // Create a custom API ref to track slide changes
+  const handleSlideChange = (api: any) => {
+    const currentSlide = api?.selectedScrollSnap();
+    if (typeof currentSlide === 'number') {
+      setActiveIndex(currentSlide);
+      console.log(`Carousel changed to image ${currentSlide}:`, images[currentSlide]);
+    }
   };
 
   // If multiple images, show carousel with navigation
@@ -68,11 +71,15 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
           loop: true,
           align: "start"
         }}
-        onSlideChange={handleSlideChange}
+        setApi={(api) => {
+          if (api) {
+            api.on('select', () => handleSlideChange(api));
+          }
+        }}
       >
         <CarouselContent>
           {images.map((img, idx) => (
-            <CarouselItem key={idx}>
+            <CarouselItem key={`image-${idx}-${img.slice(-8)}`}>
               <div className="aspect-square relative">
                 <img 
                   src={img} 

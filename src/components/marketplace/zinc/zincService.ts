@@ -1,5 +1,7 @@
+
 import { ZincProduct } from './types';
 import { ZINC_API_BASE_URL, getZincHeaders } from './zincCore';
+import { getExactProductImage } from './utils/images/productImageUtils';
 
 /**
  * Search for products on Amazon via Zinc API
@@ -74,12 +76,9 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
           images = ['/placeholder.svg'];
         }
         
-        // Import product image utility functions
+        // Add a category-specific image if we have few images - using the imported function
         try {
-          const { getExactProductImage } = await import('./utils/images/productImageUtils');
-          
-          // Add a category-specific image if we have few images
-          if (images.length < 2 && typeof getExactProductImage === 'function') {
+          if (images.length < 2) {
             const category = item.category || 'Electronics';
             const specificImage = getExactProductImage(item.title || '', category);
             if (specificImage && !images.includes(specificImage)) {
@@ -87,7 +86,7 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
             }
           }
         } catch (error) {
-          console.warn("Could not import product image utilities:", error);
+          console.warn("Could not use product image utilities:", error);
         }
         
         // Log what we're returning
@@ -161,16 +160,13 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
       const title = data.title || '';
       
       try {
-        // Import dynamically to avoid circular dependencies
-        const { getExactProductImage } = require('./utils/images/productImageUtils');
-        
         // Add 2-3 related but different images based on the product
         for (let i = 1; i <= 3; i++) {
           // Create unique product modification parameter
           const viewParam = `?view=${i}`;
           
           // Try to get a category-specific image first
-          if (i === 1 && typeof getExactProductImage === 'function') {
+          if (i === 1) {
             const specificImage = getExactProductImage(title, category);
             if (specificImage && specificImage !== mainImage) {
               images.push(specificImage);
@@ -184,7 +180,7 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
           }
         }
       } catch (error) {
-        console.warn("Could not import product image utilities:", error);
+        console.warn("Could not use product image utilities:", error);
         // Fallback: add simple variations
         images.push(`${mainImage}?view=2`);
         images.push(`${mainImage}?view=3`);

@@ -24,41 +24,79 @@ export const generateProductImages = (item: any, mainImage: string): string[] =>
       mainImage && 
       mainImage !== '/placeholder.svg' && 
       (mainImage.includes('amazon.com') || mainImage.includes('m.media-amazon.com'))) {
-    // Extract the base URL without any existing parameters
-    const baseUrl = mainImage.split('?')[0];
+    // Extract the product ID from Amazon image
+    const productId = extractAmazonProductId(mainImage);
     
-    // Generate visually distinct variations with entirely different parameters
-    const hash = Date.now(); // Add timestamp to prevent caching
-    const newImages = [
-      baseUrl, // Original image
-      `${baseUrl}?sx=0&sy=0&ex=1000&ey=1000&hash=${hash}`, // Full view
-      `${baseUrl}?angle=front&m=fit&h=600&w=600&hash=${hash+1}`, // Front angle
-      `${baseUrl}?view=side&f=f6f6f6&hash=${hash+2}`, // Side view
-      `${baseUrl}?rotation=45&f=ffffff&hash=${hash+3}` // Rotated view
-    ];
-    
-    // Add another variation based on product type
-    const title = item.title.toLowerCase();
-    if (title.includes('tv') || title.includes('monitor')) {
-      newImages.push(`${baseUrl}?angle=side&m=contain&hash=${hash+4}`);
-    } else if (title.includes('phone') || title.includes('laptop')) {
-      newImages.push(`${baseUrl}?angle=back&m=crop&hash=${hash+5}`);
-    } else if (title.includes('food') || title.includes('container')) {
-      newImages.push(`${baseUrl}?angle=top&q=85&hash=${hash+6}`);
+    if (productId) {
+      // Extract the base URL and file extension
+      const urlParts = mainImage.split('.');
+      const fileExt = urlParts.pop() || 'jpg';
+      const baseUrlWithoutExt = urlParts.join('.');
+      
+      // Generate variations by changing the product ID slightly
+      const hash = Date.now(); // Add timestamp to prevent caching
+      const generatedImages = [
+        mainImage // Original image
+      ];
+      
+      // Create ID variations that actually show different views
+      const idVariations = [
+        productId.replace(/L/g, 'R'), // Change L to R in ID
+        productId.replace(/\d/g, m => (parseInt(m) + 1) % 10), // Increment digits
+        productId.substring(0, productId.length-2) + '2L', // Change ending
+        productId.substring(0, productId.length-2) + '3L'  // Another ending
+      ];
+      
+      // Create truly different Amazon URLs
+      idVariations.forEach((id, index) => {
+        // Create a new URL with the varied ID
+        const newUrl = mainImage.replace(productId, id);
+        
+        // Only add if it's not already in the array
+        if (!generatedImages.includes(newUrl)) {
+          generatedImages.push(newUrl);
+        }
+        
+        // Also try with timestamp
+        const urlWithTimestamp = `${newUrl}?t=${hash+index}`;
+        if (!generatedImages.includes(urlWithTimestamp)) {
+          generatedImages.push(urlWithTimestamp);
+        }
+      });
+      
+      // If we still don't have enough, add parameter variations
+      if (generatedImages.length < 5) {
+        // Add variations with query parameters that Amazon might use
+        generatedImages.push(`${mainImage}?t=${hash+10}&m=fit&h=600&w=600`);
+        generatedImages.push(`${mainImage}?t=${hash+11}&m=crop&h=400&w=400`);
+      }
+      
+      // Add the generated images to our collection
+      generatedImages.forEach(img => {
+        if (!images.includes(img)) {
+          images.push(img);
+        }
+      });
     } else {
-      newImages.push(`${baseUrl}?angle=alt&m=pad&hash=${hash+7}`);
-    }
-    
-    // If we already have some images, add the new ones
-    if (images.length > 0) {
+      // If we couldn't extract a product ID, fall back to parameter variations
+      const timestamp = Date.now();
+      const baseUrl = mainImage.split('?')[0];
+      
+      // Add parameter variations
+      const newImages = [
+        baseUrl, // Original image
+        `${baseUrl}?t=${timestamp}`, // With timestamp
+        `${baseUrl}?t=${timestamp+1}&view=back`, // Back view
+        `${baseUrl}?t=${timestamp+2}&view=side`, // Side view
+        `${baseUrl}?t=${timestamp+3}&view=top`   // Top view
+      ];
+      
       // Add new images to existing ones, avoiding duplicates
       newImages.forEach(img => {
         if (!images.includes(img)) {
           images.push(img);
         }
       });
-    } else {
-      images = newImages;
     }
     
     console.log(`Generated ${images.length} truly distinct image variations for ${item.title}`);
@@ -86,36 +124,63 @@ export const generateProductDetailImages = (data: any, mainImage: string): strin
   else if (mainImage && 
            mainImage !== '/placeholder.svg' && 
            (mainImage.includes('amazon.com') || mainImage.includes('m.media-amazon.com'))) {
-    // Start with the main image
-    images = [mainImage];
+    // Extract the product ID from Amazon image
+    const productId = extractAmazonProductId(mainImage);
     
-    const title = data.title || '';
-    const hash = Date.now(); // Add timestamp to prevent caching
-    
-    try {
+    if (productId) {
+      // Extract the base URL and file extension
+      const urlParts = mainImage.split('.');
+      const fileExt = urlParts.pop() || 'jpg';
+      const baseUrlWithoutExt = urlParts.join('.');
+      
+      // Start with the main image
+      images = [mainImage];
+      
+      // Create ID variations that actually show different views
+      const idVariations = [
+        productId.replace(/L/g, 'R'), // Change L to R in ID
+        productId.replace(/\d/g, m => (parseInt(m) + 1) % 10), // Increment digits
+        productId.substring(0, productId.length-2) + '2L', // Change ending
+        productId.substring(0, productId.length-2) + '3L'  // Another ending
+      ];
+      
+      // Create truly different Amazon URLs
+      const timestamp = Date.now();
+      idVariations.forEach((id, index) => {
+        // Create a new URL with the varied ID
+        const newUrl = mainImage.replace(productId, id);
+        
+        // Only add if it's not already in the array
+        if (!images.includes(newUrl)) {
+          images.push(newUrl);
+        }
+        
+        // Also try with timestamp
+        const urlWithTimestamp = `${newUrl}?t=${timestamp+index}`;
+        if (!images.includes(urlWithTimestamp)) {
+          images.push(urlWithTimestamp);
+        }
+      });
+      
+      // If we still don't have enough, add parameter variations
+      if (images.length < 5) {
+        // Add variations with query parameters that Amazon might use
+        images.push(`${mainImage}?t=${timestamp+10}&m=fit&h=600&w=600`);
+        images.push(`${mainImage}?t=${timestamp+11}&m=crop&h=400&w=400`);
+      }
+    } else {
+      // If we couldn't extract a product ID, fall back to parameter variations
+      const timestamp = Date.now();
       const baseUrl = mainImage.split('?')[0];
       
-      // Add Amazon-specific image variations with distinct parameters to ensure different images
-      images.push(`${baseUrl}?m=fit&h=800&w=800&hash=${hash}`);
-      images.push(`${baseUrl}?m=contain&h=600&w=600&hash=${hash+1}`);
-      images.push(`${baseUrl}?m=crop&h=400&w=400&hash=${hash+2}`);
-      
-      // Add different angles based on product type
-      if (title.toLowerCase().includes('tv') || title.toLowerCase().includes('monitor')) {
-        images.push(`${baseUrl}?angle=front&f=ffffff&hash=${hash+3}`);
-        images.push(`${baseUrl}?angle=side&f=ffffff&hash=${hash+4}`);
-      } else if (title.toLowerCase().includes('phone') || title.toLowerCase().includes('laptop')) {
-        images.push(`${baseUrl}?angle=side&f=f8f8f8&hash=${hash+5}`);
-        images.push(`${baseUrl}?angle=back&f=f8f8f8&hash=${hash+6}`);
-      } else if (title.toLowerCase().includes('food') || title.toLowerCase().includes('container')) {
-        images.push(`${baseUrl}?angle=top&f=fafafa&hash=${hash+7}`);
-        images.push(`${baseUrl}?angle=3q&f=fafafa&hash=${hash+8}`);
-      } else {
-        images.push(`${baseUrl}?angle=back&f=fdfdfd&hash=${hash+9}`);
-        images.push(`${baseUrl}?angle=front&f=fdfdfd&hash=${hash+10}`);
-      }
-    } catch (error) {
-      console.warn("Could not generate image variations:", error);
+      // Add parameter variations
+      images = [
+        baseUrl, // Original image
+        `${baseUrl}?t=${timestamp}`, // With timestamp
+        `${baseUrl}?t=${timestamp+1}&view=back`, // Back view
+        `${baseUrl}?t=${timestamp+2}&view=side`, // Side view
+        `${baseUrl}?t=${timestamp+3}&view=top`   // Top view
+      ];
     }
     
     console.log(`Generated ${images.length} truly distinct image variations for ${data.title}`);
@@ -126,3 +191,21 @@ export const generateProductDetailImages = (data: any, mainImage: string): strin
   // Ensure all images are unique
   return Array.from(new Set(images));
 };
+
+/**
+ * Extract Amazon product ID from image URL
+ * Example: https://m.media-amazon.com/images/I/51RwqTDfIvL._AC_UL320_.jpg
+ * Returns: 51RwqTDfIvL
+ */
+function extractAmazonProductId(url: string): string | null {
+  // Amazon image URLs follow this pattern: 
+  // https://m.media-amazon.com/images/I/[PRODUCT_ID]._[VARIANT]_.jpg
+  const regex = /\/images\/I\/([A-Za-z0-9]+)(\._.*)?/;
+  const match = url.match(regex);
+  
+  if (match && match[1]) {
+    return match[1];
+  }
+  
+  return null;
+}

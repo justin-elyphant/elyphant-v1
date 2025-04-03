@@ -26,9 +26,10 @@ interface WishlistCardProps {
   wishlist: WishlistData;
   onEdit: (id: number) => void;
   onShare: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
-const WishlistCard = ({ wishlist, onEdit, onShare }: WishlistCardProps) => {
+const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps) => {
   const handleRemoveItem = (itemId: number) => {
     // Create an updated copy of the wishlist with the item removed
     const updatedWishlist = {
@@ -52,7 +53,17 @@ const WishlistCard = ({ wishlist, onEdit, onShare }: WishlistCardProps) => {
   };
 
   return (
-    <Card key={wishlist.id}>
+    <Card key={wishlist.id} className="relative">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="absolute top-2 right-2 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+        onClick={() => onDelete(wishlist.id)}
+        aria-label={`Delete ${wishlist.title} wishlist`}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+      
       <CardHeader>
         <CardTitle>{wishlist.title}</CardTitle>
         <CardDescription>{wishlist.description}</CardDescription>

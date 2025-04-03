@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { toast } from "sonner";
@@ -9,8 +8,17 @@ import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LightbulbIcon } from "lucide-react";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Mock data for wishlists
 const initialWishlists = [
   {
     id: 1,
@@ -36,6 +44,7 @@ const initialWishlists = [
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [currentWishlist, setCurrentWishlist] = useState<WishlistData | null>(null);
   const [wishlists, setWishlists] = useLocalStorage<WishlistData[]>("userWishlists", initialWishlists);
 
@@ -77,6 +86,23 @@ const MyWishlists = () => {
     }
   };
 
+  const handleDeleteWishlist = (id: number) => {
+    const wishlistToDelete = wishlists.find(wishlist => wishlist.id === id);
+    if (wishlistToDelete) {
+      setCurrentWishlist(wishlistToDelete);
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (currentWishlist) {
+      const updatedWishlists = wishlists.filter(wishlist => wishlist.id !== currentWishlist.id);
+      setWishlists(updatedWishlists);
+      toast.success("Wishlist deleted successfully!");
+      setDeleteDialogOpen(false);
+    }
+  };
+
   const handleShareWishlist = (id: number) => {
     console.log(`Share wishlist ${id}`);
     toast.info("Sharing feature coming soon!");
@@ -102,13 +128,13 @@ const MyWishlists = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <CreateWishlistCard onCreateNew={handleCreateWishlist} />
         
-        {/* Existing wishlists */}
         {wishlists.map((wishlist: WishlistData) => (
           <WishlistCard 
             key={wishlist.id}
             wishlist={wishlist}
             onEdit={handleEditWishlist}
             onShare={handleShareWishlist}
+            onDelete={handleDeleteWishlist}
           />
         ))}
       </div>
@@ -125,6 +151,24 @@ const MyWishlists = () => {
         onSubmit={handleEditDialogSubmit}
         wishlist={currentWishlist}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this wishlist?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the wishlist "{currentWishlist?.title}" and all items within it.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

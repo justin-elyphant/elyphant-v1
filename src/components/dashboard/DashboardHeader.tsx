@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { UserRound, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import Logo from "@/components/home/components/Logo";
 
 interface DashboardHeaderProps {
   userData: any;
@@ -14,6 +14,10 @@ interface DashboardHeaderProps {
 const DashboardHeader = ({ userData, onLogout }: DashboardHeaderProps) => {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="flex items-center gap-4">
+        <Logo />
+      </div>
+      
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
           {userData?.profileImage ? (

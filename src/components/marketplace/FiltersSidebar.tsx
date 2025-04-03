@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,24 +17,22 @@ import {
 
 interface FiltersSidebarProps {
   onFilterChange?: (filters: Record<string, any>) => void;
+  activeFilters?: Record<string, any>;
 }
 
-const FiltersSidebar = ({ onFilterChange }: FiltersSidebarProps) => {
+const FiltersSidebar = ({ onFilterChange, activeFilters }: FiltersSidebarProps) => {
   const location = useLocation();
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [categoryFilters, setCategoryFilters] = useState<Record<string, any>>({});
   
-  // Get category from URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get("category");
     
-    // Get category-specific filters
     const availableFilters = getCategoryFilters(categoryParam);
     setCategoryFilters(availableFilters);
     
-    // Initialize filters with default values
     const initialFilters: Record<string, any> = {};
     Object.keys(availableFilters).forEach(key => {
       const filter = availableFilters[key];
@@ -85,7 +82,6 @@ const FiltersSidebar = ({ onFilterChange }: FiltersSidebarProps) => {
   };
   
   const clearAllFilters = () => {
-    // Reset to initial values
     const initialFilters: Record<string, any> = {};
     Object.keys(categoryFilters).forEach(key => {
       const filter = categoryFilters[key];

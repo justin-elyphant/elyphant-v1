@@ -21,9 +21,16 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
     if (products.length === 0) {
       toast.info("Loading products...");
     } else {
-      const shopifyProducts = products.filter(p => p.vendor === "Shopify");
-      if (shopifyProducts.length > 0) {
+      // Check if there are any products matching this brand name
+      const brandProducts = products.filter(p => 
+        p.name.toLowerCase().includes(brandName.toLowerCase()) || 
+        (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase()))
+      );
+      
+      if (brandProducts.length > 0) {
         toast.success(`Viewing ${brandName} products`);
+      } else {
+        toast.info(`No ${brandName} products found`);
       }
     }
   };
@@ -34,7 +41,7 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
       <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
         {brands.map((brand) => (
           <Link 
-            to={`/marketplace?search=${encodeURIComponent(brand.name)}`}
+            to={`/marketplace?brand=${encodeURIComponent(brand.name)}`}
             key={brand.id} 
             onClick={() => handleBrandClick(brand.name)}
           >
@@ -44,7 +51,7 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
                   <img 
                     src={brand.logoUrl} 
                     alt={brand.name} 
-                    className="w-10 h-10 object-contain"
+                    className="w-full h-full object-contain"
                     loading="lazy" 
                     width="40" 
                     height="40"

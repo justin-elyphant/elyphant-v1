@@ -7,6 +7,7 @@ import ProductGrid from "./ProductGrid";
 import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
+import { useLocation } from "react-router-dom";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -19,6 +20,21 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   const [sortOption, setSortOption] = useState("relevance");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+  const location = useLocation();
+  
+  // Extract brand from URL on component mount or URL change
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const brandParam = params.get("brand");
+    
+    if (brandParam) {
+      // Update active filters with brand
+      setActiveFilters(prev => ({
+        ...prev,
+        brand: brandParam
+      }));
+    }
+  }, [location.search]);
   
   // Update filtered products when products or filters change
   useEffect(() => {
@@ -90,7 +106,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {showFilters && (
           <div className="md:col-span-1">
-            <FiltersSidebar onFilterChange={handleFilterChange} />
+            <FiltersSidebar onFilterChange={handleFilterChange} activeFilters={activeFilters} />
           </div>
         )}
         

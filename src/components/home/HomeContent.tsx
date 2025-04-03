@@ -63,14 +63,44 @@ const HomeContent = () => {
     },
   ];
 
-  // Top brands data - using high-quality, recognizable logos
+  // Top brands data with actual brand logos
   const topBrands = [
-    { id: 1, name: "Nike", logoUrl: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=128&q=80", productCount: 245 },
-    { id: 2, name: "Apple", logoUrl: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=128&q=80", productCount: 189 },
-    { id: 3, name: "Samsung", logoUrl: "https://images.unsplash.com/photo-1662219708489-57083b9817e7?w=128&q=80", productCount: 167 },
-    { id: 4, name: "Sony", logoUrl: "https://images.unsplash.com/photo-1583508805133-64b71bd23141?w=128&q=80", productCount: 142 },
-    { id: 5, name: "Adidas", logoUrl: "https://images.unsplash.com/photo-1588484628369-dd7de8548df4?w=128&q=80", productCount: 134 },
-    { id: 6, name: "Bose", logoUrl: "https://images.unsplash.com/photo-1626143551763-4da56bf972ef?w=128&q=80", productCount: 98 },
+    { 
+      id: 1, 
+      name: "Nike", 
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1200px-Logo_NIKE.svg.png", 
+      productCount: 245 
+    },
+    { 
+      id: 2, 
+      name: "Apple", 
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg", 
+      productCount: 189 
+    },
+    { 
+      id: 3, 
+      name: "Samsung", 
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/2560px-Samsung_Logo.svg.png", 
+      productCount: 167 
+    },
+    { 
+      id: 4, 
+      name: "Sony", 
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Sony_logo.svg/2560px-Sony_logo.svg.png", 
+      productCount: 142 
+    },
+    { 
+      id: 5, 
+      name: "Adidas", 
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png", 
+      productCount: 134 
+    },
+    { 
+      id: 6, 
+      name: "Bose", 
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Bose_logo.svg/2560px-Bose_logo.svg.png", 
+      productCount: 98 
+    },
   ];
 
   return (

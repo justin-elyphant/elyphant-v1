@@ -17,43 +17,59 @@ export function createImageVariations(baseImage: string, productName: string): s
     const baseUrl = baseImage.split('?')[0];
     
     // Generate visually distinct variations with different size parameters
-    variations.push(`${baseUrl}?sx=500&sy=500&ex=500&ey=500`); // Square crop
-    variations.push(`${baseUrl}?sx=600&sy=300&ex=600&ey=300`); // Wider crop
+    // Use more significantly different parameters to make visually distinct images
+    variations.push(`${baseUrl}?sx=300&sy=300&ex=600&ey=600`); // Zoomed crop
+    variations.push(`${baseUrl}?sx=0&sy=0&ex=800&ey=400`); // Wide view
     
-    // Add another variation with a different angle based on product type
+    // Add different angles based on product type
     const productNameLower = productName.toLowerCase();
     if (productNameLower.includes('tv') || productNameLower.includes('monitor')) {
-      variations.push(`${baseUrl}?angle=side`);
+      variations.push(`${baseUrl}?angle=front&f=ffffff`); // Front with white background
     } else if (productNameLower.includes('phone') || productNameLower.includes('laptop')) {
-      variations.push(`${baseUrl}?angle=back`);
+      variations.push(`${baseUrl}?angle=side&f=f8f8f8`); // Side view with light gray background
+    } else if (productNameLower.includes('food') || productNameLower.includes('container')) {
+      variations.push(`${baseUrl}?angle=top&f=fafafa`); // Top view for containers/food
     } else {
-      variations.push(`${baseUrl}?angle=alt`);
+      variations.push(`${baseUrl}?angle=back&f=fdfdfd`); // Back view with slight background
+    }
+    
+    // Add a secondary image for better variation
+    const secondaryImage = getFallbackImage(productNameLower);
+    if (secondaryImage && !variations.includes(secondaryImage)) {
+      variations.push(secondaryImage);
     }
     
     return variations;
   } 
   
-  // For non-Amazon images, still try to create variations
+  // For non-Amazon images, create more distinct variations
+  // Use a more substantial set of variations for non-Amazon images
   return [
     baseImage,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=1`,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=2`
-  ];
+    `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=alt&view=side`,
+    `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=zoom&view=detail`,
+    getFallbackImage(productName.toLowerCase()) // Add a completely different image
+  ].filter(Boolean); // Remove any falsy values
 }
 
 /**
- * Get a fallback image based on product category
+ * Get a fallback image based on product category or name
  */
-export function getFallbackImage(category: string): string {
-  switch (category.toLowerCase()) {
-    case 'electronics':
-      return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
-    case 'footwear':
-    case 'shoes':
-      return 'https://m.media-amazon.com/images/I/61-Ww4OnWIL._AC_UX695_.jpg';
-    case 'clothing':
-      return 'https://m.media-amazon.com/images/I/71zny7BTRlL._AC_SL1500_.jpg';
-    default:
-      return '/placeholder.svg';
+export function getFallbackImage(productNameOrCategory: string): string {
+  // More detailed product type detection for better fallback images
+  if (productNameOrCategory.includes('food') || productNameOrCategory.includes('container') || 
+      productNameOrCategory.includes('kitchen') || productNameOrCategory.includes('storage')) {
+    return 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=500&h=500&fit=crop'; // Food containers image
   }
+  if (productNameOrCategory.includes('electronics')) {
+    return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
+  }
+  if (productNameOrCategory.includes('footwear') || productNameOrCategory.includes('shoes')) {
+    return 'https://m.media-amazon.com/images/I/61-Ww4OnWIL._AC_UX695_.jpg';
+  }
+  if (productNameOrCategory.includes('clothing')) {
+    return 'https://m.media-amazon.com/images/I/71zny7BTRlL._AC_SL1500_.jpg';
+  }
+  // Default fallback
+  return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop';
 }

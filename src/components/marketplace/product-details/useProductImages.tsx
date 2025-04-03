@@ -38,8 +38,11 @@ function getProcessedImages(product: Product): string[] {
   // Case 1: Product has an 'images' array with content
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
     const filteredImages = product.images.filter(img => !!img);
-    console.log("Using product.images array:", filteredImages);
-    return filteredImages;
+    
+    // Ensure no duplicate images in the array
+    const uniqueImages = Array.from(new Set(filteredImages));
+    console.log("Using product.images array:", uniqueImages);
+    return uniqueImages;
   } 
   
   // Case 2: Product only has a single image

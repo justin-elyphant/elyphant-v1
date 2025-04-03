@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -8,6 +8,7 @@ import {
   CarouselPrevious
 } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
+import { ImageOff } from "lucide-react";
 
 interface ProductCarouselProps {
   images: string[];
@@ -17,14 +18,25 @@ interface ProductCarouselProps {
 const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
+  const [uniqueImages, setUniqueImages] = useState<string[]>([]);
+  
+  // Process images to ensure they're unique
+  useEffect(() => {
+    // Use a Set to ensure uniqueness
+    const uniqueImageSet = new Set(images);
+    const uniqueImageArray = Array.from(uniqueImageSet);
+    console.log(`ProcessedImages: ${uniqueImageArray.length} unique from ${images.length} total`);
+    setUniqueImages(uniqueImageArray);
+  }, [images]);
   
   // Filter out any images that failed to load
-  const validImages = images.filter((_, idx) => !failedImages[idx]);
+  const validImages = uniqueImages.filter((_, idx) => !failedImages[idx]);
   
   // If no images available, show placeholder
   if (validImages.length === 0) {
     return (
       <div className="aspect-square relative bg-gray-100 flex items-center justify-center">
+        <ImageOff className="h-8 w-8 text-gray-400 mb-2" />
         <span className="text-muted-foreground">No image available</span>
       </div>
     );
@@ -49,7 +61,7 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
 
   // Handle image loading errors
   const handleImageError = (idx: number) => {
-    console.error(`Image at index ${idx} failed to load:`, images[idx]);
+    console.error(`Image at index ${idx} failed to load:`, uniqueImages[idx]);
     setFailedImages(prev => ({...prev, [idx]: true}));
   };
   
@@ -58,7 +70,7 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
     const currentSlide = api?.selectedScrollSnap();
     if (typeof currentSlide === 'number') {
       setActiveIndex(currentSlide);
-      console.log(`Carousel changed to image ${currentSlide}:`, images[currentSlide]);
+      console.log(`Carousel changed to image ${currentSlide}:`, uniqueImages[currentSlide]);
     }
   };
 
@@ -78,8 +90,8 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
         }}
       >
         <CarouselContent>
-          {images.map((img, idx) => (
-            <CarouselItem key={`image-${idx}-${img.slice(-8)}`}>
+          {uniqueImages.map((img, idx) => (
+            <CarouselItem key={`image-${idx}-${img.slice(-12)}`}>
               <div className="aspect-square relative">
                 <img 
                   src={img} 
@@ -91,7 +103,7 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
                   variant="secondary" 
                   className="absolute bottom-2 right-2 bg-black/70 text-white"
                 >
-                  {idx + 1}/{images.length}
+                  {idx + 1}/{uniqueImages.length}
                 </Badge>
               </div>
             </CarouselItem>
@@ -108,12 +120,18 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
       {/* Thumbnail indicators */}
       {validImages.length > 1 && (
         <div className="flex justify-center gap-1 mt-2">
-          {images.map((_, idx) => (
+          {uniqueImages.map((_, idx) => (
             <div 
               key={idx}
               className={`w-2 h-2 rounded-full transition-colors ${
                 idx === activeIndex ? 'bg-primary' : 'bg-gray-300'
               }`}
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                // Update the active index when a dot is clicked
+                setActiveIndex(idx);
+              }}
             />
           ))}
         </div>

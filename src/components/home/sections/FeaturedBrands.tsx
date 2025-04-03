@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProducts } from "@/contexts/ProductContext";
@@ -16,18 +16,25 @@ type BrandsProps = {
 };
 
 const FeaturedBrands = ({ brands }: BrandsProps) => {
-  const { products, setProducts, isLoading } = useProducts();
-  
-  useEffect(() => {
-    console.log(`FeaturedBrands: ${products.length} products available, isLoading: ${isLoading}`);
-  }, [products, isLoading]);
+  const { products, setProducts } = useProducts();
+  const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
   
   const handleBrandClick = async (brandName: string) => {
     console.log(`Brand clicked: ${brandName}, products available: ${products.length}`);
-    toast.loading("Loading products...", { id: "loading-brand-products" });
     
-    // This will fetch products for the brand from the Zinc API
-    await handleBrandProducts(brandName, products, setProducts);
+    // Set loading state for this specific brand
+    setLoadingBrand(brandName);
+    
+    try {
+      // This will fetch products for the brand from the Zinc API
+      await handleBrandProducts(brandName, products, setProducts);
+    } catch (error) {
+      console.error(`Error loading ${brandName} products:`, error);
+      toast.error(`Failed to load ${brandName} products`, { id: "loading-brand-products" });
+    } finally {
+      // Clear loading state
+      setLoadingBrand(null);
+    }
   };
 
   return (
@@ -39,6 +46,7 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
             to={`/marketplace?brand=${encodeURIComponent(brand.name)}`}
             key={brand.id} 
             onClick={() => handleBrandClick(brand.name)}
+            className={loadingBrand === brand.name ? "pointer-events-none opacity-70" : ""}
           >
             <Card className="hover:shadow-md transition-shadow border border-gray-200">
               <CardContent className="p-6 flex flex-col items-center justify-center">
@@ -65,6 +73,9 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
                   )}
                 </div>
                 <h3 className="font-medium text-center text-sm">{brand.name}</h3>
+                {loadingBrand === brand.name && (
+                  <div className="mt-2 text-xs text-blue-500">Loading...</div>
+                )}
               </CardContent>
             </Card>
           </Link>

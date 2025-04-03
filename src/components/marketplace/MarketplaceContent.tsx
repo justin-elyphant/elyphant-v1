@@ -8,9 +8,7 @@ import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
-import { handleBrandProducts } from "@/utils/brandUtils";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -24,8 +22,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [searchParams] = useSearchParams();
-  const { products: contextProducts, setProducts: setContextProducts } = useProducts();
-  const [isBrandLoading, setIsBrandLoading] = useState(false);
+  const { products: contextProducts } = useProducts();
   
   // Log initial state for debugging
   useEffect(() => {
@@ -40,7 +37,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     }
   }, [products, sortOption]);
   
-  // Extract brand from URL and fetch products if needed
+  // Extract brand from URL for UI feedback
   useEffect(() => {
     const brandParam = searchParams.get("brand");
     
@@ -52,38 +49,12 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         ...prev,
         brand: brandParam
       }));
-      
-      // Check if we have any products for this brand
-      const hasBrandProducts = contextProducts.some(p => 
-        p.vendor === "Amazon via Zinc" && 
-        (p.name.toLowerCase().includes(brandParam.toLowerCase()) || 
-         (p.description && p.description.toLowerCase().includes(brandParam.toLowerCase())))
-      );
-      
-      if (!hasBrandProducts && !isBrandLoading) {
-        console.log(`No products found for brand ${brandParam}, fetching from Zinc API`);
-        setIsBrandLoading(true);
-        
-        // Fetch products for this brand
-        handleBrandProducts(brandParam, contextProducts, setContextProducts)
-          .then(brandProducts => {
-            if (brandProducts.length > 0) {
-              console.log(`Fetched ${brandProducts.length} products for brand ${brandParam}`);
-              // The products should now be in the context, and will be included in the next render
-            }
-            setIsBrandLoading(false);
-          })
-          .catch(error => {
-            console.error(`Error fetching products for brand ${brandParam}:`, error);
-            setIsBrandLoading(false);
-          });
-      }
     }
-  }, [searchParams, contextProducts, setContextProducts, isBrandLoading]);
+  }, [searchParams, contextProducts]);
   
   // Process filtered products based on active filters
   useEffect(() => {
-    if (products.length === 0 && !isLoading && !isBrandLoading) {
+    if (products.length === 0 && !isLoading) {
       console.log("No products to filter");
       return;
     }
@@ -126,7 +97,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     console.log(`Filter result: ${result.length} products after filtering`);
     
     setFilteredProducts(result);
-  }, [products, activeFilters, sortOption, isLoading, isBrandLoading]);
+  }, [products, activeFilters, sortOption, isLoading]);
   
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);
@@ -136,8 +107,8 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     setSortOption(option);
   };
 
-  // Show loading state if we're loading products or specifically loading brand products
-  if ((isLoading && products.length === 0) || isBrandLoading) {
+  // Show loading state if we're loading products
+  if (isLoading) {
     return <MarketplaceLoading />;
   }
 

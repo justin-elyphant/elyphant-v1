@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useMarketplaceSearch } from "@/components/marketplace/hooks/useMarketplaceSearch";
 import MarketplaceHeader from "@/components/marketplace/MarketplaceHeader";
 import MarketplaceContent from "@/components/marketplace/MarketplaceContent";
@@ -21,6 +21,7 @@ const MarketplaceWrapper = () => {
   const location = useLocation();
   const { products, setProducts } = useProducts();
   const [searchParams] = useSearchParams();
+  const [isBrandLoading, setIsBrandLoading] = useState(false);
   
   useEffect(() => {
     console.log(`MarketplaceWrapper: Search params: ${location.search}, Products loaded: ${products.length}`);
@@ -39,22 +40,33 @@ const MarketplaceWrapper = () => {
          (p.description && p.description.toLowerCase().includes(brandParam.toLowerCase())))
       );
       
-      if (brandProducts.length === 0) {
+      if (brandProducts.length === 0 && !isBrandLoading) {
         console.log(`No products found for brand ${brandParam}, fetching from Zinc API`);
+        // Start loading
+        setIsBrandLoading(true);
+        
         // Fetch products for this brand
-        handleBrandProducts(brandParam, products, setProducts);
+        handleBrandProducts(brandParam, products, setProducts)
+          .then(() => {
+            console.log(`Finished loading products for ${brandParam}`);
+            setIsBrandLoading(false);
+          })
+          .catch(error => {
+            console.error(`Error in brand products fetch: ${error}`);
+            setIsBrandLoading(false);
+          });
       } else {
         console.log(`Found ${brandProducts.length} existing products for brand ${brandParam}`);
       }
     }
-  }, [searchParams, products, setProducts]);
+  }, [searchParams, products, setProducts, isBrandLoading]);
 
   return (
     <div className="container mx-auto py-8 px-4">
       <MarketplaceHeader title={pageTitle} subtitle={subtitle} />
       <MarketplaceContent 
         products={filteredProducts} 
-        isLoading={isLoading} 
+        isLoading={isLoading || isBrandLoading} 
       />
     </div>
   );

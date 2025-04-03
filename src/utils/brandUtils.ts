@@ -10,18 +10,27 @@ export const handleBrandProducts = (
   allProducts: Product[], 
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
 ): Product[] => {
+  if (!brandName || brandName.trim() === "") {
+    console.log("No brand name provided");
+    return [];
+  }
+
   if (allProducts.length === 0) {
+    console.log("No products available to filter");
     toast.info("Loading products...");
     return [];
   }
   
   console.log(`Looking for products for brand: ${brandName}`);
   
+  // Case-insensitive brand name
+  const brandNameLower = brandName.toLowerCase();
+  
   // More flexible brand matching
   const productsByBrand = allProducts.filter(p => 
-    (p.name && p.name.toLowerCase().includes(brandName.toLowerCase())) || 
-    (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase())) ||
-    (p.description && p.description.toLowerCase().includes(brandName.toLowerCase()))
+    (p.name && p.name.toLowerCase().includes(brandNameLower)) || 
+    (p.vendor && p.vendor.toLowerCase().includes(brandNameLower)) ||
+    (p.description && p.description.toLowerCase().includes(brandNameLower))
   );
   
   console.log(`Found ${productsByBrand.length} products for brand ${brandName}`);
@@ -36,11 +45,12 @@ export const handleBrandProducts = (
       if (randomProduct) {
         const newProduct: Product = {
           ...randomProduct,
-          id: 10000 + allProducts.length + i, // Ensure unique ID
+          id: Date.now() + i, // Ensure unique ID using timestamp
           name: `${brandName} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
           vendor: brandName,
           category: randomProduct.category || "Clothing",
-          description: `Premium ${brandName} ${randomProduct.category || "item"} with exceptional quality and style.`
+          description: `Premium ${brandName} ${randomProduct.category || "item"} with exceptional quality and style.`,
+          isBestSeller: i === 0 // Make the first one a bestseller
         };
         tempProducts.push(newProduct);
       }
@@ -49,11 +59,24 @@ export const handleBrandProducts = (
     // Update products in context
     if (tempProducts.length > 0) {
       console.log(`Creating ${tempProducts.length} temporary products for brand ${brandName}`);
-      setProducts(prev => [...prev, ...tempProducts]);
-      toast.success(`${brandName} products added to catalog`);
+      
+      // Add new products to the context
+      setProducts(prev => {
+        // Check if these products already exist to avoid duplicates
+        const existingIds = new Set(prev.map(p => p.id));
+        const uniqueNewProducts = tempProducts.filter(p => !existingIds.has(p.id));
+        
+        if (uniqueNewProducts.length > 0) {
+          toast.success(`${brandName} products added to catalog`);
+          return [...prev, ...uniqueNewProducts];
+        }
+        return prev;
+      });
+      
       return tempProducts;
     }
     
+    toast.error(`Couldn't find or create products for ${brandName}`);
     return [];
   } else {
     toast.success(`Viewing ${brandName} products`);

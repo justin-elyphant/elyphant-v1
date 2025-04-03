@@ -3,7 +3,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProducts } from "@/contexts/ProductContext";
-import { toast } from "sonner";
 import { handleBrandProducts } from "@/utils/brandUtils";
 
 type BrandsProps = {
@@ -19,7 +18,8 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
   const { products, setProducts } = useProducts();
   
   const handleBrandClick = (brandName: string) => {
-    // This will find or create products for the brand
+    console.log(`Brand clicked: ${brandName}`);
+    // This will find or create products for the brand and add them to the context
     handleBrandProducts(brandName, products, setProducts);
   };
 

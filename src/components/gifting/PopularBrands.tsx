@@ -62,7 +62,8 @@ const PopularBrands = () => {
   const { products, setProducts } = useProducts();
   
   const handleBrandClick = (brandName: string) => {
-    // This will find or create products for the brand
+    console.log(`PopularBrands: Brand clicked: ${brandName}`);
+    // Pre-generate the brand products before navigation
     handleBrandProducts(brandName, products, setProducts);
   };
 

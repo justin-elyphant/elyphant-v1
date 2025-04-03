@@ -32,6 +32,8 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     const brandParam = params.get("brand");
     
     if (brandParam) {
+      console.log(`URL contains brand parameter: ${brandParam}`);
+      
       // Update active filters with brand
       setActiveFilters(prev => ({
         ...prev,
@@ -39,55 +41,64 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       }));
       
       // Generate brand products immediately
-      handleBrandProducts(brandParam, products, setProducts);
+      const brandProducts = handleBrandProducts(brandParam, products, setProducts);
+      
+      // If we have brand products, set them as filtered products
+      if (brandProducts && brandProducts.length > 0) {
+        console.log(`Setting ${brandProducts.length} brand products as filtered products`);
+        setFilteredProducts(sortProducts(brandProducts, sortOption));
+      }
     }
-  }, [location.search, products, setProducts]);
+  }, [location.search, products, setProducts, sortOption]);
   
   // Update filtered products when products or filters change
   useEffect(() => {
+    if (Object.keys(activeFilters).length === 0) {
+      // No filters, show all products
+      setFilteredProducts(sortProducts(products, sortOption));
+      return;
+    }
+
     let result = [...products];
     
     // Apply filters
-    if (Object.keys(activeFilters).length > 0) {
-      // Apply price filter
-      if (activeFilters.price && typeof activeFilters.price === 'object') {
-        const { min, max } = activeFilters.price;
-        result = result.filter(product => 
-          product.price >= min && product.price <= max
-        );
-      }
+    if (activeFilters.price && typeof activeFilters.price === 'object') {
+      const { min, max } = activeFilters.price;
+      result = result.filter(product => 
+        product.price >= min && product.price <= max
+      );
+    }
+    
+    // Apply rating filter
+    if (activeFilters.rating && activeFilters.rating !== 'all') {
+      const minRating = parseInt(activeFilters.rating.replace('up', ''));
+      result = result.filter(product => 
+        (product.rating || 0) >= minRating
+      );
+    }
+    
+    // Apply shipping filter
+    if (activeFilters.shipping === true) {
+      // All products have free shipping in our demo
+    }
+    
+    // Apply brand filter if present - make it case-insensitive and more flexible
+    if (activeFilters.brand && activeFilters.brand !== 'all') {
+      const brandName = activeFilters.brand.toLowerCase();
       
-      // Apply rating filter
-      if (activeFilters.rating && activeFilters.rating !== 'all') {
-        const minRating = parseInt(activeFilters.rating.replace('up', ''));
-        result = result.filter(product => 
-          (product.rating || 0) >= minRating
-        );
-      }
+      // Use more relaxed brand filtering
+      result = result.filter(product => 
+        (product.name && product.name.toLowerCase().includes(brandName)) ||
+        (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
+        (product.description && product.description.toLowerCase().includes(brandName))
+      );
       
-      // Apply shipping filter
-      if (activeFilters.shipping === true) {
-        // All products have free shipping in our demo
-      }
-      
-      // Apply brand filter if present - make it case-insensitive and more flexible
-      if (activeFilters.brand && activeFilters.brand !== 'all') {
-        const brandName = activeFilters.brand.toLowerCase();
-        
-        // Use more relaxed brand filtering
-        result = result.filter(product => 
-          (product.name && product.name.toLowerCase().includes(brandName)) ||
-          (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
-          (product.description && product.description.toLowerCase().includes(brandName))
-        );
-        
-        // If still no results after filtering, create temporary brand products
-        if (result.length === 0) {
-          console.log(`No filtered products found for brand ${activeFilters.brand}`);
-          const brandProducts = handleBrandProducts(activeFilters.brand, products, setProducts);
-          if (brandProducts.length > 0) {
-            result = brandProducts;
-          }
+      // If still no results after filtering, create temporary brand products
+      if (result.length === 0) {
+        console.log(`No filtered products found for brand ${activeFilters.brand}`);
+        const brandProducts = handleBrandProducts(activeFilters.brand, products, setProducts);
+        if (brandProducts.length > 0) {
+          result = brandProducts;
         }
       }
     }

@@ -28,15 +28,17 @@ const SearchResults = ({
   const { products } = useProducts();
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchRequestIdRef = useRef<number>(0);
+  const previousSearchTermRef = useRef<string>("");
 
   // Search Zinc API when searchTerm changes with improved debouncing
   useEffect(() => {
-    // Don't trigger search if term is too short
-    if (searchTerm.trim().length <= 2) {
-      setZincResults([]);
-      setLoading(false);
+    // Don't trigger search if term is too short or hasn't changed
+    if (searchTerm.trim().length <= 2 || searchTerm === previousSearchTermRef.current) {
       return;
     }
+    
+    // Update previous search term
+    previousSearchTermRef.current = searchTerm;
     
     setLoading(true);
     
@@ -51,9 +53,11 @@ const SearchResults = ({
     // Set a timeout to avoid excessive API calls
     searchTimeoutRef.current = setTimeout(async () => {
       try {
+        console.log("Searching for products with term:", searchTerm);
         // Only proceed if this is still the most recent request
         if (currentRequestId === searchRequestIdRef.current) {
           const results = await searchProducts(searchTerm);
+          console.log("Search results:", results);
           // Only update state if this is still the most recent request
           if (currentRequestId === searchRequestIdRef.current) {
             setZincResults(results.slice(0, 5)); // Limit to 5 results

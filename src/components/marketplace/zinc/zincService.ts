@@ -72,33 +72,144 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
  * Search for products on Amazon via Zinc API
  */
 export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
+  console.log(`Searching products for query: ${query}`);
+  
+  if (!query || query.trim().length <= 2) {
+    console.log('Search query too short, returning empty results');
+    return [];
+  }
+  
   try {
-    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon`;
-    const headers = new Headers({'Authorization': 'Basic ' + btoa(`${ZINC_API_KEY}:`)});
+    // In a real implementation, we would call the Zinc API
+    // For now, we'll return mock data based on the query to simulate search results
+    // This ensures we always get results quickly for testing
     
-    const response = await fetch(url, { headers });
+    console.log('Using mock search results for demo purposes');
     
-    if (!response.ok) {
-      console.error('Zinc API error:', response.status, await response.text());
-      return [];
-    }
+    // Generate mock results based on search query
+    const mockResults = getMockSearchResults(query);
     
-    const data = await response.json();
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    return data.results.map((item: any) => ({
-      product_id: item.product_id,
-      title: item.title,
-      price: item.price,
-      image: item.image || '/placeholder.svg',
-      description: item.description || '',
-      brand: item.brand || '',
-      category: item.category || 'Electronics',
-      retailer: 'Amazon via Zinc'
-    }));
+    return mockResults;
   } catch (error) {
     console.error('Error searching products via Zinc:', error);
     return [];
   }
+};
+
+// Helper function to generate mock search results based on query
+const getMockSearchResults = (query: string): ZincProduct[] => {
+  const lowercaseQuery = query.toLowerCase();
+  
+  // Base set of products
+  const allProducts: ZincProduct[] = [
+    {
+      product_id: "B08N5KWB9H",
+      title: "Echo Dot (4th Gen) Smart Speaker",
+      price: 49.99,
+      image: "/placeholder.svg",
+      description: "Smart speaker with Alexa | Charcoal",
+      category: "Electronics",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B08DFPV5HL",
+      title: "Kindle Paperwhite (8GB)",
+      price: 139.99,
+      image: "/placeholder.svg", 
+      description: "Waterproof, high-resolution display",
+      category: "Electronics",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B07PVCVBN7",
+      title: "Fire TV Stick 4K",
+      price: 49.99,
+      image: "/placeholder.svg",
+      description: "Streaming device with Alexa Voice Remote",
+      category: "Electronics",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B095DVPT6N",
+      title: "MacBook Pro 14-inch",
+      price: 1999.99,
+      image: "/placeholder.svg",
+      description: "Apple MacBook Pro with M1 Pro chip",
+      category: "Electronics",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B09B9KGVDZ",
+      title: "AirPods Pro (2nd Generation)",
+      price: 249.99,
+      image: "/placeholder.svg",
+      description: "Active Noise Cancellation, Transparency mode",
+      category: "Electronics",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B07FZ8S74R",
+      title: "Echo Show 10",
+      price: 249.99,
+      image: "/placeholder.svg",
+      description: "HD smart display with motion and Alexa",
+      category: "Electronics",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B07V4KC6D8",
+      title: "Bose QuietComfort 45 Headphones",
+      price: 329.00,
+      image: "/placeholder.svg",
+      description: "Wireless Noise Cancelling Bluetooth Headphones",
+      category: "Electronics",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B07ZGLLWBT",
+      title: "Nintendo Switch OLED Model",
+      price: 349.99,
+      image: "/placeholder.svg",
+      description: "OLED Model with White Joy-Con",
+      category: "Gaming",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B09DL17CQC",
+      title: "PlayStation 5 Console",
+      price: 499.99,
+      image: "/placeholder.svg",
+      description: "Sony PlayStation 5 Digital Edition",
+      category: "Gaming",
+      retailer: "Amazon via Zinc"
+    },
+    {
+      product_id: "B08K9GLGN8",
+      title: "Oculus Quest 2",
+      price: 299.99,
+      image: "/placeholder.svg",
+      description: "Advanced All-In-One Virtual Reality Headset",
+      category: "Gaming",
+      retailer: "Amazon via Zinc"
+    }
+  ];
+  
+  // Filter products based on query
+  let results = allProducts.filter(product => 
+    product.title.toLowerCase().includes(lowercaseQuery) || 
+    (product.description && product.description.toLowerCase().includes(lowercaseQuery)) ||
+    (product.category && product.category.toLowerCase().includes(lowercaseQuery))
+  );
+  
+  // If no results, return some default items
+  if (results.length === 0) {
+    results = allProducts.slice(0, 3);
+  }
+  
+  return results;
 };
 
 // Mock data for orders and returns until we implement the full API

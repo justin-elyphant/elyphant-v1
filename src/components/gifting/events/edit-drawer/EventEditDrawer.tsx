@@ -59,7 +59,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[400px] overflow-y-auto max-w-md mx-auto rounded-t-xl top-[20vh]">
+      <DrawerContent className="max-h-[350px] overflow-y-auto max-w-md mx-auto rounded-t-xl top-[25vh]">
         <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl py-2">
           <DrawerTitle className="text-primary text-lg">Edit Gift Occasion</DrawerTitle>
           <DrawerDescription className="text-muted-foreground text-sm">

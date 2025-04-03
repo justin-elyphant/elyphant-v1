@@ -13,6 +13,49 @@ export type ZincProduct = {
   review_count?: number;
 };
 
+// Zinc Order type (used by orderService.ts)
+export type ZincOrder = {
+  id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  retailer: string;
+  products: {
+    product_id: string;
+    quantity: number;
+  }[];
+  shipping_address: {
+    first_name: string;
+    last_name: string;
+    address_line1: string;
+    address_line2?: string;
+    zip_code: string;
+    city: string;
+    state: string;
+    country: string;
+    phone_number: string;
+  };
+  tracking_number?: string;
+  estimated_delivery?: string;
+  total_price: number;
+};
+
+// Zinc Return type (used by returnService.ts)
+export type ZincReturn = {
+  id: string;
+  order_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  items: {
+    product_id: string;
+    quantity: number;
+    reason: string;
+  }[];
+  refund_amount?: number;
+  refund_status?: string;
+};
+
 // Zinc API order request type
 export type ZincOrderRequest = {
   retailer: string;

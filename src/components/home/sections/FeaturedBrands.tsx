@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProducts } from "@/contexts/ProductContext";
 import { handleBrandProducts } from "@/utils/brandUtils";
+import { toast } from "sonner";
 
 type BrandsProps = {
   brands: {
@@ -26,6 +27,7 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
     
     if (products.length === 0) {
       console.log("No products available when brand clicked, will try later via URL param");
+      toast.loading("Loading products...", { id: "loading-brand-products" });
     } else {
       // This will find or create products for the brand and add them to the context
       handleBrandProducts(brandName, products, setProducts);

@@ -21,15 +21,23 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState("relevance");
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const location = useLocation();
-  const { setProducts: setContextProducts } = useProducts();
+  const { products: contextProducts, setProducts: setContextProducts } = useProducts();
   
   // Log initial state for debugging
   useEffect(() => {
     console.log(`MarketplaceContent mounted: ${products.length} products, isLoading: ${isLoading}`);
   }, []);
+  
+  // Set filtered products when products change
+  useEffect(() => {
+    if (products.length > 0 && filteredProducts.length === 0) {
+      console.log(`Setting initial filtered products: ${products.length} products available`);
+      setFilteredProducts(sortProducts(products, sortOption));
+    }
+  }, [products, filteredProducts, sortOption]);
   
   // Extract brand from URL on component mount or URL change
   useEffect(() => {
@@ -37,7 +45,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     const brandParam = params.get("brand");
     
     if (brandParam) {
-      console.log(`URL contains brand parameter: ${brandParam}, products available: ${products.length}, isLoading: ${isLoading}`);
+      console.log(`URL contains brand parameter: ${brandParam}, products available: ${contextProducts.length}, isLoading: ${isLoading}`);
       
       // Update active filters with brand
       setActiveFilters(prev => ({
@@ -46,8 +54,8 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       }));
       
       // Only attempt to filter if we have products
-      if (products.length > 0) {
-        const brandProducts = handleBrandProducts(brandParam, products, setContextProducts);
+      if (contextProducts.length > 0) {
+        const brandProducts = handleBrandProducts(brandParam, contextProducts, setContextProducts);
         
         // If we have brand products, set them as filtered products
         if (brandProducts && brandProducts.length > 0) {
@@ -56,9 +64,28 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         }
       } else {
         console.log("Waiting for products to load before filtering by brand");
+        toast.loading("Loading products...");
+        
+        // Set up a timer to check for products loading
+        const checkProductsInterval = setInterval(() => {
+          if (contextProducts.length > 0) {
+            console.log(`Products loaded, now filtering for brand: ${brandParam}`);
+            clearInterval(checkProductsInterval);
+            
+            const brandProducts = handleBrandProducts(brandParam, contextProducts, setContextProducts);
+            if (brandProducts && brandProducts.length > 0) {
+              console.log(`Setting ${brandProducts.length} brand products as filtered products`);
+              setFilteredProducts(sortProducts(brandProducts, sortOption));
+              toast.dismiss();
+            }
+          }
+        }, 300);
+        
+        // Clear interval after 10 seconds to prevent memory leaks
+        setTimeout(() => clearInterval(checkProductsInterval), 10000);
       }
     }
-  }, [location.search, products, setContextProducts, sortOption]);
+  }, [location.search, contextProducts, setContextProducts, sortOption]);
   
   // Update filtered products when products or filters change
   useEffect(() => {
@@ -134,7 +161,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     setSortOption(option);
   };
 
-  if (isLoading) {
+  if (isLoading && products.length === 0 && filteredProducts.length === 0) {
     return <MarketplaceLoading />;
   }
 

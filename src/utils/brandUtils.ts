@@ -18,7 +18,7 @@ export const handleBrandProducts = (
   // Important check: if products aren't loaded yet, return early
   if (!allProducts || allProducts.length === 0) {
     console.log("No products available to filter - waiting for products to load");
-    toast.info("Loading products...");
+    toast.loading("Loading products...", { id: "loading-products" });
     return [];
   }
   
@@ -27,7 +27,7 @@ export const handleBrandProducts = (
   // Case-insensitive brand name
   const brandNameLower = brandName.toLowerCase();
   
-  // More flexible brand matching
+  // More flexible brand matching - check vendor, name, and description
   const productsByBrand = allProducts.filter(p => 
     (p.name && p.name.toLowerCase().includes(brandNameLower)) || 
     (p.vendor && p.vendor.toLowerCase().includes(brandNameLower)) ||
@@ -68,7 +68,8 @@ export const handleBrandProducts = (
         const uniqueNewProducts = tempProducts.filter(p => !existingIds.has(p.id));
         
         if (uniqueNewProducts.length > 0) {
-          toast.success(`${brandName} products added to catalog`);
+          toast.success(`${brandName} products added to catalog`, { id: "brand-products-added" });
+          toast.dismiss("loading-products");
           return [...prev, ...uniqueNewProducts];
         }
         return prev;
@@ -78,9 +79,11 @@ export const handleBrandProducts = (
     }
     
     toast.error(`Couldn't find or create products for ${brandName}`);
+    toast.dismiss("loading-products");
     return [];
   } else {
-    toast.success(`Viewing ${brandName} products`);
+    toast.success(`Viewing ${brandName} products`, { id: "viewing-brand-products" });
+    toast.dismiss("loading-products");
     return productsByBrand;
   }
 };

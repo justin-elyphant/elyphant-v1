@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProducts } from "@/contexts/ProductContext";
 import { handleBrandProducts } from "@/utils/brandUtils";
+import { toast } from "sonner";
 
 // Mock data for popular brands with real logos
 const popularBrands = [
@@ -70,6 +71,7 @@ const PopularBrands = () => {
     
     if (products.length === 0) {
       console.log("No products available when brand clicked, will try later via URL param");
+      toast.loading("Loading products...", { id: "loading-brand-products" });
     } else {
       // Pre-generate the brand products before navigation
       handleBrandProducts(brandName, products, setProducts);

@@ -6,10 +6,11 @@ import { Loader2 } from "lucide-react";
 const MarketplaceLoading = () => {
   return (
     <div className="space-y-8">
-      <div className="flex justify-center py-4">
-        <div className="flex items-center gap-2 text-primary">
-          <Loader2 className="h-6 w-6 animate-spin" />
+      <div className="flex justify-center py-6">
+        <div className="flex flex-col items-center gap-2 text-primary">
+          <Loader2 className="h-8 w-8 animate-spin" />
           <p className="text-lg font-medium">Loading products...</p>
+          <p className="text-sm text-muted-foreground">Please wait while we fetch the latest products</p>
         </div>
       </div>
       

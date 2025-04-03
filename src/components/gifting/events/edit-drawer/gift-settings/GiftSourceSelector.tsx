@@ -11,12 +11,12 @@ interface GiftSourceSelectorProps {
 
 const GiftSourceSelector = ({ giftSource, setGiftSource }: GiftSourceSelectorProps) => {
   return (
-    <div className="space-y-0 mt-0.5">
+    <div className="space-y-0 pt-0">
       <Label className="text-[7px] font-medium leading-none">Gift Selection Source</Label>
       <RadioGroup 
         value={giftSource} 
         onValueChange={(value: GiftSource) => setGiftSource(value)}
-        className="flex flex-col gap-0 mt-0.5"
+        className="flex flex-col gap-0 mt-0"
       >
         <div className="flex items-center space-x-1 py-0 px-0.5 rounded hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
           <RadioGroupItem value="wishlist" id="wishlist" className="h-1.5 w-1.5 text-primary border-primary/50" />

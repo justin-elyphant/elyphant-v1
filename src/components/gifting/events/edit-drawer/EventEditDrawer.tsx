@@ -67,7 +67,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
           </DrawerDescription>
         </DrawerHeader>
         
-        <div className="px-3 py-0 space-y-0.5">
+        <div className="px-3 py-0 space-y-0">
           <EventFormSection 
             type={type}
             person={person}

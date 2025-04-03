@@ -23,7 +23,7 @@ const AutoGiftToggle = ({ enabled, setEnabled }: AutoGiftToggleProps) => {
           id="auto-gift"
           checked={enabled}
           onCheckedChange={setEnabled}
-          className="data-[state=checked]:bg-primary h-2.5 w-5"
+          className="data-[state=checked]:bg-primary h-2 w-4"
         />
       </div>
     </Card>

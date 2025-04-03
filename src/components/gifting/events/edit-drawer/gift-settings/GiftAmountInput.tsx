@@ -31,7 +31,7 @@ const GiftAmountInput = ({ amount, setAmount }: GiftAmountInputProps) => {
   };
 
   return (
-    <div className="space-y-0 mt-0">
+    <div className="space-y-0 py-0.5">
       <Label htmlFor="gift-amount" className="flex items-center text-[7px] font-medium leading-none">
         <DollarSign className="h-1.5 w-1.5 mr-0.5 text-primary" />
         Gift Amount
@@ -42,7 +42,7 @@ const GiftAmountInput = ({ amount, setAmount }: GiftAmountInputProps) => {
           size="icon" 
           type="button" 
           onClick={decrementAmount}
-          className="h-3 w-3 border-primary/20 text-primary p-0"
+          className="h-2.5 w-2.5 border-primary/20 text-primary p-0"
         >
           <Minus className="h-1.5 w-1.5" />
         </Button>
@@ -53,7 +53,7 @@ const GiftAmountInput = ({ amount, setAmount }: GiftAmountInputProps) => {
             type="number"
             value={amount}
             onChange={handleAmountChange}
-            className="pl-3 text-center focus-visible:ring-primary/50 border-primary/20 h-3 text-[7px] py-0"
+            className="pl-3 text-center focus-visible:ring-primary/50 border-primary/20 h-2.5 text-[7px] py-0"
             min={0}
             max={500}
           />
@@ -63,7 +63,7 @@ const GiftAmountInput = ({ amount, setAmount }: GiftAmountInputProps) => {
           size="icon" 
           type="button" 
           onClick={incrementAmount}
-          className="h-3 w-3 border-primary/20 text-primary p-0"
+          className="h-2.5 w-2.5 border-primary/20 text-primary p-0"
         >
           <Plus className="h-1.5 w-1.5" />
         </Button>

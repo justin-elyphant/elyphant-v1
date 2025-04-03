@@ -18,7 +18,7 @@ export const useZincProducts = () => {
     localStorage.setItem("zincConnection", JSON.stringify(connection));
   };
   
-  const { syncProducts, isLoading: isSyncLoading, error: syncError } = useZincProductSync(updateLastSync);
+  const { syncProducts: syncZincProducts, isLoading: isSyncLoading, error: syncError } = useZincProductSync(updateLastSync);
 
   // Helper function to convert ZincProduct to Product
   const convertZincProductToProduct = (zincProduct: ZincProduct, index: number): Product => ({
@@ -36,6 +36,26 @@ export const useZincProducts = () => {
     const results = await search(term);
     
     // Update products in context
+    if (results.length > 0) {
+      setProducts(prevProducts => {
+        // Filter out any existing Amazon products
+        const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
+        
+        // Convert ZincProduct to Product format
+        const amazonProducts = results.map(convertZincProductToProduct);
+        
+        // Add the new Amazon products
+        return [...nonAmazonProducts, ...amazonProducts];
+      });
+    }
+    
+    return results;
+  };
+
+  // Wrapper for syncProducts that handles the type conversion
+  const syncProducts = async () => {
+    const results = await syncZincProducts();
+    
     if (results.length > 0) {
       setProducts(prevProducts => {
         // Filter out any existing Amazon products

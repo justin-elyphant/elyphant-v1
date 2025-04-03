@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 
@@ -14,6 +13,9 @@ export type Product = {
   description?: string;
   rating?: number;
   reviewCount?: number;
+  images?: string[];
+  features?: string[];
+  specifications?: Record<string, string>;
 };
 
 type ProductContextType = {

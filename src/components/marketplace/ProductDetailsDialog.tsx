@@ -25,7 +25,8 @@ const ProductDetailsDialog = ({
 
   if (!product) return null;
 
-  const images = Array.isArray(product.images) ? product.images : [product.image];
+  // Safely access images array or create a single-item array from image if images is undefined
+  const images = product.images && product.images.length > 0 ? product.images : [product.image];
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);

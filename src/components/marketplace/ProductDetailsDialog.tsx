@@ -111,8 +111,14 @@ const ProductDetailsDialog = ({
     );
   };
 
-  // Ensure description exists with a fallback
-  const description = product.description || "No description available for this product.";
+  // If description is empty, generate a simple one based on the product name and category
+  let description = product.description;
+  if (!description || description.trim() === "") {
+    const productType = product.name.split(' ').slice(1).join(' ');
+    const brand = product.name.split(' ')[0];
+    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This ${product.category.toLowerCase()} item features premium materials and exceptional craftsmanship for long-lasting use.`;
+  }
+  
   const features = product.features || [];
   const specifications = product.specifications || {};
 

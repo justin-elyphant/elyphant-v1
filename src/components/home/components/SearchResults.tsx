@@ -83,9 +83,15 @@ const SearchResults = ({
   // Get local store products that match searchTerm
   const filteredProducts = searchTerm.trim().length <= 2 ? [] : 
     products
-      .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                  (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())))
+      .filter(p => 
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
       .slice(0, 5); // Limit to 5 results
+
+  // Determine if we have any results to show
+  const hasResults = zincResults.length > 0 || filteredProducts.length > 0;
 
   return (
     <Command>
@@ -155,6 +161,16 @@ const SearchResults = ({
               </CommandItem>
             </CommandGroup>
           </>
+        )}
+        
+        {!hasResults && searchTerm.trim().length > 2 && !loading && (
+          <CommandItem 
+            onSelect={() => onItemSelect(searchTerm)}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            <Search className="mr-2 h-4 w-4" />
+            Search for "{searchTerm}" in marketplace
+          </CommandItem>
         )}
       </CommandList>
     </Command>

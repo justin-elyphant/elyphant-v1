@@ -1,93 +1,119 @@
 
+// Utility function to map search terms to image categories
+
+// Define a simple mapping object instead of using require
+const categoryMapping: Record<string, string> = {
+  // Electronics
+  "iphone": "electronics",
+  "airpods": "electronics",
+  "macbook": "electronics",
+  "laptop": "electronics",
+  "headphones": "electronics",
+  "tablet": "electronics",
+  "ipad": "electronics",
+  "kindle": "electronics",
+  "camera": "electronics",
+  "alexa": "electronics",
+  "echo": "electronics",
+  "playstation": "electronics",
+  "xbox": "electronics",
+  "nintendo": "electronics",
+  "gaming": "electronics",
+  "tv": "electronics",
+  "computer": "electronics",
+  "monitor": "electronics",
+  
+  // Clothing
+  "shirt": "clothing",
+  "dress": "clothing",
+  "pants": "clothing",
+  "shoes": "clothing",
+  "nike": "clothing",
+  "adidas": "clothing",
+  "puma": "clothing",
+  "jacket": "clothing",
+  "hat": "clothing",
+  "socks": "clothing",
+  
+  // Home
+  "furniture": "home",
+  "chair": "home",
+  "table": "home",
+  "desk": "home",
+  "sofa": "home",
+  "kitchenware": "home",
+  "cookware": "home",
+  "bedding": "home",
+  "pillow": "home",
+  "mattress": "home",
+  "decor": "home",
+  
+  // Fitness
+  "yoga": "fitness",
+  "exercise": "fitness",
+  "fitness": "fitness",
+  "weights": "fitness",
+  "treadmill": "fitness",
+  "gym": "fitness",
+  
+  // Beauty
+  "makeup": "beauty",
+  "skincare": "beauty",
+  "haircare": "beauty",
+  "perfume": "beauty",
+  "cosmetics": "beauty",
+  
+  // Kids
+  "toys": "kids",
+  "baby": "kids",
+  "kids": "kids",
+  "children": "kids",
+  
+  // Generic fallbacks by brand
+  "amazon": "electronics",
+  "apple": "electronics",
+  "samsung": "electronics",
+  "google": "electronics",
+  "microsoft": "electronics",
+  "sony": "electronics",
+  "lg": "electronics",
+  "bose": "electronics",
+  "dell": "electronics",
+  "hp": "electronics",
+  "asus": "electronics",
+  "lenovo": "electronics"
+};
+
 /**
- * Maps search terms to appropriate image categories to ensure correct images
+ * Get the most appropriate image category for a search query
  */
 export const getImageCategory = (query: string): string => {
-  const lowercaseQuery = query.toLowerCase().trim();
+  const lowercaseQuery = query.toLowerCase();
   
-  // Apple products mapping
-  if (lowercaseQuery.includes('iphone')) {
-    return 'iPhone';
-  }
-  if (lowercaseQuery.includes('macbook') || 
-      lowercaseQuery.includes('mackbook') || 
-      (lowercaseQuery.includes('mac') && lowercaseQuery.includes('book'))) {
-    return 'MacBook';
-  }
-  if (lowercaseQuery.includes('ipad')) {
-    return 'iPad';
-  }
-  if (lowercaseQuery.includes('airpods')) {
-    return 'AirPods';
-  }
-  if (lowercaseQuery.includes('apple') && lowercaseQuery.includes('watch')) {
-    return 'AppleWatch';
+  // Check for specific keyword matches
+  for (const [keyword, category] of Object.entries(categoryMapping)) {
+    if (lowercaseQuery.includes(keyword)) {
+      return category;
+    }
   }
   
-  // Samsung products mapping
-  if (lowercaseQuery.includes('samsung') && 
-      (lowercaseQuery.includes('galaxy') || lowercaseQuery.includes('phone'))) {
-    return 'SamsungPhone';
-  }
-  if (lowercaseQuery.includes('samsung') && lowercaseQuery.includes('tv')) {
-    return 'SamsungTV';
-  }
-  if (lowercaseQuery.includes('samsung')) {
-    return 'Samsung';
+  // If no specific mapping found, determine based on common patterns
+  if (
+    lowercaseQuery.includes("phone") || 
+    lowercaseQuery.includes("tech") || 
+    lowercaseQuery.includes("gadget")
+  ) {
+    return "electronics";
   }
   
-  // Gaming consoles
-  if (lowercaseQuery.includes('playstation') || 
-      lowercaseQuery.includes('ps5') || 
-      lowercaseQuery.includes('ps4')) {
-    return 'PlayStation';
-  }
-  if (lowercaseQuery.includes('xbox')) {
-    return 'Xbox';
-  }
-  if (lowercaseQuery.includes('nintendo') || lowercaseQuery.includes('switch')) {
-    return 'NintendoSwitch';
+  if (
+    lowercaseQuery.includes("wear") || 
+    lowercaseQuery.includes("fashion") ||
+    lowercaseQuery.includes("apparel")
+  ) {
+    return "clothing";
   }
   
-  // Audio devices
-  if (lowercaseQuery.includes('headphone') || 
-      lowercaseQuery.includes('earphone') || 
-      lowercaseQuery.includes('earbud')) {
-    return 'Headphones';
-  }
-  if (lowercaseQuery.includes('speaker') || 
-      lowercaseQuery.includes('echo') || 
-      lowercaseQuery.includes('alexa')) {
-    return 'Speakers';
-  }
-  
-  // Footwear brands mapping
-  if (lowercaseQuery.includes('nike') || 
-      (lowercaseQuery.includes('shoe') && lowercaseQuery.includes('nike'))) {
-    return 'NikeShoes';
-  }
-  if (lowercaseQuery.includes('adidas') || 
-      (lowercaseQuery.includes('shoe') && lowercaseQuery.includes('adidas'))) {
-    return 'AdidasShoes';
-  }
-  if (lowercaseQuery.includes('shoes') || 
-      lowercaseQuery.includes('sneakers') ||
-      lowercaseQuery.includes('footwear')) {
-    return 'Footwear';
-  }
-  
-  if (lowercaseQuery.includes('xbox') || 
-      lowercaseQuery.includes('playstation') || 
-      lowercaseQuery.includes('gaming')) {
-    return 'Gaming';
-  }
-  
-  if (lowercaseQuery.includes('dallas') || 
-      lowercaseQuery.includes('cowboys')) {
-    return 'Sports';
-  }
-  
-  // Import and use the guessCategory function from categoryUtils
-  const { guessCategory } = require('./categoryUtils');
-  return guessCategory(lowercaseQuery);
+  // Default fallback
+  return "electronics";
 };

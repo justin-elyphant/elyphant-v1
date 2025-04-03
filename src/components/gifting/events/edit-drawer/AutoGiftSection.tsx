@@ -115,7 +115,7 @@ const AutoGiftSection = ({
             <RadioGroup 
               value={giftSource} 
               onValueChange={(value: GiftSource) => setGiftSource(value)}
-              className="space-y-2 mt-1"
+              className="flex flex-col gap-1.5"
             >
               <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
                 <RadioGroupItem value="wishlist" id="wishlist" className="text-primary border-primary/50" />

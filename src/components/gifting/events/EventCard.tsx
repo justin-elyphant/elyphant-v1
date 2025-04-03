@@ -1,129 +1,136 @@
 
 import React from "react";
-import { Gift, Calendar, DollarSign, Bell, MoreVertical, Edit } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Gift, Calendar, Edit, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { EventData } from "./types";
+import { ExtendedEventData } from "./types";
+import EventPrivacyBadge from "./EventPrivacyBadge";
 
 interface EventCardProps {
-  event: EventData;
-  onSendGift: (id: number) => void;
-  onToggleAutoGift: (id: number) => void;
-  onEdit?: (id: number) => void;
-  extraContent?: React.ReactNode; // Additional content like privacy badges
+  event: ExtendedEventData;
+  onSendGift: () => void;
+  onToggleAutoGift: () => void;
+  onEdit: () => void;
+  onVerifyEvent: () => void;
+  onClick?: () => void; // Add onClick prop
 }
 
-const EventCard = ({ event, onSendGift, onToggleAutoGift, onEdit, extraContent }: EventCardProps) => {
-  const { id, type, person, date, daysAway, avatarUrl, autoGiftEnabled, autoGiftAmount, giftSource } = event;
-  
-  const getUrgencyClass = (days: number) => {
-    if (days <= 7) return "text-red-600 font-semibold";
-    if (days <= 14) return "text-amber-600";
-    return "text-muted-foreground";
-  };
-
-  // Use explicit handlers to prevent event bubbling issues
-  const handleSendGift = () => {
-    onSendGift(id);
-  };
-
-  const handleToggleAutoGift = () => {
-    onToggleAutoGift(id);
-  };
-
-  const handleEdit = () => {
-    if (onEdit) {
-      onEdit(id);
+const EventCard = ({
+  event,
+  onSendGift,
+  onToggleAutoGift,
+  onEdit,
+  onVerifyEvent,
+  onClick,
+}: EventCardProps) => {
+  // To prevent event bubbling from buttons to card
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only trigger if click happened directly on card or card content elements
+    if (
+      (e.target as HTMLElement).closest('button') === null &&
+      onClick
+    ) {
+      onClick();
     }
   };
 
   return (
-    <Card>
+    <Card 
+      className="relative h-full cursor-pointer transition-all hover:shadow-md" 
+      onClick={handleCardClick} // Add onClick handler
+    >
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src={avatarUrl} alt={person} />
-              <AvatarFallback>{person.charAt(0)}</AvatarFallback>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={event.avatarUrl} alt={event.person} />
+              <AvatarFallback>{event.person[0]}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-base font-semibold">{type}</CardTitle>
-              <p className="text-sm text-muted-foreground">{person}</p>
+              <div className="font-medium">{event.person}</div>
+              <div className="text-sm text-muted-foreground">{event.type}</div>
             </div>
           </div>
-          <div className="flex">
-            {extraContent}
-            {onEdit && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">More options</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleEdit}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
+          <EventPrivacyBadge privacyLevel={event.privacyLevel} isVerified={event.isVerified} />
         </div>
       </CardHeader>
       
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center text-sm">
-            <Calendar className="h-4 w-4 mr-2 text-blue-500" />
-            <span>{date}</span>
-          </div>
-          
-          <div className="flex items-center text-sm">
-            <Bell className="h-4 w-4 mr-2 text-blue-500" />
-            <span className={getUrgencyClass(daysAway)}>
-              {daysAway === 0 
-                ? "Today!" 
-                : daysAway === 1 
-                  ? "Tomorrow!" 
-                  : `In ${daysAway} days`}
-            </span>
-          </div>
-          
-          {autoGiftEnabled && autoGiftAmount && (
-            <div className="flex items-center text-sm">
-              <DollarSign className="h-4 w-4 mr-2 text-green-500" />
-              <span>Auto-gift: ${autoGiftAmount}</span>
-              {giftSource && (
-                <span className="ml-1 text-xs text-muted-foreground">
-                  ({giftSource === "wishlist" 
-                    ? "From wishlist" 
-                    : giftSource === "ai" 
-                      ? "AI selected" 
-                      : "Wishlist + AI"})
-                </span>
-              )}
-            </div>
-          )}
+      <CardContent className="pb-2">
+        <div className="flex items-center space-x-2 text-sm">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span>{event.date}</span>
+          <Badge variant="outline" className="ml-auto">
+            {event.daysAway} days away
+          </Badge>
         </div>
+        
+        {/* Auto-Gift Status */}
+        <div className="flex items-center justify-between mt-3">
+          <div className="text-sm">
+            <span>Auto-Gift: </span>
+            {event.autoGiftEnabled ? (
+              <span className="font-medium text-green-600">
+                ${event.autoGiftAmount}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">Disabled</span>
+            )}
+          </div>
+          <Switch
+            checked={event.autoGiftEnabled}
+            onCheckedChange={onToggleAutoGift}
+            aria-label="Toggle auto-gift"
+          />
+        </div>
+        
+        {/* Verification indicator */}
+        {event.needsVerification && !event.isVerified && (
+          <div className="mt-3 rounded-sm bg-amber-50 p-2 text-xs text-amber-600 flex items-center space-x-1">
+            <span>Needs verification</span>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="h-6 px-2 text-xs text-amber-700" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onVerifyEvent();
+              }}
+            >
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Verify
+            </Button>
+          </div>
+        )}
       </CardContent>
       
-      <CardFooter className="pt-2 justify-between">
-        <Button variant="outline" size="sm" onClick={handleSendGift}>
-          <Gift className="h-4 w-4 mr-2" />
-          Send Gift
-        </Button>
-        
-        <div className="flex items-center space-x-2">
-          <span className="text-xs text-muted-foreground">Auto</span>
-          <Switch 
-            checked={autoGiftEnabled} 
-            onCheckedChange={handleToggleAutoGift}
-          />
+      <CardFooter className="pt-2">
+        <div className="flex space-x-2 w-full">
+          <Button 
+            className="flex-1" 
+            variant="outline" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSendGift();
+            }}
+          >
+            <Gift className="h-4 w-4 mr-2" />
+            Send Gift
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="px-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
         </div>
       </CardFooter>
     </Card>

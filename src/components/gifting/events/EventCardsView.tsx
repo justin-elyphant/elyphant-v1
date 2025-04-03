@@ -1,8 +1,6 @@
 
 import React from "react";
-import { Badge } from "@/components/ui/badge";
 import EventCard from "./EventCard";
-import EventPrivacyBadge from "./EventPrivacyBadge";
 import { ExtendedEventData } from "./types";
 
 interface EventCardsViewProps {
@@ -11,45 +9,39 @@ interface EventCardsViewProps {
   onToggleAutoGift: (id: number) => void;
   onEdit: (id: number) => void;
   onVerifyEvent: (id: number) => void;
+  onEventClick?: (event: ExtendedEventData) => void; // Add this prop
 }
 
-const EventCardsView = ({ 
-  events, 
-  onSendGift, 
-  onToggleAutoGift, 
+const EventCardsView = ({
+  events,
+  onSendGift,
+  onToggleAutoGift,
   onEdit,
-  onVerifyEvent
+  onVerifyEvent,
+  onEventClick,
 }: EventCardsViewProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {events.map((event) => (
-        <EventCard 
-          key={event.id}
-          event={event}
-          onSendGift={onSendGift}
-          onToggleAutoGift={onToggleAutoGift}
-          onEdit={onEdit}
-          extraContent={
-            <>
-              {event.privacyLevel && <EventPrivacyBadge 
-                privacyLevel={event.privacyLevel} 
-                isVerified={event.isVerified} 
-              />}
-              {event.needsVerification && (
-                <div className="mt-2">
-                  <Badge 
-                    variant="outline" 
-                    className="cursor-pointer hover:bg-amber-50 border-amber-300"
-                    onClick={() => onVerifyEvent(event.id)}
-                  >
-                    Verify Event
-                  </Badge>
-                </div>
-              )}
-            </>
-          }
-        />
-      ))}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {events.length === 0 ? (
+        <div className="col-span-full text-center py-12 bg-white rounded-md shadow-sm">
+          <h3 className="text-lg font-medium mb-2">No events found</h3>
+          <p className="text-muted-foreground">
+            Try adjusting your filters or add a new event
+          </p>
+        </div>
+      ) : (
+        events.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            onSendGift={() => onSendGift(event.id)}
+            onToggleAutoGift={() => onToggleAutoGift(event.id)}
+            onEdit={() => onEdit(event.id)}
+            onVerifyEvent={() => onVerifyEvent(event.id)}
+            onClick={() => onEventClick && onEventClick(event)} // Add click handler to the card
+          />
+        ))
+      )}
     </div>
   );
 };

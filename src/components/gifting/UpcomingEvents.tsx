@@ -197,6 +197,7 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
           onToggleAutoGift={handleToggleAutoGift}
           onEdit={handleEditEvent}
           onVerifyEvent={handleVerifyEvent}
+          onEventClick={handleEventClick} // Add this prop to pass the event click handler
         />
       ) : (
         <EventCalendarView 

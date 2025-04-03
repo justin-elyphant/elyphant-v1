@@ -86,6 +86,10 @@ const MyWishlists = () => {
     <div>
       <WishlistHeader title="My Wishlists" onCreateNew={handleCreateWishlist} />
       
+      <p className="text-muted-foreground mb-6">
+        Create and manage wishlists to share with friends and family
+      </p>
+      
       {wishlists.length > 0 && (
         <Alert className="mb-6 bg-blue-50 border-blue-200">
           <LightbulbIcon className="h-4 w-4 text-blue-600" />

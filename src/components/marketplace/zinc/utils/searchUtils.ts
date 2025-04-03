@@ -8,3 +8,4 @@ export { generatePrice } from './pricing/priceRanges';
 export { getExactProductImage } from './images/productImageUtils';
 export { getBrandFromTitle } from './brands/brandUtils';
 export { generateTitle } from './titles/titleGenerator';
+export { generateDescription } from './descriptions/descriptionGenerator';

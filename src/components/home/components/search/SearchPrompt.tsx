@@ -19,7 +19,7 @@ const SearchPrompt = ({ loading, searchTerm, onSelect, searchSuggestion }: Searc
   if (!searchTerm || searchTerm.trim().length < 2) {
     return (
       <div className="py-6 text-center text-sm">
-        Type to search for products, friends, or experiences
+        Type to search for products, brands, friends, or experiences
       </div>
     );
   }

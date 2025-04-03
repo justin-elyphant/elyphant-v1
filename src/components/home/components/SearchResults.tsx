@@ -18,7 +18,6 @@ const SearchResults = ({
 }: SearchResultsProps) => {
   const { loading, zincResults, filteredProducts, hasResults } = useZincSearch(searchTerm);
 
-  // Handle keyboard navigation and Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchTerm.trim()) {
       e.preventDefault();
@@ -26,7 +25,6 @@ const SearchResults = ({
     }
   };
 
-  // Static mock data for friends and experiences
   const friendsData = [
     { id: "friend-1", name: "Alex's Wishlist" },
     { id: "friend-2", name: "Sarah's Birthday" }
@@ -44,19 +42,15 @@ const SearchResults = ({
     }
   };
 
-  // This handler ensures no auto-highlighting
   const handleInputValueChange = (value: string) => {
-    // We pass the value up to parent components
     onSearchTermChange(value);
   };
 
-  // Calculate search suggestion based on search term
   const getSearchSuggestion = () => {
     if (!searchTerm || searchTerm.trim().length < 2) return "";
     
     const term = searchTerm.toLowerCase().trim();
     
-    // Common search suggestions
     const suggestions: Record<string, string> = {
       "n": "nike shoes",
       "ni": "nike shoes",
@@ -75,12 +69,10 @@ const SearchResults = ({
       "xb": "xbox"
     };
     
-    // Check if we have an exact match in our suggestions
     if (suggestions[term]) {
       return suggestions[term];
     }
     
-    // Otherwise, return the original search term
     return searchTerm;
   };
 
@@ -89,13 +81,11 @@ const SearchResults = ({
   return (
     <Command onKeyDown={handleKeyDown}>
       <CommandInput 
-        placeholder="Search products, friends, or experiences..." 
+        placeholder="Search products, brands, friends, or experiences..." 
         value={searchTerm}
         onValueChange={handleInputValueChange}
-        // Fix: Prevent auto-focusing the input which causes unwanted selection
         autoFocus={false}
         className="cursor-text"
-        // Fix: Additional props to prevent browser auto-behavior
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"

@@ -29,7 +29,6 @@ const SearchResults = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchRequestIdRef = useRef<number>(0);
   const previousSearchTermRef = useRef<string>("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Handle keyboard navigation and Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -68,10 +67,12 @@ const SearchResults = ({
           const results = await searchProducts(searchTerm);
           console.log("Search results:", results);
           // Only update state if this is still the most recent request
-          if (currentRequestId === searchRequestIdRef.current && results?.length > 0) {
-            setZincResults(results.slice(0, 5)); // Limit to 5 results
-          } else {
-            setZincResults([]);
+          if (currentRequestId === searchRequestIdRef.current) {
+            if (results?.length > 0) {
+              setZincResults(results.slice(0, 5)); // Limit to 5 results
+            } else {
+              setZincResults([]);
+            }
           }
         }
       } catch (error) {
@@ -105,25 +106,36 @@ const SearchResults = ({
   // Determine if we have any results to show
   const hasResults = zincResults.length > 0 || filteredProducts.length > 0;
 
+  const renderSearchPrompt = () => {
+    if (loading) {
+      return "Searching...";
+    }
+    
+    if (searchTerm.trim().length <= 2) {
+      return "Enter at least 3 characters to search";
+    }
+    
+    return (
+      <CommandItem 
+        onSelect={() => onItemSelect(searchTerm)}
+        className="text-blue-600 hover:text-blue-800"
+      >
+        <Search className="mr-2 h-4 w-4" />
+        Search for "{searchTerm}" in marketplace
+      </CommandItem>
+    );
+  };
+
   return (
     <Command onKeyDown={handleKeyDown}>
       <CommandInput 
-        ref={inputRef}
         placeholder="Search products, friends, or experiences..." 
         value={searchTerm}
         onValueChange={onSearchTermChange}
       />
       <CommandList>
         <CommandEmpty>
-          {loading ? "Searching..." : searchTerm.trim().length > 2 ? (
-            <CommandItem 
-              onSelect={() => onItemSelect(searchTerm)}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              <Search className="mr-2 h-4 w-4" />
-              Search for "{searchTerm}" in marketplace
-            </CommandItem>
-          ) : "Enter at least 3 characters to search"}
+          {renderSearchPrompt()}
         </CommandEmpty>
         
         {zincResults.length > 0 && (
@@ -154,7 +166,7 @@ const SearchResults = ({
           </CommandGroup>
         )}
         
-        {searchTerm.trim().length > 2 && (
+        {searchTerm.trim().length > 2 && !loading && (
           <>
             <CommandGroup heading="Friends">
               <CommandItem onSelect={() => onItemSelect("Alex's Wishlist")}>

@@ -65,7 +65,7 @@ const SearchBar = () => {
               className="pl-10 w-full"
               value={searchTerm}
               onChange={(e) => handleSearchTermChange(e.target.value)}
-              onClick={() => setIsSearchOpen(true)}
+              onClick={() => searchTerm.trim().length > 0 && setIsSearchOpen(true)}
               onKeyDown={handleKeyDown}
             />
           </div>

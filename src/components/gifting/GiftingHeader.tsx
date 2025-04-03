@@ -28,20 +28,22 @@ const GiftingHeader = () => {
     // Open the search results popover when the user starts typing
     if (value.trim().length > 0 && !isSearchOpen) {
       setIsSearchOpen(true);
+    } else if (value.trim().length === 0) {
+      setIsSearchOpen(false);
     }
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
     }
   };
   
   const handleSearchItemSelect = (value: string) => {
     setSearchTerm(value);
-    navigate(`/marketplace?search=${encodeURIComponent(value)}`);
+    navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     setIsSearchOpen(false);
   };
 
@@ -83,7 +85,7 @@ const GiftingHeader = () => {
                     className="pl-10 bg-gray-100 border-gray-200 focus:bg-white"
                     value={searchTerm}
                     onChange={(e) => handleSearchTermChange(e.target.value)}
-                    onClick={() => setIsSearchOpen(true)}
+                    onClick={() => searchTerm.trim().length > 0 && setIsSearchOpen(true)}
                     onKeyDown={handleKeyDown}
                   />
                 </div>

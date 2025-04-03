@@ -18,23 +18,30 @@ const Marketplace = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const toastShownRef = useRef(false);
+  const searchIdRef = useRef<string | null>(null);
 
   // Reset toast shown flag when component unmounts or after a delay
   useEffect(() => {
-    const timer = setTimeout(() => {
-      toastShownRef.current = false;
-    }, 3000);
-    
     return () => {
-      clearTimeout(timer);
       toastShownRef.current = false;
+      searchIdRef.current = null;
     };
-  }, [location.search]);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get("category");
     const searchParam = params.get("search");
+    
+    // Generate unique search ID to track this search session
+    const newSearchId = searchParam ? `search-${Date.now()}` : null;
+    const searchChanged = searchParam !== searchIdRef.current;
+    
+    if (searchChanged) {
+      // Reset the toast flag for new searches
+      toastShownRef.current = false;
+      searchIdRef.current = newSearchId;
+    }
     
     setCurrentCategory(categoryParam);
     
@@ -74,8 +81,8 @@ const Marketplace = () => {
             
             setFilteredProducts([...amazonProducts, ...storeProducts]);
             
-            // Show only ONE toast notification with a summary
-            if (!toastShownRef.current) {
+            // Show only ONE toast notification with a summary if it's a new search
+            if (!toastShownRef.current && searchChanged) {
               toastShownRef.current = true;
               toast({
                 title: "Search Complete",
@@ -92,8 +99,8 @@ const Marketplace = () => {
             
             setFilteredProducts(storeProducts);
             
-            // Only show toast if we have no results at all and haven't shown one yet
-            if (storeProducts.length === 0 && !toastShownRef.current) {
+            // Only show toast if we have no results at all and haven't shown one yet for this search
+            if (storeProducts.length === 0 && !toastShownRef.current && searchChanged) {
               toastShownRef.current = true;
               toast({
                 title: "No Results Found",
@@ -106,8 +113,8 @@ const Marketplace = () => {
         } catch (error) {
           console.error("Error searching for products:", error);
           
-          // Only show error toast once
-          if (!toastShownRef.current) {
+          // Only show error toast once per search
+          if (!toastShownRef.current && searchChanged) {
             toastShownRef.current = true;
             toast({
               title: "Search Error",

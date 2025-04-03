@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { LogIn, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const AuthButtons = () => {
   const [userData] = useLocalStorage("userData", null);
@@ -16,12 +17,17 @@ const AuthButtons = () => {
             Dashboard
           </Link>
         </Button>
-        <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
-          <Link to={`/profile/${userData.id}`}>
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </Link>
-        </Button>
+        <Link to={`/profile/${userData.id}`}>
+          <Avatar className="h-9 w-9 cursor-pointer">
+            {userData?.profileImage ? (
+              <AvatarImage src={userData.profileImage} alt={userData.name} />
+            ) : (
+              <AvatarFallback className="bg-purple-100 text-purple-600 text-sm">
+                {userData.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            )}
+          </Avatar>
+        </Link>
       </nav>
     );
   }

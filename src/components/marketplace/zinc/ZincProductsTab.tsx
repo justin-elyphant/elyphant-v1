@@ -22,7 +22,9 @@ const ZincProductsTab = () => {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSearch(localSearchTerm);
+    if (localSearchTerm.trim()) {
+      handleSearch(localSearchTerm);
+    }
   };
   
   return (

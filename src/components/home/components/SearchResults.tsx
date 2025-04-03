@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search } from "lucide-react";
 import { 
   Command,
@@ -26,12 +26,20 @@ const SearchResults = ({
   const [loading, setLoading] = useState(false);
   const [zincResults, setZincResults] = useState<any[]>([]);
   const { products } = useProducts();
+  const searchTimeoutRef = useRef<number | null>(null);
 
-  // Search Zinc API when searchTerm changes
+  // Search Zinc API when searchTerm changes with debouncing
   useEffect(() => {
+    // Clear any pending timeouts
+    if (searchTimeoutRef.current) {
+      window.clearTimeout(searchTimeoutRef.current);
+    }
+
     if (searchTerm.trim().length > 2) {
-      const searchZinc = async () => {
-        setLoading(true);
+      setLoading(true);
+      
+      // Set a timeout to avoid excessive API calls
+      searchTimeoutRef.current = window.setTimeout(async () => {
         try {
           const results = await searchProducts(searchTerm);
           setZincResults(results.slice(0, 5)); // Limit to 5 results
@@ -40,12 +48,18 @@ const SearchResults = ({
         } finally {
           setLoading(false);
         }
-      };
-      
-      searchZinc();
+      }, 500); // 500ms debounce
     } else {
       setZincResults([]);
+      setLoading(false);
     }
+    
+    // Cleanup timeout on unmount or when searchTerm changes
+    return () => {
+      if (searchTimeoutRef.current) {
+        window.clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, [searchTerm]);
 
   // Get local store products that match searchTerm

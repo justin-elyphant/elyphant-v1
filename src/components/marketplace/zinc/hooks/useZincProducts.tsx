@@ -79,8 +79,9 @@ export const useZincProducts = () => {
       // Update last sync time
       updateLastSync();
       
+      // Only show ONE summary toast
       toast({
-        title: "Products synced",
+        title: "Products Synced",
         description: `Successfully synced ${amazonProducts.length} products from Amazon`,
       });
       
@@ -89,7 +90,7 @@ export const useZincProducts = () => {
       console.error("Error syncing products:", err);
       setError("Failed to sync products from Amazon. Please try again later.");
       toast({
-        title: "Sync failed",
+        title: "Sync Failed",
         description: "Failed to sync products from Amazon",
         variant: "destructive",
       });
@@ -114,9 +115,9 @@ export const useZincProducts = () => {
       // Update products in context
       updateProductsInContext(amazonProducts);
       
-      // Show only ONE toast with a summary
+      // Show only ONE toast notification with a summary
       toast({
-        title: "Search Results",
+        title: "Search Complete",
         description: `Found ${amazonProducts.length} products matching "${term}"`,
       });
       
@@ -124,7 +125,7 @@ export const useZincProducts = () => {
     } catch (err) {
       console.error("Error searching products:", err);
       toast({
-        title: "Search failed",
+        title: "Search Failed",
         description: "Failed to search products",
         variant: "destructive",
       });

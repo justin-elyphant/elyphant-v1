@@ -6,8 +6,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 5000  // 5 seconds instead of 1000000 milliseconds
+const TOAST_LIMIT = 1  // Strictly limit to 1 toast at a time
+const TOAST_REMOVE_DELAY = 3000  // 3 seconds (even shorter than before)
 
 type ToasterToast = ToastProps & {
   id: string
@@ -75,9 +75,16 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      // Clear any existing toasts before adding a new one
+      state.toasts.forEach(toast => {
+        if (toast.open) {
+          dispatch({ type: "DISMISS_TOAST", toastId: toast.id })
+        }
+      })
+      
       return {
         ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+        toasts: [action.toast].slice(0, TOAST_LIMIT),
       }
 
     case "UPDATE_TOAST":

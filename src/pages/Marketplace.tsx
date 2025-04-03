@@ -61,10 +61,10 @@ const Marketplace = () => {
             
             setFilteredProducts([...amazonProducts, ...storeProducts]);
             
-            // Show only ONE toast notification with a summary
+            // Show only ONE toast notification with a summary - moved outside the loop
             toast({
-              title: "Search Results",
-              description: `Found ${amazonProducts.length} Amazon products matching "${searchParam}"`
+              title: "Search Complete",
+              description: `Found ${amazonProducts.length} products matching "${searchParam}"`
             });
           } else {
             // If no Amazon products, just filter store products
@@ -75,7 +75,7 @@ const Marketplace = () => {
             
             setFilteredProducts(storeProducts);
             toast({
-              title: "No Amazon Products",
+              title: "Search Complete",
               description: `No Amazon products found for "${searchParam}"`
             });
           }

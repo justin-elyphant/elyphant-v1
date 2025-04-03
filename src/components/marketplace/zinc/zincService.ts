@@ -1,11 +1,9 @@
 
 import { ZincProduct } from './types';
-import { findMatchingProducts } from './utils/findMatchingProducts';
 import { ZINC_API_BASE_URL, getZincHeaders } from './zincCore';
 
 /**
  * Search for products on Amazon via Zinc API
- * In a real implementation, this would call the actual Zinc API
  */
 export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
   console.log(`Searching products for query: ${query}`);
@@ -16,30 +14,42 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
   }
   
   try {
-    // Normalize the query to handle common misspellings
-    const normalizedQuery = query.trim().toLowerCase();
+    // Call the actual Zinc API
+    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon`;
+    const headers = getZincHeaders();
     
-    // Special handling for common misspellings of MacBook
-    const searchQuery = normalizedQuery.includes('mackbook') 
-      ? normalizedQuery.replace('mackbook', 'macbook') 
-      : normalizedQuery;
+    console.log('Calling Zinc API:', url);
+    const response = await fetch(url, { headers });
     
-    console.log('Using mock search results for demo purposes');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Zinc API error:', response.status, errorText);
+      throw new Error(`Zinc API error: ${response.status} ${errorText}`);
+    }
     
-    // Generate mock results based on search query using accurate pricing and Amazon images
-    const mockResults = findMatchingProducts(searchQuery);
+    const data = await response.json();
+    console.log('Zinc API response:', data);
     
-    // Ensure retailer is set to "Amazon via Zinc" for authenticity
-    mockResults.forEach(product => {
-      product.retailer = "Amazon via Zinc";
-    });
+    // Transform the Zinc API response to our ZincProduct format
+    if (data.results && Array.isArray(data.results)) {
+      return data.results.map((item: any) => ({
+        product_id: item.product_id || item.asin,
+        title: item.title,
+        price: parseFloat(item.price) || 0,
+        image: item.image_url || item.image || '/placeholder.svg',
+        description: item.description || '',
+        brand: item.brand || 'Unknown',
+        category: item.category || 'Electronics',
+        retailer: "Amazon via Zinc",
+        rating: item.rating || 0,
+        review_count: item.review_count || 0
+      }));
+    }
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return mockResults;
+    return [];
   } catch (error) {
     console.error('Error searching products via Zinc:', error);
+    // If the API fails, still return an empty array rather than crashing
     return [];
   }
 };
@@ -52,23 +62,29 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
     const url = `${ZINC_API_BASE_URL}/products/${productId}?retailer=amazon`;
     const headers = getZincHeaders();
     
+    console.log('Fetching product details from Zinc API:', url);
     const response = await fetch(url, { headers });
     
     if (!response.ok) {
-      console.error('Zinc API error:', response.status, await response.text());
-      return null;
+      const errorText = await response.text();
+      console.error('Zinc API error:', response.status, errorText);
+      throw new Error(`Zinc API error: ${response.status} ${errorText}`);
     }
     
     const data = await response.json();
+    console.log('Zinc product details response:', data);
+    
     return {
-      product_id: data.product_id,
+      product_id: data.product_id || data.asin,
       title: data.title,
-      price: data.price,
-      image: data.images[0] || '/placeholder.svg',
-      description: data.description,
-      brand: data.brand,
-      category: data.category,
-      retailer: 'Amazon via Zinc'
+      price: parseFloat(data.price) || 0,
+      image: (data.images && data.images[0]) || data.image || '/placeholder.svg',
+      description: data.description || '',
+      brand: data.brand || 'Unknown',
+      category: data.category || 'Electronics',
+      retailer: 'Amazon via Zinc',
+      rating: data.rating || 0,
+      review_count: data.review_count || 0
     };
   } catch (error) {
     console.error('Error fetching product from Zinc:', error);

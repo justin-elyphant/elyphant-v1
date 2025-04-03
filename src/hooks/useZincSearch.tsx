@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { searchProducts } from "@/components/marketplace/zinc/productService";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { useProducts } from "@/contexts/ProductContext";
 
 export const useZincSearch = (searchTerm: string) => {
@@ -19,7 +19,7 @@ export const useZincSearch = (searchTerm: string) => {
         (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-      .slice(0, 10); // Increased from 5 to 10 results
+      .slice(0, 10);
 
   // Search Zinc API when searchTerm changes with improved debouncing
   useEffect(() => {
@@ -52,7 +52,7 @@ export const useZincSearch = (searchTerm: string) => {
           // Only update state if this is still the most recent request
           if (currentRequestId === searchRequestIdRef.current) {
             if (results?.length > 0) {
-              setZincResults(results.slice(0, 12)); // Increased from 5 to 12 results
+              setZincResults(results.slice(0, 12));
             } else {
               setZincResults([]);
             }
@@ -66,7 +66,7 @@ export const useZincSearch = (searchTerm: string) => {
           setLoading(false);
         }
       }
-    }, 300); // 300ms debounce - slightly faster to improve responsiveness
+    }, 300);
     
     // Cleanup timeout on unmount or when searchTerm changes
     return () => {

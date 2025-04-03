@@ -25,20 +25,46 @@ export const useZincProductSync = (updateLastSync: () => void) => {
     toastShownRef.current['syncing'] = true;
     
     try {
+      toast({
+        title: "Syncing Products",
+        description: "Fetching products from Amazon...",
+        id: "sync-in-progress"
+      });
+      
       // Search for some popular products
       const searchTerms = ["kindle", "echo dot", "fire tv"];
       let allProducts: ZincProduct[] = [];
       
-      // Perform searches for each term (limited to keep things responsive)
+      // Perform searches for each term
       for (const term of searchTerms) {
         const results = await searchProducts(term);
         allProducts = [...allProducts, ...results.slice(0, 10)]; // Take first 10 results from each search
       }
       
       if (allProducts.length === 0) {
-        // Fall back to mock data if the API isn't returning results
-        allProducts = getMockFallbackProducts();
+        throw new Error("No products found");
       }
+      
+      // Convert to Product format
+      const amazonProducts = allProducts.map((product, index) => ({
+        id: 2000 + index, // Use a different ID range to avoid conflicts
+        name: product.title,
+        price: product.price,
+        category: product.category || "Electronics",
+        image: product.image || "/placeholder.svg",
+        vendor: "Amazon via Zinc",
+        description: product.description || "",
+        rating: product.rating,
+        reviewCount: product.review_count
+      }));
+      
+      // Update products in context
+      setProducts(prevProducts => {
+        // Filter out any existing Amazon products
+        const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
+        // Add the new Amazon products
+        return [...nonAmazonProducts, ...amazonProducts];
+      });
       
       // Update last sync time
       updateLastSync();
@@ -47,7 +73,7 @@ export const useZincProductSync = (updateLastSync: () => void) => {
       if (!toastShownRef.current['sync-complete']) {
         toast({
           title: "Products Synced",
-          description: `Successfully synced ${allProducts.length} products`,
+          description: `Successfully synced ${allProducts.length} products from Amazon`,
           id: "products-synced" // Use a fixed ID to ensure only one appears
         });
         toastShownRef.current['sync-complete'] = true;
@@ -61,7 +87,7 @@ export const useZincProductSync = (updateLastSync: () => void) => {
       if (!toastShownRef.current['sync-error']) {
         toast({
           title: "Sync Failed",
-          description: "Failed to sync products",
+          description: "Failed to fetch products from Amazon. Please try again later.",
           variant: "destructive",
           id: "sync-error" // Use a fixed ID to ensure only one appears
         });
@@ -76,48 +102,6 @@ export const useZincProductSync = (updateLastSync: () => void) => {
         toastShownRef.current['syncing'] = false;
       }, 1000);
     }
-  };
-
-  // Helper function to get mock products as fallback
-  const getMockFallbackProducts = (): ZincProduct[] => {
-    return [
-      {
-        product_id: "B081QSJNRJ",
-        title: "Kindle Paperwhite",
-        price: 139.99,
-        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&h=500&fit=crop",
-        description: "The thinnest, lightest Kindle Paperwhite yet—with a flush-front design and 300 ppi glare-free display that reads like real paper even in bright sunlight. Features waterproof design so you're free to read and relax at the beach, by the pool, or in the bath.",
-        category: "Electronics",
-        retailer: "Elyphant" // Changed from "Amazon via Zinc"
-      },
-      {
-        product_id: "B07XJ8C8F7",
-        title: "Echo Dot (4th Gen)",
-        price: 49.99,
-        image: "https://images.unsplash.com/photo-1543512214-318c7553f230?w=500&h=500&fit=crop",
-        description: "Meet the Echo Dot - Our most popular smart speaker with Alexa. The sleek, compact design delivers crisp vocals and balanced bass for full sound. Voice control your entertainment - Stream songs from Amazon Music, Apple Music, Spotify, and others.",
-        category: "Electronics",
-        retailer: "Elyphant" // Changed from "Amazon via Zinc"
-      },
-      {
-        product_id: "B079QHML21",
-        title: "Fire TV Stick 4K",
-        price: 49.99,
-        image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=500&h=500&fit=crop",
-        description: "Our most powerful streaming media stick with a Wi-Fi antenna design optimized for 4K Ultra HD streaming. Launch and control content with the Alexa Voice Remote. Enjoy brilliant picture with access to 4K Ultra HD, Dolby Vision, HDR, and HDR10+.",
-        category: "Electronics",
-        retailer: "Elyphant" // Changed from "Amazon via Zinc"
-      },
-      {
-        product_id: "B07ZPC9QD4",
-        title: "AirPods Pro",
-        price: 249.99,
-        image: "https://images.unsplash.com/photo-1588423771073-b8903fbb85b5?w=500&h=500&fit=crop",
-        description: "Active Noise Cancellation for immersive sound. Transparency mode for hearing and connecting with the world around you. A more customizable fit for all-day comfort. Sweat and water resistant. Adaptive EQ automatically tunes music to the shape of your ear.",
-        category: "Electronics",
-        retailer: "Elyphant" // Changed from "Amazon via Zinc"
-      }
-    ];
   };
 
   return {

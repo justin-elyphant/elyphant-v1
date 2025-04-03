@@ -14,6 +14,13 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
     setIsLoading(true);
     
     try {
+      console.log(`Searching for products with term: "${searchParam}"`);
+      toast({
+        title: "Searching...",
+        description: `Looking for products matching "${searchParam}"`,
+        id: "search-in-progress"
+      });
+      
       const results = await searchProducts(searchParam);
       
       if (results.length > 0) {
@@ -24,7 +31,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
           price: product.price,
           category: product.category || "Electronics",
           image: product.image || "/placeholder.svg",
-          vendor: "Elyphant",
+          vendor: "Amazon via Zinc",
           description: product.description || "",
           rating: product.rating,
           reviewCount: product.review_count
@@ -55,9 +62,26 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
         }
         
         return amazonProducts;
+      } else {
+        // Show toast for no results
+        if (!toastShownRef.current && searchChanged) {
+          setTimeout(() => {
+            if (!toastShownRef.current) {
+              toastShownRef.current = true;
+              toast({
+                title: "No Results",
+                description: `No products found matching "${searchParam}"`,
+                variant: "destructive",
+                id: "no-results",
+                duration: 3000
+              });
+            }
+          }, 500);
+        }
+        
+        return [];
       }
       
-      return [];
     } catch (error) {
       console.error("Error searching for products:", error);
       
@@ -68,7 +92,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
             toastShownRef.current = true;
             toast({
               title: "Search Error",
-              description: "Error searching for products",
+              description: "Error connecting to Amazon. Please try again later.",
               variant: "destructive",
               id: "search-error",
               duration: 3000

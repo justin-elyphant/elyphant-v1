@@ -62,6 +62,14 @@ const ProductDetailsDialog = ({
 
   // Create a function to render the carousel
   const renderCarousel = () => {
+    if (!images || images.length === 0) {
+      return (
+        <div className="aspect-square relative bg-gray-100 flex items-center justify-center">
+          <span className="text-muted-foreground">No image available</span>
+        </div>
+      );
+    }
+    
     if (images.length === 1) {
       return (
         <div className="aspect-square relative">
@@ -102,7 +110,7 @@ const ProductDetailsDialog = ({
           <DialogTitle className="text-xl">{product.name}</DialogTitle>
           {product.description && (
             <DialogDescription className="text-sm text-muted-foreground line-clamp-2">
-              {product.description.substring(0, 120)}{product.description.length > 120 ? '...' : ''}
+              {product.description}
             </DialogDescription>
           )}
         </DialogHeader>

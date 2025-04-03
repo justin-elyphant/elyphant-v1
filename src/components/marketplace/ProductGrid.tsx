@@ -32,12 +32,15 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   };
   
   const handleProductClick = (productId: number) => {
+    console.log("Product clicked:", productId);
     setShowProductDetails(productId);
   };
   
   const selectedProduct = showProductDetails !== null 
     ? products.find(p => p.id === showProductDetails)
     : null;
+    
+  console.log("Selected product:", selectedProduct);
 
   if (sortedProducts.length === 0) {
     return (
@@ -54,9 +57,9 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
         ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' 
         : 'space-y-4'}`}
       >
-        {sortedProducts.map((product, index) => (
+        {sortedProducts.map((product) => (
           <ProductItem 
-            key={index}
+            key={product.id}
             product={product}
             viewMode={viewMode}
             onProductClick={handleProductClick}
@@ -69,7 +72,10 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
       <ProductDetailsDialog 
         product={selectedProduct}
         open={showProductDetails !== null}
-        onOpenChange={(open) => !open && setShowProductDetails(null)}
+        onOpenChange={(open) => {
+          console.log("Dialog open state changing to:", open);
+          if (!open) setShowProductDetails(null);
+        }}
         userData={userData}
       />
 

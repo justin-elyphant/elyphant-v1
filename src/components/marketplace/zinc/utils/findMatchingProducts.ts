@@ -1,3 +1,4 @@
+
 import { ZincProduct } from '../types';
 import { allProducts, specificProducts } from '../data/mockProducts';
 import { createMockResults } from './mockResultsGenerator';
@@ -34,6 +35,17 @@ const getImageCategory = (query: string): string => {
       lowercaseQuery.includes('sneakers') ||
       lowercaseQuery.includes('footwear')) {
     return 'Footwear';
+  }
+  
+  if (lowercaseQuery.includes('xbox') || 
+      lowercaseQuery.includes('playstation') || 
+      lowercaseQuery.includes('gaming')) {
+    return 'Gaming';
+  }
+  
+  if (lowercaseQuery.includes('dallas') || 
+      lowercaseQuery.includes('cowboys')) {
+    return 'Sports';
   }
   
   // Default to the guessed category
@@ -76,7 +88,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       correctedQuery.includes("macbook") || 
       correctedQuery.includes("ipad")) {
     console.log(`SearchUtils: Found special match for Apple products`);
-    return createMockResults("Apple Products", "Electronics", 100, 4.2, 5.0, "Apple");
+    return createMockResults("Apple Products", "Apple", 100, 4.2, 5.0, "Apple");
   }
   
   // Check for well-known brands and products
@@ -102,7 +114,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       if (specificProducts[mappedTerm]) {
         // For Nike, always create a larger set of results
         if (term === "nike") {
-          return createMockResults("Nike Products", "Footwear", 100, 4.0, 5.0, "Nike");
+          return createMockResults("Nike Products", "Nike", 100, 4.0, 5.0, "Nike");
         }
         return specificProducts[mappedTerm];
       }
@@ -113,7 +125,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       } else if (mappedTerm.includes("shoes")) {
         return createMockResults(mappedTerm, "Footwear", 100, 4.1, 5.0, mappedTerm.split(' ')[0]);
       } else if (mappedTerm.includes("samsung") || mappedTerm.includes("iphone")) {
-        return createMockResults(mappedTerm, "Electronics", 100, 4.4, 5.0, mappedTerm.split(' ')[0]);
+        return createMockResults(mappedTerm, mappedTerm.includes("samsung") ? "Samsung" : "Apple", 100, 4.4, 5.0, mappedTerm.split(' ')[0]);
       } else if (mappedTerm.includes("xbox") || mappedTerm.includes("playstation")) {
         return createMockResults(mappedTerm, "Gaming", 100, 4.7, 5.0, mappedTerm.split(' ')[0]);
       }

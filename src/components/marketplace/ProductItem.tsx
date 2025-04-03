@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
-import { Heart, ShoppingCart, Star, StarHalf } from "lucide-react";
+import { Heart, ShoppingCart, Star, StarHalf, ImageOff } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -24,12 +24,18 @@ const ProductItem = ({
 }: ProductItemProps) => {
   const { addToCart } = useCart();
   const [userData] = useLocalStorage("userData", null);
+  const [imageError, setImageError] = React.useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product);
     
     toast.success(`${product.name} added to cart`);
+  };
+
+  const handleImageError = () => {
+    console.log(`Image failed to load for product: ${product.name}`);
+    setImageError(true);
   };
 
   // Render star ratings
@@ -56,6 +62,30 @@ const ProductItem = ({
     );
   };
 
+  // Get a fallback image based on product name or category
+  const getFallbackImage = () => {
+    const name = product.name.toLowerCase();
+    const category = product.category?.toLowerCase() || '';
+    
+    if (name.includes('apple') || name.includes('iphone') || name.includes('macbook')) {
+      return 'https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=500'; // Apple related
+    }
+    
+    if (name.includes('samsung') || name.includes('galaxy')) {
+      return 'https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=500'; // Samsung related
+    }
+    
+    if (name.includes('nike') || category.includes('footwear') || name.includes('shoe')) {
+      return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500'; // Nike/shoes
+    }
+    
+    if (category.includes('electronics')) {
+      return 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500'; // Electronics
+    }
+    
+    return '/placeholder.svg'; // Default placeholder
+  };
+
   return (
     <div 
       className={`${
@@ -66,11 +96,23 @@ const ProductItem = ({
       onClick={() => onProductClick(product.id)}
     >
       <div className={`${viewMode === 'list' ? 'w-1/3' : 'w-full'} relative`}>
-        <img 
-          src={product.image || '/placeholder.svg'} 
-          alt={product.name} 
-          className="w-full h-48 object-cover"
-        />
+        {imageError ? (
+          <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+            <img 
+              src={getFallbackImage()}
+              alt={product.name}
+              className="w-full h-48 object-cover"
+              onError={handleImageError}
+            />
+          </div>
+        ) : (
+          <img 
+            src={product.image || '/placeholder.svg'} 
+            alt={product.name} 
+            className="w-full h-48 object-cover"
+            onError={handleImageError}
+          />
+        )}
         {userData ? (
           <WishlistSelectionPopover 
             productId={product.id}

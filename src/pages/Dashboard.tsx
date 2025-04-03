@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
+import Header from "@/components/home/Header";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 
@@ -29,9 +30,12 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
-      <DashboardHeader userData={userData} onLogout={handleLogout} />
-      <DashboardGrid />
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="container max-w-6xl mx-auto py-8 px-4">
+        <DashboardHeader userData={userData} onLogout={handleLogout} />
+        <DashboardGrid />
+      </div>
     </div>
   );
 };

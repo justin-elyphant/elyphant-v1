@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import MainLayout from "./components/layout/MainLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Marketplace from "./pages/Marketplace";
@@ -32,20 +33,21 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/vendor-signup" element={<VendorSignup />} />
-                <Route path="/vendor-portal" element={<VendorManagement />} />
-                <Route path="/vendor-management" element={<VendorManagement />} />
-                <Route path="/gifting" element={<Gifting />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/sign-up" element={<SignUp />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile/:userId" element={<UserProfile />} />
-                <Route path="/wishlists" element={<Wishlists />} />
-                <Route path="/events" element={<Events />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="/" element={<MainLayout />}>
+                  <Route index element={<Index />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/vendor-signup" element={<VendorSignup />} />
+                  <Route path="/vendor-portal" element={<VendorManagement />} />
+                  <Route path="/vendor-management" element={<VendorManagement />} />
+                  <Route path="/gifting" element={<Gifting />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/sign-up" element={<SignUp />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile/:userId" element={<UserProfile />} />
+                  <Route path="/wishlists" element={<Wishlists />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
               </Routes>
             </BrowserRouter>
           </CartProvider>

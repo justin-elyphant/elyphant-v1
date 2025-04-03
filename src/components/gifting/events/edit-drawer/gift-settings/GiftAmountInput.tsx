@@ -32,7 +32,7 @@ const GiftAmountInput = ({ amount, setAmount }: GiftAmountInputProps) => {
 
   return (
     <div className="py-0.5">
-      <Label htmlFor="gift-amount" className="flex items-center text-xs font-medium mb-0.5">
+      <Label htmlFor="gift-amount" className="flex items-center text-sm font-medium mb-0.5">
         <DollarSign className="h-3 w-3 mr-1 text-primary" />
         Gift Amount
       </Label>

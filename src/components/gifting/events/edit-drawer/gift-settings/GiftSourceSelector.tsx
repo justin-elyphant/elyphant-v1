@@ -12,7 +12,7 @@ interface GiftSourceSelectorProps {
 const GiftSourceSelector = ({ giftSource, setGiftSource }: GiftSourceSelectorProps) => {
   return (
     <div className="space-y-0.5 pt-0.5 pb-0">
-      <Label className="text-xs font-medium mb-0.5 block">Gift Selection Source</Label>
+      <Label className="text-sm font-medium mb-0.5 block">Gift Selection Source</Label>
       <RadioGroup 
         value={giftSource} 
         onValueChange={(value: GiftSource) => setGiftSource(value)}
@@ -20,15 +20,15 @@ const GiftSourceSelector = ({ giftSource, setGiftSource }: GiftSourceSelectorPro
       >
         <div className="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
           <RadioGroupItem value="wishlist" id="wishlist" className="h-3 w-3 text-primary border-primary/50" />
-          <Label htmlFor="wishlist" className="cursor-pointer text-xs leading-tight">From wishlist</Label>
+          <Label htmlFor="wishlist" className="cursor-pointer text-sm leading-tight">From wishlist</Label>
         </div>
         <div className="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
           <RadioGroupItem value="ai" id="ai" className="h-3 w-3 text-primary border-primary/50" />
-          <Label htmlFor="ai" className="cursor-pointer text-xs leading-tight">AI selected</Label>
+          <Label htmlFor="ai" className="cursor-pointer text-sm leading-tight">AI selected</Label>
         </div>
         <div className="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
           <RadioGroupItem value="both" id="both" className="h-3 w-3 text-primary border-primary/50" />
-          <Label htmlFor="both" className="cursor-pointer text-xs leading-tight">Wishlist + AI</Label>
+          <Label htmlFor="both" className="cursor-pointer text-sm leading-tight">Wishlist + AI</Label>
         </div>
       </RadioGroup>
     </div>

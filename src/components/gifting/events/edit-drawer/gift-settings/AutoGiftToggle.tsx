@@ -14,8 +14,8 @@ const AutoGiftToggle = ({ enabled, setEnabled }: AutoGiftToggleProps) => {
     <Card className="py-1 px-2 border border-primary/20 bg-gradient-to-r from-purple-50/50 to-white dark:from-purple-900/10 dark:to-transparent">
       <div className="flex items-center justify-between gap-1">
         <div>
-          <Label htmlFor="auto-gift" className="text-xs font-medium">Enable Auto-Gifting</Label>
-          <p className="text-[10px] text-muted-foreground leading-none">
+          <Label htmlFor="auto-gift" className="text-sm font-medium">Enable Auto-Gifting</Label>
+          <p className="text-xs text-muted-foreground leading-tight">
             Automatically send a gift
           </p>
         </div>

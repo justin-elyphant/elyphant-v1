@@ -2,10 +2,6 @@
 import { useState } from "react";
 import { ZincProduct } from "../types";
 
-interface UseZincProductSyncProps {
-  updateLastSync: () => void;
-}
-
 export const useZincProductSyncImpl = (updateLastSync: () => void) => {
   const [error, setError] = useState<string | null>(null);
   
@@ -23,7 +19,8 @@ export const useZincProductSyncImpl = (updateLastSync: () => void) => {
           price: 129.99,
           description: "High-quality wireless headphones with noise cancellation",
           image: "https://picsum.photos/seed/headphones/300/300",
-          category: "Electronics"
+          category: "Electronics",
+          retailer: "Amazon via Zinc"
         },
         {
           product_id: "ZINC2",
@@ -31,7 +28,8 @@ export const useZincProductSyncImpl = (updateLastSync: () => void) => {
           price: 89.99,
           description: "Advanced fitness tracker with heart rate monitoring",
           image: "https://picsum.photos/seed/fitness/300/300",
-          category: "Electronics"
+          category: "Electronics",
+          retailer: "Amazon via Zinc"
         },
         {
           product_id: "ZINC3",
@@ -39,7 +37,8 @@ export const useZincProductSyncImpl = (updateLastSync: () => void) => {
           price: 24.99,
           description: "Soft, comfortable organic cotton t-shirt",
           image: "https://picsum.photos/seed/tshirt/300/300",
-          category: "Clothing"
+          category: "Clothing",
+          retailer: "Amazon via Zinc"
         }
       ];
       

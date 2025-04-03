@@ -1,6 +1,6 @@
 
 import { useZincProductSearch } from "./useZincProductSearch";
-import { useZincSync } from "./useZincProductSync";
+import { useZincSync } from "./useZincSync";
 
 /**
  * Combined hook for Zinc product management

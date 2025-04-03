@@ -1,9 +1,8 @@
-
 import React from "react";
 import EventViewToggle from "../EventViewToggle";
 import EventTypeFilter from "../EventTypeFilter";
 import EventCardsView from "../EventCardsView";
-import EventCalendarView from "../EventCalendarView";
+import EventCalendarView from "./CalendarView";
 import { useEvents } from "../context/EventsContext";
 import { useEventHandlers } from "../hooks/useEventHandlers";
 import { FilterOption } from "../types";

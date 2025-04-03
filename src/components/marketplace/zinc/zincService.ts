@@ -1,3 +1,4 @@
+
 import { ZincProduct } from './types';
 import { findMatchingProducts } from './utils/searchUtils';
 import { ZINC_API_BASE_URL, getZincHeaders } from './zincCore';
@@ -15,12 +16,18 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
   }
   
   try {
-    // In a real implementation, we would call the Zinc API
-    // For now, we'll return mock data based on the query to simulate search results
+    // Normalize the query to handle common misspellings
+    const normalizedQuery = query.trim().toLowerCase();
+    
+    // Special handling for common misspellings of MacBook
+    const searchQuery = normalizedQuery.includes('mackbook') 
+      ? normalizedQuery.replace('mackbook', 'macbook') 
+      : normalizedQuery;
+    
     console.log('Using mock search results for demo purposes');
     
     // Generate mock results based on search query using accurate pricing and Amazon images
-    const mockResults = findMatchingProducts(query);
+    const mockResults = findMatchingProducts(searchQuery);
     
     // Ensure retailer is set to "Amazon via Zinc" for authenticity
     mockResults.forEach(product => {

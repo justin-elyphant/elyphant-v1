@@ -1,4 +1,3 @@
-
 import { ZincProduct } from '../types';
 import { generateDescription } from './productDescriptionUtils';
 
@@ -92,7 +91,7 @@ export const createMockResults = (
       description: description,
       brand: brand || getBrandFromTitle(title),
       category: category,
-      retailer: "Amazon via Zinc",  // Changed to reflect real Amazon via Zinc
+      retailer: "Amazon via Zinc",
       rating: rating,
       review_count: reviewCount
     });
@@ -118,7 +117,9 @@ function generateTitle(query: string, category: string, brand?: string, index?: 
     return `Apple iPhone ${model} ${size} - ${color}`;
   }
   
-  if (category === 'MacBook' || query.toLowerCase().includes('macbook')) {
+  if (category === 'MacBook' || 
+      query.toLowerCase().includes('macbook') || 
+      query.toLowerCase().includes('mackbook')) {
     const models = ['Air', 'Pro 13"', 'Pro 14"', 'Pro 16"'];
     const specs = ['M1', 'M2', 'M3', 'M2 Pro', 'M3 Pro', 'M3 Max'];
     const storage = ['256GB', '512GB', '1TB', '2TB'];
@@ -132,7 +133,6 @@ function generateTitle(query: string, category: string, brand?: string, index?: 
     return `Apple MacBook ${model} ${spec} ${size} ${color}`;
   }
   
-  // For Nike shoes
   if (category === 'Nike' || category === 'Footwear' || query.toLowerCase().includes('nike')) {
     const models = ['Air Max', 'Air Force 1', 'React', 'Dunk', 'Jordan', 'Revolution', 'Free Run', 'Pegasus', 'ZoomX'];
     const types = ['Running', 'Basketball', 'Training', 'Lifestyle', 'Walking', 'Tennis'];
@@ -145,7 +145,6 @@ function generateTitle(query: string, category: string, brand?: string, index?: 
     return `Nike ${model} ${type} Shoes - ${color}`;
   }
   
-  // For Samsung phones
   if (category === 'Samsung' || category === 'SamsungPhone' || query.toLowerCase().includes('samsung')) {
     const models = ['Galaxy S23', 'Galaxy S23+', 'Galaxy S23 Ultra', 'Galaxy S22', 'Galaxy A53', 'Galaxy Z Flip4', 'Galaxy Z Fold4'];
     const colors = ['Phantom Black', 'Phantom White', 'Green', 'Lavender', 'Graphite', 'Burgundy'];
@@ -186,74 +185,78 @@ function getBrandFromTitle(title: string): string {
 }
 
 // Generate an exact product image URL based on title and category
-// This uses real Amazon product images for a more authentic experience
 function getExactProductImage(title: string, category: string): string {
   const lowerTitle = title.toLowerCase();
   const lowerCategory = category.toLowerCase();
   
-  // Amazon product images (high quality)
-  
   // Apple Products with exact Amazon images
+  if (lowerTitle.includes('macbook') || lowerCategory === 'macbook') {
+    return 'https://m.media-amazon.com/images/I/61L5QgPvgqL._AC_SL1500_.jpg';
+  }
+  
   if (lowerTitle.includes('iphone')) {
     return 'https://m.media-amazon.com/images/I/61bK6PMOC3L._AC_SL1500_.jpg';
   }
-  if (lowerTitle.includes('macbook')) {
-    return 'https://m.media-amazon.com/images/I/61L5QgPvgqL._AC_SL1500_.jpg';
-  }
+  
   if (lowerTitle.includes('ipad')) {
     return 'https://m.media-amazon.com/images/I/81gC7frRJyL._AC_SL1500_.jpg';
   }
+  
   if (lowerTitle.includes('airpods')) {
     return 'https://m.media-amazon.com/images/I/71zny7BTRlL._AC_SL1500_.jpg';
   }
+  
   if (lowerTitle.includes('apple watch')) {
     return 'https://m.media-amazon.com/images/I/71+3+8VcGFL._AC_SL1500_.jpg';
   }
   
-  // Samsung Products with exact Amazon images
   if (lowerTitle.includes('samsung') && lowerTitle.includes('galaxy')) {
     return 'https://m.media-amazon.com/images/I/61a2y1FCAJL._AC_SL1500_.jpg';
   }
+  
   if (lowerTitle.includes('samsung') && lowerTitle.includes('tv')) {
     return 'https://m.media-amazon.com/images/I/91RfzivKmwL._AC_SL1500_.jpg';
   }
   
-  // Gaming Consoles with exact Amazon images
   if (lowerTitle.includes('playstation') || lowerTitle.includes('ps5')) {
     return 'https://m.media-amazon.com/images/I/51QkER5ynaL._SL1500_.jpg';
   }
+  
   if (lowerTitle.includes('xbox')) {
     return 'https://m.media-amazon.com/images/I/61-jjE67aHL._SL1500_.jpg';
   }
+  
   if (lowerTitle.includes('nintendo') || lowerTitle.includes('switch')) {
     return 'https://m.media-amazon.com/images/I/61i8Vjb17SL._SL1500_.jpg';
   }
   
-  // Footwear with exact Amazon images
   if (lowerTitle.includes('nike') && (lowerTitle.includes('shoe') || lowerTitle.includes('sneaker'))) {
     return 'https://m.media-amazon.com/images/I/71jeoX0rMBL._AC_UX695_.jpg';
   }
+  
   if (lowerTitle.includes('adidas') && (lowerTitle.includes('shoe') || lowerTitle.includes('sneaker'))) {
     return 'https://m.media-amazon.com/images/I/81bTuA9K9qL._AC_UX695_.jpg';
   }
   
-  // Fallbacks based on category with Amazon images
   if (lowerCategory.includes('electronics')) {
     return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
   }
+  
   if (lowerCategory.includes('footwear') || lowerCategory.includes('shoes')) {
     return 'https://m.media-amazon.com/images/I/61-Ww4OnWIL._AC_UX695_.jpg';
   }
+  
   if (lowerCategory.includes('sports')) {
     return 'https://m.media-amazon.com/images/I/81YpuRoACeL._AC_SL1500_.jpg';
   }
+  
   if (lowerCategory.includes('headphones')) {
     return 'https://m.media-amazon.com/images/I/61+WYAjltpL._AC_SL1500_.jpg';
   }
+  
   if (lowerCategory.includes('speakers')) {
     return 'https://m.media-amazon.com/images/I/716QOWr4QFL._AC_SL1500_.jpg';
   }
   
-  // Default fallback to a generic Amazon product image
   return 'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg';
 }

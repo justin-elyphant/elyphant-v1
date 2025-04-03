@@ -14,6 +14,7 @@ const getImageCategory = (query: string): string => {
     return 'iPhone';
   }
   if (lowercaseQuery.includes('macbook') || 
+      lowercaseQuery.includes('mackbook') || 
       (lowercaseQuery.includes('mac') && lowercaseQuery.includes('book'))) {
     return 'MacBook';
   }
@@ -115,6 +116,14 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
   const imageCategory = getImageCategory(correctedQuery);
   console.log(`SearchUtils: Using image category "${imageCategory}" for "${correctedQuery}"`);
   
+  // Special handling for MacBook misspellings
+  if (normalizedQuery.includes("mackbook") || 
+      (normalizedQuery.includes("mac") && normalizedQuery.includes("book")) ||
+      (normalizedQuery.includes("apple") && normalizedQuery.includes("mackbook"))) {
+    console.log(`SearchUtils: Found special match for Apple MacBook`);
+    return createMockResults("Apple MacBook", "MacBook", 100, 4.5, 5.0, "Apple", true);
+  }
+  
   // Direct matching for common searches
   if (correctedQuery === "nike shoes" || 
       correctedQuery === "nike shoe" || 
@@ -189,6 +198,12 @@ const correctMisspellings = (query: string): string => {
     "appl": "apple",
     "appel": "apple",
     "apppe": "apple",
+    
+    // MacBook variants
+    "mackbook": "macbook",
+    "macbok": "macbook",
+    "makbook": "macbook",
+    "macbuk": "macbook",
     
     // iPhone variants
     "ifone": "iphone",

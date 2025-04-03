@@ -3,8 +3,17 @@ import React from "react";
 import { useMarketplaceSearch } from "@/components/marketplace/hooks/useMarketplaceSearch";
 import MarketplaceHeader from "@/components/marketplace/MarketplaceHeader";
 import MarketplaceContent from "@/components/marketplace/MarketplaceContent";
+import { ProductProvider } from "@/contexts/ProductContext";
 
 const Marketplace = () => {
+  return (
+    <ProductProvider>
+      <MarketplaceContent />
+    </ProductProvider>
+  );
+};
+
+const MarketplaceContent = () => {
   const { filteredProducts, isLoading, getPageInfo } = useMarketplaceSearch();
   const { pageTitle, subtitle } = getPageInfo();
 

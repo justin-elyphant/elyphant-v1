@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
@@ -31,8 +31,12 @@ const ProductDetailsDialog = ({
 
   if (!product) return null;
 
+  console.log("ProductDetailsDialog rendering with product:", product);
+  
   // Safely access images array or create a single-item array from image if images is undefined
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
+  
+  console.log("Images to display:", images);
 
   const renderRating = (rating?: number, reviewCount?: number) => {
     if (!rating) return null;

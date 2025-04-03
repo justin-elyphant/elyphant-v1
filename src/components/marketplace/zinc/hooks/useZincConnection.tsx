@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
-import { fetchProductDetails } from "../zincService";
+import { fetchProductDetails } from "../productService";
 
 export const useZincConnection = () => {
   const [isConnected, setIsConnected] = useState(false);

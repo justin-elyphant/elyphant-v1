@@ -9,7 +9,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
-import { searchProducts } from "@/components/marketplace/zinc/zincService";
+import { searchProducts } from "@/components/marketplace/zinc/productService";
 import { useProducts } from "@/contexts/ProductContext";
 
 interface SearchResultsProps {

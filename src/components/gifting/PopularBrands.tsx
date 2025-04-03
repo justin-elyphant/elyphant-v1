@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProducts } from "@/contexts/ProductContext";
-import { toast } from "sonner";
+import { handleBrandProducts } from "@/utils/brandUtils";
 
 // Mock data for popular brands with real logos
 const popularBrands = [
@@ -62,43 +62,8 @@ const PopularBrands = () => {
   const { products, setProducts } = useProducts();
   
   const handleBrandClick = (brandName: string) => {
-    if (products.length === 0) {
-      toast.info("Loading products...");
-      return;
-    }
-    
-    // More flexible brand matching
-    const productsByBrand = products.filter(p => 
-      (p.name && p.name.toLowerCase().includes(brandName.toLowerCase())) || 
-      (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase())) ||
-      (p.description && p.description.toLowerCase().includes(brandName.toLowerCase()))
-    );
-    
-    if (productsByBrand.length === 0) {
-      // No products found for this brand, so create some temporary ones
-      const tempProducts = [...products];
-      
-      // Create 5 products for this brand
-      for (let i = 0; i < 5; i++) {
-        const randomProduct = products[Math.floor(Math.random() * products.length)];
-        if (randomProduct) {
-          tempProducts.push({
-            ...randomProduct,
-            id: 10000 + products.length + i, // Ensure unique ID
-            name: `${brandName} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
-            vendor: brandName,
-            category: randomProduct.category || "Clothing",
-            description: `Premium ${brandName} ${randomProduct.category || "item"} with exceptional quality and style.`
-          });
-        }
-      }
-      
-      // Update products in context
-      setProducts(tempProducts);
-      toast.success(`${brandName} products added to catalog`);
-    } else {
-      toast.success(`Viewing ${brandName} products`);
-    }
+    // This will find or create products for the brand
+    handleBrandProducts(brandName, products, setProducts);
   };
 
   return (

@@ -10,6 +10,7 @@ import { sortProducts } from "./hooks/utils/categoryUtils";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
+import { handleBrandProducts } from "@/utils/brandUtils";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -36,8 +37,11 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         ...prev,
         brand: brandParam
       }));
+      
+      // Generate brand products immediately
+      handleBrandProducts(brandParam, products, setProducts);
     }
-  }, [location.search]);
+  }, [location.search, products, setProducts]);
   
   // Update filtered products when products or filters change
   useEffect(() => {
@@ -79,30 +83,10 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         
         // If still no results after filtering, create temporary brand products
         if (result.length === 0) {
-          console.log(`No products found for brand ${activeFilters.brand}, creating temporary products`);
-          
-          // Create 5 temporary products for this brand
-          const tempProducts = [];
-          for (let i = 0; i < 5; i++) {
-            const randomProduct = products[Math.floor(Math.random() * products.length)];
-            if (randomProduct) {
-              const newProduct = {
-                ...randomProduct,
-                id: 20000 + i, // Ensure unique ID
-                name: `${activeFilters.brand} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
-                vendor: activeFilters.brand,
-                category: randomProduct.category || "Clothing",
-                description: `Premium ${activeFilters.brand} ${randomProduct.category || "item"} with exceptional quality and style.`
-              };
-              tempProducts.push(newProduct);
-              result.push(newProduct);
-            }
-          }
-          
-          // Add these new products to the context
-          if (tempProducts.length > 0) {
-            setProducts(prev => [...prev, ...tempProducts]);
-            toast.success(`${activeFilters.brand} products added to catalog`);
+          console.log(`No filtered products found for brand ${activeFilters.brand}`);
+          const brandProducts = handleBrandProducts(activeFilters.brand, products, setProducts);
+          if (brandProducts.length > 0) {
+            result = brandProducts;
           }
         }
       }

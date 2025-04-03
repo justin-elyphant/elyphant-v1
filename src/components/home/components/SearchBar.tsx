@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ const SearchBar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Initialize search term from URL on mount or location change
   useEffect(() => {
@@ -30,8 +31,10 @@ const SearchBar = () => {
     }
   };
 
-  const handleSearchTermChange = (value: string) => {
+  const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setSearchTerm(value);
+    
     // Open the search results popover when the user starts typing
     if (value.trim().length > 0 && !isSearchOpen) {
       setIsSearchOpen(true);
@@ -57,6 +60,8 @@ const SearchBar = () => {
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent default form submission behavior
       handleSearch(e as unknown as React.FormEvent);
+    } else if (e.key === 'Escape') {
+      setIsSearchOpen(false);
     }
   };
 
@@ -66,6 +71,41 @@ const SearchBar = () => {
       return;
     }
     setIsSearchOpen(open);
+    
+    // Focus the input when the popover opens
+    if (open && inputRef.current) {
+      // Use setTimeout to ensure the focus happens after React's rendering cycle
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          // Place cursor at the end
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
+        }
+      }, 0);
+    }
+  };
+
+  const handleInputClick = () => {
+    if (searchTerm.trim().length > 0) {
+      setIsSearchOpen(true);
+      
+      // Make sure the cursor is at the end of the text and no text is selected
+      if (inputRef.current) {
+        const length = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(length, length);
+      }
+    }
+  };
+
+  const handleClearButtonClick = () => {
+    setSearchTerm("");
+    setIsSearchOpen(false);
+    
+    // Focus the input after clearing
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   return (
@@ -75,19 +115,29 @@ const SearchBar = () => {
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input 
+              ref={inputRef}
               placeholder="Search products, friends, or experiences..." 
               className="pl-10 w-full"
               value={searchTerm}
-              onChange={(e) => handleSearchTermChange(e.target.value)}
-              onClick={() => searchTerm.trim().length > 0 && setIsSearchOpen(true)}
+              onChange={handleSearchTermChange}
+              onClick={handleInputClick}
               onKeyDown={handleKeyDown}
             />
+            {searchTerm.length > 0 && (
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4"
+                onClick={handleClearButtonClick}
+              >
+                &times;
+              </button>
+            )}
           </div>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[calc(100vw-2rem)] sm:w-[450px] z-50" align="start">
           <SearchResults 
             searchTerm={searchTerm}
-            onSearchTermChange={handleSearchTermChange}
+            onSearchTermChange={(value) => setSearchTerm(value)}
             onItemSelect={handleSearchItemSelect}
           />
         </PopoverContent>

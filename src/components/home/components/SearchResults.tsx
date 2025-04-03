@@ -45,12 +45,19 @@ const SearchResults = ({
     }
   };
 
+  // This handler ensures no auto-highlighting
+  const handleInputValueChange = (value: string) => {
+    // We pass the value up to parent components
+    onSearchTermChange(value);
+  };
+
   return (
     <Command onKeyDown={handleKeyDown}>
       <CommandInput 
         placeholder="Search products, friends, or experiences..." 
         value={searchTerm}
-        onValueChange={onSearchTermChange}
+        onValueChange={handleInputValueChange}
+        autoFocus={false}
       />
       <CommandList>
         <CommandEmpty>

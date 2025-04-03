@@ -1,16 +1,18 @@
-
 // Zinc API product type
 export type ZincProduct = {
   product_id: string;
   title: string;
   price: number;
   image: string;
+  images?: string[];
   description?: string;
   brand?: string;
   category?: string;
   retailer: string;
   rating?: number;
   review_count?: number;
+  features?: string[];
+  specifications?: Record<string, string>;
 };
 
 // Zinc Order type (used by orderService.ts)

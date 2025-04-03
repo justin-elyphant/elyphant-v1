@@ -1,10 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
-import { Heart, ShoppingCart, Star, StarHalf } from "lucide-react";
+import { Heart, ShoppingCart, Star, StarHalf, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProductDetailsDialogProps {
@@ -21,14 +21,23 @@ const ProductDetailsDialog = ({
   userData
 }: ProductDetailsDialogProps) => {
   const { addToCart } = useCart();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!product) return null;
 
-  // Render star ratings
+  const images = Array.isArray(product.images) ? product.images : [product.image];
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const previousImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   const renderRating = (rating?: number, reviewCount?: number) => {
     if (!rating) return null;
     
-    // Calculate full and half stars
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
     
@@ -57,11 +66,54 @@ const ProductDetailsDialog = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="relative overflow-hidden rounded-md">
-            <img 
-              src={product.image} 
-              alt={product.name} 
-              className="w-full h-auto object-cover"
-            />
+            <div className="aspect-square relative">
+              <img 
+                src={images[currentImageIndex]} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+              
+              {images.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full"
+                    onClick={previousImage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+            
+            {images.length > 1 && (
+              <div className="flex gap-2 mt-2 overflow-x-auto">
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    className={`w-16 h-16 rounded-md overflow-hidden border-2 ${
+                      idx === currentImageIndex ? 'border-primary' : 'border-transparent'
+                    }`}
+                    onClick={() => setCurrentImageIndex(idx)}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.name} view ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="flex flex-col space-y-4">
@@ -71,8 +123,22 @@ const ProductDetailsDialog = ({
               <span className="text-green-600 text-sm block mt-2">Free shipping</span>
             </div>
             
-            <div className="text-sm text-muted-foreground">
-              <p className="mb-2">{product.description || "No product description available."}</p>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Description</h4>
+                <p className="text-sm text-muted-foreground">{product.description}</p>
+              </div>
+
+              {product.features && product.features.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Features</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground">
+                    {product.features.map((feature, idx) => (
+                      <li key={idx}>{feature}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
             
             <div className="mt-auto pt-4 flex flex-col space-y-2">

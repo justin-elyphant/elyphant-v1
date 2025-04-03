@@ -1,4 +1,3 @@
-
 import { ZincProduct } from './types';
 import { ZINC_API_BASE_URL, getZincHeaders } from './zincCore';
 
@@ -14,7 +13,6 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
   }
   
   try {
-    // Call the actual Zinc API
     const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon`;
     const headers = getZincHeaders();
     
@@ -30,26 +28,27 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
     const data = await response.json();
     console.log('Zinc API response:', data);
     
-    // Transform the Zinc API response to our ZincProduct format
     if (data.results && Array.isArray(data.results)) {
       return data.results.map((item: any) => ({
         product_id: item.product_id || item.asin,
         title: item.title,
         price: typeof item.price === 'number' ? item.price / 100 : parseFloat(item.price) || 0,
         image: item.image_url || item.image || '/placeholder.svg',
-        description: item.description || '',
+        images: item.images || [item.image_url || item.image || '/placeholder.svg'],
+        description: item.description || item.product_description || '',
         brand: item.brand || 'Unknown',
         category: item.category || 'Electronics',
         retailer: "Amazon via Zinc",
-        rating: item.stars || 0,
-        review_count: item.num_reviews || 0
+        rating: item.stars || item.rating || 0,
+        review_count: item.num_reviews || item.review_count || 0,
+        features: item.features || item.bullet_points || [],
+        specifications: item.specifications || {}
       }));
     }
     
     return [];
   } catch (error) {
     console.error('Error searching products via Zinc:', error);
-    // If the API fails, still return an empty array rather than crashing
     return [];
   }
 };
@@ -83,12 +82,11 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
       brand: data.brand || 'Unknown',
       category: data.category || 'Electronics',
       retailer: 'Amazon via Zinc',
-      rating: data.stars || 0,
-      review_count: data.num_reviews || 0
+      rating: data.stars || data.rating || 0,
+      review_count: data.num_reviews || data.review_count || 0
     };
   } catch (error) {
     console.error('Error fetching product from Zinc:', error);
     return null;
   }
 };
-

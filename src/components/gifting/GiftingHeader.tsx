@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Home, Search, User, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import SearchResults from "@/components/home/components/SearchResults";
 
 const GiftingHeader = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -22,9 +25,16 @@ const GiftingHeader = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams(location.search);
-    params.set("search", searchTerm);
-    navigate(`${location.pathname}?${params.toString()}`);
+    if (searchTerm.trim()) {
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+      setIsSearchOpen(false);
+    }
+  };
+  
+  const handleSearchItemSelect = (value: string) => {
+    setSearchTerm(value);
+    navigate(`/marketplace?search=${encodeURIComponent(value)}`);
+    setIsSearchOpen(false);
   };
 
   return (
@@ -48,18 +58,28 @@ const GiftingHeader = () => {
           </div>
           
           <div className="hidden md:block w-full max-w-md mx-6">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input 
-                  type="search" 
-                  placeholder="Search gifts, friends, or experiences..." 
-                  className="pl-10 bg-gray-100 border-gray-200 focus:bg-white"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+            <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+              <PopoverTrigger asChild>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input 
+                    type="search" 
+                    placeholder="Search gifts, friends, or experiences..." 
+                    className="pl-10 bg-gray-100 border-gray-200 focus:bg-white"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onClick={() => setIsSearchOpen(true)}
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[calc(100vw-2rem)] sm:w-[450px] z-50" align="start">
+                <SearchResults 
+                  searchTerm={searchTerm}
+                  onSearchTermChange={setSearchTerm}
+                  onItemSelect={handleSearchItemSelect}
                 />
-              </div>
-            </form>
+              </PopoverContent>
+            </Popover>
           </div>
           
           <div className="flex items-center space-x-4">

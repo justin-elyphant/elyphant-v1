@@ -6,38 +6,112 @@ import { categories } from "@/components/home/components/CategoriesDropdown";
 import MarketplaceFilters from "@/components/marketplace/MarketplaceFilters";
 import FiltersSidebar from "@/components/marketplace/FiltersSidebar";
 import ProductGrid from "@/components/marketplace/ProductGrid";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
+import { toast } from "sonner";
 
 const Marketplace = () => {
   const location = useLocation();
-  const { products } = useProducts();
+  const { products, setProducts } = useProducts();
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get("category");
+    const searchParam = params.get("search");
+    
     setCurrentCategory(categoryParam);
     
-    if (categoryParam) {
-      const filtered = products.filter(product => 
-        product.category === categoryParam
-      );
+    // If there's a search term in the URL, search for products using Zinc API
+    if (searchParam) {
+      const searchZincProducts = async () => {
+        setIsLoading(true);
+        try {
+          const results = await searchProducts(searchParam);
+          
+          if (results.length > 0) {
+            // Convert to Product format
+            const amazonProducts = results.map((product, index) => ({
+              id: 1000 + index,
+              name: product.title,
+              price: product.price,
+              category: product.category || "Electronics",
+              image: product.image || "/placeholder.svg",
+              vendor: "Amazon via Zinc",
+              description: product.description || ""
+            }));
+            
+            // Update products in context
+            setProducts(prevProducts => {
+              // Filter out any existing Amazon products
+              const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
+              // Add the new Amazon products
+              return [...nonAmazonProducts, ...amazonProducts];
+            });
+            
+            // Set filtered products to include amazonProducts and any matching store products
+            const storeProducts = products.filter(product => 
+              product.vendor !== "Amazon via Zinc" && 
+              (product.name.toLowerCase().includes(searchParam.toLowerCase()) || 
+              (product.description && product.description.toLowerCase().includes(searchParam.toLowerCase())))
+            );
+            
+            setFilteredProducts([...amazonProducts, ...storeProducts]);
+            toast.success(`Found ${amazonProducts.length} Amazon products matching "${searchParam}"`);
+          } else {
+            // If no Amazon products, just filter store products
+            const storeProducts = products.filter(product => 
+              product.name.toLowerCase().includes(searchParam.toLowerCase()) || 
+              (product.description && product.description.toLowerCase().includes(searchParam.toLowerCase()))
+            );
+            
+            setFilteredProducts(storeProducts);
+            toast.info(`No Amazon products found for "${searchParam}"`);
+          }
+        } catch (error) {
+          console.error("Error searching for products:", error);
+          toast.error("Error searching for Amazon products");
+          
+          // Fall back to local product search
+          const filteredStoreProducts = products.filter(product => 
+            product.name.toLowerCase().includes(searchParam.toLowerCase()) || 
+            (product.description && product.description.toLowerCase().includes(searchParam.toLowerCase()))
+          );
+          
+          setFilteredProducts(filteredStoreProducts);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      searchZincProducts();
+    } else if (categoryParam) {
+      // Filter by category if no search term
+      const filtered = products.filter(product => product.category === categoryParam);
       setFilteredProducts(filtered.length ? filtered : products);
     } else {
+      // No search term or category, show all products
       setFilteredProducts(products);
     }
-  }, [location.search, products]);
+  }, [location.search, products, setProducts]);
 
+  const params = new URLSearchParams(location.search);
+  const searchParam = params.get("search");
   const categoryName = categories.find(c => c.url === currentCategory)?.name || "All Products";
+  const pageTitle = searchParam ? `Search results for "${searchParam}"` : categoryName;
 
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{categoryName}</h1>
+        <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
         <p className="text-muted-foreground">
-          Browse our collection of {currentCategory ? categoryName.toLowerCase() : "products"} from trusted vendors
+          {searchParam 
+            ? `Found ${filteredProducts.length} items matching your search`
+            : `Browse our collection of ${currentCategory ? categoryName.toLowerCase() : "products"} from trusted vendors`
+          }
         </p>
       </div>
       
@@ -57,10 +131,16 @@ const Marketplace = () => {
             totalItems={filteredProducts.length}
           />
           
-          <ProductGrid 
-            products={filteredProducts} 
-            viewMode={viewMode} 
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <p className="text-muted-foreground">Searching products...</p>
+            </div>
+          ) : (
+            <ProductGrid 
+              products={filteredProducts} 
+              viewMode={viewMode} 
+            />
+          )}
         </div>
       </div>
     </div>

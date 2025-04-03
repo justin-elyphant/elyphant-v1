@@ -11,7 +11,7 @@ const EventsCard = () => {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center">
           <Calendar className="h-5 w-5 mr-2 text-blue-500" />
-          Upcoming Events
+          Auto-Gift Hub
         </CardTitle>
         <CardDescription>
           Important dates to remember

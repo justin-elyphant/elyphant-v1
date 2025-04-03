@@ -62,7 +62,7 @@ const HomeContent = () => {
     },
   ];
 
-  // Top brands data with actual brand logos
+  // Top brands data with updated Lululemon logo
   const topBrands = [
     { 
       id: 1, 
@@ -97,7 +97,7 @@ const HomeContent = () => {
     { 
       id: 6, 
       name: "Lululemon", 
-      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Lululemon_Athletica_logo.svg/2560px-Lululemon_Athletica_logo.svg.png", 
+      logoUrl: "/lovable-uploads/f0a52aa3-9dcd-4367-9a66-0724e97f2641.png", 
       productCount: 98 
     },
   ];

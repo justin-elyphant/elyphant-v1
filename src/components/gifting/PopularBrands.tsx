@@ -3,6 +3,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useProducts } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 
 // Mock data for popular brands with real logos
 const popularBrands = [
@@ -39,7 +41,7 @@ const popularBrands = [
   { 
     id: 6, 
     name: "Lululemon", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Lululemon_Athletica_logo.svg/2560px-Lululemon_Athletica_logo.svg.png", 
+    logoUrl: "/lovable-uploads/f0a52aa3-9dcd-4367-9a66-0724e97f2641.png", 
     productCount: 98 
   },
   { 
@@ -57,6 +59,46 @@ const popularBrands = [
 ];
 
 const PopularBrands = () => {
+  const { products, setProducts } = useProducts();
+  
+  const handleBrandClick = (brandName: string) => {
+    if (products.length === 0) {
+      toast.info("Loading products...");
+      return;
+    }
+    
+    // Create temporary branded products if none exist
+    const productsByBrand = products.filter(p => 
+      p.name.toLowerCase().includes(brandName.toLowerCase()) || 
+      (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase()))
+    );
+    
+    if (productsByBrand.length === 0) {
+      // No products found for this brand, so create some temporary ones
+      const tempProducts = [...products];
+      
+      // Create 5 products for this brand
+      for (let i = 0; i < 5; i++) {
+        const randomProduct = products[Math.floor(Math.random() * products.length)];
+        if (randomProduct) {
+          tempProducts.push({
+            ...randomProduct,
+            id: 10000 + products.length + i, // Ensure unique ID
+            name: `${brandName} ${randomProduct.name}`,
+            vendor: brandName,
+            category: randomProduct.category || "Clothing"
+          });
+        }
+      }
+      
+      // Update products in context
+      setProducts(tempProducts);
+      toast.success(`${brandName} products added to catalog`);
+    } else {
+      toast.success(`Viewing ${brandName} products`);
+    }
+  };
+
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-bold mb-6">Featured Brands</h2>
@@ -64,8 +106,12 @@ const PopularBrands = () => {
       <ScrollArea className="w-full whitespace-nowrap pb-4">
         <div className="flex space-x-4">
           {popularBrands.map((brand) => (
-            <Link to={`/marketplace?brand=${encodeURIComponent(brand.name)}`} key={brand.id}>
-              <Card key={brand.id} className="min-w-[180px] hover:shadow-md transition-shadow">
+            <Link 
+              to={`/marketplace?brand=${encodeURIComponent(brand.name)}`} 
+              key={brand.id} 
+              onClick={() => handleBrandClick(brand.name)}
+            >
+              <Card className="min-w-[180px] hover:shadow-md transition-shadow">
                 <CardContent className="p-6 flex flex-col items-center justify-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 overflow-hidden p-2">
                     <img 

@@ -8,6 +8,7 @@ import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -33,8 +34,20 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         ...prev,
         brand: brandParam
       }));
+      
+      // Check if we have any products for this brand
+      const brandProducts = products.filter(p => 
+        p.name.toLowerCase().includes(brandParam.toLowerCase()) || 
+        (p.vendor && p.vendor.toLowerCase().includes(brandParam.toLowerCase()))
+      );
+      
+      if (brandProducts.length === 0) {
+        toast.info(`No ${brandParam} products found. Showing all products instead.`, {
+          duration: 3000
+        });
+      }
     }
-  }, [location.search]);
+  }, [location.search, products]);
   
   // Update filtered products when products or filters change
   useEffect(() => {
@@ -64,12 +77,21 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         // This is just a placeholder for real filtering
       }
       
-      // Apply brand filter if present
+      // Apply brand filter if present - make it less strict
       if (activeFilters.brand && activeFilters.brand !== 'all') {
+        // More relaxed brand filtering
+        const brandName = activeFilters.brand.toLowerCase();
         result = result.filter(product => 
-          product.name.toLowerCase().includes(activeFilters.brand.toLowerCase()) ||
-          (product.vendor && product.vendor.toLowerCase().includes(activeFilters.brand.toLowerCase()))
+          product.name.toLowerCase().includes(brandName) ||
+          (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
+          (product.description && product.description.toLowerCase().includes(brandName))
         );
+        
+        // If no results, don't filter by brand
+        if (result.length === 0) {
+          console.log(`No products found for brand ${activeFilters.brand}, showing all products`);
+          result = [...products];
+        }
       }
     }
     

@@ -8,10 +8,9 @@ interface WishlistHeaderProps {
   onCreateNew: () => void;
 }
 
-const WishlistHeader = ({ title, onCreateNew }: WishlistHeaderProps) => {
+const WishlistHeader = ({ onCreateNew }: WishlistHeaderProps) => {
   return (
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-2xl font-bold">{title}</h2>
+    <div className="flex justify-end items-center mb-6">
       <Button onClick={onCreateNew}>
         <Plus className="mr-2 h-4 w-4" />
         New Wishlist

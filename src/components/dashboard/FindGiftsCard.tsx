@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Gift, Search, ChevronDown } from "lucide-react";
+import { Gift, Search, ChevronDown, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -99,9 +99,17 @@ const FindGiftsCard = () => {
             </div>
           </div>
           
-          <Button className="w-full" asChild>
-            <Link to="/marketplace">Explore Marketplace</Link>
-          </Button>
+          <div className="flex justify-center">
+            <Button 
+              className="px-8 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 shadow-md" 
+              asChild
+            >
+              <Link to="/marketplace" className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                Explore Marketplace
+              </Link>
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -26,7 +26,8 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
     // Check if we have any products for this brand with a more flexible matching
     const productsByBrand = products.filter(p => 
       (p.name && p.name.toLowerCase().includes(brandName.toLowerCase())) || 
-      (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase()))
+      (p.vendor && p.vendor.toLowerCase().includes(brandName.toLowerCase())) ||
+      (p.description && p.description.toLowerCase().includes(brandName.toLowerCase()))
     );
     
     if (productsByBrand.length === 0) {

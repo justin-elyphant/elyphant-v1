@@ -36,40 +36,8 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         ...prev,
         brand: brandParam
       }));
-      
-      // Check if we have any products for this brand with a more flexible matching
-      const brandProducts = products.filter(p => 
-        p.name.toLowerCase().includes(brandParam.toLowerCase()) || 
-        (p.vendor && p.vendor.toLowerCase().includes(brandParam.toLowerCase()))
-      );
-      
-      if (brandProducts.length === 0) {
-        // Create temporary products for this brand if none exist
-        const tempProducts = [...products];
-        
-        // Create 5 products for this brand
-        for (let i = 0; i < 5; i++) {
-          const randomProduct = products[Math.floor(Math.random() * products.length)];
-          if (randomProduct) {
-            tempProducts.push({
-              ...randomProduct,
-              id: 10000 + products.length + i, // Ensure unique ID
-              name: `${brandParam} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
-              vendor: brandParam,
-              category: randomProduct.category || "Clothing",
-              description: `Premium ${brandParam} ${randomProduct.category || "item"} with exceptional quality and style.`
-            });
-          }
-        }
-        
-        // Update products in context
-        setProducts(tempProducts);
-        toast.success(`${brandParam} products added to catalog`);
-      } else {
-        toast.success(`Viewing ${brandParam} products`);
-      }
     }
-  }, [location.search, products, setProducts]);
+  }, [location.search]);
   
   // Update filtered products when products or filters change
   useEffect(() => {
@@ -114,6 +82,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
           console.log(`No products found for brand ${activeFilters.brand}, creating temporary products`);
           
           // Create 5 temporary products for this brand
+          const tempProducts = [];
           for (let i = 0; i < 5; i++) {
             const randomProduct = products[Math.floor(Math.random() * products.length)];
             if (randomProduct) {
@@ -125,12 +94,16 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
                 category: randomProduct.category || "Clothing",
                 description: `Premium ${activeFilters.brand} ${randomProduct.category || "item"} with exceptional quality and style.`
               };
+              tempProducts.push(newProduct);
               result.push(newProduct);
             }
           }
           
           // Add these new products to the context
-          setProducts(prev => [...prev, ...result]);
+          if (tempProducts.length > 0) {
+            setProducts(prev => [...prev, ...tempProducts]);
+            toast.success(`${activeFilters.brand} products added to catalog`);
+          }
         }
       }
     }

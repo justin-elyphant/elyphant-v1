@@ -76,7 +76,7 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
           images = ['/placeholder.svg'];
         }
         
-        // Add a category-specific image if we have few images - using the imported function
+        // Add a category-specific image if we have few images
         try {
           if (images.length < 2) {
             const category = item.category || 'Electronics';

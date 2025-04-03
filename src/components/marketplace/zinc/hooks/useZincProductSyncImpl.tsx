@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { ZincProduct } from "../types";
 
-/**
- * Hook for syncing products from Zinc API
- */
-export const useZincProductSync = (updateLastSync: () => void) => {
+interface UseZincProductSyncProps {
+  updateLastSync: () => void;
+}
+
+export const useZincProductSyncImpl = (updateLastSync: () => void) => {
   const [error, setError] = useState<string | null>(null);
   
   const syncProducts = async (): Promise<ZincProduct[]> => {

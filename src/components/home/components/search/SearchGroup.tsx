@@ -2,12 +2,14 @@
 import React from "react";
 import { CommandGroup, CommandItem } from "@/components/ui/command";
 import { Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface SearchItem {
   id: string;
   name: string;
   title?: string;
   image?: string;
+  isTopSeller?: boolean;
 }
 
 interface SearchGroupProps {
@@ -42,6 +44,11 @@ const SearchGroup: React.FC<SearchGroupProps> = ({ heading, items, onSelect }) =
           )}
           <div className="flex-1 truncate">
             {item.name}
+            {item.isTopSeller && (
+              <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 text-xs">
+                Top Seller
+              </Badge>
+            )}
           </div>
           <Check className="h-4 w-4 opacity-0 group-aria-selected:opacity-100" />
         </CommandItem>

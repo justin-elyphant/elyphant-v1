@@ -10,6 +10,7 @@ type CollectionProps = {
     name: string;
     image: string;
     count: number;
+    searchTerm: string; // Added searchTerm for proper linking
   }[];
 };
 
@@ -28,7 +29,7 @@ const FeaturedCollections = ({ collections }: CollectionProps) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {collections.map((collection) => (
           <Link 
-            to="/gifting?tab=products" 
+            to={`/marketplace?search=${encodeURIComponent(collection.searchTerm)}`}
             key={collection.id}
             onClick={handleCollectionClick}
           >

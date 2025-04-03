@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
@@ -71,8 +72,8 @@ const SearchBar = () => {
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          const length = inputRef.current.value.length;
-          inputRef.current.setSelectionRange(length, length);
+          // This makes the full text selectable on focus
+          inputRef.current.select();
         }
       }, 0);
     }
@@ -83,12 +84,10 @@ const SearchBar = () => {
       setIsSearchOpen(true);
     }
     
-    setTimeout(() => {
-      if (inputRef.current) {
-        const length = inputRef.current.value.length;
-        inputRef.current.setSelectionRange(length, length);
-      }
-    }, 0);
+    // Select all text when clicking in the input field
+    if (inputRef.current) {
+      inputRef.current.select();
+    }
   };
 
   const handleClearButtonClick = () => {
@@ -99,17 +98,6 @@ const SearchBar = () => {
       inputRef.current.focus();
     }
   };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (inputRef.current && document.activeElement === inputRef.current) {
-        const length = inputRef.current.value.length;
-        inputRef.current.setSelectionRange(length, length);
-      }
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <form onSubmit={handleSearch} className="w-full">

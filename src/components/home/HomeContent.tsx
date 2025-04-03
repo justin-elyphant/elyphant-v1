@@ -31,42 +31,46 @@ const HomeContent = () => {
     }
   }, [products]);
 
-  // Featured collections
+  // Featured collections with updated high-quality images and proper search terms
   const collections = [
     { 
       id: 1, 
       name: "Birthday Gifts", 
-      image: "https://images.unsplash.com/photo-1577998474517-7eeeed4e448a?w=500&q=80", 
-      count: 120 
+      image: "https://images.unsplash.com/photo-1523293915678-d126868e96f1?w=500&q=80", 
+      count: 120,
+      searchTerm: "birthday gifts"
     },
     { 
       id: 2, 
       name: "Anniversary", 
-      image: "https://images.unsplash.com/photo-1548353866-8befc7a7233e?w=500&q=80", 
-      count: 85 
+      image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=500&q=80", 
+      count: 85,
+      searchTerm: "anniversary gifts"
     },
     { 
       id: 3, 
       name: "For Her", 
-      image: "https://images.unsplash.com/photo-1588012886078-94edc2c72087?w=500&q=80", 
-      count: 150 
+      image: "https://images.unsplash.com/photo-1549989476-69a92fa57c36?w=500&q=80", 
+      count: 150,
+      searchTerm: "gifts for her"
     },
     { 
       id: 4, 
       name: "For Him", 
-      image: "https://images.unsplash.com/photo-1574634534894-89d7576c8259?w=500&q=80", 
-      count: 145 
+      image: "https://images.unsplash.com/photo-1490367532201-b9bc1dc483f6?w=500&q=80", 
+      count: 145,
+      searchTerm: "gifts for him"
     },
   ];
 
-  // Top brands data - use real image URLs
+  // Top brands data - using high-quality, recognizable logos
   const topBrands = [
-    { id: 1, name: "Nike", logoUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=128&q=80", productCount: 245 },
-    { id: 2, name: "Apple", logoUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=128&q=80", productCount: 189 },
-    { id: 3, name: "Samsung", logoUrl: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=128&q=80", productCount: 167 },
-    { id: 4, name: "Sony", logoUrl: "https://images.unsplash.com/photo-1593344484362-83d5fa2a98dd?w=128&q=80", productCount: 142 },
-    { id: 5, name: "Adidas", logoUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=128&q=80", productCount: 134 },
-    { id: 6, name: "Bose", logoUrl: "https://images.unsplash.com/photo-1610041819557-a370a7dfa3f5?w=128&q=80", productCount: 98 },
+    { id: 1, name: "Nike", logoUrl: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=128&q=80", productCount: 245 },
+    { id: 2, name: "Apple", logoUrl: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=128&q=80", productCount: 189 },
+    { id: 3, name: "Samsung", logoUrl: "https://images.unsplash.com/photo-1662219708489-57083b9817e7?w=128&q=80", productCount: 167 },
+    { id: 4, name: "Sony", logoUrl: "https://images.unsplash.com/photo-1583508805133-64b71bd23141?w=128&q=80", productCount: 142 },
+    { id: 5, name: "Adidas", logoUrl: "https://images.unsplash.com/photo-1588484628369-dd7de8548df4?w=128&q=80", productCount: 134 },
+    { id: 6, name: "Bose", logoUrl: "https://images.unsplash.com/photo-1626143551763-4da56bf972ef?w=128&q=80", productCount: 98 },
   ];
 
   return (

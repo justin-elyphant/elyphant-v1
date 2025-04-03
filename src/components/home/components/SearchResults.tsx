@@ -5,6 +5,7 @@ import { useZincSearch } from "@/hooks/useZincSearch";
 import SearchPrompt from "./search/SearchPrompt";
 import SearchGroup from "./search/SearchGroup";
 import SearchFooter from "./search/SearchFooter";
+import { Badge } from "@/components/ui/badge";
 
 interface SearchResultsProps {
   searchTerm: string;
@@ -78,6 +79,18 @@ const SearchResults = ({
   };
 
   const searchSuggestion = getSearchSuggestion();
+  
+  // Sort products by rating/review count to identify top sellers
+  const sortedZincResults = [...zincResults].sort((a, b) => {
+    const aScore = (a.rating || 0) * (a.review_count || 0);
+    const bScore = (b.rating || 0) * (b.review_count || 0);
+    return bScore - aScore;
+  });
+  
+  // Identify top sellers (top 30% of results)
+  const topSellerCount = Math.max(1, Math.ceil(sortedZincResults.length * 0.3));
+  const topSellers = sortedZincResults.slice(0, topSellerCount);
+  const otherProducts = sortedZincResults.slice(topSellerCount);
 
   return (
     <Command onKeyDown={handleKeyDown}>
@@ -102,16 +115,32 @@ const SearchResults = ({
           />
         </CommandEmpty>
         
-        <SearchGroup 
-          heading="Amazon Products" 
-          items={zincResults.map((product) => ({ 
-            id: `zinc-${product.id || product.product_id || Math.random().toString()}`,
-            title: product.title,
-            name: product.title,
-            image: product.image
-          }))} 
-          onSelect={handleSelect} 
-        />
+        {topSellers.length > 0 && (
+          <SearchGroup 
+            heading="Top Sellers" 
+            items={topSellers.map((product) => ({ 
+              id: `top-${product.id || product.product_id || Math.random().toString()}`,
+              title: product.title,
+              name: product.title,
+              image: product.image,
+              isTopSeller: true
+            }))} 
+            onSelect={handleSelect} 
+          />
+        )}
+        
+        {otherProducts.length > 0 && (
+          <SearchGroup 
+            heading="More Products" 
+            items={otherProducts.map((product) => ({ 
+              id: `other-${product.id || product.product_id || Math.random().toString()}`,
+              title: product.title,
+              name: product.title,
+              image: product.image
+            }))} 
+            onSelect={handleSelect} 
+          />
+        )}
         
         <SearchGroup 
           heading="Store Products" 

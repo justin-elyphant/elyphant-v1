@@ -1,4 +1,5 @@
 
-// Main entry point for search utilities
-// Re-exports all search utilities from separate files
+// Re-export all search utilities from the new files
 export { findMatchingProducts } from './findMatchingProducts';
+export { getImageCategory } from './categoryMapper';
+export { correctMisspellings } from './spellingCorrector';

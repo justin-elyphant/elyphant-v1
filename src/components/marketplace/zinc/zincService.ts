@@ -1,6 +1,6 @@
 
 import { ZincProduct } from './types';
-import { findMatchingProducts } from './utils/searchUtils';
+import { findMatchingProducts } from './utils/findMatchingProducts';
 import { ZINC_API_BASE_URL, getZincHeaders } from './zincCore';
 
 /**

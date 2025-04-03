@@ -50,11 +50,11 @@ const ZincReturnsTab = () => {
   const getBadgeVariant = (status: string) => {
     switch (status) {
       case "completed":
-        return "success";
+        return "default";
       case "in_transit":
-        return "info";
+        return "secondary";
       case "pending":
-        return "warning";
+        return "outline";
       default:
         return "default";
     }
@@ -89,7 +89,7 @@ const ZincReturnsTab = () => {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Return #{returnItem.id.slice(-6)}</CardTitle>
-              <Badge variant={getBadgeVariant(returnItem.status) as "success" | "info" | "warning" | "default"} className="flex items-center">
+              <Badge variant={getBadgeVariant(returnItem.status)} className="flex items-center">
                 {getStatusIcon(returnItem.status)}
                 {returnItem.status.split('_').map(word => 
                   word.charAt(0).toUpperCase() + word.slice(1)
@@ -132,7 +132,7 @@ const ZincReturnsTab = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Elephant Credit:</span>
-                    <Badge variant={returnItem.creditIssued ? "success" : "default"}>
+                    <Badge variant={returnItem.creditIssued ? "default" : "outline"}>
                       {returnItem.creditIssued ? "Issued" : "Not Issued"}
                     </Badge>
                   </div>

@@ -45,11 +45,11 @@ const ZincOrdersTab = () => {
   const getBadgeVariant = (status: string) => {
     switch (status) {
       case "delivered":
-        return "success";
+        return "default";
       case "shipped":
-        return "info";
+        return "secondary";
       case "processing":
-        return "warning";
+        return "outline";
       default:
         return "default";
     }
@@ -81,7 +81,7 @@ const ZincOrdersTab = () => {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Order #{order.id.slice(-6)}</CardTitle>
-              <Badge variant={getBadgeVariant(order.status) as "success" | "info" | "warning" | "default"} className="flex items-center">
+              <Badge variant={getBadgeVariant(order.status)} className="flex items-center">
                 {getStatusIcon(order.status)}
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </Badge>

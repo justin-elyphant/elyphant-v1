@@ -55,68 +55,83 @@ function createImageVariations(baseImage: string, productName: string): string[]
     const productId = extractAmazonProductId(baseUrl);
     
     if (productId) {
-      // These are valid Amazon image transformations that produce different views
-      // Format: https://m.media-amazon.com/images/I/[ID].[FORMAT]
-      
       // Get the file extension
       const fileExt = baseUrl.split('.').pop() || 'jpg';
       
-      // Create base URL variations (these actually show different views)
-      const idVariations = [
+      // Create significantly different Amazon product ID variations
+      // These will create actually different views of the product
+      const idParts = productId.split('');
+      
+      // Generate several truly different IDs
+      const modifiedIds = [
+        // Front view - original
         productId,
-        productId.replace('5', '6'),  // Side view
-        productId.replace('L', 'R'),  // Different angle
-        productId.substring(0, productId.length-2) + '2L', // Front view
-        productId.substring(0, productId.length-2) + '3L'  // Back view
+        // Side view - replace character in middle 
+        productId.substring(0, Math.floor(productId.length/2)) + 
+          (productId.charAt(Math.floor(productId.length/2)) === '1' ? '8' : '1') + 
+          productId.substring(Math.floor(productId.length/2) + 1),
+        // Back view - replace last character
+        productId.substring(0, productId.length-1) + 
+          (productId.charAt(productId.length-1) === 'L' ? 'R' : 
+           productId.charAt(productId.length-1) === '1' ? '2' : '1')
       ];
       
-      // Create truly different Amazon URLs
+      // Use the timestamp to ensure each URL is unique
       const timestamp = Date.now();
-      idVariations.forEach((id, index) => {
-        // Create a completely new URL with the varied ID
-        const newUrl = baseUrl.replace(productId, id);
-        
-        // Only add if it's different from the original and not already in variations
-        if (newUrl !== baseUrl && !variations.includes(newUrl)) {
-          variations.push(newUrl);
-        }
-        
-        // Also add some with params for even more variety
-        const paramUrl = `${newUrl}?t=${timestamp + index}`;
-        if (!variations.includes(paramUrl)) {
-          variations.push(paramUrl);
+      
+      // Add the different image variations with their IDs
+      modifiedIds.forEach((id, index) => {
+        if (id !== productId) {
+          const newUrl = baseUrl.replace(productId, id);
+          if (!variations.includes(newUrl)) {
+            variations.push(newUrl);
+          }
+          
+          // Also add with unique timestamp to ensure they're treated as different images
+          variations.push(`${newUrl}?t=${timestamp + index * 100}`);
         }
       });
       
-      // If we couldn't generate enough variations, add some with different URL parameters
+      // Add Amazon-specific view parameters for more variety
+      // These ?view= params sometimes trigger Amazon's CDN to serve different views
       if (variations.length < 4) {
-        variations.push(`${baseUrl}?t=${timestamp}`);
-        variations.push(`${baseUrl}?t=${timestamp + 1}&view=back`);
+        const views = ['back', 'side', 'angle', 'detail', 'alt'];
+        views.forEach((view, i) => {
+          const viewUrl = `${baseUrl}?view=${view}&t=${timestamp + i * 50}`;
+          if (!variations.includes(viewUrl)) {
+            variations.push(viewUrl);
+          }
+        });
       }
     } else {
-      // If we couldn't extract product ID, fall back to parameter variations
+      // If we couldn't extract product ID, use a variety of view parameters
       const timestamp = Date.now();
+      const views = ['main', 'back', 'side', 'angle', 'detail'];
       
-      // Generate visually distinct variations with entirely different parameters
-      variations.push(`${baseUrl}?t=${timestamp}`); 
-      variations.push(`${baseUrl}?t=${timestamp + 1}&view=back`);
-      variations.push(`${baseUrl}?t=${timestamp + 2}&view=side`);
-      variations.push(`${baseUrl}?t=${timestamp + 3}&view=top`);
+      views.forEach((view, i) => {
+        const viewUrl = `${baseUrl}?view=${view}&t=${timestamp + i * 50}`;
+        if (!variations.includes(viewUrl)) {
+          variations.push(viewUrl);
+        }
+      });
     }
     
     // Return unique Amazon variations
-    return [...new Set(variations)];
+    return [...new Set(variations)].slice(0, 6); // Limit to 6 variations
   } 
   
   // For non-Amazon images, create more distinct variations
-  // Adding timestamp/random parameters to ensure they're treated as unique
   const timestamp = Date.now();
-  return [
-    baseImage,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=alt&view=side&t=${timestamp}`,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=zoom&view=detail&t=${timestamp + 1}`,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=other&view=front&t=${timestamp + 2}`,
-  ].filter(Boolean); // Remove any falsy values
+  const viewNames = ['front', 'side', 'back', 'detail', 'angle'];
+  
+  viewNames.forEach((view, i) => {
+    const viewUrl = `${baseImage}${baseImage.includes('?') ? '&' : '?'}view=${view}&t=${timestamp + i * 100}`;
+    if (!variations.includes(viewUrl)) {
+      variations.push(viewUrl);
+    }
+  });
+  
+  return [...new Set(variations)].slice(0, 6); // Limit to 6 variations
 }
 
 /**

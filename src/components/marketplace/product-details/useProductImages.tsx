@@ -2,6 +2,7 @@
 import { Product } from "@/contexts/ProductContext";
 import { useEffect, useState } from "react";
 import { generateImageVariations } from "./carousel/utils/imageUtils";
+import { getExactProductImage } from "../zinc/utils/images/productImageUtils";
 
 /**
  * Custom hook to manage product images with improved organization and uniqueness
@@ -54,7 +55,15 @@ function getProcessedImages(product: Product): string[] {
       if (uniqueImages.length < 3 && product.image) {
         const extraVariations = generateImageVariations(product.image, product.name)
           .filter(img => !uniqueImages.includes(img));
-        uniqueImages.push(...extraVariations.slice(0, 3)); // Add up to 3 extras
+        uniqueImages.push(...extraVariations.slice(0, 4)); // Add up to 4 extras
+      }
+      
+      // Try to add a category-specific image if we still need more
+      if (uniqueImages.length < 3 && product.category) {
+        const specificImage = getExactProductImage(product.name, product.category);
+        if (specificImage && !uniqueImages.includes(specificImage)) {
+          uniqueImages.push(specificImage);
+        }
       }
       
       console.log("Using product.images array:", uniqueImages);
@@ -66,6 +75,15 @@ function getProcessedImages(product: Product): string[] {
   if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
     // Generate variations with distinct parameters to ensure uniqueness
     const imageVariations = generateImageVariations(product.image, product.name);
+    
+    // Try to add a category-specific image if we have one
+    if (product.category) {
+      const specificImage = getExactProductImage(product.name, product.category);
+      if (specificImage && !imageVariations.includes(specificImage)) {
+        imageVariations.push(specificImage);
+      }
+    }
+    
     console.log("Using single product.image with enhanced variations:", imageVariations);
     return imageVariations;
   }

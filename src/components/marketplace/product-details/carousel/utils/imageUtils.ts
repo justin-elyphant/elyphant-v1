@@ -1,3 +1,4 @@
+
 /**
  * Utilities for product carousel image processing
  */
@@ -94,16 +95,70 @@ export const processImages = (images: string[]): string[] => {
  * for display purposes only
  */
 export const generateImageVariations = (baseImage: string, productName: string): string[] => {
-  // Implement a simplified version that's different from the one in imageGenerationService
   if (!baseImage || baseImage === "/placeholder.svg") {
     return ["/placeholder.svg"];
   }
   
-  const timestamp = Date.now();
+  // Start with the original image
+  const variations = [baseImage];
   
-  return [
-    baseImage,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}v=alt&t=${timestamp}`,
-    `${baseImage}${baseImage.includes('?') ? '&' : '?'}v=main&t=${timestamp+1}`,
-  ];
+  // Create Amazon-specific variations
+  if (baseImage.includes('amazon.com') || baseImage.includes('m.media-amazon.com')) {
+    // Extract the base URL without any existing parameters
+    const baseUrl = baseImage.split('?')[0];
+    
+    // Extract product ID if it's an Amazon URL
+    const productId = extractAmazonProductId(baseUrl);
+    
+    if (productId) {
+      // Create truly different Amazon product IDs - these should show different angles
+      // Modify specific characters in the ID that typically change between view angles
+      const modifiedIds = [
+        // Original ID
+        productId,
+        // Change middle character to create side view
+        productId.substring(0, Math.floor(productId.length/2)) + 
+          (productId.charAt(Math.floor(productId.length/2)) === '1' ? '2' : '1') + 
+          productId.substring(Math.floor(productId.length/2) + 1),
+        // Modify last non-extension character for back view  
+        productId.substring(0, productId.length-1) + 
+          (productId.charAt(productId.length-1) === 'L' ? 'R' : 
+           productId.charAt(productId.length-1) === '1' ? '2' : '1')
+      ];
+      
+      // Create timestamp to ensure uniqueness
+      const timestamp = Date.now();
+      
+      // Add each variation with a different ID
+      modifiedIds.forEach((id, index) => {
+        if (id !== productId) {
+          const newUrl = baseUrl.replace(productId, id);
+          variations.push(`${newUrl}?t=${timestamp + index * 100}`);
+        }
+      });
+      
+      // Make sure we have enough variations
+      if (variations.length < 3) {
+        // Add Amazon-specific view parameters
+        variations.push(`${baseUrl}?view=back&t=${timestamp}`);
+        variations.push(`${baseUrl}?view=side&t=${timestamp + 50}`);
+      }
+    } else {
+      // If we couldn't extract a product ID, use view parameters
+      const timestamp = Date.now();
+      variations.push(`${baseUrl}?view=main&t=${timestamp}`);
+      variations.push(`${baseUrl}?view=back&t=${timestamp + 50}`);
+      variations.push(`${baseUrl}?view=side&t=${timestamp + 100}`);
+    }
+    
+    // Return unique variations, limited to reasonable number
+    return [...new Set(variations)].slice(0, 5);
+  }
+  
+  // For non-Amazon images, create parameter variations
+  const timestamp = Date.now();
+  variations.push(`${baseImage}${baseImage.includes('?') ? '&' : '?'}view=alt&t=${timestamp}`);
+  variations.push(`${baseImage}${baseImage.includes('?') ? '&' : '?'}view=main&t=${timestamp+1}`);
+  
+  return [...new Set(variations)].slice(0, 3);
 };

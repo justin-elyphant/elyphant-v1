@@ -1,35 +1,51 @@
 
 import React from "react";
-import { Search } from "lucide-react";
 import { CommandGroup, CommandItem } from "@/components/ui/command";
+import { Check } from "lucide-react";
+
+interface SearchItem {
+  id: string;
+  name: string;
+  title?: string;
+  image?: string;
+}
 
 interface SearchGroupProps {
   heading: string;
-  items: { id?: string | number; name?: string; title?: string; value?: string }[];
+  items: SearchItem[];
   onSelect: (value: string) => void;
 }
 
-const SearchGroup = ({ heading, items, onSelect }: SearchGroupProps) => {
-  if (items.length === 0) return null;
-  
+const SearchGroup: React.FC<SearchGroupProps> = ({ heading, items, onSelect }) => {
+  if (!items || items.length === 0) {
+    return null;
+  }
+
   return (
     <CommandGroup heading={heading}>
-      {items.map((item, index) => {
-        const displayText = item.title || item.name || item.value || "";
-        const itemValue = item.value || displayText;
-        const key = item.id ? `${item.id}` : `${heading}-${index}`;
-        
-        return (
-          <CommandItem 
-            key={key}
-            onSelect={() => onSelect(displayText)}
-            value={displayText}
-          >
-            <Search className="mr-2 h-4 w-4" />
-            {displayText}
-          </CommandItem>
-        );
-      })}
+      {items.map((item) => (
+        <CommandItem
+          key={item.id}
+          value={item.name}
+          onSelect={() => onSelect(item.name)}
+          className="flex items-center gap-2"
+        >
+          {item.image && (
+            <div className="h-8 w-8 rounded overflow-hidden shrink-0">
+              <img
+                src={item.image}
+                alt={item.name}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+          <div className="flex-1 truncate">
+            {item.name}
+          </div>
+          <Check className="h-4 w-4 opacity-0 group-aria-selected:opacity-100" />
+        </CommandItem>
+      ))}
     </CommandGroup>
   );
 };

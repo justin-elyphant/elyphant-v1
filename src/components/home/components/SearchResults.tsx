@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Command, CommandInput, CommandList, CommandEmpty } from "@/components/ui/command";
 import { useZincSearch } from "@/hooks/useZincSearch";
@@ -106,7 +107,8 @@ const SearchResults = ({
           items={zincResults.map((product) => ({ 
             id: `zinc-${product.id || product.product_id || Math.random().toString()}`,
             title: product.title,
-            name: product.title
+            name: product.title,
+            image: product.image
           }))} 
           onSelect={handleSelect} 
         />
@@ -116,6 +118,7 @@ const SearchResults = ({
           items={filteredProducts.map((product) => ({ 
             id: `local-${product.id}`,
             name: product.name,
+            image: product.image
           }))} 
           onSelect={handleSelect} 
         />

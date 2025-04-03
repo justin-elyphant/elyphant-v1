@@ -19,7 +19,7 @@ export const useZincSearch = (searchTerm: string) => {
         (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-      .slice(0, 5); // Limit to 5 results
+      .slice(0, 10); // Increased from 5 to 10 results
 
   // Search Zinc API when searchTerm changes with improved debouncing
   useEffect(() => {
@@ -52,7 +52,7 @@ export const useZincSearch = (searchTerm: string) => {
           // Only update state if this is still the most recent request
           if (currentRequestId === searchRequestIdRef.current) {
             if (results?.length > 0) {
-              setZincResults(results.slice(0, 5)); // Limit to 5 results
+              setZincResults(results.slice(0, 12)); // Increased from 5 to 12 results
             } else {
               setZincResults([]);
             }

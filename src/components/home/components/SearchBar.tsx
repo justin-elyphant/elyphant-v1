@@ -25,7 +25,7 @@ const SearchBar = () => {
     e.preventDefault();
     if (searchTerm.trim()) {
       console.log(`SearchBar: Navigating to marketplace with search term "${searchTerm}"`);
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
     }
   };
@@ -35,13 +35,15 @@ const SearchBar = () => {
     // Open the search results popover when the user starts typing
     if (value.trim().length > 0 && !isSearchOpen) {
       setIsSearchOpen(true);
+    } else if (value.trim().length === 0) {
+      setIsSearchOpen(false);
     }
   };
 
   const handleSearchItemSelect = (value: string) => {
     setSearchTerm(value);
     console.log(`SearchBar: Selected search item "${value}"`);
-    navigate(`/marketplace?search=${encodeURIComponent(value)}`);
+    navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     setIsSearchOpen(false);
   };
 
@@ -53,7 +55,7 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="w-full">
+    <form onSubmit={handleSearch} className="w-full">
       <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <PopoverTrigger asChild>
           <div className="relative w-full">
@@ -76,7 +78,7 @@ const SearchBar = () => {
           />
         </PopoverContent>
       </Popover>
-    </div>
+    </form>
   );
 };
 

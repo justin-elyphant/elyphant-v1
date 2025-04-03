@@ -68,12 +68,15 @@ const SearchResults = ({
           const results = await searchProducts(searchTerm);
           console.log("Search results:", results);
           // Only update state if this is still the most recent request
-          if (currentRequestId === searchRequestIdRef.current) {
+          if (currentRequestId === searchRequestIdRef.current && results?.length > 0) {
             setZincResults(results.slice(0, 5)); // Limit to 5 results
+          } else {
+            setZincResults([]);
           }
         }
       } catch (error) {
         console.error("Error searching Zinc API:", error);
+        setZincResults([]);
       } finally {
         if (currentRequestId === searchRequestIdRef.current) {
           setLoading(false);
@@ -112,7 +115,15 @@ const SearchResults = ({
       />
       <CommandList>
         <CommandEmpty>
-          {loading ? "Searching..." : "No results found."}
+          {loading ? "Searching..." : searchTerm.trim().length > 2 ? (
+            <CommandItem 
+              onSelect={() => onItemSelect(searchTerm)}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <Search className="mr-2 h-4 w-4" />
+              Search for "{searchTerm}" in marketplace
+            </CommandItem>
+          ) : "Enter at least 3 characters to search"}
         </CommandEmpty>
         
         {zincResults.length > 0 && (

@@ -67,10 +67,10 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     return specificProducts['nike shoes'] || [];
   }
   
-  // If no results, return some default items
+  // If no results, return empty array instead of default items
   if (results.length === 0) {
-    console.log(`SearchUtils: No matches found, returning default products`);
-    results = allProducts.slice(0, 3);
+    console.log(`SearchUtils: No matches found, returning empty array`);
+    return [];
   }
   
   console.log(`SearchUtils: Returning ${results.length} results`);

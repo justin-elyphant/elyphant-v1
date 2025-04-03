@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { categories } from "@/components/home/components/CategoriesDropdown";
@@ -17,6 +17,19 @@ const Marketplace = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const toastShownRef = useRef(false);
+
+  // Reset toast shown flag when component unmounts or after a delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      toastShownRef.current = false;
+    }, 3000);
+    
+    return () => {
+      clearTimeout(timer);
+      toastShownRef.current = false;
+    };
+  }, [location.search]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -61,11 +74,15 @@ const Marketplace = () => {
             
             setFilteredProducts([...amazonProducts, ...storeProducts]);
             
-            // Show only ONE toast notification with a summary - moved outside the loop
-            toast({
-              title: "Search Complete",
-              description: `Found ${amazonProducts.length} products matching "${searchParam}"`
-            });
+            // Show only ONE toast notification with a summary
+            if (!toastShownRef.current) {
+              toastShownRef.current = true;
+              toast({
+                title: "Search Complete",
+                description: `Found ${amazonProducts.length} products matching "${searchParam}"`,
+                id: "search-complete" // Use consistent ID
+              });
+            }
           } else {
             // If no Amazon products, just filter store products
             const storeProducts = products.filter(product => 
@@ -74,18 +91,31 @@ const Marketplace = () => {
             );
             
             setFilteredProducts(storeProducts);
-            toast({
-              title: "Search Complete",
-              description: `No Amazon products found for "${searchParam}"`
-            });
+            
+            // Only show toast if we have no results at all and haven't shown one yet
+            if (storeProducts.length === 0 && !toastShownRef.current) {
+              toastShownRef.current = true;
+              toast({
+                title: "No Results Found",
+                description: `No products found for "${searchParam}"`,
+                variant: "destructive",
+                id: "no-results-found" // Use consistent ID
+              });
+            }
           }
         } catch (error) {
           console.error("Error searching for products:", error);
-          toast({
-            title: "Search Error",
-            description: "Error searching for Amazon products",
-            variant: "destructive"
-          });
+          
+          // Only show error toast once
+          if (!toastShownRef.current) {
+            toastShownRef.current = true;
+            toast({
+              title: "Search Error",
+              description: "Error searching for Amazon products",
+              variant: "destructive",
+              id: "search-error" // Use consistent ID
+            });
+          }
           
           // Fall back to local product search
           const filteredStoreProducts = products.filter(product => 

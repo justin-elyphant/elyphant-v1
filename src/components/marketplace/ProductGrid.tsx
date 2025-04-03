@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import ProductItem from "./product-item/ProductItem";
-import ProductDetailsDialog from "./ProductDetailsDialog";
+import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 
@@ -19,7 +18,6 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [userData] = useLocalStorage("userData", null);
 
-  // Sort products when the sort option or products change
   React.useEffect(() => {
     setSortedProducts(sortProducts(products, sortOption));
   }, [products, sortOption]);
@@ -68,7 +66,6 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
         ))}
       </div>
 
-      {/* Product Details Dialog */}
       <ProductDetailsDialog 
         product={selectedProduct}
         open={showProductDetails !== null}
@@ -79,7 +76,6 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
         userData={userData}
       />
 
-      {/* Sign Up Dialog */}
       <SignUpDialog 
         open={showSignUpDialog} 
         onOpenChange={setShowSignUpDialog} 

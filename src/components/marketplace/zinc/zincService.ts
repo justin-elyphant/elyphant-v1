@@ -1,4 +1,3 @@
-
 import { ZincProduct } from './types';
 import { ZINC_API_BASE_URL, getZincHeaders } from './zincCore';
 
@@ -47,48 +46,48 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
           images = item.image_urls.filter((img: string) => img && typeof img === 'string');
           console.log(`Using ${images.length} image_urls for ${item.title}`);
         }
-        // 3. Create fallback images by generating variations
         
-        // Always include the main image if we have no other images
-        if (images.length === 0 && mainImage) {
-          // Start with the main image
-          images = [mainImage];
+        // 3. Create fallback images by generating variations
+        if (images.length === 0 && mainImage && mainImage !== '/placeholder.svg') {
+          // Extract the base URL without any existing parameters
+          const baseUrl = mainImage.split('?')[0];
           
-          // Use the getExactProductImage utility to get category-specific images
-          const category = item.category || 'Electronics';
-          const title = item.title || '';
+          // Generate visually distinct variations with different size parameters
+          images = [
+            baseUrl, // Original image
+            `${baseUrl}?sx=500&sy=500&ex=500&ey=500`, // Square crop
+            `${baseUrl}?sx=600&sy=300&ex=600&ey=300` // Wider crop
+          ];
           
-          try {
-            // Import dynamically to avoid circular dependencies
-            const { getExactProductImage } = require('./utils/images/productImageUtils');
-            
-            // Add 2-3 related but different images based on the product
-            for (let i = 1; i <= 3; i++) {
-              // Create unique product modification parameter
-              const viewParam = `?view=${i}`;
-              
-              // Try to get a category-specific image first
-              if (i === 1 && typeof getExactProductImage === 'function') {
-                const specificImage = getExactProductImage(title, category);
-                if (specificImage && specificImage !== mainImage) {
-                  images.push(specificImage);
-                  continue;
-                }
-              }
-              
-              // Add a variation of the main image
-              if (!mainImage.includes(viewParam)) {
-                images.push(`${mainImage}${viewParam}`);
-              }
-            }
-          } catch (error) {
-            console.warn("Could not import product image utilities:", error);
-            // Fallback: add simple variations
-            images.push(`${mainImage}?view=2`);
-            images.push(`${mainImage}?view=3`);
+          // Add another variation based on product type
+          const title = item.title.toLowerCase();
+          if (title.includes('tv') || title.includes('monitor')) {
+            images.push(`${baseUrl}?angle=side`);
+          } else if (title.includes('phone') || title.includes('laptop')) {
+            images.push(`${baseUrl}?angle=back`);
+          } else {
+            images.push(`${baseUrl}?angle=alt`);
           }
           
           console.log(`Generated ${images.length} image variations for ${item.title}`);
+        } else if (images.length === 0) {
+          images = ['/placeholder.svg'];
+        }
+        
+        // Import product image utility functions
+        try {
+          const { getExactProductImage } = await import('./utils/images/productImageUtils');
+          
+          // Add a category-specific image if we have few images
+          if (images.length < 2 && typeof getExactProductImage === 'function') {
+            const category = item.category || 'Electronics';
+            const specificImage = getExactProductImage(item.title || '', category);
+            if (specificImage && !images.includes(specificImage)) {
+              images.push(specificImage);
+            }
+          }
+        } catch (error) {
+          console.warn("Could not import product image utilities:", error);
         }
         
         // Log what we're returning

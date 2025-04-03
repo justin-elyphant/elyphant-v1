@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -7,6 +7,7 @@ import {
   CarouselNext,
   CarouselPrevious
 } from "@/components/ui/carousel";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductCarouselProps {
   images: string[];
@@ -14,8 +15,14 @@ interface ProductCarouselProps {
 }
 
 const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
+  
+  // Filter out any images that failed to load
+  const validImages = images.filter((_, idx) => !failedImages[idx]);
+  
   // If no images available, show placeholder
-  if (images.length === 0) {
+  if (validImages.length === 0) {
     return (
       <div className="aspect-square relative bg-gray-100 flex items-center justify-center">
         <span className="text-muted-foreground">No image available</span>
@@ -24,15 +31,15 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
   }
   
   // If only one image, just show it directly
-  if (images.length === 1) {
+  if (validImages.length === 1) {
     return (
       <div className="aspect-square relative">
         <img 
-          src={images[0]} 
+          src={validImages[0]} 
           alt={productName}
-          className="w-full h-full object-cover rounded-md"
+          className="w-full h-full object-contain rounded-md"
           onError={(e) => {
-            console.error("Image failed to load:", images[0]);
+            console.error("Image failed to load:", validImages[0]);
             e.currentTarget.src = "/placeholder.svg";
           }}
         />
@@ -40,33 +47,71 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
     );
   }
 
+  // Handle image loading errors
+  const handleImageError = (idx: number) => {
+    console.error(`Image at index ${idx} failed to load:`, images[idx]);
+    setFailedImages(prev => ({...prev, [idx]: true}));
+  };
+  
+  // Track carousel slide changes
+  const handleSlideChange = (idx: number) => {
+    setActiveIndex(idx);
+    console.log(`Carousel changed to image ${idx}:`, images[idx]);
+  };
+
   // If multiple images, show carousel with navigation
   return (
-    <Carousel className="w-full">
-      <CarouselContent>
-        {images.map((img, idx) => (
-          <CarouselItem key={idx}>
-            <div className="aspect-square relative">
-              <img 
-                src={img} 
-                alt={`${productName} view ${idx + 1}`}
-                className="w-full h-full object-cover rounded-md"
-                onError={(e) => {
-                  console.error("Image failed to load:", img);
-                  e.currentTarget.src = "/placeholder.svg";
-                }}
-              />
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      {images.length > 1 && (
-        <>
-          <CarouselPrevious className="left-2" />
-          <CarouselNext className="right-2" />
-        </>
+    <div className="space-y-2">
+      <Carousel 
+        className="w-full"
+        opts={{
+          loop: true,
+          align: "start"
+        }}
+        onSlideChange={handleSlideChange}
+      >
+        <CarouselContent>
+          {images.map((img, idx) => (
+            <CarouselItem key={idx}>
+              <div className="aspect-square relative">
+                <img 
+                  src={img} 
+                  alt={`${productName} view ${idx + 1}`}
+                  className="w-full h-full object-contain rounded-md"
+                  onError={() => handleImageError(idx)}
+                />
+                <Badge 
+                  variant="secondary" 
+                  className="absolute bottom-2 right-2 bg-black/70 text-white"
+                >
+                  {idx + 1}/{images.length}
+                </Badge>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        {validImages.length > 1 && (
+          <>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </>
+        )}
+      </Carousel>
+      
+      {/* Thumbnail indicators */}
+      {validImages.length > 1 && (
+        <div className="flex justify-center gap-1 mt-2">
+          {images.map((_, idx) => (
+            <div 
+              key={idx}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                idx === activeIndex ? 'bg-primary' : 'bg-gray-300'
+              }`}
+            />
+          ))}
+        </div>
       )}
-    </Carousel>
+    </div>
   );
 };
 

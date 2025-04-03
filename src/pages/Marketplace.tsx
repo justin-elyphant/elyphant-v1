@@ -8,12 +8,12 @@ import { ProductProvider } from "@/contexts/ProductContext";
 const Marketplace = () => {
   return (
     <ProductProvider>
-      <MarketplaceContent />
+      <MarketplaceWrapper />
     </ProductProvider>
   );
 };
 
-const MarketplaceContent = () => {
+const MarketplaceWrapper = () => {
   const { filteredProducts, isLoading, getPageInfo } = useMarketplaceSearch();
   const { pageTitle, subtitle } = getPageInfo();
 

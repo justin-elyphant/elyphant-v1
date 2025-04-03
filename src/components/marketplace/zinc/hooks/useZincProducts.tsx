@@ -1,7 +1,9 @@
+
 import { useState } from "react";
 import { useZincSearch } from "./useZincSearch";
 import { useZincProductSync } from "./useZincProductSync";
 import { useProducts } from "@/contexts/ProductContext";
+import { ZincProduct } from "../types";
 
 export const useZincProducts = () => {
   const { search, isLoading: isSearchLoading, error: searchError, searchTerm, setSearchTerm } = useZincSearch();
@@ -26,8 +28,20 @@ export const useZincProducts = () => {
       setProducts(prevProducts => {
         // Filter out any existing Amazon products
         const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
+        
+        // Convert ZincProduct to Product format
+        const amazonProducts = results.map((product, index) => ({
+          id: 1000 + index,
+          name: product.title,
+          price: product.price,
+          category: product.category || "Electronics",
+          image: product.image || "/placeholder.svg",
+          vendor: "Amazon via Zinc",
+          description: product.description || ""
+        }));
+        
         // Add the new Amazon products
-        return [...nonAmazonProducts, ...results];
+        return [...nonAmazonProducts, ...amazonProducts];
       });
     }
     

@@ -11,6 +11,7 @@ export const useZincIntegration = () => {
       // Load initial Amazon products on successful connection
       await products.syncProducts();
     }
+    return success;
   };
 
   return {

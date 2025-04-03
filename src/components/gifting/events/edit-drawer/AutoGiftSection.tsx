@@ -3,8 +3,9 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { DollarSign, Plus, Minus } from "lucide-react";
+import { DollarSign, Plus, Minus, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GiftSource } from "./types";
 
@@ -46,27 +47,33 @@ const AutoGiftSection = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-md font-medium">Auto-Gifting Settings</h3>
-      
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <Label htmlFor="auto-gift">Enable Auto-Gifting</Label>
-          <p className="text-sm text-muted-foreground">
-            Automatically send a gift for this occasion
-          </p>
-        </div>
-        <Switch
-          id="auto-gift"
-          checked={autoGiftEnabled}
-          onCheckedChange={setAutoGiftEnabled}
-        />
+      <div className="flex items-center gap-2">
+        <Gift className="h-5 w-5 text-primary" />
+        <h3 className="text-md font-medium">Auto-Gifting Settings</h3>
       </div>
       
+      <Card className="p-4 border border-primary/20 bg-gradient-to-r from-purple-50/50 to-white dark:from-purple-900/10 dark:to-transparent">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="auto-gift" className="font-medium">Enable Auto-Gifting</Label>
+            <p className="text-sm text-muted-foreground">
+              Automatically send a gift for this occasion
+            </p>
+          </div>
+          <Switch
+            id="auto-gift"
+            checked={autoGiftEnabled}
+            onCheckedChange={setAutoGiftEnabled}
+            className="data-[state=checked]:bg-primary"
+          />
+        </div>
+      </Card>
+      
       {autoGiftEnabled && (
-        <>
+        <div className="space-y-4 animate-in fade-in-50 slide-in-from-top-5 duration-300 pl-2">
           <div className="space-y-2">
-            <Label htmlFor="gift-amount" className="flex items-center">
-              <DollarSign className="h-4 w-4 mr-2" />
+            <Label htmlFor="gift-amount" className="flex items-center text-sm font-medium">
+              <DollarSign className="h-4 w-4 mr-1 text-primary" />
               Gift Amount
             </Label>
             <div className="flex items-center space-x-2">
@@ -75,7 +82,7 @@ const AutoGiftSection = ({
                 size="icon" 
                 type="button" 
                 onClick={decrementAmount}
-                className="h-8 w-8"
+                className="h-8 w-8 border-primary/20 text-primary"
               >
                 <Minus className="h-3 w-3" />
               </Button>
@@ -86,7 +93,7 @@ const AutoGiftSection = ({
                   type="number"
                   value={autoGiftAmount}
                   onChange={handleAmountChange}
-                  className="pl-8 text-center"
+                  className="pl-8 text-center focus-visible:ring-primary/50 border-primary/20"
                   min={0}
                   max={500}
                 />
@@ -96,38 +103,39 @@ const AutoGiftSection = ({
                 size="icon" 
                 type="button" 
                 onClick={incrementAmount}
-                className="h-8 w-8"
+                className="h-8 w-8 border-primary/20 text-primary"
               >
                 <Plus className="h-3 w-3" />
               </Button>
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Minimum: $0</span>
-              <span>Maximum: $500</span>
+            <div className="flex justify-between text-xs text-muted-foreground mt-1 px-1">
+              <span>Min: $0</span>
+              <span>Max: $500</span>
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label>Gift Selection Source</Label>
+          <div className="space-y-2 pt-2">
+            <Label className="text-sm font-medium">Gift Selection Source</Label>
             <RadioGroup 
               value={giftSource} 
               onValueChange={(value: GiftSource) => setGiftSource(value)}
+              className="space-y-2 mt-1"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="wishlist" id="wishlist" />
-                <Label htmlFor="wishlist">From wishlist</Label>
+              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
+                <RadioGroupItem value="wishlist" id="wishlist" className="text-primary border-primary/50" />
+                <Label htmlFor="wishlist" className="cursor-pointer">From wishlist</Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="ai" id="ai" />
-                <Label htmlFor="ai">AI selected</Label>
+              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
+                <RadioGroupItem value="ai" id="ai" className="text-primary border-primary/50" />
+                <Label htmlFor="ai" className="cursor-pointer">AI selected</Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="both" id="both" />
-                <Label htmlFor="both">Wishlist + AI</Label>
+              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
+                <RadioGroupItem value="both" id="both" className="text-primary border-primary/50" />
+                <Label htmlFor="both" className="cursor-pointer">Wishlist + AI</Label>
               </div>
             </RadioGroup>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

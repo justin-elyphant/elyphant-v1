@@ -54,10 +54,10 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] overflow-y-auto">
-        <DrawerHeader className="text-left">
-          <DrawerTitle>Edit Gift Occasion</DrawerTitle>
-          <DrawerDescription>
+      <DrawerContent className="max-h-[90vh] overflow-y-auto max-w-md mx-auto rounded-t-xl">
+        <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl">
+          <DrawerTitle className="text-primary text-xl">Edit Gift Occasion</DrawerTitle>
+          <DrawerDescription className="text-muted-foreground">
             Update the details for {person}'s {type}
           </DrawerDescription>
         </DrawerHeader>
@@ -72,7 +72,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setDate={setDate}
           />
           
-          <Separator />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20" />
           
           <AutoGiftSection 
             autoGiftEnabled={autoGiftEnabled}
@@ -83,7 +83,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setGiftSource={setGiftSource}
           />
           
-          <Separator />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20" />
           
           <PrivacySection 
             privacyLevel={privacyLevel}
@@ -91,14 +91,21 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
           />
         </div>
         
-        <DrawerFooter className="pt-2">
-          <Button onClick={handleSave}>Save Changes</Button>
-          <DrawerClose asChild>
-            <Button variant="outline">
-              <X className="h-4 w-4 mr-2" />
-              Cancel
+        <DrawerFooter className="pt-2 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+          <div className="flex flex-row gap-2 w-full">
+            <Button 
+              onClick={handleSave} 
+              className="flex-1 bg-primary hover:bg-primary/90"
+            >
+              Save Changes
             </Button>
-          </DrawerClose>
+            <DrawerClose asChild>
+              <Button variant="outline" className="border-primary/20 hover:bg-primary/10">
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </DrawerClose>
+          </div>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

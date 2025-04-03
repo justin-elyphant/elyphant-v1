@@ -42,9 +42,15 @@ const GiftingHeader = () => {
   };
   
   const handleSearchItemSelect = (value: string) => {
+    if (!value.trim()) return;
+    
     setSearchTerm(value);
-    navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     setIsSearchOpen(false);
+    
+    // Brief timeout to ensure the UI updates before navigating
+    setTimeout(() => {
+      navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
+    }, 10);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -52,6 +58,14 @@ const GiftingHeader = () => {
       e.preventDefault();
       handleSearch(e as unknown as React.FormEvent);
     }
+  };
+  
+  const handlePopoverOpenChange = (open: boolean) => {
+    // Only allow opening the popover if we have a search term
+    if (open && searchTerm.trim().length === 0) {
+      return;
+    }
+    setIsSearchOpen(open);
   };
 
   return (
@@ -75,7 +89,7 @@ const GiftingHeader = () => {
           </div>
           
           <div className="hidden md:block w-full max-w-md mx-6">
-            <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+            <Popover open={isSearchOpen} onOpenChange={handlePopoverOpenChange}>
               <PopoverTrigger asChild>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

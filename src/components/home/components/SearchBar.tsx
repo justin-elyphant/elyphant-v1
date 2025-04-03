@@ -41,10 +41,16 @@ const SearchBar = () => {
   };
 
   const handleSearchItemSelect = (value: string) => {
+    if (!value.trim()) return;
+    
     setSearchTerm(value);
     console.log(`SearchBar: Selected search item "${value}"`);
-    navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     setIsSearchOpen(false);
+    
+    // Brief timeout to ensure the UI updates before navigating
+    setTimeout(() => {
+      navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
+    }, 10);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -54,9 +60,17 @@ const SearchBar = () => {
     }
   };
 
+  const handlePopoverOpenChange = (open: boolean) => {
+    // Only allow opening the popover if we have a search term
+    if (open && searchTerm.trim().length === 0) {
+      return;
+    }
+    setIsSearchOpen(open);
+  };
+
   return (
     <form onSubmit={handleSearch} className="w-full">
-      <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+      <Popover open={isSearchOpen} onOpenChange={handlePopoverOpenChange}>
         <PopoverTrigger asChild>
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />

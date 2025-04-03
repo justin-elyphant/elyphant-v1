@@ -106,6 +106,12 @@ const SearchResults = ({
   // Determine if we have any results to show
   const hasResults = zincResults.length > 0 || filteredProducts.length > 0;
 
+  const handleSelect = (value: string) => {
+    if (value) {
+      onItemSelect(value);
+    }
+  };
+
   const renderSearchPrompt = () => {
     if (loading) {
       return "Searching...";
@@ -116,13 +122,13 @@ const SearchResults = ({
     }
     
     return (
-      <CommandItem 
-        onSelect={() => onItemSelect(searchTerm)}
-        className="text-blue-600 hover:text-blue-800"
+      <div 
+        className="text-blue-600 hover:text-blue-800 px-3 py-2 cursor-pointer flex items-center"
+        onClick={() => handleSelect(searchTerm)}
       >
         <Search className="mr-2 h-4 w-4" />
         Search for "{searchTerm}" in marketplace
-      </CommandItem>
+      </div>
     );
   };
 
@@ -143,7 +149,8 @@ const SearchResults = ({
             {zincResults.map((product, index) => (
               <CommandItem 
                 key={`zinc-${index}`} 
-                onSelect={() => onItemSelect(product.title)}
+                onSelect={() => handleSelect(product.title)}
+                value={product.title}
               >
                 <Search className="mr-2 h-4 w-4" />
                 {product.title}
@@ -157,7 +164,8 @@ const SearchResults = ({
             {filteredProducts.map((product) => (
               <CommandItem 
                 key={`local-${product.id}`}
-                onSelect={() => onItemSelect(product.name)}
+                onSelect={() => handleSelect(product.name)}
+                value={product.name}
               >
                 <Search className="mr-2 h-4 w-4" />
                 {product.name}
@@ -169,26 +177,41 @@ const SearchResults = ({
         {searchTerm.trim().length > 2 && !loading && (
           <>
             <CommandGroup heading="Friends">
-              <CommandItem onSelect={() => onItemSelect("Alex's Wishlist")}>
+              <CommandItem 
+                onSelect={() => handleSelect("Alex's Wishlist")}
+                value="Alex's Wishlist"
+              >
                 <Search className="mr-2 h-4 w-4" />
                 Alex's Wishlist
               </CommandItem>
-              <CommandItem onSelect={() => onItemSelect("Sarah's Birthday")}>
+              <CommandItem 
+                onSelect={() => handleSelect("Sarah's Birthday")}
+                value="Sarah's Birthday"
+              >
                 <Search className="mr-2 h-4 w-4" />
                 Sarah's Birthday
               </CommandItem>
             </CommandGroup>
             
             <CommandGroup heading="Experiences">
-              <CommandItem onSelect={() => onItemSelect("Virtual Wine Tasting")}>
+              <CommandItem 
+                onSelect={() => handleSelect("Virtual Wine Tasting")}
+                value="Virtual Wine Tasting"
+              >
                 <Search className="mr-2 h-4 w-4" />
                 Virtual Wine Tasting
               </CommandItem>
-              <CommandItem onSelect={() => onItemSelect("Spa Day Package")}>
+              <CommandItem 
+                onSelect={() => handleSelect("Spa Day Package")}
+                value="Spa Day Package"
+              >
                 <Search className="mr-2 h-4 w-4" />
                 Spa Day Package
               </CommandItem>
-              <CommandItem onSelect={() => onItemSelect("Easter Egg Hunt")}>
+              <CommandItem 
+                onSelect={() => handleSelect("Easter Egg Hunt")}
+                value="Easter Egg Hunt"
+              >
                 <Search className="mr-2 h-4 w-4" />
                 Easter Egg Hunt
               </CommandItem>
@@ -197,13 +220,13 @@ const SearchResults = ({
         )}
         
         {!hasResults && searchTerm.trim().length > 2 && !loading && (
-          <CommandItem 
-            onSelect={() => onItemSelect(searchTerm)}
-            className="text-blue-600 hover:text-blue-800"
+          <div 
+            className="text-blue-600 hover:text-blue-800 px-3 py-2 cursor-pointer flex items-center"
+            onClick={() => handleSelect(searchTerm)}
           >
             <Search className="mr-2 h-4 w-4" />
             Search for "{searchTerm}" in marketplace
-          </CommandItem>
+          </div>
         )}
       </CommandList>
     </Command>

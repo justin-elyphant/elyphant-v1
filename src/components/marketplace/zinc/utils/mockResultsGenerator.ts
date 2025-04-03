@@ -1,6 +1,6 @@
 
 import { ZincProduct } from '../types';
-import { generateProductDescription } from './productDescriptionUtils';
+import { generateDescription } from './productDescriptionUtils';
 
 // Price ranges for different product categories
 const PRICE_RANGES: Record<string, { min: number; max: number }> = {
@@ -82,7 +82,7 @@ export const createMockResults = (
     const imageUrl = getProductImage(title, category);
     
     // Generate a detailed product description
-    const description = generateProductDescription(title, category, brand);
+    const description = generateDescription(title, category);
     
     results.push({
       product_id: productId,

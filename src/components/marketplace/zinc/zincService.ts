@@ -91,3 +91,4 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
     return null;
   }
 };
+

@@ -63,8 +63,8 @@ export const useZincSearch = (searchTerm: string) => {
                 brand: item.brand || "Unknown",
                 category: item.category || "Electronics",
                 retailer: "Amazon via Zinc",
-                rating: item.stars || 0,
-                review_count: item.num_reviews || 0
+                rating: item.rating || 0,
+                review_count: item.review_count || 0
               }));
               
               setZincResults(formattedResults.slice(0, 12));
@@ -101,3 +101,4 @@ export const useZincSearch = (searchTerm: string) => {
     hasResults
   };
 };
+

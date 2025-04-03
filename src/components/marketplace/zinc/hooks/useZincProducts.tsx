@@ -4,6 +4,7 @@ import { useZincSearch } from "./useZincSearch";
 import { useZincProductSync } from "./useZincProductSync";
 import { useProducts } from "@/contexts/ProductContext";
 import { ZincProduct } from "../types";
+import { Product } from "@/contexts/ProductContext";
 
 export const useZincProducts = () => {
   const { search, isLoading: isSearchLoading, error: searchError, searchTerm, setSearchTerm } = useZincSearch();
@@ -19,6 +20,17 @@ export const useZincProducts = () => {
   
   const { syncProducts, isLoading: isSyncLoading, error: syncError } = useZincProductSync(updateLastSync);
 
+  // Helper function to convert ZincProduct to Product
+  const convertZincProductToProduct = (zincProduct: ZincProduct, index: number): Product => ({
+    id: 1000 + index,
+    name: zincProduct.title,
+    price: zincProduct.price,
+    category: zincProduct.category || "Electronics",
+    image: zincProduct.image || "/placeholder.svg",
+    vendor: "Amazon via Zinc",
+    description: zincProduct.description || ""
+  });
+
   // Combined handleSearch that uses the search hook but also updates the product context
   const handleSearch = async (term: string) => {
     const results = await search(term);
@@ -30,15 +42,7 @@ export const useZincProducts = () => {
         const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
         
         // Convert ZincProduct to Product format
-        const amazonProducts = results.map((product, index) => ({
-          id: 1000 + index,
-          name: product.title,
-          price: product.price,
-          category: product.category || "Electronics",
-          image: product.image || "/placeholder.svg",
-          vendor: "Amazon via Zinc",
-          description: product.description || ""
-        }));
+        const amazonProducts = results.map(convertZincProductToProduct);
         
         // Add the new Amazon products
         return [...nonAmazonProducts, ...amazonProducts];

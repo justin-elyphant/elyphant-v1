@@ -1,216 +1,180 @@
 
-import { toast } from "sonner";
+// Zinc API integration service
+const ZINC_API_BASE_URL = 'https://api.zinc.io/v1';
+const ZINC_API_KEY = '5B394AAF6CD03728E9E33DDF'; // This is a demo key - in production, use environment variables
 
 export interface ZincProduct {
-  id: number;
-  name: string;
+  product_id: string;
+  title: string;
   price: number;
-  category: string;
   image: string;
-  vendor: string;
   description?: string;
-  asin?: string;
-  url?: string;
+  brand?: string;
+  category?: string;
+  retailer: string;
 }
 
 export interface ZincOrder {
   id: string;
-  retailer: "amazon";
-  products: {
-    product_id: string;
-    quantity: number;
-  }[];
-  shipping_address: {
-    first_name: string;
-    last_name: string;
-    address_line1: string;
-    address_line2?: string;
-    zip_code: string;
-    city: string;
-    state: string;
-    country: string;
-    phone_number: string;
-  };
-  is_gift?: boolean;
-  gift_message?: string;
-  webhooks?: {
-    request_succeeded?: string;
-    request_failed?: string;
-    tracking_obtained?: string;
-    order_placed?: string;
-    order_failed?: string;
-  };
-  client_notes?: string;
-  max_price?: number;
-  shipping_method?: "standard" | "expedited" | "priority";
-  payment_method: {
-    name_on_card: string;
-    number: string;
-    security_code: string;
-    expiration_month: number;
-    expiration_year: number;
-    use_gift: boolean;
-  };
+  status: string;
+  customerName: string;
+  items: { name: string; quantity: number; price: number }[];
+  total: number;
+  date: string;
 }
 
 export interface ZincReturn {
   id: string;
-  order_id: string;
+  orderId: string;
+  customerName: string;
+  item: { name: string; price: number };
   reason: string;
-  items: {
-    product_id: string;
-    quantity: number;
-  }[];
-  status: "pending" | "in_transit" | "completed" | "failed";
-  return_type: "refund" | "replacement";
-  notes?: string;
+  status: string;
+  requestDate: string;
+  completionDate: string | null;
+  refundAmount: number | null;
+  creditIssued: boolean;
 }
 
-// Mock implementation of the Zinc service
-// In a real implementation, this would make actual API calls to Zinc
-export const zincService = {
-  // Get Zinc API key from localStorage
-  getApiKey: (): string | null => {
-    try {
-      const connection = JSON.parse(localStorage.getItem("zincConnection") || "{}");
-      return connection.apiKey || null;
-    } catch (e) {
-      console.error("Error getting Zinc API key:", e);
+/**
+ * Fetch product details from Amazon via Zinc API
+ */
+export const fetchProductDetails = async (productId: string): Promise<ZincProduct | null> => {
+  try {
+    const url = `${ZINC_API_BASE_URL}/products/${productId}?retailer=amazon`;
+    const headers = new Headers({'Authorization': 'Basic ' + btoa(`${ZINC_API_KEY}:`)});
+    
+    const response = await fetch(url, { headers });
+    
+    if (!response.ok) {
+      console.error('Zinc API error:', response.status, await response.text());
       return null;
     }
-  },
-  
-  // Search for products on Amazon via Zinc
-  searchProducts: async (query: string): Promise<ZincProduct[]> => {
-    const apiKey = zincService.getApiKey();
-    if (!apiKey) {
-      toast.error("Zinc API key not found");
-      return [];
-    }
     
-    // This would be an actual API call to Zinc in a real implementation
-    // For now, we'll return mock data
-    console.log(`Searching for ${query} using Zinc API`);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    return [
-      {
-        id: 201,
-        name: `Amazon Search: ${query}`,
-        price: 129.99,
-        category: "Electronics",
-        image: "/placeholder.svg",
-        vendor: "Amazon via Zinc",
-        description: "Search result for " + query,
-        asin: "B0123456789"
-      }
-    ];
-  },
-  
-  // Place an order on Amazon via Zinc
-  placeOrder: async (order: ZincOrder): Promise<{ success: boolean; orderId?: string; error?: string }> => {
-    const apiKey = zincService.getApiKey();
-    if (!apiKey) {
-      return { success: false, error: "Zinc API key not found" };
-    }
-    
-    console.log("Placing order via Zinc API:", order);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Simulate successful order creation
+    const data = await response.json();
     return {
-      success: true,
-      orderId: "ord_" + Math.random().toString(36).substring(2, 8)
+      product_id: data.product_id,
+      title: data.title,
+      price: data.price,
+      image: data.images[0] || '/placeholder.svg',
+      description: data.description,
+      brand: data.brand,
+      category: data.category,
+      retailer: 'Amazon via Zinc'
     };
-  },
-  
-  // Get order details from Zinc
-  getOrder: async (orderId: string): Promise<any> => {
-    const apiKey = zincService.getApiKey();
-    if (!apiKey) {
-      return { success: false, error: "Zinc API key not found" };
-    }
-    
-    console.log(`Getting order details for ${orderId} via Zinc API`);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Return mock order details
-    return {
-      id: orderId,
-      status: "delivered",
-      tracking: {
-        carrier: "UPS",
-        number: "1Z999AA10123456784"
-      },
-      items: [
-        {
-          name: "Echo Dot (4th Gen)",
-          quantity: 1,
-          price: 49.99
-        }
-      ],
-      total: 49.99,
-      shipping_address: {
-        name: "Jane Smith",
-        address_line1: "123 Main St",
-        city: "San Francisco",
-        state: "CA",
-        zip_code: "94105"
-      }
-    };
-  },
-  
-  // Request a return via Zinc
-  requestReturn: async (returnData: ZincReturn): Promise<{ success: boolean; returnId?: string; error?: string }> => {
-    const apiKey = zincService.getApiKey();
-    if (!apiKey) {
-      return { success: false, error: "Zinc API key not found" };
-    }
-    
-    console.log("Requesting return via Zinc API:", returnData);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simulate successful return request
-    return {
-      success: true,
-      returnId: "ret_" + Math.random().toString(36).substring(2, 8)
-    };
-  },
-  
-  // Get return details from Zinc
-  getReturn: async (returnId: string): Promise<any> => {
-    const apiKey = zincService.getApiKey();
-    if (!apiKey) {
-      return { success: false, error: "Zinc API key not found" };
-    }
-    
-    console.log(`Getting return details for ${returnId} via Zinc API`);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Return mock return details
-    return {
-      id: returnId,
-      status: "completed",
-      refund_amount: 49.99,
-      items: [
-        {
-          name: "Echo Dot (4th Gen)",
-          quantity: 1,
-          price: 49.99
-        }
-      ]
-    };
+  } catch (error) {
+    console.error('Error fetching product from Zinc:', error);
+    return null;
   }
 };
 
-export default zincService;
+/**
+ * Search for products on Amazon via Zinc API
+ */
+export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
+  try {
+    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon`;
+    const headers = new Headers({'Authorization': 'Basic ' + btoa(`${ZINC_API_KEY}:`)});
+    
+    const response = await fetch(url, { headers });
+    
+    if (!response.ok) {
+      console.error('Zinc API error:', response.status, await response.text());
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    return data.results.map((item: any) => ({
+      product_id: item.product_id,
+      title: item.title,
+      price: item.price,
+      image: item.image || '/placeholder.svg',
+      description: item.description || '',
+      brand: item.brand || '',
+      category: item.category || 'Electronics',
+      retailer: 'Amazon via Zinc'
+    }));
+  } catch (error) {
+    console.error('Error searching products via Zinc:', error);
+    return [];
+  }
+};
+
+// Mock data for orders and returns until we implement the full API
+export const getMockOrders = (): ZincOrder[] => {
+  return [
+    {
+      id: "ord_123456",
+      customerName: "Jane Smith",
+      items: [
+        { name: "Echo Dot (4th Gen)", quantity: 1, price: 49.99 }
+      ],
+      total: 49.99,
+      status: "delivered",
+      date: "2025-03-28T14:30:00Z"
+    },
+    {
+      id: "ord_123457",
+      customerName: "John Doe",
+      items: [
+        { name: "Kindle Paperwhite", quantity: 1, price: 139.99 }
+      ],
+      total: 139.99,
+      status: "shipped",
+      date: "2025-04-01T10:15:00Z"
+    },
+    {
+      id: "ord_123458",
+      customerName: "Alex Johnson",
+      items: [
+        { name: "Fire TV Stick 4K", quantity: 1, price: 49.99 },
+        { name: "AirPods Pro", quantity: 1, price: 249.99 }
+      ],
+      total: 299.98,
+      status: "processing",
+      date: "2025-04-02T16:45:00Z"
+    }
+  ];
+};
+
+export const getMockReturns = (): ZincReturn[] => {
+  return [
+    {
+      id: "ret_789012",
+      orderId: "ord_123456",
+      customerName: "Jane Smith",
+      item: { name: "Echo Dot (4th Gen)", price: 49.99 },
+      reason: "Defective product",
+      status: "completed",
+      requestDate: "2025-03-30T11:30:00Z",
+      completionDate: "2025-04-02T14:45:00Z",
+      refundAmount: 49.99,
+      creditIssued: true
+    },
+    {
+      id: "ret_789013",
+      orderId: "ord_123457",
+      customerName: "John Doe",
+      item: { name: "Kindle Paperwhite", price: 139.99 },
+      reason: "Changed mind",
+      status: "in_transit",
+      requestDate: "2025-04-02T09:15:00Z",
+      completionDate: null,
+      refundAmount: null,
+      creditIssued: false
+    },
+    {
+      id: "ret_789014",
+      orderId: "ord_123458",
+      customerName: "Alex Johnson",
+      item: { name: "AirPods Pro", price: 249.99 },
+      reason: "Incorrect item",
+      status: "pending",
+      requestDate: "2025-04-03T10:30:00Z",
+      completionDate: null,
+      refundAmount: null,
+      creditIssued: false
+    }
+  ];
+};

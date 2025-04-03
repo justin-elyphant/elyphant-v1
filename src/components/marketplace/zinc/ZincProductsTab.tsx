@@ -1,30 +1,77 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useZincIntegration } from "./useZincIntegration";
 
 const ZincProductsTab = () => {
   const { products } = useProducts();
+  const { 
+    isLoading, 
+    searchTerm, 
+    setSearchTerm, 
+    handleSearch, 
+    syncProducts 
+  } = useZincIntegration();
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
+  
   const amazonProducts = products.filter(p => p.vendor === "Amazon via Zinc");
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(localSearchTerm);
+  };
   
   return (
     <div className="space-y-4 py-4">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search Amazon products..."
-          className="pl-8"
-        />
-      </div>
+      <form className="flex gap-2" onSubmit={handleSubmit}>
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search Amazon products..."
+            className="pl-8"
+            value={localSearchTerm}
+            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            disabled={isLoading}
+          />
+        </div>
+        <Button 
+          type="submit" 
+          variant="default" 
+          disabled={isLoading || !localSearchTerm.trim()}
+        >
+          {isLoading ? "Searching..." : "Search"}
+        </Button>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={() => syncProducts()} 
+          disabled={isLoading}
+        >
+          <RefreshCw className="h-4 w-4 mr-1" />
+          Sync
+        </Button>
+      </form>
       
-      {amazonProducts.length === 0 ? (
+      {searchTerm && (
+        <p className="text-sm text-muted-foreground">
+          Showing results for: "{searchTerm}"
+        </p>
+      )}
+      
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <p className="text-muted-foreground">Loading products...</p>
+        </div>
+      ) : amazonProducts.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-6">
             <p className="text-center text-muted-foreground">
-              No Amazon products found. Sync with Amazon to import products.
+              No Amazon products found. Search for products or sync with Amazon to import products.
             </p>
           </CardContent>
         </Card>

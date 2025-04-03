@@ -28,6 +28,13 @@ const ZincIntegration = () => {
     error
   } = useZincIntegration();
 
+  // Pre-fill with the provided API key for convenience
+  React.useEffect(() => {
+    if (!isConnected && apiKey === "") {
+      setApiKey("5B394AAF6CD03728E9E33DDF");
+    }
+  }, [isConnected, apiKey, setApiKey]);
+
   return (
     <div className="space-y-4">
       {!isConnected ? (

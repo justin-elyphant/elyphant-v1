@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,12 +59,21 @@ const popularBrands = [
 ];
 
 const PopularBrands = () => {
-  const { products, setProducts } = useProducts();
+  const { products, setProducts, isLoading } = useProducts();
+  
+  useEffect(() => {
+    console.log(`PopularBrands: ${products.length} products available, isLoading: ${isLoading}`);
+  }, [products, isLoading]);
   
   const handleBrandClick = (brandName: string) => {
-    console.log(`PopularBrands: Brand clicked: ${brandName}`);
-    // Pre-generate the brand products before navigation
-    handleBrandProducts(brandName, products, setProducts);
+    console.log(`PopularBrands: Brand clicked: ${brandName}, products available: ${products.length}`);
+    
+    if (products.length === 0) {
+      console.log("No products available when brand clicked, will try later via URL param");
+    } else {
+      // Pre-generate the brand products before navigation
+      handleBrandProducts(brandName, products, setProducts);
+    }
   };
 
   return (

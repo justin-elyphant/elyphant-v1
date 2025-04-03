@@ -24,7 +24,12 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const location = useLocation();
-  const { setProducts } = useProducts();
+  const { setProducts: setContextProducts } = useProducts();
+  
+  // Log initial state for debugging
+  useEffect(() => {
+    console.log(`MarketplaceContent mounted: ${products.length} products, isLoading: ${isLoading}`);
+  }, []);
   
   // Extract brand from URL on component mount or URL change
   useEffect(() => {
@@ -32,7 +37,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     const brandParam = params.get("brand");
     
     if (brandParam) {
-      console.log(`URL contains brand parameter: ${brandParam}`);
+      console.log(`URL contains brand parameter: ${brandParam}, products available: ${products.length}, isLoading: ${isLoading}`);
       
       // Update active filters with brand
       setActiveFilters(prev => ({
@@ -40,19 +45,30 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         brand: brandParam
       }));
       
-      // Generate brand products immediately
-      const brandProducts = handleBrandProducts(brandParam, products, setProducts);
-      
-      // If we have brand products, set them as filtered products
-      if (brandProducts && brandProducts.length > 0) {
-        console.log(`Setting ${brandProducts.length} brand products as filtered products`);
-        setFilteredProducts(sortProducts(brandProducts, sortOption));
+      // Only attempt to filter if we have products
+      if (products.length > 0) {
+        const brandProducts = handleBrandProducts(brandParam, products, setContextProducts);
+        
+        // If we have brand products, set them as filtered products
+        if (brandProducts && brandProducts.length > 0) {
+          console.log(`Setting ${brandProducts.length} brand products as filtered products`);
+          setFilteredProducts(sortProducts(brandProducts, sortOption));
+        }
+      } else {
+        console.log("Waiting for products to load before filtering by brand");
       }
     }
-  }, [location.search, products, setProducts, sortOption]);
+  }, [location.search, products, setContextProducts, sortOption]);
   
   // Update filtered products when products or filters change
   useEffect(() => {
+    console.log(`Updating filtered products: ${products.length} products available, ${Object.keys(activeFilters).length} active filters`);
+    
+    if (products.length === 0) {
+      console.log("No products available to filter");
+      return;
+    }
+    
     if (Object.keys(activeFilters).length === 0) {
       // No filters, show all products
       setFilteredProducts(sortProducts(products, sortOption));
@@ -96,7 +112,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       // If still no results after filtering, create temporary brand products
       if (result.length === 0) {
         console.log(`No filtered products found for brand ${activeFilters.brand}`);
-        const brandProducts = handleBrandProducts(activeFilters.brand, products, setProducts);
+        const brandProducts = handleBrandProducts(activeFilters.brand, products, setContextProducts);
         if (brandProducts.length > 0) {
           result = brandProducts;
         }
@@ -105,9 +121,10 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     
     // Apply sorting
     result = sortProducts(result, sortOption);
+    console.log(`Filter result: ${result.length} products after filtering`);
     
     setFilteredProducts(result);
-  }, [products, activeFilters, sortOption, setProducts]);
+  }, [products, activeFilters, sortOption, setContextProducts]);
   
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);

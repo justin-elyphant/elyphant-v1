@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProducts } from "@/contexts/ProductContext";
@@ -15,12 +15,21 @@ type BrandsProps = {
 };
 
 const FeaturedBrands = ({ brands }: BrandsProps) => {
-  const { products, setProducts } = useProducts();
+  const { products, setProducts, isLoading } = useProducts();
+  
+  useEffect(() => {
+    console.log(`FeaturedBrands: ${products.length} products available, isLoading: ${isLoading}`);
+  }, [products, isLoading]);
   
   const handleBrandClick = (brandName: string) => {
-    console.log(`Brand clicked: ${brandName}`);
-    // This will find or create products for the brand and add them to the context
-    handleBrandProducts(brandName, products, setProducts);
+    console.log(`Brand clicked: ${brandName}, products available: ${products.length}`);
+    
+    if (products.length === 0) {
+      console.log("No products available when brand clicked, will try later via URL param");
+    } else {
+      // This will find or create products for the brand and add them to the context
+      handleBrandProducts(brandName, products, setProducts);
+    }
   };
 
   return (

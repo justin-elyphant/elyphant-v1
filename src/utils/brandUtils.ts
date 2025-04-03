@@ -15,13 +15,14 @@ export const handleBrandProducts = (
     return [];
   }
 
-  if (allProducts.length === 0) {
-    console.log("No products available to filter");
+  // Important check: if products aren't loaded yet, return early
+  if (!allProducts || allProducts.length === 0) {
+    console.log("No products available to filter - waiting for products to load");
     toast.info("Loading products...");
     return [];
   }
   
-  console.log(`Looking for products for brand: ${brandName}`);
+  console.log(`Looking for products for brand: ${brandName} among ${allProducts.length} products`);
   
   // Case-insensitive brand name
   const brandNameLower = brandName.toLowerCase();

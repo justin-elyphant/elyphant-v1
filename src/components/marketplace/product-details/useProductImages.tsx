@@ -48,43 +48,56 @@ function getProcessedImages(product: Product): string[] {
     
     // If we have valid images after filtering, use them
     if (filteredImages.length > 0) {
-      // Ensure no duplicate images in the array
-      const uniqueImages = Array.from(new Set(filteredImages));
+      // For Amazon images, only use the original image from the array to avoid mixing products
+      const isAmazonImage = filteredImages[0]?.includes('amazon.com') || filteredImages[0]?.includes('m.media-amazon.com');
       
-      // If we have too few unique images, generate more variations
-      if (uniqueImages.length < 3 && product.image) {
-        const extraVariations = generateImageVariations(product.image, product.name)
-          .filter(img => !uniqueImages.includes(img));
-        uniqueImages.push(...extraVariations.slice(0, 4)); // Add up to 4 extras
-      }
-      
-      // Try to add a category-specific image if we still need more
-      if (uniqueImages.length < 3 && product.category) {
-        const specificImage = getExactProductImage(product.name, product.category);
-        if (specificImage && !uniqueImages.includes(specificImage)) {
-          uniqueImages.push(specificImage);
+      if (isAmazonImage) {
+        // For Amazon, just use the first image and maybe one category-specific image
+        const baseImage = filteredImages[0];
+        const result = [baseImage];
+        
+        // Try to add a category-specific image if applicable
+        if (product.category) {
+          const specificImage = getExactProductImage(product.name, product.category);
+          if (specificImage && !result.includes(specificImage)) {
+            result.push(specificImage);
+          }
         }
+        
+        console.log("Using Amazon product with minimal variations:", result);
+        return result;
       }
       
-      console.log("Using product.images array:", uniqueImages);
-      return uniqueImages;
+      // For non-Amazon images, use the array as-is
+      console.log("Using product.images array:", filteredImages);
+      return filteredImages;
     }
   } 
   
   // Case 2: Product only has a single image
   if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
-    // Generate variations with distinct parameters to ensure uniqueness
-    const imageVariations = generateImageVariations(product.image, product.name);
+    // For Amazon images, be very conservative with variations
+    const isAmazonImage = product.image.includes('amazon.com') || product.image.includes('m.media-amazon.com');
     
-    // Try to add a category-specific image if we have one
-    if (product.category) {
-      const specificImage = getExactProductImage(product.name, product.category);
-      if (specificImage && !imageVariations.includes(specificImage)) {
-        imageVariations.push(specificImage);
+    if (isAmazonImage) {
+      // For Amazon, just use the original image plus maybe one category image
+      const result = [product.image];
+      
+      // Try to add a category-specific image if we have one
+      if (product.category) {
+        const specificImage = getExactProductImage(product.name, product.category);
+        if (specificImage && !result.includes(specificImage)) {
+          result.push(specificImage);
+        }
       }
+      
+      console.log("Using single Amazon image with minimal variations:", result);
+      return result;
     }
     
-    console.log("Using single product.image with enhanced variations:", imageVariations);
+    // For non-Amazon images, generate variations more safely
+    const imageVariations = generateImageVariations(product.image, product.name);
+    console.log("Using single product.image with variations:", imageVariations);
     return imageVariations;
   }
   

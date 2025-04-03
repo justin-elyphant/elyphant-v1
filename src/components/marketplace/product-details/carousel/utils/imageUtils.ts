@@ -7,44 +7,15 @@
  * Deduplicates Amazon images by looking at product IDs in the URL
  */
 export const deduplicateAmazonImages = (imageUrls: string[]): string[] => {
-  const productIdMap = new Map<string, string>();
-  const urlWithParamsMap = new Map<string, string>();
-  const result: string[] = [];
-  
-  // First pass: Group by product ID and collect unique parameter combinations
-  imageUrls.forEach(url => {
-    // Extract the base URL and product ID
-    const baseUrl = url.split('?')[0];
-    const productId = extractAmazonProductId(baseUrl);
-    const hasParams = url.includes('?');
-    
-    if (productId) {
-      // If this is a new product ID, add it to our result
-      if (!productIdMap.has(productId)) {
-        productIdMap.set(productId, url);
-        result.push(url);
-      } else if (hasParams && !urlWithParamsMap.has(url)) {
-        // If this has unique params, also add it
-        urlWithParamsMap.set(url, url);
-        result.push(url);
-      }
-    } else {
-      // If we couldn't extract a product ID, keep the URL
-      result.push(url);
-    }
-  });
-  
-  // Ensure we have at least 2 images, add timestamp params if needed
-  if (result.length < 2 && imageUrls.length > 0) {
-    const timestamp = Date.now();
-    const baseUrl = imageUrls[0].split('?')[0];
-    
-    // Add a couple more with timestamp params
-    result.push(`${baseUrl}?t=${timestamp}&view=alt`);
-    result.push(`${baseUrl}?t=${timestamp+1}&view=back`);
+  // Since we're being more conservative, just return the first image if it's an Amazon URL
+  if (imageUrls.length > 0 && 
+      (imageUrls[0].includes('amazon.com') || imageUrls[0].includes('m.media-amazon.com'))) {
+    return [imageUrls[0]];
   }
   
-  return result;
+  // For non-Amazon URLs, deduplicate normally
+  const uniqueUrls = [...new Set(imageUrls)];
+  return uniqueUrls;
 };
 
 /**
@@ -70,23 +41,18 @@ export const processImages = (images: string[]): string[] => {
     !img.includes('unsplash.com') && img !== '/placeholder.svg'
   );
   
-  // More aggressive deduplication for Amazon images
-  if (filteredImages.length > 0 && filteredImages[0].includes('amazon.com')) {
-    // For Amazon images, we need special handling
-    const deduplicatedImages = deduplicateAmazonImages(filteredImages);
-    console.log(`ProcessedImages: ${deduplicatedImages.length} truly unique Amazon images from ${filteredImages.length} total`);
-    return deduplicatedImages;
-  } else {
-    // For other images, general deduplication
-    const imageSet = new Set(filteredImages);
-    const uniqueImageArray = Array.from(imageSet);
-    
-    // If we still have no images, add a placeholder
-    const finalImages = uniqueImageArray.length > 0 ? uniqueImageArray : images.length > 0 ? [images[0]] : ["/placeholder.svg"];
-    
-    console.log(`ProcessedImages: ${finalImages.length} truly unique from ${images.length} total`);
-    return finalImages;
+  // For Amazon images, just use the first image to avoid mixing products
+  if (filteredImages.length > 0 && 
+      (filteredImages[0].includes('amazon.com') || filteredImages[0].includes('m.media-amazon.com'))) {
+    return [filteredImages[0]];
   }
+  
+  // For other images, general deduplication
+  const imageSet = new Set(filteredImages);
+  const uniqueImageArray = Array.from(imageSet);
+  
+  // If we still have no images, add a placeholder
+  return uniqueImageArray.length > 0 ? uniqueImageArray : ["/placeholder.svg"];
 };
 
 /**
@@ -99,66 +65,16 @@ export const generateImageVariations = (baseImage: string, productName: string):
     return ["/placeholder.svg"];
   }
   
-  // Start with the original image
-  const variations = [baseImage];
-  
-  // Create Amazon-specific variations
+  // For Amazon images, be very conservative - just return the original image
   if (baseImage.includes('amazon.com') || baseImage.includes('m.media-amazon.com')) {
-    // Extract the base URL without any existing parameters
-    const baseUrl = baseImage.split('?')[0];
-    
-    // Extract product ID if it's an Amazon URL
-    const productId = extractAmazonProductId(baseUrl);
-    
-    if (productId) {
-      // Create truly different Amazon product IDs - these should show different angles
-      // Modify specific characters in the ID that typically change between view angles
-      const modifiedIds = [
-        // Original ID
-        productId,
-        // Change middle character to create side view
-        productId.substring(0, Math.floor(productId.length/2)) + 
-          (productId.charAt(Math.floor(productId.length/2)) === '1' ? '2' : '1') + 
-          productId.substring(Math.floor(productId.length/2) + 1),
-        // Modify last non-extension character for back view  
-        productId.substring(0, productId.length-1) + 
-          (productId.charAt(productId.length-1) === 'L' ? 'R' : 
-           productId.charAt(productId.length-1) === '1' ? '2' : '1')
-      ];
-      
-      // Create timestamp to ensure uniqueness
-      const timestamp = Date.now();
-      
-      // Add each variation with a different ID
-      modifiedIds.forEach((id, index) => {
-        if (id !== productId) {
-          const newUrl = baseUrl.replace(productId, id);
-          variations.push(`${newUrl}?t=${timestamp + index * 100}`);
-        }
-      });
-      
-      // Make sure we have enough variations
-      if (variations.length < 3) {
-        // Add Amazon-specific view parameters
-        variations.push(`${baseUrl}?view=back&t=${timestamp}`);
-        variations.push(`${baseUrl}?view=side&t=${timestamp + 50}`);
-      }
-    } else {
-      // If we couldn't extract a product ID, use view parameters
-      const timestamp = Date.now();
-      variations.push(`${baseUrl}?view=main&t=${timestamp}`);
-      variations.push(`${baseUrl}?view=back&t=${timestamp + 50}`);
-      variations.push(`${baseUrl}?view=side&t=${timestamp + 100}`);
-    }
-    
-    // Return unique variations, limited to reasonable number
-    return [...new Set(variations)].slice(0, 5);
+    return [baseImage];
   }
   
   // For non-Amazon images, create parameter variations
+  // But be more conservative
   const timestamp = Date.now();
-  variations.push(`${baseImage}${baseImage.includes('?') ? '&' : '?'}view=alt&t=${timestamp}`);
-  variations.push(`${baseImage}${baseImage.includes('?') ? '&' : '?'}view=main&t=${timestamp+1}`);
-  
-  return [...new Set(variations)].slice(0, 3);
+  return [
+    baseImage,
+    `${baseImage}${baseImage.includes('?') ? '&' : '?'}t=${timestamp}`,
+  ];
 };

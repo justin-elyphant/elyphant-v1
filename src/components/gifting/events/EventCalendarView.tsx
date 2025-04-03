@@ -8,12 +8,12 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import { Calendar as CalendarIcon, Gift, Bell, DollarSign } from "lucide-react";
+import { Calendar as CalendarIcon, Gift, Bell, DollarSign, ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExtendedEventData, FilterOption } from "./types";
 import EventPrivacyBadge from "./EventPrivacyBadge";
 import EventTypeFilter from "./EventTypeFilter";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 
 interface EventCalendarViewProps {
   events: ExtendedEventData[];
@@ -37,6 +37,29 @@ const EventCalendarView = ({
   // Get unique event types for the filter
   const eventTypes = Array.from(new Set(events.map(event => event.type)));
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  
+  // Navigate to today's date
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  // Navigate to previous month
+  const goToPreviousMonth = () => {
+    if (selectedDate) {
+      const newDate = new Date(selectedDate);
+      newDate.setMonth(newDate.getMonth() - 1);
+      setSelectedDate(newDate);
+    }
+  };
+
+  // Navigate to next month
+  const goToNextMonth = () => {
+    if (selectedDate) {
+      const newDate = new Date(selectedDate);
+      newDate.setMonth(newDate.getMonth() + 1);
+      setSelectedDate(newDate);
+    }
+  };
   
   // Filter events based on selected type
   const filteredEvents = selectedEventType === "all" 
@@ -254,11 +277,41 @@ const EventCalendarView = ({
           Click on highlighted dates to see event details
         </p>
         
-        <EventTypeFilter 
-          eventTypes={eventTypes} 
-          selectedType={selectedEventType}
-          onTypeChange={onEventTypeChange}
-        />
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <EventTypeFilter 
+            eventTypes={eventTypes} 
+            selectedType={selectedEventType}
+            onTypeChange={onEventTypeChange}
+          />
+          
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={goToPreviousMonth}
+              title="Previous month"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={goToToday}
+              className={isToday(selectedDate as Date) ? "bg-blue-100 border-blue-300" : ""}
+              title="Go to today"
+            >
+              Today
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={goToNextMonth}
+              title="Next month"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -268,10 +321,12 @@ const EventCalendarView = ({
             selected={selectedDate}
             onSelect={setSelectedDate}
             modifiers={{
-              hasEvent: (date) => getEventsForDay(date).length > 0
+              hasEvent: (date) => getEventsForDay(date).length > 0,
+              today: (date) => isToday(date)
             }}
             modifiersClassNames={{
-              hasEvent: "font-bold text-primary bg-blue-50"
+              hasEvent: "font-bold text-primary bg-blue-50",
+              today: "ring-2 ring-blue-400"
             }}
             components={{
               DayContent: (props) => (

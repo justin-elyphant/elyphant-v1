@@ -45,8 +45,8 @@ export const handleBrandProducts = async (
           image: product.image || "/placeholder.svg",
           vendor: "Amazon via Zinc",
           description: product.description || `${brandName} product with exceptional quality.`,
-          rating: product.rating || 4.5,
-          reviewCount: product.review_count || 100,
+          rating: product.rating || product.stars || 4.5,
+          reviewCount: product.review_count || product.num_reviews || 100,
           images: product.images || [product.image || "/placeholder.svg"],
           isBestSeller: product.isBestSeller || index < Math.ceil(zincResults.length * 0.1) // Top 10% are bestsellers
         }));

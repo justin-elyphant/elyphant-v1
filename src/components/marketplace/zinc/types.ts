@@ -1,3 +1,4 @@
+
 // Zinc API product type
 export type ZincProduct = {
   product_id: string;
@@ -11,6 +12,10 @@ export type ZincProduct = {
   retailer: string;
   rating?: number;
   review_count?: number;
+  // Add properties that are in the API response but not in our type
+  stars?: number;
+  num_reviews?: number;
+  num_sales?: number;
   features?: string[];
   specifications?: Record<string, string>;
   isBestSeller?: boolean;

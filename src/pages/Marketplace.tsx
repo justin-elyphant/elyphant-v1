@@ -6,6 +6,7 @@ import MarketplaceContent from "@/components/marketplace/MarketplaceContent";
 import { ProductProvider, useProducts } from "@/contexts/ProductContext";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { handleBrandProducts } from "@/utils/brandUtils";
+import { toast } from "sonner";
 
 const Marketplace = () => {
   return (
@@ -22,6 +23,7 @@ const MarketplaceWrapper = () => {
   const { products, setProducts } = useProducts();
   const [searchParams] = useSearchParams();
   const [isBrandLoading, setIsBrandLoading] = useState(false);
+  const [attemptedBrands, setAttemptedBrands] = useState<string[]>([]);
   
   useEffect(() => {
     console.log(`MarketplaceWrapper: Search params: ${location.search}, Products loaded: ${products.length}`);
@@ -30,7 +32,7 @@ const MarketplaceWrapper = () => {
   // Handle brand parameter
   useEffect(() => {
     const brandParam = searchParams.get("brand");
-    if (brandParam && products.length > 0) {
+    if (brandParam && !attemptedBrands.includes(brandParam) && products.length > 0) {
       console.log(`MarketplaceWrapper: Processing brand parameter: ${brandParam}`);
       
       // Check if we already have products for this brand
@@ -45,6 +47,9 @@ const MarketplaceWrapper = () => {
         // Start loading
         setIsBrandLoading(true);
         
+        // Mark this brand as attempted
+        setAttemptedBrands(prev => [...prev, brandParam]);
+        
         // Fetch products for this brand
         handleBrandProducts(brandParam, products, setProducts)
           .then(() => {
@@ -54,12 +59,13 @@ const MarketplaceWrapper = () => {
           .catch(error => {
             console.error(`Error in brand products fetch: ${error}`);
             setIsBrandLoading(false);
+            toast.error(`Couldn't load ${brandParam} products`, { id: "loading-brand-products" });
           });
       } else {
         console.log(`Found ${brandProducts.length} existing products for brand ${brandParam}`);
       }
     }
-  }, [searchParams, products, setProducts, isBrandLoading]);
+  }, [searchParams, products, setProducts, isBrandLoading, attemptedBrands]);
 
   return (
     <div className="container mx-auto py-8 px-4">

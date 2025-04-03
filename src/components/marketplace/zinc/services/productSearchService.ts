@@ -16,7 +16,7 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
   }
   
   try {
-    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon`;
+    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon&limit=100`;
     const headers = getZincHeaders();
     
     console.log('Calling Zinc API:', url);
@@ -32,7 +32,7 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
     console.log('Zinc API response:', data);
     
     if (data.results && Array.isArray(data.results)) {
-      return data.results.map((item: any) => {
+      return data.results.map((item: any, index: number) => {
         // Create a base image URL - ensure it's not undefined
         const mainImage = item.image_url || item.image || '/placeholder.svg';
         
@@ -57,6 +57,9 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
           console.log(`Product "${item.title}" images:`, images);
         }
         
+        // Determine if product is a best seller (top 10% of results)
+        const isBestSeller = index < Math.ceil(data.results.length * 0.1);
+        
         return {
           product_id: item.product_id || item.asin,
           title: item.title,
@@ -70,7 +73,8 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
           rating: item.stars || item.rating || 0,
           review_count: item.num_reviews || item.review_count || 0,
           features: item.features || item.bullet_points || [],
-          specifications: item.specifications || {}
+          specifications: item.specifications || {},
+          isBestSeller: isBestSeller
         };
       });
     }

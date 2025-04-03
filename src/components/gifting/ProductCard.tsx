@@ -106,6 +106,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <ShoppingCart className="h-4 w-4" />
           </Button>
         </div>
+        
+        {product.isBestSeller && (
+          <Badge 
+            variant="default" 
+            className="absolute top-2 left-2 bg-yellow-500 text-white"
+          >
+            Best Seller
+          </Badge>
+        )}
       </div>
       <CardContent className="p-3">
         <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>

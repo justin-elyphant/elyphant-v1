@@ -7,6 +7,7 @@ import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import ProductImage from "./ProductImage";
 import ProductDetails from "./ProductDetails";
 import WishlistButton from "./WishlistButton";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductItemProps {
   product: Product;
@@ -41,6 +42,14 @@ const ProductItem = ({
     >
       <div className={`${viewMode === 'list' ? 'w-1/3' : 'w-full'} relative`}>
         <ProductImage product={product} />
+        {product.isBestSeller && (
+          <Badge 
+            variant="default" 
+            className="absolute top-2 left-2 bg-yellow-500 text-white"
+          >
+            Best Seller
+          </Badge>
+        )}
         <WishlistButton 
           userData={userData} 
           productId={product.id} 

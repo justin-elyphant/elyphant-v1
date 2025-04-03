@@ -46,7 +46,7 @@ const SearchGroup: React.FC<SearchGroupProps> = ({ heading, items, onSelect }) =
             {item.name}
             {item.isTopSeller && (
               <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 text-xs">
-                Top Seller
+                Best Seller
               </Badge>
             )}
           </div>

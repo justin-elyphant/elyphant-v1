@@ -54,7 +54,7 @@ export const useZincSearch = (searchTerm: string) => {
             // Handle the Zinc API response format
             if (results && Array.isArray(results)) {
               // Map the Zinc API response to match our expected format
-              const formattedResults = results.map(item => ({
+              const formattedResults = results.map((item, index) => ({
                 product_id: item.product_id,
                 title: item.title,
                 price: typeof item.price === 'number' ? item.price / 100 : parseFloat(item.price),
@@ -64,7 +64,8 @@ export const useZincSearch = (searchTerm: string) => {
                 category: item.category || "Electronics",
                 retailer: "Amazon via Zinc",
                 rating: item.rating || 0,
-                review_count: item.review_count || 0
+                review_count: item.review_count || 0,
+                isBestSeller: item.isBestSeller || (index < Math.ceil(results.length * 0.1)) // Top 10% are best sellers
               }));
               
               setZincResults(formattedResults.slice(0, 12));
@@ -101,4 +102,3 @@ export const useZincSearch = (searchTerm: string) => {
     hasResults
   };
 };
-

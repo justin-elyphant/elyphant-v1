@@ -108,13 +108,9 @@ const AutoGiftSection = ({
                 <Plus className="h-3 w-3" />
               </Button>
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-1 px-1">
-              <span>Min: $0</span>
-              <span>Max: $500</span>
-            </div>
           </div>
           
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2">
             <Label className="text-sm font-medium">Gift Selection Source</Label>
             <RadioGroup 
               value={giftSource} 

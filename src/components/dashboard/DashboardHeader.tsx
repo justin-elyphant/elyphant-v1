@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DashboardHeaderProps {
   userData: any;
@@ -14,16 +13,6 @@ const DashboardHeader = ({ userData }: DashboardHeaderProps) => {
         <h1 className="text-2xl font-bold">Welcome, {userData.name}</h1>
         <p className="text-muted-foreground">What would you like to do today?</p>
       </div>
-      
-      <Avatar className="h-12 w-12">
-        {userData?.profileImage ? (
-          <AvatarImage src={userData.profileImage} alt={userData.name} />
-        ) : (
-          <AvatarFallback className="bg-purple-100 text-purple-600 text-xl">
-            {userData.name.substring(0, 2).toUpperCase()}
-          </AvatarFallback>
-        )}
-      </Avatar>
     </div>
   );
 };

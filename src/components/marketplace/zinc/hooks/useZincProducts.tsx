@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
 import { searchProducts, ZincProduct } from "../zincService";
 import { useZincConnection } from "./useZincConnection";
@@ -78,12 +79,20 @@ export const useZincProducts = () => {
       // Update last sync time
       updateLastSync();
       
-      toast.success(`Successfully synced ${amazonProducts.length} products from Amazon`);
+      toast({
+        title: "Products synced",
+        description: `Successfully synced ${amazonProducts.length} products from Amazon`,
+      });
+      
       return amazonProducts;
     } catch (err) {
       console.error("Error syncing products:", err);
       setError("Failed to sync products from Amazon. Please try again later.");
-      toast.error("Failed to sync products");
+      toast({
+        title: "Sync failed",
+        description: "Failed to sync products from Amazon",
+        variant: "destructive",
+      });
       return [];
     } finally {
       setIsLoading(false);
@@ -105,11 +114,19 @@ export const useZincProducts = () => {
       // Update products in context
       updateProductsInContext(amazonProducts);
       
-      toast.success(`Found ${amazonProducts.length} products matching "${term}"`);
+      toast({
+        title: "Search Results",
+        description: `Found ${amazonProducts.length} products matching "${term}"`,
+      });
+      
       return amazonProducts;
     } catch (err) {
       console.error("Error searching products:", err);
-      toast.error("Failed to search products");
+      toast({
+        title: "Search failed",
+        description: "Failed to search products",
+        variant: "destructive",
+      });
       return [];
     } finally {
       setIsLoading(false);

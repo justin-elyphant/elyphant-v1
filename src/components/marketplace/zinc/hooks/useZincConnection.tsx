@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
 import { fetchProductDetails } from "../zincService";
 
@@ -51,13 +51,20 @@ export const useZincConnection = () => {
       
       setIsConnected(true);
       setLastSync(Date.now());
-      toast.success("Successfully connected to Zinc API");
+      toast({
+        title: "Connection successful",
+        description: "Successfully connected to Zinc API"
+      });
       
       return true;
     } catch (err) {
       console.error("Error connecting to Zinc:", err);
       setError("Failed to connect to Zinc API. Please check your API key and try again.");
-      toast.error("Failed to connect to Zinc API");
+      toast({
+        title: "Connection failed",
+        description: "Failed to connect to Zinc API. Please check your API key.",
+        variant: "destructive"
+      });
       return false;
     } finally {
       setIsLoading(false);
@@ -68,7 +75,10 @@ export const useZincConnection = () => {
     localStorage.removeItem("zincConnection");
     setIsConnected(false);
     setApiKey("");
-    toast.info("Disconnected from Zinc API");
+    toast({
+      title: "Disconnected",
+      description: "Disconnected from Zinc API"
+    });
     
     // Remove Amazon products from context
     setProducts(prevProducts => prevProducts.filter(p => p.vendor !== "Amazon via Zinc"));

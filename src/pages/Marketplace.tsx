@@ -7,7 +7,7 @@ import MarketplaceFilters from "@/components/marketplace/MarketplaceFilters";
 import FiltersSidebar from "@/components/marketplace/FiltersSidebar";
 import ProductGrid from "@/components/marketplace/ProductGrid";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 const Marketplace = () => {
   const location = useLocation();
@@ -60,7 +60,10 @@ const Marketplace = () => {
             );
             
             setFilteredProducts([...amazonProducts, ...storeProducts]);
-            toast.success(`Found ${amazonProducts.length} Amazon products matching "${searchParam}"`);
+            toast({
+              title: "Search Results",
+              description: `Found ${amazonProducts.length} Amazon products matching "${searchParam}"`
+            });
           } else {
             // If no Amazon products, just filter store products
             const storeProducts = products.filter(product => 
@@ -69,11 +72,18 @@ const Marketplace = () => {
             );
             
             setFilteredProducts(storeProducts);
-            toast.info(`No Amazon products found for "${searchParam}"`);
+            toast({
+              title: "No Amazon Products",
+              description: `No Amazon products found for "${searchParam}"`
+            });
           }
         } catch (error) {
           console.error("Error searching for products:", error);
-          toast.error("Error searching for Amazon products");
+          toast({
+            title: "Search Error",
+            description: "Error searching for Amazon products",
+            variant: "destructive"
+          });
           
           // Fall back to local product search
           const filteredStoreProducts = products.filter(product => 

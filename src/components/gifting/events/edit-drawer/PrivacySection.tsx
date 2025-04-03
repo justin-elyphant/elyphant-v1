@@ -15,7 +15,7 @@ const PrivacySection = ({
   setPrivacyLevel,
 }: PrivacySectionProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       <div>
         <h3 className="text-md font-medium flex items-center">
           <Shield className="h-4 w-4 mr-2" />
@@ -29,16 +29,17 @@ const PrivacySection = ({
       <RadioGroup 
         value={privacyLevel}
         onValueChange={(value: PrivacyLevel) => setPrivacyLevel(value)}
+        className="space-y-1"
       >
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
           <RadioGroupItem value="private" id="private" />
           <Label htmlFor="private">Private (Only visible to you)</Label>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
           <RadioGroupItem value="shared" id="shared" />
           <Label htmlFor="shared">Shared (Visible to connected users)</Label>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors">
           <RadioGroupItem value="public" id="public" />
           <Label htmlFor="public">Public (Visible to everyone)</Label>
         </div>

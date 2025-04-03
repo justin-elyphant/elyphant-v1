@@ -24,7 +24,7 @@ const AutoGiftSection = ({
   setGiftSource,
 }: AutoGiftSectionProps) => {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       <div className="flex items-center gap-2">
         <Gift className="h-5 w-5 text-primary" />
         <h3 className="text-md font-medium">Auto-Gifting Settings</h3>
@@ -36,7 +36,7 @@ const AutoGiftSection = ({
       />
       
       {autoGiftEnabled && (
-        <div className="space-y-3 animate-in fade-in-50 slide-in-from-top-5 duration-300">
+        <div className="space-y-2.5 animate-in fade-in-50 slide-in-from-top-5 duration-300">
           <GiftAmountInput 
             amount={autoGiftAmount} 
             setAmount={setAutoGiftAmount} 

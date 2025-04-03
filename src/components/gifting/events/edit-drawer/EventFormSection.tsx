@@ -45,8 +45,8 @@ const EventFormSection = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="space-y-3">
+      <div className="space-y-1.5">
         <Label htmlFor="occasion-type">
           <Tag className="h-4 w-4 mr-2 inline-block" />
           Occasion Type
@@ -59,7 +59,7 @@ const EventFormSection = ({
         />
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="person">
           <User className="h-4 w-4 mr-2 inline-block" />
           Person
@@ -72,7 +72,7 @@ const EventFormSection = ({
         />
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="date" className="flex items-center">
           <CalendarIcon className="h-4 w-4 mr-2" />
           Date

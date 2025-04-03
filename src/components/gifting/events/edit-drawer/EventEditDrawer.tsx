@@ -59,15 +59,15 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] overflow-y-auto max-w-md mx-auto rounded-t-xl">
-        <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl pb-2">
+      <DrawerContent className="max-h-[95vh] overflow-y-auto max-w-md mx-auto rounded-t-xl">
+        <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl pb-2 pt-4">
           <DrawerTitle className="text-primary text-xl">Edit Gift Occasion</DrawerTitle>
           <DrawerDescription className="text-muted-foreground">
             Update the details for {person}'s {type}
           </DrawerDescription>
         </DrawerHeader>
         
-        <div className="px-4 py-2 space-y-4">
+        <div className="px-4 pt-0 pb-0 space-y-3">
           <EventFormSection 
             type={type}
             person={person}
@@ -96,7 +96,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
           />
         </div>
         
-        <DrawerFooter className="pt-2 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+        <DrawerFooter className="pt-3 pb-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
           <div className="flex items-center justify-between w-full gap-3">
             <Button 
               onClick={handleSave} 

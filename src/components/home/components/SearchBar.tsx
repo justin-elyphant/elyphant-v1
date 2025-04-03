@@ -47,6 +47,7 @@ const SearchBar = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent default form submission behavior
       handleSearch(e as unknown as React.FormEvent);
     }
   };

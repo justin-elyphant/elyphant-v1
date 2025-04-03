@@ -8,19 +8,23 @@ export const useZincSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<ZincProduct[]>([]);
 
   const search = async (term: string): Promise<ZincProduct[]> => {
     if (!term.trim()) return [];
     
     setIsLoading(true);
     setSearchTerm(term);
+    setError(null);
     console.log(`useZincSearch: Searching for "${term}"`);
     
     try {
-      const results = await searchProducts(term);
-      console.log(`useZincSearch: Found ${results.length} results for "${term}"`);
+      const searchResults = await searchProducts(term);
+      console.log(`useZincSearch: Found ${searchResults.length} results for "${term}"`);
       
-      if (results.length === 0) {
+      setResults(searchResults);
+      
+      if (searchResults.length === 0) {
         toast({
           title: "No results found",
           description: `No products found for "${term}"`,
@@ -28,7 +32,7 @@ export const useZincSearch = () => {
         });
       }
       
-      return results;
+      return searchResults;
     } catch (err) {
       console.error("Error searching products:", err);
       setError("Failed to search products");
@@ -48,6 +52,7 @@ export const useZincSearch = () => {
     searchTerm,
     setSearchTerm,
     isLoading,
-    error
+    error,
+    results
   };
 };

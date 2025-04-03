@@ -13,6 +13,14 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
   
   console.log(`SearchUtils: Searching for "${normalizedQuery}"`);
   
+  // Direct matching for "nike shoes" - prioritize this common search
+  if (normalizedQuery === "nike shoes" || 
+      normalizedQuery === "nike shoe" || 
+      (normalizedQuery.includes("nike") && normalizedQuery.includes("shoe"))) {
+    console.log(`SearchUtils: Found special match for Nike Shoes`);
+    return specificProducts["nike shoes"] || [];
+  }
+  
   // Check for exact matches in our specific products first
   for (const key in specificProducts) {
     if (key === normalizedQuery) {
@@ -54,7 +62,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
   );
   
   // Check for brand-specific searches (like "Nike")
-  if (results.length === 0 && (normalizedQuery.includes('nike') || normalizedQuery === 'nike')) {
+  if (results.length === 0 && normalizedQuery.includes('nike')) {
     console.log(`SearchUtils: Using fallback for Nike-related search`);
     return specificProducts['nike shoes'] || [];
   }

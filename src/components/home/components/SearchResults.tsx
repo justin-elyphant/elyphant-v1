@@ -29,6 +29,15 @@ const SearchResults = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchRequestIdRef = useRef<number>(0);
   const previousSearchTermRef = useRef<string>("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Handle keyboard navigation and Enter key
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      e.preventDefault();
+      onItemSelect(searchTerm);
+    }
+  };
 
   // Search Zinc API when searchTerm changes with improved debouncing
   useEffect(() => {
@@ -70,7 +79,7 @@ const SearchResults = ({
           setLoading(false);
         }
       }
-    }, 600); // 600ms debounce - slightly longer to prevent frequent calls
+    }, 300); // 300ms debounce - slightly faster to improve responsiveness
     
     // Cleanup timeout on unmount or when searchTerm changes
     return () => {
@@ -94,11 +103,12 @@ const SearchResults = ({
   const hasResults = zincResults.length > 0 || filteredProducts.length > 0;
 
   return (
-    <Command>
+    <Command onKeyDown={handleKeyDown}>
       <CommandInput 
+        ref={inputRef}
         placeholder="Search products, friends, or experiences..." 
         value={searchTerm}
-        onValueChange={onSearchTermChange} 
+        onValueChange={onSearchTermChange}
       />
       <CommandList>
         <CommandEmpty>

@@ -45,6 +45,13 @@ const GiftingHeader = () => {
     setIsSearchOpen(false);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch(e as unknown as React.FormEvent);
+    }
+  };
+
   return (
     <header className="bg-white border-b sticky top-0 z-10">
       <div className="container mx-auto px-4 py-3">
@@ -77,11 +84,7 @@ const GiftingHeader = () => {
                     value={searchTerm}
                     onChange={(e) => handleSearchTermChange(e.target.value)}
                     onClick={() => setIsSearchOpen(true)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch(e);
-                      }
-                    }}
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </PopoverTrigger>

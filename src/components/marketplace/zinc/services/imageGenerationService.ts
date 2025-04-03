@@ -1,6 +1,5 @@
 
 import { ZincProduct } from '../types';
-import { processImages } from '../../product-details/carousel/utils/imageUtils';
 
 /**
  * Generate product detail images for a zinc product
@@ -36,7 +35,7 @@ export function generateProductImages(mainImage: string, productTitle: string): 
 /**
  * Create image variations from a single base image
  */
-export function createImageVariations(baseImage: string, productName: string): string[] {
+function createImageVariations(baseImage: string, productName: string): string[] {
   // Return placeholder if no base image
   if (!baseImage) {
     return ["/placeholder.svg"];
@@ -46,7 +45,8 @@ export function createImageVariations(baseImage: string, productName: string): s
   const variations = [baseImage];
   
   // Create Amazon-specific variations if applicable
-  if (baseImage.includes('amazon.com') || baseImage.includes('m.media-amazon.com')) {
+  if (baseImage && typeof baseImage === 'string' && 
+     (baseImage.includes('amazon.com') || baseImage.includes('m.media-amazon.com'))) {
     // Extract the base URL without any existing parameters
     let baseUrl = baseImage.split('?')[0];
     

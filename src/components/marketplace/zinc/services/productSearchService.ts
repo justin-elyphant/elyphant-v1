@@ -37,7 +37,7 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
         const mainImage = item.image_url || item.image || '/placeholder.svg';
         
         // Generate appropriate images for the product
-        const images = generateProductImages(item, mainImage);
+        const images = generateProductImages(mainImage, item.title || '');
         
         // Add a category-specific image if we have few images
         try {

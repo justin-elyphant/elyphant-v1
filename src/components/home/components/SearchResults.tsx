@@ -1,16 +1,10 @@
 
-import React, { useState, useEffect, useRef } from "react";
-import { Search } from "lucide-react";
-import { 
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { searchProducts } from "@/components/marketplace/zinc/productService";
-import { useProducts } from "@/contexts/ProductContext";
+import React from "react";
+import { Command, CommandInput, CommandList, CommandEmpty } from "@/components/ui/command";
+import { useZincSearch } from "@/hooks/useZincSearch";
+import SearchPrompt from "./search/SearchPrompt";
+import SearchGroup from "./search/SearchGroup";
+import SearchFooter from "./search/SearchFooter";
 
 interface SearchResultsProps {
   searchTerm: string;
@@ -23,12 +17,7 @@ const SearchResults = ({
   onSearchTermChange, 
   onItemSelect 
 }: SearchResultsProps) => {
-  const [loading, setLoading] = useState(false);
-  const [zincResults, setZincResults] = useState<any[]>([]);
-  const { products } = useProducts();
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const searchRequestIdRef = useRef<number>(0);
-  const previousSearchTermRef = useRef<string>("");
+  const { loading, zincResults, filteredProducts, hasResults } = useZincSearch(searchTerm);
 
   // Handle keyboard navigation and Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -38,98 +27,22 @@ const SearchResults = ({
     }
   };
 
-  // Search Zinc API when searchTerm changes with improved debouncing
-  useEffect(() => {
-    // Don't trigger search if term is too short or hasn't changed
-    if (searchTerm.trim().length <= 2 || searchTerm === previousSearchTermRef.current) {
-      return;
-    }
-    
-    // Update previous search term
-    previousSearchTermRef.current = searchTerm;
-    
-    setLoading(true);
-    
-    // Clear any pending timeouts
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    // Create a unique ID for this search request
-    const currentRequestId = ++searchRequestIdRef.current;
-    
-    // Set a timeout to avoid excessive API calls
-    searchTimeoutRef.current = setTimeout(async () => {
-      try {
-        console.log("Searching for products with term:", searchTerm);
-        // Only proceed if this is still the most recent request
-        if (currentRequestId === searchRequestIdRef.current) {
-          const results = await searchProducts(searchTerm);
-          console.log("Search results:", results);
-          // Only update state if this is still the most recent request
-          if (currentRequestId === searchRequestIdRef.current) {
-            if (results?.length > 0) {
-              setZincResults(results.slice(0, 5)); // Limit to 5 results
-            } else {
-              setZincResults([]);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error searching Zinc API:", error);
-        setZincResults([]);
-      } finally {
-        if (currentRequestId === searchRequestIdRef.current) {
-          setLoading(false);
-        }
-      }
-    }, 300); // 300ms debounce - slightly faster to improve responsiveness
-    
-    // Cleanup timeout on unmount or when searchTerm changes
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchTerm]);
+  // Static mock data for friends and experiences
+  const friendsData = [
+    { id: "friend-1", name: "Alex's Wishlist" },
+    { id: "friend-2", name: "Sarah's Birthday" }
+  ];
 
-  // Get local store products that match searchTerm
-  const filteredProducts = searchTerm.trim().length <= 2 ? [] : 
-    products
-      .filter(p => 
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-      .slice(0, 5); // Limit to 5 results
-
-  // Determine if we have any results to show
-  const hasResults = zincResults.length > 0 || filteredProducts.length > 0;
+  const experiencesData = [
+    { id: "exp-1", name: "Virtual Wine Tasting" },
+    { id: "exp-2", name: "Spa Day Package" },
+    { id: "exp-3", name: "Easter Egg Hunt" }
+  ];
 
   const handleSelect = (value: string) => {
     if (value) {
       onItemSelect(value);
     }
-  };
-
-  const renderSearchPrompt = () => {
-    if (loading) {
-      return "Searching...";
-    }
-    
-    if (searchTerm.trim().length <= 2) {
-      return "Enter at least 3 characters to search";
-    }
-    
-    return (
-      <div 
-        className="text-blue-600 hover:text-blue-800 px-3 py-2 cursor-pointer flex items-center"
-        onClick={() => handleSelect(searchTerm)}
-      >
-        <Search className="mr-2 h-4 w-4" />
-        Search for "{searchTerm}" in marketplace
-      </div>
-    );
   };
 
   return (
@@ -141,93 +54,53 @@ const SearchResults = ({
       />
       <CommandList>
         <CommandEmpty>
-          {renderSearchPrompt()}
+          <SearchPrompt 
+            loading={loading} 
+            searchTerm={searchTerm} 
+            onSelect={handleSelect} 
+          />
         </CommandEmpty>
         
-        {zincResults.length > 0 && (
-          <CommandGroup heading="Amazon Products">
-            {zincResults.map((product, index) => (
-              <CommandItem 
-                key={`zinc-${index}`} 
-                onSelect={() => handleSelect(product.title)}
-                value={product.title}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                {product.title}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
+        <SearchGroup 
+          heading="Amazon Products" 
+          items={zincResults.map((product) => ({ 
+            id: `zinc-${product.id || Math.random().toString()}`,
+            title: product.title,
+          }))} 
+          onSelect={handleSelect} 
+        />
         
-        {filteredProducts.length > 0 && (
-          <CommandGroup heading="Store Products">
-            {filteredProducts.map((product) => (
-              <CommandItem 
-                key={`local-${product.id}`}
-                onSelect={() => handleSelect(product.name)}
-                value={product.name}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                {product.name}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
+        <SearchGroup 
+          heading="Store Products" 
+          items={filteredProducts.map((product) => ({ 
+            id: `local-${product.id}`,
+            name: product.name,
+          }))} 
+          onSelect={handleSelect} 
+        />
         
         {searchTerm.trim().length > 2 && !loading && (
           <>
-            <CommandGroup heading="Friends">
-              <CommandItem 
-                onSelect={() => handleSelect("Alex's Wishlist")}
-                value="Alex's Wishlist"
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Alex's Wishlist
-              </CommandItem>
-              <CommandItem 
-                onSelect={() => handleSelect("Sarah's Birthday")}
-                value="Sarah's Birthday"
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Sarah's Birthday
-              </CommandItem>
-            </CommandGroup>
+            <SearchGroup 
+              heading="Friends" 
+              items={friendsData} 
+              onSelect={handleSelect} 
+            />
             
-            <CommandGroup heading="Experiences">
-              <CommandItem 
-                onSelect={() => handleSelect("Virtual Wine Tasting")}
-                value="Virtual Wine Tasting"
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Virtual Wine Tasting
-              </CommandItem>
-              <CommandItem 
-                onSelect={() => handleSelect("Spa Day Package")}
-                value="Spa Day Package"
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Spa Day Package
-              </CommandItem>
-              <CommandItem 
-                onSelect={() => handleSelect("Easter Egg Hunt")}
-                value="Easter Egg Hunt"
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Easter Egg Hunt
-              </CommandItem>
-            </CommandGroup>
+            <SearchGroup 
+              heading="Experiences" 
+              items={experiencesData} 
+              onSelect={handleSelect} 
+            />
           </>
         )}
         
-        {!hasResults && searchTerm.trim().length > 2 && !loading && (
-          <div 
-            className="text-blue-600 hover:text-blue-800 px-3 py-2 cursor-pointer flex items-center"
-            onClick={() => handleSelect(searchTerm)}
-          >
-            <Search className="mr-2 h-4 w-4" />
-            Search for "{searchTerm}" in marketplace
-          </div>
-        )}
+        <SearchFooter 
+          searchTerm={searchTerm}
+          hasResults={hasResults}
+          isLoading={loading}
+          onSelect={handleSelect}
+        />
       </CommandList>
     </Command>
   );

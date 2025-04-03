@@ -10,7 +10,7 @@ const Hero = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-6 md:mb-0">
-            <h2 className="text-3xl font-bold mb-3">The Future of Gifting is Automated</h2>
+            <h2 className="text-3xl font-bold mb-3">Automate Gifting, Strengthen Connections</h2>
             <p className="text-base text-gray-700 mb-4">
               Create wishlists, automate gift-giving, and never miss 
               an important celebration again. Our platform handles everything from selection to delivery.

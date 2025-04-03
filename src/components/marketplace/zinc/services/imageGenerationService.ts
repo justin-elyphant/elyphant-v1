@@ -1,4 +1,38 @@
 
+import { ZincProduct } from '../types';
+import { createImageVariations, extractAmazonProductId } from '../../product-details/carousel/utils/imageUtils';
+
+/**
+ * Generate product detail images for a zinc product
+ */
+export function generateProductDetailImages(data: any, mainImage: string): string[] {
+  // Start with any existing images
+  const existingImages = Array.isArray(data.images) ? data.images : [];
+  
+  // Generate variations from the main image
+  const variations = createImageVariations(mainImage, data.title || "Product");
+  
+  // Combine and deduplicate
+  const allImages = [...existingImages, ...variations];
+  
+  // Return unique set
+  return [...new Set(allImages)];
+}
+
+/**
+ * Generate product images for search results
+ */
+export function generateProductImages(mainImage: string, productTitle: string): string[] {
+  if (!mainImage || mainImage === "/placeholder.svg") {
+    return ["/placeholder.svg"];
+  }
+  
+  // Generate variations of the main image
+  const variations = createImageVariations(mainImage, productTitle);
+  
+  return variations;
+}
+
 /**
  * Create image variations from a single base image
  */
@@ -83,24 +117,6 @@ export function createImageVariations(baseImage: string, productName: string): s
     `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=zoom&view=detail&t=${timestamp + 1}`,
     `${baseImage}${baseImage.includes('?') ? '&' : '?'}variant=other&view=front&t=${timestamp + 2}`,
   ].filter(Boolean); // Remove any falsy values
-}
-
-/**
- * Extract Amazon product ID from image URL
- * Example: https://m.media-amazon.com/images/I/51RwqTDfIvL._AC_UL320_.jpg
- * Returns: 51RwqTDfIvL
- */
-function extractAmazonProductId(url: string): string | null {
-  // Amazon image URLs follow this pattern: 
-  // https://m.media-amazon.com/images/I/[PRODUCT_ID]._[VARIANT]_.jpg
-  const regex = /\/images\/I\/([A-Za-z0-9]+)(\._.*)?/;
-  const match = url.match(regex);
-  
-  if (match && match[1]) {
-    return match[1];
-  }
-  
-  return null;
 }
 
 /**

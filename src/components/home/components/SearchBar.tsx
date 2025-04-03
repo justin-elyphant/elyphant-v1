@@ -89,13 +89,15 @@ const SearchBar = () => {
   const handleInputClick = () => {
     if (searchTerm.trim().length > 0) {
       setIsSearchOpen(true);
-      
-      // Make sure the cursor is at the end of the text and no text is selected
+    }
+    
+    // Fix: Make sure to position cursor correctly and prevent auto-selection
+    setTimeout(() => {
       if (inputRef.current) {
         const length = inputRef.current.value.length;
         inputRef.current.setSelectionRange(length, length);
       }
-    }
+    }, 0);
   };
 
   const handleClearButtonClick = () => {
@@ -107,6 +109,20 @@ const SearchBar = () => {
       inputRef.current.focus();
     }
   };
+
+  // Fix: Set the input to focused initially to avoid auto-selection issues
+  useEffect(() => {
+    // Use a slight delay to ensure the component is fully rendered
+    const timer = setTimeout(() => {
+      if (inputRef.current && document.activeElement === inputRef.current) {
+        // If the input is already focused, position cursor at the end
+        const length = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(length, length);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <form onSubmit={handleSearch} className="w-full">
@@ -122,6 +138,14 @@ const SearchBar = () => {
               onChange={handleSearchTermChange}
               onClick={handleInputClick}
               onKeyDown={handleKeyDown}
+              // Fix: Prevent auto-selection by setting autoComplete
+              autoComplete="off"
+              // Fix: Use "text" type explicitly to help prevent auto-selection issues
+              type="text"
+              // Fix: Prevent autocorrect/suggestion features that could interfere
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
             />
             {searchTerm.length > 0 && (
               <button

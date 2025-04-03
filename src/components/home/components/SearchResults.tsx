@@ -57,7 +57,14 @@ const SearchResults = ({
         placeholder="Search products, friends, or experiences..." 
         value={searchTerm}
         onValueChange={handleInputValueChange}
+        // Fix: Prevent auto-focusing the input which causes unwanted selection
         autoFocus={false}
+        className="cursor-text"
+        // Fix: Additional props to prevent browser auto-behavior
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck="false"
       />
       <CommandList>
         <CommandEmpty>

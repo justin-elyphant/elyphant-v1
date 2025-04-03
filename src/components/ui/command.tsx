@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -38,19 +39,62 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
 const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
->(({ className, ...props }, ref) => (
-  <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
-    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-    <CommandPrimitive.Input
-      ref={ref}
-      className={cn(
-        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-      {...props}
-    />
-  </div>
-))
+>(({ className, ...props }, ref) => {
+  // Create a ref to use with the input element
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  
+  // Combine refs
+  const combinedRef = React.useCallback(
+    (node: HTMLInputElement | null) => {
+      // Update our internal ref
+      inputRef.current = node;
+      
+      // Forward the ref
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref) {
+        ref.current = node;
+      }
+    },
+    [ref]
+  );
+  
+  // Apply effect to prevent auto-selection
+  React.useEffect(() => {
+    if (inputRef.current && props.value && typeof props.value === 'string') {
+      const inputElement = inputRef.current;
+      // Set cursor to end of input text when input receives focus
+      const handleFocus = () => {
+        setTimeout(() => {
+          if (inputElement) {
+            const len = inputElement.value.length;
+            inputElement.setSelectionRange(len, len);
+          }
+        }, 0);
+      };
+      
+      inputElement.addEventListener('focus', handleFocus);
+      
+      return () => {
+        inputElement.removeEventListener('focus', handleFocus);
+      };
+    }
+  }, [props.value]);
+
+  return (
+    <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
+      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+      <CommandPrimitive.Input
+        ref={combinedRef}
+        className={cn(
+          "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        {...props}
+      />
+    </div>
+  );
+});
 
 CommandInput.displayName = CommandPrimitive.Input.displayName
 

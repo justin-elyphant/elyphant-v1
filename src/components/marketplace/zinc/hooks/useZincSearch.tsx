@@ -30,6 +30,14 @@ export const useZincSearch = () => {
       const searchResults = await searchProducts(term);
       console.log(`useZincSearch: Found ${searchResults.length} results for "${term}"`);
       
+      // Log sample of image arrays for debugging
+      if (searchResults.length > 0) {
+        console.log("Sample product images:", {
+          mainImage: searchResults[0].image,
+          imagesArray: searchResults[0].images
+        });
+      }
+      
       setResults(searchResults);
       
       // Only show toast for empty results and only once per search session

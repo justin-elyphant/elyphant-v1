@@ -1,53 +1,77 @@
 
 import { useState } from "react";
-import { useProducts } from "@/contexts/ProductContext";
 import { useZincProductSync } from "./useZincProductSync";
-import { convertZincProductToProduct } from "../utils/productConverter";
+import { ZincProduct } from "../types";
+import { toast } from "@/hooks/use-toast";
 
+/**
+ * Hook for syncing products from Zinc API with UI feedback
+ */
 export const useZincSync = () => {
-  const { setProducts } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
   
-  // For the useZincProductSync hook, we'll provide an updateLastSync function
   const updateLastSync = () => {
-    // In a real implementation, this would update the last sync time in the context or localStorage
-    const connection = JSON.parse(localStorage.getItem("zincConnection") || "{}");
-    connection.lastSync = Date.now();
-    localStorage.setItem("zincConnection", JSON.stringify(connection));
+    setLastSync(new Date());
   };
   
-  // Use the sync hook
-  const { syncProducts: syncZincProducts, error: syncError } = useZincProductSync(updateLastSync);
-
-  // Wrapper for syncProducts that handles the type conversion
+  // Use the product sync hook
+  const { syncProducts: syncProductsBase } = useZincProductSync(updateLastSync);
+  
+  // Add UI feedback and loading state
   const syncProducts = async () => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      const results = await syncZincProducts();
+      console.log("Starting product sync from Zinc API");
       
-      if (results.length > 0) {
-        setProducts(prevProducts => {
-          // Filter out any existing Amazon products
-          const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
-          
-          // Convert ZincProduct to Product format
-          const amazonProducts = results.map(convertZincProductToProduct);
-          
-          // Add the new Amazon products
-          return [...nonAmazonProducts, ...amazonProducts];
+      toast({
+        title: "Syncing products",
+        description: "Fetching latest products from Amazon..."
+      });
+      
+      const products = await syncProductsBase();
+      
+      if (products.length > 0) {
+        console.log(`Synced ${products.length} products successfully`);
+        toast({
+          title: "Sync completed",
+          description: `Successfully synced ${products.length} products from Amazon`,
+          variant: "default"
         });
+        return products;
+      } else {
+        console.log("Sync returned zero products");
+        toast({
+          title: "Sync completed",
+          description: "No new products found to sync",
+          variant: "default"
+        });
+        return [];
       }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to sync products";
+      console.error("Sync error:", errorMessage);
+      setError(errorMessage);
       
-      return results;
+      toast({
+        title: "Sync failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      return [];
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return {
     syncProducts,
     isLoading,
-    error: syncError
+    error,
+    lastSync
   };
 };

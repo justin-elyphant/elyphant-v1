@@ -50,7 +50,9 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
             ...product,
             vendor: "Shopify",
             description: product.description || generateDescription(product.name, product.category || "Electronics"),
-            images: product.images || [product.image]
+            images: product.images || [product.image],
+            features: product.features || [],
+            specifications: product.specifications || {}
           }));
           
           setProducts(shopifyProductsWithVendor);
@@ -68,11 +70,13 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       if (savedProducts && savedProducts.length > 0) {
         console.log(`ProductContext: Loaded ${savedProducts.length} products from localStorage`);
         
-        // Enrich saved products with descriptions if missing
+        // Enrich saved products with descriptions and images if missing
         const enrichedProducts = savedProducts.map(product => ({
           ...product,
           description: product.description || generateDescription(product.name, product.category || "Electronics"),
-          images: product.images || [product.image]
+          images: product.images || [product.image],
+          features: product.features || [],
+          specifications: product.specifications || {}
         }));
         
         setProducts(enrichedProducts);
@@ -86,11 +90,13 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       if (mockProducts && mockProducts.length > 0) {
         console.log(`ProductContext: Loaded ${mockProducts.length} mock products`);
         
-        // Enrich mock products with descriptions if missing
+        // Enrich mock products with descriptions and images if missing
         const enrichedMockProducts = mockProducts.map(product => ({
           ...product,
           description: product.description || generateDescription(product.name, product.category || "Electronics"),
-          images: product.images || [product.image]
+          images: product.images || [product.image],
+          features: product.features || [],
+          specifications: product.specifications || {}
         }));
         
         setProducts(enrichedMockProducts);

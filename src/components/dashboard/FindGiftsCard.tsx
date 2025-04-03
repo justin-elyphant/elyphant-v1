@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Gift, Search, Sparkles, ChevronDown } from "lucide-react";
+import { Gift, Search, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,12 +25,6 @@ const FindGiftsCard = () => {
     }
   };
 
-  const popularCategories = [
-    { name: "Birthday", path: "/marketplace?category=birthday" },
-    { name: "Anniversary", path: "/marketplace?category=anniversary" },
-    { name: "Wedding", path: "/marketplace?category=wedding" },
-  ];
-
   const handleCategorySelect = (categoryUrl: string) => {
     navigate(`/marketplace?category=${categoryUrl}`);
     setIsCategoriesOpen(false);
@@ -48,24 +42,16 @@ const FindGiftsCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input 
-                placeholder="Search for gifts..." 
-                className="pl-10 w-full bg-purple-50 focus:bg-white transition-colors"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </form>
-            <p className="text-sm text-muted-foreground">
-              Browse our marketplace for curated gift ideas for any occasion.
-            </p>
-            <div className="flex flex-wrap gap-2">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Browse our marketplace for curated gift ideas for any occasion.
+          </p>
+
+          <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:space-x-3">
+            <div>
               <DropdownMenu open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-1">
+                  <Button variant="outline" className="flex items-center gap-1 whitespace-nowrap">
                     Categories <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -84,45 +70,38 @@ const FindGiftsCard = () => {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              
-              {popularCategories.map((category) => (
+            </div>
+
+            <div className="flex-1">
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input 
+                  placeholder="Search for gifts..." 
+                  className="pl-10 w-full bg-purple-50 focus:bg-white transition-colors"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </form>
+            </div>
+            
+            <div className="flex space-x-2">
+              {["Birthday", "Anniversary", "Wedding"].map((category) => (
                 <Button 
-                  key={category.name}
+                  key={category}
                   size="sm" 
                   variant="outline" 
-                  className="text-xs" 
-                  onClick={() => navigate(category.path)}
+                  className="text-xs whitespace-nowrap" 
+                  onClick={() => navigate(`/marketplace?category=${category.toLowerCase()}`)}
                 >
-                  {category.name}
+                  {category}
                 </Button>
               ))}
             </div>
-            <Button className="w-full" asChild>
-              <Link to="/marketplace">Explore Marketplace</Link>
-            </Button>
           </div>
           
-          <div className="space-y-4 hidden md:block">
-            <div className="bg-purple-50 p-4 rounded-md">
-              <h3 className="font-medium text-sm flex items-center mb-2">
-                <Sparkles className="h-4 w-4 mr-1 text-purple-600" />
-                Featured Gifts
-              </h3>
-              <div className="grid grid-cols-1 gap-2">
-                {["Birthday", "Anniversary", "Wedding", "Graduation", "Holiday", "Thank You"].map((category) => (
-                  <Button 
-                    key={category}
-                    size="sm" 
-                    variant="ghost" 
-                    className="justify-start text-sm h-8" 
-                    onClick={() => navigate(`/marketplace?category=${category.toLowerCase()}`)}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
+          <Button className="w-full" asChild>
+            <Link to="/marketplace">Explore Marketplace</Link>
+          </Button>
         </div>
       </CardContent>
     </Card>

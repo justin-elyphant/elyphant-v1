@@ -1,7 +1,8 @@
 
 import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
-import { searchProducts } from "@/components/marketplace/zinc/zincService";
+import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
+import { ZincProduct } from "@/components/marketplace/zinc/types";
 
 /**
  * Handles finding or loading products for a specific brand from the Zinc API
@@ -32,22 +33,22 @@ export const handleBrandProducts = async (
       
       // Convert Zinc products to our product format
       const brandProducts = zincResults
-        .filter(product => 
+        .filter((product: ZincProduct) => 
           product.title.toLowerCase().includes(brandName.toLowerCase()) || 
           (product.brand && product.brand.toLowerCase() === brandName.toLowerCase())
         )
-        .map((product, index) => ({
+        .map((product: ZincProduct, index: number) => ({
           id: Date.now() + index, // Ensure unique ID
           name: product.title,
-          price: typeof product.price === 'number' ? product.price / 100 : parseFloat(product.price) || 0,
+          price: product.price,
           category: product.category || "Clothing",
           image: product.image || "/placeholder.svg",
           vendor: "Amazon via Zinc",
           description: product.description || `${brandName} product with exceptional quality.`,
-          rating: product.stars || 4.5,
-          reviewCount: product.num_reviews || 100,
-          images: [product.image || "/placeholder.svg"],
-          isBestSeller: index < Math.ceil(zincResults.length * 0.1) // Top 10% are bestsellers
+          rating: product.rating || 4.5,
+          reviewCount: product.review_count || 100,
+          images: product.images || [product.image || "/placeholder.svg"],
+          isBestSeller: product.isBestSeller || index < Math.ceil(zincResults.length * 0.1) // Top 10% are bestsellers
         }));
       
       if (brandProducts.length > 0) {

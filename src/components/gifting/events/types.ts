@@ -17,3 +17,5 @@ export interface ExtendedEventData extends EventData {
   needsVerification?: boolean;
   giftSource?: "wishlist" | "ai" | "both";
 }
+
+export type FilterOption = "all" | string;

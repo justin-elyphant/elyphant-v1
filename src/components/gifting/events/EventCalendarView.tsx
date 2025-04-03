@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/tooltip";
 import { Calendar as CalendarIcon, Gift, Bell, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ExtendedEventData } from "./types";
+import { ExtendedEventData, FilterOption } from "./types";
 import EventPrivacyBadge from "./EventPrivacyBadge";
+import EventTypeFilter from "./EventTypeFilter";
 
 interface EventCalendarViewProps {
   events: ExtendedEventData[];
@@ -19,6 +20,8 @@ interface EventCalendarViewProps {
   onSendGift?: (id: number) => void;
   onToggleAutoGift?: (id: number) => void;
   onVerifyEvent?: (id: number) => void;
+  selectedEventType: FilterOption;
+  onEventTypeChange: (type: FilterOption) => void;
 }
 
 const EventCalendarView = ({ 
@@ -26,10 +29,20 @@ const EventCalendarView = ({
   onEventClick, 
   onSendGift,
   onToggleAutoGift,
-  onVerifyEvent
+  onVerifyEvent,
+  selectedEventType,
+  onEventTypeChange
 }: EventCalendarViewProps) => {
+  // Get unique event types for the filter
+  const eventTypes = Array.from(new Set(events.map(event => event.type)));
+  
+  // Filter events based on selected type
+  const filteredEvents = selectedEventType === "all" 
+    ? events 
+    : events.filter(event => event.type === selectedEventType);
+
   // Convert string dates to Date objects for the calendar
-  const eventDates = events.map(event => ({
+  const eventDates = filteredEvents.map(event => ({
     ...event,
     dateObj: parseDateString(event.date)
   }));
@@ -208,9 +221,15 @@ const EventCalendarView = ({
     <div className="bg-white p-6 rounded-lg shadow-sm">
       <div className="mb-4">
         <h3 className="text-lg font-medium">Events Calendar</h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-4">
           Click on highlighted dates to see event details
         </p>
+        
+        <EventTypeFilter 
+          eventTypes={eventTypes} 
+          selectedType={selectedEventType}
+          onTypeChange={onEventTypeChange}
+        />
       </div>
       
       <Calendar 

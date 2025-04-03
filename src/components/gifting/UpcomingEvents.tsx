@@ -6,7 +6,7 @@ import EventEditDrawer from "./events/edit-drawer/EventEditDrawer";
 import EventCalendarView from "./events/EventCalendarView";
 import EventCardsView from "./events/EventCardsView";
 import EventViewToggle from "./events/EventViewToggle";
-import { ExtendedEventData } from "./events/types";
+import { ExtendedEventData, FilterOption } from "./events/types";
 
 // Mock data for upcoming events
 const upcomingEvents: ExtendedEventData[] = [
@@ -70,6 +70,7 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
+  const [selectedEventType, setSelectedEventType] = useState<FilterOption>("all");
   
   const handleAddEvent = () => {
     if (onAddEvent) {
@@ -155,6 +156,11 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
     setCurrentEvent(event);
     setIsEditDrawerOpen(true);
   };
+  
+  const handleEventTypeChange = (type: FilterOption) => {
+    setSelectedEventType(type);
+    console.log(`Filtered to event type: ${type}`);
+  };
 
   return (
     <div>
@@ -182,7 +188,9 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
           onEventClick={handleEventClick}
           onSendGift={handleSendGift}
           onToggleAutoGift={handleToggleAutoGift}
-          onVerifyEvent={handleVerifyEvent} 
+          onVerifyEvent={handleVerifyEvent}
+          selectedEventType={selectedEventType}
+          onEventTypeChange={handleEventTypeChange}
         />
       )}
 

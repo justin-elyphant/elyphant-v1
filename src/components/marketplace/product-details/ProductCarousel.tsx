@@ -27,12 +27,30 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
       !img.includes('unsplash.com') && img !== '/placeholder.svg'
     );
     
-    // Use a Set to ensure uniqueness
-    const uniqueImageSet = new Set(filteredImages.length > 0 ? filteredImages : images);
-    const uniqueImageArray = Array.from(uniqueImageSet);
+    // Ensure uniqueness by creating a fingerprint for each image URL
+    const imageMap = new Map<string, string>();
     
-    console.log(`ProcessedImages: ${uniqueImageArray.length} unique from ${images.length} total`);
-    setUniqueImages(uniqueImageArray);
+    filteredImages.forEach(img => {
+      // Create a fingerprint by removing common URL parameters that don't change content
+      const base = img.split('?')[0];
+      const fingerprint = img.includes('amazon') 
+        ? `${base}-${img.includes('angle=') ? img.match(/angle=([^&]*)/)?.[1] : ''}-${img.includes('view=') ? img.match(/view=([^&]*)/)?.[1] : ''}`
+        : img;
+        
+      // Only add this image if we don't already have it (or its base variant)
+      if (!imageMap.has(base) && !imageMap.has(fingerprint)) {
+        imageMap.set(fingerprint, img);
+      }
+    });
+    
+    // Convert map back to an array of unique images
+    const uniqueImageArray = Array.from(imageMap.values());
+    
+    // If we still have no images, add a placeholder
+    const finalImages = uniqueImageArray.length > 0 ? uniqueImageArray : images.length > 0 ? [images[0]] : ["/placeholder.svg"];
+    
+    console.log(`ProcessedImages: ${finalImages.length} truly unique from ${images.length} total`);
+    setUniqueImages(finalImages);
   }, [images]);
   
   // Filter out any images that failed to load
@@ -97,7 +115,7 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
       >
         <CarouselContent>
           {uniqueImages.map((img, idx) => (
-            <CarouselItem key={`image-${idx}-${img.slice(-12)}`}>
+            <CarouselItem key={`image-${idx}-${img.slice(-20)}`}>
               <div className="aspect-square relative">
                 <img 
                   src={img} 

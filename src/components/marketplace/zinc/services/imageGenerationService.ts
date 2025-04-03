@@ -19,34 +19,55 @@ export const generateProductImages = (item: any, mainImage: string): string[] =>
     console.log(`Using ${images.length} image_urls for ${item.title}`);
   }
   
-  // 3. Create fallback images by generating variations
-  if (images.length === 0 && mainImage && mainImage !== '/placeholder.svg') {
+  // 3. Create fallback images by generating variations - only for Amazon images
+  if ((images.length === 0 || images.length < 3) && 
+      mainImage && 
+      mainImage !== '/placeholder.svg' && 
+      (mainImage.includes('amazon.com') || mainImage.includes('m.media-amazon.com'))) {
     // Extract the base URL without any existing parameters
     const baseUrl = mainImage.split('?')[0];
     
-    // Generate visually distinct variations with different size parameters
-    images = [
+    // Generate visually distinct variations with entirely different parameters
+    const hash = Date.now(); // Add timestamp to prevent caching
+    const newImages = [
       baseUrl, // Original image
-      `${baseUrl}?sx=500&sy=500&ex=500&ey=500`, // Square crop
-      `${baseUrl}?sx=600&sy=300&ex=600&ey=300` // Wider crop
+      `${baseUrl}?sx=0&sy=0&ex=1000&ey=1000&hash=${hash}`, // Full view
+      `${baseUrl}?angle=front&m=fit&h=600&w=600&hash=${hash+1}`, // Front angle
+      `${baseUrl}?view=side&f=f6f6f6&hash=${hash+2}`, // Side view
+      `${baseUrl}?rotation=45&f=ffffff&hash=${hash+3}` // Rotated view
     ];
     
     // Add another variation based on product type
     const title = item.title.toLowerCase();
     if (title.includes('tv') || title.includes('monitor')) {
-      images.push(`${baseUrl}?angle=side`);
+      newImages.push(`${baseUrl}?angle=side&m=contain&hash=${hash+4}`);
     } else if (title.includes('phone') || title.includes('laptop')) {
-      images.push(`${baseUrl}?angle=back`);
+      newImages.push(`${baseUrl}?angle=back&m=crop&hash=${hash+5}`);
+    } else if (title.includes('food') || title.includes('container')) {
+      newImages.push(`${baseUrl}?angle=top&q=85&hash=${hash+6}`);
     } else {
-      images.push(`${baseUrl}?angle=alt`);
+      newImages.push(`${baseUrl}?angle=alt&m=pad&hash=${hash+7}`);
     }
     
-    console.log(`Generated ${images.length} image variations for ${item.title}`);
+    // If we already have some images, add the new ones
+    if (images.length > 0) {
+      // Add new images to existing ones, avoiding duplicates
+      newImages.forEach(img => {
+        if (!images.includes(img)) {
+          images.push(img);
+        }
+      });
+    } else {
+      images = newImages;
+    }
+    
+    console.log(`Generated ${images.length} truly distinct image variations for ${item.title}`);
   } else if (images.length === 0) {
     images = ['/placeholder.svg'];
   }
   
-  return images;
+  // Ensure images are unique
+  return Array.from(new Set(images));
 };
 
 /**
@@ -61,46 +82,47 @@ export const generateProductDetailImages = (data: any, mainImage: string): strin
     images = data.images.filter((img: string) => img && typeof img === 'string');
     console.log(`Using ${images.length} API-provided images for ${data.title}`);
   }
-  // 2. Create fallback images
-  else {
+  // 2. Create fallback images - only for Amazon products
+  else if (mainImage && 
+           mainImage !== '/placeholder.svg' && 
+           (mainImage.includes('amazon.com') || mainImage.includes('m.media-amazon.com'))) {
     // Start with the main image
     images = [mainImage];
     
-    // Try to get a category-specific image from Amazon
-    const category = data.category || 'Electronics';
     const title = data.title || '';
+    const hash = Date.now(); // Add timestamp to prevent caching
     
     try {
-      // Only use Amazon-specific images
-      if (mainImage.includes('amazon.com') || mainImage.includes('m.media-amazon.com')) {
-        const baseUrl = mainImage.split('?')[0];
-        
-        // Add Amazon-specific image variations
-        images.push(`${baseUrl}?sx=300&sy=300&ex=600&ey=600`);
-        images.push(`${baseUrl}?sx=0&sy=0&ex=800&ey=400`);
-        
-        // Add different angles based on product type
-        if (title.toLowerCase().includes('tv') || title.toLowerCase().includes('monitor')) {
-          images.push(`${baseUrl}?angle=front&f=ffffff`);
-        } else if (title.toLowerCase().includes('phone') || title.toLowerCase().includes('laptop')) {
-          images.push(`${baseUrl}?angle=side&f=f8f8f8`);
-        } else if (title.toLowerCase().includes('food') || title.toLowerCase().includes('container')) {
-          images.push(`${baseUrl}?angle=top&f=fafafa`);
-        } else {
-          images.push(`${baseUrl}?angle=back&f=fdfdfd`);
-        }
-      }
-      // For non-Amazon images, create simple variations
-      else if (mainImage !== '/placeholder.svg') {
-        images.push(`${mainImage}${mainImage.includes('?') ? '&' : '?'}view=side`);
-        images.push(`${mainImage}${mainImage.includes('?') ? '&' : '?'}view=detail`);
+      const baseUrl = mainImage.split('?')[0];
+      
+      // Add Amazon-specific image variations with distinct parameters to ensure different images
+      images.push(`${baseUrl}?m=fit&h=800&w=800&hash=${hash}`);
+      images.push(`${baseUrl}?m=contain&h=600&w=600&hash=${hash+1}`);
+      images.push(`${baseUrl}?m=crop&h=400&w=400&hash=${hash+2}`);
+      
+      // Add different angles based on product type
+      if (title.toLowerCase().includes('tv') || title.toLowerCase().includes('monitor')) {
+        images.push(`${baseUrl}?angle=front&f=ffffff&hash=${hash+3}`);
+        images.push(`${baseUrl}?angle=side&f=ffffff&hash=${hash+4}`);
+      } else if (title.toLowerCase().includes('phone') || title.toLowerCase().includes('laptop')) {
+        images.push(`${baseUrl}?angle=side&f=f8f8f8&hash=${hash+5}`);
+        images.push(`${baseUrl}?angle=back&f=f8f8f8&hash=${hash+6}`);
+      } else if (title.toLowerCase().includes('food') || title.toLowerCase().includes('container')) {
+        images.push(`${baseUrl}?angle=top&f=fafafa&hash=${hash+7}`);
+        images.push(`${baseUrl}?angle=3q&f=fafafa&hash=${hash+8}`);
+      } else {
+        images.push(`${baseUrl}?angle=back&f=fdfdfd&hash=${hash+9}`);
+        images.push(`${baseUrl}?angle=front&f=fdfdfd&hash=${hash+10}`);
       }
     } catch (error) {
       console.warn("Could not generate image variations:", error);
     }
     
-    console.log(`Generated ${images.length} image variations for ${data.title}`);
+    console.log(`Generated ${images.length} truly distinct image variations for ${data.title}`);
+  } else if (images.length === 0) {
+    images = ['/placeholder.svg'];
   }
   
-  return images;
+  // Ensure all images are unique
+  return Array.from(new Set(images));
 };

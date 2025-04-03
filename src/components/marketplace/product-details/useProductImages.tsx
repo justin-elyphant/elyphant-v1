@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createImageVariations } from "./imageUtils";
 
 /**
- * Custom hook to manage product images with improved organization
+ * Custom hook to manage product images with improved organization and uniqueness
  */
 export const useProductImages = (product: Product | null) => {
   const [images, setImages] = useState<string[]>([]);
@@ -23,16 +23,19 @@ export const useProductImages = (product: Product | null) => {
     // Process images from the product
     const processedImages = getProcessedImages(product);
     
+    // Ensure we have unique images by using Set
+    const uniqueImages = Array.from(new Set(processedImages));
+    
     // Set the final image array
-    console.log("Final image array length:", processedImages.length);
-    setImages(processedImages);
+    console.log("Final unique image array length:", uniqueImages.length);
+    setImages(uniqueImages);
   }, [product]);
 
   return images;
 };
 
 /**
- * Process and return images from a product
+ * Process and return images from a product, ensuring uniqueness
  */
 function getProcessedImages(product: Product): string[] {
   // Case 1: Product has an 'images' array with content
@@ -46,6 +49,14 @@ function getProcessedImages(product: Product): string[] {
     if (filteredImages.length > 0) {
       // Ensure no duplicate images in the array
       const uniqueImages = Array.from(new Set(filteredImages));
+      
+      // If we have too few unique images, generate more variations
+      if (uniqueImages.length < 3 && product.image) {
+        const extraVariations = createImageVariations(product.image, product.name)
+          .filter(img => !uniqueImages.includes(img));
+        uniqueImages.push(...extraVariations.slice(0, 3)); // Add up to 3 extras
+      }
+      
       console.log("Using product.images array:", uniqueImages);
       return uniqueImages;
     }
@@ -53,7 +64,7 @@ function getProcessedImages(product: Product): string[] {
   
   // Case 2: Product only has a single image
   if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
-    // Generate variations without adding generic fallbacks
+    // Generate variations with distinct parameters to ensure uniqueness
     const imageVariations = createImageVariations(product.image, product.name);
     console.log("Using single product.image with enhanced variations:", imageVariations);
     return imageVariations;

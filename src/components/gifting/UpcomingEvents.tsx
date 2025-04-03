@@ -145,6 +145,8 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   };
 
   const handleSaveEvent = (eventId: number, updatedEvent: Partial<ExtendedEventData>) => {
+    console.log("Saving event with updates:", updatedEvent);
+    
     const updatedEvents = events.map(event => 
       event.id === eventId 
         ? { ...event, ...updatedEvent } 
@@ -157,6 +159,7 @@ const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   };
 
   const handleEventClick = (event: ExtendedEventData) => {
+    console.log("Event clicked:", event);
     setCurrentEvent(event);
     setIsEditDrawerOpen(true);
   };

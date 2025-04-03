@@ -26,8 +26,9 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
       setType(event.type);
       setPerson(event.person);
       setDate(event.date);
-      setAutoGiftEnabled(event.autoGiftEnabled);
-      setAutoGiftAmount(event.autoGiftAmount || 0);
+      setAutoGiftEnabled(event.autoGiftEnabled || false);
+      // Make sure autoGiftAmount is initialized properly
+      setAutoGiftAmount(event.autoGiftAmount || 50); // Default to 50 if not set
       setGiftSource(event.giftSource || "wishlist");
       // Make sure we cast the string to the correct type
       setPrivacyLevel((event.privacyLevel || "private") as PrivacyLevel);

@@ -15,7 +15,7 @@ interface EventCardProps {
   onToggleAutoGift: () => void;
   onEdit: () => void;
   onVerifyEvent: () => void;
-  onClick?: () => void; // Add onClick prop
+  onClick?: () => void;
 }
 
 const EventCard = ({
@@ -40,7 +40,7 @@ const EventCard = ({
   return (
     <Card 
       className="relative h-full cursor-pointer transition-all hover:shadow-md" 
-      onClick={handleCardClick} // Add onClick handler
+      onClick={handleCardClick}
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
@@ -73,14 +73,14 @@ const EventCard = ({
             <span>Auto-Gift: </span>
             {event.autoGiftEnabled ? (
               <span className="font-medium text-green-600">
-                ${event.autoGiftAmount}
+                ${event.autoGiftAmount || 0}
               </span>
             ) : (
               <span className="text-muted-foreground">Disabled</span>
             )}
           </div>
           <Switch
-            checked={event.autoGiftEnabled}
+            checked={event.autoGiftEnabled || false}
             onCheckedChange={onToggleAutoGift}
             aria-label="Toggle auto-gift"
           />

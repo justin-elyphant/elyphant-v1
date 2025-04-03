@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Command, CommandInput, CommandList, CommandEmpty } from "@/components/ui/command";
 import { useZincSearch } from "@/hooks/useZincSearch";
@@ -51,6 +50,42 @@ const SearchResults = ({
     onSearchTermChange(value);
   };
 
+  // Calculate search suggestion based on search term
+  const getSearchSuggestion = () => {
+    if (!searchTerm || searchTerm.trim().length < 2) return "";
+    
+    const term = searchTerm.toLowerCase().trim();
+    
+    // Common search suggestions
+    const suggestions: Record<string, string> = {
+      "n": "nike shoes",
+      "ni": "nike shoes",
+      "nik": "nike shoes",
+      "d": "dallas cowboys",
+      "da": "dallas cowboys",
+      "dal": "dallas cowboys",
+      "ip": "iphone",
+      "iph": "iphone",
+      "s": "samsung galaxy",
+      "sa": "samsung galaxy",
+      "sam": "samsung galaxy",
+      "p": "playstation",
+      "pl": "playstation",
+      "x": "xbox",
+      "xb": "xbox"
+    };
+    
+    // Check if we have an exact match in our suggestions
+    if (suggestions[term]) {
+      return suggestions[term];
+    }
+    
+    // Otherwise, return the original search term
+    return searchTerm;
+  };
+
+  const searchSuggestion = getSearchSuggestion();
+
   return (
     <Command onKeyDown={handleKeyDown}>
       <CommandInput 
@@ -72,14 +107,16 @@ const SearchResults = ({
             loading={loading} 
             searchTerm={searchTerm} 
             onSelect={handleSelect} 
+            searchSuggestion={searchSuggestion !== searchTerm ? searchSuggestion : ""}
           />
         </CommandEmpty>
         
         <SearchGroup 
           heading="Amazon Products" 
           items={zincResults.map((product) => ({ 
-            id: `zinc-${product.id || Math.random().toString()}`,
+            id: `zinc-${product.id || product.product_id || Math.random().toString()}`,
             title: product.title,
+            name: product.title
           }))} 
           onSelect={handleSelect} 
         />
@@ -93,7 +130,7 @@ const SearchResults = ({
           onSelect={handleSelect} 
         />
         
-        {searchTerm.trim().length > 2 && !loading && (
+        {searchTerm.trim().length > 1 && !loading && (
           <>
             <SearchGroup 
               heading="Friends" 
@@ -114,6 +151,7 @@ const SearchResults = ({
           hasResults={hasResults}
           isLoading={loading}
           onSelect={handleSelect}
+          searchSuggestion={searchSuggestion !== searchTerm ? searchSuggestion : ""}
         />
       </CommandList>
     </Command>

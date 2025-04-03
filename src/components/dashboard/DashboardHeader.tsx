@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Logo from "@/components/home/components/Logo";
 
 interface DashboardHeaderProps {
   userData: any;
@@ -11,12 +10,9 @@ interface DashboardHeaderProps {
 const DashboardHeader = ({ userData }: DashboardHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-8">
-      <div className="flex items-center gap-4">
-        <Logo />
-        <div>
-          <h1 className="text-2xl font-bold">Welcome, {userData.name}</h1>
-          <p className="text-muted-foreground">What would you like to do today?</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold">Welcome, {userData.name}</h1>
+        <p className="text-muted-foreground">What would you like to do today?</p>
       </div>
       
       <Avatar className="h-12 w-12">

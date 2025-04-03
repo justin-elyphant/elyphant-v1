@@ -62,28 +62,88 @@ const ProductItem = ({
     );
   };
 
-  // Get a fallback image based on product name or category
+  // Get a product-specific image based on name and category
   const getFallbackImage = () => {
     const name = product.name.toLowerCase();
     const category = product.category?.toLowerCase() || '';
     
-    if (name.includes('apple') || name.includes('iphone') || name.includes('macbook')) {
-      return 'https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=500'; // Apple related
+    // Apple products
+    if (name.includes('iphone')) {
+      return 'https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=500&h=500&fit=crop'; // iPhone
+    }
+    if (name.includes('macbook') || name.includes('mac book')) {
+      return 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&h=500&fit=crop'; // MacBook
+    }
+    if (name.includes('airpods')) {
+      return 'https://images.unsplash.com/photo-1588423771073-b8903fbb85b5?w=500&h=500&fit=crop'; // AirPods
+    }
+    if (name.includes('ipad')) {
+      return 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=500&fit=crop'; // iPad
+    }
+    if (name.includes('apple watch') || name.includes('watch') && name.includes('apple')) {
+      return 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&h=500&fit=crop'; // Apple Watch
+    }
+    if (name.includes('apple tv')) {
+      return 'https://images.unsplash.com/photo-1528928441742-b4ccac1bb04c?w=500&h=500&fit=crop'; // Apple TV
+    }
+    if (name.includes('apple pencil') || name.includes('pencil') && name.includes('apple')) {
+      return 'https://images.unsplash.com/photo-1595411425732-e69c1aba47b3?w=500&h=500&fit=crop'; // Apple Pencil
     }
     
-    if (name.includes('samsung') || name.includes('galaxy')) {
-      return 'https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=500'; // Samsung related
+    // Samsung products
+    if (name.includes('samsung') && (name.includes('galaxy') || name.includes('phone'))) {
+      return 'https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=500&h=500&fit=crop'; // Samsung Galaxy
+    }
+    if (name.includes('samsung') && name.includes('tv')) {
+      return 'https://images.unsplash.com/photo-1601944179066-29786cb9d32a?w=500&h=500&fit=crop'; // Samsung TV
     }
     
-    if (name.includes('nike') || category.includes('footwear') || name.includes('shoe')) {
-      return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500'; // Nike/shoes
+    // Gaming/Console products
+    if (name.includes('playstation') || name.includes('ps5') || name.includes('ps4')) {
+      return 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500&h=500&fit=crop'; // PlayStation
+    }
+    if (name.includes('xbox')) {
+      return 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=500&h=500&fit=crop'; // Xbox
+    }
+    if (name.includes('nintendo') || name.includes('switch')) {
+      return 'https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=500&h=500&fit=crop'; // Nintendo Switch
     }
     
+    // Headphones and Speakers
+    if (name.includes('headphone') || name.includes('earphone') || name.includes('earbud')) {
+      return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop'; // Headphones
+    }
+    if (name.includes('speaker') || name.includes('echo') || name.includes('alexa')) {
+      return 'https://images.unsplash.com/photo-1558537348-c0f8e733989d?w=500&h=500&fit=crop'; // Speaker
+    }
+    
+    // Footwear
+    if (name.includes('nike') || (name.includes('shoe') && name.includes('nike'))) {
+      return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop'; // Nike shoes
+    }
+    if (name.includes('adidas') || (name.includes('shoe') && name.includes('adidas'))) {
+      return 'https://images.unsplash.com/photo-1518894950606-4642a0c087f9?w=500&h=500&fit=crop'; // Adidas shoes
+    }
+    
+    // Category fallbacks (if no specific product match)
     if (category.includes('electronics')) {
-      return 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500'; // Electronics
+      return 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&h=500&fit=crop'; // Electronics
+    }
+    if (category.includes('footwear') || category.includes('shoes')) {
+      return 'https://images.unsplash.com/photo-1543508282-6319a3e2621f?w=500&h=500&fit=crop'; // Shoes
+    }
+    if (category.includes('clothing') || category.includes('apparel')) {
+      return 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&h=500&fit=crop'; // Clothing
+    }
+    if (category.includes('home') || category.includes('kitchen')) {
+      return 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500&h=500&fit=crop'; // Home/Kitchen
+    }
+    if (category.includes('sports')) {
+      return 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=500&h=500&fit=crop'; // Sports
     }
     
-    return '/placeholder.svg'; // Default placeholder
+    // Generic product image if no specific match
+    return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop';
   };
 
   return (
@@ -102,7 +162,7 @@ const ProductItem = ({
               src={getFallbackImage()}
               alt={product.name}
               className="w-full h-48 object-cover"
-              onError={handleImageError}
+              onError={() => console.log(`Fallback image also failed for: ${product.name}`)}
             />
           </div>
         ) : (

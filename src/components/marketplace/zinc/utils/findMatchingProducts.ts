@@ -10,28 +10,80 @@ import { guessCategory } from './categoryUtils';
 const getImageCategory = (query: string): string => {
   const lowercaseQuery = query.toLowerCase().trim();
   
-  // Technology brands mapping
-  if (lowercaseQuery.includes('apple') || 
-      lowercaseQuery.includes('iphone') || 
-      lowercaseQuery.includes('macbook') || 
-      lowercaseQuery.includes('ipad') || 
-      lowercaseQuery.includes('airpods')) {
+  // Apple products mapping
+  if (lowercaseQuery.includes('iphone')) {
+    return 'iPhone';
+  }
+  if (lowercaseQuery.includes('macbook') || 
+      (lowercaseQuery.includes('mac') && lowercaseQuery.includes('book'))) {
+    return 'MacBook';
+  }
+  if (lowercaseQuery.includes('ipad')) {
+    return 'iPad';
+  }
+  if (lowercaseQuery.includes('airpods')) {
+    return 'AirPods';
+  }
+  if (lowercaseQuery.includes('apple') && lowercaseQuery.includes('watch')) {
+    return 'AppleWatch';
+  }
+  if (lowercaseQuery.includes('apple') && lowercaseQuery.includes('tv')) {
+    return 'AppleTV';
+  }
+  if (lowercaseQuery.includes('apple') && lowercaseQuery.includes('pencil')) {
+    return 'ApplePencil';
+  }
+  if (lowercaseQuery.includes('apple')) {
     return 'Apple';
   }
   
-  if (lowercaseQuery.includes('samsung') || 
-      lowercaseQuery.includes('galaxy')) {
+  // Samsung products mapping
+  if (lowercaseQuery.includes('samsung') && 
+      (lowercaseQuery.includes('galaxy') || lowercaseQuery.includes('phone'))) {
+    return 'SamsungPhone';
+  }
+  if (lowercaseQuery.includes('samsung') && lowercaseQuery.includes('tv')) {
+    return 'SamsungTV';
+  }
+  if (lowercaseQuery.includes('samsung')) {
     return 'Samsung';
   }
   
-  if (lowercaseQuery.includes('sony') || 
-      lowercaseQuery.includes('playstation')) {
-    return 'Electronics';
+  // Gaming consoles
+  if (lowercaseQuery.includes('playstation') || 
+      lowercaseQuery.includes('ps5') || 
+      lowercaseQuery.includes('ps4')) {
+    return 'PlayStation';
+  }
+  if (lowercaseQuery.includes('xbox')) {
+    return 'Xbox';
+  }
+  if (lowercaseQuery.includes('nintendo') || lowercaseQuery.includes('switch')) {
+    return 'NintendoSwitch';
+  }
+  
+  // Audio devices
+  if (lowercaseQuery.includes('headphone') || 
+      lowercaseQuery.includes('earphone') || 
+      lowercaseQuery.includes('earbud')) {
+    return 'Headphones';
+  }
+  if (lowercaseQuery.includes('speaker') || 
+      lowercaseQuery.includes('echo') || 
+      lowercaseQuery.includes('alexa')) {
+    return 'Speakers';
   }
   
   // Footwear brands mapping
   if (lowercaseQuery.includes('nike') || 
-      lowercaseQuery.includes('shoes') || 
+      (lowercaseQuery.includes('shoe') && lowercaseQuery.includes('nike'))) {
+    return 'NikeShoes';
+  }
+  if (lowercaseQuery.includes('adidas') || 
+      (lowercaseQuery.includes('shoe') && lowercaseQuery.includes('adidas'))) {
+    return 'AdidasShoes';
+  }
+  if (lowercaseQuery.includes('shoes') || 
       lowercaseQuery.includes('sneakers') ||
       lowercaseQuery.includes('footwear')) {
     return 'Footwear';

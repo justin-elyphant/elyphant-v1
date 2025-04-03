@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
-import { Heart, ShoppingCart, Star, StarHalf, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, ShoppingCart, Star, StarHalf } from "lucide-react";
 import { toast } from "sonner";
 import { 
   Carousel,
@@ -28,7 +28,6 @@ const ProductDetailsDialog = ({
   userData
 }: ProductDetailsDialogProps) => {
   const { addToCart } = useCart();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!product) return null;
 
@@ -57,6 +56,41 @@ const ProductDetailsDialog = ({
     );
   };
 
+  // Create a function to render the carousel
+  const renderCarousel = () => {
+    if (images.length === 1) {
+      return (
+        <div className="aspect-square relative">
+          <img 
+            src={images[0]} 
+            alt={product.name}
+            className="w-full h-full object-cover rounded-md"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <Carousel className="w-full">
+        <CarouselContent>
+          {images.map((img, idx) => (
+            <CarouselItem key={idx}>
+              <div className="aspect-square relative">
+                <img 
+                  src={img} 
+                  alt={`${product.name} view ${idx + 1}`}
+                  className="w-full h-full object-cover rounded-md"
+                />
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="left-2" />
+        <CarouselNext className="right-2" />
+      </Carousel>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
@@ -71,53 +105,7 @@ const ProductDetailsDialog = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="relative overflow-hidden rounded-md">
-            {images.length > 1 ? (
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {images.map((img, idx) => (
-                    <CarouselItem key={idx}>
-                      <div className="aspect-square relative">
-                        <img 
-                          src={img} 
-                          alt={`${product.name} view ${idx + 1}`}
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </Carousel>
-            ) : (
-              <div className="aspect-square relative">
-                <img 
-                  src={images[0]} 
-                  alt={product.name}
-                  className="w-full h-full object-cover rounded-md"
-                />
-              </div>
-            )}
-            
-            {images.length > 1 && (
-              <div className="flex gap-2 mt-2 overflow-x-auto">
-                {images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    className={`w-16 h-16 rounded-md overflow-hidden border-2 ${
-                      idx === currentImageIndex ? 'border-primary' : 'border-transparent'
-                    }`}
-                    onClick={() => setCurrentImageIndex(idx)}
-                  >
-                    <img
-                      src={img}
-                      alt={`${product.name} view ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+            {renderCarousel()}
           </div>
           
           <div className="flex flex-col space-y-4">

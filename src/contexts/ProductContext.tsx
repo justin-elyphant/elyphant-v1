@@ -29,6 +29,53 @@ type ProductContextType = {
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
+// Helper function to generate mock features for products
+const generateMockFeatures = (productName: string, category: string): string[] => {
+  const features = [
+    `Premium ${category.toLowerCase()} for everyday use`,
+    `Enhanced durability and reliability`,
+    `Stylish design perfect for any setting`,
+    `Easy to clean and maintain`
+  ];
+  
+  // Add some category-specific features
+  if (category === "Electronics") {
+    features.push("Energy efficient technology");
+    features.push("Smart connectivity options");
+  } else if (category === "Clothing") {
+    features.push("Breathable fabric for all-day comfort");
+    features.push("Machine washable");
+  } else if (category === "Footwear") {
+    features.push("Cushioned insole for maximum comfort");
+    features.push("Non-slip outsole for better traction");
+  }
+  
+  return features;
+};
+
+// Helper function to generate mock specifications
+const generateMockSpecifications = (productName: string, category: string): Record<string, string> => {
+  const specs: Record<string, string> = {
+    "Brand": productName.split(' ')[0],
+    "Material": "Premium quality",
+    "Origin": "Imported"
+  };
+  
+  // Add some category-specific specifications
+  if (category === "Electronics") {
+    specs["Power"] = "110-240V";
+    specs["Warranty"] = "1 year";
+  } else if (category === "Clothing") {
+    specs["Fabric"] = "Cotton blend";
+    specs["Care"] = "Machine wash cold";
+  } else if (category === "Footwear") {
+    specs["Upper"] = "Synthetic leather";
+    specs["Sole"] = "Rubber";
+  }
+  
+  return specs;
+};
+
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,8 +98,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
             vendor: "Shopify",
             description: product.description || generateDescription(product.name, product.category || "Electronics"),
             images: product.images || [product.image],
-            features: product.features || [],
-            specifications: product.specifications || {}
+            features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
+            specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics")
           }));
           
           setProducts(shopifyProductsWithVendor);
@@ -75,8 +122,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
           ...product,
           description: product.description || generateDescription(product.name, product.category || "Electronics"),
           images: product.images || [product.image],
-          features: product.features || [],
-          specifications: product.specifications || {}
+          features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
+          specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics")
         }));
         
         setProducts(enrichedProducts);
@@ -95,8 +142,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
           ...product,
           description: product.description || generateDescription(product.name, product.category || "Electronics"),
           images: product.images || [product.image],
-          features: product.features || [],
-          specifications: product.specifications || {}
+          features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
+          specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics")
         }));
         
         setProducts(enrichedMockProducts);

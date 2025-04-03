@@ -66,16 +66,12 @@ const PopularBrands = () => {
     console.log(`PopularBrands: ${products.length} products available, isLoading: ${isLoading}`);
   }, [products, isLoading]);
   
-  const handleBrandClick = (brandName: string) => {
+  const handleBrandClick = async (brandName: string) => {
     console.log(`PopularBrands: Brand clicked: ${brandName}, products available: ${products.length}`);
+    toast.loading("Loading products...", { id: "loading-brand-products" });
     
-    if (products.length === 0) {
-      console.log("No products available when brand clicked, will try later via URL param");
-      toast.loading("Loading products...", { id: "loading-brand-products" });
-    } else {
-      // Pre-generate the brand products before navigation
-      handleBrandProducts(brandName, products, setProducts);
-    }
+    // Fetch brand products from Zinc API
+    await handleBrandProducts(brandName, products, setProducts);
   };
 
   return (

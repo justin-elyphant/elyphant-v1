@@ -22,16 +22,12 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
     console.log(`FeaturedBrands: ${products.length} products available, isLoading: ${isLoading}`);
   }, [products, isLoading]);
   
-  const handleBrandClick = (brandName: string) => {
+  const handleBrandClick = async (brandName: string) => {
     console.log(`Brand clicked: ${brandName}, products available: ${products.length}`);
+    toast.loading("Loading products...", { id: "loading-brand-products" });
     
-    if (products.length === 0) {
-      console.log("No products available when brand clicked, will try later via URL param");
-      toast.loading("Loading products...", { id: "loading-brand-products" });
-    } else {
-      // This will find or create products for the brand and add them to the context
-      handleBrandProducts(brandName, products, setProducts);
-    }
+    // This will fetch products for the brand from the Zinc API
+    await handleBrandProducts(brandName, products, setProducts);
   };
 
   return (

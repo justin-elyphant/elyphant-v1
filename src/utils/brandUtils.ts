@@ -1,89 +1,69 @@
 
 import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
 
 /**
- * Handles finding or creating products for a specific brand
+ * Handles finding or loading products for a specific brand from the Zinc API
  */
-export const handleBrandProducts = (
+export const handleBrandProducts = async (
   brandName: string, 
   allProducts: Product[], 
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
-): Product[] => {
+): Promise<Product[]> => {
   if (!brandName || brandName.trim() === "") {
     console.log("No brand name provided");
     return [];
   }
 
-  // Important check: if products aren't loaded yet, return early
-  if (!allProducts || allProducts.length === 0) {
-    console.log("No products available to filter - waiting for products to load");
-    toast.loading("Loading products...", { id: "loading-products" });
-    return [];
-  }
+  console.log(`Looking for products for brand: ${brandName}`);
+  toast.loading("Loading products...", { id: "loading-brand-products" });
   
-  console.log(`Looking for products for brand: ${brandName} among ${allProducts.length} products`);
-  
-  // Case-insensitive brand name
-  const brandNameLower = brandName.toLowerCase();
-  
-  // More flexible brand matching - check vendor, name, and description
-  const productsByBrand = allProducts.filter(p => 
-    (p.name && p.name.toLowerCase().includes(brandNameLower)) || 
-    (p.vendor && p.vendor.toLowerCase().includes(brandNameLower)) ||
-    (p.description && p.description.toLowerCase().includes(brandNameLower))
-  );
-  
-  console.log(`Found ${productsByBrand.length} products for brand ${brandName}`);
-  
-  if (productsByBrand.length === 0) {
-    // No products found for this brand, so create some temporary ones
-    const tempProducts: Product[] = [];
+  try {
+    // Search for products using the Zinc API
+    console.log(`Fetching ${brandName} products from Zinc API`);
+    const zincResults = await searchProducts(brandName);
     
-    // Create 5 products for this brand
-    for (let i = 0; i < 5; i++) {
-      const randomProduct = allProducts[Math.floor(Math.random() * allProducts.length)];
-      if (randomProduct) {
-        const newProduct: Product = {
-          ...randomProduct,
-          id: Date.now() + i, // Ensure unique ID using timestamp
-          name: `${brandName} ${randomProduct.name.split(' ').slice(1).join(' ')}`,
-          vendor: brandName,
-          category: randomProduct.category || "Clothing",
-          description: `Premium ${brandName} ${randomProduct.category || "item"} with exceptional quality and style.`,
-          isBestSeller: i === 0 // Make the first one a bestseller
-        };
-        tempProducts.push(newProduct);
-      }
-    }
-    
-    // Update products in context
-    if (tempProducts.length > 0) {
-      console.log(`Creating ${tempProducts.length} temporary products for brand ${brandName}`);
+    if (zincResults && zincResults.length > 0) {
+      console.log(`Found ${zincResults.length} products for ${brandName} from Zinc API`);
       
-      // Add new products to the context
+      // Convert Zinc products to our product format
+      const brandProducts = zincResults.map((product, index) => ({
+        id: Date.now() + index, // Ensure unique ID
+        name: product.title,
+        price: product.price,
+        category: product.category || "Clothing",
+        image: product.image || "/placeholder.svg",
+        vendor: "Amazon via Zinc",
+        description: product.description || `${brandName} product with exceptional quality.`,
+        rating: product.rating || 4.5,
+        reviewCount: product.review_count || 100,
+        images: product.images || [product.image || "/placeholder.svg"],
+        isBestSeller: index < Math.ceil(zincResults.length * 0.1) // Top 10% are bestsellers
+      }));
+      
+      // Update products in context - add these to existing products
       setProducts(prev => {
-        // Check if these products already exist to avoid duplicates
-        const existingIds = new Set(prev.map(p => p.id));
-        const uniqueNewProducts = tempProducts.filter(p => !existingIds.has(p.id));
+        // Remove any existing products from this brand to avoid duplicates
+        const filteredProducts = prev.filter(p => 
+          !(p.vendor === "Amazon via Zinc" && 
+            (p.name.toLowerCase().includes(brandName.toLowerCase()) || 
+             (p.description && p.description.toLowerCase().includes(brandName.toLowerCase()))))
+        );
         
-        if (uniqueNewProducts.length > 0) {
-          toast.success(`${brandName} products added to catalog`, { id: "brand-products-added" });
-          toast.dismiss("loading-products");
-          return [...prev, ...uniqueNewProducts];
-        }
-        return prev;
+        toast.success(`Viewing ${brandName} products`, { id: "loading-brand-products" });
+        return [...filteredProducts, ...brandProducts];
       });
       
-      return tempProducts;
+      return brandProducts;
+    } else {
+      console.log(`No products found for ${brandName} from Zinc API`);
+      toast.error(`No products found for ${brandName}`, { id: "loading-brand-products" });
+      return [];
     }
-    
-    toast.error(`Couldn't find or create products for ${brandName}`);
-    toast.dismiss("loading-products");
+  } catch (error) {
+    console.error(`Error fetching ${brandName} products:`, error);
+    toast.error(`Couldn't fetch products for ${brandName}`, { id: "loading-brand-products" });
     return [];
-  } else {
-    toast.success(`Viewing ${brandName} products`, { id: "viewing-brand-products" });
-    toast.dismiss("loading-products");
-    return productsByBrand;
   }
 };

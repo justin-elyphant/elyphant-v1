@@ -7,7 +7,7 @@ import ProductGrid from "./ProductGrid";
 import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
 import { handleBrandProducts } from "@/utils/brandUtils";
@@ -23,8 +23,9 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   const [sortOption, setSortOption] = useState("relevance");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { products: contextProducts, setProducts: setContextProducts } = useProducts();
+  const [isBrandLoading, setIsBrandLoading] = useState(false);
   
   // Log initial state for debugging
   useEffect(() => {
@@ -33,19 +34,18 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   
   // Set filtered products when products change
   useEffect(() => {
-    if (products.length > 0 && filteredProducts.length === 0) {
-      console.log(`Setting initial filtered products: ${products.length} products available`);
+    if (products.length > 0) {
+      console.log(`Setting filtered products: ${products.length} products available`);
       setFilteredProducts(sortProducts(products, sortOption));
     }
-  }, [products, filteredProducts, sortOption]);
+  }, [products, sortOption]);
   
-  // Extract brand from URL on component mount or URL change
+  // Extract brand from URL and fetch products if needed
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const brandParam = params.get("brand");
+    const brandParam = searchParams.get("brand");
     
     if (brandParam) {
-      console.log(`URL contains brand parameter: ${brandParam}, products available: ${contextProducts.length}, isLoading: ${isLoading}`);
+      console.log(`MarketplaceContent: URL contains brand parameter: ${brandParam}, context products: ${contextProducts.length}`);
       
       // Update active filters with brand
       setActiveFilters(prev => ({
@@ -53,58 +53,59 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         brand: brandParam
       }));
       
-      // Only attempt to filter if we have products
-      if (contextProducts.length > 0) {
-        const brandProducts = handleBrandProducts(brandParam, contextProducts, setContextProducts);
+      // Check if we have any products for this brand
+      const hasBrandProducts = contextProducts.some(p => 
+        p.vendor === "Amazon via Zinc" && 
+        (p.name.toLowerCase().includes(brandParam.toLowerCase()) || 
+         (p.description && p.description.toLowerCase().includes(brandParam.toLowerCase())))
+      );
+      
+      if (!hasBrandProducts && !isBrandLoading) {
+        console.log(`No products found for brand ${brandParam}, fetching from Zinc API`);
+        setIsBrandLoading(true);
         
-        // If we have brand products, set them as filtered products
-        if (brandProducts && brandProducts.length > 0) {
-          console.log(`Setting ${brandProducts.length} brand products as filtered products`);
-          setFilteredProducts(sortProducts(brandProducts, sortOption));
-        }
-      } else {
-        console.log("Waiting for products to load before filtering by brand");
-        toast.loading("Loading products...");
-        
-        // Set up a timer to check for products loading
-        const checkProductsInterval = setInterval(() => {
-          if (contextProducts.length > 0) {
-            console.log(`Products loaded, now filtering for brand: ${brandParam}`);
-            clearInterval(checkProductsInterval);
-            
-            const brandProducts = handleBrandProducts(brandParam, contextProducts, setContextProducts);
-            if (brandProducts && brandProducts.length > 0) {
-              console.log(`Setting ${brandProducts.length} brand products as filtered products`);
-              setFilteredProducts(sortProducts(brandProducts, sortOption));
-              toast.dismiss();
+        // Fetch products for this brand
+        handleBrandProducts(brandParam, contextProducts, setContextProducts)
+          .then(brandProducts => {
+            if (brandProducts.length > 0) {
+              console.log(`Fetched ${brandProducts.length} products for brand ${brandParam}`);
+              // The products should now be in the context, and will be included in the next render
             }
-          }
-        }, 300);
-        
-        // Clear interval after 10 seconds to prevent memory leaks
-        setTimeout(() => clearInterval(checkProductsInterval), 10000);
+            setIsBrandLoading(false);
+          })
+          .catch(error => {
+            console.error(`Error fetching products for brand ${brandParam}:`, error);
+            setIsBrandLoading(false);
+          });
       }
     }
-  }, [location.search, contextProducts, setContextProducts, sortOption]);
+  }, [searchParams, contextProducts, setContextProducts, isBrandLoading]);
   
-  // Update filtered products when products or filters change
+  // Process filtered products based on active filters
   useEffect(() => {
-    console.log(`Updating filtered products: ${products.length} products available, ${Object.keys(activeFilters).length} active filters`);
-    
-    if (products.length === 0) {
-      console.log("No products available to filter");
-      return;
-    }
-    
-    if (Object.keys(activeFilters).length === 0) {
-      // No filters, show all products
-      setFilteredProducts(sortProducts(products, sortOption));
+    if (products.length === 0 && !isLoading && !isBrandLoading) {
+      console.log("No products to filter");
       return;
     }
 
+    console.log(`Applying filters: ${Object.keys(activeFilters).length} active filters`);
     let result = [...products];
     
     // Apply filters
+    if (activeFilters.brand && activeFilters.brand !== 'all') {
+      const brandName = activeFilters.brand.toLowerCase();
+      console.log(`Filtering for brand: ${brandName}`);
+      
+      result = result.filter(product => 
+        (product.name && product.name.toLowerCase().includes(brandName)) ||
+        (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
+        (product.description && product.description.toLowerCase().includes(brandName))
+      );
+      
+      console.log(`Found ${result.length} products for brand ${activeFilters.brand}`);
+    }
+    
+    // Apply price filter
     if (activeFilters.price && typeof activeFilters.price === 'object') {
       const { min, max } = activeFilters.price;
       result = result.filter(product => 
@@ -120,38 +121,12 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       );
     }
     
-    // Apply shipping filter
-    if (activeFilters.shipping === true) {
-      // All products have free shipping in our demo
-    }
-    
-    // Apply brand filter if present - make it case-insensitive and more flexible
-    if (activeFilters.brand && activeFilters.brand !== 'all') {
-      const brandName = activeFilters.brand.toLowerCase();
-      
-      // Use more relaxed brand filtering
-      result = result.filter(product => 
-        (product.name && product.name.toLowerCase().includes(brandName)) ||
-        (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
-        (product.description && product.description.toLowerCase().includes(brandName))
-      );
-      
-      // If still no results after filtering, create temporary brand products
-      if (result.length === 0) {
-        console.log(`No filtered products found for brand ${activeFilters.brand}`);
-        const brandProducts = handleBrandProducts(activeFilters.brand, products, setContextProducts);
-        if (brandProducts.length > 0) {
-          result = brandProducts;
-        }
-      }
-    }
-    
     // Apply sorting
     result = sortProducts(result, sortOption);
     console.log(`Filter result: ${result.length} products after filtering`);
     
     setFilteredProducts(result);
-  }, [products, activeFilters, sortOption, setContextProducts]);
+  }, [products, activeFilters, sortOption, isLoading, isBrandLoading]);
   
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);
@@ -161,7 +136,8 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     setSortOption(option);
   };
 
-  if (isLoading && products.length === 0 && filteredProducts.length === 0) {
+  // Show loading state if we're loading products or specifically loading brand products
+  if ((isLoading && products.length === 0) || isBrandLoading) {
     return <MarketplaceLoading />;
   }
 

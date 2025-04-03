@@ -60,14 +60,14 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[95vh] overflow-y-auto max-w-md mx-auto rounded-t-xl">
-        <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl pb-2 pt-3">
-          <DrawerTitle className="text-primary text-base">Edit Gift Occasion</DrawerTitle>
+        <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl pb-1.5 pt-2.5">
+          <DrawerTitle className="text-primary text-sm">Edit Gift Occasion</DrawerTitle>
           <DrawerDescription className="text-muted-foreground text-xs">
             Update details for {person}'s {type}
           </DrawerDescription>
         </DrawerHeader>
         
-        <div className="px-3 py-1.5 space-y-2">
+        <div className="px-3 py-1 space-y-1.5">
           <EventFormSection 
             type={type}
             person={person}
@@ -77,7 +77,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setDate={setDate}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1.5" />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />
           
           <AutoGiftSection 
             autoGiftEnabled={autoGiftEnabled}
@@ -88,7 +88,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setGiftSource={setGiftSource}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1.5" />
+          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />
           
           <PrivacySection 
             privacyLevel={privacyLevel}
@@ -96,19 +96,19 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
           />
         </div>
         
-        <DrawerFooter className="pt-1.5 pb-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+        <DrawerFooter className="pt-1 pb-2.5 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
           <div className="flex items-center justify-between w-full gap-2">
             <Button 
               onClick={handleSave} 
-              className="flex-1 bg-primary hover:bg-primary/90 h-8 text-xs py-0"
+              className="flex-1 bg-primary hover:bg-primary/90 h-7 text-xs py-0"
               disabled={isSaving}
             >
-              <Save className="h-3 w-3 mr-1.5" />
+              <Save className="h-3 w-3 mr-1" />
               Save Changes
             </Button>
             <DrawerClose asChild>
-              <Button variant="outline" className="border-primary/20 hover:bg-primary/10 h-8 text-xs py-0">
-                <X className="h-3 w-3 mr-1.5" />
+              <Button variant="outline" className="border-primary/20 hover:bg-primary/10 h-7 text-xs py-0">
+                <X className="h-3 w-3 mr-1" />
                 Cancel
               </Button>
             </DrawerClose>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,13 +53,8 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
                     className="max-w-full max-h-full object-contain"
                     loading="lazy" 
                     onError={(e) => {
-                      // Fix Bose logo specifically
-                      if (brand.name === "Bose") {
-                        (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Bose_logo.svg/1200px-Bose_logo.svg.png";
-                      } else {
-                        // Fallback for other brand images
-                        (e.target as HTMLImageElement).src = "/placeholder.svg";
-                      }
+                      // Fallback for brand images
+                      (e.target as HTMLImageElement).src = "/placeholder.svg";
                       console.log(`Brand image fallback used for: ${brand.name}`);
                     }}
                   />

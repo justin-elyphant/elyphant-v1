@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import FeaturedCollections from "./sections/FeaturedCollections";
 import FeaturedBrands from "./sections/FeaturedBrands";
@@ -97,8 +96,8 @@ const HomeContent = () => {
     },
     { 
       id: 6, 
-      name: "Bose", 
-      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Bose_logo.svg/2560px-Bose_logo.svg.png", 
+      name: "Lululemon", 
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Lululemon_Athletica_logo.svg/2560px-Lululemon_Athletica_logo.svg.png", 
       productCount: 98 
     },
   ];

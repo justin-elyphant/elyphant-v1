@@ -38,8 +38,8 @@ const popularBrands = [
   },
   { 
     id: 6, 
-    name: "Bose", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Bose_logo.svg/1200px-Bose_logo.svg.png", 
+    name: "Lululemon", 
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Lululemon_Athletica_logo.svg/2560px-Lululemon_Athletica_logo.svg.png", 
     productCount: 98 
   },
   { 

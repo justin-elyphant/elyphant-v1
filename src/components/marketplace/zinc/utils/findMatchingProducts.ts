@@ -1,4 +1,3 @@
-
 import { ZincProduct } from '../types';
 import { allProducts, specificProducts } from '../data/mockProducts';
 import { createMockResults } from './mockResultsGenerator';
@@ -26,15 +25,6 @@ const getImageCategory = (query: string): string => {
   }
   if (lowercaseQuery.includes('apple') && lowercaseQuery.includes('watch')) {
     return 'AppleWatch';
-  }
-  if (lowercaseQuery.includes('apple') && lowercaseQuery.includes('tv')) {
-    return 'AppleTV';
-  }
-  if (lowercaseQuery.includes('apple') && lowercaseQuery.includes('pencil')) {
-    return 'ApplePencil';
-  }
-  if (lowercaseQuery.includes('apple')) {
-    return 'Apple';
   }
   
   // Samsung products mapping
@@ -130,7 +120,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       correctedQuery === "nike shoe" || 
       (correctedQuery.includes("nike") && correctedQuery.includes("shoe"))) {
     console.log(`SearchUtils: Found special match for Nike Shoes`);
-    // Return more products (minimum 100)
+    // Return products with accurate pricing
     return createMockResults("Nike Shoes", "Footwear", 100, 4.5, 5.0, "Nike", true);
   }
   
@@ -164,14 +154,14 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       
       // If we have specific products for this term, return them
       if (specificProducts[mappedTerm]) {
-        // For Nike, always create a larger set of results
+        // For Nike, always create a larger set of results with accurate pricing
         if (term === "nike") {
           return createMockResults("Nike Products", "Nike", 100, 4.0, 5.0, "Nike", true);
         }
         return specificProducts[mappedTerm];
       }
       
-      // If not, let's create some fallback results for common searches
+      // If not, let's create some fallback results for common searches with accurate pricing
       if (mappedTerm === "dallas cowboys") {
         return createMockResults(mappedTerm, "Sports", 100, 4.3, 5.0, "Sports", true);
       } else if (mappedTerm.includes("shoes")) {
@@ -184,7 +174,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     }
   }
   
-  // Generic search - always return at least 100 items
+  // Generic search - always return products with accurate pricing
   return createMockResults(correctedQuery, imageCategory, 100, 3.5, 5.0, undefined, true);
 };
 

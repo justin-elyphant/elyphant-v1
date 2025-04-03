@@ -151,7 +151,7 @@ const correctMisspellings = (query: string): string => {
     // Nike variants
     "nkie": "nike",
     "nikey": "nike",
-    "nkie": "nike",
+    "nik": "nike",
     
     // Other common brands
     "guci": "gucci",

@@ -17,14 +17,14 @@ export type ZincProduct = {
 export type ZincOrder = {
   id: string;
   status: string;
-  created_at: string;
-  updated_at: string;
-  retailer: string;
-  products: {
+  created_at?: string;
+  updated_at?: string;
+  retailer?: string;
+  products?: {
     product_id: string;
     quantity: number;
   }[];
-  shipping_address: {
+  shipping_address?: {
     first_name: string;
     last_name: string;
     address_line1: string;
@@ -37,7 +37,17 @@ export type ZincOrder = {
   };
   tracking_number?: string;
   estimated_delivery?: string;
-  total_price: number;
+  total_price?: number;
+  
+  // Mock data properties
+  customerName?: string;
+  date?: string;
+  items?: { 
+    name: string; 
+    quantity: number; 
+    price: number 
+  }[];
+  total?: number;
 };
 
 // Zinc Return type (used by returnService.ts)
@@ -54,6 +64,18 @@ export type ZincReturn = {
   }[];
   refund_amount?: number;
   refund_status?: string;
+  
+  // Mock data properties
+  orderId?: string;
+  customerName?: string;
+  item?: { 
+    name: string; 
+    price: number 
+  };
+  reason?: string;
+  requestDate?: string;
+  completionDate?: string | null;
+  creditIssued?: boolean;
 };
 
 // Zinc API order request type

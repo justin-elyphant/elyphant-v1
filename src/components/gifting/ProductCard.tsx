@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingCart } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   product: Product;
@@ -33,6 +32,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product);
+    
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} has been added to your cart`
+    });
   };
 
   return (

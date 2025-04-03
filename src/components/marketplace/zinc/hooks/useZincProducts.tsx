@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
 import { searchProducts, ZincProduct } from "../zincService";
 import { useZincConnection } from "./useZincConnection";
@@ -114,6 +114,7 @@ export const useZincProducts = () => {
       // Update products in context
       updateProductsInContext(amazonProducts);
       
+      // Show only ONE toast with a summary
       toast({
         title: "Search Results",
         description: `Found ${amazonProducts.length} products matching "${term}"`,

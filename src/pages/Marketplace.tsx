@@ -7,7 +7,7 @@ import MarketplaceFilters from "@/components/marketplace/MarketplaceFilters";
 import FiltersSidebar from "@/components/marketplace/FiltersSidebar";
 import ProductGrid from "@/components/marketplace/ProductGrid";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const Marketplace = () => {
   const location = useLocation();
@@ -60,6 +60,8 @@ const Marketplace = () => {
             );
             
             setFilteredProducts([...amazonProducts, ...storeProducts]);
+            
+            // Show only ONE toast notification with a summary
             toast({
               title: "Search Results",
               description: `Found ${amazonProducts.length} Amazon products matching "${searchParam}"`

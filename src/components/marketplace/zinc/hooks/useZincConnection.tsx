@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
 import { fetchProductDetails } from "../zincService";
 

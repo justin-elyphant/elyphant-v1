@@ -24,9 +24,9 @@ const AutoGiftSection = ({
   setGiftSource,
 }: AutoGiftSectionProps) => {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center gap-1.5">
-        <Gift className="h-4 w-4 text-primary" />
+        <Gift className="h-3.5 w-3.5 text-primary" />
         <h3 className="text-sm font-medium">Auto-Gifting</h3>
       </div>
       

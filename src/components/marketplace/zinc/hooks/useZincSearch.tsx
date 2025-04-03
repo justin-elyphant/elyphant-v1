@@ -30,11 +30,23 @@ export const useZincSearch = () => {
       const searchResults = await searchProducts(term);
       console.log(`useZincSearch: Found ${searchResults.length} results for "${term}"`);
       
-      // Log sample of image arrays for debugging
+      // Enhanced logging for image arrays
       if (searchResults.length > 0) {
-        console.log("Sample product images:", {
+        // Log the first product's image data in detail
+        console.log("Product image data:", {
+          product: searchResults[0].title,
           mainImage: searchResults[0].image,
+          hasImagesArray: Array.isArray(searchResults[0].images),
+          imagesLength: searchResults[0].images?.length || 0,
           imagesArray: searchResults[0].images
+        });
+        
+        // Ensure each product has an images array
+        searchResults.forEach(product => {
+          if (!product.images || !Array.isArray(product.images) || product.images.length === 0) {
+            product.images = product.image ? [product.image] : ['/placeholder.svg'];
+            console.log(`Added images array to product: ${product.title}`);
+          }
         });
       }
       

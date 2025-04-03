@@ -35,14 +35,14 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
       return data.results.map((item: any) => ({
         product_id: item.product_id || item.asin,
         title: item.title,
-        price: parseFloat(item.price) || 0,
+        price: typeof item.price === 'number' ? item.price / 100 : parseFloat(item.price) || 0,
         image: item.image_url || item.image || '/placeholder.svg',
         description: item.description || '',
         brand: item.brand || 'Unknown',
         category: item.category || 'Electronics',
         retailer: "Amazon via Zinc",
-        rating: item.rating || 0,
-        review_count: item.review_count || 0
+        rating: item.stars || 0,
+        review_count: item.num_reviews || 0
       }));
     }
     
@@ -77,14 +77,14 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
     return {
       product_id: data.product_id || data.asin,
       title: data.title,
-      price: parseFloat(data.price) || 0,
+      price: typeof data.price === 'number' ? data.price / 100 : parseFloat(data.price) || 0,
       image: (data.images && data.images[0]) || data.image || '/placeholder.svg',
       description: data.description || '',
       brand: data.brand || 'Unknown',
       category: data.category || 'Electronics',
       retailer: 'Amazon via Zinc',
-      rating: data.rating || 0,
-      review_count: data.review_count || 0
+      rating: data.stars || 0,
+      review_count: data.num_reviews || 0
     };
   } catch (error) {
     console.error('Error fetching product from Zinc:', error);

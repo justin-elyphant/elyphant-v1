@@ -51,8 +51,23 @@ export const useZincSearch = (searchTerm: string) => {
           console.log("Search results:", results);
           // Only update state if this is still the most recent request
           if (currentRequestId === searchRequestIdRef.current) {
-            if (results?.length > 0) {
-              setZincResults(results.slice(0, 12));
+            // Handle the Zinc API response format
+            if (results && Array.isArray(results)) {
+              // Map the Zinc API response to match our expected format
+              const formattedResults = results.map(item => ({
+                product_id: item.product_id,
+                title: item.title,
+                price: typeof item.price === 'number' ? item.price / 100 : parseFloat(item.price),
+                image: item.image,
+                description: item.description || "",
+                brand: item.brand || "Unknown",
+                category: item.category || "Electronics",
+                retailer: "Amazon via Zinc",
+                rating: item.stars || 0,
+                review_count: item.num_reviews || 0
+              }));
+              
+              setZincResults(formattedResults.slice(0, 12));
             } else {
               setZincResults([]);
             }

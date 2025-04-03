@@ -7,7 +7,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1  // Strictly limit to 1 toast at a time
-const TOAST_REMOVE_DELAY = 3000  // 3 seconds (even shorter than before)
+const TOAST_REMOVE_DELAY = 2000  // 2 seconds (even shorter than before)
 
 type ToasterToast = ToastProps & {
   id: string
@@ -72,15 +72,44 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
+// Clear all existing toasts
+const clearAllToasts = () => {
+  toastTimeouts.forEach((timeout) => {
+    clearTimeout(timeout)
+  })
+  toastTimeouts.clear()
+  dispatch({
+    type: "REMOVE_TOAST",
+  })
+}
+
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
-      // Clear any existing toasts before adding a new one
-      state.toasts.forEach(toast => {
+      // First, dismiss all existing toasts
+      state.toasts.forEach((toast) => {
         if (toast.open) {
           dispatch({ type: "DISMISS_TOAST", toastId: toast.id })
         }
       })
+      
+      // Wait a tiny bit to avoid flicker
+      setTimeout(() => {
+        // If we already have a toast with this ID, don't add a new one
+        const hasToastWithId = state.toasts.some(t => 
+          action.toast.id && t.id === action.toast.id
+        )
+        
+        if (hasToastWithId) {
+          return
+        }
+        
+        // Add the new toast
+        dispatch({
+          type: "UPDATE_TOAST",
+          toast: { ...action.toast, open: true }
+        })
+      }, 10)
       
       return {
         ...state,
@@ -98,8 +127,7 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      // Side effects - add to remove queue
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -147,33 +175,53 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
-  const id = genId()
+function toast({ id, ...props }: Toast & { id?: string }) {
+  // Allow the caller to specify a custom id
+  const toastId = id || genId()
 
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
+  // If there's already a toast with this ID, dismiss it first
+  if (id) {
+    memoryState.toasts.forEach(t => {
+      if (t.id === id) {
+        dispatch({ type: "DISMISS_TOAST", toastId: id })
+      }
     })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+    
+    // Wait for the dismiss animation
+    setTimeout(() => {
+      dispatchAddToast({ ...props, id: toastId })
+    }, 100)
+  } else {
+    dispatchAddToast({ ...props, id: toastId })
+  }
 
+  return {
+    id: toastId,
+    dismiss: () => dispatch({ type: "DISMISS_TOAST", toastId }),
+    update: (props: ToasterToast) =>
+      dispatch({
+        type: "UPDATE_TOAST",
+        toast: { ...props, id: toastId },
+      }),
+  }
+}
+
+function dispatchAddToast(props: ToasterToast) {
+  // Dismiss any existing toasts first
+  clearAllToasts()
+  
+  // Add the new toast
   dispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
-      id,
+      id: props.id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) dismiss()
+        if (!open) dispatch({ type: "DISMISS_TOAST", toastId: props.id })
       },
     },
   })
-
-  return {
-    id: id,
-    dismiss,
-    update,
-  }
 }
 
 function useToast() {

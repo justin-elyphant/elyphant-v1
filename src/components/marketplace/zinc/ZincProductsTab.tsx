@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,13 +17,17 @@ const ZincProductsTab = () => {
     syncProducts 
   } = useZincIntegration();
   const [localSearchTerm, setLocalSearchTerm] = useState("");
+  const searchInProgressRef = useRef(false);
   
   const amazonProducts = products.filter(p => p.vendor === "Amazon via Zinc");
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (localSearchTerm.trim()) {
-      handleSearch(localSearchTerm);
+    
+    if (localSearchTerm.trim() && !searchInProgressRef.current) {
+      searchInProgressRef.current = true;
+      await handleSearch(localSearchTerm);
+      searchInProgressRef.current = false;
     }
   };
   

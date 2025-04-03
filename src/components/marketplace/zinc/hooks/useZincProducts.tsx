@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useProducts } from "@/contexts/ProductContext";
 import { searchProducts, ZincProduct } from "../zincService";
@@ -9,10 +9,22 @@ export const useZincProducts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { setProducts } = useProducts();
   const { isLoading, setIsLoading, setError, updateLastSync } = useZincConnection();
+  const toastShownRef = useRef<{ [key: string]: boolean }>({});
+
+  const clearToastShown = () => {
+    toastShownRef.current = {};
+  };
+
+  // Reset toast tracking every 3 seconds to avoid permanent blocking
+  setInterval(clearToastShown, 3000);
 
   const syncProducts = async () => {
+    // Avoid duplicate toasts
+    if (toastShownRef.current['syncing']) return [];
+    
     setIsLoading(true);
     setError(null);
+    toastShownRef.current['syncing'] = true;
     
     try {
       // Search for some popular products
@@ -80,31 +92,49 @@ export const useZincProducts = () => {
       updateLastSync();
       
       // Only show ONE summary toast
-      toast({
-        title: "Products Synced",
-        description: `Successfully synced ${amazonProducts.length} products from Amazon`,
-      });
+      if (!toastShownRef.current['sync-complete']) {
+        toast({
+          title: "Products Synced",
+          description: `Successfully synced ${amazonProducts.length} products from Amazon`,
+          id: "products-synced" // Use a fixed ID to ensure only one appears
+        });
+        toastShownRef.current['sync-complete'] = true;
+      }
       
       return amazonProducts;
     } catch (err) {
       console.error("Error syncing products:", err);
       setError("Failed to sync products from Amazon. Please try again later.");
-      toast({
-        title: "Sync Failed",
-        description: "Failed to sync products from Amazon",
-        variant: "destructive",
-      });
+      
+      if (!toastShownRef.current['sync-error']) {
+        toast({
+          title: "Sync Failed",
+          description: "Failed to sync products from Amazon",
+          variant: "destructive",
+          id: "sync-error" // Use a fixed ID to ensure only one appears
+        });
+        toastShownRef.current['sync-error'] = true;
+      }
+      
       return [];
     } finally {
       setIsLoading(false);
+      // Reset syncing flag after a delay
+      setTimeout(() => {
+        toastShownRef.current['syncing'] = false;
+      }, 1000);
     }
   };
 
   const handleSearch = async (term: string) => {
     if (!term.trim()) return [];
     
+    // Avoid duplicate search toasts
+    if (toastShownRef.current['searching']) return [];
+    
     setIsLoading(true);
     setSearchTerm(term);
+    toastShownRef.current['searching'] = true;
     
     try {
       const results = await searchProducts(term);
@@ -116,22 +146,36 @@ export const useZincProducts = () => {
       updateProductsInContext(amazonProducts);
       
       // Show only ONE toast notification with a summary
-      toast({
-        title: "Search Complete",
-        description: `Found ${amazonProducts.length} products matching "${term}"`,
-      });
+      if (!toastShownRef.current['search-complete']) {
+        toast({
+          title: "Search Complete",
+          description: `Found ${amazonProducts.length} products matching "${term}"`,
+          id: "search-complete" // Use a fixed ID to ensure only one appears
+        });
+        toastShownRef.current['search-complete'] = true;
+      }
       
       return amazonProducts;
     } catch (err) {
       console.error("Error searching products:", err);
-      toast({
-        title: "Search Failed",
-        description: "Failed to search products",
-        variant: "destructive",
-      });
+      
+      if (!toastShownRef.current['search-error']) {
+        toast({
+          title: "Search Failed",
+          description: "Failed to search products",
+          variant: "destructive",
+          id: "search-error" // Use a fixed ID to ensure only one appears
+        });
+        toastShownRef.current['search-error'] = true;
+      }
+      
       return [];
     } finally {
       setIsLoading(false);
+      // Reset searching flag after a delay
+      setTimeout(() => {
+        toastShownRef.current['searching'] = false;
+      }, 1000);
     }
   };
 

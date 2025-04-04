@@ -19,6 +19,8 @@ const Connections = () => {
     friends,
     following,
     suggestions,
+    filters,
+    setFilters,
     handleRelationshipChange,
     handleSendVerificationRequest
   } = useConnections();
@@ -27,7 +29,9 @@ const Connections = () => {
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <ConnectionsHeader 
         searchTerm={searchTerm} 
-        setSearchTerm={setSearchTerm} 
+        setSearchTerm={setSearchTerm}
+        filters={filters}
+        setFilters={setFilters}
       />
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">

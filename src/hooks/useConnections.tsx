@@ -1,6 +1,5 @@
-
-import { useState } from "react";
-import { Connection, RelationshipType } from "@/types/connections";
+import { useState, useCallback } from "react";
+import { Connection, RelationshipType, DataVerificationStatus } from "@/types/connections";
 import { toast } from "sonner";
 
 // Mock data
@@ -143,16 +142,51 @@ const mockSuggestions: Connection[] = [
   }
 ];
 
+export type ConnectionFilters = {
+  relationship?: RelationshipType | 'all';
+  verificationStatus?: 'verified' | 'incomplete' | 'all';
+};
+
 export const useConnections = () => {
   const [connections, setConnections] = useState<Connection[]>(mockConnections);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("friends");
+  const [filters, setFilters] = useState<ConnectionFilters>({
+    relationship: 'all',
+    verificationStatus: 'all'
+  });
+  
+  const applyFilters = useCallback((connection: Connection) => {
+    if (filters.relationship && filters.relationship !== 'all') {
+      if (connection.relationship !== filters.relationship) {
+        return false;
+      }
+    }
+    
+    if (filters.verificationStatus && filters.verificationStatus !== 'all') {
+      const statuses = Object.values(connection.dataStatus);
+      
+      if (filters.verificationStatus === 'verified') {
+        if (!statuses.every(status => status === 'verified')) {
+          return false;
+        }
+      } else if (filters.verificationStatus === 'incomplete') {
+        if (!statuses.some(status => status === 'missing' || status === 'outdated')) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }, [filters]);
   
   const filteredConnections = connections.filter(connection => {
-    return (
+    const matchesSearch = (
       connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       connection.username.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    
+    return matchesSearch && applyFilters(connection);
   });
   
   const friends = filteredConnections.filter(conn => conn.type === 'friend');
@@ -189,6 +223,8 @@ export const useConnections = () => {
     friends,
     following,
     suggestions,
+    filters,
+    setFilters,
     handleRelationshipChange,
     handleSendVerificationRequest
   };

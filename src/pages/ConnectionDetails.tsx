@@ -207,8 +207,8 @@ const ConnectionDetails = () => {
                     </div>
                   </div>
                   <Badge 
-                    variant={connection.dataStatus.shipping === 'verified' ? 'success' : 
-                             connection.dataStatus.shipping === 'outdated' ? 'warning' : 'destructive'}
+                    variant={connection.dataStatus.shipping === 'verified' ? 'secondary' : 
+                             connection.dataStatus.shipping === 'outdated' ? 'outline' : 'destructive'}
                     className={
                       connection.dataStatus.shipping === 'verified' ? 'bg-green-100 text-green-800' : 
                       connection.dataStatus.shipping === 'outdated' ? 'bg-yellow-100 text-yellow-800' : 
@@ -234,8 +234,8 @@ const ConnectionDetails = () => {
                     </div>
                   </div>
                   <Badge 
-                    variant={connection.dataStatus.birthday === 'verified' ? 'success' : 
-                             connection.dataStatus.birthday === 'outdated' ? 'warning' : 'destructive'}
+                    variant={connection.dataStatus.birthday === 'verified' ? 'secondary' : 
+                             connection.dataStatus.birthday === 'outdated' ? 'outline' : 'destructive'}
                     className={
                       connection.dataStatus.birthday === 'verified' ? 'bg-green-100 text-green-800' : 
                       connection.dataStatus.birthday === 'outdated' ? 'bg-yellow-100 text-yellow-800' : 
@@ -261,8 +261,8 @@ const ConnectionDetails = () => {
                     </div>
                   </div>
                   <Badge 
-                    variant={connection.dataStatus.email === 'verified' ? 'success' : 
-                             connection.dataStatus.email === 'outdated' ? 'warning' : 'destructive'}
+                    variant={connection.dataStatus.email === 'verified' ? 'secondary' : 
+                             connection.dataStatus.email === 'outdated' ? 'outline' : 'destructive'}
                     className={
                       connection.dataStatus.email === 'verified' ? 'bg-green-100 text-green-800' : 
                       connection.dataStatus.email === 'outdated' ? 'bg-yellow-100 text-yellow-800' : 

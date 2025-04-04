@@ -1,16 +1,25 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, UserPlus, Search, Filter } from "lucide-react";
+import { ArrowLeft, UserPlus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import FilterOptions from "./FilterOptions";
+import { ConnectionFilters } from "@/hooks/useConnections";
 
 interface ConnectionsHeaderProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  filters: ConnectionFilters;
+  setFilters: (filters: ConnectionFilters) => void;
 }
 
-const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({ searchTerm, setSearchTerm }) => {
+const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({ 
+  searchTerm, 
+  setSearchTerm, 
+  filters, 
+  setFilters
+}) => {
   return (
     <>
       <div className="mb-6">
@@ -45,9 +54,7 @@ const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({ searchTerm, setSe
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
-        </Button>
+        <FilterOptions filters={filters} onFiltersChange={setFilters} />
       </div>
     </>
   );

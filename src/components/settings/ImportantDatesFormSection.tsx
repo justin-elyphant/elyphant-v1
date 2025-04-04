@@ -1,18 +1,21 @@
 
 import React from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
+interface ImportantDate {
+  date: Date;
+  description: string;
+}
+
 interface ImportantDatesFormSectionProps {
-  importantDates: Array<{
-    date: Date;
-    description: string;
-  }>;
+  importantDates: ImportantDate[];
   removeImportantDate: (index: number) => void;
   newImportantDate: {
     date: Date | undefined;
@@ -32,37 +35,50 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
   setNewImportantDate,
   addImportantDate
 }) => {
+  const handleDateChange = (date: Date | undefined) => {
+    setNewImportantDate({
+      ...newImportantDate,
+      date
+    });
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewImportantDate({
+      ...newImportantDate,
+      description: e.target.value
+    });
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Important Dates</h3>
-      <p className="text-sm text-muted-foreground">Add important dates for gift reminders</p>
+      <p className="text-sm text-muted-foreground">Add dates that matter to you</p>
       
-      <div className="space-y-3 mb-4">
-        {importantDates.map((date, index) => (
+      <div className="flex flex-wrap gap-2 mb-4">
+        {importantDates.map((importantDate, index) => (
           <div 
             key={index} 
-            className="flex items-center justify-between bg-muted p-3 rounded-md"
+            className="bg-muted px-3 py-1 rounded-full flex items-center gap-1"
           >
-            <div>
-              <p className="font-medium">{format(new Date(date.date), "PPP")}</p>
-              <p className="text-sm text-muted-foreground">{date.description}</p>
-            </div>
+            <span>{format(new Date(importantDate.date), "MMM d, yyyy")} - {importantDate.description}</span>
             <button 
               type="button" 
               onClick={() => removeImportantDate(index)}
               className="text-muted-foreground hover:text-foreground"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </button>
           </div>
         ))}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="date">Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                id="date"
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
@@ -81,7 +97,7 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
               <Calendar
                 mode="single"
                 selected={newImportantDate.date}
-                onSelect={(date) => setNewImportantDate(prev => ({ ...prev, date }))}
+                onSelect={handleDateChange}
                 initialFocus
                 className={cn("p-3 pointer-events-auto")}
               />
@@ -89,22 +105,25 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
           </Popover>
         </div>
         
-        <div className="md:col-span-2 flex gap-2">
-          <Input
-            value={newImportantDate.description}
-            onChange={(e) => setNewImportantDate(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Description (e.g., Anniversary, Graduation)"
-            className="flex-1"
-          />
-          <Button 
-            type="button" 
-            onClick={addImportantDate}
-            variant="outline"
-            disabled={!newImportantDate.date || !newImportantDate.description}
-          >
-            <Plus className="h-4 w-4" />
-            Add
-          </Button>
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <div className="flex gap-2">
+            <Input 
+              id="description"
+              value={newImportantDate.description}
+              onChange={handleDescriptionChange}
+              placeholder="e.g., Anniversary"
+              className="flex-1"
+            />
+            <Button 
+              type="button" 
+              onClick={addImportantDate}
+              variant="outline"
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          </div>
         </div>
       </div>
     </div>

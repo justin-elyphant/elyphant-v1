@@ -22,12 +22,14 @@ const SignUp = () => {
     step,
     profileType,
     profileImage,
+    profileData,
     formValues,
     emailSent,
     userEmail,
     handleSignUpSubmit,
     handleProfileTypeSelection,
     handleImageUpload,
+    handleProfileDataChange,
     completeOnboarding
   } = useSignUpProcess(invitedBy, senderUserId);
 
@@ -55,6 +57,8 @@ const SignUp = () => {
           onImageUpload={handleImageUpload}
           onComplete={handleOnboardingComplete}
           onSkip={handleOnboardingComplete}
+          onProfileDataChange={handleProfileDataChange}
+          initialProfileData={profileData}
         />
       )}
     </div>

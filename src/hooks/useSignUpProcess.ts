@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,10 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   const [userId, setUserId] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState({
+    bio: "",
+    interests: [] as string[]
+  });
 
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
@@ -73,21 +78,56 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     }
   };
 
+  const handleProfileDataChange = (data: any) => {
+    setProfileData(data);
+  };
+
   const completeOnboarding = async () => {
-    if (!userId) return;
+    if (!userId) return false;
     
     try {
+      // Upload profile image to storage if exists
+      let profileImageUrl = profileImage;
+      
+      if (profileImage && profileImage.startsWith('data:')) {
+        // Extract file data from base64 string
+        const fileExt = profileImage.substring(profileImage.indexOf('/') + 1, profileImage.indexOf(';base64'));
+        const fileName = `${userId}.${fileExt}`;
+        const fileData = profileImage.replace(/^data:image\/\w+;base64,/, '');
+        
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, decode(fileData), {
+            contentType: `image/${fileExt}`,
+            upsert: true
+          });
+          
+        if (error) {
+          console.error("Error uploading profile image:", error);
+        } else if (data) {
+          const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+            
+          profileImageUrl = publicUrlData.publicUrl;
+        }
+      }
+      
       // Update user profile with additional info
       const { error } = await supabase
         .from('profiles')
         .update({
-          profile_image: profileImage,
+          profile_image: profileImageUrl,
           profile_type: profileType,
+          bio: profileData.bio,
+          interests: profileData.interests,
         })
         .eq('id', userId);
       
       if (error) {
         console.error("Error updating profile:", error);
+        return false;
       }
       
       // If user was invited by someone (gift purchase), create a connection
@@ -112,12 +152,23 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
       return false;
     }
   };
+  
+  // Helper function to decode base64 to binary
+  function decode(base64String: string): Uint8Array {
+    const binaryString = atob(base64String);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  }
 
   return {
     step,
     setStep,
     profileType,
     profileImage,
+    profileData,
     formValues,
     userId,
     emailSent,
@@ -125,6 +176,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     handleSignUpSubmit,
     handleProfileTypeSelection,
     handleImageUpload,
+    handleProfileDataChange,
     completeOnboarding
   };
 };

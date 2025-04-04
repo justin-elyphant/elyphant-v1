@@ -11,7 +11,7 @@ import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import InterestsFormSection from "./InterestsFormSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
-import DeleteProfileSection from "./DeleteProfileSection";
+import DeleteAccount from "./DeleteAccount";
 
 const GeneralSettings = () => {
   const [userData, setUserData] = useLocalStorage("userData", null);
@@ -243,7 +243,7 @@ const GeneralSettings = () => {
         Save Profile Information
       </Button>
       
-      <DeleteProfileSection />
+      <DeleteAccount />
     </form>
   );
 };

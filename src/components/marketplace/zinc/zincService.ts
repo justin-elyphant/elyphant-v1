@@ -58,6 +58,5 @@ export {
   fetchProductDetails,
   processOrder,
   getOrderStatus,
-  cancelOrder,
-  testPurchase
+  cancelOrder
 };

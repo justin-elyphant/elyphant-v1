@@ -13,6 +13,7 @@ const SearchBar = () => {
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   
+  // Get search term from URL on initial load
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const searchParam = params.get("search");
@@ -21,60 +22,41 @@ const SearchBar = () => {
     }
   }, [location.search]);
   
+  // Handle form submission
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      console.log(`SearchBar: Navigating to marketplace with search term "${searchTerm}"`);
       navigate(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
     }
   };
 
-  const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    
-    if (e.target.value.trim().length > 0 && !isSearchOpen) {
-      setIsSearchOpen(true);
-    } else if (e.target.value.trim().length === 0) {
-      setIsSearchOpen(false);
-    }
-  };
-
-  const handleSearchItemSelect = (value: string) => {
-    if (!value.trim()) return;
-    
+  // Simple input change handler
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setSearchTerm(value);
-    console.log(`SearchBar: Selected search item "${value}"`);
-    setIsSearchOpen(false);
     
-    // Use navigate directly instead of setTimeout
-    navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSearch(e as unknown as React.FormEvent);
-    } else if (e.key === 'Escape') {
+    // Open popover if we have text, close if empty
+    if (value.trim()) {
+      setIsSearchOpen(true);
+    } else {
       setIsSearchOpen(false);
     }
   };
 
-  const handlePopoverOpenChange = (open: boolean) => {
-    // Only control the open state, don't interfere with focus
-    setIsSearchOpen(open);
-  };
-
-  const handleInputClick = () => {
-    if (searchTerm.trim().length > 0) {
-      setIsSearchOpen(true);
+  // Handle selecting an item from search results
+  const handleSearchItemSelect = (value: string) => {
+    if (value.trim()) {
+      setSearchTerm(value);
+      setIsSearchOpen(false);
+      navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     }
   };
 
-  const handleClearButtonClick = () => {
+  // Clear the search input
+  const handleClearSearch = () => {
     setSearchTerm("");
     setIsSearchOpen(false);
-    
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -82,43 +64,40 @@ const SearchBar = () => {
 
   return (
     <form onSubmit={handleSearch} className="w-full">
-      <Popover open={isSearchOpen} onOpenChange={handlePopoverOpenChange}>
-        <PopoverTrigger asChild>
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input 
-              ref={inputRef}
-              placeholder="Search products, brands, friends, or experiences..." 
-              className="pl-10 w-full"
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              onClick={handleInputClick}
-              onKeyDown={handleKeyDown}
-              autoComplete="off"
-              type="text"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
-            />
-            {searchTerm.length > 0 && (
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4"
-                onClick={handleClearButtonClick}
-              >
-                &times;
-              </button>
-            )}
-          </div>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-[calc(100vw-2rem)] sm:w-[450px] z-50" align="start">
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input 
+          ref={inputRef}
+          type="text"
+          placeholder="Search products, brands, friends, or experiences..." 
+          className="pl-10 w-full"
+          value={searchTerm}
+          onChange={handleInputChange}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+        />
+        {searchTerm.length > 0 && (
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4"
+            onClick={handleClearSearch}
+          >
+            &times;
+          </button>
+        )}
+      </div>
+      
+      {isSearchOpen && searchTerm.trim() && (
+        <div className="absolute z-50 w-[calc(100vw-2rem)] sm:w-[450px] mt-1 bg-popover rounded-md border shadow-md">
           <SearchResults 
             searchTerm={searchTerm}
             onSearchTermChange={setSearchTerm}
             onItemSelect={handleSearchItemSelect}
           />
-        </PopoverContent>
-      </Popover>
+        </div>
+      )}
     </form>
   );
 };

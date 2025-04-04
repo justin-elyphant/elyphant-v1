@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,7 @@ import { testPurchase } from "./zincService";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const ZincOrdersTab = () => {
   const [orders, setOrders] = useState(getMockOrders());
@@ -19,11 +19,11 @@ const ZincOrdersTab = () => {
   const [isTestPurchaseModalOpen, setIsTestPurchaseModalOpen] = useState(false);
   const [testProductId, setTestProductId] = useState("B01DFKC2SO"); // Default test product - Amazon Echo Dot
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSimulatedTest, setIsSimulatedTest] = useState(true);
   const [hasAmazonCredentials, setHasAmazonCredentials] = useState(
     localStorage.getItem('amazonCredentials') !== null
   );
 
-  // Function to get appropriate badge variant based on order status
   const getBadgeVariant = (status: string) => {
     switch (status) {
       case "delivered":
@@ -37,7 +37,6 @@ const ZincOrdersTab = () => {
     }
   };
 
-  // Function to get icon based on order status
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "delivered":
@@ -72,7 +71,7 @@ const ZincOrdersTab = () => {
       toast.success("Order processed successfully", { id: "process-order" });
     }, 2000);
   };
-  
+
   const handleManageCredentials = () => {
     setIsCredentialsModalOpen(true);
   };
@@ -195,21 +194,18 @@ const ZincOrdersTab = () => {
         </Card>
       ))}
       
-      {/* Amazon Credentials Manager */}
       <AmazonCredentialsManager 
         isOpen={isCredentialsModalOpen}
         onClose={() => setIsCredentialsModalOpen(false)}
         onSave={handleSaveCredentials}
       />
 
-      {/* Test Purchase Dialog */}
       <Dialog open={isTestPurchaseModalOpen} onOpenChange={setIsTestPurchaseModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Test Purchase</DialogTitle>
             <DialogDescription>
-              This will process a test purchase using your Amazon account.
-              Enter an Amazon product ID to test.
+              This will process a test purchase using Amazon. No actual order will be placed.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -225,6 +221,20 @@ const ZincOrdersTab = () => {
                 Enter an Amazon ASIN (product ID). Default is B01DFKC2SO for Amazon Echo Dot.
               </p>
             </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="simulated-test" 
+                checked={isSimulatedTest}
+                onCheckedChange={setIsSimulatedTest}
+              />
+              <Label htmlFor="simulated-test">Fully simulate test (recommended)</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isSimulatedTest ? 
+                "This will simulate the entire order process, no real orders will be placed." : 
+                "WARNING: Disabling simulation may attempt to place a real order on Amazon."}
+            </p>
           </div>
           <DialogFooter>
             <Button 

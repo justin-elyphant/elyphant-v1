@@ -1,4 +1,3 @@
-
 // Zinc API product type
 export type ZincProduct = {
   product_id: string;
@@ -97,16 +96,12 @@ export type ZincOrderRequest = {
     first_name: string;
     last_name: string;
     address_line1: string;
-    address_line2?: string;
     zip_code: string;
     city: string;
     state: string;
     country: string;
     phone_number: string;
   };
-  is_gift?: boolean;
-  gift_message?: string;
-  shipping_method?: string;
   payment_method: {
     name_on_card: string;
     number: string;
@@ -118,25 +113,18 @@ export type ZincOrderRequest = {
     first_name: string;
     last_name: string;
     address_line1: string;
-    address_line2?: string;
     zip_code: string;
     city: string;
     state: string;
     country: string;
     phone_number: string;
   };
+  is_gift?: boolean;
   retailer_credentials?: {
     email: string;
     password: string;
   };
-  webhooks?: {
-    request_succeeded?: string;
-    request_failed?: string;
-    tracking_obtained?: string;
-  };
-  client_notes?: {
-    [key: string]: string;
-  };
+  is_test?: boolean; // New property to indicate test orders
 };
 
 // Zinc API return request type

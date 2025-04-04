@@ -45,7 +45,8 @@ export const testPurchase = async (productId: string) => {
       country: 'US',
       phone_number: '5555555555'
     },
-    is_gift: false
+    is_gift: false,
+    is_test: true // Add this flag to indicate a test order
   };
 
   // Process the order

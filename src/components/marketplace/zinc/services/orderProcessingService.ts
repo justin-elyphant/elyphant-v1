@@ -1,4 +1,3 @@
-
 import { ZINC_API_BASE_URL, getZincHeaders } from '../zincCore';
 import { ZincOrderRequest, ZincOrder } from '../types';
 import { toast } from "sonner";
@@ -11,6 +10,13 @@ import { toast } from "sonner";
 export const processOrder = async (orderRequest: ZincOrderRequest): Promise<ZincOrder | null> => {
   try {
     console.log("Processing order through Zinc API:", orderRequest);
+    
+    // Check if this is a test order
+    const isTestOrder = orderRequest.is_test === true;
+    if (isTestOrder) {
+      console.log("This is a TEST order - will not actually charge your card or place an Amazon order");
+      toast.info("This is a TEST order - no actual Amazon order will be placed");
+    }
     
     // Check for stored Amazon credentials
     const amazonCredentialsString = localStorage.getItem('amazonCredentials');
@@ -31,6 +37,26 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
       console.log("No Amazon credentials found in local storage");
     }
     
+    // For test orders, we simulate the API response
+    if (isTestOrder) {
+      console.log("Simulating a Zinc API order response for test order");
+      
+      // Create a simulated response after a short delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const testOrderId = 'test-' + Math.random().toString(36).substring(2, 15);
+      
+      return {
+        id: testOrderId,
+        status: "processing",
+        created_at: new Date().toISOString(),
+        retailer: orderRequest.retailer,
+        products: orderRequest.products,
+        total_price: 99.99, // Simulated price
+      };
+    }
+    
+    // For real orders, process through the Zinc API
     const response = await fetch(`${ZINC_API_BASE_URL}/orders`, {
       method: 'POST',
       headers: getZincHeaders(),

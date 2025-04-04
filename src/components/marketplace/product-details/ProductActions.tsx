@@ -11,6 +11,7 @@ interface ProductActionsProps {
   onAddToCart?: () => void;
   onAddToWishlist?: (e: React.MouseEvent) => void;
   isInWishlist?: boolean;
+  userData?: any;
 }
 
 const ProductActions = ({
@@ -19,6 +20,7 @@ const ProductActions = ({
   onAddToCart,
   onAddToWishlist,
   isInWishlist = false,
+  userData,
 }: ProductActionsProps) => {
   const { addToCart } = useCart();
 

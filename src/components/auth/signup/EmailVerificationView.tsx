@@ -72,6 +72,14 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
             Resend Verification Email
           </Button>
         </div>
+        
+        <Alert className="bg-amber-50 border-amber-200 mt-6">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Important Note</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            After verifying your email, please return to this site directly rather than following the redirect link.
+          </AlertDescription>
+        </Alert>
       </CardContent>
       <CardFooter className="flex flex-col items-center gap-4">
         <div className="text-sm text-muted-foreground">

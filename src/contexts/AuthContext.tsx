@@ -4,6 +4,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Profile } from "@/types/supabase";
+import { useNavigate } from "react-router-dom";
 
 interface AuthState {
   user: User | null;
@@ -29,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener
@@ -40,12 +42,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (event === 'SIGNED_IN') {
           toast.success('Signed in successfully!');
+          navigate('/dashboard');
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
         } else if (event === 'USER_UPDATED') {
           // This fires when email verification completes
           if (session?.user.email_confirmed_at) {
             toast.success('Email verified successfully!');
+            navigate('/dashboard');
           }
         }
       }
@@ -59,10 +63,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    navigate('/');
   };
 
   const getUserProfile = async () => {
@@ -88,9 +93,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
+    // Get current site URL for redirection after email verification
+    const currentUrl = window.location.origin;
+    const redirectTo = `${currentUrl}/dashboard`;
+    
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: user.email,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
     });
     
     if (error) {

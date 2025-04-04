@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,10 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
 
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
+      // Get current site URL for redirection after email verification
+      const currentUrl = window.location.origin;
+      const redirectTo = `${currentUrl}/dashboard`;
+      
       // Create account with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
@@ -26,7 +29,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
             invited_by: invitedBy,
             sender_user_id: senderUserId,
           },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: redirectTo,
         }
       });
       

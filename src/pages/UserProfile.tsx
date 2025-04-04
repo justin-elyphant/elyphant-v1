@@ -10,7 +10,10 @@ import {
   Settings, 
   Edit,
   Bookmark,
-  ArrowLeft
+  ArrowLeft,
+  CalendarDays,
+  MapPin,
+  Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +28,13 @@ import {
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableRow
+} from "@/components/ui/table";
 
 // Mock wishlist data - in a real app, this would come from a database
 const mockWishlists = [
@@ -167,6 +177,7 @@ const UserProfile = () => {
       {/* Profile info */}
       <div className="pl-8 mb-8">
         <h1 className="text-2xl font-bold">{userData?.name || "User Name"}</h1>
+        <div className="text-sm text-muted-foreground mb-2">@{userData?.username || "username"}</div>
         <div className="flex items-center gap-6 mt-2 text-sm text-muted-foreground">
           <div className="flex items-center">
             <Users className="h-4 w-4 mr-1" />
@@ -181,14 +192,97 @@ const UserProfile = () => {
             <span className="font-medium">254</span> Likes
           </div>
         </div>
-        <p className="mt-4 text-muted-foreground">
-          {userData?.profileType === "gifter" 
-            ? "I love finding the perfect gifts for my friends and family!" 
-            : userData?.profileType === "giftee"
-            ? "Check out my wishlists for gift ideas!"
-            : "I enjoy both giving and receiving gifts!"}
-        </p>
+        {userData?.bio && (
+          <p className="mt-4 text-muted-foreground">{userData.bio}</p>
+        )}
+        {!userData?.bio && (
+          <p className="mt-4 text-muted-foreground">
+            {userData?.profileType === "gifter" 
+              ? "I love finding the perfect gifts for my friends and family!" 
+              : userData?.profileType === "giftee"
+              ? "Check out my wishlists for gift ideas!"
+              : "I enjoy both giving and receiving gifts!"}
+          </p>
+        )}
+        
+        {/* Personal Info Card */}
+        {(userData?.birthday || userData?.address) && (
+          <Card className="mt-4 w-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-md">Personal Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableBody>
+                  {userData?.birthday && (
+                    <TableRow>
+                      <TableCell className="font-medium flex items-center">
+                        <CalendarDays className="h-4 w-4 mr-2" />
+                        Birthday
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(userData.birthday), "PPP")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {userData?.address?.city && userData?.address?.country && (
+                    <TableRow>
+                      <TableCell className="font-medium flex items-center">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Location
+                      </TableCell>
+                      <TableCell>
+                        {userData.address.city}, {userData.address.country}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </div>
+      
+      {/* Interests Section */}
+      {userData?.interests && userData.interests.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-medium mb-2">Interests</h3>
+          <div className="flex flex-wrap gap-2">
+            {userData.interests.map((interest, index) => (
+              <div 
+                key={index} 
+                className="bg-muted px-3 py-1 rounded-full text-sm"
+              >
+                {interest}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Important Dates */}
+      {userData?.importantDates && userData.importantDates.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-medium mb-2">Important Dates</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userData.importantDates.map((date, index) => (
+              <Card key={index}>
+                <CardContent className="p-4 flex items-start gap-3">
+                  <Gift className="h-5 w-5 text-muted-foreground mt-1" />
+                  <div>
+                    <div className="font-medium">
+                      {format(new Date(date.date), "PPP")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {date.description}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
       
       <Separator className="my-6" />
       

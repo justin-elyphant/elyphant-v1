@@ -5,7 +5,7 @@ import MarketplaceHeader from "@/components/marketplace/MarketplaceHeader";
 import MarketplaceContent from "@/components/marketplace/MarketplaceContent";
 import { ProductProvider, useProducts } from "@/contexts/ProductContext";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { handleBrandProducts } from "@/utils/brandUtils";
+import { handleBrandProducts, getAppleFallbackProducts } from "@/utils/brandUtils";
 import { toast } from "sonner";
 
 const Marketplace = () => {

@@ -1,20 +1,14 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, User, RefreshCw } from "lucide-react";
+import { Mail, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { loadCaptchaEnginge, LoadCanvasTemplate, validateCaptcha } from "react-simple-captcha";
+import { Form } from "@/components/ui/form";
+import InputField from "./fields/InputField";
+import { CaptchaField } from "./fields/CaptchaField";
+import { validateCaptcha } from "react-simple-captcha";
 
 // Schema definition
 const signUpSchema = z.object({
@@ -43,17 +37,6 @@ const SignUpForm = ({ onSubmitSuccess }: SignUpFormProps) => {
     },
   });
 
-  useEffect(() => {
-    // Load the captcha engine when the component mounts
-    loadCaptchaEnginge(6);
-  }, []);
-
-  const refreshCaptcha = () => {
-    loadCaptchaEnginge(6);
-    setCaptchaError("");
-    form.setValue("captcha", "");
-  };
-
   const onSubmit = (values: SignUpValues) => {
     // Validate the captcha
     if (!validateCaptcha(values.captcha)) {
@@ -71,92 +54,34 @@ const SignUpForm = ({ onSubmitSuccess }: SignUpFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
+        <InputField
+          form={form}
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input placeholder="Your name" className="pl-10" {...field} />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Name"
+          placeholder="Your name"
+          Icon={User}
         />
-        <FormField
-          control={form.control}
+        
+        <InputField
+          form={form}
           name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input type="email" placeholder="your@email.com" className="pl-10" {...field} />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Email"
+          placeholder="your@email.com"
+          type="email"
+          Icon={Mail}
         />
-        <FormField
-          control={form.control}
+        
+        <InputField
+          form={form}
           name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input type="password" placeholder="********" className="pl-10" {...field} />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Password"
+          placeholder="********"
+          type="password"
+          Icon={Lock}
         />
 
-        {/* Captcha Field */}
-        <div className="space-y-2">
-          <div className="relative bg-gray-50 p-3 rounded-md border">
-            <LoadCanvasTemplate />
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              className="absolute top-3 right-3 h-8 w-8"
-              onClick={refreshCaptcha}
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span className="sr-only">Refresh Captcha</span>
-            </Button>
-          </div>
-          
-          <FormField
-            control={form.control}
-            name="captcha"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Captcha</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Enter the code shown above" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {captchaError && (
-            <p className="text-sm font-medium text-destructive">{captchaError}</p>
-          )}
-        </div>
-        
+        <CaptchaField form={form} />
+
         <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
           Create Account
         </Button>

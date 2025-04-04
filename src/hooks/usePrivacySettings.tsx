@@ -20,7 +20,6 @@ const defaultSettings: PrivacySettingsType = {
 };
 
 export const usePrivacySettings = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [settings, setSettings] = useLocalStorage<PrivacySettingsType>(
     "privacySettings", 
     defaultSettings
@@ -50,8 +49,6 @@ export const usePrivacySettings = () => {
   return {
     settings: pendingChanges,
     updateSetting,
-    isOpen,
-    setIsOpen,
     saveSettings
   };
 };

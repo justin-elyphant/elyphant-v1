@@ -1,40 +1,16 @@
 
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { 
-  User, 
-  Users, 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  Settings, 
-  Edit,
-  Bookmark,
-  ArrowLeft,
-  CalendarDays,
-  MapPin,
-  Gift
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useParams } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableRow
-} from "@/components/ui/table";
+import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+
+// Import the newly created components
+import ProfileHeader from "@/components/user-profile/ProfileHeader";
+import ProfileBanner from "@/components/user-profile/ProfileBanner";
+import ProfileInfo from "@/components/user-profile/ProfileInfo";
+import InterestsSection from "@/components/user-profile/InterestsSection";
+import ImportantDatesSection from "@/components/user-profile/ImportantDatesSection";
+import ProfileTabs from "@/components/user-profile/ProfileTabs";
 
 // Mock wishlist data - in a real app, this would come from a database
 const mockWishlists = [
@@ -92,262 +68,30 @@ const UserProfile = () => {
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
-      <div className="mb-6">
-        <Button variant="ghost" asChild className="p-0">
-          <Link to="/dashboard">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Link>
-        </Button>
-      </div>
+      <ProfileHeader />
       
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-48 rounded-t-lg relative mb-16">
-        {/* Profile image */}
-        <div className="absolute -bottom-16 left-8">
-          <Avatar className="h-32 w-32 border-4 border-white">
-            {userData?.profileImage ? (
-              <AvatarImage src={userData.profileImage} alt={userData?.name} />
-            ) : (
-              <AvatarFallback className="bg-purple-100 text-purple-600 text-3xl">
-                {userData?.name?.substring(0, 2).toUpperCase() || "?"}
-              </AvatarFallback>
-            )}
-          </Avatar>
-        </div>
-        
-        {/* Action buttons */}
-        <div className="absolute bottom-4 right-4 flex gap-2">
-          {isCurrentUser ? (
-            <>
-              <Button size="sm" variant="secondary" asChild>
-                <Link to="/profile/edit">
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit Profile
-                </Link>
-              </Button>
-              <Button size="sm" variant="secondary" asChild>
-                <Link to="/settings">
-                  <Settings className="h-4 w-4 mr-1" />
-                  Settings
-                </Link>
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                size="sm" 
-                variant={isFollowing ? "secondary" : "default"}
-                onClick={handleFollow}
-                className={isFollowing ? "" : "bg-purple-600 hover:bg-purple-700"}
-              >
-                {isFollowing ? (
-                  <>
-                    <User className="h-4 w-4 mr-1" />
-                    Following
-                  </>
-                ) : (
-                  <>
-                    <User className="h-4 w-4 mr-1" />
-                    Follow
-                  </>
-                )}
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="secondary">
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    Message
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <div className="p-4">
-                    <h2 className="text-lg font-bold mb-2">Message Feature</h2>
-                    <p>Messaging functionality coming soon!</p>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <Button size="sm" variant="outline" onClick={handleShare}>
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+      <ProfileBanner 
+        userData={userData}
+        isCurrentUser={isCurrentUser}
+        isFollowing={isFollowing}
+        onFollow={handleFollow}
+        onShare={handleShare}
+      />
       
-      {/* Profile info */}
-      <div className="pl-8 mb-8">
-        <h1 className="text-2xl font-bold">{userData?.name || "User Name"}</h1>
-        <div className="text-sm text-muted-foreground mb-2">@{userData?.username || "username"}</div>
-        <div className="flex items-center gap-6 mt-2 text-sm text-muted-foreground">
-          <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            <span className="font-medium">127</span> Followers
-          </div>
-          <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            <span className="font-medium">83</span> Following
-          </div>
-          <div className="flex items-center">
-            <Heart className="h-4 w-4 mr-1" />
-            <span className="font-medium">254</span> Likes
-          </div>
-        </div>
-        {userData?.bio && (
-          <p className="mt-4 text-muted-foreground">{userData.bio}</p>
-        )}
-        {!userData?.bio && (
-          <p className="mt-4 text-muted-foreground">
-            {userData?.profileType === "gifter" 
-              ? "I love finding the perfect gifts for my friends and family!" 
-              : userData?.profileType === "giftee"
-              ? "Check out my wishlists for gift ideas!"
-              : "I enjoy both giving and receiving gifts!"}
-          </p>
-        )}
-        
-        {/* Personal Info Card */}
-        {(userData?.birthday || userData?.address) && (
-          <Card className="mt-4 w-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md">Personal Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableBody>
-                  {userData?.birthday && (
-                    <TableRow>
-                      <TableCell className="font-medium flex items-center">
-                        <CalendarDays className="h-4 w-4 mr-2" />
-                        Birthday
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(userData.birthday), "PPP")}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {userData?.address?.city && userData?.address?.country && (
-                    <TableRow>
-                      <TableCell className="font-medium flex items-center">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Location
-                      </TableCell>
-                      <TableCell>
-                        {userData.address.city}, {userData.address.country}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <ProfileInfo userData={userData} />
       
-      {/* Interests Section */}
-      {userData?.interests && userData.interests.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-medium mb-2">Interests</h3>
-          <div className="flex flex-wrap gap-2">
-            {userData.interests.map((interest, index) => (
-              <div 
-                key={index} 
-                className="bg-muted px-3 py-1 rounded-full text-sm"
-              >
-                {interest}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <InterestsSection interests={userData?.interests || []} />
       
-      {/* Important Dates */}
-      {userData?.importantDates && userData.importantDates.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-medium mb-2">Important Dates</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {userData.importantDates.map((date, index) => (
-              <Card key={index}>
-                <CardContent className="p-4 flex items-start gap-3">
-                  <Gift className="h-5 w-5 text-muted-foreground mt-1" />
-                  <div>
-                    <div className="font-medium">
-                      {format(new Date(date.date), "PPP")}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {date.description}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
+      <ImportantDatesSection importantDates={userData?.importantDates || []} />
       
       <Separator className="my-6" />
       
-      {/* Tabs for profile content */}
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full">
-          <TabsTrigger value="wishlists" className="flex-1">Wishlists</TabsTrigger>
-          <TabsTrigger value="favorites" className="flex-1">Favorites</TabsTrigger>
-          <TabsTrigger value="activity" className="flex-1">Activity</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="wishlists" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockWishlists.map(wishlist => (
-              <Card key={wishlist.id} className="overflow-hidden">
-                <div 
-                  className="h-36 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${wishlist.image})` }}
-                />
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{wishlist.title}</CardTitle>
-                  <CardDescription>{wishlist.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">{wishlist.itemCount} items</span>
-                    <Button variant="ghost" size="sm">
-                      <Bookmark className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {isCurrentUser && (
-              <Card className="flex items-center justify-center h-full border-dashed">
-                <CardContent className="py-8">
-                  <Button variant="outline" asChild>
-                    <Link to="/wishlists/create">
-                      Create New Wishlist
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="favorites" className="mt-6">
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium mb-2">No favorites yet</h3>
-            <p className="text-muted-foreground mb-4">When you find products you love, save them here for later.</p>
-            <Button asChild>
-              <Link to="/marketplace">Explore Marketplace</Link>
-            </Button>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="activity" className="mt-6">
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium mb-2">Activity feed coming soon</h3>
-            <p className="text-muted-foreground">We're working on an activity feed to show your interactions.</p>
-          </div>
-        </TabsContent>
-      </Tabs>
+      <ProfileTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isCurrentUser={isCurrentUser}
+        mockWishlists={mockWishlists}
+      />
     </div>
   );
 };

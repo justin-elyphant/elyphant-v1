@@ -21,6 +21,7 @@ import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Returns from "./pages/Returns";
 import Connections from "./pages/Connections";
+import ConnectionDetails from "./pages/ConnectionDetails";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
 
@@ -54,6 +55,7 @@ const App = () => {
                   <Route path="/orders/:orderId" element={<OrderDetail />} />
                   <Route path="/returns/:orderId" element={<Returns />} />
                   <Route path="/connections" element={<Connections />} />
+                  <Route path="/connection/:connectionId" element={<ConnectionDetails />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

@@ -103,7 +103,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
       </CardContent>
       <CardFooter className="flex justify-between pt-2">
         <Button variant="outline" size="sm" asChild>
-          <Link to={`/profile/${friend.id}`}>View Profile</Link>
+          <Link to={`/connection/${friend.id}`}>View Details</Link>
         </Button>
         <TooltipProvider>
           <Tooltip>

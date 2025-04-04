@@ -31,12 +31,11 @@ const SearchBar = () => {
   };
 
   const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
+    setSearchTerm(e.target.value);
     
-    if (value.trim().length > 0 && !isSearchOpen) {
+    if (e.target.value.trim().length > 0 && !isSearchOpen) {
       setIsSearchOpen(true);
-    } else if (value.trim().length === 0) {
+    } else if (e.target.value.trim().length === 0) {
       setIsSearchOpen(false);
     }
   };
@@ -48,9 +47,8 @@ const SearchBar = () => {
     console.log(`SearchBar: Selected search item "${value}"`);
     setIsSearchOpen(false);
     
-    setTimeout(() => {
-      navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
-    }, 10);
+    // Use navigate directly instead of setTimeout
+    navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -63,18 +61,8 @@ const SearchBar = () => {
   };
 
   const handlePopoverOpenChange = (open: boolean) => {
-    if (open && searchTerm.trim().length === 0) {
-      return;
-    }
+    // Only control the open state, don't interfere with focus
     setIsSearchOpen(open);
-    
-    if (open && inputRef.current) {
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 0);
-    }
   };
 
   const handleInputClick = () => {

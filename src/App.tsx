@@ -25,6 +25,10 @@ import Connections from "./pages/Connections";
 import ConnectionDetails from "./pages/ConnectionDetails";
 import Settings from "./pages/Settings";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
+import Messages from "./pages/Messages";
+import Funding from "./pages/Funding";
+import FundingDetails from "./pages/FundingDetails";
+import FundingSuccess from "./pages/FundingSuccess";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -62,6 +66,11 @@ const App = () => {
                     <Route path="/returns/:orderId" element={<Returns />} />
                     <Route path="/connections" element={<Connections />} />
                     <Route path="/connection/:connectionId" element={<ConnectionDetails />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/messages/:connectionId" element={<Messages />} />
+                    <Route path="/funding" element={<Funding />} />
+                    <Route path="/funding/:campaignId" element={<FundingDetails />} />
+                    <Route path="/funding/success" element={<FundingSuccess />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/purchase-success" element={<PurchaseSuccess />} />
                     <Route path="*" element={<NotFound />} />

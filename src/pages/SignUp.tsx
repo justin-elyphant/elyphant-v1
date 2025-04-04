@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Mail, AlertCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Import our components
 import SignUpForm, { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -30,6 +31,7 @@ const SignUp = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const { resendVerificationEmail } = useAuth();
   
   // Get invitation parameters from URL if present
   const invitedBy = searchParams.get('invitedBy');
@@ -132,25 +134,33 @@ const SignUp = () => {
   };
 
   const handleResendVerification = async () => {
-    if (!userEmail) return;
+    if (!userEmail) {
+      toast.error("No email address available");
+      return;
+    }
     
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: userEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        }
-      });
-      
-      if (error) {
-        toast.error("Failed to resend email", {
-          description: error.message
+      if (resendVerificationEmail) {
+        await resendVerificationEmail();
+      } else {
+        // Fallback if context function is not available
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: userEmail,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+          }
         });
-        return;
+        
+        if (error) {
+          toast.error("Failed to resend email", {
+            description: error.message
+          });
+          return;
+        }
+        
+        toast.success("Verification email resent!");
       }
-      
-      toast.success("Verification email resent!");
     } catch (err) {
       console.error("Error resending verification:", err);
       toast.error("Failed to resend verification email");

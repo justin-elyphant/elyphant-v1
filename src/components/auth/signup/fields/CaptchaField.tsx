@@ -1,33 +1,39 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { loadCaptchaEnginge, LoadCanvasTemplate, validateCaptcha } from "react-simple-captcha";
 
 interface CaptchaFieldProps {
   form: UseFormReturn<any>;
 }
 
-const CaptchaField = ({ form }: CaptchaFieldProps) => {
+// Simple captcha generator
+const generateCaptcha = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let captcha = '';
+  for (let i = 0; i < 6; i++) {
+    captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return captcha;
+};
+
+export const CaptchaField = ({ form }: CaptchaFieldProps) => {
+  const [captchaText, setCaptchaText] = useState(() => generateCaptcha());
   const [captchaError, setCaptchaError] = useState("");
   
-  useEffect(() => {
-    // Load the captcha engine when the component mounts
-    loadCaptchaEnginge(6);
-  }, []);
-
   const refreshCaptcha = () => {
-    loadCaptchaEnginge(6);
+    const newCaptcha = generateCaptcha();
+    setCaptchaText(newCaptcha);
     setCaptchaError("");
     form.setValue("captcha", "");
   };
 
   // This function can be used externally to validate the captcha
   const validateCaptchaField = (value: string): boolean => {
-    const isValid = validateCaptcha(value);
+    const isValid = value.toLowerCase() === captchaText.toLowerCase();
     setCaptchaError(isValid ? "" : "The captcha you entered is incorrect");
     return isValid;
   };
@@ -35,7 +41,10 @@ const CaptchaField = ({ form }: CaptchaFieldProps) => {
   return (
     <div className="space-y-2">
       <div className="relative bg-gray-50 p-3 rounded-md border">
-        <LoadCanvasTemplate />
+        <div className="select-none text-xl font-bold tracking-wider text-center py-2" 
+             style={{ fontFamily: 'monospace', letterSpacing: '0.25em' }}>
+          {captchaText}
+        </div>
         <Button 
           type="button" 
           variant="ghost" 
@@ -71,4 +80,4 @@ const CaptchaField = ({ form }: CaptchaFieldProps) => {
   );
 };
 
-export { CaptchaField, type CaptchaFieldProps };
+export { type CaptchaFieldProps };

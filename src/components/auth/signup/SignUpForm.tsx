@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import InputField from "./fields/InputField";
 import { CaptchaField } from "./fields/CaptchaField";
-import { validateCaptcha } from "react-simple-captcha";
 
 // Schema definition
 const signUpSchema = z.object({
@@ -25,7 +24,7 @@ interface SignUpFormProps {
 }
 
 const SignUpForm = ({ onSubmitSuccess }: SignUpFormProps) => {
-  const [captchaError, setCaptchaError] = useState("");
+  const captchaRef = useRef<any>(null);
   
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -38,14 +37,12 @@ const SignUpForm = ({ onSubmitSuccess }: SignUpFormProps) => {
   });
 
   const onSubmit = (values: SignUpValues) => {
-    // Validate the captcha
-    if (!validateCaptcha(values.captcha)) {
-      setCaptchaError("The captcha you entered is incorrect");
+    // Validate the captcha - the field component handles the validation internally
+    // by comparing user input to the generated captcha
+    const captchaField = document.querySelector(".CaptchaField") as HTMLElement;
+    if (captchaField && captchaField.querySelector(".text-destructive")) {
       return;
     }
-
-    // Reset any captcha error
-    setCaptchaError("");
     
     // Call the parent component's callback
     onSubmitSuccess(values);
@@ -80,7 +77,9 @@ const SignUpForm = ({ onSubmitSuccess }: SignUpFormProps) => {
           Icon={Lock}
         />
 
-        <CaptchaField form={form} />
+        <div className="CaptchaField">
+          <CaptchaField form={form} />
+        </div>
 
         <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
           Create Account

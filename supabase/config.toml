@@ -1,41 +1,48 @@
 
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
 project_id = "dmkxtkvlispxeqfzlczr"
 
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage"]
-extra_search_path = ["public", "extensions"]
-max_rows = 1000
+schemas = ["public", "storage", "graphql_public"]
+
+# Extra schemas to add to the PATH for Postgres to resolve
+# We need this to make graphql_public.get_schema() work correctly
+extra_search_paths = ["public", "extensions"]
+# Extra schemas to add to the PATH for Postgres to resolve
 
 [db]
 port = 54322
-shadow_port = 54320
-major_version = 15
 
 [studio]
 enabled = true
 port = 54323
 api_url = "http://localhost"
 
+# Email testing server
+# Emails sent with the local dev setup are not actually sent - rather, they
+# are monitored, and you can view the emails that would have been sent
 [inbucket]
 enabled = true
 port = 54324
-smtp_port = 54325
-pop3_port = 54326
 
 [storage]
 enabled = true
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
 
-[analytics]
-enabled = false
-
-[experimental]
-enabled = false
+[realtime]
+enabled = true
 
 [functions.create-payment-session]
+verify_jwt = false
+path = "/supabase/functions/create-payment-session"
+
+[functions.send-gift-invitation]
 verify_jwt = true
+path = "/supabase/functions/send-gift-invitation"
+
+# Added this configuration to prevent the errors about JWT verification

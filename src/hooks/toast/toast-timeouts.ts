@@ -1,6 +1,7 @@
 
 import { TOAST_REMOVE_DELAY } from "./constants"
-import { dispatch, actionTypes } from "./index"
+import { dispatch } from "./toast-reducer"
+import { actionTypes } from "./types"
 
 // Toast timeouts management
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()

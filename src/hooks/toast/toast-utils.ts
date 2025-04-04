@@ -1,6 +1,7 @@
 
 import { Toast, ToasterToast } from "./types";
-import { dispatch, actionTypes } from "./index";
+import { dispatch } from "./toast-reducer";
+import { actionTypes } from "./types";
 import { TOAST_REMOVE_DELAY } from "./constants";
 
 // Counter for generating unique IDs

@@ -5,6 +5,7 @@ import { reducer, dispatch, getMemoryState, getListeners } from "./toast-reducer
 import { createToast } from "./toast-utils"
 export { clearAllToasts } from "./toast-timeouts"
 export { actionTypes } from "./types"
+export { dispatch } from "./toast-reducer"
 
 // Re-export types
 export type { Toast, Action, State } from "./types"

@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, UserPlus, Filter } from "lucide-react";
+import { ArrowLeft, Search, UserPlus, Filter, Mail, Gift, Calendar, MapPin, AlertCircle, Baby, Heart, Users, Shield, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,9 +9,35 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Mock connection data - in a real app, this would be fetched from a database
-const mockConnections = [
+type RelationshipType = 'friend' | 'spouse' | 'cousin' | 'child' | 'custom';
+
+type DataVerificationStatus = {
+  shipping: 'verified' | 'missing' | 'outdated';
+  birthday: 'verified' | 'missing' | 'outdated';
+  email: 'verified' | 'missing' | 'outdated';
+};
+
+interface Connection {
+  id: string;
+  name: string;
+  username: string;
+  imageUrl: string;
+  mutualFriends: number;
+  type: 'friend' | 'following' | 'suggestion';
+  lastActive: string;
+  relationship: RelationshipType;
+  customRelationship?: string;
+  dataStatus: DataVerificationStatus;
+  interests?: string[];
+  bio?: string;
+}
+
+const mockConnections: Connection[] = [
   {
     id: '1',
     name: 'Alex Johnson',
@@ -20,7 +45,15 @@ const mockConnections = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 12,
     type: 'friend',
-    lastActive: '2 hours ago'
+    lastActive: '2 hours ago',
+    relationship: 'friend',
+    dataStatus: {
+      shipping: 'missing',
+      birthday: 'verified',
+      email: 'verified'
+    },
+    interests: ['Reading', 'Hiking', 'Photography'],
+    bio: 'Passionate photographer and outdoor enthusiast.'
   },
   {
     id: '2',
@@ -29,7 +62,15 @@ const mockConnections = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 5,
     type: 'friend',
-    lastActive: '1 day ago'
+    lastActive: '1 day ago',
+    relationship: 'spouse',
+    dataStatus: {
+      shipping: 'verified',
+      birthday: 'verified',
+      email: 'verified'
+    },
+    interests: ['Cooking', 'Travel', 'Music'],
+    bio: 'Professional chef and music enthusiast.'
   },
   {
     id: '3',
@@ -38,7 +79,15 @@ const mockConnections = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 8,
     type: 'friend',
-    lastActive: '3 days ago'
+    lastActive: '3 days ago',
+    relationship: 'cousin',
+    dataStatus: {
+      shipping: 'outdated',
+      birthday: 'verified',
+      email: 'missing'
+    },
+    interests: ['Gaming', 'Tech', 'Movies'],
+    bio: 'Software developer and avid gamer.'
   },
   {
     id: '4',
@@ -47,7 +96,15 @@ const mockConnections = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 2,
     type: 'following',
-    lastActive: 'Just now'
+    lastActive: 'Just now',
+    relationship: 'friend',
+    dataStatus: {
+      shipping: 'missing',
+      birthday: 'missing',
+      email: 'verified'
+    },
+    interests: ['Art', 'Design', 'Fashion'],
+    bio: 'Creative director with a passion for sustainable fashion.'
   },
   {
     id: '5',
@@ -56,11 +113,18 @@ const mockConnections = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 0,
     type: 'following',
-    lastActive: '1 week ago'
+    lastActive: '1 week ago',
+    relationship: 'child',
+    dataStatus: {
+      shipping: 'verified',
+      birthday: 'outdated',
+      email: 'verified'
+    },
+    interests: ['Sports', 'Fitness', 'Nutrition'],
+    bio: 'Personal trainer and nutrition coach.'
   }
 ];
 
-// Mock suggestions data - in a real app, this would be generated based on user data
 const mockSuggestions = [
   {
     id: '6',
@@ -91,22 +155,64 @@ const mockSuggestions = [
   }
 ];
 
+const getRelationshipIcon = (relationship: RelationshipType) => {
+  switch (relationship) {
+    case 'spouse':
+      return <Heart className="h-4 w-4" />;
+    case 'cousin':
+      return <Users className="h-4 w-4" />;
+    case 'child':
+      return <Baby className="h-4 w-4" />;
+    case 'custom':
+      return <Plus className="h-4 w-4" />;
+    case 'friend':
+    default:
+      return <Users className="h-4 w-4" />;
+  }
+};
+
+const getRelationshipLabel = (relationship: RelationshipType, custom?: string) => {
+  if (relationship === 'custom' && custom) {
+    return custom;
+  }
+  return relationship.charAt(0).toUpperCase() + relationship.slice(1);
+};
+
 const Connections = () => {
   const [userData] = useLocalStorage("userData", null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("friends");
+  const [connections, setConnections] = useState<Connection[]>(mockConnections);
   
-  // Filter connections based on search term
-  const filteredConnections = mockConnections.filter(connection => {
+  const filteredConnections = connections.filter(connection => {
     return (
       connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       connection.username.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
   
-  // Filter connections based on type for different tabs
   const friends = filteredConnections.filter(conn => conn.type === 'friend');
   const following = filteredConnections.filter(conn => conn.type === 'following');
+
+  const handleRelationshipChange = (connectionId: string, newRelationship: RelationshipType, customValue?: string) => {
+    setConnections(prev => 
+      prev.map(conn => 
+        conn.id === connectionId 
+          ? { 
+              ...conn, 
+              relationship: newRelationship, 
+              customRelationship: customValue 
+            } 
+          : conn
+      )
+    );
+    
+    toast.success(`Relationship updated to ${customValue || newRelationship}`);
+  };
+
+  const handleSendVerificationRequest = (connectionId: string, dataType: keyof DataVerificationStatus) => {
+    toast.success(`Verification request for ${dataType} sent to ${connections.find(c => c.id === connectionId)?.name}`);
+  };
   
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
@@ -158,7 +264,7 @@ const Connections = () => {
           {friends.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {friends.map(friend => (
-                <Card key={friend.id}>
+                <Card key={friend.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center space-x-3">
@@ -171,22 +277,196 @@ const Connections = () => {
                           <CardDescription>{friend.username}</CardDescription>
                         </div>
                       </div>
-                      <Badge variant="outline">Friend</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1">
+                            {getRelationshipIcon(friend.relationship)}
+                            <span>{getRelationshipLabel(friend.relationship, friend.customRelationship)}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem 
+                            onClick={() => handleRelationshipChange(friend.id, 'friend')}
+                            className="gap-2"
+                          >
+                            <Users className="h-4 w-4" /> Friend
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleRelationshipChange(friend.id, 'spouse')}
+                            className="gap-2"
+                          >
+                            <Heart className="h-4 w-4" /> Spouse
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleRelationshipChange(friend.id, 'cousin')}
+                            className="gap-2"
+                          >
+                            <Users className="h-4 w-4" /> Cousin
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleRelationshipChange(friend.id, 'child')}
+                            className="gap-2"
+                          >
+                            <Baby className="h-4 w-4" /> Child
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              const custom = prompt('Enter custom relationship:');
+                              if (custom) handleRelationshipChange(friend.id, 'custom', custom);
+                            }}
+                            className="gap-2"
+                          >
+                            <Plus className="h-4 w-4" /> Custom
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </CardHeader>
-                  <CardContent className="pb-2">
-                    <p className="text-sm text-muted-foreground">
+                  <CardContent className="pb-0">
+                    {friend.bio && (
+                      <p className="text-sm mb-3">{friend.bio}</p>
+                    )}
+                    
+                    {friend.interests && friend.interests.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {friend.interests.map(interest => (
+                          <Badge key={interest} variant="secondary" className="text-xs">{interest}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <p className="text-sm text-muted-foreground mb-1">
                       <span className="font-medium">{friend.mutualFriends}</span> mutual connections
                     </p>
-                    <p className="text-xs text-muted-foreground">Active {friend.lastActive}</p>
+                    <p className="text-xs text-muted-foreground mb-3">Active {friend.lastActive}</p>
+                    
+                    <div className="bg-muted p-3 rounded-md mb-3">
+                      <h4 className="text-sm font-medium mb-2 flex items-center">
+                        <Shield className="h-4 w-4 mr-1 text-primary" />
+                        Data Verification
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            <span>Shipping Address:</span>
+                          </div>
+                          <div className="flex items-center">
+                            {friend.dataStatus.shipping === 'verified' ? (
+                              <Badge variant="outline" className="text-green-500 border-green-500">Verified</Badge>
+                            ) : friend.dataStatus.shipping === 'missing' ? (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 text-red-500 p-0"
+                                onClick={() => handleSendVerificationRequest(friend.id, 'shipping')}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" /> Request
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 text-amber-500 p-0"
+                                onClick={() => handleSendVerificationRequest(friend.id, 'shipping')}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" /> Update
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            <span>Birthday:</span>
+                          </div>
+                          <div className="flex items-center">
+                            {friend.dataStatus.birthday === 'verified' ? (
+                              <Badge variant="outline" className="text-green-500 border-green-500">Verified</Badge>
+                            ) : friend.dataStatus.birthday === 'missing' ? (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 text-red-500 p-0"
+                                onClick={() => handleSendVerificationRequest(friend.id, 'birthday')}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" /> Request
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 text-amber-500 p-0"
+                                onClick={() => handleSendVerificationRequest(friend.id, 'birthday')}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" /> Update
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center">
+                            <Mail className="h-3 w-3 mr-1" />
+                            <span>Email:</span>
+                          </div>
+                          <div className="flex items-center">
+                            {friend.dataStatus.email === 'verified' ? (
+                              <Badge variant="outline" className="text-green-500 border-green-500">Verified</Badge>
+                            ) : friend.dataStatus.email === 'missing' ? (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 text-red-500 p-0"
+                                onClick={() => handleSendVerificationRequest(friend.id, 'email')}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" /> Request
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 text-amber-500 p-0"
+                                onClick={() => handleSendVerificationRequest(friend.id, 'email')}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" /> Update
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {(friend.dataStatus.shipping !== 'verified' || 
+                     friend.dataStatus.birthday !== 'verified' || 
+                     friend.dataStatus.email !== 'verified') && (
+                      <Alert variant="destructive" className="mb-2 p-2 text-xs">
+                        <AlertCircle className="h-3 w-3" />
+                        <AlertTitle className="text-xs">Auto-gifting unavailable</AlertTitle>
+                        <AlertDescription className="text-xs">
+                          Complete profile data to enable auto-gifting.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </CardContent>
-                  <CardFooter className="flex justify-between">
+                  <CardFooter className="flex justify-between pt-2">
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/profile/${friend.id}`}>View Profile</Link>
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      Remove
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Gift className="h-4 w-4 mr-1" />
+                            Gift
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Send a gift to {friend.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </CardFooter>
                 </Card>
               ))}
@@ -210,7 +490,7 @@ const Connections = () => {
           {following.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {following.map(follow => (
-                <Card key={follow.id}>
+                <Card key={follow.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center space-x-3">
@@ -226,8 +506,20 @@ const Connections = () => {
                       <Badge variant="secondary">Following</Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="pb-2">
-                    <p className="text-sm text-muted-foreground">
+                  <CardContent className="pb-0">
+                    {follow.bio && (
+                      <p className="text-sm mb-3">{follow.bio}</p>
+                    )}
+                    
+                    {follow.interests && follow.interests.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {follow.interests.map(interest => (
+                          <Badge key={interest} variant="secondary" className="text-xs">{interest}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <p className="text-sm text-muted-foreground mb-1">
                       <span className="font-medium">{follow.mutualFriends}</span> mutual connections
                     </p>
                     <p className="text-xs text-muted-foreground">Active {follow.lastActive}</p>
@@ -236,8 +528,9 @@ const Connections = () => {
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/profile/${follow.id}`}>View Profile</Link>
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      Unfollow
+                    <Button variant="outline" size="sm">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Connect
                     </Button>
                   </CardFooter>
                 </Card>
@@ -318,6 +611,13 @@ const Connections = () => {
             <div>
               <p className="font-medium">Connection visibility</p>
               <p className="text-sm text-muted-foreground">Control who can see your connections</p>
+            </div>
+            <Button variant="outline">Manage</Button>
+          </div>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">Auto-Gifting Preferences</p>
+              <p className="text-sm text-muted-foreground">Set up automatic gifting for special occasions</p>
             </div>
             <Button variant="outline">Manage</Button>
           </div>

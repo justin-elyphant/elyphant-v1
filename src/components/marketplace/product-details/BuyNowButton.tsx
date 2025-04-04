@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RecipientInfoDialog from './RecipientInfoDialog';
+import { supabase } from "@/integrations/supabase/client";
 
 interface BuyNowButtonProps {
   productId: number;

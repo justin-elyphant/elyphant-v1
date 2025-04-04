@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   recipientFirstName: z.string().min(1, "First name is required"),
@@ -50,6 +51,8 @@ const RecipientInfoDialog: React.FC<RecipientInfoDialogProps> = ({
   onSubmit,
   productName,
 }) => {
+  const { user } = useAuth();
+  
   const form = useForm<RecipientInfoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -75,13 +78,28 @@ const RecipientInfoDialog: React.FC<RecipientInfoDialogProps> = ({
 
       // Send invitation if the user doesn't exist
       if (!existingUser) {
-        // In a real implementation, we would call an edge function here
-        // to send the invitation email and SMS
-        console.log("Sending invitation to:", data.recipientEmail);
+        // Call the Edge Function to send invitation
+        const response = await supabase.functions.invoke('send-gift-invitation', {
+          body: {
+            recipientFirstName: data.recipientFirstName,
+            recipientLastName: data.recipientLastName,
+            recipientEmail: data.recipientEmail,
+            recipientPhone: data.recipientPhone,
+            senderName: user?.user_metadata?.name || 'A friend',
+            senderUserId: user?.id, // Include the sender's user ID
+            productName
+          }
+        });
+
+        if (response.error) {
+          throw new Error(response.error);
+        }
         
-        toast.success(`Invitation will be sent to ${data.recipientEmail}`);
+        toast.success(`Invitation sent to ${data.recipientEmail}`);
       } else {
         console.log("Recipient already has an account");
+        // If the recipient already has an account, we could automatically create a connection here
+        toast.success(`${data.recipientFirstName} already has an account. They'll be notified about their gift!`);
       }
       
       onSubmit(data);

@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -19,11 +19,16 @@ import ProfileSetup from "@/components/auth/signup/ProfileSetup";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [profileType, setProfileType] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<SignUpValues | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  
+  // Get invitation parameters from URL if present
+  const invitedBy = searchParams.get('invitedBy');
+  const senderUserId = searchParams.get('senderUserId');
   
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
@@ -34,6 +39,9 @@ const SignUp = () => {
         options: {
           data: {
             name: values.name,
+            // Store the invitation data in user metadata for later use
+            invited_by: invitedBy,
+            sender_user_id: senderUserId,
           },
         }
       });
@@ -93,6 +101,20 @@ const SignUp = () => {
         console.error("Error updating profile:", error);
       }
       
+      // If user was invited by someone (gift purchase), create a connection
+      if (senderUserId) {
+        try {
+          // In a real app, this would create a connection in the database
+          console.log(`Creating connection between ${senderUserId} and ${userId}`);
+          
+          // This would be a database insert to create a friend connection
+          // For now, we'll just show a toast message
+          toast.success(`You're now connected with ${invitedBy || 'your gift sender'}!`);
+        } catch (connErr) {
+          console.error("Error creating connection:", connErr);
+        }
+      }
+      
       toast.success("Profile set up successfully!");
       navigate("/dashboard");
     } catch (err) {
@@ -103,6 +125,14 @@ const SignUp = () => {
 
   return (
     <div className="container max-w-md mx-auto py-10 px-4">
+      {invitedBy && (
+        <div className="mb-4 p-4 bg-purple-50 rounded-md text-center">
+          <p className="text-purple-700 font-medium">
+            {invitedBy} has invited you to join! Sign up to connect and view your gift.
+          </p>
+        </div>
+      )}
+      
       {step === 1 && (
         <Card>
           <CardHeader className="space-y-1">

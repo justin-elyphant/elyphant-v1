@@ -12,6 +12,7 @@ interface GiftInvitationRequest {
   recipientEmail: string;
   recipientPhone?: string;
   senderName: string;
+  senderUserId: string; // Added sender user ID to track referral
   productName: string;
 }
 
@@ -27,12 +28,13 @@ serve(async (req) => {
       recipientLastName, 
       recipientEmail, 
       recipientPhone, 
-      senderName, 
+      senderName,
+      senderUserId, // Get sender user ID
       productName 
     } = await req.json() as GiftInvitationRequest;
 
     // Validate inputs
-    if (!recipientEmail || !recipientFirstName || !senderName) {
+    if (!recipientEmail || !recipientFirstName || !senderName || !senderUserId) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { 
@@ -47,8 +49,13 @@ serve(async (req) => {
     // 2. Use a service like Twilio to send SMS if phone number is provided
     console.log(`Sending invitation to ${recipientFirstName} ${recipientLastName} at ${recipientEmail}`);
     
+    // Store the pending connection in the database for when the user signs up
+    // This would be implemented with a database table in production
+    // For now, let's assume we store it somewhere (would be a DB insert in prod)
+    console.log(`Storing pending connection: Sender ${senderUserId} -> Recipient ${recipientEmail}`);
+    
     // For now, just log and return a success response
-    const invitationLink = `https://yourdomain.com/signup?invitedBy=${encodeURIComponent(senderName)}`;
+    const invitationLink = `https://yourdomain.com/signup?invitedBy=${encodeURIComponent(senderName)}&senderUserId=${senderUserId}`;
     
     // Email would contain something like:
     const emailTemplate = `

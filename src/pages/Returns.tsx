@@ -11,6 +11,7 @@ import OrderNotFound from "@/components/orders/OrderNotFound";
 import ExistingReturnsCard from "@/components/returns/ExistingReturnsCard";
 import SelectReturnItemsCard from "@/components/returns/SelectReturnItemsCard";
 import ReturnDetailsForm from "@/components/returns/ReturnDetailsForm";
+import ReturnStepsIndicator from "@/components/returns/ReturnStepsIndicator";
 import { useReturnForm } from "@/components/returns/hooks/useReturnForm";
 
 const Returns = () => {
@@ -19,6 +20,7 @@ const Returns = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1);
   
   const {
     selectedItems,
@@ -57,6 +59,28 @@ const Returns = () => {
       setIsLoading(false);
     }, 500);
   }, [orderId, navigate]);
+
+  // Handle step navigation
+  const nextStep = () => {
+    const anyItemSelected = Object.values(selectedItems).some(selected => selected);
+    
+    if (currentStep === 1 && !anyItemSelected) {
+      toast.error("Please select at least one item to return");
+      return;
+    }
+    
+    setCurrentStep(prev => Math.min(prev + 1, 3));
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  // Handle the submit and set it to final step
+  const onSubmitReturn = () => {
+    handleSubmitReturn();
+    setCurrentStep(3);
+  };
 
   if (!userData || isLoading) {
     return (
@@ -104,18 +128,48 @@ const Returns = () => {
         </p>
       </div>
 
-      <SelectReturnItemsCard
-        order={order}
-        selectedItems={selectedItems}
-        returnReasons={returnReasons}
-        handleItemSelection={handleItemSelection}
-        handleReasonChange={handleReasonChange}
-      />
+      <ReturnStepsIndicator currentStep={currentStep} />
 
-      <ReturnDetailsForm 
-        orderId={orderId}
-        handleSubmitReturn={handleSubmitReturn} 
-      />
+      {currentStep === 1 && (
+        <>
+          <SelectReturnItemsCard
+            order={order}
+            selectedItems={selectedItems}
+            returnReasons={returnReasons}
+            handleItemSelection={handleItemSelection}
+            handleReasonChange={handleReasonChange}
+          />
+          <div className="flex justify-end mt-6">
+            <Button onClick={nextStep}>
+              Continue to Return Details
+            </Button>
+          </div>
+        </>
+      )}
+
+      {currentStep === 2 && (
+        <>
+          <ReturnDetailsForm 
+            orderId={orderId}
+            handleSubmitReturn={onSubmitReturn} 
+          />
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={prevStep}>
+              Back to Select Items
+            </Button>
+          </div>
+        </>
+      )}
+
+      {currentStep === 3 && (
+        <div className="bg-card rounded-lg border p-6 text-center">
+          <h2 className="text-xl font-semibold mb-4">Return Request Submitted</h2>
+          <p className="mb-6">Your return request has been submitted successfully. You will receive a confirmation email shortly.</p>
+          <Button onClick={() => navigate("/orders")}>
+            View All Orders
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

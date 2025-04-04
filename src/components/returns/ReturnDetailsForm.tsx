@@ -1,17 +1,13 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -29,12 +25,16 @@ interface ReturnDetailsFormProps {
 }
 
 const ReturnDetailsForm = ({ orderId, handleSubmitReturn }: ReturnDetailsFormProps) => {
-  const navigate = useNavigate();
   const form = useForm({
     defaultValues: {
       additionalNotes: ""
     }
   });
+
+  const onSubmit = (data) => {
+    console.log("Form data:", data);
+    handleSubmitReturn();
+  };
 
   return (
     <Card>
@@ -46,7 +46,7 @@ const ReturnDetailsForm = ({ orderId, handleSubmitReturn }: ReturnDetailsFormPro
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <div className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="additionalNotes"
@@ -66,18 +66,18 @@ const ReturnDetailsForm = ({ orderId, handleSubmitReturn }: ReturnDetailsFormPro
                 </FormItem>
               )}
             />
-          </div>
+            
+            <div className="flex justify-end">
+              <button 
+                type="submit" 
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              >
+                Submit Return Request
+              </button>
+            </div>
+          </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={() => navigate(`/orders/${orderId}`)}>
-          Cancel
-        </Button>
-        <Button onClick={handleSubmitReturn}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Submit Return Request
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

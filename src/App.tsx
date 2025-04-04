@@ -24,6 +24,7 @@ import Returns from "./pages/Returns";
 import Connections from "./pages/Connections";
 import ConnectionDetails from "./pages/ConnectionDetails";
 import Settings from "./pages/Settings";
+import PurchaseSuccess from "./pages/PurchaseSuccess";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -62,6 +63,7 @@ const App = () => {
                     <Route path="/connections" element={<Connections />} />
                     <Route path="/connection/:connectionId" element={<ConnectionDetails />} />
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/purchase-success" element={<PurchaseSuccess />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>

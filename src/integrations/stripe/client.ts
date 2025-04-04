@@ -27,3 +27,23 @@ export const createPaymentSession = async (amount: number, eventId: string) => {
     throw error;
   }
 };
+
+// Function to create a direct purchase checkout session
+export const createCheckoutSession = async (productId: number, price: number, productName: string, productImage?: string) => {
+  try {
+    const { data } = await supabase.functions.invoke('create-payment-session', {
+      body: { 
+        amount: price,
+        productId,
+        productName,
+        productImage,
+        paymentType: 'direct-purchase'
+      }
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    throw error;
+  }
+};

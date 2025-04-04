@@ -19,8 +19,9 @@ import { Input } from "@/components/ui/input";
 import { formSchema } from "./schema";
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { AddressFields } from "./AddressFields";
+import { z } from "zod";
 
-export type RecipientInfoFormData = React.ComponentProps<typeof RecipientInfoDialog>["onSubmit"] extends (data: infer T) => void ? T : never;
+export type RecipientInfoFormData = z.infer<typeof formSchema>;
 
 interface RecipientInfoFormProps {
   onSubmit: (data: RecipientInfoFormData) => void;

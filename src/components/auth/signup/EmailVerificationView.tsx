@@ -1,8 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Mail, AlertCircle } from "lucide-react";
+import { Mail, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,6 +25,7 @@ interface EmailVerificationViewProps {
 }
 
 const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { resendVerificationEmail } = useAuth();
 
   const handleResendVerification = async () => {
@@ -34,7 +35,8 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
     }
     
     try {
-      // Use our custom email function instead
+      setIsLoading(true);
+      // Use our custom email function
       const verificationUrl = `${window.location.origin}/dashboard?email=${encodeURIComponent(userEmail)}`;
       
       await supabase.functions.invoke('send-verification-email', {
@@ -45,44 +47,58 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
         }
       });
       
-      toast.success("Verification email resent!");
+      toast.success("Verification email sent! Please check your inbox", {
+        description: "If you don't see it, please check your spam folder."
+      });
     } catch (err) {
       console.error("Error resending verification:", err);
-      toast.error("Failed to resend verification email");
+      toast.error("Failed to send verification email");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Card>
+    <Card className="shadow-md">
       <CardHeader className="space-y-1">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-3xl">🐘</span>
-          <CardTitle className="text-2xl font-bold">Welcome to Elyphant!</CardTitle>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-4xl">🐘</span>
+          <div>
+            <CardTitle className="text-2xl font-bold">Welcome to Elyphant!</CardTitle>
+            <CardDescription className="text-base">
+              We've sent a verification link to {userEmail}
+            </CardDescription>
+          </div>
         </div>
-        <CardDescription>
-          We've sent a verification link to {userEmail}
-        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Alert className="bg-purple-50 border-purple-200 mb-4">
+      <CardContent className="space-y-4">
+        <Alert className="bg-purple-50 border-purple-200">
           <Mail className="h-4 w-4 text-purple-600" />
-          <AlertTitle className="text-purple-800">Verification Required</AlertTitle>
+          <AlertTitle className="text-purple-800 font-medium">Verification Required</AlertTitle>
           <AlertDescription className="text-purple-700">
             Please check your inbox and click the verification link to continue.
             If you don't see the email, check your spam folder.
           </AlertDescription>
         </Alert>
         
-        <div className="text-center mt-4 mb-2">
+        <div className="text-center mt-6 mb-2">
           <p className="text-sm text-gray-600 mb-4">
             Didn't receive an email? Click below to resend.
           </p>
           <Button 
             variant="outline" 
             onClick={handleResendVerification}
-            className="mx-auto"
+            className="mx-auto transition-all hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"
+            disabled={isLoading}
           >
-            Resend Verification Email
+            {isLoading ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              "Resend Verification Email"
+            )}
           </Button>
         </div>
         
@@ -90,14 +106,14 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertTitle className="text-amber-800">Important Note</AlertTitle>
           <AlertDescription className="text-amber-700">
-            After verifying your email, please return to this site directly rather than following the redirect link.
+            After verifying your email, you'll be automatically redirected to your Elyphant dashboard.
           </AlertDescription>
         </Alert>
       </CardContent>
-      <CardFooter className="flex flex-col items-center gap-4">
+      <CardFooter className="flex flex-col items-center gap-4 border-t pt-4">
         <div className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/sign-in" className="text-primary underline-offset-4 hover:underline">
+          <Link to="/sign-in" className="text-purple-600 hover:text-purple-800 underline-offset-4 hover:underline">
             Sign in
           </Link>
         </div>

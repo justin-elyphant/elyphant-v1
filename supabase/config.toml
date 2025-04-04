@@ -52,5 +52,3 @@ path = "/supabase/functions/send-deletion-email"
 [functions.send-verification-email]
 verify_jwt = false
 path = "/supabase/functions/send-verification-email"
-
-# Added this configuration to prevent the errors about JWT verification

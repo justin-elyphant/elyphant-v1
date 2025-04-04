@@ -25,7 +25,8 @@ import {
   RefreshCw, 
   MapPin, 
   ArrowLeft,
-  InfoIcon 
+  InfoIcon, 
+  Mail
 } from "lucide-react";
 import { getMockOrders } from "@/components/marketplace/zinc/orderService";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
@@ -37,6 +38,7 @@ const OrderDetail = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState<ZincOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Redirect to sign-up if not logged in
   useEffect(() => {
@@ -67,33 +69,43 @@ const OrderDetail = () => {
     }, 500);
   }, [orderId, navigate]);
 
+  const handleEmailReceipt = () => {
+    setIsSendingEmail(true);
+    
+    // Simulate API call to send email
+    setTimeout(() => {
+      toast.success("Receipt sent to your email");
+      setIsSendingEmail(false);
+    }, 1000);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "delivered":
         return (
           <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
             <Package className="h-3 w-3 mr-1" />
-            Delivered
+            <span>Delivered</span>
           </Badge>
         );
       case "shipped":
         return (
           <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
             <TruckIcon className="h-3 w-3 mr-1" />
-            Shipped
+            <span>Shipped</span>
           </Badge>
         );
       case "processing":
         return (
           <Badge variant="outline" className="bg-yellow-50 text-yellow-800 hover:bg-yellow-100">
             <RefreshCw className="h-3 w-3 mr-1" />
-            Processing
+            <span>Processing</span>
           </Badge>
         );
       default:
         return (
           <Badge variant="outline">
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
           </Badge>
         );
     }
@@ -180,6 +192,17 @@ const OrderDetail = () => {
               <div className="flex justify-between font-semibold">
                 <dt>Total:</dt>
                 <dd>${order.total?.toFixed(2)}</dd>
+              </div>
+              <div className="pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleEmailReceipt}
+                  disabled={isSendingEmail}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  {isSendingEmail ? "Sending..." : "Email Receipt"}
+                </Button>
               </div>
             </dl>
           </CardContent>

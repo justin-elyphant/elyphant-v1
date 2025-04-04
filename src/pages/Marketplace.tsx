@@ -37,15 +37,21 @@ const MarketplaceWrapper = () => {
       
       // Set loading state
       setIsBrandLoading(true);
+      toast.loading(`Looking for ${brandParam} products...`, { id: "loading-brand-products" });
       
       // Mark this brand as attempted to prevent duplicate fetches
       setAttemptedBrands(prev => [...prev, brandParam]);
       
       // Fetch products for this brand
       handleBrandProducts(brandParam, products, setProducts)
-        .then(() => {
-          console.log(`Finished loading products for ${brandParam}`);
+        .then((brandProducts) => {
+          console.log(`Finished loading products for ${brandParam}, found ${brandProducts.length} products`);
           setIsBrandLoading(false);
+          
+          if (brandProducts.length === 0) {
+            // If no products found, show error toast
+            toast.error(`No products found for ${brandParam}`, { id: "loading-brand-products" });
+          }
         })
         .catch(error => {
           console.error(`Error in brand products fetch: ${error}`);

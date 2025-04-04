@@ -3,6 +3,7 @@ import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
+import { convertZincProductToProduct } from "@/components/marketplace/zinc/utils/productConverter";
 
 /**
  * Handles finding or loading products for a specific brand from the Zinc API
@@ -31,27 +32,13 @@ export const handleBrandProducts = async (
     if (zincResults && zincResults.length > 0) {
       console.log(`Found ${zincResults.length} products for ${brandName} from Zinc API`);
       
-      // Convert Zinc products to our product format
+      // Filter products to ensure they're actually for this brand
       const brandProducts = zincResults
         .filter((product: ZincProduct) => 
-          product.title.toLowerCase().includes(brandName.toLowerCase()) || 
-          (product.brand && product.brand.toLowerCase() === brandName.toLowerCase())
+          (product.title && product.title.toLowerCase().includes(brandName.toLowerCase())) || 
+          (product.brand && product.brand.toLowerCase().includes(brandName.toLowerCase()))
         )
-        .map((product: ZincProduct, index: number) => ({
-          id: Date.now() + index, // Ensure unique ID
-          name: product.title,
-          price: typeof product.price === 'number' ? 
-            (product.price > 1000 ? product.price / 100 : product.price) : 
-            parseFloat(String(product.price)) || 0,
-          category: product.category || "Clothing",
-          image: product.image || "/placeholder.svg",
-          vendor: "Amazon via Zinc",
-          description: product.description || `${brandName} product with exceptional quality.`,
-          rating: product.rating || 4.5,
-          reviewCount: product.review_count || 100,
-          images: product.images || [product.image || "/placeholder.svg"],
-          isBestSeller: product.isBestSeller || index < Math.ceil(zincResults.length * 0.1) // Top 10% are bestsellers
-        }));
+        .map(product => convertZincProductToProduct(product));
       
       if (brandProducts.length > 0) {
         // Update products in context - add these to existing products

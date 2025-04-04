@@ -27,20 +27,13 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
     }
     
     const data = await response.json();
-    console.log('Zinc API response:', data);
+    console.log('Zinc API response received');
     
     if (data.results && Array.isArray(data.results)) {
-      return data.results.map((item: any) => {
+      console.log(`Processing ${data.results.length} results from Zinc API`);
+      return data.results.map((item: any, index: number) => {
         // Determine if product is a best seller (top 10% of results)
-        const isBestSeller = data.results.indexOf(item) < Math.ceil(data.results.length * 0.1);
-        
-        // Calculate price correctly - convert cents to dollars if needed
-        let price = 0;
-        if (typeof item.price === 'number') {
-          price = item.price > 1000 ? item.price / 100 : item.price;
-        } else if (typeof item.price === 'string') {
-          price = parseFloat(item.price) || 0;
-        }
+        const isBestSeller = index < Math.ceil(data.results.length * 0.1);
         
         // Ensure we have an image array
         const images = item.images && Array.isArray(item.images) ? 
@@ -48,17 +41,19 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
           (item.image ? [item.image] : ['/placeholder.svg']);
         
         return {
-          product_id: item.product_id || item.asin,
-          title: item.title,
-          price: price,
+          product_id: item.product_id || item.asin || `unknown-${index}`,
+          title: item.title || "Unknown Product",
+          price: item.price || 0,
           image: item.image || '/placeholder.svg',
           images: images,
           description: item.description || item.product_description || '',
-          brand: item.brand || 'Unknown',
+          brand: item.brand || query || 'Unknown', // Use query as fallback brand
           category: item.category || 'Electronics',
           retailer: "Amazon via Zinc",
-          rating: item.rating || item.stars || 0,
-          review_count: item.review_count || item.num_reviews || 0,
+          rating: item.rating || 0,
+          stars: item.stars || 0,
+          review_count: item.review_count || 0,
+          num_reviews: item.num_reviews || 0,
           features: item.features || item.bullet_points || [],
           specifications: item.specifications || {},
           isBestSeller: isBestSeller
@@ -66,9 +61,10 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
       });
     }
     
+    console.log('No results found in Zinc API response');
     return [];
   } catch (error) {
     console.error('Error searching products via Zinc:', error);
-    return [];
+    throw error; // Let the caller handle the error
   }
 };

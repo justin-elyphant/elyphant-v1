@@ -75,9 +75,15 @@ const SignIn = () => {
       });
       
       if (error) {
-        toast.error(`${provider} sign-in failed`, {
-          description: error.message,
-        });
+        if (error.message.includes('provider is not enabled')) {
+          toast.error(`${provider} sign-in not available`, {
+            description: `Please contact the administrator to enable ${provider} authentication.`,
+          });
+        } else {
+          toast.error(`${provider} sign-in failed`, {
+            description: error.message,
+          });
+        }
       }
     } catch (err) {
       console.error(`${provider} sign-in error:`, err);

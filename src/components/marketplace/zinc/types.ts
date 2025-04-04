@@ -1,4 +1,3 @@
-
 // Zinc API product type
 export type ZincProduct = {
   product_id: string;
@@ -10,9 +9,9 @@ export type ZincProduct = {
   brand?: string;
   category?: string;
   retailer: string;
+  // Support both naming conventions from the API
   rating?: number;
   review_count?: number;
-  // Add properties that are in the API response but not in our type
   stars?: number;
   num_reviews?: number;
   num_sales?: number;

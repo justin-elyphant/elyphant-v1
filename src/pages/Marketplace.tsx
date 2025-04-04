@@ -32,40 +32,28 @@ const MarketplaceWrapper = () => {
   // Handle brand parameter
   useEffect(() => {
     const brandParam = searchParams.get("brand");
-    if (brandParam && !attemptedBrands.includes(brandParam) && products.length > 0) {
+    if (brandParam && !attemptedBrands.includes(brandParam)) {
       console.log(`MarketplaceWrapper: Processing brand parameter: ${brandParam}`);
       
-      // Check if we already have products for this brand
-      const brandProducts = products.filter(p => 
-        p.vendor === "Amazon via Zinc" && 
-        (p.name.toLowerCase().includes(brandParam.toLowerCase()) || 
-         (p.description && p.description.toLowerCase().includes(brandParam.toLowerCase())))
-      );
+      // Set loading state
+      setIsBrandLoading(true);
       
-      if (brandProducts.length === 0 && !isBrandLoading) {
-        console.log(`No products found for brand ${brandParam}, fetching from Zinc API`);
-        // Start loading
-        setIsBrandLoading(true);
-        
-        // Mark this brand as attempted
-        setAttemptedBrands(prev => [...prev, brandParam]);
-        
-        // Fetch products for this brand
-        handleBrandProducts(brandParam, products, setProducts)
-          .then(() => {
-            console.log(`Finished loading products for ${brandParam}`);
-            setIsBrandLoading(false);
-          })
-          .catch(error => {
-            console.error(`Error in brand products fetch: ${error}`);
-            setIsBrandLoading(false);
-            toast.error(`Couldn't load ${brandParam} products`, { id: "loading-brand-products" });
-          });
-      } else {
-        console.log(`Found ${brandProducts.length} existing products for brand ${brandParam}`);
-      }
+      // Mark this brand as attempted to prevent duplicate fetches
+      setAttemptedBrands(prev => [...prev, brandParam]);
+      
+      // Fetch products for this brand
+      handleBrandProducts(brandParam, products, setProducts)
+        .then(() => {
+          console.log(`Finished loading products for ${brandParam}`);
+          setIsBrandLoading(false);
+        })
+        .catch(error => {
+          console.error(`Error in brand products fetch: ${error}`);
+          setIsBrandLoading(false);
+          toast.error(`Couldn't load ${brandParam} products`, { id: "loading-brand-products" });
+        });
     }
-  }, [searchParams, products, setProducts, isBrandLoading, attemptedBrands]);
+  }, [searchParams, products, setProducts, attemptedBrands]);
 
   return (
     <div className="container mx-auto py-8 px-4">

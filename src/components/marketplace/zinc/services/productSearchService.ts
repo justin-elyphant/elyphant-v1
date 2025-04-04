@@ -1,3 +1,4 @@
+
 import { ZincProduct } from '../types';
 import { ZINC_API_BASE_URL, getZincHeaders } from '../zincCore';
 
@@ -33,31 +34,34 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
         // Determine if product is a best seller (top 10% of results)
         const isBestSeller = data.results.indexOf(item) < Math.ceil(data.results.length * 0.1);
         
-        // Calculate price correctly
-        const price = typeof item.price === 'number' ? 
-          (item.price > 1000 ? item.price / 100 : item.price) : // Convert cents to dollars if needed
-          parseFloat(item.price) || 0;
+        // Calculate price correctly - convert cents to dollars if needed
+        let price = 0;
+        if (typeof item.price === 'number') {
+          price = item.price > 1000 ? item.price / 100 : item.price;
+        } else if (typeof item.price === 'string') {
+          price = parseFloat(item.price) || 0;
+        }
+        
+        // Ensure we have an image array
+        const images = item.images && Array.isArray(item.images) ? 
+          item.images : 
+          (item.image ? [item.image] : ['/placeholder.svg']);
         
         return {
           product_id: item.product_id || item.asin,
           title: item.title,
           price: price,
           image: item.image || '/placeholder.svg',
+          images: images,
           description: item.description || item.product_description || '',
           brand: item.brand || 'Unknown',
           category: item.category || 'Electronics',
           retailer: "Amazon via Zinc",
-          // Map the rating properties both ways to ensure compatibility
           rating: item.rating || item.stars || 0,
           review_count: item.review_count || item.num_reviews || 0,
-          // Keep the original properties as well
-          stars: item.stars || item.rating || 0,
-          num_reviews: item.num_reviews || item.review_count || 0,
-          num_sales: item.num_sales || 0,
           features: item.features || item.bullet_points || [],
           specifications: item.specifications || {},
-          isBestSeller: isBestSeller,
-          images: item.images || [item.image || '/placeholder.svg']
+          isBestSeller: isBestSeller
         };
       });
     }

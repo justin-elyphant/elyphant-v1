@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { ArrowRight, Mail, Lock, User, Camera } from "lucide-react";
+import { ArrowRight, Mail, Lock, User, Camera, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -26,11 +26,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { loadCaptchaEnginge, LoadCanvasTemplate, validateCaptcha } from "react-simple-captcha";
 
 const signUpSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+  captcha: z.string().min(1, { message: "Please enter the captcha code" }),
 });
 
 type SignUpValues = z.infer<typeof signUpSchema>;
@@ -41,6 +43,7 @@ const SignUp = () => {
   const [profileType, setProfileType] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [userData, setUserData] = useLocalStorage("userData", null);
+  const [captchaError, setCaptchaError] = useState("");
   
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -48,10 +51,31 @@ const SignUp = () => {
       name: "",
       email: "",
       password: "",
+      captcha: "",
     },
   });
 
+  useEffect(() => {
+    // Load the captcha engine when the component mounts
+    loadCaptchaEnginge(6);
+  }, []);
+
+  const refreshCaptcha = () => {
+    loadCaptchaEnginge(6);
+    setCaptchaError("");
+    form.setValue("captcha", "");
+  };
+
   const onSubmit = (values: SignUpValues) => {
+    // Validate the captcha
+    if (!validateCaptcha(values.captcha)) {
+      setCaptchaError("The captcha you entered is incorrect");
+      return;
+    }
+
+    // Reset any captcha error
+    setCaptchaError("");
+    
     // In a real app, this would send the data to an API
     toast.success("Account created successfully!");
     
@@ -162,6 +186,44 @@ const SignUp = () => {
                     </FormItem>
                   )}
                 />
+
+                {/* Captcha Field */}
+                <div className="space-y-2">
+                  <div className="relative bg-gray-50 p-3 rounded-md border">
+                    <LoadCanvasTemplate />
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-3 right-3 h-8 w-8"
+                      onClick={refreshCaptcha}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      <span className="sr-only">Refresh Captcha</span>
+                    </Button>
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="captcha"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Captcha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter the code shown above" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {captchaError && (
+                    <p className="text-sm font-medium text-destructive">{captchaError}</p>
+                  )}
+                </div>
+                
                 <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
                   Create Account
                 </Button>

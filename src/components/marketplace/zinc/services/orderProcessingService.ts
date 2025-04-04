@@ -12,6 +12,25 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
   try {
     console.log("Processing order through Zinc API:", orderRequest);
     
+    // Check for stored Amazon credentials
+    const amazonCredentialsString = localStorage.getItem('amazonCredentials');
+    if (amazonCredentialsString) {
+      try {
+        const amazonCredentials = JSON.parse(amazonCredentialsString);
+        console.log("Using stored Amazon credentials for", amazonCredentials.email);
+        
+        // Add retailer credentials to the order request
+        orderRequest.retailer_credentials = {
+          email: amazonCredentials.email,
+          password: amazonCredentials.password
+        };
+      } catch (error) {
+        console.error("Error parsing Amazon credentials:", error);
+      }
+    } else {
+      console.log("No Amazon credentials found in local storage");
+    }
+    
     const response = await fetch(`${ZINC_API_BASE_URL}/orders`, {
       method: 'POST',
       headers: getZincHeaders(),

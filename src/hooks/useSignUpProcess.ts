@@ -50,7 +50,23 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         setUserEmail(values.email);
         setEmailSent(true);
         
-        toast.success("Account created successfully!");
+        // Send custom verification email
+        try {
+          const verificationUrl = `${currentUrl}/dashboard?email=${encodeURIComponent(values.email)}`;
+
+          await supabase.functions.invoke('send-verification-email', {
+            body: {
+              email: values.email,
+              name: values.name,
+              verificationUrl: verificationUrl
+            }
+          });
+          
+          toast.success("Account created! Check your email for verification link.");
+        } catch (emailError) {
+          console.error("Failed to send custom verification email:", emailError);
+          toast.error("Account created, but there was an issue sending the verification email.");
+        }
         
         // Store form values for later steps
         setFormValues(values);

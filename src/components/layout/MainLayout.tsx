@@ -2,6 +2,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Header from "@/components/home/Header";
+import { ViewportToggle } from "@/components/ui/viewport-toggle";
 
 const MainLayout = () => {
   return (
@@ -10,6 +11,7 @@ const MainLayout = () => {
       <main className="flex-1">
         <Outlet />
       </main>
+      <ViewportToggle />
     </div>
   );
 };

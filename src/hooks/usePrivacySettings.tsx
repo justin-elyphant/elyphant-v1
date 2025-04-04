@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
 
@@ -28,9 +28,9 @@ export const usePrivacySettings = () => {
   const [pendingChanges, setPendingChanges] = useState<PrivacySettingsType>(settings);
 
   // Initialize pending changes when settings change
-  useState(() => {
+  useEffect(() => {
     setPendingChanges(settings);
-  });
+  }, [settings]);
 
   const updateSetting = <K extends keyof PrivacySettingsType>(
     key: K, 

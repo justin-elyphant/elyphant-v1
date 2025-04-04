@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { usePrivacySettings } from "@/hooks/usePrivacySettings";
+import { PrivacySettingsType } from "@/hooks/usePrivacySettings";
 
 const PrivacySettings: React.FC = () => {
   const { 
@@ -80,7 +81,11 @@ const PrivacySettings: React.FC = () => {
                 <div className="w-[180px]">
                   <Select 
                     value={settings.connectionVisibility}
-                    onValueChange={(value) => updateSetting('connectionVisibility', value)}
+                    onValueChange={(value) => {
+                      // Cast to the specific type to avoid TypeScript error
+                      const typedValue = value as PrivacySettingsType['connectionVisibility'];
+                      updateSetting('connectionVisibility', typedValue);
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select visibility" />
@@ -113,7 +118,11 @@ const PrivacySettings: React.FC = () => {
                 <div className="w-[180px]">
                   <Select 
                     value={settings.friendSuggestions}
-                    onValueChange={(value) => updateSetting('friendSuggestions', value)}
+                    onValueChange={(value) => {
+                      // Cast to the specific type to avoid TypeScript error
+                      const typedValue = value as PrivacySettingsType['friendSuggestions'];
+                      updateSetting('friendSuggestions', typedValue);
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select option" />

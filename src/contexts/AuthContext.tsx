@@ -13,6 +13,7 @@ interface AuthState {
   signOut: () => Promise<void>;
   getUserProfile: () => Promise<Profile | null>;
   resendVerificationEmail: () => Promise<void>;
+  updateUserProfile: (updates: Partial<Profile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState>({
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthState>({
   signOut: async () => {},
   getUserProfile: async () => null,
   resendVerificationEmail: async () => {},
+  updateUserProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -31,6 +33,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const [bucketInitialized, setBucketInitialized] = useState(false);
+
+  useEffect(() => {
+    // Check if avatars bucket exists and create it if it doesn't
+    const initializeStorageBucket = async () => {
+      try {
+        // Check if bucket exists
+        const { data, error } = await supabase.storage.getBucket('avatars');
+        
+        // If bucket doesn't exist, create it
+        if (error && error.message.includes('does not exist')) {
+          await supabase.storage.createBucket('avatars', {
+            public: true,
+            fileSizeLimit: 1024 * 1024 * 5, // 5MB
+          });
+          
+          // Create policy to allow public access to avatars
+          await supabase.storage.from('avatars').createSignedUrl('dummy.txt', 1);
+        }
+        
+        setBucketInitialized(true);
+      } catch (err) {
+        console.error("Error initializing storage bucket:", err);
+      }
+    };
+    
+    initializeStorageBucket();
+  }, []);
 
   useEffect(() => {
     // Set up auth state listener
@@ -87,6 +117,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data;
   };
   
+  const updateUserProfile = async (updates: Partial<Profile>) => {
+    if (!user) {
+      toast.error('You must be logged in to update your profile');
+      return;
+    }
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id);
+      
+    if (error) {
+      console.error('Error updating user profile:', error);
+      toast.error('Failed to update profile');
+      throw error;
+    }
+    
+    toast.success('Profile updated successfully');
+  };
+  
   const resendVerificationEmail = async () => {
     if (!user?.email) {
       toast.error('No email address available');
@@ -120,7 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading, 
       signOut, 
       getUserProfile,
-      resendVerificationEmail 
+      resendVerificationEmail,
+      updateUserProfile
     }}>
       {children}
     </AuthContext.Provider>

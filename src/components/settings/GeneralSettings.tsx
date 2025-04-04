@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +14,18 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import ProfileImageUpload from "./ProfileImageUpload";
+import AddressAutocomplete from "./AddressAutocomplete";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Profile } from "@/types/supabase";
 
 const GeneralSettings = () => {
   const [userData, setUserData] = useLocalStorage("userData", null);
+  const { user, getUserProfile } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     name: userData?.name || "",
     email: userData?.email || "",
@@ -32,8 +40,35 @@ const GeneralSettings = () => {
       country: userData?.address?.country || ""
     },
     interests: userData?.interests || [],
-    importantDates: userData?.importantDates || []
+    importantDates: userData?.importantDates || [],
+    profile_image: userData?.profile_image || null
   });
+  
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          const profileData = await getUserProfile();
+          if (profileData) {
+            setProfile(profileData);
+            setFormData(prev => ({
+              ...prev,
+              name: profileData.name || prev.name,
+              email: user.email || prev.email,
+              profile_image: profileData.profile_image || prev.profile_image
+            }));
+          }
+        } catch (error) {
+          console.error("Error loading profile:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    loadProfile();
+  }, [user, getUserProfile]);
 
   const [newInterest, setNewInterest] = useState("");
   const [newImportantDate, setNewImportantDate] = useState({
@@ -44,7 +79,6 @@ const GeneralSettings = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Handle nested address fields
     if (name.startsWith("address.")) {
       const addressField = name.split(".")[1];
       setFormData(prev => ({
@@ -66,6 +100,32 @@ const GeneralSettings = () => {
     setFormData(prev => ({
       ...prev,
       birthday: date
+    }));
+  };
+
+  const handleAddressAutocomplete = (address: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      address: {
+        street: address.address,
+        city: address.city,
+        state: address.state,
+        zipCode: address.zipCode,
+        country: address.country
+      }
+    }));
+  };
+
+  const handleProfileImageUpdate = (url: string | null) => {
+    setFormData(prev => ({
+      ...prev,
+      profile_image: url
     }));
   };
 
@@ -113,10 +173,9 @@ const GeneralSettings = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Update the user data
     setUserData({
       ...userData,
       name: formData.name,
@@ -126,15 +185,40 @@ const GeneralSettings = () => {
       bio: formData.bio,
       address: formData.address,
       interests: formData.interests,
-      importantDates: formData.importantDates
+      importantDates: formData.importantDates,
+      profile_image: formData.profile_image
     });
+    
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            name: formData.name
+          })
+          .eq('id', user.id);
+          
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        toast.error("Failed to update profile in database");
+        return;
+      }
+    }
     
     toast.success("Profile information updated successfully");
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Basic Information */}
+      <div className="flex justify-center mb-6">
+        <ProfileImageUpload 
+          currentImage={formData.profile_image} 
+          name={formData.name} 
+          onImageUpdate={handleProfileImageUpdate} 
+        />
+      </div>
+
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -158,6 +242,7 @@ const GeneralSettings = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="your@email.com"
+              disabled={!!user}
             />
           </div>
         
@@ -219,18 +304,22 @@ const GeneralSettings = () => {
         </div>
       </div>
       
-      {/* Shipping Address */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Shipping Address</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="street">Street Address</Label>
-            <Input 
-              id="street"
-              name="address.street"
+            <AddressAutocomplete
               value={formData.address.street}
-              onChange={handleChange}
-              placeholder="123 Main St"
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  address: {
+                    ...prev.address,
+                    street: value
+                  }
+                }));
+              }}
+              onAddressSelect={handleAddressAutocomplete}
             />
           </div>
           
@@ -280,7 +369,6 @@ const GeneralSettings = () => {
         </div>
       </div>
       
-      {/* Interests */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Interests</h3>
         <p className="text-sm text-muted-foreground">Add your interests to help connections find better gifts for you</p>
@@ -321,7 +409,6 @@ const GeneralSettings = () => {
         </div>
       </div>
       
-      {/* Important Dates */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Important Dates</h3>
         <p className="text-sm text-muted-foreground">Add important dates for gift reminders</p>

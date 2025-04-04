@@ -3,9 +3,19 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { testPurchase } from "../zincService";
 import { getMockOrders } from "../orderService";
+import { ZincOrder } from "../types";
+
+interface Order {
+  id: string;
+  status: string;
+  customerName: string;
+  date: string;
+  items: { name: string; quantity: number; price: number; }[];
+  total: number;
+}
 
 export const useOrders = () => {
-  const [orders, setOrders] = useState(getMockOrders());
+  const [orders, setOrders] = useState<Order[]>(getMockOrders());
   const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
   const [isTestPurchaseModalOpen, setIsTestPurchaseModalOpen] = useState(false);
   const [testProductId, setTestProductId] = useState("B01DFKC2SO"); // Default test product - Amazon Echo Dot

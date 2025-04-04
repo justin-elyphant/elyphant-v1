@@ -9,6 +9,7 @@ export interface EventData {
   autoGiftEnabled: boolean;
   autoGiftAmount?: number;
   giftSource?: "wishlist" | "ai" | "both";
+  paymentMethodId?: string;
 }
 
 export interface ExtendedEventData extends EventData {
@@ -16,7 +17,8 @@ export interface ExtendedEventData extends EventData {
   isVerified?: boolean;
   needsVerification?: boolean;
   giftSource?: "wishlist" | "ai" | "both";
-  dateObj?: Date | null; // Add this property to fix the type error
+  dateObj?: Date | null;
+  paymentMethodId?: string;
 }
 
 export type FilterOption = "all" | string;

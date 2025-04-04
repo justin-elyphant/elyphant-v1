@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock, Facebook, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { FcGoogle } from "react-icons/fc";
+import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
 import { Separator } from "@/components/ui/separator";
 
 const SignIn = () => {
@@ -164,7 +164,7 @@ const SignIn = () => {
                 disabled={socialLoading.google}
                 className="flex items-center justify-center gap-2"
               >
-                <FcGoogle className="h-5 w-5" />
+                <GoogleIcon className="h-5 w-5" />
                 <span className="sr-only sm:not-sr-only sm:inline-block">Google</span>
               </Button>
               

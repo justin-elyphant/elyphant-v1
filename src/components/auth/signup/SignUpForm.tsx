@@ -9,7 +9,7 @@ import { Form } from "@/components/ui/form";
 import InputField from "./fields/InputField";
 import { CaptchaField } from "./fields/CaptchaField";
 import { supabase } from "@/integrations/supabase/client";
-import { FcGoogle } from "react-icons/fc";
+import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 
@@ -142,7 +142,7 @@ const SignUpForm = ({ onSubmitSuccess }: SignUpFormProps) => {
             disabled={isLoading.google}
             className="flex items-center justify-center gap-2"
           >
-            <FcGoogle className="h-5 w-5" />
+            <GoogleIcon className="h-5 w-5" />
             <span className="sr-only sm:not-sr-only sm:inline-block">Google</span>
           </Button>
           

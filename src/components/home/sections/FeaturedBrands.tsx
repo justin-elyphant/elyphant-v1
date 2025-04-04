@@ -34,6 +34,13 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
     setLoadingBrand(brandName);
     toast.loading(`Looking for ${brandName} products...`, { id: "loading-brand-products" });
     
+    // Immediately navigate for Apple to prevent freezing
+    if (brandName.toLowerCase() === "apple") {
+      console.log("Apple brand detected, navigating immediately");
+      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
+      return;
+    }
+    
     try {
       // Set a timeout to prevent hanging
       const timeoutId = setTimeout(() => {
@@ -44,7 +51,7 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
           // Navigate anyway after timeout
           navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
         }
-      }, 5000); // 5 second timeout
+      }, 3000); // 3 second timeout - reduced from 5 seconds
       
       // Pre-fetch a few products for this brand before navigating
       await handleBrandProducts(brandName, products, setProducts);

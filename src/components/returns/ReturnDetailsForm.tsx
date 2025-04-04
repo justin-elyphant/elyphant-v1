@@ -18,6 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import ReturnStatusTimeline from "./ReturnStatusTimeline";
 
 interface ReturnDetailsFormProps {
   orderId: string;
@@ -36,49 +38,56 @@ const ReturnDetailsForm = ({ orderId, handleSubmitReturn }: ReturnDetailsFormPro
     handleSubmitReturn();
   };
 
+  // For demonstration, we'll use today's date
+  const today = new Date().toISOString();
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Return Details</CardTitle>
-        <CardDescription>
-          Please provide additional information about your return
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="additionalNotes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Please provide any additional details about the return"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This information helps us process your return more efficiently.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end">
-              <button 
-                type="submit" 
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              >
-                Submit Return Request
-              </button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <ReturnStatusTimeline 
+        currentStatus="requested" 
+        requestDate={today}
+      />
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Return Details</CardTitle>
+          <CardDescription>
+            Please provide additional information about your return
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="additionalNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please provide any additional details about the return"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This information helps us process your return more efficiently.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end">
+                <Button type="submit">
+                  Submit Return Request
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

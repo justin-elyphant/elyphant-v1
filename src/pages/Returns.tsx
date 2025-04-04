@@ -12,6 +12,7 @@ import ExistingReturnsCard from "@/components/returns/ExistingReturnsCard";
 import SelectReturnItemsCard from "@/components/returns/SelectReturnItemsCard";
 import ReturnDetailsForm from "@/components/returns/ReturnDetailsForm";
 import ReturnStepsIndicator from "@/components/returns/ReturnStepsIndicator";
+import ReturnStatusTimeline from "@/components/returns/ReturnStatusTimeline";
 import { useReturnForm } from "@/components/returns/hooks/useReturnForm";
 
 const Returns = () => {
@@ -21,6 +22,7 @@ const Returns = () => {
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
+  const [returnDate, setReturnDate] = useState(null);
   
   const {
     selectedItems,
@@ -78,6 +80,7 @@ const Returns = () => {
 
   // Handle the submit and set it to final step
   const onSubmitReturn = () => {
+    setReturnDate(new Date().toISOString());
     handleSubmitReturn();
     setCurrentStep(3);
   };
@@ -162,12 +165,19 @@ const Returns = () => {
       )}
 
       {currentStep === 3 && (
-        <div className="bg-card rounded-lg border p-6 text-center">
-          <h2 className="text-xl font-semibold mb-4">Return Request Submitted</h2>
-          <p className="mb-6">Your return request has been submitted successfully. You will receive a confirmation email shortly.</p>
-          <Button onClick={() => navigate("/orders")}>
-            View All Orders
-          </Button>
+        <div className="space-y-6">
+          <ReturnStatusTimeline 
+            currentStatus="requested"
+            requestDate={returnDate}
+          />
+          
+          <div className="bg-card rounded-lg border p-6 text-center">
+            <h2 className="text-xl font-semibold mb-4">Return Request Submitted</h2>
+            <p className="mb-6">Your return request has been submitted successfully. You will receive a confirmation email shortly.</p>
+            <Button onClick={() => navigate("/orders")}>
+              View All Orders
+            </Button>
+          </div>
         </div>
       )}
     </div>

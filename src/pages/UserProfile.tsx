@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 
-// Import the newly created components
+// Import the component files
 import ProfileHeader from "@/components/user-profile/ProfileHeader";
 import ProfileBanner from "@/components/user-profile/ProfileBanner";
 import ProfileInfo from "@/components/user-profile/ProfileInfo";

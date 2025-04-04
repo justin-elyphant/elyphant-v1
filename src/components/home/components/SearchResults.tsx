@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Command, CommandInput, CommandList, CommandEmpty } from "@/components/ui/command";
+import { Command, CommandList, CommandEmpty } from "@/components/ui/command";
 import { useZincSearch } from "@/hooks/useZincSearch";
 import SearchPrompt from "./search/SearchPrompt";
 import SearchGroup from "./search/SearchGroup";
@@ -42,10 +42,6 @@ const SearchResults = ({
     if (value) {
       onItemSelect(value);
     }
-  };
-
-  const handleInputValueChange = (value: string) => {
-    onSearchTermChange(value);
   };
 
   const getSearchSuggestion = () => {
@@ -94,17 +90,6 @@ const SearchResults = ({
 
   return (
     <Command onKeyDown={handleKeyDown}>
-      <CommandInput 
-        placeholder="Search products, brands, friends, or experiences..." 
-        value={searchTerm}
-        onValueChange={handleInputValueChange}
-        autoFocus={false}
-        className="cursor-text"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck="false"
-      />
       <CommandList>
         <CommandEmpty>
           <SearchPrompt 

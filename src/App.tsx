@@ -17,6 +17,9 @@ import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
 import Wishlists from "./pages/Wishlists";
 import Events from "./pages/Events";
+import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
+import Returns from "./pages/Returns";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
 
@@ -46,6 +49,9 @@ const App = () => {
                   <Route path="/profile/:userId" element={<UserProfile />} />
                   <Route path="/wishlists" element={<Wishlists />} />
                   <Route path="/events" element={<Events />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/orders/:orderId" element={<OrderDetail />} />
+                  <Route path="/returns/:orderId" element={<Returns />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

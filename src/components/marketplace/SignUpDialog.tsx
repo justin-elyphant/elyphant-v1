@@ -41,7 +41,7 @@ const SignUpDialog = ({ open, onOpenChange }: SignUpDialogProps) => {
                 <Mail className="w-4 h-4" /> We'll verify your email for security
               </p>
               <p className="text-sm flex items-center justify-center gap-1 text-green-600">
-                <ShieldCheck className="w-4 h-4" /> Simple captcha to protect your account
+                <ShieldCheck className="w-4 h-4" /> Sign up with email or social accounts
               </p>
             </div>
           </div>

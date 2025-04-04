@@ -12,15 +12,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Facebook, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { FcGoogle } from "react-icons/fc";
+import { Separator } from "@/components/ui/separator";
 
 const SignIn = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<{[key: string]: boolean}>({
+    google: false,
+    apple: false,
+    facebook: false
+  });
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +56,34 @@ const SignIn = () => {
       toast.error("Sign in failed");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'apple' | 'facebook') => {
+    try {
+      setSocialLoading({ ...socialLoading, [provider]: true });
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: provider === 'facebook' ? {
+            access_type: 'offline',
+            scope: 'email,public_profile,user_friends'
+          } : undefined
+        }
+      });
+      
+      if (error) {
+        toast.error(`${provider} sign-in failed`, {
+          description: error.message,
+        });
+      }
+    } catch (err) {
+      console.error(`${provider} sign-in error:`, err);
+      toast.error(`Failed to sign in with ${provider}`);
+    } finally {
+      setSocialLoading({ ...socialLoading, [provider]: false });
     }
   };
 
@@ -113,7 +148,50 @@ const SignIn = () => {
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
-            <div className="text-sm text-muted-foreground text-center">
+            
+            <div className="relative my-4 w-full">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-muted-foreground">
+                OR CONTINUE WITH
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => handleSocialLogin('google')}
+                disabled={socialLoading.google}
+                className="flex items-center justify-center gap-2"
+              >
+                <FcGoogle className="h-5 w-5" />
+                <span className="sr-only sm:not-sr-only sm:inline-block">Google</span>
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => handleSocialLogin('apple')}
+                disabled={socialLoading.apple}
+                className="flex items-center justify-center gap-2"
+              >
+                <Apple className="h-5 w-5" />
+                <span className="sr-only sm:not-sr-only sm:inline-block">Apple</span>
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => handleSocialLogin('facebook')}
+                disabled={socialLoading.facebook}
+                className="flex items-center justify-center gap-2"
+              >
+                <Facebook className="h-5 w-5 text-blue-600" />
+                <span className="sr-only sm:not-sr-only sm:inline-block">Facebook</span>
+              </Button>
+            </div>
+            
+            <div className="text-sm text-muted-foreground text-center mt-4">
               Don't have an account?{" "}
               <Link to="/sign-up" className="text-primary underline-offset-4 hover:underline">
                 Sign up

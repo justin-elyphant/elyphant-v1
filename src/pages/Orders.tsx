@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -19,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, TruckIcon, RefreshCw, MapPin, ArrowDown, ArrowUp } from "lucide-react";
+import { Package, TruckIcon, RefreshCw, MapPin, ArrowDown, ArrowUp, Home } from "lucide-react";
 import { getMockOrders } from "@/components/marketplace/zinc/orderService";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
 
@@ -129,14 +128,23 @@ const Orders = () => {
           <h1 className="text-2xl font-bold">My Orders</h1>
           <p className="text-muted-foreground">View and manage your order history</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={refreshOrders}
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={refreshOrders}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/dashboard")}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Return to Dashboard
+          </Button>
+        </div>
       </div>
 
       {/* Order list */}

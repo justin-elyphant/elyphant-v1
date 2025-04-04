@@ -18,6 +18,7 @@ export type Product = {
   features?: string[];
   specifications?: Record<string, string>;
   isBestSeller?: boolean;
+  brand?: string; // Added brand field
 };
 
 type ProductContextType = {
@@ -100,7 +101,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
             images: product.images || [product.image],
             features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
             specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
-            isBestSeller: product.isBestSeller || false
+            isBestSeller: product.isBestSeller || false,
+            brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
           }));
           
           setProducts(shopifyProductsWithVendor);
@@ -125,7 +127,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
           images: product.images || [product.image],
           features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
           specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
-          isBestSeller: product.isBestSeller || false
+          isBestSeller: product.isBestSeller || false,
+          brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
         }));
         
         setProducts(enrichedProducts);
@@ -146,7 +149,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
           images: product.images || [product.image],
           features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
           specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
-          isBestSeller: product.isBestSeller || (index < Math.ceil(mockProducts.length * 0.1)) // Mark top 10% as best sellers
+          isBestSeller: product.isBestSeller || (index < Math.ceil(mockProducts.length * 0.1)), // Mark top 10% as best sellers
+          brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
         }));
         
         setProducts(enrichedMockProducts);

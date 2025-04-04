@@ -28,7 +28,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     : [zincProduct.image || "/placeholder.svg"];
   
   // Extract the brand name, ensuring it's not an empty string
-  const brand = zincProduct.brand || extractBrandFromTitle(zincProduct.title || "");
+  const brandName = zincProduct.brand || extractBrandFromTitle(zincProduct.title || "");
   
   return {
     id: Date.now() + Math.floor(Math.random() * 1000), // Generate a unique ID
@@ -37,15 +37,14 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     category: zincProduct.category || "Electronics",
     image: zincProduct.image || "/placeholder.svg",
     vendor: "Amazon via Zinc",
-    description: zincProduct.description || `High-quality product from ${brand || 'a trusted brand'}.`,
+    description: zincProduct.description || `High-quality product from ${brandName || 'a trusted brand'}.`,
     rating: rating,
     reviewCount: reviewCount,
     images: images,
     features: zincProduct.features || [],
     specifications: zincProduct.specifications || {},
     isBestSeller: zincProduct.isBestSeller || false,
-    // Add the brand name to help with filtering
-    brand: brand
+    brand: brandName // This will be added to the Product interface
   };
 };
 

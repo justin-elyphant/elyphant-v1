@@ -25,9 +25,14 @@ export const handleBrandProducts = async (
   toast.loading(`Looking for ${brandName} products...`, { id: "loading-brand-products" });
   
   try {
+    // Special handling for Apple to avoid fruit results
+    const searchQuery = brandName.toLowerCase() === "apple" ? 
+      "apple technology products" : 
+      brandName;
+    
     // Search for products using the Zinc API
-    console.log(`Fetching ${brandName} products from Zinc API`);
-    const zincResults = await searchProducts(brandName);
+    console.log(`Fetching ${searchQuery} products from Zinc API`);
+    const zincResults = await searchProducts(searchQuery);
     
     if (zincResults && zincResults.length > 0) {
       console.log(`Found ${zincResults.length} products for ${brandName} from Zinc API`);

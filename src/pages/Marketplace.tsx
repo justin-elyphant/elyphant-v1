@@ -56,8 +56,13 @@ const MarketplaceWrapper = () => {
       // Mark this brand as attempted to prevent duplicate fetches
       setAttemptedBrands(prev => [...prev, brandParam]);
       
+      // Handle special case for Apple to avoid fruit results
+      const searchBrandName = brandParam.toLowerCase() === "apple" ? 
+        "Apple technology" : 
+        brandParam;
+      
       // Fetch products for this brand
-      handleBrandProducts(brandParam, products, setProducts)
+      handleBrandProducts(searchBrandName, products, setProducts)
         .then((brandProducts) => {
           console.log(`Finished loading products for ${brandParam}, found ${brandProducts.length} products`);
           setIsBrandLoading(false);

@@ -13,6 +13,22 @@ const DeleteProfileSection = () => {
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const sendDeletionEmail = async (email: string, name: string | null) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-deletion-email', {
+        body: { email, name }
+      });
+      
+      if (error) throw error;
+      
+      console.log("Deletion confirmation email sent successfully");
+    } catch (error) {
+      console.error("Failed to send deletion confirmation email:", error);
+      // We don't want to block the deletion process if the email fails
+      // Just log the error and continue
+    }
+  };
+
   const handleDeleteProfile = async () => {
     if (!user) {
       toast.error("You must be logged in to delete your profile");
@@ -22,6 +38,18 @@ const DeleteProfileSection = () => {
     setIsDeleting(true);
     
     try {
+      // Fetch user profile to get name for email
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name, email')
+        .eq('id', user.id)
+        .single();
+      
+      // Send deletion confirmation email before deleting the profile
+      if (user.email) {
+        await sendDeletionEmail(user.email, profileData?.name);
+      }
+      
       // Delete the user's profile data first
       const { error: profileError } = await supabase
         .from('profiles')

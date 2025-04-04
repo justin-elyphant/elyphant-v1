@@ -156,6 +156,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const sendDeletionEmail = async (email: string, name: string | null) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-deletion-email', {
+        body: { email, name }
+      });
+      
+      if (error) throw error;
+      
+      console.log("Deletion confirmation email sent successfully");
+    } catch (error) {
+      console.error("Failed to send deletion confirmation email:", error);
+      // Continue with deletion even if email fails
+    }
+  };
+
   const deleteUser = async () => {
     if (!user) {
       toast.error('You must be logged in to delete your account');
@@ -163,6 +178,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+      
+      if (user.email) {
+        await sendDeletionEmail(user.email, profileData?.name);
+      }
+      
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()

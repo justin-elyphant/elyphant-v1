@@ -45,4 +45,8 @@ path = "/supabase/functions/create-payment-session"
 verify_jwt = true
 path = "/supabase/functions/send-gift-invitation"
 
+[functions.send-deletion-email]
+verify_jwt = true
+path = "/supabase/functions/send-deletion-email"
+
 # Added this configuration to prevent the errors about JWT verification

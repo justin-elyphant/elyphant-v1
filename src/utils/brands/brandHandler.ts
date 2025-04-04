@@ -6,6 +6,9 @@ import { ZincProduct } from "@/components/marketplace/zinc/types";
 import { convertZincProductToProduct } from "@/components/marketplace/zinc/utils/productConverter";
 import { getAppleFallbackProducts } from "./fallbackProducts";
 
+// Minimum number of products to return for a brand
+const MIN_PRODUCTS_COUNT = 75;
+
 /**
  * Handles finding or loading products for a specific brand from the Zinc API
  */
@@ -32,7 +35,7 @@ export const handleBrandProducts = async (
       (p.name && p.name.toLowerCase().includes(brandName.toLowerCase()))
     );
     
-    if (existingProducts.length >= 10) {
+    if (existingProducts.length >= MIN_PRODUCTS_COUNT) {
       console.log(`Using ${existingProducts.length} existing products for ${brandName}`);
       toast.success(`Found ${existingProducts.length} ${brandName} products`, { id: "loading-brand-products" });
       return existingProducts;
@@ -53,7 +56,7 @@ export const handleBrandProducts = async (
     
     // Race the API call against the timeout
     const zincResults = await Promise.race([
-      searchProducts(searchQuery),
+      searchProducts(searchQuery, MIN_PRODUCTS_COUNT), // Pass the minimum required products
       timeoutPromise
     ]);
     
@@ -107,7 +110,7 @@ export const handleBrandProducts = async (
     // If this is Apple, provide fallback Apple products to avoid showing fruits
     if (brandName.toLowerCase() === "apple") {
       console.log("Using fallback Apple products");
-      const fallbackAppleProducts = getAppleFallbackProducts();
+      const fallbackAppleProducts = getAppleFallbackProducts(MIN_PRODUCTS_COUNT); // Request the minimum number
       
       // Update products in context
       setProducts(prev => {

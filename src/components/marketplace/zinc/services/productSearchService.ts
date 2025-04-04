@@ -6,9 +6,11 @@ import { findMappedTerm, getWellKnownTermMappings } from '../utils/termMapper';
 
 /**
  * Search for products on Amazon via Zinc API
+ * @param query The search query
+ * @param minCount Minimum number of products to return (default 100)
  */
-export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
-  console.log(`Searching products for query: ${query}`);
+export const searchProducts = async (query: string, minCount: number = 100): Promise<ZincProduct[]> => {
+  console.log(`Searching products for query: ${query}, minimum count: ${minCount}`);
   
   if (!query || query.trim().length <= 2) {
     console.log('Search query too short, returning empty results');
@@ -19,7 +21,7 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
   const normalizedQuery = query.toLowerCase().trim();
   if (normalizedQuery === 'apple' || normalizedQuery === 'apple products') {
     console.log('Special case handling for Apple products');
-    return getAppleTechProducts();
+    return getAppleTechProducts(minCount);
   }
   
   // Check for other special cases
@@ -43,7 +45,9 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
   }
   
   try {
-    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon&limit=100`;
+    // Adjust the limit parameter to request more products
+    const limit = Math.max(minCount, 100);
+    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=amazon&limit=${limit}`;
     const headers = getZincHeaders();
     
     console.log('Calling Zinc API:', url);
@@ -133,9 +137,11 @@ const extractBrandFromTitle = (title: string): string => {
 
 /**
  * Get Apple technology products
+ * @param minCount Minimum number of products to return
  */
-const getAppleTechProducts = (): ZincProduct[] => {
-  return [
+const getAppleTechProducts = (minCount: number = 75): ZincProduct[] => {
+  // Base products
+  const baseProducts = [
     {
       product_id: 'apple-iphone-1',
       title: 'Apple iPhone 15 Pro, 256GB, Space Black',
@@ -225,4 +231,96 @@ const getAppleTechProducts = (): ZincProduct[] => {
       isBestSeller: false
     }
   ];
+
+  // If we have enough products, return them
+  if (baseProducts.length >= minCount) {
+    return baseProducts;
+  }
+
+  // Create additional products to meet the minimum count
+  const additionalProducts: ZincProduct[] = [];
+  const remainingNeeded = minCount - baseProducts.length;
+
+  // Product types for variation
+  const productTypes = ['iPhone', 'MacBook', 'iPad', 'Apple Watch', 'AirPods', 'Mac Mini', 'iMac', 'Apple TV'];
+  const colorOptions = ['Space Gray', 'Silver', 'Gold', 'Pacific Blue', 'Graphite', 'Sierra Blue', 'Alpine Green', 'Deep Purple', 'Midnight', 'Starlight'];
+  const storageOptions = [64, 128, 256, 512, 1024];
+  const imageUrls = [
+    'https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=500&h=500&fit=crop',
+    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&h=500&fit=crop',
+    'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=500&fit=crop',
+    'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&h=500&fit=crop',
+    'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=500&h=500&fit=crop'
+  ];
+
+  for (let i = 0; i < remainingNeeded; i++) {
+    // Generate a random price between $299 and $2499
+    const price = Math.floor(Math.random() * 2200 + 299) + Math.random().toFixed(2);
+    
+    // Select a random product type
+    const productType = productTypes[Math.floor(Math.random() * productTypes.length)];
+    
+    // Select a random color
+    const color = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+    
+    // Select a random storage
+    const storage = storageOptions[Math.floor(Math.random() * storageOptions.length)];
+    
+    // Select a random image
+    const imageUrl = imageUrls[Math.floor(Math.random() * imageUrls.length)];
+    
+    // Generate a product title
+    let title = '';
+    switch (productType) {
+      case 'iPhone':
+        title = `Apple iPhone ${Math.floor(Math.random() * 6) + 10} ${Math.random() > 0.5 ? 'Pro' : ''}, ${storage}GB, ${color}`;
+        break;
+      case 'MacBook':
+        title = `Apple MacBook ${Math.random() > 0.5 ? 'Pro' : 'Air'} ${Math.random() > 0.5 ? '13-inch' : '16-inch'} with M${Math.floor(Math.random() * 3) + 1} chip, ${storage}GB SSD, ${color}`;
+        break;
+      case 'iPad':
+        title = `Apple iPad ${Math.random() > 0.5 ? 'Pro' : 'Air'} ${Math.random() > 0.5 ? '11-inch' : '12.9-inch'}, ${storage}GB, ${color}`;
+        break;
+      case 'Apple Watch':
+        title = `Apple Watch Series ${Math.floor(Math.random() * 3) + 7} ${Math.floor(Math.random() * 5) + 40}mm, ${color}, ${Math.random() > 0.5 ? 'GPS' : 'GPS + Cellular'}`;
+        break;
+      default:
+        title = `Apple ${productType}, ${storage}GB, ${color}`;
+    }
+
+    // Add a random unique product ID
+    const product_id = `apple-${productType.toLowerCase().replace(' ', '-')}-${baseProducts.length + i + 1}`;
+    
+    // Generate a random rating between 3.5 and 5.0
+    const rating = (Math.random() * 1.5 + 3.5).toFixed(1);
+    
+    // Generate a random number of reviews
+    const reviewCount = Math.floor(Math.random() * 2000) + 50;
+
+    // Create the product
+    additionalProducts.push({
+      product_id,
+      title,
+      price: parseFloat(price.toString()),
+      image: imageUrl,
+      images: [imageUrl],
+      description: `Experience the amazing features of the ${title}. This premium Apple product delivers exceptional performance and the quality you expect from Apple.`,
+      brand: 'Apple',
+      category: 'Electronics',
+      retailer: 'Amazon via Zinc',
+      rating: parseFloat(rating),
+      stars: parseFloat(rating),
+      review_count: reviewCount,
+      num_reviews: reviewCount,
+      features: ['Premium Apple quality', 'Fast performance', 'Great battery life', 'Stunning display'],
+      specifications: {
+        'Brand': 'Apple',
+        'Storage': `${storage}GB`,
+        'Color': color
+      },
+      isBestSeller: Math.random() > 0.8 // 20% chance of being a bestseller
+    });
+  }
+
+  return [...baseProducts, ...additionalProducts];
 };

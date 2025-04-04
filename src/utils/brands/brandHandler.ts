@@ -5,6 +5,7 @@ import { searchProducts } from "@/components/marketplace/zinc/services/productSe
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 import { convertZincProductToProduct } from "@/components/marketplace/zinc/utils/productConverter";
 import { getAppleFallbackProducts } from "./fallbackProducts";
+import { generateDescription } from "@/components/marketplace/zinc/utils/productDescriptionUtils";
 
 // Minimum number of products to return for a brand
 const MIN_PRODUCTS_COUNT = 75;
@@ -69,6 +70,12 @@ export const handleBrandProducts = async (
         if (!product.brand) {
           product.brand = brandName;
         }
+        
+        // Make sure description is set before conversion
+        if (!product.description) {
+          product.description = generateDescription(product.title || "Unknown Product", product.category || "Electronics");
+        }
+        
         return convertZincProductToProduct(product);
       });
       

@@ -1,6 +1,7 @@
 
 import { ZincProduct } from "../types";
 import { Product } from "@/contexts/ProductContext";
+import { generateDescription } from "./productDescriptionUtils";
 
 /**
  * Converts a ZincProduct to the application's Product format
@@ -30,6 +31,10 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   // Extract the brand name, ensuring it's not an empty string
   const brandName = zincProduct.brand || extractBrandFromTitle(zincProduct.title || "");
   
+  // Generate a description if one doesn't exist
+  const description = zincProduct.description || 
+    generateDescription(zincProduct.title || "Unknown Product", zincProduct.category || "Electronics");
+  
   return {
     id: Date.now() + Math.floor(Math.random() * 1000), // Generate a unique ID
     name: zincProduct.title || "Unknown Product",
@@ -37,7 +42,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     category: zincProduct.category || "Electronics",
     image: zincProduct.image || "/placeholder.svg",
     vendor: "Amazon via Zinc",
-    description: zincProduct.description || `High-quality product from ${brandName || 'a trusted brand'}.`,
+    description: description,
     rating: rating,
     reviewCount: reviewCount,
     images: images,

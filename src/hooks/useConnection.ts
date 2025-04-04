@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useConnectionById } from "@/hooks/useConnectionById";
+import useConnectionById from "@/hooks/useConnectionById";
 
 export const useConnection = (connectionId: string) => {
   const { connection, loading, error, updateRelationship } = useConnectionById(connectionId);

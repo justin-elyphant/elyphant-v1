@@ -30,7 +30,7 @@ export const fetchMessages = async (otherUserId: string): Promise<Message[]> => 
     .from('messages')
     .select('*')
     .or(`sender_id.eq.${user.user.id},recipient_id.eq.${user.user.id}`)
-    .and(`sender_id.eq.${otherUserId},recipient_id.eq.${otherUserId}`)
+    .or(`sender_id.eq.${otherUserId},recipient_id.eq.${otherUserId}`)
     .order('created_at', { ascending: true });
 
   if (error) {

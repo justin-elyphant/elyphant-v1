@@ -11,6 +11,7 @@ import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import InterestsFormSection from "./InterestsFormSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
+import DeleteProfileSection from "./DeleteProfileSection";
 
 const GeneralSettings = () => {
   const [userData, setUserData] = useLocalStorage("userData", null);
@@ -241,6 +242,8 @@ const GeneralSettings = () => {
       <Button type="submit" className="w-full md:w-auto">
         Save Profile Information
       </Button>
+      
+      <DeleteProfileSection />
     </form>
   );
 };

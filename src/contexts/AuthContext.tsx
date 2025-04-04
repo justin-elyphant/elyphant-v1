@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +13,7 @@ interface AuthState {
   getUserProfile: () => Promise<Profile | null>;
   resendVerificationEmail: () => Promise<void>;
   updateUserProfile: (updates: Partial<Profile>) => Promise<void>;
+  deleteUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState>({
@@ -24,6 +24,7 @@ const AuthContext = createContext<AuthState>({
   getUserProfile: async () => null,
   resendVerificationEmail: async () => {},
   updateUserProfile: async () => {},
+  deleteUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -36,20 +37,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [bucketInitialized, setBucketInitialized] = useState(false);
 
   useEffect(() => {
-    // Check if avatars bucket exists and create it if it doesn't
     const initializeStorageBucket = async () => {
       try {
-        // Check if bucket exists
         const { data, error } = await supabase.storage.getBucket('avatars');
         
-        // If bucket doesn't exist, create it
         if (error && error.message.includes('does not exist')) {
           await supabase.storage.createBucket('avatars', {
             public: true,
-            fileSizeLimit: 1024 * 1024 * 5, // 5MB
+            fileSizeLimit: 1024 * 1024 * 5,
           });
           
-          // Create policy to allow public access to avatars
           await supabase.storage.from('avatars').createSignedUrl('dummy.txt', 1);
         }
         
@@ -63,7 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -76,7 +72,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
         } else if (event === 'USER_UPDATED') {
-          // This fires when email verification completes
           if (session?.user.email_confirmed_at) {
             toast.success('Email verified successfully!');
             navigate('/dashboard');
@@ -85,7 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -143,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Get current site URL for redirection after email verification
     const currentUrl = window.location.origin;
     const redirectTo = `${currentUrl}/dashboard`;
     
@@ -163,6 +156,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteUser = async () => {
+    if (!user) {
+      toast.error('You must be logged in to delete your account');
+      return;
+    }
+    
+    try {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+      
+      if (profileError) throw profileError;
+      
+      const { error: authError } = await supabase.auth.admin.deleteUser(
+        user.id
+      );
+      
+      if (authError) throw authError;
+      
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete account');
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -171,7 +193,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signOut, 
       getUserProfile,
       resendVerificationEmail,
-      updateUserProfile
+      updateUserProfile,
+      deleteUser
     }}>
       {children}
     </AuthContext.Provider>

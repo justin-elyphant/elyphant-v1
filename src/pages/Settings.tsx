@@ -1,42 +1,55 @@
 
-import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
-import PrivacySettings from "@/components/connections/PrivacySettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
+import PaymentSettings from "@/components/settings/PaymentSettings";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Settings = () => {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [activeTab, setActiveTab] = useState(tabParam || "general");
+  
+  // If not logged in, redirect to login
+  useEffect(() => {
+    if (!user) {
+      navigate("/sign-in");
+    }
+  }, [user, navigate]);
+  
+  // When tab changes in URL, update active tab
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+  
+  // Update URL when active tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    navigate(`/settings?tab=${tab}`);
+  };
+  
+  const tabs = [
+    { id: "general", label: "General Settings" },
+    { id: "notification", label: "Notifications" },
+    { id: "payment", label: "Payment Methods" },
+  ];
+  
   return (
-    <SettingsLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Account Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account settings and preferences.
-          </p>
-        </div>
-        
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="w-full max-w-md grid grid-cols-3">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="general" className="space-y-4 mt-6">
-            <GeneralSettings />
-          </TabsContent>
-          
-          <TabsContent value="privacy" className="space-y-4 mt-6">
-            <PrivacySettings />
-          </TabsContent>
-          
-          <TabsContent value="notifications" className="space-y-4 mt-6">
-            <NotificationSettings />
-          </TabsContent>
-        </Tabs>
-      </div>
+    <SettingsLayout 
+      tabs={tabs} 
+      activeTab={activeTab} 
+      onTabChange={handleTabChange}
+    >
+      {activeTab === "general" && <GeneralSettings />}
+      {activeTab === "notification" && <NotificationSettings />}
+      {activeTab === "payment" && <PaymentSettings />}
     </SettingsLayout>
   );
 };

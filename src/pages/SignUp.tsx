@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { supabase } from "@/integrations/supabase/client";
 
-// Import our new components
+// Import our components
 import SignUpForm, { SignUpValues } from "@/components/auth/signup/SignUpForm";
 import ProfileTypeSelection from "@/components/auth/signup/ProfileTypeSelection";
 import ProfileSetup from "@/components/auth/signup/ProfileSetup";
@@ -22,18 +22,37 @@ const SignUp = () => {
   const [step, setStep] = useState(1);
   const [profileType, setProfileType] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [userData, setUserData] = useLocalStorage("userData", null);
   const [formValues, setFormValues] = useState<SignUpValues | null>(null);
   
-  const handleSignUpSubmit = (values: SignUpValues) => {
-    // In a real app, this would send the data to an API
-    toast.success("Account created successfully!");
-    
-    // Store user data in local storage for demo purposes
-    setFormValues(values);
-    
-    // Move to the next step of onboarding
-    setStep(2);
+  const handleSignUpSubmit = async (values: SignUpValues) => {
+    try {
+      // Create account with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            name: values.name,
+          },
+        }
+      });
+      
+      if (error) {
+        toast.error("Sign up failed", {
+          description: error.message,
+        });
+        return;
+      }
+      
+      toast.success("Account created successfully!");
+      
+      // Store form values and continue to next step
+      setFormValues(values);
+      setStep(2);
+    } catch (err) {
+      console.error("Sign up error:", err);
+      toast.error("Failed to create account");
+    }
   };
 
   const handleProfileTypeSelection = (type: string) => {
@@ -53,22 +72,29 @@ const SignUp = () => {
     }
   };
 
-  const completeOnboarding = () => {
-    // Update user data with final profile info
-    setUserData({
-      ...formValues,
-      profileImage,
-      profileType,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      wishlists: [],
-      following: [],
-      followers: [],
-      onboardingCompleted: true
-    });
+  const completeOnboarding = async () => {
+    if (!formValues) return;
     
-    toast.success("Profile set up successfully!");
-    navigate("/dashboard");
+    try {
+      // Update user profile with additional info
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          profile_image: profileImage,
+          profile_type: profileType,
+        })
+        .eq('id', supabase.auth.getUser());
+      
+      if (error) {
+        console.error("Error updating profile:", error);
+      }
+      
+      toast.success("Profile set up successfully!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Error completing onboarding:", err);
+      toast.error("Failed to complete profile setup");
+    }
   };
 
   return (

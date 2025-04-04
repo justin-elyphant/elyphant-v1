@@ -13,6 +13,7 @@ import VendorManagement from "./pages/VendorManagement";
 import Gifting from "./pages/Gifting";
 import Cart from "./pages/Cart";
 import SignUp from "./pages/SignUp";
+import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
 import Wishlists from "./pages/Wishlists";
@@ -25,6 +26,7 @@ import ConnectionDetails from "./pages/ConnectionDetails";
 import Settings from "./pages/Settings";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const App = () => {
   // Move QueryClient instantiation inside the component
@@ -33,37 +35,40 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <ProductProvider>
-          <CartProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<Index />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/vendor-signup" element={<VendorSignup />} />
-                  <Route path="/vendor-portal" element={<VendorManagement />} />
-                  <Route path="/vendor-management" element={<VendorManagement />} />
-                  <Route path="/gifting" element={<Gifting />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/sign-up" element={<SignUp />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile/:userId" element={<UserProfile />} />
-                  <Route path="/wishlists" element={<Wishlists />} />
-                  <Route path="/events" element={<Events />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/orders/:orderId" element={<OrderDetail />} />
-                  <Route path="/returns/:orderId" element={<Returns />} />
-                  <Route path="/connections" element={<Connections />} />
-                  <Route path="/connection/:connectionId" element={<ConnectionDetails />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </CartProvider>
-        </ProductProvider>
+        <AuthProvider>
+          <ProductProvider>
+            <CartProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<MainLayout />}>
+                    <Route index element={<Index />} />
+                    <Route path="/marketplace" element={<Marketplace />} />
+                    <Route path="/vendor-signup" element={<VendorSignup />} />
+                    <Route path="/vendor-portal" element={<VendorManagement />} />
+                    <Route path="/vendor-management" element={<VendorManagement />} />
+                    <Route path="/gifting" element={<Gifting />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/sign-up" element={<SignUp />} />
+                    <Route path="/sign-in" element={<SignIn />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/profile/:userId" element={<UserProfile />} />
+                    <Route path="/wishlists" element={<Wishlists />} />
+                    <Route path="/events" element={<Events />} />
+                    <Route path="/orders" element={<Orders />} />
+                    <Route path="/orders/:orderId" element={<OrderDetail />} />
+                    <Route path="/returns/:orderId" element={<Returns />} />
+                    <Route path="/connections" element={<Connections />} />
+                    <Route path="/connection/:connectionId" element={<ConnectionDetails />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+              </BrowserRouter>
+            </CartProvider>
+          </ProductProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

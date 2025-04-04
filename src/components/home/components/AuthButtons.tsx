@@ -1,15 +1,23 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { LogIn, User } from "lucide-react";
+import { LogIn, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 const AuthButtons = () => {
-  const [userData] = useLocalStorage("userData", null);
+  const { user, signOut } = useAuth();
 
-  if (userData) {
+  if (user) {
     return (
       <nav className="flex items-center space-x-3">
         <Button variant="outline" size="sm" asChild>
@@ -17,17 +25,40 @@ const AuthButtons = () => {
             Dashboard
           </Link>
         </Button>
-        <Link to={`/profile/${userData.id}`}>
-          <Avatar className="h-9 w-9 cursor-pointer">
-            {userData?.profileImage ? (
-              <AvatarImage src={userData.profileImage} alt={userData.name} />
-            ) : (
-              <AvatarFallback className="bg-purple-100 text-purple-600 text-sm">
-                {userData.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            )}
-          </Avatar>
-        </Link>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="h-9 w-9 cursor-pointer">
+              {user.user_metadata?.profile_image ? (
+                <AvatarImage src={user.user_metadata.profile_image} alt={user.user_metadata?.name || user.email || ''} />
+              ) : (
+                <AvatarFallback className="bg-purple-100 text-purple-600 text-sm">
+                  {(user.user_metadata?.name || user.email || '').substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              {user.user_metadata?.name || user.email}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to={`/profile/${user.id}`}>Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/wishlists">Wishlists</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings">Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut} className="text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </nav>
     );
   }

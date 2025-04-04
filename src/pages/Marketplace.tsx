@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useMarketplaceSearch } from "@/components/marketplace/hooks/useMarketplaceSearch";
 import MarketplaceHeader from "@/components/marketplace/MarketplaceHeader";
 import MarketplaceContent from "@/components/marketplace/MarketplaceContent";
@@ -26,6 +26,45 @@ const MarketplaceWrapper = () => {
   const [attemptedBrands, setAttemptedBrands] = useState<string[]>([]);
   const [brandProducts, setBrandProducts] = useState<any[]>([]);
   
+  // Memoized function to handle brand loading
+  const loadBrandProducts = useCallback(async (brandName: string) => {
+    console.log(`MarketplaceWrapper: Processing brand parameter: ${brandName}`);
+    
+    // Set loading state
+    setIsBrandLoading(true);
+    toast.loading(`Looking for ${brandName} products...`, { id: "loading-brand-products" });
+    
+    try {
+      // Handle special case for Apple to avoid fruit results
+      const searchBrandName = brandName.toLowerCase() === "apple" ? 
+        "Apple technology" : 
+        brandName;
+      
+      // Fetch products for this brand with a timeout
+      const timeout = setTimeout(() => {
+        if (isBrandLoading) {
+          console.log(`Brand product loading timeout for ${brandName}`);
+          setIsBrandLoading(false);
+          toast.error(`Loading ${brandName} products took too long. Try again later.`, { id: "loading-brand-products" });
+        }
+      }, 15000); // 15 second timeout
+      
+      // Fetch products for this brand
+      const brandProductsResult = await handleBrandProducts(searchBrandName, products, setProducts);
+      
+      // Clear timeout since we got a response
+      clearTimeout(timeout);
+      
+      console.log(`Finished loading products for ${brandName}, found ${brandProductsResult.length} products`);
+      setIsBrandLoading(false);
+      setBrandProducts(brandProductsResult);
+    } catch (error) {
+      console.error(`Error in brand products fetch: ${error}`);
+      setIsBrandLoading(false);
+      toast.error(`Couldn't load ${brandName} products`, { id: "loading-brand-products" });
+    }
+  }, [products, setProducts, isBrandLoading]);
+  
   useEffect(() => {
     console.log(`MarketplaceWrapper: Search params: ${location.search}, Products loaded: ${products.length}`);
     
@@ -46,40 +85,16 @@ const MarketplaceWrapper = () => {
   // Handle brand parameter
   useEffect(() => {
     const brandParam = searchParams.get("brand");
-    if (brandParam && !attemptedBrands.includes(brandParam)) {
-      console.log(`MarketplaceWrapper: Processing brand parameter: ${brandParam}`);
-      
-      // Set loading state
-      setIsBrandLoading(true);
-      toast.loading(`Looking for ${brandParam} products...`, { id: "loading-brand-products" });
-      
+    
+    // Only process if we have a brand parameter, we're not already loading, and we haven't attempted this brand before
+    if (brandParam && !isBrandLoading && !attemptedBrands.includes(brandParam)) {
       // Mark this brand as attempted to prevent duplicate fetches
       setAttemptedBrands(prev => [...prev, brandParam]);
       
-      // Handle special case for Apple to avoid fruit results
-      const searchBrandName = brandParam.toLowerCase() === "apple" ? 
-        "Apple technology" : 
-        brandParam;
-      
-      // Fetch products for this brand
-      handleBrandProducts(searchBrandName, products, setProducts)
-        .then((brandProducts) => {
-          console.log(`Finished loading products for ${brandParam}, found ${brandProducts.length} products`);
-          setIsBrandLoading(false);
-          setBrandProducts(brandProducts);
-          
-          if (brandProducts.length === 0) {
-            // If no products found, show error toast
-            toast.error(`No products found for ${brandParam}`, { id: "loading-brand-products" });
-          }
-        })
-        .catch(error => {
-          console.error(`Error in brand products fetch: ${error}`);
-          setIsBrandLoading(false);
-          toast.error(`Couldn't load ${brandParam} products`, { id: "loading-brand-products" });
-        });
+      // Load brand products
+      loadBrandProducts(brandParam);
     }
-  }, [searchParams, products, setProducts, attemptedBrands]);
+  }, [searchParams, loadBrandProducts, attemptedBrands, isBrandLoading]);
   
   // Get products to display - if we have brand products, use those, otherwise use filtered products
   const displayProducts = 

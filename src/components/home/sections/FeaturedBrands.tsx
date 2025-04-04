@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProducts } from "@/contexts/ProductContext";
 import { handleBrandProducts } from "@/utils/brandUtils";
@@ -18,19 +18,47 @@ type BrandsProps = {
 const FeaturedBrands = ({ brands }: BrandsProps) => {
   const { products, setProducts } = useProducts();
   const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
+  const navigate = useNavigate();
   
-  const handleBrandClick = async (brandName: string) => {
+  const handleBrandClick = async (e: React.MouseEvent, brandName: string) => {
+    e.preventDefault(); // Prevent default link behavior
+    
+    if (loadingBrand) {
+      console.log("Already loading a brand, ignoring click");
+      return;
+    }
+    
     console.log(`Brand clicked: ${brandName}, products available: ${products.length}`);
     
     // Set loading state for this specific brand
     setLoadingBrand(brandName);
+    toast.loading(`Looking for ${brandName} products...`, { id: "loading-brand-products" });
     
     try {
-      // This will fetch products for the brand from the Zinc API
+      // Set a timeout to prevent hanging
+      const timeoutId = setTimeout(() => {
+        if (loadingBrand === brandName) {
+          console.log(`Brand loading timeout for ${brandName}`);
+          setLoadingBrand(null);
+          toast.error(`Loading ${brandName} products took too long`, { id: "loading-brand-products" });
+          // Navigate anyway after timeout
+          navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
+        }
+      }, 5000); // 5 second timeout
+      
+      // Pre-fetch a few products for this brand before navigating
       await handleBrandProducts(brandName, products, setProducts);
+      
+      // Clear the timeout since we got a response
+      clearTimeout(timeoutId);
+      
+      // Navigate to marketplace with this brand
+      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
     } catch (error) {
       console.error(`Error loading ${brandName} products:`, error);
       toast.error(`Failed to load ${brandName} products`, { id: "loading-brand-products" });
+      // Navigate anyway even if there was an error
+      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
     } finally {
       // Clear loading state
       setLoadingBrand(null);
@@ -45,8 +73,8 @@ const FeaturedBrands = ({ brands }: BrandsProps) => {
           <Link 
             to={`/marketplace?brand=${encodeURIComponent(brand.name)}`}
             key={brand.id} 
-            onClick={() => handleBrandClick(brand.name)}
-            className={loadingBrand === brand.name ? "pointer-events-none opacity-70" : ""}
+            onClick={(e) => handleBrandClick(e, brand.name)}
+            className={loadingBrand ? "pointer-events-none opacity-70" : ""}
           >
             <Card className="hover:shadow-md transition-shadow border border-gray-200">
               <CardContent className="p-6 flex flex-col items-center justify-center">

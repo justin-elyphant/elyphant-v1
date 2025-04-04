@@ -24,10 +24,24 @@ const MarketplaceWrapper = () => {
   const [searchParams] = useSearchParams();
   const [isBrandLoading, setIsBrandLoading] = useState(false);
   const [attemptedBrands, setAttemptedBrands] = useState<string[]>([]);
+  const [brandProducts, setBrandProducts] = useState<any[]>([]);
   
   useEffect(() => {
     console.log(`MarketplaceWrapper: Search params: ${location.search}, Products loaded: ${products.length}`);
-  }, [location.search, products]);
+    
+    // Log available products for debugging
+    if (products.length > 0) {
+      const brandParam = searchParams.get("brand");
+      if (brandParam) {
+        const matchingProducts = products.filter(p => 
+          (p.name && p.name.toLowerCase().includes(brandParam.toLowerCase())) ||
+          (p.brand && p.brand.toLowerCase().includes(brandParam.toLowerCase())) ||
+          (p.description && p.description.toLowerCase().includes(brandParam.toLowerCase()))
+        );
+        console.log(`Found ${matchingProducts.length} products matching brand "${brandParam}" in context`);
+      }
+    }
+  }, [location.search, products, searchParams]);
 
   // Handle brand parameter
   useEffect(() => {
@@ -47,6 +61,7 @@ const MarketplaceWrapper = () => {
         .then((brandProducts) => {
           console.log(`Finished loading products for ${brandParam}, found ${brandProducts.length} products`);
           setIsBrandLoading(false);
+          setBrandProducts(brandProducts);
           
           if (brandProducts.length === 0) {
             // If no products found, show error toast
@@ -60,12 +75,18 @@ const MarketplaceWrapper = () => {
         });
     }
   }, [searchParams, products, setProducts, attemptedBrands]);
+  
+  // Get products to display - if we have brand products, use those, otherwise use filtered products
+  const displayProducts = 
+    searchParams.get("brand") && brandProducts.length > 0 
+      ? brandProducts 
+      : filteredProducts;
 
   return (
     <div className="container mx-auto py-8 px-4">
       <MarketplaceHeader title={pageTitle} subtitle={subtitle} />
       <MarketplaceContent 
-        products={filteredProducts} 
+        products={displayProducts} 
         isLoading={isLoading || isBrandLoading} 
       />
     </div>

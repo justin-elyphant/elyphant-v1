@@ -22,7 +22,7 @@ export const handleBrandProducts = async (
   console.log(`Looking for products for brand: ${brandName}`);
   
   // Show loading toast
-  toast.loading("Loading products...", { id: "loading-brand-products" });
+  toast.loading(`Looking for ${brandName} products...`, { id: "loading-brand-products" });
   
   try {
     // Search for products using the Zinc API
@@ -32,21 +32,23 @@ export const handleBrandProducts = async (
     if (zincResults && zincResults.length > 0) {
       console.log(`Found ${zincResults.length} products for ${brandName} from Zinc API`);
       
-      // Filter products to ensure they're actually for this brand
-      const brandProducts = zincResults
-        .filter((product: ZincProduct) => 
-          (product.title && product.title.toLowerCase().includes(brandName.toLowerCase())) || 
-          (product.brand && product.brand.toLowerCase().includes(brandName.toLowerCase()))
-        )
-        .map(product => convertZincProductToProduct(product));
+      // Convert all products to our format
+      const brandProducts = zincResults.map(product => {
+        // Add the current brand name to the product's brand field to ensure it's included
+        if (!product.brand) {
+          product.brand = brandName;
+        }
+        return convertZincProductToProduct(product);
+      });
       
       if (brandProducts.length > 0) {
         // Update products in context - add these to existing products
         setProducts(prev => {
-          // Remove any existing products from this brand to avoid duplicates
+          // Remove any existing Amazon products for this brand to avoid duplicates
           const filteredProducts = prev.filter(p => 
             !(p.vendor === "Amazon via Zinc" && 
               (p.name.toLowerCase().includes(brandName.toLowerCase()) || 
+              (p.brand && p.brand.toLowerCase().includes(brandName.toLowerCase())) ||
               (p.description && p.description.toLowerCase().includes(brandName.toLowerCase()))))
           );
           

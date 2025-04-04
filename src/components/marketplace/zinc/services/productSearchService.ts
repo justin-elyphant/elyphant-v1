@@ -31,29 +31,41 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
     
     if (data.results && Array.isArray(data.results)) {
       console.log(`Processing ${data.results.length} results from Zinc API`);
+      
       return data.results.map((item: any, index: number) => {
         // Determine if product is a best seller (top 10% of results)
         const isBestSeller = index < Math.ceil(data.results.length * 0.1);
+        
+        // Normalize the price (API sometimes returns cents instead of dollars)
+        let price = 0;
+        if (typeof item.price === 'number') {
+          price = item.price > 1000 ? item.price / 100 : item.price;
+        } else if (item.price) {
+          price = parseFloat(String(item.price));
+        }
         
         // Ensure we have an image array
         const images = item.images && Array.isArray(item.images) ? 
           item.images : 
           (item.image ? [item.image] : ['/placeholder.svg']);
         
+        // Try to extract brand from title if not provided
+        const brand = item.brand || extractBrandFromTitle(item.title || "");
+        
         return {
           product_id: item.product_id || item.asin || `unknown-${index}`,
           title: item.title || "Unknown Product",
-          price: item.price || 0,
+          price: price,
           image: item.image || '/placeholder.svg',
           images: images,
           description: item.description || item.product_description || '',
-          brand: item.brand || query || 'Unknown', // Use query as fallback brand
+          brand: brand,
           category: item.category || 'Electronics',
           retailer: "Amazon via Zinc",
-          rating: item.rating || 0,
-          stars: item.stars || 0,
-          review_count: item.review_count || 0,
-          num_reviews: item.num_reviews || 0,
+          rating: item.rating || item.stars || 0,
+          stars: item.stars || item.rating || 0,
+          review_count: item.review_count || item.num_reviews || 0,
+          num_reviews: item.num_reviews || item.review_count || 0,
           features: item.features || item.bullet_points || [],
           specifications: item.specifications || {},
           isBestSeller: isBestSeller
@@ -67,4 +79,25 @@ export const searchProducts = async (query: string): Promise<ZincProduct[]> => {
     console.error('Error searching products via Zinc:', error);
     throw error; // Let the caller handle the error
   }
+};
+
+/**
+ * Extract brand name from product title
+ */
+const extractBrandFromTitle = (title: string): string => {
+  // Common brand words that might appear in titles
+  const commonBrands = [
+    'Apple', 'Samsung', 'Sony', 'Nike', 'Adidas', 'Microsoft', 'Dell', 'HP', 
+    'LG', 'Bose', 'Amazon', 'Google', 'Logitech', 'Levi\'s', 'Nintendo', 'Canon',
+    'Lego', 'Lululemon'
+  ];
+  
+  for (const brand of commonBrands) {
+    if (title.toLowerCase().includes(brand.toLowerCase())) {
+      return brand;
+    }
+  }
+  
+  // Return the first word as a fallback
+  return title.split(' ')[0];
 };

@@ -27,6 +27,9 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     ? zincProduct.images 
     : [zincProduct.image || "/placeholder.svg"];
   
+  // Extract the brand name, ensuring it's not an empty string
+  const brand = zincProduct.brand || extractBrandFromTitle(zincProduct.title || "");
+  
   return {
     id: Date.now() + Math.floor(Math.random() * 1000), // Generate a unique ID
     name: zincProduct.title || "Unknown Product",
@@ -34,12 +37,35 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     category: zincProduct.category || "Electronics",
     image: zincProduct.image || "/placeholder.svg",
     vendor: "Amazon via Zinc",
-    description: zincProduct.description || `High-quality product from ${zincProduct.brand || 'a trusted brand'}.`,
+    description: zincProduct.description || `High-quality product from ${brand || 'a trusted brand'}.`,
     rating: rating,
     reviewCount: reviewCount,
     images: images,
     features: zincProduct.features || [],
     specifications: zincProduct.specifications || {},
-    isBestSeller: zincProduct.isBestSeller || false
+    isBestSeller: zincProduct.isBestSeller || false,
+    // Add the brand name to help with filtering
+    brand: brand
   };
+};
+
+/**
+ * Extract brand name from product title
+ */
+const extractBrandFromTitle = (title: string): string => {
+  // Common brand words that might appear at the beginning of titles
+  const commonBrands = [
+    'Apple', 'Samsung', 'Sony', 'Nike', 'Adidas', 'Microsoft', 'Dell', 'HP', 
+    'LG', 'Bose', 'Amazon', 'Google', 'Logitech', 'Levi\'s', 'Nintendo', 'Canon',
+    'Lego', 'Lululemon'
+  ];
+  
+  for (const brand of commonBrands) {
+    if (title.toLowerCase().includes(brand.toLowerCase())) {
+      return brand;
+    }
+  }
+  
+  // Return the first word as a fallback
+  return title.split(' ')[0];
 };

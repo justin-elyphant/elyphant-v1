@@ -20,6 +20,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
   const [autoGiftAmount, setAutoGiftAmount] = useState(0);
   const [giftSource, setGiftSource] = useState<GiftSource>("wishlist");
   const [privacyLevel, setPrivacyLevel] = useState<PrivacyLevel>("private");
+  const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize form when event changes
@@ -34,6 +35,8 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
       setGiftSource(event.giftSource || "wishlist");
       // Make sure we cast the string to the correct type
       setPrivacyLevel((event.privacyLevel || "private") as PrivacyLevel);
+      // Initialize payment method ID if available
+      setPaymentMethodId(event.paymentMethodId || "");
     }
   }, [event]);
 
@@ -47,6 +50,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
         autoGiftEnabled,
         autoGiftAmount: autoGiftEnabled ? autoGiftAmount : undefined,
         giftSource: autoGiftEnabled ? giftSource : undefined,
+        paymentMethodId: autoGiftEnabled ? paymentMethodId : undefined,
         privacyLevel,
       });
       toast.success("Gift occasion updated successfully");
@@ -83,9 +87,11 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             autoGiftEnabled={autoGiftEnabled}
             autoGiftAmount={autoGiftAmount}
             giftSource={giftSource}
+            paymentMethodId={paymentMethodId}
             setAutoGiftEnabled={setAutoGiftEnabled}
             setAutoGiftAmount={setAutoGiftAmount}
             setGiftSource={setGiftSource}
+            setPaymentMethodId={setPaymentMethodId}
           />
           
           <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />

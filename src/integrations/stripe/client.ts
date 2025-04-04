@@ -1,6 +1,7 @@
 
 // Stripe client integration
 import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from "@/integrations/supabase/client";
 
 // Use environment variable or fallback to the provided key
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 

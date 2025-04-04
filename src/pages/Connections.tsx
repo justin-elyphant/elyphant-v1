@@ -7,7 +7,6 @@ import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
 import FriendsTabContent from "@/components/connections/FriendsTabContent";
 import FollowingTabContent from "@/components/connections/FollowingTabContent";
 import SuggestionsTabContent from "@/components/connections/SuggestionsTabContent";
-import PrivacySettings from "@/components/connections/PrivacySettings";
 
 const Connections = () => {
   const [userData] = useLocalStorage("userData", null);
@@ -61,8 +60,6 @@ const Connections = () => {
           <SuggestionsTabContent suggestions={suggestions} />
         </TabsContent>
       </Tabs>
-      
-      <PrivacySettings />
     </div>
   );
 };

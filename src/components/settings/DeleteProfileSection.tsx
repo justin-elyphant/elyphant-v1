@@ -2,32 +2,13 @@
 import React, { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const DeleteProfileSection = () => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user, deleteUser } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const sendDeletionEmail = async (email: string, name: string | null) => {
-    try {
-      const { error } = await supabase.functions.invoke('send-deletion-email', {
-        body: { email, name }
-      });
-      
-      if (error) throw error;
-      
-      console.log("Deletion confirmation email sent successfully");
-    } catch (error) {
-      console.error("Failed to send deletion confirmation email:", error);
-      // We don't want to block the deletion process if the email fails
-      // Just log the error and continue
-    }
-  };
 
   const handleDeleteProfile = async () => {
     if (!user) {
@@ -38,40 +19,8 @@ const DeleteProfileSection = () => {
     setIsDeleting(true);
     
     try {
-      // Fetch user profile to get name for email
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('name, email')
-        .eq('id', user.id)
-        .single();
-      
-      // Send deletion confirmation email before deleting the profile
-      if (user.email) {
-        await sendDeletionEmail(user.email, profileData?.name);
-      }
-      
-      // Delete the user's profile data first
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-        
-      if (profileError) {
-        throw profileError;
-      }
-      
-      // Delete the user's account from auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
-      
-      if (authError) {
-        throw authError;
-      }
-
-      // Sign out the user after deletion
-      await signOut();
-      
+      await deleteUser();
       toast.success("Your profile has been deleted successfully");
-      navigate("/");
     } catch (error) {
       console.error("Error deleting profile:", error);
       toast.error("Failed to delete your profile. Please try again later.");

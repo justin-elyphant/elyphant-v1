@@ -31,7 +31,7 @@ import FundingDetails from "./pages/FundingDetails";
 import FundingSuccess from "./pages/FundingSuccess";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/auth";
 
 const App = () => {
   // Move QueryClient instantiation inside the component

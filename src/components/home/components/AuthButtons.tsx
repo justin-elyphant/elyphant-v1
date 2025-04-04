@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { LogIn, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 

@@ -5,7 +5,7 @@ import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import PaymentSettings from "@/components/settings/PaymentSettings";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 const Settings = () => {
   const [searchParams] = useSearchParams();

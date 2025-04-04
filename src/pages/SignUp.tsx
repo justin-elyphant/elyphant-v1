@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Mail, AlertCircle } from "lucide-react";
 
 // Import our components
 import SignUpForm, { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -25,6 +28,8 @@ const SignUp = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<SignUpValues | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   
   // Get invitation parameters from URL if present
   const invitedBy = searchParams.get('invitedBy');
@@ -43,6 +48,7 @@ const SignUp = () => {
             invited_by: invitedBy,
             sender_user_id: senderUserId,
           },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         }
       });
       
@@ -55,11 +61,13 @@ const SignUp = () => {
       
       if (data.user) {
         setUserId(data.user.id);
+        setUserEmail(values.email);
+        setEmailSent(true);
+        
         toast.success("Account created successfully!");
         
-        // Store form values and continue to next step
+        // Store form values for later steps
         setFormValues(values);
-        setStep(2);
       }
     } catch (err) {
       console.error("Sign up error:", err);
@@ -123,6 +131,32 @@ const SignUp = () => {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!userEmail) return;
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: userEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        }
+      });
+      
+      if (error) {
+        toast.error("Failed to resend email", {
+          description: error.message
+        });
+        return;
+      }
+      
+      toast.success("Verification email resent!");
+    } catch (err) {
+      console.error("Error resending verification:", err);
+      toast.error("Failed to resend verification email");
+    }
+  };
+
   return (
     <div className="container max-w-md mx-auto py-10 px-4">
       {invitedBy && (
@@ -133,7 +167,46 @@ const SignUp = () => {
         </div>
       )}
       
-      {step === 1 && (
+      {emailSent ? (
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
+            <CardDescription>
+              We've sent a verification link to {userEmail}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert className="bg-blue-50 border-blue-200 mb-4">
+              <Mail className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-800">Verification Required</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                Please check your inbox and click the verification link to continue.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="text-center mt-4 mb-2">
+              <p className="text-sm text-gray-600 mb-4">
+                Didn't receive an email? Check your spam folder or click below to resend.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={handleResendVerification}
+                className="mx-auto"
+              >
+                Resend Verification Email
+              </Button>
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link to="/sign-in" className="text-primary underline-offset-4 hover:underline">
+                Sign in
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      ) : step === 1 ? (
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
@@ -153,13 +226,9 @@ const SignUp = () => {
             </div>
           </CardFooter>
         </Card>
-      )}
-
-      {step === 2 && (
+      ) : step === 2 ? (
         <ProfileTypeSelection onSelect={handleProfileTypeSelection} />
-      )}
-
-      {step === 3 && formValues && (
+      ) : formValues && (
         <ProfileSetup 
           userName={formValues.name}
           profileImage={profileImage}

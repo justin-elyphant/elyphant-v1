@@ -11,6 +11,7 @@ interface AuthState {
   isLoading: boolean;
   signOut: () => Promise<void>;
   getUserProfile: () => Promise<Profile | null>;
+  resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState>({
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthState>({
   isLoading: true,
   signOut: async () => {},
   getUserProfile: async () => null,
+  resendVerificationEmail: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -40,6 +42,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           toast.success('Signed in successfully!');
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
+        } else if (event === 'USER_UPDATED') {
+          // This fires when email verification completes
+          if (session?.user.email_confirmed_at) {
+            toast.success('Email verified successfully!');
+          }
         }
       }
     );
@@ -74,9 +81,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     return data;
   };
+  
+  const resendVerificationEmail = async () => {
+    if (!user?.email) {
+      toast.error('No email address available');
+      return;
+    }
+    
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+    });
+    
+    if (error) {
+      console.error('Error resending verification email:', error);
+      toast.error('Failed to resend verification email');
+    } else {
+      toast.success('Verification email sent!');
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signOut, getUserProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      isLoading, 
+      signOut, 
+      getUserProfile,
+      resendVerificationEmail 
+    }}>
       {children}
     </AuthContext.Provider>
   );

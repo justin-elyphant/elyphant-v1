@@ -2,7 +2,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Heart } from "lucide-react";
+import { AlertCircle, Heart, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SignUpDialogProps {
@@ -33,8 +33,11 @@ const SignUpDialog = ({ open, onOpenChange }: SignUpDialogProps) => {
         <div className="flex justify-center py-6">
           <div className="text-center">
             <Heart className="w-16 h-16 mx-auto mb-4 text-red-500" />
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-2">
               Save products, share with friends, and get notified about price drops.
+            </p>
+            <p className="text-sm flex items-center justify-center gap-1 text-purple-600">
+              <Mail className="w-4 h-4" /> We'll verify your email for security
             </p>
           </div>
         </div>

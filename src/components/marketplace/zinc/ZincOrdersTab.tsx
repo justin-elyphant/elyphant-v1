@@ -1,46 +1,21 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, TruckIcon, Package } from "lucide-react";
-
-// Mock order data
-const mockOrders = [
-  {
-    id: "ord_123456",
-    customerName: "Jane Smith",
-    items: [
-      { name: "Echo Dot (4th Gen)", quantity: 1, price: 49.99 }
-    ],
-    total: 49.99,
-    status: "delivered",
-    date: "2025-03-28T14:30:00Z"
-  },
-  {
-    id: "ord_123457",
-    customerName: "John Doe",
-    items: [
-      { name: "Kindle Paperwhite", quantity: 1, price: 139.99 }
-    ],
-    total: 139.99,
-    status: "shipped",
-    date: "2025-04-01T10:15:00Z"
-  },
-  {
-    id: "ord_123458",
-    customerName: "Alex Johnson",
-    items: [
-      { name: "Fire TV Stick 4K", quantity: 1, price: 49.99 },
-      { name: "AirPods Pro", quantity: 1, price: 249.99 }
-    ],
-    total: 299.98,
-    status: "processing",
-    date: "2025-04-02T16:45:00Z"
-  }
-];
+import { ShoppingBag, TruckIcon, Package, Settings } from "lucide-react";
+import { toast } from "sonner";
+import { getMockOrders } from "./orderService";
+import AmazonCredentialsManager from "./AmazonCredentialsManager";
+import { AmazonCredentials } from "./types";
 
 const ZincOrdersTab = () => {
+  const [orders, setOrders] = useState(getMockOrders());
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+  const [hasAmazonCredentials, setHasAmazonCredentials] = useState(
+    localStorage.getItem('amazonCredentials') !== null
+  );
+
   // Function to get appropriate badge variant based on order status
   const getBadgeVariant = (status: string) => {
     switch (status) {
@@ -69,14 +44,50 @@ const ZincOrdersTab = () => {
     }
   };
 
+  const handleSaveCredentials = (credentials: AmazonCredentials) => {
+    setHasAmazonCredentials(true);
+    console.log("Amazon credentials saved:", credentials.email);
+  };
+
+  const handleProcessOrder = (orderId: string) => {
+    toast.loading("Processing order...", { id: "process-order" });
+    
+    // Simulate order processing for now
+    setTimeout(() => {
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId 
+            ? { ...order, status: "shipped" } 
+            : order
+        )
+      );
+      
+      toast.success("Order processed successfully", { id: "process-order" });
+    }, 2000);
+  };
+  
+  const handleManageCredentials = () => {
+    setIsCredentialsModalOpen(true);
+  };
+
   return (
     <div className="space-y-4 py-4">
       <div className="flex justify-between items-center">
         <h3 className="font-medium">Recent Orders</h3>
-        <Button variant="outline" size="sm">View All Orders</Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleManageCredentials}
+          >
+            <Settings className="h-3 w-3 mr-1" />
+            {hasAmazonCredentials ? "Update Amazon Credentials" : "Add Amazon Credentials"}
+          </Button>
+          <Button variant="outline" size="sm">View All Orders</Button>
+        </div>
       </div>
       
-      {mockOrders.map(order => (
+      {orders.map(order => (
         <Card key={order.id}>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
@@ -109,13 +120,26 @@ const ZincOrdersTab = () => {
               <div className="pt-2 flex justify-end space-x-2">
                 <Button variant="outline" size="sm">Details</Button>
                 {order.status === "processing" && (
-                  <Button size="sm">Process Now</Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleProcessOrder(order.id)}
+                    disabled={!hasAmazonCredentials}
+                  >
+                    {hasAmazonCredentials ? "Process Now" : "Add Amazon Credentials"}
+                  </Button>
                 )}
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
+      
+      {/* Amazon Credentials Manager */}
+      <AmazonCredentialsManager 
+        isOpen={isCredentialsModalOpen}
+        onClose={() => setIsCredentialsModalOpen(false)}
+        onSave={handleSaveCredentials}
+      />
     </div>
   );
 };

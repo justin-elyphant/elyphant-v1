@@ -1,3 +1,4 @@
+
 // Zinc API product type
 export type ZincProduct = {
   product_id: string;
@@ -165,4 +166,10 @@ export type ZincReturnRequest = {
   client_notes?: {
     [key: string]: string;
   };
+};
+
+// Amazon retailer credentials type
+export type AmazonCredentials = {
+  email: string;
+  password: string;
 };

@@ -23,6 +23,7 @@ const SignUp = () => {
   const [profileType, setProfileType] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<SignUpValues | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
@@ -44,11 +45,14 @@ const SignUp = () => {
         return;
       }
       
-      toast.success("Account created successfully!");
-      
-      // Store form values and continue to next step
-      setFormValues(values);
-      setStep(2);
+      if (data.user) {
+        setUserId(data.user.id);
+        toast.success("Account created successfully!");
+        
+        // Store form values and continue to next step
+        setFormValues(values);
+        setStep(2);
+      }
     } catch (err) {
       console.error("Sign up error:", err);
       toast.error("Failed to create account");
@@ -73,7 +77,7 @@ const SignUp = () => {
   };
 
   const completeOnboarding = async () => {
-    if (!formValues) return;
+    if (!userId) return;
     
     try {
       // Update user profile with additional info
@@ -83,7 +87,7 @@ const SignUp = () => {
           profile_image: profileImage,
           profile_type: profileType,
         })
-        .eq('id', supabase.auth.getUser());
+        .eq('id', userId);
       
       if (error) {
         console.error("Error updating profile:", error);

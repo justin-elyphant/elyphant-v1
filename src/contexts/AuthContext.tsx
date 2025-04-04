@@ -3,13 +3,14 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Profile } from "@/types/supabase";
 
 interface AuthState {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
-  getUserProfile: () => Promise<any>;
+  getUserProfile: () => Promise<Profile | null>;
 }
 
 const AuthContext = createContext<AuthState>({

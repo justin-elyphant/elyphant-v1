@@ -100,6 +100,13 @@ const mockSuggestions: Connection[] = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 4,
     type: 'suggestion',
+    lastActive: 'Never',
+    relationship: 'friend',
+    dataStatus: {
+      shipping: 'missing',
+      birthday: 'missing',
+      email: 'missing'
+    },
     reason: 'Based on your interests'
   },
   {
@@ -109,6 +116,13 @@ const mockSuggestions: Connection[] = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 7,
     type: 'suggestion',
+    lastActive: 'Never',
+    relationship: 'friend',
+    dataStatus: {
+      shipping: 'missing',
+      birthday: 'missing',
+      email: 'missing'
+    },
     reason: 'Friends with Alex Johnson'
   },
   {
@@ -118,6 +132,13 @@ const mockSuggestions: Connection[] = [
     imageUrl: '/placeholder.svg',
     mutualFriends: 3,
     type: 'suggestion',
+    lastActive: 'Never',
+    relationship: 'friend',
+    dataStatus: {
+      shipping: 'missing',
+      birthday: 'missing',
+      email: 'missing'
+    },
     reason: 'Connected to your recent activity'
   }
 ];

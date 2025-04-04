@@ -20,8 +20,8 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
       // Get current site URL for redirection after email verification
-      const currentUrl = window.location.origin;
-      const redirectTo = `${currentUrl}/dashboard`;
+      const currentOrigin = window.location.origin;
+      const redirectTo = `${currentOrigin}/dashboard`;
       
       // Create account with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
@@ -48,13 +48,15 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
       if (data.user) {
         setUserId(data.user.id);
         setUserEmail(values.email);
-        setEmailSent(true);
         
-        // Send custom verification email
+        // Send custom verification email immediately
         try {
-          const verificationUrl = `${currentUrl}/dashboard?email=${encodeURIComponent(values.email)}`;
+          // Ensure the full application URL is used (not localhost)
+          const verificationUrl = `${currentOrigin}/dashboard?email=${encodeURIComponent(values.email)}`;
 
-          await supabase.functions.invoke('send-verification-email', {
+          console.log("Sending verification email with URL:", verificationUrl);
+          
+          const emailResponse = await supabase.functions.invoke('send-verification-email', {
             body: {
               email: values.email,
               name: values.name,
@@ -62,10 +64,34 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
             }
           });
           
+          console.log("Email function response:", emailResponse);
+          
+          if (emailResponse.error) {
+            throw new Error(emailResponse.error.message || "Failed to send verification email");
+          }
+          
+          setEmailSent(true);
           toast.success("Account created! Check your email for verification link.");
         } catch (emailError) {
           console.error("Failed to send custom verification email:", emailError);
           toast.error("Account created, but there was an issue sending the verification email.");
+          
+          // Fall back to Supabase's default verification
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: values.email,
+            options: {
+              emailRedirectTo: redirectTo,
+            }
+          });
+          
+          if (resendError) {
+            console.error("Failed to resend verification:", resendError);
+          } else {
+            toast.success("A verification email has been sent using our backup system.");
+          }
+          
+          setEmailSent(true);
         }
         
         // Store form values for later steps

@@ -1,9 +1,8 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Mail, AlertCircle, RefreshCw } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -19,6 +18,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface EmailVerificationViewProps {
   userEmail: string | null;
@@ -26,7 +26,26 @@ interface EmailVerificationViewProps {
 
 const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { resendVerificationEmail } = useAuth();
+  const navigate = useNavigate();
+  
+  // Function to check if the user's email has been verified
+  const checkVerificationStatus = async () => {
+    if (!userEmail) return;
+    
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      
+      if (data?.session?.user?.email_confirmed_at) {
+        toast.success("Your email has been verified!");
+        navigate('/dashboard');
+      } else {
+        toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
+      }
+    } catch (err) {
+      console.error("Error checking verification status:", err);
+    }
+  };
 
   const handleResendVerification = async () => {
     if (!userEmail) {
@@ -36,10 +55,14 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
     
     try {
       setIsLoading(true);
-      // Use our custom email function
-      const verificationUrl = `${window.location.origin}/dashboard?email=${encodeURIComponent(userEmail)}`;
+      // Get the current origin for proper URL construction
+      const currentOrigin = window.location.origin;
+      const verificationUrl = `${currentOrigin}/dashboard?email=${encodeURIComponent(userEmail)}`;
       
-      await supabase.functions.invoke('send-verification-email', {
+      console.log("Resending verification email with URL:", verificationUrl);
+      
+      // Try our custom email function first
+      const response = await supabase.functions.invoke('send-verification-email', {
         body: {
           email: userEmail,
           name: "",
@@ -47,12 +70,37 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
         }
       });
       
+      console.log("Email function response:", response);
+      
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to send verification email");
+      }
+      
       toast.success("Verification email sent! Please check your inbox", {
         description: "If you don't see it, please check your spam folder."
       });
     } catch (err) {
       console.error("Error resending verification:", err);
-      toast.error("Failed to send verification email");
+      
+      // Fall back to Supabase's default resend function
+      try {
+        const { error: resendError } = await supabase.auth.resend({
+          type: 'signup',
+          email: userEmail,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+          }
+        });
+        
+        if (resendError) throw resendError;
+        
+        toast.success("Verification email sent using our backup system!", {
+          description: "If you don't see it, please check your spam folder."
+        });
+      } catch (fallbackErr) {
+        console.error("Fallback resend failed:", fallbackErr);
+        toast.error("Failed to send verification email. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,21 +133,42 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
           <p className="text-sm text-gray-600 mb-4">
             Didn't receive an email? Click below to resend.
           </p>
-          <Button 
-            variant="outline" 
-            onClick={handleResendVerification}
-            className="mx-auto transition-all hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Resend Verification Email"
-            )}
-          </Button>
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleResendVerification}
+              className="transition-all hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Resend Verification Email"
+              )}
+            </Button>
+            
+            <Button
+              variant="secondary"
+              onClick={checkVerificationStatus}
+              className="mt-2 sm:mt-0"
+            >
+              I've Verified My Email
+            </Button>
+          </div>
+        </div>
+
+        <Separator className="my-4" />
+        
+        <div className="text-sm text-center text-gray-600">
+          <p className="mb-2">Having trouble?</p>
+          <ul className="list-disc text-left ml-6 space-y-1">
+            <li>Check your spam or junk folder</li>
+            <li>Make sure your email address was entered correctly</li>
+            <li>Try using a different browser if the verification link doesn't work</li>
+          </ul>
         </div>
         
         <Alert className="bg-amber-50 border-amber-200 mt-6">
@@ -107,6 +176,7 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
           <AlertTitle className="text-amber-800">Important Note</AlertTitle>
           <AlertDescription className="text-amber-700">
             After verifying your email, you'll be automatically redirected to your Elyphant dashboard.
+            If not, click the "I've Verified My Email" button above.
           </AlertDescription>
         </Alert>
       </CardContent>

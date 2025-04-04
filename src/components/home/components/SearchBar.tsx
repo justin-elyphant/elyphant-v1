@@ -72,8 +72,6 @@ const SearchBar = () => {
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          // This makes the full text selectable on focus
-          inputRef.current.select();
         }
       }, 0);
     }
@@ -82,11 +80,6 @@ const SearchBar = () => {
   const handleInputClick = () => {
     if (searchTerm.trim().length > 0) {
       setIsSearchOpen(true);
-    }
-    
-    // Select all text when clicking in the input field
-    if (inputRef.current) {
-      inputRef.current.select();
     }
   };
 
@@ -133,7 +126,7 @@ const SearchBar = () => {
         <PopoverContent className="p-0 w-[calc(100vw-2rem)] sm:w-[450px] z-50" align="start">
           <SearchResults 
             searchTerm={searchTerm}
-            onSearchTermChange={(value) => setSearchTerm(value)}
+            onSearchTermChange={setSearchTerm}
             onItemSelect={handleSearchItemSelect}
           />
         </PopoverContent>

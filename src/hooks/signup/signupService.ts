@@ -5,9 +5,8 @@ import { SignUpValues } from "@/components/auth/signup/SignUpForm";
 
 export const signUpUser = async (values: SignUpValues, invitedBy: string | null, senderUserId: string | null) => {
   // Get the current site URL - using window.location.origin to get the ACTUAL current URL
-  // This ensures we're not using localhost in the email if we're on the preview site
   const currentOrigin = window.location.origin;
-  const redirectTo = `${currentOrigin}/sign-up?verified=true`; // Add verified parameter
+  const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(values.email)}`; 
   
   // Create account with Supabase Auth
   const { data, error } = await supabase.auth.signUp({
@@ -30,18 +29,15 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   return data;
 };
 
-export const sendVerificationEmail = async (email: string, name: string) => {
+export const sendVerificationEmail = async (email: string, name: string, verificationUrl: string) => {
   try {
-    const currentOrigin = window.location.origin;
-    
-    // Send the actual origin, not a path - the edge function will handle the redirect path
-    console.log("Using origin for verification:", currentOrigin);
+    console.log("Using origin for verification:", verificationUrl);
     
     const emailResponse = await supabase.functions.invoke('send-verification-email', {
       body: {
         email: email,
         name: name,
-        verificationUrl: currentOrigin
+        verificationUrl: verificationUrl
       }
     });
     
@@ -61,7 +57,7 @@ export const sendVerificationEmail = async (email: string, name: string) => {
 
 export const resendDefaultVerification = async (email: string) => {
   const currentOrigin = window.location.origin;
-  const redirectTo = `${currentOrigin}/sign-up?verified=true`; // Add verified parameter
+  const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(email)}`;
   
   try {
     const { error } = await supabase.auth.resend({

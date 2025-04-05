@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
 import { useProfileImage } from "./signup/useProfileImage";
@@ -12,6 +12,7 @@ import {
   updateUserProfile,
   createConnection
 } from "./signup/signupService";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSignUpProcess = (invitedBy: string | null, senderUserId: string | null) => {
   const [step, setStep] = useState(1);
@@ -29,6 +30,32 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   const setIsVerified = useCallback((value: boolean) => {
     setIsVerifiedState(value);
   }, []);
+
+  // Effect to check if we're already logged in from a verification
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (data?.session) {
+        console.log("User already has a session:", data.session.user);
+        setUserId(data.session.user.id);
+        setUserEmail(data.session.user.email);
+        
+        // If the user has logged in but we don't have form values yet,
+        // create a basic form values object from the user data
+        if (!formValues && data.session.user.email) {
+          const name = data.session.user.user_metadata?.name || "User";
+          setFormValues({
+            name,
+            email: data.session.user.email,
+            password: "", // We don't need the password as they're already logged in
+            captcha: ""
+          });
+        }
+      }
+    };
+    
+    checkSession();
+  }, [formValues]);
   
   const { verificationChecking, isVerified, isLoading, checkEmailVerification } = useEmailVerification(
     emailSent, 
@@ -52,7 +79,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
           const currentOrigin = window.location.origin;
           console.log("Using origin for verification:", currentOrigin);
           
-          const emailResult = await sendVerificationEmail(values.email, values.name);
+          const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
           
           if (!emailResult.success) {
             // Fall back to Supabase's default verification
@@ -137,7 +164,9 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     formValues,
     userId,
     emailSent,
+    setEmailSent,
     userEmail,
+    setUserEmail,
     verificationChecking,
     isVerified,
     handleSignUpSubmit,

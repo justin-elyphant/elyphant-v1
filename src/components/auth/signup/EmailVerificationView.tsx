@@ -58,6 +58,7 @@ const EmailVerificationView = ({
         
         if (data?.session?.user?.email_confirmed_at) {
           toast.success("Your email has been verified!");
+          window.location.href = `${window.location.origin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
         } else {
           toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
         }
@@ -81,7 +82,7 @@ const EmailVerificationView = ({
       
       // Get the actual current URL (not localhost)
       const currentOrigin = window.location.origin;
-      const redirectTo = `${currentOrigin}/sign-up?verified=true`; // Add verified parameter
+      const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
       
       // Try our custom email function first
       const response = await supabase.functions.invoke('send-verification-email', {
@@ -108,7 +109,7 @@ const EmailVerificationView = ({
           type: 'signup',
           email: userEmail,
           options: {
-            emailRedirectTo: `${window.location.origin}/sign-up?verified=true`,
+            emailRedirectTo: `${window.location.origin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`,
           }
         });
         

@@ -61,10 +61,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email is required");
     }
 
-    // Always use the project URL from environment when available
-    // This ensures we're never using localhost in production
-    const baseUrl = Deno.env.get("SUPABASE_URL") || verificationUrl;
-    console.log(`Base URL for verification: ${baseUrl}`);
+    // Use the provided verification URL from the client
+    // This ensures we're using the actual URL the user is coming from
+    console.log(`Base URL for verification: ${verificationUrl}`);
 
     // Get signup URL with proper redirect using the admin API
     const { data: signUpData, error: signUpError } = await fetch(
@@ -80,7 +79,8 @@ const handler = async (req: Request): Promise<Response> => {
           type: "signup",
           email: email,
           options: {
-            redirect_to: `${baseUrl}/sign-up?verified=true` // Add verified=true parameter to trigger proper flow
+            // Use the client-provided verification URL
+            redirect_to: `${verificationUrl}/sign-up?verified=true&email=${encodeURIComponent(email)}` 
           }
         })
       }

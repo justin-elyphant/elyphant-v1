@@ -51,6 +51,7 @@ export const useEmailVerification = (
         // Show success notification
         toast.success("Email verified successfully!");
         
+        // Instead of redirecting here, we'll let the parent component handle the flow
         return { verified: true };
       }
       
@@ -85,7 +86,7 @@ export const useEmailVerification = (
   }, [emailSent, userEmail, isVerified, checkEmailVerification]);
   
   // Handle manual verification check with loading state
-  const handleManualCheck = async () => {
+  const handleManualCheck = async (): Promise<{ verified: boolean }> => {
     setIsLoading(true);
     const result = await checkEmailVerification();
     setIsLoading(false);

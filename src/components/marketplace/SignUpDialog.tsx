@@ -13,9 +13,9 @@ interface SignUpDialogProps {
 const SignUpDialog = ({ open, onOpenChange }: SignUpDialogProps) => {
   const navigate = useNavigate();
 
-  const handleSignIn = () => {
+  const handleSignUp = () => {
     onOpenChange(false);
-    navigate("/sign-in");
+    navigate("/sign-up");
   };
 
   return (
@@ -24,10 +24,10 @@ const SignUpDialog = ({ open, onOpenChange }: SignUpDialogProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertCircle className="h-6 w-6 text-orange-500" />
-            Sign In Required
+            Create Your Wishlist
           </DialogTitle>
           <DialogDescription className="text-base pt-2">
-            Please sign in to start saving your favorite products to your wishlist!
+            Sign up to start saving your favorite products to your wishlist!
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center py-6">
@@ -37,8 +37,11 @@ const SignUpDialog = ({ open, onOpenChange }: SignUpDialogProps) => {
               Save products, share with friends, and get notified about price drops.
             </p>
             <div className="flex flex-col gap-2 mt-4">
+              <p className="text-sm flex items-center justify-center gap-1 text-purple-600">
+                <Mail className="w-4 h-4" /> We'll verify your email for security
+              </p>
               <p className="text-sm flex items-center justify-center gap-1 text-green-600">
-                <ShieldCheck className="w-4 h-4" /> Sign in with email or social accounts
+                <ShieldCheck className="w-4 h-4" /> Sign up with email or social accounts
               </p>
             </div>
           </div>
@@ -47,8 +50,8 @@ const SignUpDialog = ({ open, onOpenChange }: SignUpDialogProps) => {
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Not Now
           </Button>
-          <Button onClick={handleSignIn}>
-            Sign In
+          <Button onClick={handleSignUp}>
+            Sign Up
           </Button>
         </DialogFooter>
       </DialogContent>

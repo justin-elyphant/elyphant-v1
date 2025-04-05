@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getUserProfile, updateUserProfile as updateProfile, resendVerificationEmail as resendEmail, sendDeletionEmail } from "./authUtils";
+import { getUserProfile as getProfile, updateUserProfile as updateProfile, resendVerificationEmail as resendEmail, sendDeletionEmail } from "./authUtils";
 import { Profile } from "@/types/supabase";
 
 export const useAuthFunctions = (user: any) => {
@@ -16,7 +16,7 @@ export const useAuthFunctions = (user: any) => {
   };
 
   const getUserProfile = async () => {
-    return await getUserProfile(user);
+    return await getProfile(user);
   };
   
   const updateUserProfile = async (updates: Partial<Profile>) => {

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -7,8 +6,7 @@ import { useEmailVerification } from "./signup/useEmailVerification";
 import { useProfileData } from "./signup/useProfileData";
 import { 
   signUpUser, 
-  sendVerificationEmail, 
-  resendDefaultVerification,
+  sendVerificationEmail,
   updateUserProfile,
   createConnection
 } from "./signup/signupService";
@@ -25,41 +23,12 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   const { profileImage, setProfileImage, handleImageUpload, uploadProfileImage } = useProfileImage();
   const { profileData, handleProfileDataChange } = useProfileData();
   
-  // Create setIsVerified callback function to pass to useEmailVerification
   const [isVerifiedState, setIsVerifiedState] = useState(false);
   const setIsVerified = useCallback((value: boolean) => {
     console.log("Setting isVerified state to:", value);
     setIsVerifiedState(value);
   }, []);
 
-  // Effect to check if we're already logged in from a verification
-  useEffect(() => {
-    const checkSession = async () => {
-      console.log("Checking for existing session");
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (data?.session) {
-        console.log("User already has a session:", data.session.user);
-        setUserId(data.session.user.id);
-        setUserEmail(data.session.user.email);
-        
-        // If the user has logged in but we don't have form values yet,
-        // create a basic form values object from the user data
-        if (!formValues && data.session.user.email) {
-          const name = data.session.user.user_metadata?.name || "User";
-          setFormValues({
-            name,
-            email: data.session.user.email,
-            password: "", // We don't need the password as they're already logged in
-            captcha: ""
-          });
-        }
-      }
-    };
-    
-    checkSession();
-  }, [formValues]);
-  
   const { 
     verificationChecking, 
     isVerified, 
@@ -73,7 +42,31 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     setIsVerified
   );
 
-  // Effect to monitor verification status and move to next step
+  useEffect(() => {
+    const checkSession = async () => {
+      console.log("Checking for existing session");
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (data?.session) {
+        console.log("User already has a session:", data.session.user);
+        setUserId(data.session.user.id);
+        setUserEmail(data.session.user.email);
+        
+        if (!formValues && data.session.user.email) {
+          const name = data.session.user.user_metadata?.name || "User";
+          setFormValues({
+            name,
+            email: data.session.user.email,
+            password: "",
+            captcha: ""
+          });
+        }
+      }
+    };
+    
+    checkSession();
+  }, [formValues]);
+  
   useEffect(() => {
     if (isVerified && emailSent && step === 1) {
       console.log("Email verified, advancing to step 2");
@@ -85,7 +78,6 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     try {
       console.log("Starting signup process for email:", values.email);
       
-      // Create user account
       const userData = await signUpUser(values, invitedBy, senderUserId);
       
       if (userData.user) {
@@ -93,37 +85,27 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         setUserId(userData.user.id);
         setUserEmail(values.email);
         
-        // Send custom verification email with code
         try {
-          // Get the actual current URL (not localhost)
           const currentOrigin = window.location.origin;
           console.log("Using origin for verification:", currentOrigin);
           
           const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
           
           if (!emailResult.success) {
-            console.log("Custom verification email failed, falling back to default");
-            // Fall back to Supabase's default verification
-            await resendDefaultVerification(values.email);
-            toast.success("A verification code has been sent using our backup system.");
+            console.error("Custom verification email failed");
+            toast.error("Failed to send verification code. Please try again.");
+            return;
           } else {
             console.log("Custom verification email sent successfully");
             toast.success("Account created! Check your email for verification code.");
+            setEmailSent(true);
           }
-          
-          setEmailSent(true);
         } catch (emailError) {
           console.error("Failed to send verification email:", emailError);
-          toast.error("Account created, but there was an issue sending the verification email.");
-          
-          // Fall back to Supabase's default verification
-          console.log("Falling back to default verification after error");
-          await resendDefaultVerification(values.email);
-          toast.success("A verification code has been sent using our backup system.");
-          setEmailSent(true);
+          toast.error("Account created, but there was an issue sending the verification email. Please try again.");
+          return;
         }
         
-        // Store form values for later steps
         setFormValues(values);
       }
     } catch (err: any) {
@@ -137,7 +119,6 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   const handleProfileTypeSelection = (type: string) => {
     console.log("Profile type selected:", type);
     setProfileType(type);
-    // Move to the next step (profile customization)
     setStep(3);
   };
 
@@ -150,10 +131,8 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     try {
       console.log("Completing onboarding for user:", userId);
       
-      // Upload profile image to storage if exists
       let profileImageUrl = await uploadProfileImage(userId, profileImage);
       
-      // Update user profile with additional info
       const profileUpdateResult = await updateUserProfile(userId, {
         profile_image: profileImageUrl,
         profile_type: profileType,
@@ -166,7 +145,6 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         return false;
       }
       
-      // If user was invited by someone (gift purchase), create a connection
       if (senderUserId) {
         await createConnection(senderUserId, userId, invitedBy);
       }
@@ -181,7 +159,6 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     }
   };
 
-  // Wrapper to ensure this function returns a Promise<{ verified: boolean }>
   const handleVerificationCheck = async (): Promise<{ verified: boolean }> => {
     console.log("Checking verification status");
     return await checkEmailVerification();

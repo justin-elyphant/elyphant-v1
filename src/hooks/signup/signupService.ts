@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -10,7 +9,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   
   console.log("Sign up with redirect to:", redirectTo);
   
-  // Create account with Supabase Auth
+  // Create account with Supabase Auth - IMPORTANT: emailRedirectTo is removed to prevent automatic email
   const { data, error } = await supabase.auth.signUp({
     email: values.email,
     password: values.password,
@@ -20,7 +19,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
         invited_by: invitedBy,
         sender_user_id: senderUserId,
       },
-      emailRedirectTo: redirectTo,
+      // We removed emailRedirectTo to prevent Supabase from sending the default email
     }
   });
   

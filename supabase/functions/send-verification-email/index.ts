@@ -13,6 +13,7 @@ interface EmailVerificationRequest {
   email: string;
   name: string;
   verificationUrl?: string;
+  useVerificationCode?: boolean;
 }
 
 // Generate a 6-digit verification code
@@ -21,6 +22,7 @@ function generateVerificationCode(): string {
 }
 
 // Store verification codes in memory (in production, use Redis or a database)
+// This is shared with verify-email-code function
 const verificationCodes: Record<string, { code: string, expires: number }> = {};
 
 const handler = async (req: Request): Promise<Response> => {
@@ -63,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
     
-    const { email, name } = body as EmailVerificationRequest;
+    const { email, name, useVerificationCode = true } = body as EmailVerificationRequest;
 
     if (!email) {
       throw new Error("Email is required");

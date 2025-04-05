@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -96,8 +97,7 @@ const SignUp: React.FC = () => {
           data: {
             name: values.name,
           },
-          emailRedirectTo: undefined,
-          shouldCreateUser: true
+          emailRedirectTo: undefined // Explicitly disable email redirect
         }
       });
       

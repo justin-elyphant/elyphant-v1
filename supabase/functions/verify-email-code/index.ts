@@ -15,9 +15,11 @@ const verificationCodes: Record<string, { code: string, expires: number }> = {};
 // Mock verification code checking (in real app, this would be stored in a database)
 const isValidVerificationCode = async (email: string, code: string): Promise<boolean> => {
   try {
-    // For testing purposes, if code is "123456" consider it valid
-    if (code === "123456") {
-      console.log("Using test verification code 123456");
+    console.log(`Checking code ${code} for email ${email}`);
+    
+    // For testing purposes, accept any 6-digit code
+    if (code.length === 6 && /^\d+$/.test(code)) {
+      console.log("Accepting any 6-digit code during development");
       return true;
     }
     
@@ -114,7 +116,10 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     // Parse JSON body
-    const { email, code } = await req.json();
+    const body = await req.json();
+    const { email, code } = body;
+    
+    console.log("Received verification request:", { email, code });
     
     if (!email || !code) {
       return new Response(
@@ -131,15 +136,8 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log(`Attempting to verify code ${code} for email ${email}`);
     
-    // For testing purposes during development, accept any 6-digit code
-    // Remove this in production!
-    let isValid = code.length === 6 && /^\d+$/.test(code);
-    
-    if (!isValid) {
-      isValid = await isValidVerificationCode(email, code);
-    } else {
-      console.log("Accepting any 6-digit code for testing");
-    }
+    // Always run isValidVerificationCode to check the code format
+    const isValid = await isValidVerificationCode(email, code);
     
     if (!isValid) {
       return new Response(

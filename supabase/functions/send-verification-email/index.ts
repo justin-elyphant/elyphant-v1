@@ -64,23 +64,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
     
-    const { email, name, verificationUrl, useVerificationCode = true } = body as EmailVerificationRequest;
+    const { email, name } = body as EmailVerificationRequest;
 
     if (!email) {
       throw new Error("Email is required");
     }
     
-    // Format the redirect URL correctly
-    const baseUrl = verificationUrl.endsWith('/') ? verificationUrl.slice(0, -1) : verificationUrl;
-    const redirectTo = `${baseUrl}/sign-up?verified=true&email=${encodeURIComponent(email)}`;
-    
-    let emailContent: string;
-    let emailSubject: string;
-    let verificationCode: string;
-
-    // Always use verification code - IMPORTANT CHANGE
-    // Generate a verification code
-    verificationCode = generateVerificationCode();
+    // Always use verification code
+    const verificationCode = generateVerificationCode();
     
     // Store the code with 15-minute expiration
     verificationCodes[email] = {
@@ -90,8 +81,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Generated verification code for ${email}: ${verificationCode}`);
     
-    emailSubject = "Your Elyphant verification code";
-    emailContent = `
+    const emailSubject = "Your Elyphant verification code";
+    const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
         <div style="text-align: center; margin-bottom: 20px;">
           <h1 style="color: #8a4baf;">Welcome to Elyphant! 🐘</h1>
@@ -136,7 +127,6 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-verification-email function:", error);
     
-    // Return a more detailed error response
     return new Response(
       JSON.stringify({ 
         error: error.message,

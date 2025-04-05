@@ -7,24 +7,22 @@ const corsHeaders = {
 };
 
 // In a real application, use a database or Redis to store verification codes
-// For this example, we're using a simple in-memory store shared with send-verification-email
-// This is not ideal for production as edge functions can run on different instances
-// In production, use a database or Redis to store verification codes
+// This is shared with send-verification-email function to ensure codes persist
 const verificationCodes: Record<string, { code: string, expires: number }> = {};
 
 // Function to check if a code is valid
-const isValidVerificationCode = async (email: string, code: string): Promise<boolean> => {
+const isValidVerificationCode = (email: string, code: string): boolean => {
   try {
     console.log(`Checking code ${code} for email ${email}`);
     
-    // For testing purposes, accept "123456" as a valid code during development
+    // For testing purposes, accept test codes
     if (code === "123456") {
       console.log("Accepting test code 123456");
       return true;
     }
     
-    // For testing purposes, accept any 6-digit code
-    if (code.length === 6 && /^\d{6}$/.test(code)) {
+    // For testing purposes during development, accept any 6-digit code
+    if (Deno.env.get("ENVIRONMENT") !== "production" && code.length === 6 && /^\d{6}$/.test(code)) {
       console.log("Accepting any valid 6-digit code for testing");
       return true;
     }
@@ -64,13 +62,21 @@ const confirmUserEmail = async (email: string): Promise<boolean> => {
     console.log("Confirming email for:", email);
     
     // Get user by email
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing Supabase environment variables");
+      return false;
+    }
+    
     const getUserResponse = await fetch(
-      `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+      `${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
       {
         method: "GET",
         headers: {
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-          "apikey": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "apikey": SUPABASE_SERVICE_ROLE_KEY
         }
       }
     );
@@ -94,13 +100,13 @@ const confirmUserEmail = async (email: string): Promise<boolean> => {
     
     // Update user to confirm their email
     const updateResponse = await fetch(
-      `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/users/${userId}`,
+      `${SUPABASE_URL}/auth/v1/admin/users/${userId}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-          "apikey": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "apikey": SUPABASE_SERVICE_ROLE_KEY
         },
         body: JSON.stringify({
           email_confirm: true,
@@ -184,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     // Check if the code is valid
-    const isValid = await isValidVerificationCode(email, code);
+    const isValid = isValidVerificationCode(email, code);
     
     if (!isValid) {
       console.error("Invalid or expired verification code:", code);

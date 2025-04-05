@@ -1,33 +1,41 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
 
 export const signUpUser = async (values: SignUpValues, invitedBy: string | null, senderUserId: string | null) => {
-  // Get the current site URL - using window.location.origin to get the ACTUAL current URL
-  const currentOrigin = window.location.origin;
-  const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(values.email)}`; 
-  
-  console.log("Sign up with redirect to:", redirectTo);
-  
-  // Create account with Supabase Auth - IMPORTANT: emailRedirectTo is removed to prevent automatic email
-  const { data, error } = await supabase.auth.signUp({
-    email: values.email,
-    password: values.password,
-    options: {
-      data: {
-        name: values.name,
-        invited_by: invitedBy,
-        sender_user_id: senderUserId,
-      },
-      // We removed emailRedirectTo to prevent Supabase from sending the default email
+  try {
+    // Get the current site URL - using window.location.origin to get the ACTUAL current URL
+    const currentOrigin = window.location.origin;
+    
+    console.log("Sign up without redirect URL to prevent auto email");
+    
+    // Create account with Supabase Auth - IMPORTANT: We're explicitly NOT setting emailRedirectTo 
+    // and NOT using autoconfirm to prevent Supabase from sending any emails
+    const { data, error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        data: {
+          name: values.name,
+          invited_by: invitedBy,
+          sender_user_id: senderUserId,
+        },
+        emailRedirectTo: undefined // Explicitly set to undefined to prevent automatic email sending
+      }
+    });
+    
+    if (error) {
+      console.error("Signup error:", error);
+      throw error;
     }
-  });
-  
-  if (error) {
+    
+    console.log("User created:", data);
+    return data;
+  } catch (error) {
+    console.error("Error in signUpUser:", error);
     throw error;
   }
-  
-  return data;
 };
 
 export const sendVerificationEmail = async (email: string, name: string, verificationUrl: string) => {
@@ -61,28 +69,15 @@ export const sendVerificationEmail = async (email: string, name: string, verific
 };
 
 export const resendDefaultVerification = async (email: string) => {
-  const currentOrigin = window.location.origin;
-  const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(email)}`;
-  
-  console.log("Resending verification with redirect to:", redirectTo);
-  
+  // We're going to use our custom verification email instead
   try {
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email,
-      options: {
-        emailRedirectTo: redirectTo,
-      }
-    });
+    const currentOrigin = window.location.origin;
+    console.log("Resending custom verification for:", email);
     
-    if (error) {
-      console.error("Failed to resend verification:", error);
-      return { success: false, error };
-    }
-    
-    return { success: true };
+    const result = await sendVerificationEmail(email, "", currentOrigin);
+    return result;
   } catch (error) {
-    console.error("Error in resendDefaultVerification:", error);
+    console.error("Error in resendVerification:", error);
     return { success: false, error };
   }
 };

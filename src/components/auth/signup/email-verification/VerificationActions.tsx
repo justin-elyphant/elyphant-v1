@@ -16,6 +16,7 @@ interface VerificationActionsProps {
   onResendVerification: () => void;
   onCheckVerification: () => void;
   onVerifyWithCode: (code: string) => Promise<boolean>;
+  resendCount?: number;
 }
 
 const VerificationActions = ({
@@ -23,7 +24,8 @@ const VerificationActions = ({
   verificationChecking,
   onResendVerification,
   onCheckVerification,
-  onVerifyWithCode
+  onVerifyWithCode,
+  resendCount = 0
 }: VerificationActionsProps) => {
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
@@ -73,9 +75,11 @@ const VerificationActions = ({
             render={({ slots }) => (
               <InputOTPGroup className="gap-2">
                 {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} index={index} className="rounded-md">
-                    {slot.char}
-                  </InputOTPSlot>
+                  <React.Fragment key={index}>
+                    <InputOTPSlot className="rounded-md border-gray-300 focus:border-purple-400 focus:ring focus:ring-purple-200 focus:ring-opacity-50" index={index}>
+                      {slot.char}
+                    </InputOTPSlot>
+                  </React.Fragment>
                 ))}
               </InputOTPGroup>
             )}
@@ -117,7 +121,10 @@ const VerificationActions = ({
                 Sending...
               </>
             ) : (
-              "Resend Verification Code"
+              <>
+                Resend Verification Code
+                {resendCount > 0 && <span className="ml-1">({resendCount})</span>}
+              </>
             )}
           </Button>
           

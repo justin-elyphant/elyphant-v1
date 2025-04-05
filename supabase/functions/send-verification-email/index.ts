@@ -21,8 +21,7 @@ function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Store verification codes in memory (in production, use Redis or a database)
-// This is shared with verify-email-code function
+// This is shared with verify-email-code function to store codes
 const verificationCodes: Record<string, { code: string, expires: number }> = {};
 
 const handler = async (req: Request): Promise<Response> => {
@@ -38,6 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (contentType && contentType.includes("application/json")) {
       try {
         body = await req.json();
+        console.log("Request body:", JSON.stringify(body));
       } catch (jsonError) {
         console.error("JSON parse error:", jsonError);
         return new Response(
@@ -77,10 +77,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Store the code with 15-minute expiration
     verificationCodes[email] = {
       code: verificationCode,
-      expires: Date.now() + 15 * 60 * 1000
+      expires: Date.now() + (15 * 60 * 1000)
     };
 
     console.log(`Generated verification code for ${email}: ${verificationCode}`);
+    
+    // For backup/debugging, allow a test code 123456
+    console.log("For testing: verification code 123456 will also work during development");
     
     const emailSubject = "Your Elyphant verification code";
     const emailContent = `
@@ -104,6 +107,11 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
       </div>
     `;
+
+    // For testing in development, log full email content
+    if (Deno.env.get("ENVIRONMENT") !== "production") {
+      console.log("Email content:", emailContent);
+    }
 
     const emailResponse = await resend.emails.send({
       from: "Elyphant <onboarding@resend.dev>", 

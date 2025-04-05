@@ -35,6 +35,7 @@ const EmailVerificationView = ({
   onVerifyWithCode
 }: EmailVerificationViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [resendAttempts, setResendAttempts] = useState(0);
   
   // If verification is confirmed, don't show this view
   if (isVerified) {
@@ -55,9 +56,10 @@ const EmailVerificationView = ({
         if (result.verified) {
           console.log("Verification check successful");
           // The parent component will handle state updates and redirects
+          toast.success("Your email has been verified! Continuing to profile setup...");
         } else {
           console.log("Verification check failed - not verified yet");
-          toast.error("Your email is not yet verified. Please check your inbox and enter the verification code.");
+          toast.error("Your email is not yet verified. Please enter the verification code sent to your email.");
         }
       } else {
         // Default implementation if no callback provided
@@ -73,7 +75,7 @@ const EmailVerificationView = ({
           window.location.href = `${window.location.origin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
         } else {
           console.log("Default check - not verified yet");
-          toast.error("Your email is not yet verified. Please check your inbox and enter the verification code.");
+          toast.error("Your email is not yet verified. Please enter the verification code from your email.");
         }
       }
     } catch (err) {
@@ -92,6 +94,7 @@ const EmailVerificationView = ({
     
     try {
       setIsLoading(true);
+      setResendAttempts(prev => prev + 1);
       
       // Get the actual current URL (not localhost)
       const currentOrigin = window.location.origin;
@@ -102,7 +105,8 @@ const EmailVerificationView = ({
         body: {
           email: userEmail,
           name: "",
-          verificationUrl: currentOrigin
+          verificationUrl: currentOrigin,
+          useVerificationCode: true // Explicitly request code-based verification
         }
       });
       
@@ -117,31 +121,7 @@ const EmailVerificationView = ({
     } catch (err) {
       console.error("Error resending verification:", err);
       
-      // Fall back to Supabase's default resend function
-      try {
-        console.log("Falling back to default verification email");
-        const currentOrigin = window.location.origin;
-        const redirectUrl = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
-        
-        console.log("Default verification redirect URL:", redirectUrl);
-        
-        const { error: resendError } = await supabase.auth.resend({
-          type: 'signup',
-          email: userEmail,
-          options: {
-            emailRedirectTo: redirectUrl
-          }
-        });
-        
-        if (resendError) throw resendError;
-        
-        toast.success("Verification code sent using our backup system!", {
-          description: "If you don't see it, please check your spam folder."
-        });
-      } catch (fallbackErr) {
-        console.error("Fallback resend failed:", fallbackErr);
-        toast.error("Failed to send verification email. Please try again later.");
-      }
+      toast.error("Failed to send verification email. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -162,7 +142,7 @@ const EmailVerificationView = ({
         <VerificationHeader userEmail={userEmail} />
       </CardHeader>
       <CardContent className="space-y-4">
-        <VerificationAlert />
+        <VerificationAlert useCode={true} />
         
         <VerificationStatus verificationChecking={verificationChecking} />
         
@@ -172,6 +152,7 @@ const EmailVerificationView = ({
           onResendVerification={handleResendVerification}
           onCheckVerification={checkVerificationStatus}
           onVerifyWithCode={verifyWithCode}
+          resendCount={resendAttempts}
         />
 
         <Separator className="my-4" />

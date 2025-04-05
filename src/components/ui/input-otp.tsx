@@ -41,11 +41,7 @@ const InputOTPSlot = React.forwardRef<
         className
       )}
       {...props}
-    >
-      <div className="absolute inset-0 flex items-center justify-center">
-        {props.children}
-      </div>
-    </div>
+    />
   )
 })
 InputOTPSlot.displayName = "InputOTPSlot"

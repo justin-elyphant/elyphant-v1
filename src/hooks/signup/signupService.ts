@@ -33,32 +33,22 @@ export const sendVerificationEmail = async (email: string, name: string) => {
   try {
     const currentOrigin = window.location.origin;
     
-    // Create a proper verification URL that doesn't rely on localhost
-    // and works in production environments
-    let verificationUrl = `${currentOrigin}/dashboard?email=${encodeURIComponent(email)}`;
-    
-    // If we're in a preview environment, make sure to use the right URL format
-    if (currentOrigin.includes('lovableproject.com') || currentOrigin.includes('lovable.app')) {
-      // Keep as is - already correctly formatted for preview
-    } else if (currentOrigin.includes('localhost')) {
-      // This will be replaced on the server side with the proper URL
-      console.log("Using localhost URL - will be transformed in the function");
-    }
-
-    console.log("Sending verification email with URL:", verificationUrl);
+    // Send the actual origin, not a path - the edge function will handle the redirect path
+    console.log("Using origin for verification:", currentOrigin);
     
     const emailResponse = await supabase.functions.invoke('send-verification-email', {
       body: {
         email: email,
         name: name,
-        verificationUrl: verificationUrl
+        verificationUrl: currentOrigin
       }
     });
     
     console.log("Email function response:", emailResponse);
     
-    if (emailResponse.error) {
-      throw new Error(emailResponse.error.message || "Failed to send verification email");
+    if (emailResponse.error || !emailResponse.data?.success) {
+      console.error("Email function error:", emailResponse.error || "Unknown error");
+      throw new Error(emailResponse.error?.message || "Failed to send verification email");
     }
     
     return { success: true };

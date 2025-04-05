@@ -26,7 +26,7 @@ const VerificationActions = ({
           variant="outline" 
           onClick={onResendVerification}
           className="transition-all hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"
-          disabled={isLoading}
+          disabled={isLoading || verificationChecking}
         >
           {isLoading ? (
             <>

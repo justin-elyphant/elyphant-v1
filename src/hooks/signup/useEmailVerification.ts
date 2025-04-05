@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -7,9 +7,50 @@ import { useNavigate } from "react-router-dom";
 export const useEmailVerification = (emailSent: boolean, userEmail: string | null) => {
   const [verificationChecking, setVerificationChecking] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Add effect to check verification status automatically every few seconds
+  // Memoized check verification function to avoid recreating it on each render
+  const checkEmailVerification = useCallback(async () => {
+    if (!userEmail) return { verified: false };
+    
+    setIsLoading(true);
+    try {
+      // Get the current session to check if the user is verified
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error checking verification status:", error);
+        setIsLoading(false);
+        return { verified: false };
+      }
+      
+      // Check if the user's email is confirmed
+      if (data?.session?.user?.email_confirmed_at) {
+        // User is verified, update state
+        setVerificationChecking(false);
+        setIsVerified(true);
+        setIsLoading(false);
+        
+        // Show success notification
+        toast.success("Email verified successfully!");
+        
+        // Navigate to dashboard
+        navigate('/dashboard', { replace: true });
+        
+        return { verified: true };
+      }
+      
+      setIsLoading(false);
+      return { verified: false };
+    } catch (err) {
+      console.error("Error checking verification status:", err);
+      setIsLoading(false);
+      return { verified: false };
+    }
+  }, [userEmail, navigate]);
+
+  // Effect to check verification status automatically
   useEffect(() => {
     let interval: number | undefined;
     
@@ -20,50 +61,27 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
       checkEmailVerification();
       
       // Then check every 5 seconds
-      interval = window.setInterval(checkEmailVerification, 5000);
+      interval = window.setInterval(() => {
+        checkEmailVerification();
+      }, 5000);
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [emailSent, userEmail, isVerified]);
+  }, [emailSent, userEmail, isVerified, checkEmailVerification]);
   
-  // Function to check email verification status
-  const checkEmailVerification = async () => {
-    if (!userEmail) return { verified: false };
-    
-    try {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error checking verification status:", error);
-        return { verified: false };
-      }
-      
-      if (data?.session?.user?.email_confirmed_at) {
-        // Clear interval if user is verified
-        setVerificationChecking(false);
-        setIsVerified(true);
-        
-        // Show success notification
-        toast.success("Email verified successfully!");
-        
-        // Navigate to dashboard
-        navigate('/dashboard', { replace: true });
-        
-        // Return success
-        return { verified: true };
-      }
-      
-      return { verified: false };
-    } catch (err) {
-      console.error("Error checking verification status:", err);
-      return { verified: false };
-    }
+  // Handle manual verification check with loading state
+  const handleManualCheck = async () => {
+    setIsLoading(true);
+    await checkEmailVerification();
+    setIsLoading(false);
   };
 
   return {
     verificationChecking,
     isVerified,
-    checkEmailVerification
+    isLoading,
+    checkEmailVerification: handleManualCheck
   };
 };

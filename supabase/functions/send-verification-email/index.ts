@@ -17,25 +17,18 @@ interface EmailVerificationRequest {
 
 // Function to detect and adapt localhost URLs for production use
 const getProductionReadyUrl = (url: string): string => {
-  // Check if the URL is from localhost or a development environment
-  if (url.includes('localhost') || url.includes('127.0.0.1')) {
-    // If we're in local development, we need to get the project ID for the proper URL
-    const projectId = Deno.env.get("PROJECT_ID") || "";
-    if (projectId) {
-      // Extract the path and query parameters from the localhost URL
-      const urlObj = new URL(url);
-      // Construct a new URL using the project domain
-      return `https://${projectId}.lovableproject.com${urlObj.pathname}${urlObj.search}`;
-    }
-  }
-  
-  // If URL has access_token already, return as is
-  if (url.includes('access_token=')) {
+  // Extract the base URL (domain part)
+  try {
+    const urlObj = new URL(url);
+    const baseDomain = urlObj.origin;
+    
+    // Return just the origin/domain part - we'll add paths via Supabase
+    return baseDomain;
+  } catch (error) {
+    console.error("Invalid URL provided:", url);
+    // Default to the URL as-is if parsing fails
     return url;
   }
-  
-  // For all other cases, just return the original URL
-  return url;
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -45,20 +38,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, name, verificationUrl }: EmailVerificationRequest = await req.json();
+    const body = await req.json();
+    const { email, name, verificationUrl } = body as EmailVerificationRequest;
 
-    if (!email || !verificationUrl) {
-      throw new Error("Email and verification URL are required");
+    if (!email) {
+      throw new Error("Email is required");
     }
 
-    // Get a production-ready URL
-    const formattedUrl = getProductionReadyUrl(verificationUrl);
-    
-    console.log(`Sending verification email to ${email}`);
-    console.log(`Original URL: ${verificationUrl}`);
-    console.log(`Formatted URL: ${formattedUrl}`);
+    // Get the production-ready base URL
+    const baseUrl = getProductionReadyUrl(verificationUrl);
+    console.log(`Base URL for redirection: ${baseUrl}`);
 
-    // Get signup URL with proper redirect
+    // Get signup URL with proper redirect using the admin API
     const { data: signUpData, error: signUpError } = await fetch(
       `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/generate-link`,
       {
@@ -72,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
           type: "signup",
           email: email,
           options: {
-            redirect_to: formattedUrl
+            redirect_to: `${baseUrl}/dashboard`
           }
         })
       }
@@ -120,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -134,8 +125,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.toString(),
-        stack: error.stack
+        success: false,
+        details: error.toString()
       }),
       {
         status: 500,

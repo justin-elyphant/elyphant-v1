@@ -22,7 +22,7 @@ import ImportantNoteAlert from "./email-verification/ImportantNoteAlert";
 interface EmailVerificationViewProps {
   userEmail: string | null;
   verificationChecking?: boolean;
-  onCheckVerification?: () => void;
+  onCheckVerification?: () => Promise<{ verified: boolean }>;
   isVerified?: boolean;
 }
 
@@ -35,6 +35,12 @@ const EmailVerificationView = ({
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
+  // If verification is confirmed, redirect to dashboard
+  if (isVerified) {
+    navigate('/dashboard', { replace: true });
+    return null;
+  }
+  
   // Function to check if the user's email has been verified
   const checkVerificationStatus = async () => {
     if (!userEmail) return;
@@ -43,7 +49,10 @@ const EmailVerificationView = ({
       setIsLoading(true);
       
       if (onCheckVerification) {
-        onCheckVerification();
+        const result = await onCheckVerification();
+        if (!result.verified) {
+          toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
+        }
       } else {
         // Default implementation if no callback provided
         const { data, error } = await supabase.auth.getSession();
@@ -51,13 +60,14 @@ const EmailVerificationView = ({
         
         if (data?.session?.user?.email_confirmed_at) {
           toast.success("Your email has been verified!");
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         } else {
           toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
         }
       }
     } catch (err) {
       console.error("Error checking verification status:", err);
+      toast.error("Failed to check verification status. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -71,22 +81,20 @@ const EmailVerificationView = ({
     
     try {
       setIsLoading(true);
-      // Get the current origin for proper URL construction
-      const currentOrigin = window.location.origin;
-      const verificationUrl = `${currentOrigin}/dashboard?email=${encodeURIComponent(userEmail)}`;
-      
-      console.log("Resending verification email with URL:", verificationUrl);
       
       // Try our custom email function first
+      const currentOrigin = window.location.origin;
+      console.log("Resending with origin:", currentOrigin);
+      
       const response = await supabase.functions.invoke('send-verification-email', {
         body: {
           email: userEmail,
           name: "",
-          verificationUrl: verificationUrl
+          verificationUrl: currentOrigin
         }
       });
       
-      console.log("Email function response:", response);
+      console.log("Resend email function response:", response);
       
       if (response.error) {
         throw new Error(response.error.message || "Failed to send verification email");
@@ -121,12 +129,6 @@ const EmailVerificationView = ({
       setIsLoading(false);
     }
   };
-
-  // If the user is already verified, redirect to dashboard
-  if (isVerified) {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
 
   return (
     <Card className="shadow-md">

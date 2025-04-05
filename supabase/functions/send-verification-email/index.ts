@@ -12,8 +12,7 @@ const corsHeaders = {
 interface EmailVerificationRequest {
   email: string;
   name: string;
-  verificationUrl: string;
-  useVerificationCode?: boolean;
+  verificationUrl?: string;
 }
 
 // Generate a 6-digit verification code
@@ -70,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email is required");
     }
     
-    // Always use verification code
+    // Generate a 6-digit verification code
     const verificationCode = generateVerificationCode();
     
     // Store the code with 15-minute expiration

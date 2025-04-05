@@ -17,9 +17,9 @@ const isValidVerificationCode = async (email: string, code: string): Promise<boo
   try {
     console.log(`Checking code ${code} for email ${email}`);
     
-    // For testing purposes, accept any 6-digit code
+    // For testing purposes, accept any 6-digit code during development
     if (code.length === 6 && /^\d+$/.test(code)) {
-      console.log("Accepting any 6-digit code during development");
+      console.log("Accepting any 6-digit code during testing");
       return true;
     }
     
@@ -55,6 +55,8 @@ const isValidVerificationCode = async (email: string, code: string): Promise<boo
 // Function to verify the email using Supabase admin API
 const confirmUserEmail = async (email: string): Promise<boolean> => {
   try {
+    console.log("Confirming email for:", email);
+    
     // Get user by email
     const getUserResponse = await fetch(
       `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
@@ -67,6 +69,11 @@ const confirmUserEmail = async (email: string): Promise<boolean> => {
       }
     );
     
+    if (!getUserResponse.ok) {
+      console.error("Failed to get user:", await getUserResponse.text());
+      return false;
+    }
+    
     const users = await getUserResponse.json();
     
     if (!users || !users.users || users.users.length === 0) {
@@ -76,6 +83,8 @@ const confirmUserEmail = async (email: string): Promise<boolean> => {
     
     const user = users.users[0];
     const userId = user.id;
+    
+    console.log("Found user with ID:", userId);
     
     // Update user to confirm their email
     const updateResponse = await fetch(
@@ -95,7 +104,7 @@ const confirmUserEmail = async (email: string): Promise<boolean> => {
     );
     
     if (!updateResponse.ok) {
-      const errorData = await updateResponse.json();
+      const errorData = await updateResponse.text();
       console.error("Failed to update user:", errorData);
       return false;
     }
@@ -135,6 +144,20 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     console.log(`Attempting to verify code ${code} for email ${email}`);
+    
+    // Verify the code format first
+    if (code.length !== 6 || !/^\d+$/.test(code)) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid verification code format. Must be 6 digits.", 
+          success: false 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
     
     // Always run isValidVerificationCode to check the code format
     const isValid = await isValidVerificationCode(email, code);

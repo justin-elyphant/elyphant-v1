@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { 
   InputOTP, 
   InputOTPGroup, 
-  InputOTPSlot 
+  InputOTPSlot,
+  InputOTPSeparator
 } from "@/components/ui/input-otp";
 import { toast } from "sonner";
 
@@ -59,14 +60,17 @@ const VerificationActions = ({
             maxLength={6} 
             value={verificationCode} 
             onChange={setVerificationCode}
-            render={({ slots }) => (
-              <InputOTPGroup>
-                {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} {...slot} index={index} />
-                ))}
-              </InputOTPGroup>
-            )}
-          />
+            disabled={isVerifyingCode}
+          >
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+            </InputOTPGroup>
+          </InputOTP>
         </div>
         
         <Button 

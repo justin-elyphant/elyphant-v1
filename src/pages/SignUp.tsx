@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSignUpProcess } from "@/hooks/useSignUpProcess";
+import { toast } from "sonner";
 
 // Import our components
 import SignUpContainer from "@/components/auth/signup/SignUpContainer";
@@ -9,7 +10,6 @@ import ProfileTypeSelection from "@/components/auth/signup/ProfileTypeSelection"
 import ProfileSetup from "@/components/auth/signup/ProfileSetup";
 import EmailVerificationView from "@/components/auth/signup/EmailVerificationView";
 import InvitationBanner from "@/components/auth/signup/InvitationBanner";
-import { toast } from "sonner";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -55,12 +55,14 @@ const SignUp = () => {
 
   // Effect to handle verified parameter in URL and advance to profile type selection
   useEffect(() => {
+    console.log("URL params check - verified:", verified, "email:", emailParam);
+    
     // Only process verification once to prevent loops
     if (verified && !verificationProcessed) {
-      console.log("Detected verified=true in URL, processing verification flow");
+      console.log("Processing verification from URL parameters");
       
       // If we have an email param, set it as the userEmail
-      if (emailParam && !userEmail) {
+      if (emailParam) {
         setUserEmail(emailParam);
         console.log("Setting email from URL parameter:", emailParam);
       }
@@ -70,21 +72,22 @@ const SignUp = () => {
       setIsVerified(true);
       setVerificationProcessed(true);
       
-      // Move to profile type selection
+      // Move to profile type selection immediately
       setStep(2);
       
       // Show success notification
       toast.success("Email verified successfully! Let's complete your profile setup.");
     }
-  }, [verified, verificationProcessed, emailParam, userEmail, setIsVerified, setStep, setEmailSent, setUserEmail]);
+  }, [verified, verificationProcessed, emailParam, setIsVerified, setStep, setEmailSent, setUserEmail]);
 
   // Handle verification success and advance to next step
   useEffect(() => {
-    if (isVerified && emailSent) {
+    if (isVerified && emailSent && step === 1) {
+      console.log("Verified and email sent, advancing to step 2");
       // If email is verified, move to profile type selection
       setStep(2);
     }
-  }, [isVerified, emailSent, setStep]);
+  }, [isVerified, emailSent, step, setStep]);
 
   // Handle checking verification status
   const handleCheckVerification = async () => {

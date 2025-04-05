@@ -47,19 +47,30 @@ const EmailVerificationView = ({
       setIsLoading(true);
       
       if (onCheckVerification) {
+        console.log("Manually checking verification status");
         const result = await onCheckVerification();
-        if (!result.verified) {
+        
+        if (result.verified) {
+          console.log("Verification check successful");
+          // The parent component will handle state updates and redirects
+        } else {
+          console.log("Verification check failed - not verified yet");
           toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
         }
       } else {
         // Default implementation if no callback provided
+        console.log("Using default verification check");
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
         
         if (data?.session?.user?.email_confirmed_at) {
+          console.log("Default check found verification");
           toast.success("Your email has been verified!");
+          
+          // Force reload with verification parameters
           window.location.href = `${window.location.origin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
         } else {
+          console.log("Default check - not verified yet");
           toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
         }
       }
@@ -82,7 +93,7 @@ const EmailVerificationView = ({
       
       // Get the actual current URL (not localhost)
       const currentOrigin = window.location.origin;
-      const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
+      console.log("Resending verification using origin:", currentOrigin);
       
       // Try our custom email function first
       const response = await supabase.functions.invoke('send-verification-email', {
@@ -94,6 +105,7 @@ const EmailVerificationView = ({
       });
       
       if (response.error) {
+        console.error("Custom verification email error:", response.error);
         throw new Error(response.error.message || "Failed to send verification email");
       }
       
@@ -105,11 +117,17 @@ const EmailVerificationView = ({
       
       // Fall back to Supabase's default resend function
       try {
+        console.log("Falling back to default verification email");
+        const currentOrigin = window.location.origin;
+        const redirectUrl = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
+        
+        console.log("Default verification redirect URL:", redirectUrl);
+        
         const { error: resendError } = await supabase.auth.resend({
           type: 'signup',
           email: userEmail,
           options: {
-            emailRedirectTo: `${window.location.origin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`,
+            emailRedirectTo: redirectUrl
           }
         });
         

@@ -28,13 +28,16 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   // Create setIsVerified callback function to pass to useEmailVerification
   const [isVerifiedState, setIsVerifiedState] = useState(false);
   const setIsVerified = useCallback((value: boolean) => {
+    console.log("Setting isVerified state to:", value);
     setIsVerifiedState(value);
   }, []);
 
   // Effect to check if we're already logged in from a verification
   useEffect(() => {
     const checkSession = async () => {
+      console.log("Checking for existing session");
       const { data, error } = await supabase.auth.getSession();
+      
       if (data?.session) {
         console.log("User already has a session:", data.session.user);
         setUserId(data.session.user.id);
@@ -64,12 +67,23 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     setIsVerified
   );
 
+  // Effect to monitor verification status and move to next step
+  useEffect(() => {
+    if (isVerified && emailSent && step === 1) {
+      console.log("Email verified, advancing to step 2");
+      setStep(2);
+    }
+  }, [isVerified, emailSent, step]);
+
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
+      console.log("Starting signup process for email:", values.email);
+      
       // Create user account
       const userData = await signUpUser(values, invitedBy, senderUserId);
       
       if (userData.user) {
+        console.log("User created successfully, ID:", userData.user.id);
         setUserId(userData.user.id);
         setUserEmail(values.email);
         
@@ -82,10 +96,12 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
           const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
           
           if (!emailResult.success) {
+            console.log("Custom verification email failed, falling back to default");
             // Fall back to Supabase's default verification
             await resendDefaultVerification(values.email);
             toast.success("A verification email has been sent using our backup system.");
           } else {
+            console.log("Custom verification email sent successfully");
             toast.success("Account created! Check your email for verification link.");
           }
           
@@ -95,6 +111,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
           toast.error("Account created, but there was an issue sending the verification email.");
           
           // Fall back to Supabase's default verification
+          console.log("Falling back to default verification after error");
           await resendDefaultVerification(values.email);
           toast.success("A verification email has been sent using our backup system.");
           setEmailSent(true);
@@ -112,15 +129,21 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   };
 
   const handleProfileTypeSelection = (type: string) => {
+    console.log("Profile type selected:", type);
     setProfileType(type);
     // Move to the next step (profile customization)
     setStep(3);
   };
 
   const completeOnboarding = async () => {
-    if (!userId) return false;
+    if (!userId) {
+      console.error("Cannot complete onboarding: no user ID");
+      return false;
+    }
     
     try {
+      console.log("Completing onboarding for user:", userId);
+      
       // Upload profile image to storage if exists
       let profileImageUrl = await uploadProfileImage(userId, profileImage);
       
@@ -133,6 +156,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
       });
       
       if (!profileUpdateResult.success) {
+        console.error("Profile update failed");
         return false;
       }
       
@@ -141,6 +165,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         await createConnection(senderUserId, userId, invitedBy);
       }
       
+      console.log("Profile setup completed successfully");
       toast.success("Profile set up successfully!");
       return true;
     } catch (err) {
@@ -152,6 +177,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
 
   // Wrapper to ensure this function returns a Promise<{ verified: boolean }>
   const handleVerificationCheck = async (): Promise<{ verified: boolean }> => {
+    console.log("Checking verification status");
     return await checkEmailVerification();
   };
 

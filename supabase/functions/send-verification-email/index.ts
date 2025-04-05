@@ -61,11 +61,12 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email is required");
     }
 
-    // Use the provided verification URL from the client
-    // This ensures we're using the actual URL the user is coming from
-    console.log(`Base URL for verification: ${verificationUrl}`);
+    console.log(`Verification URL provided: ${verificationUrl}`);
+    
+    // Do not append /sign-up to the URL - it will be included in the redirect_to
+    const redirectTo = `${verificationUrl}/sign-up?verified=true&email=${encodeURIComponent(email)}`;
+    console.log(`Final redirect URL: ${redirectTo}`);
 
-    // Get signup URL with proper redirect using the admin API
     const { data: signUpData, error: signUpError } = await fetch(
       `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/generate-link`,
       {
@@ -79,8 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
           type: "signup",
           email: email,
           options: {
-            // Use the client-provided verification URL
-            redirect_to: `${verificationUrl}/sign-up?verified=true&email=${encodeURIComponent(email)}` 
+            redirect_to: redirectTo
           }
         })
       }

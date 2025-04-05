@@ -8,6 +8,8 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   const currentOrigin = window.location.origin;
   const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(values.email)}`; 
   
+  console.log("Sign up with redirect to:", redirectTo);
+  
   // Create account with Supabase Auth
   const { data, error } = await supabase.auth.signUp({
     email: values.email,
@@ -31,13 +33,13 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
 
 export const sendVerificationEmail = async (email: string, name: string, verificationUrl: string) => {
   try {
-    console.log("Using origin for verification:", verificationUrl);
+    console.log("Sending verification email with base URL:", verificationUrl);
     
     const emailResponse = await supabase.functions.invoke('send-verification-email', {
       body: {
         email: email,
         name: name,
-        verificationUrl: verificationUrl
+        verificationUrl: verificationUrl // Send just the origin, the function will append the path
       }
     });
     
@@ -58,6 +60,8 @@ export const sendVerificationEmail = async (email: string, name: string, verific
 export const resendDefaultVerification = async (email: string) => {
   const currentOrigin = window.location.origin;
   const redirectTo = `${currentOrigin}/sign-up?verified=true&email=${encodeURIComponent(email)}`;
+  
+  console.log("Resending verification with redirect to:", redirectTo);
   
   try {
     const { error } = await supabase.auth.resend({

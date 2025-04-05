@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +53,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsProcessingToken(true);
           console.log("Processing access token from URL");
           
+          // Get the email and verified parameters if they exist
+          const email = params.get('email') || null;
+          const verified = params.get('verified') === 'true';
+          
+          // Check if we're in the signup flow with verified=true
+          if (verified && email && location.pathname === '/sign-up') {
+            console.log("Detected verified=true in URL with email:", email);
+            
+            // No need to navigate - we're already on /sign-up
+            // The SignUp component will handle the verified parameter
+            setIsProcessingToken(false);
+            return;
+          }
+          
           // Exchange the access token for a session
           const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
           
@@ -72,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Navigate to dashboard and remove the token from URL
             navigate('/dashboard', { replace: true });
             toast.success("Email verification successful!");
+            setIsProcessingToken(false);
           }
         } catch (err) {
           console.error("Error processing access token:", err);
@@ -84,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleAccessToken();
   }, [location, navigate, isProcessingToken]);
 
+  // Setup auth state change listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -91,7 +106,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
-        setIsProcessingToken(false);
 
         if (event === 'SIGNED_IN') {
           toast.success('Signed in successfully!');
@@ -103,7 +117,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.removeItem('email_just_verified');
           }
           
-          navigate('/dashboard');
+          // Check if we're in the signup flow with verified=true
+          const params = new URLSearchParams(location.search);
+          const verified = params.get('verified') === 'true';
+          
+          if (verified && location.pathname === '/sign-up') {
+            console.log("Already on sign-up page with verified=true, not navigating");
+            // Don't navigate - let the signup component handle the flow
+          } else {
+            // Otherwise navigate to dashboard
+            navigate('/dashboard');
+          }
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
         } else if (event === 'USER_UPDATED') {
@@ -112,7 +136,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (session?.user.email_confirmed_at && emailJustVerified === 'true') {
             toast.success('Email verified successfully!');
             localStorage.removeItem('email_just_verified');
-            navigate('/dashboard');
+            
+            // Check current location - if we're already on sign-up, don't navigate away
+            if (location.pathname !== '/sign-up') {
+              navigate('/dashboard');
+            }
           }
         }
       }
@@ -126,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname, location.search]);
 
   const signOut = async () => {
     await supabase.auth.signOut();

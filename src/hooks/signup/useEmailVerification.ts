@@ -26,6 +26,8 @@ export const useEmailVerification = (
     
     setIsLoading(true);
     try {
+      console.log("Checking email verification status for:", userEmail);
+      
       // Get the current session to check if the user is verified
       const { data, error } = await supabase.auth.getSession();
       
@@ -37,6 +39,8 @@ export const useEmailVerification = (
       
       // Check if the user's email is confirmed
       if (data?.session?.user?.email_confirmed_at) {
+        console.log("Email is confirmed! Timestamp:", data.session.user.email_confirmed_at);
+        
         // User is verified, update state
         setVerificationChecking(false);
         setIsVerified(true);
@@ -51,8 +55,10 @@ export const useEmailVerification = (
         // Show success notification
         toast.success("Email verified successfully!");
         
-        // Instead of redirecting here, we'll let the parent component handle the flow
+        // Return success
         return { verified: true };
+      } else {
+        console.log("Email is not confirmed yet");
       }
       
       setIsLoading(false);
@@ -69,6 +75,7 @@ export const useEmailVerification = (
     let interval: number | undefined;
     
     if (emailSent && userEmail && !isVerified) {
+      console.log("Starting verification check interval for email:", userEmail);
       setVerificationChecking(true);
       
       // Check immediately
@@ -81,7 +88,10 @@ export const useEmailVerification = (
     }
     
     return () => {
-      if (interval) clearInterval(interval);
+      if (interval) {
+        console.log("Clearing verification check interval");
+        clearInterval(interval);
+      }
     };
   }, [emailSent, userEmail, isVerified, checkEmailVerification]);
   

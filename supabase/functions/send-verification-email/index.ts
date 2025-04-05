@@ -14,7 +14,6 @@ interface EmailVerificationRequest {
   email: string;
   name: string;
   verificationUrl?: string;
-  useVerificationCode?: boolean;
 }
 
 // Generate a 6-digit verification code
@@ -75,9 +74,6 @@ const handler = async (req: Request): Promise<Response> => {
     if (!email) {
       throw new Error("Email is required");
     }
-    
-    // Always use code-based verification - override any setting
-    const useVerificationCode = true;
     
     // Generate a 6-digit verification code
     const verificationCode = generateVerificationCode();

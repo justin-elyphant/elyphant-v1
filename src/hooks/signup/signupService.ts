@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -18,8 +17,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
           sender_user_id: senderUserId,
         },
         emailRedirectTo: undefined, // Explicitly disable email redirect
-        // We can't use emailConfirm as it doesn't exist in the type
-        // Instead we'll handle email verification manually through our own process
+        emailConfirm: false // Explicitly disable email confirmation - not in types but can be added
       }
     });
     
@@ -48,7 +46,6 @@ export const sendVerificationEmail = async (email: string, name: string, verific
         email: email,
         name: name,
         verificationUrl: baseUrl, // Send just the origin, the function will append the path
-        useVerificationCode: true // Tell the function to use verification code
       }
     });
     

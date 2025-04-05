@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -95,7 +94,9 @@ const SignUp: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      // Completely disable Supabase's built-in email verification - we'll use our custom system
+      console.log("Sign up initiated for", values.email);
+      
+      // IMPORTANT: Using signUp with COMPLETELY DISABLED email verification
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -103,16 +104,22 @@ const SignUp: React.FC = () => {
           data: {
             name: values.name,
           },
-          emailRedirectTo: undefined, // Explicitly disable email redirect
+          // Explicitly disable ALL email confirmation by Supabase
+          emailRedirectTo: undefined,
+          // Set no email confirmation needed - our custom flow will verify emails
+          emailConfirm: false
         }
       });
       
       if (error) {
+        console.error("Signup error:", error);
         toast.error("Signup failed", {
           description: error.message,
         });
         return;
       }
+      
+      console.log("User created successfully:", data);
       
       // Save user email and name for verification step
       setUserEmail(values.email);
@@ -123,6 +130,7 @@ const SignUp: React.FC = () => {
       const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
       
       if (!emailResult.success) {
+        console.error("Failed to send verification code:", emailResult.error);
         toast.error("Failed to send verification code", {
           description: "Please try again or contact support.",
         });
@@ -135,6 +143,7 @@ const SignUp: React.FC = () => {
       });
       setStep("verification");
     } catch (error: any) {
+      console.error("Signup failed:", error);
       toast.error("Signup failed", {
         description: error.message || "An unexpected error occurred",
       });
@@ -155,14 +164,16 @@ const SignUp: React.FC = () => {
           email: email,
           name: name,
           verificationUrl: baseUrl,
-          useVerificationCode: true // Explicitly request code-based verification
+          useVerificationCode: true // Always use code-based verification
         }
       });
       
       if (emailResponse.error) {
+        console.error("Error sending verification email:", emailResponse.error);
         throw new Error(emailResponse.error.message || "Failed to send verification email");
       }
       
+      console.log("Verification email sent successfully");
       return { success: true };
     } catch (error) {
       console.error("Failed to send verification email:", error);

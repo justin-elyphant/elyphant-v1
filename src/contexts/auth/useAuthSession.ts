@@ -23,16 +23,26 @@ export const useAuthSession = (): UseAuthSessionReturn => {
   // Immediately check URL for access_token and handle it
   useEffect(() => {
     const handleAccessToken = async () => {
-      // Disable automatic email handling from Supabase redirects
       const params = new URLSearchParams(location.hash.substring(1) || location.search);
       const accessToken = params.get('access_token') || null;
+      const errorDescription = params.get('error_description') || null;
+      
+      // Handle auth errors explicitly
+      if (errorDescription) {
+        console.error("Auth error:", errorDescription);
+        toast.error("Authentication error", { description: errorDescription });
+        return;
+      }
       
       if (accessToken && !isProcessingToken) {
         setIsProcessingToken(true);
-        console.log("Detected access token in URL - redirecting to sign up page for manual verification");
+        console.log("Detected access token in URL - intercepting and redirecting to custom verification");
         
-        // Instead of processing the token automatically, redirect to sign-up page
-        // Our custom verification will handle it from there
+        // Clear URL parameters while preserving the path
+        const cleanPath = location.pathname;
+        window.history.replaceState(null, '', cleanPath);
+        
+        // Always redirect to our custom verification flow regardless of the token source
         navigate('/sign-up', { replace: true });
         
         setTimeout(() => {
@@ -55,13 +65,10 @@ export const useAuthSession = (): UseAuthSessionReturn => {
         setIsLoading(false);
 
         if (event === 'SIGNED_IN') {
-          // Don't show success toast if we're processing a token
-          if (!isProcessingToken) {
-            toast.success('Signed in successfully!');
-          }
-          
-          // Redirect to dashboard only if not on sign-up page
+          // Don't show success toast or redirect if we're processing a token
+          // or if we're on the sign-up page (which handles its own verification)
           if (!isProcessingToken && !location.pathname.includes('/sign-up')) {
+            toast.success('Signed in successfully!');
             navigate('/dashboard');
           }
         } else if (event === 'SIGNED_OUT') {

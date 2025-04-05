@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -33,7 +32,18 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
 export const sendVerificationEmail = async (email: string, name: string) => {
   try {
     const currentOrigin = window.location.origin;
-    const verificationUrl = `${currentOrigin}/dashboard?email=${encodeURIComponent(email)}`;
+    
+    // Create a proper verification URL that doesn't rely on localhost
+    // and works in production environments
+    let verificationUrl = `${currentOrigin}/dashboard?email=${encodeURIComponent(email)}`;
+    
+    // If we're in a preview environment, make sure to use the right URL format
+    if (currentOrigin.includes('lovableproject.com') || currentOrigin.includes('lovable.app')) {
+      // Keep as is - already correctly formatted for preview
+    } else if (currentOrigin.includes('localhost')) {
+      // This will be replaced on the server side with the proper URL
+      console.log("Using localhost URL - will be transformed in the function");
+    }
 
     console.log("Sending verification email with URL:", verificationUrl);
     

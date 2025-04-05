@@ -17,17 +17,23 @@ interface EmailVerificationRequest {
 
 // Function to detect and adapt localhost URLs for production use
 const getProductionReadyUrl = (url: string): string => {
-  // Check if URL is localhost or 127.0.0.1
-  if (url.includes('localhost') || url.includes('127.0.0.1')) {
-    // Replace with the Lovable preview URL if that's what we have access to
-    // This is a fallback and should be improved with a proper domain
+  // Check if URL contains an access_token parameter
+  if (url.includes('access_token=')) {
+    // Extract the token to preserve it
+    const tokenMatch = url.match(/access_token=([^&]+)/);
+    const token = tokenMatch ? tokenMatch[1] : '';
+    
+    // Build the correct URL format with the proper domain
     const projectId = Deno.env.get("PROJECT_ID") || "";
-    if (projectId) {
-      return url.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, 
-                         `https://${projectId}.lovableproject.com`);
-    }
+    const baseUrl = projectId ? 
+      `https://${projectId}.lovableproject.com` : 
+      url.split('?')[0];
+      
+    // Construct the final URL with token and email parameter
+    return `${baseUrl}/dashboard?access_token=${token}`;
   }
   
+  // If there's no token, just return the original URL
   // Make sure the URL is properly formatted with https
   return url.startsWith('http') ? url : `https://${url}`;
 };

@@ -2,9 +2,11 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export const useEmailVerification = (emailSent: boolean, userEmail: string | null) => {
   const [verificationChecking, setVerificationChecking] = useState(false);
+  const navigate = useNavigate();
 
   // Add effect to check verification status automatically every few seconds
   useEffect(() => {
@@ -39,6 +41,12 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
       if (data?.session?.user?.email_confirmed_at) {
         // Clear interval if user is verified
         setVerificationChecking(false);
+        
+        // Show success notification
+        toast.success("Email verified successfully!");
+        
+        // Navigate to dashboard
+        navigate('/dashboard', { replace: true });
         
         // Return success
         return { verified: true };

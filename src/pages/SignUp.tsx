@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -31,7 +30,6 @@ import { Mail, Lock, User, ArrowLeft, Check, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import EmailVerificationView from "@/components/auth/signup/EmailVerificationView";
 
-// Define signup schema with validation
 const signUpSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -39,7 +37,6 @@ const signUpSchema = z.object({
   captcha: z.string().min(1, { message: "Please enter the captcha code" }),
 });
 
-// Define verification schema
 const verificationSchema = z.object({
   code: z.string().length(6, { message: "Verification code must be 6 digits" }),
 });
@@ -57,7 +54,6 @@ const SignUp: React.FC = () => {
   const [verificationError, setVerificationError] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
   
-  // Check if the email verified parameter exists in the URL
   useEffect(() => {
     const verified = searchParams.get('verified') === 'true';
     const email = searchParams.get('email');
@@ -66,12 +62,10 @@ const SignUp: React.FC = () => {
       console.log("Email verified from URL parameters!");
       setIsVerified(true);
       setUserEmail(email);
-      // Automatically advance to the dashboard if already verified
       navigate("/dashboard");
     }
   }, [searchParams, navigate]);
 
-  // Form for sign up
   const signUpForm = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -82,7 +76,6 @@ const SignUp: React.FC = () => {
     },
   });
 
-  // Form for verification code
   const verificationForm = useForm<VerificationValues>({
     resolver: zodResolver(verificationSchema),
     defaultValues: {
@@ -90,14 +83,12 @@ const SignUp: React.FC = () => {
     },
   });
 
-  // Handle signup form submission
   const onSignUpSubmit = async (values: SignUpValues) => {
     try {
       setIsSubmitting(true);
       
       console.log("Sign up initiated for", values.email);
       
-      // IMPORTANT: Using signUp with COMPLETELY DISABLED email verification
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -105,8 +96,8 @@ const SignUp: React.FC = () => {
           data: {
             name: values.name,
           },
-          // Explicitly disable email redirect to prevent default email flow
-          emailRedirectTo: undefined
+          emailRedirectTo: undefined,
+          shouldCreateUser: true
         }
       });
       
@@ -120,11 +111,9 @@ const SignUp: React.FC = () => {
       
       console.log("User created successfully:", data);
       
-      // Save user email and name for verification step
       setUserEmail(values.email);
       setUserName(values.name);
       
-      // Send custom verification email with code
       const currentOrigin = window.location.origin;
       const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
       
@@ -136,7 +125,6 @@ const SignUp: React.FC = () => {
         return;
       }
       
-      // Move to verification step
       toast.success("Verification code sent", {
         description: "Please check your email for the verification code.",
       });
@@ -151,7 +139,6 @@ const SignUp: React.FC = () => {
     }
   };
 
-  // Send verification email with code
   const sendVerificationEmail = async (email: string, name: string, verificationUrl: string) => {
     try {
       const baseUrl = verificationUrl.endsWith('/') ? verificationUrl.slice(0, -1) : verificationUrl;
@@ -163,7 +150,7 @@ const SignUp: React.FC = () => {
           email: email,
           name: name,
           verificationUrl: baseUrl,
-          useVerificationCode: true // Always use code-based verification
+          useVerificationCode: true
         }
       });
       
@@ -180,7 +167,6 @@ const SignUp: React.FC = () => {
     }
   };
 
-  // Resend verification code
   const handleResendCode = async () => {
     try {
       setIsSubmitting(true);
@@ -203,13 +189,11 @@ const SignUp: React.FC = () => {
     }
   };
 
-  // Handle verification form submission
   const onVerificationSubmit = async (values: VerificationValues) => {
     try {
       setIsSubmitting(true);
       setVerificationError("");
       
-      // Verify code with edge function
       const { data, error } = await supabase.functions.invoke('verify-email-code', {
         body: {
           email: userEmail,
@@ -222,12 +206,10 @@ const SignUp: React.FC = () => {
         return;
       }
       
-      // Success - redirect to dashboard or sign in
       toast.success("Email verified!", {
         description: "Your account is now ready to use.",
       });
       
-      // Try to get the session after verification
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (sessionData.session) {
@@ -242,12 +224,10 @@ const SignUp: React.FC = () => {
     }
   };
 
-  // Check verification status
   const checkEmailVerification = async () => {
     try {
       setIsSubmitting(true);
       
-      // Get the current session to check if the user is verified
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -255,7 +235,6 @@ const SignUp: React.FC = () => {
         return { verified: false };
       }
       
-      // Check if the user's email is confirmed
       if (data?.session?.user?.email_confirmed_at) {
         setIsVerified(true);
         toast.success("Email verified!");
@@ -276,19 +255,16 @@ const SignUp: React.FC = () => {
     }
   };
 
-  // Go back to sign up step
   const handleBackToSignUp = () => {
     setStep("signup");
     setVerificationError("");
   };
 
-  // Verify with code method for EmailVerificationView
   const verifyWithCode = async (code: string): Promise<boolean> => {
     try {
       setIsSubmitting(true);
       setVerificationError("");
       
-      // Verify code with edge function
       const { data, error } = await supabase.functions.invoke('verify-email-code', {
         body: {
           email: userEmail,
@@ -301,14 +277,12 @@ const SignUp: React.FC = () => {
         return false;
       }
       
-      // Success - redirect to dashboard or sign in
       toast.success("Email verified!", {
         description: "Your account is now ready to use.",
       });
       
       setIsVerified(true);
       
-      // Try to get the session after verification
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (sessionData.session) {

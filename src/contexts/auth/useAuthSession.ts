@@ -1,5 +1,4 @@
 
-
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +27,7 @@ export const useAuthSession = (): UseAuthSessionReturn => {
       const accessToken = params.get('access_token') || null;
       const errorDescription = params.get('error_description') || null;
       const type = params.get('type') || null;
+      const confirmToken = params.get('token') || null;  // Used in email confirmation links
       
       // Handle auth errors explicitly
       if (errorDescription) {
@@ -36,10 +36,12 @@ export const useAuthSession = (): UseAuthSessionReturn => {
         return;
       }
       
-      // Detect any link with confirmation tokens from Supabase
-      if ((accessToken && !isProcessingToken) || (type === 'signup' || type === 'recovery')) {
+      // Intercept ANY Supabase auth redirects - this captures both access_token and confirmation links
+      if ((accessToken && !isProcessingToken) || 
+          (type === 'signup' || type === 'recovery') || 
+          confirmToken) {
         setIsProcessingToken(true);
-        console.log("Detected access token or confirmation link in URL - intercepting and redirecting to custom verification");
+        console.log("Intercepted Supabase auth redirect - redirecting to custom verification flow");
         
         // Clear URL parameters while preserving the path
         const cleanPath = location.pathname;
@@ -94,4 +96,3 @@ export const useAuthSession = (): UseAuthSessionReturn => {
 
   return { user, session, isLoading, isProcessingToken };
 };
-

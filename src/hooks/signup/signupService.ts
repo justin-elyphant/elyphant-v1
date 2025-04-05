@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -7,7 +6,8 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   try {
     console.log("Signing up user with completely disabled email verification");
     
-    // Create account with Supabase Auth - IMPORTANT: We're explicitly disabling all email verification
+    // Create account with Supabase Auth - IMPORTANT: We're disabling the automatic email confirmation
+    // by setting shouldCreateUser: false to prevent Supabase from sending its own confirmation email
     const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -17,7 +17,8 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
           invited_by: invitedBy,
           sender_user_id: senderUserId,
         },
-        emailRedirectTo: undefined // Explicitly disable email redirect - this prevents automatic confirmation emails
+        emailRedirectTo: undefined, // Explicitly disable email redirect
+        shouldCreateUser: true // We'll handle verification with our own code
       }
     });
     

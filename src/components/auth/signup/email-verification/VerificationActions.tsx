@@ -59,14 +59,16 @@ const VerificationActions = ({
             maxLength={6} 
             value={verificationCode} 
             onChange={setVerificationCode}
-            render={({ slots }) => (
-              <InputOTPGroup>
-                {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} index={index} className="border-purple-200 focus-within:border-purple-500" />
-                ))}
-              </InputOTPGroup>
-            )}
-          />
+          >
+            <InputOTPGroup>
+              <InputOTPSlot index={0} className="border-purple-200 focus-within:border-purple-500" />
+              <InputOTPSlot index={1} className="border-purple-200 focus-within:border-purple-500" />
+              <InputOTPSlot index={2} className="border-purple-200 focus-within:border-purple-500" />
+              <InputOTPSlot index={3} className="border-purple-200 focus-within:border-purple-500" />
+              <InputOTPSlot index={4} className="border-purple-200 focus-within:border-purple-500" />
+              <InputOTPSlot index={5} className="border-purple-200 focus-within:border-purple-500" />
+            </InputOTPGroup>
+          </InputOTP>
         </div>
         
         <Button 

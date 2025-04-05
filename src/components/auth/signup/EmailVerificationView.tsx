@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-// Import our new components
+// Import our components
 import VerificationHeader from "./email-verification/VerificationHeader";
 import VerificationAlert from "./email-verification/VerificationAlert";
 import VerificationStatus from "./email-verification/VerificationStatus";
@@ -23,12 +23,14 @@ interface EmailVerificationViewProps {
   userEmail: string | null;
   verificationChecking?: boolean;
   onCheckVerification?: () => void;
+  isVerified?: boolean;
 }
 
 const EmailVerificationView = ({ 
   userEmail, 
   verificationChecking = false,
-  onCheckVerification 
+  onCheckVerification,
+  isVerified = false
 }: EmailVerificationViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -119,6 +121,12 @@ const EmailVerificationView = ({
       setIsLoading(false);
     }
   };
+
+  // If the user is already verified, redirect to dashboard
+  if (isVerified) {
+    navigate('/dashboard', { replace: true });
+    return null;
+  }
 
   return (
     <Card className="shadow-md">

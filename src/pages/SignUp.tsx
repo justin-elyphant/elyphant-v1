@@ -27,6 +27,7 @@ const SignUp = () => {
     emailSent,
     userEmail,
     verificationChecking,
+    isVerified,
     handleSignUpSubmit,
     handleProfileTypeSelection,
     handleImageUpload,
@@ -51,6 +52,7 @@ const SignUp = () => {
           userEmail={userEmail}
           verificationChecking={verificationChecking}
           onCheckVerification={checkEmailVerification}
+          isVerified={isVerified}
         />
       ) : step === 1 ? (
         <SignUpContainer onSubmitSuccess={handleSignUpSubmit} />

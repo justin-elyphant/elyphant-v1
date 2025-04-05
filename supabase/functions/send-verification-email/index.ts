@@ -17,25 +17,25 @@ interface EmailVerificationRequest {
 
 // Function to detect and adapt localhost URLs for production use
 const getProductionReadyUrl = (url: string): string => {
-  // Check if URL contains an access_token parameter
-  if (url.includes('access_token=')) {
-    // Extract the token to preserve it
-    const tokenMatch = url.match(/access_token=([^&]+)/);
-    const token = tokenMatch ? tokenMatch[1] : '';
-    
-    // Build the correct URL format with the proper domain
+  // Check if the URL is from localhost or a development environment
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    // If we're in local development, we need to get the project ID for the proper URL
     const projectId = Deno.env.get("PROJECT_ID") || "";
-    const baseUrl = projectId ? 
-      `https://${projectId}.lovableproject.com` : 
-      url.split('?')[0];
-      
-    // Construct the final URL with token and email parameter
-    return `${baseUrl}/dashboard?access_token=${token}`;
+    if (projectId) {
+      // Extract the path and query parameters from the localhost URL
+      const urlObj = new URL(url);
+      // Construct a new URL using the project domain
+      return `https://${projectId}.lovableproject.com${urlObj.pathname}${urlObj.search}`;
+    }
   }
   
-  // If there's no token, just return the original URL
-  // Make sure the URL is properly formatted with https
-  return url.startsWith('http') ? url : `https://${url}`;
+  // If URL has access_token already, return as is
+  if (url.includes('access_token=')) {
+    return url;
+  }
+  
+  // For all other cases, just return the original URL
+  return url;
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -58,6 +58,39 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Original URL: ${verificationUrl}`);
     console.log(`Formatted URL: ${formattedUrl}`);
 
+    // Get signup URL with proper redirect
+    const { data: signUpData, error: signUpError } = await fetch(
+      `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/generate-link`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "apikey": `${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
+        },
+        body: JSON.stringify({
+          type: "signup",
+          email: email,
+          options: {
+            redirect_to: formattedUrl
+          }
+        })
+      }
+    ).then(res => res.json());
+
+    if (signUpError) {
+      throw new Error(`Failed to generate verification link: ${signUpError.message}`);
+    }
+
+    // Use the generated action link which contains the proper access_token
+    const actionLink = signUpData?.action_link;
+    
+    if (!actionLink) {
+      throw new Error("Failed to generate verification link");
+    }
+
+    console.log(`Generated action link: ${actionLink}`);
+
     const emailResponse = await resend.emails.send({
       from: "Elyphant <onboarding@resend.dev>", 
       to: [email],
@@ -71,12 +104,12 @@ const handler = async (req: Request): Promise<Response> => {
           <p>Thanks for signing up with Elyphant! We're excited to have you join our community of gift-givers and wish-makers.</p>
           <p>Please verify your email address to continue:</p>
           <div style="margin: 20px 0; text-align: center;">
-            <a href="${formattedUrl}" style="background-color: #8a4baf; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            <a href="${actionLink}" style="background-color: #8a4baf; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Verify my email
             </a>
           </div>
           <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #4a4a4a; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">${formattedUrl}</p>
+          <p style="word-break: break-all; color: #4a4a4a; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">${actionLink}</p>
           <p>If you didn't create an account with us, you can safely ignore this email.</p>
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #6b6b6b; font-size: 12px; text-align: center;">
             <p>&copy; ${new Date().getFullYear()} Elyphant. All rights reserved.</p>

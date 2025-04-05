@@ -31,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessingToken, setIsProcessingToken] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [bucketInitialized, setBucketInitialized] = useState(false);
@@ -48,23 +49,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const params = new URLSearchParams(location.search);
       const accessToken = params.get('access_token');
       
-      if (accessToken) {
+      if (accessToken && !isProcessingToken) {
         try {
+          setIsProcessingToken(true);
+          console.log("Processing access token from URL");
+          
           // Process the token (this should trigger the onAuthStateChange event)
           const { data, error } = await supabase.auth.getUser(accessToken);
           
           if (error) {
             console.error("Error processing access token:", error);
             toast.error("Verification link is invalid or has expired");
+            setIsProcessingToken(false);
           } else if (data.user?.email_confirmed_at) {
-            // User is verified, redirect and show success message
-            toast.success("Email verified successfully!");
+            // User is verified, set a flag so we know to redirect and show success message after auth state updates
+            console.log("Email verified successfully via token");
+            localStorage.setItem('email_just_verified', 'true');
+            
+            // Get session with the token
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            if (!sessionError && sessionData.session) {
+              setSession(sessionData.session);
+              setUser(sessionData.session.user);
+            }
             
             // Navigate to dashboard and remove the token from URL
             navigate('/dashboard', { replace: true });
           }
         } catch (err) {
           console.error("Error processing access token:", err);
+          setIsProcessingToken(false);
         }
       }
     };
@@ -74,10 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log("Auth state change event:", event);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        setIsProcessingToken(false);
 
         if (event === 'SIGNED_IN') {
           toast.success('Signed in successfully!');
@@ -85,8 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
         } else if (event === 'USER_UPDATED') {
-          if (session?.user.email_confirmed_at) {
+          const emailJustVerified = localStorage.getItem('email_just_verified');
+          
+          if (session?.user.email_confirmed_at && emailJustVerified === 'true') {
             toast.success('Email verified successfully!');
+            localStorage.removeItem('email_just_verified');
             navigate('/dashboard');
           }
         }

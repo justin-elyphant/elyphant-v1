@@ -6,13 +6,14 @@ import { useNavigate } from "react-router-dom";
 
 export const useEmailVerification = (emailSent: boolean, userEmail: string | null) => {
   const [verificationChecking, setVerificationChecking] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const navigate = useNavigate();
 
   // Add effect to check verification status automatically every few seconds
   useEffect(() => {
     let interval: number | undefined;
     
-    if (emailSent && userEmail) {
+    if (emailSent && userEmail && !isVerified) {
       setVerificationChecking(true);
       
       // Check immediately
@@ -25,7 +26,7 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [emailSent, userEmail]);
+  }, [emailSent, userEmail, isVerified]);
   
   // Function to check email verification status
   const checkEmailVerification = async () => {
@@ -41,6 +42,7 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
       if (data?.session?.user?.email_confirmed_at) {
         // Clear interval if user is verified
         setVerificationChecking(false);
+        setIsVerified(true);
         
         // Show success notification
         toast.success("Email verified successfully!");
@@ -61,6 +63,7 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
 
   return {
     verificationChecking,
+    isVerified,
     checkEmailVerification
   };
 };

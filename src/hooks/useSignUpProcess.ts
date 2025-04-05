@@ -23,7 +23,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   
   const { profileImage, setProfileImage, handleImageUpload, uploadProfileImage } = useProfileImage();
   const { profileData, handleProfileDataChange } = useProfileData();
-  const { verificationChecking, checkEmailVerification } = useEmailVerification(emailSent, userEmail);
+  const { verificationChecking, isVerified, checkEmailVerification } = useEmailVerification(emailSent, userEmail);
 
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
@@ -118,6 +118,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     emailSent,
     userEmail,
     verificationChecking,
+    isVerified,
     handleSignUpSubmit,
     handleProfileTypeSelection,
     handleImageUpload,

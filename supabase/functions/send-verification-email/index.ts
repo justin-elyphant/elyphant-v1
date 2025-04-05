@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
+// Initialize Resend with API key from environment variable
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -23,7 +24,10 @@ function generateVerificationCode(): string {
 
 // This is shared with verify-email-code function to store codes
 // Use a more persistent storage mechanism for production
-const verificationCodes: Record<string, { code: string, expires: number }> = {};
+const GLOBAL: any = globalThis;
+if (!GLOBAL.verificationCodes) {
+  GLOBAL.verificationCodes = {};
+}
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -72,11 +76,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email is required");
     }
     
+    // Always use code-based verification - override any setting
+    const useVerificationCode = true;
+    
     // Generate a 6-digit verification code
     const verificationCode = generateVerificationCode();
     
     // Store the code with 15-minute expiration
-    const GLOBAL: any = globalThis;
     if (!GLOBAL.verificationCodes) {
       GLOBAL.verificationCodes = {};
     }
@@ -91,12 +97,6 @@ const handler = async (req: Request): Promise<Response> => {
     // For backup/debugging in development environments, allow test code 123456
     if (Deno.env.get("ENVIRONMENT") !== "production") {
       console.log("For testing: verification code 123456 will also work during development");
-      
-      // Also store to verificationCodes
-      verificationCodes[email] = {
-        code: verificationCode,
-        expires: Date.now() + (15 * 60 * 1000)
-      };
     }
     
     const emailSubject = "Your Elyphant verification code";

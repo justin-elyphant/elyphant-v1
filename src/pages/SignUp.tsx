@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +29,7 @@ import { CaptchaField } from "@/components/auth/signup/fields/CaptchaField";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Mail, Lock, User, ArrowLeft, Check, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import EmailVerificationView from "@/components/auth/signup/EmailVerificationView";
 
 // Define signup schema with validation
 const signUpSchema = z.object({
@@ -48,11 +49,27 @@ type VerificationValues = z.infer<typeof verificationSchema>;
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<"signup" | "verification">("signup");
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [verificationError, setVerificationError] = useState<string>("");
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  
+  // Check if the email verified parameter exists in the URL
+  useEffect(() => {
+    const verified = searchParams.get('verified') === 'true';
+    const email = searchParams.get('email');
+    
+    if (verified && email) {
+      console.log("Email verified from URL parameters!");
+      setIsVerified(true);
+      setUserEmail(email);
+      // Automatically advance to the dashboard if already verified
+      navigate("/dashboard");
+    }
+  }, [searchParams, navigate]);
 
   // Form for sign up
   const signUpForm = useForm<SignUpValues>({
@@ -78,7 +95,7 @@ const SignUp: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      // Sign up user with Supabase Auth
+      // Completely disable Supabase's built-in email verification - we'll use our custom system
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -131,12 +148,14 @@ const SignUp: React.FC = () => {
     try {
       const baseUrl = verificationUrl.endsWith('/') ? verificationUrl.slice(0, -1) : verificationUrl;
       
+      console.log("Sending custom verification email to", email, "using origin:", baseUrl);
+      
       const emailResponse = await supabase.functions.invoke('send-verification-email', {
         body: {
           email: email,
           name: name,
           verificationUrl: baseUrl,
-          useVerificationCode: true
+          useVerificationCode: true // Explicitly request code-based verification
         }
       });
       
@@ -213,10 +232,92 @@ const SignUp: React.FC = () => {
     }
   };
 
+  // Check verification status
+  const checkEmailVerification = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      // Get the current session to check if the user is verified
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        toast.error("Failed to check verification status");
+        return { verified: false };
+      }
+      
+      // Check if the user's email is confirmed
+      if (data?.session?.user?.email_confirmed_at) {
+        setIsVerified(true);
+        toast.success("Email verified!");
+        
+        navigate("/dashboard");
+        return { verified: true };
+      }
+      
+      toast.error("Email not verified yet", {
+        description: "Please enter the verification code sent to your email."
+      });
+      return { verified: false };
+    } catch (err) {
+      toast.error("Failed to check verification status");
+      return { verified: false };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Go back to sign up step
   const handleBackToSignUp = () => {
     setStep("signup");
     setVerificationError("");
+  };
+
+  // Verify with code method for EmailVerificationView
+  const verifyWithCode = async (code: string): Promise<boolean> => {
+    try {
+      setIsSubmitting(true);
+      setVerificationError("");
+      
+      // Verify code with edge function
+      const { data, error } = await supabase.functions.invoke('verify-email-code', {
+        body: {
+          email: userEmail,
+          code: code
+        }
+      });
+      
+      if (error || !data.success) {
+        setVerificationError(error?.message || "Invalid verification code");
+        return false;
+      }
+      
+      // Success - redirect to dashboard or sign in
+      toast.success("Email verified!", {
+        description: "Your account is now ready to use.",
+      });
+      
+      setIsVerified(true);
+      
+      // Try to get the session after verification
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (sessionData.session) {
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          navigate("/sign-in");  
+        }, 1500);
+      }
+      
+      return true;
+    } catch (error: any) {
+      setVerificationError(error.message || "Verification failed");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -314,91 +415,13 @@ const SignUp: React.FC = () => {
           </CardFooter>
         </Card>
       ) : (
-        <Card>
-          <CardHeader className="space-y-1">
-            <div className="flex items-center">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="mr-2" 
-                onClick={handleBackToSignUp} 
-                type="button"
-                disabled={isSubmitting}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <CardTitle className="text-2xl">Verify your email</CardTitle>
-            </div>
-            <CardDescription>
-              Enter the 6-digit code sent to {userEmail}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {verificationError && (
-              <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{verificationError}</AlertDescription>
-              </Alert>
-            )}
-            
-            <Form {...verificationForm}>
-              <form onSubmit={verificationForm.handleSubmit(onVerificationSubmit)} className="space-y-6">
-                <FormField
-                  control={verificationForm.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col items-center justify-center">
-                      <FormLabel className="text-center mb-2">Verification Code</FormLabel>
-                      <FormControl>
-                        <InputOTP maxLength={6} {...field}>
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="space-y-4">
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Verifying...
-                      </>
-                    ) : (
-                      <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Verify Email
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleResendCode}
-                    disabled={isSubmitting}
-                  >
-                    Resend Code
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+        <EmailVerificationView 
+          userEmail={userEmail}
+          verificationChecking={isSubmitting}
+          onCheckVerification={checkEmailVerification}
+          isVerified={isVerified}
+          onVerifyWithCode={verifyWithCode}
+        />
       )}
     </div>
   );

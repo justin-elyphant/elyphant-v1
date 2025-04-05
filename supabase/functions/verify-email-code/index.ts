@@ -54,79 +54,6 @@ const isValidVerificationCode = (email: string, code: string): boolean => {
   }
 };
 
-// Function to verify the email using Supabase admin API
-const confirmUserEmail = async (email: string): Promise<boolean> => {
-  try {
-    console.log("Confirming email for:", email);
-    
-    // Get user by email
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("Missing Supabase environment variables");
-      return false;
-    }
-    
-    const getUserResponse = await fetch(
-      `${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
-      {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          "apikey": SUPABASE_SERVICE_ROLE_KEY
-        }
-      }
-    );
-    
-    if (!getUserResponse.ok) {
-      console.error("Failed to get user:", await getUserResponse.text());
-      return false;
-    }
-    
-    const users = await getUserResponse.json();
-    
-    if (!users || !users.users || users.users.length === 0) {
-      console.error("No user found with email:", email);
-      return false;
-    }
-    
-    const user = users.users[0];
-    const userId = user.id;
-    
-    console.log("Found user with ID:", userId);
-    
-    // Update user to confirm their email
-    const updateResponse = await fetch(
-      `${SUPABASE_URL}/auth/v1/admin/users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          "apikey": SUPABASE_SERVICE_ROLE_KEY
-        },
-        body: JSON.stringify({
-          email_confirm: true,
-          user_metadata: { ...user.user_metadata, email_verified: true }
-        })
-      }
-    );
-    
-    if (!updateResponse.ok) {
-      const errorData = await updateResponse.text();
-      console.error("Failed to update user:", errorData);
-      return false;
-    }
-    
-    console.log("User email confirmed successfully for:", email);
-    return true;
-  } catch (error) {
-    console.error("Error confirming user email:", error);
-    return false;
-  }
-};
-
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -199,23 +126,6 @@ const handler = async (req: Request): Promise<Response> => {
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-    
-    // If code is valid, confirm the user's email
-    const confirmed = await confirmUserEmail(email);
-    
-    if (!confirmed) {
-      console.error("Failed to verify email for", email);
-      return new Response(
-        JSON.stringify({ 
-          error: "Failed to verify email", 
-          success: false 
-        }),
-        {
-          status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );

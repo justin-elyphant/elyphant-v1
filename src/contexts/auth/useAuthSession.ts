@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +36,7 @@ export const useAuthSession = (): UseAuthSessionReturn => {
       }
       
       // Intercept ANY Supabase auth redirects - this captures both access_token and confirmation links
+      // This should not be triggered with our new signup flow, but we keep it as a safeguard
       if ((accessToken && !isProcessingToken) || 
           (type === 'signup' || type === 'recovery') || 
           confirmToken) {

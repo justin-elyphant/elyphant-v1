@@ -5,21 +5,16 @@ import { SignUpValues } from "@/components/auth/signup/SignUpForm";
 
 export const signUpUser = async (values: SignUpValues, invitedBy: string | null, senderUserId: string | null) => {
   try {
-    console.log("Signing up user with completely disabled email verification");
+    console.log("Signing up user with admin API and bypassing email verification");
     
-    // Create account with Supabase Auth - We're using emailConfirmation: false
-    // to try and prevent Supabase from sending its own confirmation email
-    const { data, error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: {
-          name: values.name,
-          invited_by: invitedBy,
-          sender_user_id: senderUserId,
-        },
-        emailRedirectTo: undefined, // Explicitly disable email redirect
-        emailConfirmation: false // Try to disable email confirmation
+    // Create the user through our Edge Function instead of Supabase Auth directly
+    const { data, error } = await supabase.functions.invoke('create-user', {
+      body: {
+        email: values.email,
+        password: values.password,
+        name: values.name,
+        invitedBy: invitedBy,
+        senderUserId: senderUserId
       }
     });
     
@@ -28,7 +23,25 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
       throw error;
     }
     
-    console.log("User created:", data);
+    if (!data.success) {
+      console.error("Signup failed:", data.error);
+      throw new Error(data.error || "Failed to create user");
+    }
+    
+    console.log("User created:", data.user);
+    
+    // After creating the user, sign them in automatically
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password
+    });
+    
+    if (signInError) {
+      console.error("Auto sign-in error:", signInError);
+      // We don't throw here since the user was created successfully
+      // They can still sign in manually
+    }
+    
     return data;
   } catch (error) {
     console.error("Error in signUpUser:", error);
@@ -48,6 +61,7 @@ export const sendVerificationEmail = async (email: string, name: string, verific
         email: email,
         name: name,
         verificationUrl: baseUrl, // Send just the origin, the function will append the path
+        useVerificationCode: true  // Explicitly request code-based verification
       }
     });
     

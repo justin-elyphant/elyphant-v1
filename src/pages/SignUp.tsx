@@ -29,6 +29,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Mail, Lock, User, ArrowLeft, Check, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import EmailVerificationView from "@/components/auth/signup/EmailVerificationView";
+import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService";
 
 const signUpSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -90,27 +91,16 @@ const SignUp: React.FC = () => {
       
       console.log("Sign up initiated for", values.email);
       
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            name: values.name,
-          },
-          emailRedirectTo: undefined,
-          emailConfirmation: false
-        }
-      });
+      const result = await signUpUser(values, null, null);
       
-      if (error) {
-        console.error("Signup error:", error);
+      if (!result) {
         toast.error("Signup failed", {
-          description: error.message,
+          description: "Unable to create account. Please try again.",
         });
         return;
       }
       
-      console.log("User created successfully:", data);
+      console.log("User created successfully:", result);
       
       setUserEmail(values.email);
       setUserName(values.name);
@@ -135,39 +125,18 @@ const SignUp: React.FC = () => {
       setStep("verification");
     } catch (err: any) {
       console.error("Signup failed:", err);
-      toast.error("Signup failed", {
-        description: err.message || "An unexpected error occurred",
-      });
+      
+      if (err.message?.includes("already registered") || err.message?.includes("user_exists")) {
+        toast.error("Email already registered", {
+          description: "Please use a different email address or try to sign in.",
+        });
+      } else {
+        toast.error("Signup failed", {
+          description: err.message || "An unexpected error occurred",
+        });
+      }
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const sendVerificationEmail = async (email: string, name: string, verificationUrl: string) => {
-    try {
-      const baseUrl = verificationUrl.endsWith('/') ? verificationUrl.slice(0, -1) : verificationUrl;
-      
-      console.log("Sending custom verification email to", email, "using origin:", baseUrl);
-      
-      const emailResponse = await supabase.functions.invoke('send-verification-email', {
-        body: {
-          email: email,
-          name: name,
-          verificationUrl: baseUrl,
-          useVerificationCode: true
-        }
-      });
-      
-      if (emailResponse.error) {
-        console.error("Error sending verification email:", emailResponse.error);
-        throw new Error(emailResponse.error.message || "Failed to send verification email");
-      }
-      
-      console.log("Verification email sent successfully");
-      return { success: true };
-    } catch (error) {
-      console.error("Failed to send verification email:", error);
-      return { success: false, error };
     }
   };
 

@@ -1,9 +1,15 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
 
 // Initialize Resend with API key from environment variable
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,11 +28,72 @@ function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// This is shared with verify-email-code function to store codes
-// Use a more persistent storage mechanism for production
-const GLOBAL: any = globalThis;
-if (!GLOBAL.verificationCodes) {
-  GLOBAL.verificationCodes = {};
+// Store verification code in database
+async function storeVerificationCode(email: string, code: string): Promise<boolean> {
+  try {
+    // Check if there's an existing code that's not expired and update resend count
+    const { data: existingCode } = await supabase
+      .from("verification_codes")
+      .select("id, resend_count, last_resend_at")
+      .eq("email", email)
+      .eq("used", false)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (existingCode) {
+      // Rate limiting - if last resend was less than 1 minute ago, don't allow
+      if (existingCode.last_resend_at && 
+          (new Date().getTime() - new Date(existingCode.last_resend_at).getTime() < 60000)) {
+        console.log(`Rate limiting - last resend was less than 1 minute ago for ${email}`);
+        return false;
+      }
+
+      // Check resend limit (max 5 per code)
+      if (existingCode.resend_count >= 5) {
+        console.log(`Resend limit reached (5) for email ${email}`);
+        return false;
+      }
+
+      // Update the existing record with new resend count
+      const { error: updateError } = await supabase
+        .from("verification_codes")
+        .update({
+          code: code,
+          resend_count: existingCode.resend_count + 1,
+          last_resend_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // Reset expiration
+        })
+        .eq("id", existingCode.id);
+      
+      if (updateError) {
+        console.error("Error updating verification code:", updateError);
+        return false;
+      }
+    } else {
+      // Create a new verification code
+      const { error: insertError } = await supabase
+        .from("verification_codes")
+        .insert({
+          email: email,
+          code: code,
+          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          last_resend_at: new Date().toISOString(),
+          resend_count: 0,
+        });
+      
+      if (insertError) {
+        console.error("Error inserting verification code:", insertError);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error storing verification code:", error);
+    return false;
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -79,21 +146,32 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate a 6-digit verification code
     const verificationCode = generateVerificationCode();
     
-    // Store the code with 15-minute expiration
-    if (!GLOBAL.verificationCodes) {
-      GLOBAL.verificationCodes = {};
-    }
+    // Store verification code in database
+    const storedCode = await storeVerificationCode(email, verificationCode);
     
-    GLOBAL.verificationCodes[email] = {
-      code: verificationCode,
-      expires: Date.now() + (15 * 60 * 1000)
-    };
+    if (!storedCode) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to store verification code or rate limit exceeded", 
+          success: false,
+          codeGenerated: false,
+          rateLimited: true
+        }),
+        {
+          status: 429,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     console.log(`Generated verification code for ${email}: ${verificationCode}`);
     
     // For backup/debugging in development environments, allow test code 123456
     if (Deno.env.get("ENVIRONMENT") !== "production") {
       console.log("For testing: verification code 123456 will also work during development");
+      
+      // Store test code in database too
+      await storeVerificationCode(email, "123456");
     }
     
     const emailSubject = "Your Elyphant verification code";
@@ -119,7 +197,7 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // For testing in development, log full email content
+    // For testing in development, log email content
     if (Deno.env.get("ENVIRONMENT") !== "production") {
       console.log("Email content:", emailContent);
     }

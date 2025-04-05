@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { sendVerificationEmail } from "@/hooks/signup/signupService";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,37 +20,21 @@ interface VerificationContainerProps {
   userEmail: string;
   userName: string;
   onBackToSignUp: () => void;
+  onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
+  resendCount: number;
 }
 
-const VerificationContainer = ({ userEmail, userName, onBackToSignUp }: VerificationContainerProps) => {
+const VerificationContainer = ({ 
+  userEmail, 
+  userName, 
+  onBackToSignUp,
+  onResendVerification,
+  resendCount
+}: VerificationContainerProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
-  const [resendCount, setResendCount] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
-
-  const handleResendCode = async () => {
-    try {
-      setIsLoading(true);
-      const currentOrigin = window.location.origin;
-      const result = await sendVerificationEmail(userEmail, userName, currentOrigin);
-      
-      if (result.success) {
-        toast.success("Verification code resent", {
-          description: "Please check your email for the new code.",
-        });
-        setResendCount(prevCount => prevCount + 1);
-      } else {
-        toast.error("Failed to resend code", {
-          description: "Please try again or contact support.",
-        });
-      }
-    } catch (error) {
-      toast.error("Failed to resend code");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const checkEmailVerification = async () => {
     try {
@@ -131,7 +114,7 @@ const VerificationContainer = ({ userEmail, userName, onBackToSignUp }: Verifica
             <VerificationActions
               isLoading={isLoading}
               verificationChecking={verificationChecking}
-              onResendVerification={handleResendCode}
+              onResendVerification={onResendVerification}
               onCheckVerification={checkEmailVerification}
               resendCount={resendCount}
             />

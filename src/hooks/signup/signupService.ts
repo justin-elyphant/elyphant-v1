@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -69,7 +68,19 @@ export const sendVerificationEmail = async (email: string, name: string, verific
     
     if (emailResponse.error) {
       console.error("Email function error:", emailResponse.error);
+      
+      // Check for rate limiting
+      if (emailResponse.error.message?.includes("rate limit") || 
+          emailResponse.status === 429 ||
+          emailResponse.data?.rateLimited) {
+        return { success: false, error: emailResponse.error, rateLimited: true };
+      }
+      
       throw new Error(emailResponse.error.message || "Failed to send verification email");
+    }
+    
+    if (emailResponse.data?.rateLimited) {
+      return { success: false, error: "Rate limited", rateLimited: true };
     }
     
     return { success: true };

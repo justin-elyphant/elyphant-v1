@@ -1,19 +1,11 @@
 
 import React, { useState } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-
-const verificationSchema = z.object({
-  code: z.string().length(6, { message: "Verification code must be 6 digits" }),
-});
-
-type VerificationValues = z.infer<typeof verificationSchema>;
 
 interface VerificationFormProps {
   userEmail: string;
@@ -24,6 +16,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [verificationError, setVerificationError] = useState<string>("");
   const [verificationCode, setVerificationCode] = useState("");
+  const [attemptCount, setAttemptCount] = useState(0);
 
   const handleVerifyCode = async () => {
     if (verificationCode.length !== 6) {
@@ -44,10 +37,26 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
       });
       
       if (error || !data.success) {
-        setVerificationError(error?.message || "Invalid verification code");
-        toast.error("Invalid verification code", {
-          description: "Please check and try again"
-        });
+        let errorMessage = "Invalid verification code";
+        
+        if (error?.message?.includes("expired") || data?.reason === "expired") {
+          errorMessage = "Verification code has expired";
+          toast.error("Verification code expired", {
+            description: "Please request a new code"
+          });
+        } else if (attemptCount >= 3) {
+          errorMessage = "Too many invalid attempts";
+          toast.error("Too many invalid attempts", {
+            description: "Please request a new code"
+          });
+        } else {
+          toast.error("Invalid verification code", {
+            description: "Please check and try again"
+          });
+        }
+        
+        setVerificationError(errorMessage);
+        setAttemptCount(prev => prev + 1);
         return;
       }
       
@@ -61,6 +70,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
       toast.error("Verification failed", {
         description: error.message || "Please try again"
       });
+      setAttemptCount(prev => prev + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +93,9 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
               {slots.map((slot, index) => (
                 <React.Fragment key={index}>
                   <InputOTPSlot
-                    className="rounded-md border-gray-300 focus:border-purple-400 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
+                    className={`rounded-md border-gray-300 focus:border-purple-400 focus:ring focus:ring-purple-200 focus:ring-opacity-50 ${
+                      verificationError ? "border-red-300" : ""
+                    }`}
                     index={index}
                   >
                     {slot.char}
@@ -97,6 +109,12 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
       
       {verificationError && (
         <p className="text-sm font-medium text-destructive mb-4">{verificationError}</p>
+      )}
+      
+      {attemptCount >= 3 && !isSubmitting && (
+        <p className="text-sm text-amber-600 mb-4">
+          Too many attempts. Consider requesting a new code.
+        </p>
       )}
       
       <Button 

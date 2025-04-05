@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -104,10 +105,8 @@ const SignUp: React.FC = () => {
           data: {
             name: values.name,
           },
-          // Explicitly disable ALL email confirmation by Supabase
-          emailRedirectTo: undefined,
-          // Set no email confirmation needed - our custom flow will verify emails
-          emailConfirm: false
+          // Explicitly disable email redirect to prevent default email flow
+          emailRedirectTo: undefined
         }
       });
       

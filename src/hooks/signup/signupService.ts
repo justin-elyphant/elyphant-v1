@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -16,8 +17,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
           invited_by: invitedBy,
           sender_user_id: senderUserId,
         },
-        emailRedirectTo: undefined, // Explicitly disable email redirect
-        emailConfirm: false // Explicitly disable email confirmation - not in types but can be added
+        emailRedirectTo: undefined // Explicitly disable email redirect - this prevents automatic confirmation emails
       }
     });
     

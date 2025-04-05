@@ -2,23 +2,22 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Mail, AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+
+// Import our new components
+import VerificationHeader from "./email-verification/VerificationHeader";
+import VerificationAlert from "./email-verification/VerificationAlert";
+import VerificationStatus from "./email-verification/VerificationStatus";
+import VerificationActions from "./email-verification/VerificationActions";
+import TroubleshootingGuide from "./email-verification/TroubleshootingGuide";
+import ImportantNoteAlert from "./email-verification/ImportantNoteAlert";
 
 interface EmailVerificationViewProps {
   userEmail: string | null;
@@ -124,92 +123,25 @@ const EmailVerificationView = ({
   return (
     <Card className="shadow-md">
       <CardHeader className="space-y-1">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-4xl">🐘</span>
-          <div>
-            <CardTitle className="text-2xl font-bold">Welcome to Elyphant!</CardTitle>
-            <CardDescription className="text-base">
-              We've sent a verification link to {userEmail}
-            </CardDescription>
-          </div>
-        </div>
+        <VerificationHeader userEmail={userEmail} />
       </CardHeader>
       <CardContent className="space-y-4">
-        <Alert className="bg-purple-50 border-purple-200">
-          <Mail className="h-4 w-4 text-purple-600" />
-          <AlertTitle className="text-purple-800 font-medium">Verification Required</AlertTitle>
-          <AlertDescription className="text-purple-700">
-            Please check your inbox and click the verification link to continue.
-            If you don't see the email, check your spam folder.
-          </AlertDescription>
-        </Alert>
+        <VerificationAlert />
         
-        {verificationChecking && (
-          <div className="text-center p-3 bg-blue-50 rounded-md border border-blue-100 flex items-center justify-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-            <span className="text-blue-700">Checking verification status automatically...</span>
-          </div>
-        )}
+        <VerificationStatus verificationChecking={verificationChecking} />
         
-        <div className="text-center mt-6 mb-2">
-          <p className="text-sm text-gray-600 mb-4">
-            Didn't receive an email? Click below to resend.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-3">
-            <Button 
-              variant="outline" 
-              onClick={handleResendVerification}
-              className="transition-all hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                "Resend Verification Email"
-              )}
-            </Button>
-            
-            <Button
-              variant="secondary"
-              onClick={checkVerificationStatus}
-              className="mt-2 sm:mt-0"
-              disabled={isLoading || verificationChecking}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Checking...
-                </>
-              ) : (
-                "I've Verified My Email"
-              )}
-            </Button>
-          </div>
-        </div>
+        <VerificationActions 
+          isLoading={isLoading}
+          verificationChecking={verificationChecking}
+          onResendVerification={handleResendVerification}
+          onCheckVerification={checkVerificationStatus}
+        />
 
         <Separator className="my-4" />
         
-        <div className="text-sm text-center text-gray-600">
-          <p className="mb-2">Having trouble?</p>
-          <ul className="list-disc text-left ml-6 space-y-1">
-            <li>Check your spam or junk folder</li>
-            <li>Make sure your email address was entered correctly</li>
-            <li>Try using a different browser if the verification link doesn't work</li>
-            <li>The verification link works best on the same device you signed up on</li>
-          </ul>
-        </div>
+        <TroubleshootingGuide />
         
-        <Alert className="bg-amber-50 border-amber-200 mt-6">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800">Important Note</AlertTitle>
-          <AlertDescription className="text-amber-700">
-            After verifying your email, you'll be automatically redirected to your Elyphant dashboard.
-            If not, click the "I've Verified My Email" button above.
-          </AlertDescription>
-        </Alert>
+        <ImportantNoteAlert />
       </CardContent>
       <CardFooter className="flex flex-col items-center gap-4 border-t pt-4">
         <div className="text-sm text-muted-foreground">

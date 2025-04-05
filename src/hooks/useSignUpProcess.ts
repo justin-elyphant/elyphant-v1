@@ -60,7 +60,13 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     checkSession();
   }, [formValues]);
   
-  const { verificationChecking, isVerified, isLoading, checkEmailVerification } = useEmailVerification(
+  const { 
+    verificationChecking, 
+    isVerified, 
+    isLoading, 
+    checkEmailVerification,
+    verifyWithCode 
+  } = useEmailVerification(
     emailSent, 
     userEmail, 
     isVerifiedState, 
@@ -87,7 +93,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         setUserId(userData.user.id);
         setUserEmail(values.email);
         
-        // Send custom verification email
+        // Send custom verification email with code
         try {
           // Get the actual current URL (not localhost)
           const currentOrigin = window.location.origin;
@@ -99,10 +105,10 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
             console.log("Custom verification email failed, falling back to default");
             // Fall back to Supabase's default verification
             await resendDefaultVerification(values.email);
-            toast.success("A verification email has been sent using our backup system.");
+            toast.success("A verification code has been sent using our backup system.");
           } else {
             console.log("Custom verification email sent successfully");
-            toast.success("Account created! Check your email for verification link.");
+            toast.success("Account created! Check your email for verification code.");
           }
           
           setEmailSent(true);
@@ -113,7 +119,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
           // Fall back to Supabase's default verification
           console.log("Falling back to default verification after error");
           await resendDefaultVerification(values.email);
-          toast.success("A verification email has been sent using our backup system.");
+          toast.success("A verification code has been sent using our backup system.");
           setEmailSent(true);
         }
         
@@ -201,6 +207,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     handleProfileDataChange,
     completeOnboarding,
     checkEmailVerification: handleVerificationCheck,
-    setIsVerified
+    setIsVerified,
+    verifyWithCode
   };
 };

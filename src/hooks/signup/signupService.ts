@@ -42,7 +42,8 @@ export const sendVerificationEmail = async (email: string, name: string, verific
       body: {
         email: email,
         name: name,
-        verificationUrl: baseUrl // Send just the origin, the function will append the path
+        verificationUrl: baseUrl, // Send just the origin, the function will append the path
+        useVerificationCode: true // Tell the function to use verification code
       }
     });
     

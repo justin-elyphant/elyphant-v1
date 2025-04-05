@@ -24,13 +24,15 @@ interface EmailVerificationViewProps {
   verificationChecking?: boolean;
   onCheckVerification?: () => Promise<{ verified: boolean }>;
   isVerified?: boolean;
+  onVerifyWithCode?: (code: string) => Promise<boolean>;
 }
 
 const EmailVerificationView = ({ 
   userEmail, 
   verificationChecking = false,
   onCheckVerification,
-  isVerified = false
+  isVerified = false,
+  onVerifyWithCode
 }: EmailVerificationViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   
@@ -55,7 +57,7 @@ const EmailVerificationView = ({
           // The parent component will handle state updates and redirects
         } else {
           console.log("Verification check failed - not verified yet");
-          toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
+          toast.error("Your email is not yet verified. Please check your inbox and enter the verification code.");
         }
       } else {
         // Default implementation if no callback provided
@@ -71,7 +73,7 @@ const EmailVerificationView = ({
           window.location.href = `${window.location.origin}/sign-up?verified=true&email=${encodeURIComponent(userEmail)}`;
         } else {
           console.log("Default check - not verified yet");
-          toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
+          toast.error("Your email is not yet verified. Please check your inbox and enter the verification code.");
         }
       }
     } catch (err) {
@@ -109,7 +111,7 @@ const EmailVerificationView = ({
         throw new Error(response.error.message || "Failed to send verification email");
       }
       
-      toast.success("Verification email sent! Please check your inbox", {
+      toast.success("Verification code sent! Please check your inbox", {
         description: "If you don't see it, please check your spam folder."
       });
     } catch (err) {
@@ -133,7 +135,7 @@ const EmailVerificationView = ({
         
         if (resendError) throw resendError;
         
-        toast.success("Verification email sent using our backup system!", {
+        toast.success("Verification code sent using our backup system!", {
           description: "If you don't see it, please check your spam folder."
         });
       } catch (fallbackErr) {
@@ -143,6 +145,15 @@ const EmailVerificationView = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const verifyWithCode = async (code: string) => {
+    if (!onVerifyWithCode) {
+      toast.error("Verification code validation is not available");
+      return false;
+    }
+    
+    return await onVerifyWithCode(code);
   };
 
   return (
@@ -160,6 +171,7 @@ const EmailVerificationView = ({
           verificationChecking={verificationChecking}
           onResendVerification={handleResendVerification}
           onCheckVerification={checkVerificationStatus}
+          onVerifyWithCode={verifyWithCode}
         />
 
         <Separator className="my-4" />

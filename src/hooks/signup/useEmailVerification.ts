@@ -75,6 +75,62 @@ export const useEmailVerification = (
     }
   }, [userEmail, setExternalIsVerified]);
 
+  // Verify with code function
+  const verifyWithCode = useCallback(async (code: string) => {
+    if (!userEmail || !code) return false;
+    
+    setIsLoading(true);
+    
+    try {
+      console.log("Verifying email with code for:", userEmail);
+      
+      // Call the edge function to verify the code
+      const { data, error } = await supabase.functions.invoke('verify-email-code', {
+        body: {
+          email: userEmail,
+          code: code
+        }
+      });
+      
+      if (error) {
+        console.error("Error verifying code:", error);
+        setIsLoading(false);
+        return false;
+      }
+      
+      if (data?.success) {
+        console.log("Email verification successful!");
+        
+        // Update user session after verification
+        await supabase.auth.refreshSession();
+        
+        // User is verified, update state
+        setIsVerified(true);
+        
+        // Also update external state if provided
+        if (setExternalIsVerified) {
+          setExternalIsVerified(true);
+        }
+        
+        setIsLoading(false);
+        
+        // Show success notification
+        toast.success("Email verified successfully!");
+        
+        return true;
+      } else {
+        console.log("Code verification failed");
+        toast.error("Invalid verification code");
+        setIsLoading(false);
+        return false;
+      }
+    } catch (err) {
+      console.error("Error verifying code:", err);
+      setIsLoading(false);
+      return false;
+    }
+  }, [userEmail, setExternalIsVerified]);
+
   // Effect to check verification status automatically
   useEffect(() => {
     let interval: number | undefined;
@@ -115,6 +171,7 @@ export const useEmailVerification = (
     verificationChecking,
     isVerified,
     isLoading,
-    checkEmailVerification: handleManualCheck
+    checkEmailVerification: handleManualCheck,
+    verifyWithCode
   };
 };

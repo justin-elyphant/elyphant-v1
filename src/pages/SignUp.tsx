@@ -43,7 +43,8 @@ const SignUp = () => {
     completeOnboarding,
     checkEmailVerification,
     setIsVerified,
-    setEmailSent
+    setEmailSent,
+    verifyWithCode
   } = useSignUpProcess(invitedBy, senderUserId);
 
   const handleOnboardingComplete = async () => {
@@ -97,6 +98,21 @@ const SignUp = () => {
     return result;
   };
 
+  // Handle verification with code
+  const handleVerifyWithCode = async (code: string) => {
+    if (!verifyWithCode) return false;
+    
+    console.log("Verifying with code:", code);
+    const success = await verifyWithCode(code);
+    
+    if (success) {
+      // Advance to the next step upon successful verification
+      setStep(2);
+    }
+    
+    return success;
+  };
+
   console.log("Current step:", step);
   console.log("Email sent:", emailSent);
   console.log("Is verified:", isVerified);
@@ -111,6 +127,7 @@ const SignUp = () => {
           verificationChecking={verificationChecking}
           onCheckVerification={handleCheckVerification}
           isVerified={isVerified}
+          onVerifyWithCode={handleVerifyWithCode}
         />
       ) : step === 1 ? (
         <SignUpContainer onSubmitSuccess={handleSignUpSubmit} />

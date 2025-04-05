@@ -1,6 +1,4 @@
 
-# A string used to distinguish different Supabase projects on the same host. Defaults to the
-# working directory name when running `supabase init`.
 project_id = "dmkxtkvlispxeqfzlczr"
 
 [api]
@@ -8,47 +6,35 @@ enabled = true
 port = 54321
 schemas = ["public", "storage", "graphql_public"]
 
-# Extra schemas to add to the PATH for Postgres to resolve
-# We need this to make graphql_public.get_schema() work correctly
-extra_search_paths = ["public", "extensions"]
-# Extra schemas to add to the PATH for Postgres to resolve
-
 [db]
 port = 54322
+shadow_port = 54320
+major_version = 15
 
 [studio]
 enabled = true
 port = 54323
 api_url = "http://localhost"
 
-# Email testing server
-# Emails sent with the local dev setup are not actually sent - rather, they
-# are monitored, and you can view the emails that would have been sent
 [inbucket]
 enabled = true
 port = 54324
 
 [storage]
 enabled = true
-
-[auth]
-enabled = true
-
-[realtime]
-enabled = true
-
-[functions.create-payment-session]
-verify_jwt = true
-path = "/supabase/functions/create-payment-session"
-
-[functions.send-gift-invitation]
-verify_jwt = true
-path = "/supabase/functions/send-gift-invitation"
-
-[functions.send-deletion-email]
-verify_jwt = true
-path = "/supabase/functions/send-deletion-email"
+port = 54325
 
 [functions.send-verification-email]
 verify_jwt = false
-path = "/supabase/functions/send-verification-email"
+
+[functions.verify-email-code]
+verify_jwt = false
+
+[functions.send-gift-invitation]
+verify_jwt = false
+
+[functions.send-deletion-email]
+verify_jwt = false
+
+[functions.create-payment-session]
+verify_jwt = false

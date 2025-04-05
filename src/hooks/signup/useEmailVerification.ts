@@ -35,8 +35,8 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
         // Show success notification
         toast.success("Email verified successfully!");
         
-        // Navigate to dashboard
-        navigate('/dashboard', { replace: true });
+        // Don't navigate here - we'll handle navigation in the parent component
+        // This ensures we follow the correct flow
         
         return { verified: true };
       }
@@ -48,7 +48,7 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
       setIsLoading(false);
       return { verified: false };
     }
-  }, [userEmail, navigate]);
+  }, [userEmail]);
 
   // Effect to check verification status automatically
   useEffect(() => {
@@ -76,7 +76,7 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
     setIsLoading(true);
     const result = await checkEmailVerification();
     setIsLoading(false);
-    return result; // Return the result with the verified property
+    return result;
   };
 
   return {

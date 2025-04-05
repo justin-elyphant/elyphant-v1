@@ -35,9 +35,8 @@ const EmailVerificationView = ({
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
-  // If verification is confirmed, redirect to dashboard
+  // If verification is confirmed, don't show this view
   if (isVerified) {
-    navigate('/dashboard', { replace: true });
     return null;
   }
   
@@ -60,7 +59,6 @@ const EmailVerificationView = ({
         
         if (data?.session?.user?.email_confirmed_at) {
           toast.success("Your email has been verified!");
-          navigate('/dashboard', { replace: true });
         } else {
           toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
         }
@@ -82,10 +80,11 @@ const EmailVerificationView = ({
     try {
       setIsLoading(true);
       
-      // Try our custom email function first
+      // Get the actual current URL (not localhost)
       const currentOrigin = window.location.origin;
       console.log("Resending with origin:", currentOrigin);
       
+      // Try our custom email function first
       const response = await supabase.functions.invoke('send-verification-email', {
         body: {
           email: userEmail,

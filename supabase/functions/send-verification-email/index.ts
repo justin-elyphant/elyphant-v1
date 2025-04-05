@@ -20,10 +20,21 @@ const getProductionReadyUrl = (url: string): string => {
   // Extract the base URL (domain part)
   try {
     const urlObj = new URL(url);
-    const baseDomain = urlObj.origin;
+    // Replace localhost with the actual domain if needed
+    if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+      const referer = Deno.env.get("SUPABASE_URL") || "";
+      if (referer) {
+        // Use Supabase project URL as fallback if localhost
+        const supabaseUrlObj = new URL(referer);
+        urlObj.hostname = supabaseUrlObj.hostname;
+        urlObj.protocol = 'https:';
+        urlObj.port = '';
+        return urlObj.origin;
+      }
+    }
     
     // Return just the origin/domain part - we'll add paths via Supabase
-    return baseDomain;
+    return urlObj.origin;
   } catch (error) {
     console.error("Invalid URL provided:", url);
     // Default to the URL as-is if parsing fails
@@ -38,7 +49,39 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const body = await req.json();
+    // Parse JSON body safely
+    let body;
+    const contentType = req.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        body = await req.json();
+      } catch (jsonError) {
+        console.error("JSON parse error:", jsonError);
+        return new Response(
+          JSON.stringify({ 
+            error: "Invalid JSON in request body", 
+            success: false,
+            details: jsonError.toString()
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+    } else {
+      return new Response(
+        JSON.stringify({ 
+          error: "Content-Type must be application/json", 
+          success: false 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
     const { email, name, verificationUrl } = body as EmailVerificationRequest;
 
     if (!email) {
@@ -63,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
           type: "signup",
           email: email,
           options: {
-            redirect_to: `${baseUrl}/dashboard`
+            redirect_to: `${baseUrl}/sign-up` // Use /sign-up to come back to the signup flow
           }
         })
       }

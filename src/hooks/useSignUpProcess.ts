@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
 import { useProfileImage } from "./signup/useProfileImage";
@@ -23,7 +23,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   
   const { profileImage, setProfileImage, handleImageUpload, uploadProfileImage } = useProfileImage();
   const { profileData, handleProfileDataChange } = useProfileData();
-  const { verificationChecking, isVerified, checkEmailVerification } = useEmailVerification(emailSent, userEmail);
+  const { verificationChecking, isVerified, isLoading, checkEmailVerification } = useEmailVerification(emailSent, userEmail);
 
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
@@ -36,6 +36,10 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         
         // Send custom verification email
         try {
+          // Get the actual current URL (not localhost)
+          const currentOrigin = window.location.origin;
+          console.log("Using origin for verification:", currentOrigin);
+          
           const emailResult = await sendVerificationEmail(values.email, values.name);
           
           if (!emailResult.success) {
@@ -107,7 +111,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     }
   };
 
-  // Make sure this function returns a Promise<{ verified: boolean }>
+  // Wrapper to ensure this function returns a Promise<{ verified: boolean }>
   const handleVerificationCheck = async (): Promise<{ verified: boolean }> => {
     return await checkEmailVerification();
   };

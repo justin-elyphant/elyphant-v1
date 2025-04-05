@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSignUpProcess } from "@/hooks/useSignUpProcess";
 
@@ -20,6 +20,7 @@ const SignUp = () => {
   
   const {
     step,
+    setStep,
     profileType,
     profileImage,
     profileData,
@@ -43,15 +44,29 @@ const SignUp = () => {
     }
   };
 
+  // Effect to handle verification success and advance to next step
+  useEffect(() => {
+    if (isVerified && emailSent) {
+      // If email is verified, move to profile type selection
+      setStep(2);
+    }
+  }, [isVerified, emailSent, setStep]);
+
+  // Handle checking verification status
+  const handleCheckVerification = async () => {
+    const result = await checkEmailVerification();
+    return result;
+  };
+
   return (
     <div className="container max-w-md mx-auto py-10 px-4">
       <InvitationBanner invitedBy={invitedBy} />
       
-      {emailSent ? (
+      {emailSent && !isVerified ? (
         <EmailVerificationView 
           userEmail={userEmail}
           verificationChecking={verificationChecking}
-          onCheckVerification={checkEmailVerification}
+          onCheckVerification={handleCheckVerification}
           isVerified={isVerified}
         />
       ) : step === 1 ? (

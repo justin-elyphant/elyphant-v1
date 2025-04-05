@@ -22,24 +22,80 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     // Parse JSON body safely
-    const body = await req.json();
-    console.log("Create user request received:", JSON.stringify({
-      ...body,
-      password: "[REDACTED]" // Don't log the actual password
-    }));
+    let body;
+    try {
+      body = await req.json();
+      console.log("Create user request received:", JSON.stringify({
+        ...body,
+        password: body.password ? "[REDACTED]" : undefined // Don't log the actual password
+      }));
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request body format",
+          success: false
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
     
     const { email, password, name, invitedBy = null, senderUserId = null } = body as CreateUserRequest;
     
+    // Validate required fields
     if (!email || !password) {
-      throw new Error("Email and password are required");
+      const missingFields = [];
+      if (!email) missingFields.push("email");
+      if (!password) missingFields.push("password");
+      
+      console.error(`Missing required fields: ${missingFields.join(", ")}`);
+      
+      return new Response(
+        JSON.stringify({ 
+          error: `Missing required fields: ${missingFields.join(", ")}`,
+          success: false
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     // Get needed environment variables
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing required environment variables");
+    // Check environment variables
+    if (!SUPABASE_URL) {
+      console.error("Missing SUPABASE_URL environment variable");
+      return new Response(
+        JSON.stringify({ 
+          error: "Server configuration error: Missing SUPABASE_URL",
+          success: false
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+      return new Response(
+        JSON.stringify({ 
+          error: "Server configuration error: Missing service role key",
+          success: false
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     // Create user with the admin API
@@ -66,9 +122,19 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
     
+    // Handle non-200 responses from Supabase
     if (!createUserResponse.ok) {
       const errorData = await createUserResponse.text();
-      console.error("Failed to create user:", errorData);
+      console.error(`Failed to create user: Status ${createUserResponse.status}`, errorData);
+      
+      // Try to parse the error as JSON if possible
+      let parsedError;
+      try {
+        parsedError = JSON.parse(errorData);
+      } catch (e) {
+        // If it's not valid JSON, use the raw text
+        parsedError = { message: errorData };
+      }
       
       // Return specific error message for common cases
       if (errorData.includes("already registered")) {
@@ -76,7 +142,9 @@ const handler = async (req: Request): Promise<Response> => {
           JSON.stringify({ 
             error: "Email already registered",
             code: "user_exists",
-            success: false
+            success: false,
+            status: createUserResponse.status,
+            details: parsedError
           }),
           {
             status: 400,
@@ -85,7 +153,20 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
       
-      throw new Error(`Failed to create user: ${errorData}`);
+      return new Response(
+        JSON.stringify({ 
+          error: `Failed to create user: ${errorData.substring(0, 500)}`,
+          success: false,
+          status: createUserResponse.status,
+          details: parsedError
+        }),
+        {
+          status: createUserResponse.status >= 400 && createUserResponse.status < 600 
+            ? createUserResponse.status 
+            : 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
     
     const userData = await createUserResponse.json();
@@ -108,7 +189,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        success: false
+        success: false,
+        stack: error.stack
       }),
       {
         status: 500,

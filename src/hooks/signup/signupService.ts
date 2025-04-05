@@ -8,7 +8,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
     console.log("Signing up user with admin API and bypassing email verification");
     
     // Create the user through our Edge Function instead of Supabase Auth directly
-    const { data, error } = await supabase.functions.invoke('create-user', {
+    const response = await supabase.functions.invoke('create-user', {
       body: {
         email: values.email,
         password: values.password,
@@ -18,17 +18,36 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
       }
     });
     
-    if (error) {
-      console.error("Signup error:", error);
-      throw error;
+    if (response.error) {
+      console.error("Signup error from edge function:", response.error);
+      
+      // Try to extract more detailed error information
+      const errorDetails = response.data?.details || {};
+      const errorMessage = response.error.message || 
+                          response.data?.error || 
+                          "Unknown error occurred";
+      
+      // Check for user already exists error
+      if (errorMessage.includes("already registered") || 
+          errorDetails.msg?.includes("already registered") ||
+          response.data?.code === "user_exists") {
+        throw new Error("Email already registered");
+      }
+      
+      // Check for other specific errors
+      if (response.data?.status === 422) {
+        throw new Error("Invalid email or password format");
+      }
+      
+      throw new Error(errorMessage);
     }
     
-    if (!data.success) {
-      console.error("Signup failed:", data.error);
-      throw new Error(data.error || "Failed to create user");
+    if (!response.data.success) {
+      console.error("Signup failed:", response.data.error);
+      throw new Error(response.data.error || "Failed to create user");
     }
     
-    console.log("User created:", data.user);
+    console.log("User created:", response.data.user);
     
     // After creating the user, sign them in automatically
     const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -42,7 +61,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
       // They can still sign in manually
     }
     
-    return data;
+    return response.data;
   } catch (error) {
     console.error("Error in signUpUser:", error);
     throw error;

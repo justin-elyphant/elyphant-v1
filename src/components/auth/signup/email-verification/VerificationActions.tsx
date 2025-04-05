@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { RefreshCw, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -27,6 +27,11 @@ const VerificationActions = ({
 }: VerificationActionsProps) => {
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  
+  // For debugging
+  useEffect(() => {
+    console.log("Verification code state:", verificationCode);
+  }, [verificationCode]);
 
   const handleVerifyCode = async () => {
     if (verificationCode.length !== 6) {
@@ -34,9 +39,13 @@ const VerificationActions = ({
       return;
     }
 
+    console.log("Attempting to verify code:", verificationCode);
     setIsVerifyingCode(true);
+    
     try {
       const success = await onVerifyWithCode(verificationCode);
+      console.log("Verification result:", success);
+      
       if (!success) {
         toast.error("Invalid verification code. Please try again.");
       }
@@ -61,16 +70,16 @@ const VerificationActions = ({
             value={verificationCode} 
             onChange={setVerificationCode}
             disabled={isVerifyingCode}
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
+            render={({ slots }) => (
+              <InputOTPGroup className="gap-2">
+                {slots.map((slot, index) => (
+                  <InputOTPSlot key={index} index={index} className="rounded-md">
+                    {slot}
+                  </InputOTPSlot>
+                ))}
+              </InputOTPGroup>
+            )}
+          />
         </div>
         
         <Button 

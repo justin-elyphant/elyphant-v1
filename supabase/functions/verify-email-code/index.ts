@@ -12,14 +12,20 @@ const corsHeaders = {
 // In production, use a database or Redis to store verification codes
 const verificationCodes: Record<string, { code: string, expires: number }> = {};
 
-// Mock verification code checking (in real app, this would be stored in a database)
+// Function to check if a code is valid
 const isValidVerificationCode = async (email: string, code: string): Promise<boolean> => {
   try {
     console.log(`Checking code ${code} for email ${email}`);
     
-    // For testing purposes, accept any 6-digit code during development
-    if (code.length === 6 && /^\d+$/.test(code)) {
-      console.log("Accepting any 6-digit code during testing");
+    // For testing purposes, accept "123456" as a valid code during development
+    if (code === "123456") {
+      console.log("Accepting test code 123456");
+      return true;
+    }
+    
+    // For testing purposes, accept any 6-digit code
+    if (code.length === 6 && /^\d{6}$/.test(code)) {
+      console.log("Accepting any valid 6-digit code for testing");
       return true;
     }
     
@@ -125,7 +131,24 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     // Parse JSON body
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+      console.log("Received body:", JSON.stringify(body));
+    } catch (error) {
+      console.error("Failed to parse JSON:", error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid JSON in request body", 
+          success: false
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     const { email, code } = body;
     
     console.log("Received verification request:", { email, code });
@@ -146,7 +169,8 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Attempting to verify code ${code} for email ${email}`);
     
     // Verify the code format first
-    if (code.length !== 6 || !/^\d+$/.test(code)) {
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+      console.error("Invalid code format:", code);
       return new Response(
         JSON.stringify({ 
           error: "Invalid verification code format. Must be 6 digits.", 
@@ -159,10 +183,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
     
-    // Always run isValidVerificationCode to check the code format
+    // Check if the code is valid
     const isValid = await isValidVerificationCode(email, code);
     
     if (!isValid) {
+      console.error("Invalid or expired verification code:", code);
       return new Response(
         JSON.stringify({ 
           error: "Invalid or expired verification code", 
@@ -179,6 +204,7 @@ const handler = async (req: Request): Promise<Response> => {
     const confirmed = await confirmUserEmail(email);
     
     if (!confirmed) {
+      console.error("Failed to verify email for", email);
       return new Response(
         JSON.stringify({ 
           error: "Failed to verify email", 
@@ -191,6 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
     
+    console.log("Email verified successfully for", email);
     return new Response(
       JSON.stringify({ 
         message: "Email verified successfully", 

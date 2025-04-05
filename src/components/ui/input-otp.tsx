@@ -37,24 +37,13 @@ const InputOTPSlot = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex h-10 w-10 items-center justify-center border border-input text-sm transition-all first:rounded-l-md last:rounded-r-md",
+        "relative flex h-10 w-10 items-center justify-center border border-input text-sm transition-all first:rounded-l-md last:rounded-r-md focus-within:z-10 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary",
         className
       )}
       {...props}
     >
-      <div
-        className={cn(
-          "absolute inset-0 flex items-center justify-center",
-          "opacity-100" // Always visible to enable interaction
-        )}
-      >
-        <input
-          inputMode="numeric"
-          pattern="[0-9]*"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          autoComplete="one-time-code"
-          tabIndex={index + 1}
-        />
+      <div className="absolute inset-0 flex items-center justify-center">
+        {props.children}
       </div>
     </div>
   )

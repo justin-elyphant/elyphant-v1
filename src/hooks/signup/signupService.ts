@@ -18,8 +18,8 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
           sender_user_id: senderUserId,
         },
         emailRedirectTo: undefined, // Explicitly disable email redirect
-        // Do not allow Supabase to send any emails
-        emailConfirm: false
+        // We can't use emailConfirm as it doesn't exist in the type
+        // Instead we'll handle email verification manually through our own process
       }
     });
     

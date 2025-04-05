@@ -5,13 +5,9 @@ import { SignUpValues } from "@/components/auth/signup/SignUpForm";
 
 export const signUpUser = async (values: SignUpValues, invitedBy: string | null, senderUserId: string | null) => {
   try {
-    // Get the current site URL - using window.location.origin to get the ACTUAL current URL
-    const currentOrigin = window.location.origin;
+    console.log("Signing up user with completely disabled email verification");
     
-    console.log("Sign up without redirect URL to prevent auto email");
-    
-    // Create account with Supabase Auth - IMPORTANT: We're explicitly NOT setting emailRedirectTo 
-    // and NOT using autoconfirm to prevent Supabase from sending any emails
+    // Create account with Supabase Auth - IMPORTANT: We're explicitly disabling all email verification
     const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -21,7 +17,9 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
           invited_by: invitedBy,
           sender_user_id: senderUserId,
         },
-        emailRedirectTo: undefined // Explicitly set to undefined to prevent automatic email sending
+        emailRedirectTo: undefined, // Explicitly disable email redirect
+        // Do not allow Supabase to send any emails
+        emailConfirm: false
       }
     });
     
@@ -84,17 +82,49 @@ export const resendDefaultVerification = async (email: string) => {
 
 export const updateUserProfile = async (userId: string, profileData: any) => {
   try {
-    const { error } = await supabase
+    // First check if profile exists to avoid duplicate key errors
+    const { data: existingProfile, error: fetchError } = await supabase
       .from('profiles')
-      .update(profileData)
-      .eq('id', userId);
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
     
-    if (error) {
-      console.error("Error updating profile:", error);
-      return { success: false, error };
+    if (fetchError) {
+      console.error("Error checking profile:", fetchError);
+      return { success: false, error: fetchError };
     }
     
-    return { success: true };
+    let result;
+    
+    if (existingProfile) {
+      // Update existing profile
+      const { error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', userId);
+      
+      if (error) {
+        console.error("Error updating profile:", error);
+        return { success: false, error };
+      }
+      result = { success: true, created: false };
+    } else {
+      // Insert new profile
+      const { error } = await supabase
+        .from('profiles')
+        .insert({ 
+          id: userId,
+          ...profileData 
+        });
+      
+      if (error) {
+        console.error("Error inserting profile:", error);
+        return { success: false, error };
+      }
+      result = { success: true, created: true };
+    }
+    
+    return result;
   } catch (error) {
     console.error("Error completing onboarding:", error);
     return { success: false, error };

@@ -6,14 +6,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// In a real application, use a database or Redis to store verification codes
-// This is shared with send-verification-email function to ensure codes persist
-const verificationCodes: Record<string, { code: string, expires: number }> = {};
-
 // Function to check if a code is valid
+// For production use, this should use a database or Redis
+// For this demo, we'll use a shared global variable
 const isValidVerificationCode = (email: string, code: string): boolean => {
   try {
     console.log(`Checking code ${code} for email ${email}`);
+    
+    // Access the global verification codes
+    const GLOBAL: any = globalThis;
+    if (!GLOBAL.verificationCodes) {
+      GLOBAL.verificationCodes = {};
+    }
     
     // For testing purposes, accept test codes
     if (code === "123456") {
@@ -21,13 +25,7 @@ const isValidVerificationCode = (email: string, code: string): boolean => {
       return true;
     }
     
-    // For testing purposes during development, accept any 6-digit code
-    if (Deno.env.get("ENVIRONMENT") !== "production" && code.length === 6 && /^\d{6}$/.test(code)) {
-      console.log("Accepting any valid 6-digit code for testing");
-      return true;
-    }
-    
-    const storedCode = verificationCodes[email];
+    const storedCode = GLOBAL.verificationCodes[email];
     
     if (!storedCode) {
       console.log("No verification code found for email:", email);
@@ -37,7 +35,7 @@ const isValidVerificationCode = (email: string, code: string): boolean => {
     if (Date.now() > storedCode.expires) {
       console.log("Verification code expired for email:", email);
       // Clean up expired code
-      delete verificationCodes[email];
+      delete GLOBAL.verificationCodes[email];
       return false;
     }
     
@@ -46,7 +44,7 @@ const isValidVerificationCode = (email: string, code: string): boolean => {
     
     // If valid, clean up the used code
     if (isValid) {
-      delete verificationCodes[email];
+      delete GLOBAL.verificationCodes[email];
     }
     
     return isValid;

@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { 
   InputOTP, 
   InputOTPGroup, 
-  InputOTPSlot,
-  InputOTPSeparator
+  InputOTPSlot
 } from "@/components/ui/input-otp";
 import { toast } from "sonner";
 
@@ -76,7 +75,10 @@ const VerificationActions = ({
               <InputOTPGroup className="gap-2">
                 {slots.map((slot, index) => (
                   <React.Fragment key={index}>
-                    <InputOTPSlot className="rounded-md border-gray-300 focus:border-purple-400 focus:ring focus:ring-purple-200 focus:ring-opacity-50" index={index}>
+                    <InputOTPSlot
+                      className="rounded-md border-gray-300 focus:border-purple-400 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
+                      index={index}
+                    >
                       {slot.char}
                     </InputOTPSlot>
                   </React.Fragment>

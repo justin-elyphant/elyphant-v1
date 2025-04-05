@@ -22,6 +22,7 @@ function generateVerificationCode(): string {
 }
 
 // This is shared with verify-email-code function to store codes
+// Use a more persistent storage mechanism for production
 const verificationCodes: Record<string, { code: string, expires: number }> = {};
 
 const handler = async (req: Request): Promise<Response> => {
@@ -65,7 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
     
-    const { email, name, useVerificationCode = true } = body as EmailVerificationRequest;
+    const { email, name } = body as EmailVerificationRequest;
 
     if (!email) {
       throw new Error("Email is required");
@@ -75,15 +76,28 @@ const handler = async (req: Request): Promise<Response> => {
     const verificationCode = generateVerificationCode();
     
     // Store the code with 15-minute expiration
-    verificationCodes[email] = {
+    const GLOBAL: any = globalThis;
+    if (!GLOBAL.verificationCodes) {
+      GLOBAL.verificationCodes = {};
+    }
+    
+    GLOBAL.verificationCodes[email] = {
       code: verificationCode,
       expires: Date.now() + (15 * 60 * 1000)
     };
 
     console.log(`Generated verification code for ${email}: ${verificationCode}`);
     
-    // For backup/debugging, allow a test code 123456
-    console.log("For testing: verification code 123456 will also work during development");
+    // For backup/debugging in development environments, allow test code 123456
+    if (Deno.env.get("ENVIRONMENT") !== "production") {
+      console.log("For testing: verification code 123456 will also work during development");
+      
+      // Also store to verificationCodes
+      verificationCodes[email] = {
+        code: verificationCode,
+        expires: Date.now() + (15 * 60 * 1000)
+      };
+    }
     
     const emailSubject = "Your Elyphant verification code";
     const emailContent = `

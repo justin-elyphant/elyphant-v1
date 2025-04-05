@@ -19,9 +19,9 @@ const VerificationAlert = ({ useCode = false }: VerificationAlertProps) => {
       <AlertDescription className="text-purple-700">
         {useCode ? (
           <>
-            Please check your email for a 6-digit verification code.
+            We've sent a 6-digit verification code to your email.
             Enter the code below to complete your signup.
-            If you don't see the email, check your spam folder.
+            If you don't see the email in your inbox, please check your spam folder.
           </>
         ) : (
           <>

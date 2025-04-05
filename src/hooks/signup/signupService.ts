@@ -7,8 +7,8 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   try {
     console.log("Signing up user with completely disabled email verification");
     
-    // Create account with Supabase Auth - We're disabling the automatic email confirmation
-    // by setting emailRedirectTo to undefined to prevent Supabase from sending its own confirmation email
+    // Create account with Supabase Auth - We're using emailConfirmation: false
+    // to try and prevent Supabase from sending its own confirmation email
     const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -18,7 +18,8 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
           invited_by: invitedBy,
           sender_user_id: senderUserId,
         },
-        emailRedirectTo: undefined // Explicitly disable email redirect
+        emailRedirectTo: undefined, // Explicitly disable email redirect
+        emailConfirmation: false // Try to disable email confirmation
       }
     });
     

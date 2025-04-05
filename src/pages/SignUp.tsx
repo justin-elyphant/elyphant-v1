@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -54,7 +53,8 @@ const SignUp: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [verificationError, setVerificationError] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
-  
+  const [emailSent, setEmailSent] = useState<boolean>(false);
+
   useEffect(() => {
     const verified = searchParams.get('verified') === 'true';
     const email = searchParams.get('email');
@@ -97,7 +97,8 @@ const SignUp: React.FC = () => {
           data: {
             name: values.name,
           },
-          emailRedirectTo: undefined // Explicitly disable email redirect
+          emailRedirectTo: undefined,
+          emailConfirmation: false
         }
       });
       
@@ -115,6 +116,8 @@ const SignUp: React.FC = () => {
       setUserName(values.name);
       
       const currentOrigin = window.location.origin;
+      console.log("Using origin for verification:", currentOrigin);
+      
       const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
       
       if (!emailResult.success) {
@@ -123,16 +126,17 @@ const SignUp: React.FC = () => {
           description: "Please try again or contact support.",
         });
         return;
+      } else {
+        console.log("Custom verification email sent successfully");
+        toast.success("Account created! Check your email for verification code.");
       }
       
-      toast.success("Verification code sent", {
-        description: "Please check your email for the verification code.",
-      });
+      setEmailSent(true);
       setStep("verification");
-    } catch (error: any) {
-      console.error("Signup failed:", error);
+    } catch (err: any) {
+      console.error("Signup failed:", err);
       toast.error("Signup failed", {
-        description: error.message || "An unexpected error occurred",
+        description: err.message || "An unexpected error occurred",
       });
     } finally {
       setIsSubmitting(false);

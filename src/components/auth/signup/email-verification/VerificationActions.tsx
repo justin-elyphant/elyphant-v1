@@ -74,7 +74,7 @@ const VerificationActions = ({
               <InputOTPGroup className="gap-2">
                 {slots.map((slot, index) => (
                   <InputOTPSlot key={index} index={index} className="rounded-md">
-                    {slot}
+                    {slot.char}
                   </InputOTPSlot>
                 ))}
               </InputOTPGroup>

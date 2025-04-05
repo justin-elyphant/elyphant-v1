@@ -25,6 +25,8 @@ export const useEmailVerification = (
     if (!userEmail) return { verified: false };
     
     setIsLoading(true);
+    setVerificationChecking(true);
+    
     try {
       console.log("Checking email verification status for:", userEmail);
       
@@ -33,6 +35,7 @@ export const useEmailVerification = (
       
       if (error) {
         console.error("Error checking verification status:", error);
+        setVerificationChecking(false);
         setIsLoading(false);
         return { verified: false };
       }
@@ -61,10 +64,12 @@ export const useEmailVerification = (
         console.log("Email is not confirmed yet");
       }
       
+      setVerificationChecking(false);
       setIsLoading(false);
       return { verified: false };
     } catch (err) {
       console.error("Error checking verification status:", err);
+      setVerificationChecking(false);
       setIsLoading(false);
       return { verified: false };
     }
@@ -91,6 +96,7 @@ export const useEmailVerification = (
       if (interval) {
         console.log("Clearing verification check interval");
         clearInterval(interval);
+        setVerificationChecking(false);
       }
     };
   }, [emailSent, userEmail, isVerified, checkEmailVerification]);
@@ -98,7 +104,9 @@ export const useEmailVerification = (
   // Handle manual verification check with loading state
   const handleManualCheck = async (): Promise<{ verified: boolean }> => {
     setIsLoading(true);
+    setVerificationChecking(true);
     const result = await checkEmailVerification();
+    setVerificationChecking(false);
     setIsLoading(false);
     return result;
   };

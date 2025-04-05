@@ -35,11 +35,14 @@ export const sendVerificationEmail = async (email: string, name: string, verific
   try {
     console.log("Sending verification email with base URL:", verificationUrl);
     
+    // Make sure verification URL doesn't end with a slash
+    const baseUrl = verificationUrl.endsWith('/') ? verificationUrl.slice(0, -1) : verificationUrl;
+    
     const emailResponse = await supabase.functions.invoke('send-verification-email', {
       body: {
         email: email,
         name: name,
-        verificationUrl: verificationUrl // Send just the origin, the function will append the path
+        verificationUrl: baseUrl // Send just the origin, the function will append the path
       }
     });
     

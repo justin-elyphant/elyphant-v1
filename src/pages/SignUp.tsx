@@ -55,7 +55,7 @@ const SignUp = () => {
 
   // Effect to handle verified parameter in URL and advance to profile type selection
   useEffect(() => {
-    console.log("URL params check - verified:", verified, "email:", emailParam);
+    console.log("URL params check - verified:", verified, "email:", emailParam, "step:", step);
     
     // Only process verification once to prevent loops
     if (verified && !verificationProcessed) {
@@ -91,7 +91,9 @@ const SignUp = () => {
 
   // Handle checking verification status
   const handleCheckVerification = async () => {
+    console.log("Manual verification check initiated");
     const result = await checkEmailVerification();
+    console.log("Verification check result:", result);
     return result;
   };
 

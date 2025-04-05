@@ -44,7 +44,7 @@ const VerificationActions = ({
           className="mt-2 sm:mt-0"
           disabled={isLoading || verificationChecking}
         >
-          {isLoading ? (
+          {verificationChecking ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Checking...

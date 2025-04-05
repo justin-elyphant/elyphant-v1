@@ -63,8 +63,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Verification URL provided: ${verificationUrl}`);
     
-    // Do not append /sign-up to the URL - it will be included in the redirect_to
-    const redirectTo = `${verificationUrl}/sign-up?verified=true&email=${encodeURIComponent(email)}`;
+    // Format the redirect URL correctly
+    const baseUrl = verificationUrl.endsWith('/') ? verificationUrl.slice(0, -1) : verificationUrl;
+    const redirectTo = `${baseUrl}/sign-up?verified=true&email=${encodeURIComponent(email)}`;
     console.log(`Final redirect URL: ${redirectTo}`);
 
     const { data: signUpData, error: signUpError } = await fetch(

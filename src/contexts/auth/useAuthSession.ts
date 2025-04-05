@@ -36,34 +36,52 @@ export const useAuthSession = (): UseAuthSessionReturn => {
           const verified = params.get('verified') === 'true';
           
           // Check if we're in the signup flow with verified=true
-          if (verified && email && location.pathname === '/sign-up') {
+          if (verified && email) {
             console.log("Detected verified=true in URL with email:", email);
             
-            // No need to navigate - we're already on /sign-up
-            // The SignUp component will handle the verified parameter
-            setIsProcessingToken(false);
-            return;
-          }
-          
-          // Exchange the access token for a session
-          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-          
-          if (sessionError) {
-            console.error("Error getting session:", sessionError);
-            toast.error("Verification failed: Invalid or expired token");
-            setIsProcessingToken(false);
-          } else if (sessionData?.session) {
-            console.log("Session obtained from token");
-            setSession(sessionData.session);
-            setUser(sessionData.session.user);
+            // Exchange the access token for a session
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
             
-            // Set a flag to show verification success message
-            localStorage.setItem('email_just_verified', 'true');
+            if (sessionError) {
+              console.error("Error getting session:", sessionError);
+              toast.error("Verification failed: Invalid or expired token");
+              setIsProcessingToken(false);
+            } else if (sessionData?.session) {
+              console.log("Session obtained from token");
+              setSession(sessionData.session);
+              setUser(sessionData.session.user);
+              
+              // Set a flag to show verification success message
+              localStorage.setItem('email_just_verified', 'true');
+              
+              // If we're on the sign-up page, let the sign-up page component handle the redirect
+              if (location.pathname === '/sign-up') {
+                console.log("Already on sign-up page, will let the component handle verification");
+                setTimeout(() => {
+                  setIsProcessingToken(false);
+                }, 100);
+              } else {
+                // Otherwise navigate to sign-up with the verified parameter
+                navigate('/sign-up?verified=true&email=' + encodeURIComponent(email), { replace: true });
+                setTimeout(() => {
+                  setIsProcessingToken(false);
+                }, 500);
+              }
+            }
+          } else {
+            // Regular token without verified=true
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
             
-            // Navigate to dashboard and remove the token from URL
-            navigate('/dashboard', { replace: true });
-            toast.success("Email verification successful!");
-            setIsProcessingToken(false);
+            if (sessionError) {
+              console.error("Error getting session:", sessionError);
+              setIsProcessingToken(false);
+            } else if (sessionData?.session) {
+              setSession(sessionData.session);
+              setUser(sessionData.session.user);
+              toast.success("Authentication successful!");
+              navigate('/dashboard', { replace: true });
+              setIsProcessingToken(false);
+            }
           }
         } catch (err) {
           console.error("Error processing access token:", err);
@@ -86,7 +104,10 @@ export const useAuthSession = (): UseAuthSessionReturn => {
         setIsLoading(false);
 
         if (event === 'SIGNED_IN') {
-          toast.success('Signed in successfully!');
+          // Don't show success toast if we're processing a token
+          if (!isProcessingToken) {
+            toast.success('Signed in successfully!');
+          }
           
           // If this is right after email verification
           const emailJustVerified = localStorage.getItem('email_just_verified');
@@ -102,23 +123,20 @@ export const useAuthSession = (): UseAuthSessionReturn => {
           if (verified && location.pathname === '/sign-up') {
             console.log("Already on sign-up page with verified=true, not navigating");
             // Don't navigate - let the signup component handle the flow
-          } else {
+          } else if (!isProcessingToken && location.pathname !== '/sign-up') {
             // Otherwise navigate to dashboard
             navigate('/dashboard');
           }
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
         } else if (event === 'USER_UPDATED') {
+          console.log("User updated event received");
+          
           const emailJustVerified = localStorage.getItem('email_just_verified');
           
           if (session?.user.email_confirmed_at && emailJustVerified === 'true') {
             toast.success('Email verified successfully!');
             localStorage.removeItem('email_just_verified');
-            
-            // Check current location - if we're already on sign-up, don't navigate away
-            if (location.pathname !== '/sign-up') {
-              navigate('/dashboard');
-            }
           }
         }
       }
@@ -132,7 +150,7 @@ export const useAuthSession = (): UseAuthSessionReturn => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname, location.search]);
+  }, [navigate, location, isProcessingToken]);
 
   return { user, session, isLoading, isProcessingToken };
 };

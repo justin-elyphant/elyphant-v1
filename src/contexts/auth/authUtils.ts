@@ -1,7 +1,7 @@
 
+import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User } from "@supabase/supabase-js";
 import { Profile } from "@/types/supabase";
 
 export const getUserProfile = async (user: User | null) => {

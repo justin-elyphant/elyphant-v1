@@ -107,6 +107,11 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     }
   };
 
+  // Make sure this function returns a Promise<{ verified: boolean }>
+  const handleVerificationCheck = async (): Promise<{ verified: boolean }> => {
+    return await checkEmailVerification();
+  };
+
   return {
     step,
     setStep,
@@ -124,6 +129,6 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     handleImageUpload,
     handleProfileDataChange,
     completeOnboarding,
-    checkEmailVerification
+    checkEmailVerification: handleVerificationCheck
   };
 };

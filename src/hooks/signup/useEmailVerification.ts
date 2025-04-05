@@ -74,8 +74,9 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
   // Handle manual verification check with loading state
   const handleManualCheck = async () => {
     setIsLoading(true);
-    await checkEmailVerification();
+    const result = await checkEmailVerification();
     setIsLoading(false);
+    return result; // Return the result with the verified property
   };
 
   return {

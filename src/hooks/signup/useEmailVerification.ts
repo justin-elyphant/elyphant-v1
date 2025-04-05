@@ -4,11 +4,21 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-export const useEmailVerification = (emailSent: boolean, userEmail: string | null) => {
+export const useEmailVerification = (
+  emailSent: boolean, 
+  userEmail: string | null,
+  externalIsVerified: boolean = false,
+  setExternalIsVerified?: (value: boolean) => void
+) => {
   const [verificationChecking, setVerificationChecking] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState(externalIsVerified);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Update internal state when external state changes
+  useEffect(() => {
+    setIsVerified(externalIsVerified);
+  }, [externalIsVerified]);
 
   // Memoized check verification function to avoid recreating it on each render
   const checkEmailVerification = useCallback(async () => {
@@ -30,13 +40,16 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
         // User is verified, update state
         setVerificationChecking(false);
         setIsVerified(true);
+        
+        // Also update external state if provided
+        if (setExternalIsVerified) {
+          setExternalIsVerified(true);
+        }
+        
         setIsLoading(false);
         
         // Show success notification
         toast.success("Email verified successfully!");
-        
-        // Don't navigate here - we'll handle navigation in the parent component
-        // This ensures we follow the correct flow
         
         return { verified: true };
       }
@@ -48,7 +61,7 @@ export const useEmailVerification = (emailSent: boolean, userEmail: string | nul
       setIsLoading(false);
       return { verified: false };
     }
-  }, [userEmail]);
+  }, [userEmail, setExternalIsVerified]);
 
   // Effect to check verification status automatically
   useEffect(() => {

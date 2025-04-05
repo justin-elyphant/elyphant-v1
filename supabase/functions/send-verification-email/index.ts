@@ -15,33 +15,6 @@ interface EmailVerificationRequest {
   verificationUrl: string;
 }
 
-// Function to detect and adapt localhost URLs for production use
-const getProductionReadyUrl = (url: string): string => {
-  // Extract the base URL (domain part)
-  try {
-    const urlObj = new URL(url);
-    // Replace localhost with the actual domain if needed
-    if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
-      const referer = Deno.env.get("SUPABASE_URL") || "";
-      if (referer) {
-        // Use Supabase project URL as fallback if localhost
-        const supabaseUrlObj = new URL(referer);
-        urlObj.hostname = supabaseUrlObj.hostname;
-        urlObj.protocol = 'https:';
-        urlObj.port = '';
-        return urlObj.origin;
-      }
-    }
-    
-    // Return just the origin/domain part - we'll add paths via Supabase
-    return urlObj.origin;
-  } catch (error) {
-    console.error("Invalid URL provided:", url);
-    // Default to the URL as-is if parsing fails
-    return url;
-  }
-};
-
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -88,9 +61,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email is required");
     }
 
-    // Get the production-ready base URL
-    const baseUrl = getProductionReadyUrl(verificationUrl);
-    console.log(`Base URL for redirection: ${baseUrl}`);
+    // Always use the project URL from environment when available
+    // This ensures we're never using localhost in production
+    const baseUrl = Deno.env.get("SUPABASE_URL") || verificationUrl;
+    console.log(`Base URL for verification: ${baseUrl}`);
 
     // Get signup URL with proper redirect using the admin API
     const { data: signUpData, error: signUpError } = await fetch(
@@ -106,7 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
           type: "signup",
           email: email,
           options: {
-            redirect_to: `${baseUrl}/sign-up` // Use /sign-up to come back to the signup flow
+            redirect_to: `${baseUrl}/sign-up?verified=true` // Add verified=true parameter to trigger proper flow
           }
         })
       }

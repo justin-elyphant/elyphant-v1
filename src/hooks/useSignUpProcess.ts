@@ -23,7 +23,19 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
   
   const { profileImage, setProfileImage, handleImageUpload, uploadProfileImage } = useProfileImage();
   const { profileData, handleProfileDataChange } = useProfileData();
-  const { verificationChecking, isVerified, isLoading, checkEmailVerification } = useEmailVerification(emailSent, userEmail);
+  
+  // Create setIsVerified callback function to pass to useEmailVerification
+  const [isVerifiedState, setIsVerifiedState] = useState(false);
+  const setIsVerified = useCallback((value: boolean) => {
+    setIsVerifiedState(value);
+  }, []);
+  
+  const { verificationChecking, isVerified, isLoading, checkEmailVerification } = useEmailVerification(
+    emailSent, 
+    userEmail, 
+    isVerifiedState, 
+    setIsVerified
+  );
 
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
@@ -133,6 +145,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     handleImageUpload,
     handleProfileDataChange,
     completeOnboarding,
-    checkEmailVerification: handleVerificationCheck
+    checkEmailVerification: handleVerificationCheck,
+    setIsVerified
   };
 };

@@ -7,7 +7,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   // Get the current site URL - using window.location.origin to get the ACTUAL current URL
   // This ensures we're not using localhost in the email if we're on the preview site
   const currentOrigin = window.location.origin;
-  const redirectTo = `${currentOrigin}/sign-up`; // Redirect back to sign-up to continue the flow
+  const redirectTo = `${currentOrigin}/sign-up?verified=true`; // Add verified parameter
   
   // Create account with Supabase Auth
   const { data, error } = await supabase.auth.signUp({
@@ -61,7 +61,7 @@ export const sendVerificationEmail = async (email: string, name: string) => {
 
 export const resendDefaultVerification = async (email: string) => {
   const currentOrigin = window.location.origin;
-  const redirectTo = `${currentOrigin}/sign-up`; // Redirect back to sign-up to continue the flow
+  const redirectTo = `${currentOrigin}/sign-up?verified=true`; // Add verified parameter
   
   try {
     const { error } = await supabase.auth.resend({

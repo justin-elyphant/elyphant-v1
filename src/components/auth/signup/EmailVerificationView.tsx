@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -33,7 +33,6 @@ const EmailVerificationView = ({
   isVerified = false
 }: EmailVerificationViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   
   // If verification is confirmed, don't show this view
   if (isVerified) {
@@ -82,7 +81,7 @@ const EmailVerificationView = ({
       
       // Get the actual current URL (not localhost)
       const currentOrigin = window.location.origin;
-      console.log("Resending with origin:", currentOrigin);
+      const redirectTo = `${currentOrigin}/sign-up?verified=true`; // Add verified parameter
       
       // Try our custom email function first
       const response = await supabase.functions.invoke('send-verification-email', {
@@ -92,8 +91,6 @@ const EmailVerificationView = ({
           verificationUrl: currentOrigin
         }
       });
-      
-      console.log("Resend email function response:", response);
       
       if (response.error) {
         throw new Error(response.error.message || "Failed to send verification email");
@@ -111,7 +108,7 @@ const EmailVerificationView = ({
           type: 'signup',
           email: userEmail,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}/sign-up?verified=true`,
           }
         });
         

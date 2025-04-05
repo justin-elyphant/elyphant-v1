@@ -17,6 +17,7 @@ const SignUp = () => {
   // Get invitation parameters from URL if present
   const invitedBy = searchParams.get('invitedBy');
   const senderUserId = searchParams.get('senderUserId');
+  const verified = searchParams.get('verified') === 'true';
   
   const {
     step,
@@ -34,7 +35,8 @@ const SignUp = () => {
     handleImageUpload,
     handleProfileDataChange,
     completeOnboarding,
-    checkEmailVerification
+    checkEmailVerification,
+    setIsVerified
   } = useSignUpProcess(invitedBy, senderUserId);
 
   const handleOnboardingComplete = async () => {
@@ -43,6 +45,15 @@ const SignUp = () => {
       navigate("/dashboard");
     }
   };
+
+  // Effect to handle verified parameter in URL and advance to profile type selection
+  useEffect(() => {
+    if (verified && emailSent) {
+      // If verified parameter is in URL, set isVerified to true and advance step
+      setIsVerified(true);
+      setStep(2);
+    }
+  }, [verified, emailSent, setIsVerified, setStep]);
 
   // Effect to handle verification success and advance to next step
   useEffect(() => {

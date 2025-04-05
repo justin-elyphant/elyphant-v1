@@ -26,11 +26,13 @@ const SignUp = () => {
     formValues,
     emailSent,
     userEmail,
+    verificationChecking,
     handleSignUpSubmit,
     handleProfileTypeSelection,
     handleImageUpload,
     handleProfileDataChange,
-    completeOnboarding
+    completeOnboarding,
+    checkEmailVerification
   } = useSignUpProcess(invitedBy, senderUserId);
 
   const handleOnboardingComplete = async () => {
@@ -45,7 +47,11 @@ const SignUp = () => {
       <InvitationBanner invitedBy={invitedBy} />
       
       {emailSent ? (
-        <EmailVerificationView userEmail={userEmail} />
+        <EmailVerificationView 
+          userEmail={userEmail}
+          verificationChecking={verificationChecking}
+          onCheckVerification={checkEmailVerification}
+        />
       ) : step === 1 ? (
         <SignUpContainer onSubmitSuccess={handleSignUpSubmit} />
       ) : step === 2 ? (

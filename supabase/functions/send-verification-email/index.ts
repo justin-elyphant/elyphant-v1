@@ -15,6 +15,23 @@ interface EmailVerificationRequest {
   verificationUrl: string;
 }
 
+// Function to detect and adapt localhost URLs for production use
+const getProductionReadyUrl = (url: string): string => {
+  // Check if URL is localhost or 127.0.0.1
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    // Replace with the Lovable preview URL if that's what we have access to
+    // This is a fallback and should be improved with a proper domain
+    const projectId = Deno.env.get("PROJECT_ID") || "";
+    if (projectId) {
+      return url.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, 
+                         `https://${projectId}.lovableproject.com`);
+    }
+  }
+  
+  // Make sure the URL is properly formatted with https
+  return url.startsWith('http') ? url : `https://${url}`;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -28,19 +45,15 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email and verification URL are required");
     }
 
-    // Log the verification URL for debugging
+    // Get a production-ready URL
+    const formattedUrl = getProductionReadyUrl(verificationUrl);
+    
     console.log(`Sending verification email to ${email}`);
-    console.log(`Verification URL: ${verificationUrl}`);
-    
-    // Make sure the URL is properly formatted
-    const formattedUrl = verificationUrl.startsWith('http') 
-      ? verificationUrl 
-      : `https://${verificationUrl}`;
-    
+    console.log(`Original URL: ${verificationUrl}`);
     console.log(`Formatted URL: ${formattedUrl}`);
 
     const emailResponse = await resend.emails.send({
-      from: "Elyphant <onboarding@resend.dev>", // Use generic resend domain for testing
+      from: "Elyphant <onboarding@resend.dev>", 
       to: [email],
       subject: "Verify your Elyphant account",
       html: `

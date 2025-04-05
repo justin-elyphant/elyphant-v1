@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -16,10 +16,55 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     bio: "",
     interests: [] as string[]
   });
+  const [verificationChecking, setVerificationChecking] = useState(false);
+
+  // Add effect to check verification status automatically every few seconds
+  useEffect(() => {
+    let interval: number | undefined;
+    
+    if (emailSent && userEmail) {
+      setVerificationChecking(true);
+      
+      // Check immediately
+      checkEmailVerification();
+      
+      // Then check every 5 seconds
+      interval = window.setInterval(checkEmailVerification, 5000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [emailSent, userEmail]);
+  
+  // Function to check email verification status
+  const checkEmailVerification = async () => {
+    if (!userEmail) return;
+    
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error checking verification status:", error);
+        return;
+      }
+      
+      if (data?.session?.user?.email_confirmed_at) {
+        // Clear interval if user is verified
+        setVerificationChecking(false);
+        
+        // Proceed to next step
+        toast.success("Your email has been verified successfully!");
+        setStep(2);
+      }
+    } catch (err) {
+      console.error("Error checking verification status:", err);
+    }
+  };
 
   const handleSignUpSubmit = async (values: SignUpValues) => {
     try {
-      // Get current site URL for redirection after email verification
+      // Get the current site URL - using window.location.origin to get the ACTUAL current URL
+      // This ensures we're not using localhost in the email if we're on the preview site
       const currentOrigin = window.location.origin;
       const redirectTo = `${currentOrigin}/dashboard`;
       
@@ -30,7 +75,6 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         options: {
           data: {
             name: values.name,
-            // Store the invitation data in user metadata for later use
             invited_by: invitedBy,
             sender_user_id: senderUserId,
           },
@@ -51,7 +95,7 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
         
         // Send custom verification email immediately
         try {
-          // Ensure the full application URL is used (not localhost)
+          // Use window.location.origin to ensure we're using the correct URL even on preview sites
           const verificationUrl = `${currentOrigin}/dashboard?email=${encodeURIComponent(values.email)}`;
 
           console.log("Sending verification email with URL:", verificationUrl);
@@ -215,10 +259,12 @@ export const useSignUpProcess = (invitedBy: string | null, senderUserId: string 
     userId,
     emailSent,
     userEmail,
+    verificationChecking,
     handleSignUpSubmit,
     handleProfileTypeSelection,
     handleImageUpload,
     handleProfileDataChange,
-    completeOnboarding
+    completeOnboarding,
+    checkEmailVerification
   };
 };

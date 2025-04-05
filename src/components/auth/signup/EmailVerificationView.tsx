@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Mail, AlertCircle, RefreshCw } from "lucide-react";
+import { Mail, AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -22,9 +22,15 @@ import { Separator } from "@/components/ui/separator";
 
 interface EmailVerificationViewProps {
   userEmail: string | null;
+  verificationChecking?: boolean;
+  onCheckVerification?: () => void;
 }
 
-const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
+const EmailVerificationView = ({ 
+  userEmail, 
+  verificationChecking = false,
+  onCheckVerification 
+}: EmailVerificationViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
@@ -33,17 +39,26 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
     if (!userEmail) return;
     
     try {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
+      setIsLoading(true);
       
-      if (data?.session?.user?.email_confirmed_at) {
-        toast.success("Your email has been verified!");
-        navigate('/dashboard');
+      if (onCheckVerification) {
+        onCheckVerification();
       } else {
-        toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
+        // Default implementation if no callback provided
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (data?.session?.user?.email_confirmed_at) {
+          toast.success("Your email has been verified!");
+          navigate('/dashboard');
+        } else {
+          toast.error("Your email is not yet verified. Please check your inbox and click the verification link.");
+        }
       }
     } catch (err) {
       console.error("Error checking verification status:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -129,6 +144,13 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
           </AlertDescription>
         </Alert>
         
+        {verificationChecking && (
+          <div className="text-center p-3 bg-blue-50 rounded-md border border-blue-100 flex items-center justify-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+            <span className="text-blue-700">Checking verification status automatically...</span>
+          </div>
+        )}
+        
         <div className="text-center mt-6 mb-2">
           <p className="text-sm text-gray-600 mb-4">
             Didn't receive an email? Click below to resend.
@@ -154,8 +176,16 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
               variant="secondary"
               onClick={checkVerificationStatus}
               className="mt-2 sm:mt-0"
+              disabled={isLoading || verificationChecking}
             >
-              I've Verified My Email
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Checking...
+                </>
+              ) : (
+                "I've Verified My Email"
+              )}
             </Button>
           </div>
         </div>
@@ -168,6 +198,7 @@ const EmailVerificationView = ({ userEmail }: EmailVerificationViewProps) => {
             <li>Check your spam or junk folder</li>
             <li>Make sure your email address was entered correctly</li>
             <li>Try using a different browser if the verification link doesn't work</li>
+            <li>The verification link works best on the same device you signed up on</li>
           </ul>
         </div>
         

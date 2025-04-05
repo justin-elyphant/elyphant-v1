@@ -13,7 +13,6 @@ import VendorManagement from "./pages/VendorManagement";
 import Gifting from "./pages/Gifting";
 import Cart from "./pages/Cart";
 import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
 import Wishlists from "./pages/Wishlists";
@@ -55,7 +54,6 @@ const App = () => {
                     <Route path="/vendor-management" element={<VendorManagement />} />
                     <Route path="/gifting" element={<Gifting />} />
                     <Route path="/cart" element={<Cart />} />
-                    <Route path="/sign-up" element={<SignUp />} />
                     <Route path="/sign-in" element={<SignIn />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile/:userId" element={<UserProfile />} />

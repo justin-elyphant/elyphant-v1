@@ -12,7 +12,6 @@ import VendorSignup from "./pages/VendorSignup";
 import VendorManagement from "./pages/VendorManagement";
 import Gifting from "./pages/Gifting";
 import Cart from "./pages/Cart";
-import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
@@ -55,7 +54,6 @@ const App = () => {
                     <Route path="/vendor-management" element={<VendorManagement />} />
                     <Route path="/gifting" element={<Gifting />} />
                     <Route path="/cart" element={<Cart />} />
-                    <Route path="/sign-up" element={<SignUp />} />
                     <Route path="/sign-in" element={<SignIn />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile/:userId" element={<UserProfile />} />

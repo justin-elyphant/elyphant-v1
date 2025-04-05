@@ -65,16 +65,10 @@ const AuthButtons = () => {
 
   return (
     <nav className="flex items-center space-x-3">
-      <Button variant="outline" size="sm" asChild>
+      <Button size="sm" className="bg-purple-600 hover:bg-purple-700" asChild>
         <Link to="/sign-in">
           <LogIn className="mr-2 h-4 w-4" />
-          Login
-        </Link>
-      </Button>
-      <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
-        <Link to="/sign-up">
-          <User className="mr-2 h-4 w-4" />
-          Sign Up
+          Sign In
         </Link>
       </Button>
     </nav>

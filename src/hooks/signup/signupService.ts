@@ -34,17 +34,23 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
         throw new Error("Email already registered");
       }
       
+      // Check for validation errors with field information
+      if (response.data?.field) {
+        throw new Error(`${response.data.error || "Invalid input"} (${response.data.field})`);
+      }
+      
       // Check for other specific errors
       if (response.data?.status === 422) {
-        throw new Error("Invalid email or password format");
+        const fieldInfo = response.data.field ? ` (${response.data.field})` : '';
+        throw new Error(`Validation error${fieldInfo}: ${response.data.error || "Invalid input format"}`);
       }
       
       throw new Error(errorMessage);
     }
     
-    if (!response.data.success) {
-      console.error("Signup failed:", response.data.error);
-      throw new Error(response.data.error || "Failed to create user");
+    if (!response.data?.success) {
+      console.error("Signup failed:", response.data?.error);
+      throw new Error(response.data?.error || "Failed to create user");
     }
     
     console.log("User created:", response.data.user);

@@ -27,7 +27,9 @@ const handler = async (req: Request): Promise<Response> => {
       body = await req.json();
       console.log("Create user request received:", JSON.stringify({
         ...body,
-        password: body.password ? "[REDACTED]" : undefined // Don't log the actual password
+        email: body.email || "[MISSING]",
+        password: body.password ? "[REDACTED]" : "[MISSING]",
+        name: body.name || "[MISSING]"
       }));
     } catch (parseError) {
       console.error("Failed to parse request body:", parseError);
@@ -60,6 +62,39 @@ const handler = async (req: Request): Promise<Response> => {
         }),
         {
           status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.error("Invalid email format:", email);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid email format",
+          success: false,
+          field: "email"
+        }),
+        {
+          status: 422,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      console.error("Password too short");
+      return new Response(
+        JSON.stringify({
+          error: "Password must be at least 6 characters",
+          success: false,
+          field: "password"
+        }),
+        {
+          status: 422,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
@@ -131,9 +166,11 @@ const handler = async (req: Request): Promise<Response> => {
       let parsedError;
       try {
         parsedError = JSON.parse(errorData);
+        console.error("Parsed error from Supabase:", JSON.stringify(parsedError));
       } catch (e) {
         // If it's not valid JSON, use the raw text
         parsedError = { message: errorData };
+        console.error("Unparsed error from Supabase:", errorData);
       }
       
       // Return specific error message for common cases
@@ -148,6 +185,37 @@ const handler = async (req: Request): Promise<Response> => {
           }),
           {
             status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+
+      // Handle Supabase validation errors (422)
+      if (createUserResponse.status === 422) {
+        let errorMessage = "Validation failed";
+        let errorField = "unknown";
+        
+        // Try to extract more specific information from the error
+        if (parsedError) {
+          if (parsedError.message?.includes("password")) {
+            errorMessage = parsedError.message || "Invalid password format";
+            errorField = "password";
+          } else if (parsedError.message?.includes("email")) {
+            errorMessage = parsedError.message || "Invalid email format";
+            errorField = "email";
+          }
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            error: errorMessage,
+            field: errorField,
+            success: false,
+            status: 422,
+            details: parsedError
+          }),
+          {
+            status: 422,
             headers: { "Content-Type": "application/json", ...corsHeaders },
           }
         );

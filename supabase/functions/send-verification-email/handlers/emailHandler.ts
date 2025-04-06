@@ -41,25 +41,37 @@ export async function handleVerificationEmail(req: Request): Promise<Response> {
     console.log(`Test verification code generated: ${verificationCode}`);
     
     // For test accounts in dev/staging, also store code 123456 as fallback
-    if (environment === "development" || environment === "staging") {
-      console.log("For testing: verification code 123456 will also work");
-      await storeVerificationCode(email, "123456");
+    try {
+      if (environment === "development" || environment === "staging") {
+        console.log("For testing: verification code 123456 will also work");
+        await storeVerificationCode(email, "123456").catch(error => {
+          console.error("Error storing test fallback code 123456:", error);
+        });
+      }
+      
+      // Store the real verification code too
+      await storeVerificationCode(email, verificationCode);
+      
+      // Return success with the code directly (only for test emails in non-production)
+      console.log(`Returning test mode response with code: ${verificationCode}`);
+      return createSuccessResponse({ 
+        id: "test-mode-email", 
+        code: verificationCode,
+        testBypass: true
+      });
+    } catch (error) {
+      console.error("Error in test email bypass flow:", error);
+      return createErrorResponse("Failed to store verification code", "database_error", 500);
     }
-    
-    // Store the real verification code too
-    await storeVerificationCode(email, verificationCode);
-    
-    // Return success with the code directly (only for test emails in non-production)
-    console.log(`Returning test mode response with code: ${verificationCode}`);
-    return createSuccessResponse({ 
-      id: "test-mode-email", 
-      code: verificationCode,
-      testBypass: true
-    });
   }
 
   // Handle regular email flow (non-test emails)
-  return await handleRegularEmail(email, name, environment);
+  try {
+    return await handleRegularEmail(email, name, environment);
+  } catch (error) {
+    console.error("Unexpected error in handleVerificationEmail:", error);
+    return createErrorResponse("Server error processing email verification", "server_error", 500);
+  }
 }
 
 /**
@@ -118,32 +130,47 @@ async function handleRegularEmail(
   name: string, 
   environment: string
 ): Promise<Response> {
-  // Generate verification code
-  const verificationCode = generateVerificationCode();
+  console.log(`📨 Processing verification email for regular (non-test) address: ${email}`);
   
-  // Store verification code in database
-  const storedCode = await storeVerificationCode(email, verificationCode);
-  
-  if (!storedCode) {
-    return createRateLimitErrorResponse();
-  }
-
-  console.log(`Generated verification code for ${email}: ${verificationCode}`);
-  
-  // For backup/debugging in development environments, allow test code 123456
-  if (environment !== "production") {
-    console.log("For testing: verification code 123456 will also work during development");
+  try {
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    console.log(`Generated verification code: ${verificationCode}`);
     
-    // Store test code in database too
-    await storeVerificationCode(email, "123456");
-  }
-  
-  // Send email with retry logic
-  const emailResult = await sendEmailWithRetry(email, name, verificationCode);
-  
-  if (!emailResult.success) {
-    return handleEmailSendingError(emailResult.error);
-  }
+    // Store verification code in database
+    const storedCode = await storeVerificationCode(email, verificationCode);
+    
+    if (!storedCode) {
+      console.warn(`⚠️ Failed to store verification code for ${email} - possible rate limit`);
+      return createRateLimitErrorResponse();
+    }
 
-  return createSuccessResponse(emailResult.data);
+    // For backup/debugging in development environments, allow test code 123456
+    if (environment !== "production") {
+      console.log("🔧 DEV/STAGING ENVIRONMENT: Adding fallback code 123456");
+      
+      try {
+        // Store test code in database too
+        await storeVerificationCode(email, "123456");
+      } catch (error) {
+        console.warn("⚠️ Failed to store fallback code, but continuing:", error);
+        // Non-critical error, continue with main flow
+      }
+    }
+    
+    // Send email with retry logic
+    console.log(`🚀 Attempting to send verification email to ${email}`);
+    const emailResult = await sendEmailWithRetry(email, name, verificationCode);
+    
+    if (!emailResult.success) {
+      console.error("❌ Email sending failed after retries:", emailResult.error);
+      return handleEmailSendingError(emailResult.error);
+    }
+
+    console.log(`✅ Successfully sent verification email to ${email}`);
+    return createSuccessResponse(emailResult.data);
+  } catch (error) {
+    console.error("❌ Unexpected error in handleRegularEmail:", error);
+    return createErrorResponse("Failed to process verification email", "server_error", 500);
+  }
 }

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 function isRateLimitError(response: any): boolean {
   // Check status code
   if (response.error?.status === 429 || response.status === 429) {
+    console.log("Rate limit detected by status code 429");
     return true;
   }
   
@@ -15,11 +16,13 @@ function isRateLimitError(response: any): boolean {
     errorMessage.toLowerCase().includes('limit') ||
     errorMessage.toLowerCase().includes('too many')
   ) {
+    console.log(`Rate limit detected by message text: "${errorMessage}"`);
     return true;
   }
   
   // Check explicit rate limited flag
   if (response.data?.rateLimited) {
+    console.log("Rate limit detected by explicit rateLimited flag");
     return true;
   }
   
@@ -54,6 +57,13 @@ export const sendVerificationEmail = async (email: string, name: string, verific
         console.log(`Using test email: ${email} - this should bypass the actual send`);
       }
       
+      console.log(`Calling send-verification-email function with params:`, { 
+        email, 
+        name, 
+        verificationUrl: baseUrl,
+        useVerificationCode: true 
+      });
+      
       emailResponse = await supabase.functions.invoke('send-verification-email', {
         body: {
           email: email,
@@ -72,6 +82,7 @@ export const sendVerificationEmail = async (email: string, name: string, verific
       
       // If it's not a rate limit error, don't retry
       if (!isRateLimitError(emailResponse)) {
+        console.log("Non-rate limit error detected, not retrying");
         break;
       }
       
@@ -83,6 +94,7 @@ export const sendVerificationEmail = async (email: string, name: string, verific
       
       // Check for rate limiting from the error or data
       if (isRateLimitError(emailResponse)) {
+        console.warn("Rate limit detected in response");
         return { success: false, error: emailResponse.error, rateLimited: true };
       }
       
@@ -91,7 +103,13 @@ export const sendVerificationEmail = async (email: string, name: string, verific
     
     // Check for rate limiting in the response data
     if (emailResponse.data?.rateLimited) {
+      console.warn("Rate limit flag detected in successful response");
       return { success: false, error: "Rate limited", rateLimited: true };
+    }
+    
+    // For test emails, log the verification code if it was returned
+    if (emailResponse.data?.code) {
+      console.log(`🧪 TEST MODE: Verification code is ${emailResponse.data.code}`);
     }
     
     return { success: true };

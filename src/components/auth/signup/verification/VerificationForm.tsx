@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +17,26 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
   const [verificationError, setVerificationError] = useState<string>("");
   const [verificationCode, setVerificationCode] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
+  const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
+
+  // Effect to automatically enter test code in development
+  useEffect(() => {
+    // Check if we're in development and using a test email
+    const isTestEmail = userEmail.includes('justncmeeks') || 
+                        userEmail.includes('test@example');
+    const isDevelopment = process.env.NODE_ENV === 'development' || 
+                        window.location.hostname === 'localhost';
+    
+    if (isDevelopment && isTestEmail) {
+      console.log("Auto-filling test verification code in development environment");
+      // Allow a moment for the component to mount
+      const timer = setTimeout(() => {
+        setVerificationCode("123456");
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [userEmail]);
 
   const handleVerifyCode = async () => {
     if (verificationCode.length !== 6) {
@@ -24,9 +44,16 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
       return;
     }
 
-    console.log("Attempting to verify code:", verificationCode);
+    // Rate limiting - prevent too frequent verification attempts
+    if (lastAttemptTime && (Date.now() - lastAttemptTime < 2000)) {
+      toast.error("Please wait a moment before trying again");
+      return;
+    }
+    
+    console.log("Attempting to verify code:", verificationCode, "for email:", userEmail);
     setIsSubmitting(true);
     setVerificationError("");
+    setLastAttemptTime(Date.now());
     
     try {
       const { data, error } = await supabase.functions.invoke('verify-email-code', {
@@ -35,6 +62,8 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
           code: verificationCode
         }
       });
+      
+      console.log("Verification response:", { data, error });
       
       if (error || !data.success) {
         let errorMessage = "Invalid verification code";
@@ -55,17 +84,20 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
           });
         }
         
+        console.error("Verification failed:", errorMessage, { data, error });
         setVerificationError(errorMessage);
         setAttemptCount(prev => prev + 1);
         return;
       }
       
+      console.log("Email verification successful!");
       toast.success("Email verified!", {
         description: "Your account is now ready to use.",
       });
       onVerificationSuccess();
       
     } catch (error: any) {
+      console.error("Verification request failed:", error);
       setVerificationError(error.message || "Verification failed");
       toast.error("Verification failed", {
         description: error.message || "Please try again"
@@ -75,6 +107,17 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
       setIsSubmitting(false);
     }
   };
+
+  // Auto-verify when test code is entered
+  useEffect(() => {
+    const isTestCode = verificationCode === "123456";
+    const isTestEmail = userEmail.includes('justncmeeks') || userEmail.includes('test@example');
+    
+    if (verificationCode.length === 6 && isTestCode && isTestEmail) {
+      console.log("Test code detected, auto-verifying");
+      handleVerifyCode();
+    }
+  }, [verificationCode]);
 
   return (
     <div className="flex flex-col items-center justify-center">

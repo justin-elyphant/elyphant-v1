@@ -2,7 +2,14 @@
 import { Resend } from "npm:resend@2.0.0";
 
 // Initialize Resend with API key from environment variable
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+
+// Check for missing API key
+if (!resendApiKey) {
+  console.error("🚨 CRITICAL ERROR: RESEND_API_KEY environment variable is not set");
+}
+
+const resend = new Resend(resendApiKey);
 
 /**
  * Sleep function for implementing backoff
@@ -13,10 +20,20 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * Check if error is related to rate limiting
  */
 export function isRateLimitError(error: any): boolean {
-  return error.message?.includes('429') || 
-         error.message?.includes('rate') || 
-         error.message?.includes('limit') ||
+  // Log the error details for better debugging
+  console.log("Checking if error is rate limit related:", {
+    statusCode: error.statusCode,
+    message: error.message,
+    name: error.name
+  });
+  
+  const isRateLimit = error.message?.includes('429') || 
+         error.message?.toLowerCase().includes('rate') || 
+         error.message?.toLowerCase().includes('limit') ||
          error.statusCode === 429;
+  
+  console.log(`Rate limit check result: ${isRateLimit ? 'IS rate limit ⚠️' : 'NOT rate limit'}`);
+  return isRateLimit;
 }
 
 /**
@@ -58,10 +75,16 @@ export async function sendEmailWithRetry(
   let retries = 0;
   let lastError = null;
   
+  console.log(`📧 Starting email send with retry logic (max ${maxRetries} attempts) to ${email}`);
+  
   while (retries < maxRetries) {
     try {
-      console.log(`Attempt ${retries + 1}/${maxRetries} to send email to ${email}`);
+      console.log(`📨 Attempt ${retries + 1}/${maxRetries} to send email to ${email}`);
       const emailContent = createVerificationEmailContent(name, verificationCode);
+      
+      // Log just before sending email to help with debugging timing issues
+      console.log(`⏱️ Sending email at ${new Date().toISOString()}`);
+      
       const emailResponse = await resend.emails.send({
         from: "Elyphant <onboarding@resend.dev>", 
         to: [email],
@@ -69,22 +92,27 @@ export async function sendEmailWithRetry(
         html: emailContent,
       });
       
-      console.log("Email sent successfully:", emailResponse);
+      console.log("✅ Email sent successfully:", emailResponse);
       return { success: true, data: emailResponse };
     } catch (error) {
       lastError = error;
-      console.error(`Email sending attempt ${retries + 1} failed:`, error);
+      console.error(`❌ Email sending attempt ${retries + 1} failed:`, error);
       
       if (isRateLimitError(error)) {
         const backoffTime = Math.pow(2, retries) * 1000; // Exponential backoff
-        console.log(`Rate limit detected. Backing off for ${backoffTime}ms before retry.`);
+        console.log(`⏱️ Rate limit detected. Backing off for ${backoffTime}ms before retry.`);
         await sleep(backoffTime);
         retries++;
       } else {
         // If it's not a rate limit error, don't retry
+        console.log("❌ Non-rate-limit error detected, stopping retry attempts");
         break;
       }
     }
+  }
+  
+  if (retries >= maxRetries) {
+    console.log(`⚠️ Maximum retries (${maxRetries}) reached for ${email}`);
   }
   
   return { success: false, error: lastError };

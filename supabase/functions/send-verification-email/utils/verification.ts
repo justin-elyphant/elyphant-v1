@@ -26,7 +26,7 @@ export function isTestEmail(email: string): boolean {
   console.log(`🔍 TEST EMAIL PATTERNS CHECK for ${email}:`);
   for (const pattern of testPatterns) {
     const matches = lowerEmail.includes(pattern);
-    console.log(`  - Pattern "${pattern}": ${matches ? 'MATCHES' : 'does not match'}`);
+    console.log(`  - Pattern "${pattern}": ${matches ? 'MATCHES ✓' : 'does not match ✗'}`);
     if (matches) {
       console.log(`  > MATCHED PATTERN: "${pattern}" found in "${lowerEmail}"`);
     }
@@ -35,6 +35,6 @@ export function isTestEmail(email: string): boolean {
   // Check if any pattern is found in the email
   const isTest = testPatterns.some(pattern => lowerEmail.includes(pattern));
   
-  console.log(`Email ${email} final test status: ${isTest ? 'IS TEST EMAIL' : 'is NOT a test email'}`);
+  console.log(`Email ${email} final test status: ${isTest ? 'IS TEST EMAIL ✓' : 'is NOT a test email ✗'}`);
   return isTest;
 }

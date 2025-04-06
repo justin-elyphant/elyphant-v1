@@ -35,6 +35,15 @@ const handler = async (req: Request): Promise<Response> => {
     const { email, name, useVerificationCode = true } = body.data;
     console.log("Request received for:", { email, name: name || "[NOT PROVIDED]", useVerificationCode });
 
+    // ENHANCED LOGGING: Log environment information
+    const environment = Deno.env.get("ENVIRONMENT") || "development";
+    console.log(`📝 ENVIRONMENT CHECK: Currently running in '${environment}' environment`);
+    
+    // ENHANCED LOGGING: Detailed test email check
+    console.log(`📧 TEST EMAIL CHECK: Checking if '${email}' is a test email...`);
+    const isTest = isTestEmail(email);
+    console.log(`📧 TEST EMAIL RESULT: '${email}' ${isTest ? 'IS' : 'is NOT'} a test email`);
+
     // Generate verification code
     const verificationCode = generateVerificationCode();
     
@@ -48,12 +57,17 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Generated verification code for ${email}: ${verificationCode}`);
     
     // For backup/debugging in development environments, allow test code 123456
-    if (Deno.env.get("ENVIRONMENT") !== "production") {
+    if (environment !== "production") {
       console.log("For testing: verification code 123456 will also work during development");
       
       // Store test code in database too
       await storeVerificationCode(email, "123456");
     }
+    
+    // ENHANCED LOGGING: Bypass check
+    const shouldBypass = isTest && environment !== "production";
+    console.log(`🔍 BYPASS CHECK: Should bypass email sending? ${shouldBypass ? 'YES' : 'NO'}`);
+    console.log(`🔍 BYPASS DETAILS: isTest=${isTest}, environment=${environment}, notProduction=${environment !== "production"}`);
     
     // Send email with retry logic
     const emailResult = await sendEmailWithRetry(email, name, verificationCode);
@@ -152,10 +166,20 @@ function isTestEmail(email: string): boolean {
     "demo@"
   ];
   
+  // ENHANCED LOGGING: Detailed pattern matching
+  console.log(`🔍 TEST EMAIL PATTERNS CHECK for ${email}:`);
+  for (const pattern of testPatterns) {
+    const matches = lowerEmail.includes(pattern);
+    console.log(`  - Pattern "${pattern}": ${matches ? 'MATCHES' : 'does not match'}`);
+    if (matches) {
+      console.log(`  > MATCHED PATTERN: "${pattern}" found in "${lowerEmail}"`);
+    }
+  }
+  
   // Check if any pattern is found in the email
   const isTest = testPatterns.some(pattern => lowerEmail.includes(pattern));
   
-  console.log(`Email ${email} test status: ${isTest ? 'IS TEST EMAIL' : 'is not a test email'}`);
+  console.log(`Email ${email} final test status: ${isTest ? 'IS TEST EMAIL' : 'is NOT a test email'}`);
   return isTest;
 }
 

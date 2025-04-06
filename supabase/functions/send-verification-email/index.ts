@@ -42,6 +42,37 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`📧 TEST EMAIL CHECK: Checking if '${email}' is a test email...`);
     const isTest = isTestEmail(email);
     console.log(`📧 TEST EMAIL RESULT: '${email}' ${isTest ? 'IS' : 'is NOT'} a test email`);
+    
+    // CRITICAL: Test email bypass check - Must run BEFORE any other logic
+    // This ensures test emails never hit rate limits or actual email services
+    const shouldBypass = isTest && environment !== "production";
+    console.log(`🔍 BYPASS CHECK: Should bypass email sending? ${shouldBypass ? 'YES' : 'NO'}`);
+    console.log(`🔍 BYPASS DETAILS: isTest=${isTest}, environment=${environment}, notProduction=${environment !== "production"}`);
+    
+    if (shouldBypass) {
+      console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing all remaining logic`);
+      
+      // Generate verification code for test accounts
+      const verificationCode = generateVerificationCode();
+      console.log(`Test verification code generated: ${verificationCode}`);
+      
+      // For test accounts in dev/staging, also store code 123456 as fallback
+      if (environment === "development" || environment === "staging") {
+        console.log("For testing: verification code 123456 will also work");
+        await storeVerificationCode(email, "123456");
+      }
+      
+      // Store the real verification code too
+      await storeVerificationCode(email, verificationCode);
+      
+      // Return success with the code directly (only for test emails in non-production)
+      console.log(`Returning test mode response with code: ${verificationCode}`);
+      return createSuccessResponse({ 
+        id: "test-mode-email", 
+        code: verificationCode,
+        testBypass: true
+      });
+    }
 
     // Generate verification code
     const verificationCode = generateVerificationCode();
@@ -61,18 +92,6 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Store test code in database too
       await storeVerificationCode(email, "123456");
-    }
-    
-    // ENHANCED LOGGING: Bypass check
-    const shouldBypass = isTest && environment !== "production";
-    console.log(`🔍 BYPASS CHECK: Should bypass email sending? ${shouldBypass ? 'YES' : 'NO'}`);
-    console.log(`🔍 BYPASS DETAILS: isTest=${isTest}, environment=${environment}, notProduction=${environment !== "production"}`);
-    
-    // Check for test email bypass - ALWAYS RUNS FIRST
-    if (shouldBypass) {
-      console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing actual email send`);
-      console.log(`Verification code for test account: ${verificationCode}`);
-      return createSuccessResponse({ id: "test-mode-email", code: verificationCode });
     }
     
     // Send email with retry logic

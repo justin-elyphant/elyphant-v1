@@ -99,6 +99,27 @@ async function storeVerificationCode(email: string, code: string): Promise<boole
   }
 }
 
+// Check if an email is a test email that should bypass actual sending
+function isTestEmail(email: string): boolean {
+  if (!email) return false;
+  
+  const lowerEmail = email.toLowerCase();
+  
+  // List of test email patterns
+  const testPatterns = [
+    "justncmeeks",
+    "test@example.com",
+    "test+",
+    "demo@"
+  ];
+  
+  // Check if any pattern is found in the email
+  const isTest = testPatterns.some(pattern => lowerEmail.includes(pattern));
+  
+  console.log(`Email ${email} test status: ${isTest ? 'IS TEST EMAIL' : 'is not a test email'}`);
+  return isTest;
+}
+
 // Send email with retry logic for handling rate limits
 async function sendEmailWithRetry(
   email: string, 
@@ -132,26 +153,20 @@ async function sendEmailWithRetry(
     </div>
   `;
 
-  // UPDATED: Improved test email detection logic
-  const isTestingEnvironment = Deno.env.get("ENVIRONMENT") !== "production";
-  // Define a list of test email addresses or patterns to match
-  const bypassEmails = ["justncmeeks@gmail.com", "justncmeeks@hotmail.com", "test@example.com"];
+  // Check for test email bypass - ALWAYS RUNS FIRST
+  const environment = Deno.env.get("ENVIRONMENT") || "development";
+  const isEnvNotProduction = environment !== "production";
+  console.log(`Current environment: ${environment}, bypass enabled: ${isEnvNotProduction}`);
   
-  // Check if the email matches any in our bypass list (checking base part before @ or + tag)
-  const isTestEmail = bypassEmails.some(testEmail => {
-    const [testUser] = testEmail.split('@');
-    const [emailUser] = email.toLowerCase().split('@');
-    // Match either the exact username or username+anything format
-    return emailUser === testUser || emailUser.startsWith(`${testUser}+`);
-  });
-  
-  if (isTestingEnvironment && isTestEmail) {
-    console.log(`Test account detected: ${email} - Bypassing actual email send`);
+  if (isTestEmail(email) && isEnvNotProduction) {
+    console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing actual email send`);
     console.log(`Verification code for test account: ${verificationCode}`);
     return { 
       success: true,
       data: { id: "test-mode-email", code: verificationCode }
     };
+  } else {
+    console.log(`✉️ Attempting to send real email to: ${email} (not a test email or production environment)`);
   }
 
   while (retries < maxRetries) {

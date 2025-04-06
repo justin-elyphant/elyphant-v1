@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -91,6 +92,14 @@ export const sendVerificationEmail = async (email: string, name: string, verific
         console.log(`Retrying email send (attempt ${retries + 1}/${maxRetries + 1})...`);
         // Add delay between retries
         await new Promise(resolve => setTimeout(resolve, retries * 1000));
+      }
+      
+      // Check for test emails
+      const isTestEmail = email.includes("justncmeeks") || 
+                          email.includes("test@example");
+                          
+      if (isTestEmail) {
+        console.log(`Using test email: ${email} - this should bypass the actual send`);
       }
       
       emailResponse = await supabase.functions.invoke('send-verification-email', {

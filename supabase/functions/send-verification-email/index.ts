@@ -132,11 +132,20 @@ async function sendEmailWithRetry(
     </div>
   `;
 
-  // DEBUG MODE: For testing in development, bypass email for specific test accounts
+  // UPDATED: Improved test email detection logic
   const isTestingEnvironment = Deno.env.get("ENVIRONMENT") !== "production";
-  const testEmails = ["justncmeeks@hotmail.com", "test@example.com"];
+  // Define a list of test email addresses or patterns to match
+  const bypassEmails = ["justncmeeks@gmail.com", "justncmeeks@hotmail.com", "test@example.com"];
   
-  if (isTestingEnvironment && testEmails.includes(email.toLowerCase())) {
+  // Check if the email matches any in our bypass list (checking base part before @ or + tag)
+  const isTestEmail = bypassEmails.some(testEmail => {
+    const [testUser] = testEmail.split('@');
+    const [emailUser] = email.toLowerCase().split('@');
+    // Match either the exact username or username+anything format
+    return emailUser === testUser || emailUser.startsWith(`${testUser}+`);
+  });
+  
+  if (isTestingEnvironment && isTestEmail) {
     console.log(`Test account detected: ${email} - Bypassing actual email send`);
     console.log(`Verification code for test account: ${verificationCode}`);
     return { 

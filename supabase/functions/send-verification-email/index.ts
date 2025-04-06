@@ -16,15 +16,118 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface EmailVerificationRequest {
-  email: string;
-  name: string;
-  verificationUrl?: string;
-  useVerificationCode?: boolean;
-}
+/**
+ * Main request handler for the edge function
+ */
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
-// Sleep function for implementing backoff
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  try {
+    // Parse request body
+    const body = await parseRequestBody(req);
+    if (!body.valid) {
+      return createErrorResponse(body.error || "Invalid request", undefined, body.status);
+    }
+    
+    const { email, name, useVerificationCode = true } = body.data;
+    console.log("Request received for:", { email, name: name || "[NOT PROVIDED]", useVerificationCode });
+
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    
+    // Store verification code in database
+    const storedCode = await storeVerificationCode(email, verificationCode);
+    
+    if (!storedCode) {
+      return createRateLimitErrorResponse();
+    }
+
+    console.log(`Generated verification code for ${email}: ${verificationCode}`);
+    
+    // For backup/debugging in development environments, allow test code 123456
+    if (Deno.env.get("ENVIRONMENT") !== "production") {
+      console.log("For testing: verification code 123456 will also work during development");
+      
+      // Store test code in database too
+      await storeVerificationCode(email, "123456");
+    }
+    
+    // Send email with retry logic
+    const emailResult = await sendEmailWithRetry(email, name, verificationCode);
+    
+    if (!emailResult.success) {
+      return handleEmailSendingError(emailResult.error);
+    }
+
+    return createSuccessResponse(emailResult.data);
+    
+  } catch (error: any) {
+    console.error("Error in send-verification-email function:", error);
+    
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        success: false,
+        details: error.toString()
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+};
+
+/**
+ * Parse and validate request body
+ */
+async function parseRequestBody(req: Request): Promise<{ 
+  valid: boolean; 
+  data?: any; 
+  error?: string;
+  status?: number;
+}> {
+  const contentType = req.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    return {
+      valid: false, 
+      error: "Content-Type must be application/json", 
+      status: 400
+    };
+  }
+  
+  try {
+    const body = await req.json();
+    console.log("Request body:", JSON.stringify({
+      email: body.email,
+      name: body.name || "[NOT PROVIDED]",
+      verificationUrl: body.verificationUrl || "[NOT PROVIDED]",
+      useVerificationCode: body.useVerificationCode
+    }));
+    
+    if (!body.email) {
+      return {
+        valid: false,
+        error: "Email is required",
+        status: 400
+      };
+    }
+    
+    return { valid: true, data: body };
+    
+  } catch (jsonError) {
+    console.error("JSON parse error:", jsonError);
+    return { 
+      valid: false, 
+      error: "Invalid JSON in request body", 
+      status: 400,
+      details: jsonError.toString()
+    };
+  }
+}
 
 /**
  * Generate a 6-digit verification code
@@ -73,57 +176,147 @@ async function storeVerificationCode(email: string, code: string): Promise<boole
       .single();
 
     if (existingCode) {
-      // Rate limiting - if last resend was less than 1 minute ago, don't allow
-      if (existingCode.last_resend_at && 
-          (new Date().getTime() - new Date(existingCode.last_resend_at).getTime() < 60000)) {
-        console.log(`Rate limiting - last resend was less than 1 minute ago for ${email}`);
-        return false;
-      }
-
-      // Check resend limit (max 5 per code)
-      if (existingCode.resend_count >= 5) {
-        console.log(`Resend limit reached (5) for email ${email}`);
-        return false;
-      }
-
-      // Update the existing record with new resend count
-      const { error: updateError } = await supabase
-        .from("verification_codes")
-        .update({
-          code: code,
-          resend_count: existingCode.resend_count + 1,
-          last_resend_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // Reset expiration
-        })
-        .eq("id", existingCode.id);
-      
-      if (updateError) {
-        console.error("Error updating verification code:", updateError);
-        return false;
-      }
+      return await handleExistingCode(existingCode, email, code);
     } else {
-      // Create a new verification code
-      const { error: insertError } = await supabase
-        .from("verification_codes")
-        .insert({
-          email: email,
-          code: code,
-          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-          last_resend_at: new Date().toISOString(),
-          resend_count: 0,
-        });
-      
-      if (insertError) {
-        console.error("Error inserting verification code:", insertError);
-        return false;
-      }
+      return await createNewVerificationCode(email, code);
     }
-    
-    return true;
   } catch (error) {
     console.error("Error storing verification code:", error);
     return false;
   }
+}
+
+/**
+ * Handle existing verification code
+ */
+async function handleExistingCode(existingCode: any, email: string, code: string): Promise<boolean> {
+  // Rate limiting - if last resend was less than 1 minute ago, don't allow
+  if (existingCode.last_resend_at && 
+      (new Date().getTime() - new Date(existingCode.last_resend_at).getTime() < 60000)) {
+    console.log(`Rate limiting - last resend was less than 1 minute ago for ${email}`);
+    return false;
+  }
+
+  // Check resend limit (max 5 per code)
+  if (existingCode.resend_count >= 5) {
+    console.log(`Resend limit reached (5) for email ${email}`);
+    return false;
+  }
+
+  // Update the existing record with new resend count
+  const { error: updateError } = await supabase
+    .from("verification_codes")
+    .update({
+      code: code,
+      resend_count: existingCode.resend_count + 1,
+      last_resend_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // Reset expiration
+    })
+    .eq("id", existingCode.id);
+  
+  if (updateError) {
+    console.error("Error updating verification code:", updateError);
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Create a new verification code record
+ */
+async function createNewVerificationCode(email: string, code: string): Promise<boolean> {
+  const { error: insertError } = await supabase
+    .from("verification_codes")
+    .insert({
+      email: email,
+      code: code,
+      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      last_resend_at: new Date().toISOString(),
+      resend_count: 0,
+    });
+  
+  if (insertError) {
+    console.error("Error inserting verification code:", insertError);
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Sleep function for implementing backoff
+ */
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Send email with retry logic for handling rate limits
+ */
+async function sendEmailWithRetry(
+  email: string, 
+  name: string, 
+  verificationCode: string, 
+  maxRetries = 3
+): Promise<{success: boolean, data?: any, error?: any}> {
+  let retries = 0;
+  let lastError = null;
+  
+  // Check for test email bypass - ALWAYS RUNS FIRST
+  const environment = Deno.env.get("ENVIRONMENT") || "development";
+  const isEnvNotProduction = environment !== "production";
+  console.log(`Current environment: ${environment}, bypass enabled: ${isEnvNotProduction}`);
+  
+  if (isTestEmail(email) && isEnvNotProduction) {
+    console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing actual email send`);
+    console.log(`Verification code for test account: ${verificationCode}`);
+    return { 
+      success: true,
+      data: { id: "test-mode-email", code: verificationCode }
+    };
+  } else {
+    console.log(`✉️ Attempting to send real email to: ${email} (not a test email or production environment)`);
+  }
+
+  while (retries < maxRetries) {
+    try {
+      console.log(`Attempt ${retries + 1}/${maxRetries} to send email to ${email}`);
+      const emailContent = createVerificationEmailContent(name, verificationCode);
+      const emailResponse = await resend.emails.send({
+        from: "Elyphant <onboarding@resend.dev>", 
+        to: [email],
+        subject: "Your Elyphant verification code",
+        html: emailContent,
+      });
+      
+      console.log("Email sent successfully:", emailResponse);
+      return { success: true, data: emailResponse };
+    } catch (error) {
+      lastError = error;
+      console.error(`Email sending attempt ${retries + 1} failed:`, error);
+      
+      if (isRateLimitError(error)) {
+        const backoffTime = Math.pow(2, retries) * 1000; // Exponential backoff
+        console.log(`Rate limit detected. Backing off for ${backoffTime}ms before retry.`);
+        await sleep(backoffTime);
+        retries++;
+      } else {
+        // If it's not a rate limit error, don't retry
+        break;
+      }
+    }
+  }
+  
+  return { success: false, error: lastError };
+}
+
+/**
+ * Check if error is related to rate limiting
+ */
+function isRateLimitError(error: any): boolean {
+  return error.message?.includes('429') || 
+         error.message?.includes('rate') || 
+         error.message?.includes('limit') ||
+         error.statusCode === 429;
 }
 
 /**
@@ -154,222 +347,92 @@ function createVerificationEmailContent(name: string, verificationCode: string):
 }
 
 /**
- * Send email with retry logic for handling rate limits
+ * Create success response
  */
-async function sendEmailWithRetry(
-  email: string, 
-  name: string, 
-  verificationCode: string, 
-  maxRetries = 3
-): Promise<{success: boolean, data?: any, error?: any}> {
-  let retries = 0;
-  let lastError = null;
-  
-  const emailSubject = "Your Elyphant verification code";
-  const emailContent = createVerificationEmailContent(name, verificationCode);
-
-  // Check for test email bypass - ALWAYS RUNS FIRST
-  const environment = Deno.env.get("ENVIRONMENT") || "development";
-  const isEnvNotProduction = environment !== "production";
-  console.log(`Current environment: ${environment}, bypass enabled: ${isEnvNotProduction}`);
-  
-  if (isTestEmail(email) && isEnvNotProduction) {
-    console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing actual email send`);
-    console.log(`Verification code for test account: ${verificationCode}`);
-    return { 
-      success: true,
-      data: { id: "test-mode-email", code: verificationCode }
-    };
-  } else {
-    console.log(`✉️ Attempting to send real email to: ${email} (not a test email or production environment)`);
-  }
-
-  while (retries < maxRetries) {
-    try {
-      console.log(`Attempt ${retries + 1}/${maxRetries} to send email to ${email}`);
-      const emailResponse = await resend.emails.send({
-        from: "Elyphant <onboarding@resend.dev>", 
-        to: [email],
-        subject: emailSubject,
-        html: emailContent,
-      });
-      
-      console.log("Email sent successfully:", emailResponse);
-      return { success: true, data: emailResponse };
-    } catch (error) {
-      lastError = error;
-      console.error(`Email sending attempt ${retries + 1} failed:`, error);
-      
-      // Check if it's a rate limit error
-      const isRateLimit = error.message?.includes('429') || 
-                          error.message?.includes('rate') || 
-                          error.message?.includes('limit') ||
-                          error.statusCode === 429;
-      
-      if (isRateLimit) {
-        const backoffTime = Math.pow(2, retries) * 1000; // Exponential backoff
-        console.log(`Rate limit detected. Backing off for ${backoffTime}ms before retry.`);
-        await sleep(backoffTime);
-        retries++;
-      } else {
-        // If it's not a rate limit error, don't retry
-        break;
-      }
-    }
-  }
-  
-  return { success: false, error: lastError };
+function createSuccessResponse(data: any): Response {
+  return new Response(JSON.stringify({ 
+    success: true, 
+    data: data,
+    codeGenerated: true
+  }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      ...corsHeaders,
+    },
+  });
 }
 
 /**
- * Main handler for the edge function
+ * Create error response
  */
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+function createErrorResponse(message: string, reason?: string, status = 400): Response {
+  return new Response(
+    JSON.stringify({ 
+      error: message, 
+      success: false,
+      reason: reason || "error"
+    }),
+    {
+      status,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    }
+  );
+}
 
-  try {
-    // Parse JSON body safely
-    let body;
-    const contentType = req.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      try {
-        body = await req.json();
-        console.log("Request body:", JSON.stringify({
-          email: body.email,
-          name: body.name || "[NOT PROVIDED]",
-          verificationUrl: body.verificationUrl || "[NOT PROVIDED]",
-          useVerificationCode: body.useVerificationCode
-        }));
-      } catch (jsonError) {
-        console.error("JSON parse error:", jsonError);
-        return new Response(
-          JSON.stringify({ 
-            error: "Invalid JSON in request body", 
-            success: false,
-            details: jsonError.toString()
-          }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
-      }
-    } else {
-      return new Response(
-        JSON.stringify({ 
-          error: "Content-Type must be application/json", 
-          success: false 
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+/**
+ * Create rate limit error response
+ */
+function createRateLimitErrorResponse(): Response {
+  return new Response(
+    JSON.stringify({ 
+      error: "Failed to store verification code or rate limit exceeded", 
+      success: false,
+      codeGenerated: false,
+      rateLimited: true
+    }),
+    {
+      status: 429,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     }
-    
-    const { email, name, useVerificationCode = true } = body as EmailVerificationRequest;
+  );
+}
 
-    if (!email) {
-      throw new Error("Email is required");
-    }
-    
-    // Generate a 6-digit verification code
-    const verificationCode = generateVerificationCode();
-    
-    // Store verification code in database
-    const storedCode = await storeVerificationCode(email, verificationCode);
-    
-    if (!storedCode) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Failed to store verification code or rate limit exceeded", 
-          success: false,
-          codeGenerated: false,
-          rateLimited: true
-        }),
-        {
-          status: 429,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    console.log(`Generated verification code for ${email}: ${verificationCode}`);
-    
-    // For backup/debugging in development environments, allow test code 123456
-    if (Deno.env.get("ENVIRONMENT") !== "production") {
-      console.log("For testing: verification code 123456 will also work during development");
-      
-      // Store test code in database too
-      await storeVerificationCode(email, "123456");
-    }
-    
-    // Send email with retry logic
-    const emailResult = await sendEmailWithRetry(email, name, verificationCode);
-    
-    if (!emailResult.success) {
-      console.error("Failed to send email after retries:", emailResult.error);
-      
-      // Check if it's a rate limit issue
-      if (emailResult.error?.statusCode === 429 || 
-          emailResult.error?.message?.includes('rate') ||
-          emailResult.error?.message?.includes('limit')) {
-        return new Response(
-          JSON.stringify({ 
-            error: "Email service rate limit reached. Please try again later.",
-            success: false,
-            rateLimited: true,
-            details: emailResult.error
-          }),
-          {
-            status: 429,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: "Failed to send verification email",
-          success: false,
-          details: emailResult.error
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      data: emailResult.data,
-      codeGenerated: true
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
-  } catch (error: any) {
-    console.error("Error in send-verification-email function:", error);
-    
+/**
+ * Handle email sending error
+ */
+function handleEmailSendingError(error: any): Response {
+  console.error("Failed to send email after retries:", error);
+  
+  // Check if it's a rate limit issue
+  if (error?.statusCode === 429 || 
+      error?.message?.includes('rate') ||
+      error?.message?.includes('limit')) {
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: "Email service rate limit reached. Please try again later.",
         success: false,
-        details: error.toString()
+        rateLimited: true,
+        details: error
       }),
       {
-        status: 500,
+        status: 429,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
-};
+  
+  return new Response(
+    JSON.stringify({ 
+      error: "Failed to send verification email",
+      success: false,
+      details: error
+    }),
+    {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    }
+  );
+}
 
 serve(handler);

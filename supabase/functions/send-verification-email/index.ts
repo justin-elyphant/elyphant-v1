@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
@@ -68,6 +67,13 @@ const handler = async (req: Request): Promise<Response> => {
     const shouldBypass = isTest && environment !== "production";
     console.log(`🔍 BYPASS CHECK: Should bypass email sending? ${shouldBypass ? 'YES' : 'NO'}`);
     console.log(`🔍 BYPASS DETAILS: isTest=${isTest}, environment=${environment}, notProduction=${environment !== "production"}`);
+    
+    // Check for test email bypass - ALWAYS RUNS FIRST
+    if (shouldBypass) {
+      console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing actual email send`);
+      console.log(`Verification code for test account: ${verificationCode}`);
+      return createSuccessResponse({ id: "test-mode-email", code: verificationCode });
+    }
     
     // Send email with retry logic
     const emailResult = await sendEmailWithRetry(email, name, verificationCode);
@@ -285,22 +291,6 @@ async function sendEmailWithRetry(
   let retries = 0;
   let lastError = null;
   
-  // Check for test email bypass - ALWAYS RUNS FIRST
-  const environment = Deno.env.get("ENVIRONMENT") || "development";
-  const isEnvNotProduction = environment !== "production";
-  console.log(`Current environment: ${environment}, bypass enabled: ${isEnvNotProduction}`);
-  
-  if (isTestEmail(email) && isEnvNotProduction) {
-    console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing actual email send`);
-    console.log(`Verification code for test account: ${verificationCode}`);
-    return { 
-      success: true,
-      data: { id: "test-mode-email", code: verificationCode }
-    };
-  } else {
-    console.log(`✉️ Attempting to send real email to: ${email} (not a test email or production environment)`);
-  }
-
   while (retries < maxRetries) {
     try {
       console.log(`Attempt ${retries + 1}/${maxRetries} to send email to ${email}`);

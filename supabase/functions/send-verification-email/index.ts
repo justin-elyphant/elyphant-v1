@@ -26,12 +26,39 @@ interface EmailVerificationRequest {
 // Sleep function for implementing backoff
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Generate a 6-digit verification code
+/**
+ * Generate a 6-digit verification code
+ */
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Store verification code in database
+/**
+ * Check if an email is a test email that should bypass actual sending
+ */
+function isTestEmail(email: string): boolean {
+  if (!email) return false;
+  
+  const lowerEmail = email.toLowerCase();
+  
+  // List of test email patterns
+  const testPatterns = [
+    "justncmeeks",
+    "test@example.com",
+    "test+",
+    "demo@"
+  ];
+  
+  // Check if any pattern is found in the email
+  const isTest = testPatterns.some(pattern => lowerEmail.includes(pattern));
+  
+  console.log(`Email ${email} test status: ${isTest ? 'IS TEST EMAIL' : 'is not a test email'}`);
+  return isTest;
+}
+
+/**
+ * Store verification code in database
+ */
 async function storeVerificationCode(email: string, code: string): Promise<boolean> {
   try {
     // Check if there's an existing code that's not expired and update resend count
@@ -99,39 +126,11 @@ async function storeVerificationCode(email: string, code: string): Promise<boole
   }
 }
 
-// Check if an email is a test email that should bypass actual sending
-function isTestEmail(email: string): boolean {
-  if (!email) return false;
-  
-  const lowerEmail = email.toLowerCase();
-  
-  // List of test email patterns
-  const testPatterns = [
-    "justncmeeks",
-    "test@example.com",
-    "test+",
-    "demo@"
-  ];
-  
-  // Check if any pattern is found in the email
-  const isTest = testPatterns.some(pattern => lowerEmail.includes(pattern));
-  
-  console.log(`Email ${email} test status: ${isTest ? 'IS TEST EMAIL' : 'is not a test email'}`);
-  return isTest;
-}
-
-// Send email with retry logic for handling rate limits
-async function sendEmailWithRetry(
-  email: string, 
-  name: string, 
-  verificationCode: string, 
-  maxRetries = 3
-): Promise<{success: boolean, data?: any, error?: any}> {
-  let retries = 0;
-  let lastError = null;
-  
-  const emailSubject = "Your Elyphant verification code";
-  const emailContent = `
+/**
+ * Create HTML email content for the verification email
+ */
+function createVerificationEmailContent(name: string, verificationCode: string): string {
+  return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="color: #8a4baf;">Welcome to Elyphant! 🐘</h1>
@@ -152,6 +151,22 @@ async function sendEmailWithRetry(
       </div>
     </div>
   `;
+}
+
+/**
+ * Send email with retry logic for handling rate limits
+ */
+async function sendEmailWithRetry(
+  email: string, 
+  name: string, 
+  verificationCode: string, 
+  maxRetries = 3
+): Promise<{success: boolean, data?: any, error?: any}> {
+  let retries = 0;
+  let lastError = null;
+  
+  const emailSubject = "Your Elyphant verification code";
+  const emailContent = createVerificationEmailContent(name, verificationCode);
 
   // Check for test email bypass - ALWAYS RUNS FIRST
   const environment = Deno.env.get("ENVIRONMENT") || "development";
@@ -206,6 +221,9 @@ async function sendEmailWithRetry(
   return { success: false, error: lastError };
 }
 
+/**
+ * Main handler for the edge function
+ */
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {

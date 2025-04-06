@@ -23,6 +23,9 @@ interface EmailVerificationRequest {
   useVerificationCode?: boolean;
 }
 
+// Sleep function for implementing backoff
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Generate a 6-digit verification code
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -96,6 +99,89 @@ async function storeVerificationCode(email: string, code: string): Promise<boole
   }
 }
 
+// Send email with retry logic for handling rate limits
+async function sendEmailWithRetry(
+  email: string, 
+  name: string, 
+  verificationCode: string, 
+  maxRetries = 3
+): Promise<{success: boolean, data?: any, error?: any}> {
+  let retries = 0;
+  let lastError = null;
+  
+  const emailSubject = "Your Elyphant verification code";
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #8a4baf;">Welcome to Elyphant! 🐘</h1>
+      </div>
+      <p>Hi ${name || "there"},</p>
+      <p>Thanks for signing up with Elyphant! We're excited to have you join our community of gift-givers and wish-makers.</p>
+      <p>Here is your verification code:</p>
+      <div style="margin: 20px 0; text-align: center;">
+        <div style="background-color: #f5f5f5; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #8a4baf;">
+          ${verificationCode}
+        </div>
+      </div>
+      <p>Enter this code on the signup page to verify your email address and continue creating your account.</p>
+      <p>This code will expire in 15 minutes.</p>
+      <p>If you didn't create an account with us, you can safely ignore this email.</p>
+      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #6b6b6b; font-size: 12px; text-align: center;">
+        <p>&copy; ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  // DEBUG MODE: For testing in development, bypass email for specific test accounts
+  const isTestingEnvironment = Deno.env.get("ENVIRONMENT") !== "production";
+  const testEmails = ["justncmeeks@hotmail.com", "test@example.com"];
+  
+  if (isTestingEnvironment && testEmails.includes(email.toLowerCase())) {
+    console.log(`Test account detected: ${email} - Bypassing actual email send`);
+    console.log(`Verification code for test account: ${verificationCode}`);
+    return { 
+      success: true,
+      data: { id: "test-mode-email", code: verificationCode }
+    };
+  }
+
+  while (retries < maxRetries) {
+    try {
+      console.log(`Attempt ${retries + 1}/${maxRetries} to send email to ${email}`);
+      const emailResponse = await resend.emails.send({
+        from: "Elyphant <onboarding@resend.dev>", 
+        to: [email],
+        subject: emailSubject,
+        html: emailContent,
+      });
+      
+      console.log("Email sent successfully:", emailResponse);
+      return { success: true, data: emailResponse };
+    } catch (error) {
+      lastError = error;
+      console.error(`Email sending attempt ${retries + 1} failed:`, error);
+      
+      // Check if it's a rate limit error
+      const isRateLimit = error.message?.includes('429') || 
+                          error.message?.includes('rate') || 
+                          error.message?.includes('limit') ||
+                          error.statusCode === 429;
+      
+      if (isRateLimit) {
+        const backoffTime = Math.pow(2, retries) * 1000; // Exponential backoff
+        console.log(`Rate limit detected. Backing off for ${backoffTime}ms before retry.`);
+        await sleep(backoffTime);
+        retries++;
+      } else {
+        // If it's not a rate limit error, don't retry
+        break;
+      }
+    }
+  }
+  
+  return { success: false, error: lastError };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -109,7 +195,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (contentType && contentType.includes("application/json")) {
       try {
         body = await req.json();
-        console.log("Request body:", JSON.stringify(body));
+        console.log("Request body:", JSON.stringify({
+          email: body.email,
+          name: body.name || "[NOT PROVIDED]",
+          verificationUrl: body.verificationUrl || "[NOT PROVIDED]",
+          useVerificationCode: body.useVerificationCode
+        }));
       } catch (jsonError) {
         console.error("JSON parse error:", jsonError);
         return new Response(
@@ -174,46 +265,46 @@ const handler = async (req: Request): Promise<Response> => {
       await storeVerificationCode(email, "123456");
     }
     
-    const emailSubject = "Your Elyphant verification code";
-    const emailContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #8a4baf;">Welcome to Elyphant! 🐘</h1>
-        </div>
-        <p>Hi ${name || "there"},</p>
-        <p>Thanks for signing up with Elyphant! We're excited to have you join our community of gift-givers and wish-makers.</p>
-        <p>Here is your verification code:</p>
-        <div style="margin: 20px 0; text-align: center;">
-          <div style="background-color: #f5f5f5; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #8a4baf;">
-            ${verificationCode}
-          </div>
-        </div>
-        <p>Enter this code on the signup page to verify your email address and continue creating your account.</p>
-        <p>This code will expire in 15 minutes.</p>
-        <p>If you didn't create an account with us, you can safely ignore this email.</p>
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #6b6b6b; font-size: 12px; text-align: center;">
-          <p>&copy; ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
-        </div>
-      </div>
-    `;
-
-    // For testing in development, log email content
-    if (Deno.env.get("ENVIRONMENT") !== "production") {
-      console.log("Email content:", emailContent);
+    // Send email with retry logic
+    const emailResult = await sendEmailWithRetry(email, name, verificationCode);
+    
+    if (!emailResult.success) {
+      console.error("Failed to send email after retries:", emailResult.error);
+      
+      // Check if it's a rate limit issue
+      if (emailResult.error?.statusCode === 429 || 
+          emailResult.error?.message?.includes('rate') ||
+          emailResult.error?.message?.includes('limit')) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Email service rate limit reached. Please try again later.",
+            success: false,
+            rateLimited: true,
+            details: emailResult.error
+          }),
+          {
+            status: 429,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to send verification email",
+          success: false,
+          details: emailResult.error
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
-
-    const emailResponse = await resend.emails.send({
-      from: "Elyphant <onboarding@resend.dev>", 
-      to: [email],
-      subject: emailSubject,
-      html: emailContent,
-    });
-
-    console.log("Email sent successfully with verification code:", verificationCode);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      data: emailResponse,
+      data: emailResult.data,
       codeGenerated: true
     }), {
       status: 200,

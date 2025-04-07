@@ -24,7 +24,9 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
   // Enhanced debugging
   console.log("VerificationForm: Rendered with props:", {
     userEmail,
-    testVerificationCode: testVerificationCode || "none"
+    testVerificationCode: testVerificationCode || "none",
+    autoVerifyTriggered,
+    currentVerificationCode: verificationCode
   });
 
   // Effect to automatically enter test code when provided
@@ -42,7 +44,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
           console.log("Auto-triggering verification for test code");
           if (!isSubmitting && !autoVerifyTriggered) {
             setAutoVerifyTriggered(true);
-            handleVerifyCode();
+            handleVerifyCode(testVerificationCode);
           }
         }, 1500);
         
@@ -53,8 +55,8 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
     }
   }, [testVerificationCode]);
 
-  const handleVerifyCode = async () => {
-    if (verificationCode.length !== 6) {
+  const handleVerifyCode = async (code = verificationCode) => {
+    if (code.length !== 6) {
       toast.error("Please enter the 6-digit code from your email");
       return;
     }
@@ -65,7 +67,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
       return;
     }
     
-    console.log("Attempting to verify code:", verificationCode, "for email:", userEmail);
+    console.log("Attempting to verify code:", code, "for email:", userEmail);
     setIsSubmitting(true);
     setVerificationError("");
     setLastAttemptTime(Date.now());
@@ -74,7 +76,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
       const { data, error } = await supabase.functions.invoke('verify-email-code', {
         body: {
           email: userEmail,
-          code: verificationCode
+          code: code
         }
       });
       
@@ -142,7 +144,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
       // Small delay to show the completed code before verification
       const timer = setTimeout(() => {
         console.log("Auto-verification now triggering after delay");
-        handleVerifyCode();
+        handleVerifyCode(verificationCode);
       }, 800);
       
       return () => clearTimeout(timer);
@@ -191,7 +193,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
       )}
       
       <Button 
-        onClick={handleVerifyCode}
+        onClick={() => handleVerifyCode()}
         disabled={verificationCode.length !== 6 || isSubmitting}
         className="bg-purple-600 hover:bg-purple-700 text-white mb-4"
       >

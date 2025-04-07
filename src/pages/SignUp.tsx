@@ -80,7 +80,7 @@ const SignUp: React.FC = () => {
         
         // If it's a test email, save the verification code
         if (emailResult.isTestEmail && emailResult.verificationCode) {
-          console.log(`Test email detected, verification code: ${emailResult.verificationCode}`);
+          console.log(`Test email detected with code: ${emailResult.verificationCode}`);
           setTestVerificationCode(emailResult.verificationCode);
           toast.info("Test account detected", {
             description: `Your verification code is: ${emailResult.verificationCode}`,

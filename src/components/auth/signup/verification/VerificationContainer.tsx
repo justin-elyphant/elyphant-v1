@@ -37,21 +37,31 @@ const VerificationContainer = ({
   const [isLoading, setIsLoading] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [localTestCode, setLocalTestCode] = useState<string | null>(null);
+  const [localCode, setLocalCode] = useState<string | null>(null);
+  
+  // Use either the prop code or the locally stored code
+  const effectiveVerificationCode = testVerificationCode || localCode;
 
-  // Enhanced logging for debugging
-  console.log("VerificationContainer: Rendering with props:", {
-    userEmail,
-    userName,
-    resendCount,
-    testVerificationCode: testVerificationCode || "none"
-  });
+  // Enhanced logging for debugging with full state details
+  useEffect(() => {
+    console.log("VerificationContainer: Full state details", {
+      userEmail,
+      userName,
+      resendCount,
+      testVerificationCode,
+      localCode,
+      effectiveVerificationCode,
+      isLoading,
+      verificationChecking,
+      isVerified
+    });
+  }, [userEmail, userName, resendCount, testVerificationCode, localCode, effectiveVerificationCode, isLoading, verificationChecking, isVerified]);
 
   // If we receive a testVerificationCode prop, update our local state
   useEffect(() => {
-    if (testVerificationCode && testVerificationCode !== localTestCode) {
-      console.log("VerificationContainer: Updating local test code from props:", testVerificationCode);
-      setLocalTestCode(testVerificationCode);
+    if (testVerificationCode && testVerificationCode !== localCode) {
+      console.log("VerificationContainer: Updating local code from props:", testVerificationCode);
+      setLocalCode(testVerificationCode);
       
       // Show toast when new code is received
       toast.info("Test verification code received", {
@@ -59,18 +69,14 @@ const VerificationContainer = ({
         duration: 10000
       });
     }
-  }, [testVerificationCode, localTestCode]);
-
-  // Additional debug effect to monitor local state
-  useEffect(() => {
-    console.log("VerificationContainer: localTestCode updated to:", localTestCode);
-  }, [localTestCode]);
+  }, [testVerificationCode, localCode]);
 
   const checkEmailVerification = async () => {
     try {
       setVerificationChecking(true);
       
       const { data, error } = await supabase.auth.getSession();
+      console.log("Email verification check result:", { data, error });
       
       if (error) {
         toast.error("Failed to check verification status");
@@ -91,6 +97,7 @@ const VerificationContainer = ({
         description: "Please enter the verification code sent to your email."
       });
     } catch (err) {
+      console.error("Error during verification check:", err);
       toast.error("Failed to check verification status");
     } finally {
       setVerificationChecking(false);
@@ -107,15 +114,12 @@ const VerificationContainer = ({
   // Function to manually set the verification code (for testing)
   const setVerificationCode = (code: string) => {
     console.log("Manually setting verification code:", code);
-    setLocalTestCode(code);
+    setLocalCode(code);
     toast.info("Verification code set manually", {
       description: `Code: ${code}`,
       duration: 5000
     });
   };
-
-  // Find the effective code to use (prop or local state)
-  const effectiveVerificationCode = testVerificationCode || localTestCode;
 
   return (
     <Card>

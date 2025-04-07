@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,9 +21,9 @@ export const useVerificationCode = ({
   const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
   const [autoVerifyTriggered, setAutoVerifyTriggered] = useState(false);
 
-  // Enhanced debugging
+  // Enhanced debugging with full props logging
   useEffect(() => {
-    console.log("useVerificationCode: Initial state", {
+    console.log("useVerificationCode: Full initialization state", {
       userEmail,
       testVerificationCode: testVerificationCode || "none",
       autoVerifyTriggered,
@@ -37,11 +37,11 @@ export const useVerificationCode = ({
         duration: 10000
       });
     }
-  }, []);
+  }, [userEmail, testVerificationCode, verificationCode, autoVerifyTriggered]);
 
-  // Effect to automatically enter test code when provided
+  // Improved code for handling auto-filling and verification
   useEffect(() => {
-    if (testVerificationCode && verificationCode !== testVerificationCode) {
+    if (testVerificationCode && testVerificationCode.length === 6 && verificationCode !== testVerificationCode) {
       console.log("Auto-filling test verification code:", testVerificationCode);
       
       // Use a timeout to ensure DOM is ready
@@ -56,42 +56,17 @@ export const useVerificationCode = ({
             setAutoVerifyTriggered(true);
             handleVerifyCode(testVerificationCode);
           }
-        }, 1500);
+        }, 1000);
         
         return () => clearTimeout(verifyTimer);
       }, 500);
       
       return () => clearTimeout(timer);
     }
-  }, [testVerificationCode]);
+  }, [testVerificationCode, isSubmitting, autoVerifyTriggered]);
 
-  // This useEffect monitors when all 6 digits have been entered
-  // and the code matches the test code, then auto-verifies
-  useEffect(() => {
-    const shouldAutoVerify = 
-      testVerificationCode && 
-      verificationCode === testVerificationCode &&
-      verificationCode.length === 6 && 
-      !isSubmitting && 
-      !autoVerifyTriggered;
-      
-    if (shouldAutoVerify) {
-      console.log("Test code fully entered and matches:", verificationCode);
-      console.log("Auto-verification will trigger shortly");
-      
-      setAutoVerifyTriggered(true);
-      
-      // Small delay to show the completed code before verification
-      const timer = setTimeout(() => {
-        console.log("Auto-verification now triggering after delay");
-        handleVerifyCode(verificationCode);
-      }, 800);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [verificationCode, testVerificationCode, isSubmitting]);
-
-  const handleVerifyCode = async (code = verificationCode) => {
+  // Memoized handleVerifyCode function to prevent recreating it on renders
+  const handleVerifyCode = useCallback(async (code = verificationCode) => {
     if (code.length !== 6) {
       toast.error("Please enter the 6-digit code from your email");
       return;
@@ -109,16 +84,20 @@ export const useVerificationCode = ({
     setLastAttemptTime(Date.now());
     
     try {
-      const { data, error } = await supabase.functions.invoke('verify-email-code', {
+      // Improved response handling with detailed logging
+      const response = await supabase.functions.invoke('verify-email-code', {
         body: {
           email: userEmail,
           code: code
         }
       });
       
-      console.log("Verification response:", { data, error });
+      // Enhanced logging for the full response
+      console.log("Full verification response:", response);
       
-      if (error || !data.success) {
+      const { data, error } = response;
+      
+      if (error || !data?.success) {
         let errorMessage = "Invalid verification code";
         
         if (error?.message?.includes("expired") || data?.reason === "expired") {
@@ -159,7 +138,7 @@ export const useVerificationCode = ({
       setAttemptCount(prev => prev + 1);
       setIsSubmitting(false);
     }
-  };
+  }, [verificationCode, userEmail, lastAttemptTime, attemptCount, onVerificationSuccess]);
 
   return {
     verificationCode,

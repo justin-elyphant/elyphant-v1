@@ -10,15 +10,22 @@ const SignUp: React.FC = () => {
     userName,
     resendCount,
     testVerificationCode,
-    onSignUpSubmit, // This is the correct property name from the hook
+    onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
   } = useSignUpProcess();
   
-  // Add logging to check testVerificationCode value
+  // Enhanced logging to check testVerificationCode value
   useEffect(() => {
+    console.log("SignUp page - Full state:", {
+      step,
+      userEmail,
+      userName,
+      resendCount,
+      testVerificationCode: testVerificationCode || "none"
+    });
     console.log("SignUp page testVerificationCode:", testVerificationCode);
-  }, [testVerificationCode]);
+  }, [step, userEmail, userName, resendCount, testVerificationCode]);
 
   return (
     <div className="container max-w-md mx-auto py-10 px-4">
@@ -28,7 +35,7 @@ const SignUp: React.FC = () => {
         userName={userName || ""}
         resendCount={resendCount || 0}
         testVerificationCode={testVerificationCode}
-        onSignUpSubmit={onSignUpSubmit} // Changed from handleSignUpSubmit to onSignUpSubmit
+        onSignUpSubmit={onSignUpSubmit}
         handleResendVerification={handleResendVerification}
         handleBackToSignUp={handleBackToSignUp}
       />

@@ -15,10 +15,13 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   onVerificationSuccess, 
   testVerificationCode 
 }) => {
-  // Add logging to track testVerificationCode
+  // Enhanced logging to track testVerificationCode
   useEffect(() => {
-    console.log("VerificationForm received testVerificationCode:", testVerificationCode);
-  }, [testVerificationCode]);
+    console.log("VerificationForm - Full props:", {
+      userEmail,
+      testVerificationCode: testVerificationCode || "none",
+    });
+  }, [userEmail, testVerificationCode]);
   
   const {
     verificationCode,
@@ -39,13 +42,14 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
       console.log("Auto-filling verification code:", testVerificationCode);
       setVerificationCode(testVerificationCode);
       
-      // Optional: Auto-submit after a short delay
-      // const timer = setTimeout(() => {
-      //   handleVerifyCode();
-      // }, 1000);
-      // return () => clearTimeout(timer);
+      // Auto-submit after a short delay
+      const timer = setTimeout(() => {
+        console.log("Auto-submitting verification after delay");
+        handleVerifyCode();
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [testVerificationCode, setVerificationCode]);
+  }, [testVerificationCode, setVerificationCode, handleVerifyCode]);
 
   return (
     <div className="flex flex-col items-center justify-center">

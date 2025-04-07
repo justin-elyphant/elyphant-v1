@@ -162,15 +162,40 @@ async function parseRequestBody(req: Request): Promise<{
   status?: number;
 }> {
   try {
-    const body = await req.json();
-    console.log("Received body:", JSON.stringify(body));
+    // Improved body parsing with error handling
+    const bodyText = await req.text();
+    console.log("Raw request body:", bodyText);
+    
+    let body;
+    try {
+      body = JSON.parse(bodyText || '{}');
+    } catch (e) {
+      console.error("Failed to parse JSON body:", e, "Body text:", bodyText);
+      return { 
+        valid: false, 
+        error: "Invalid JSON format in request body",
+        status: 400
+      };
+    }
+    
+    console.log("Parsed body:", JSON.stringify(body));
     
     const { email, code } = body;
     
-    if (!email || !code) {
+    if (!email) {
+      console.error("Missing email in request");
       return { 
         valid: false, 
-        error: "Email and code are required",
+        error: "Email is required",
+        status: 400
+      };
+    }
+    
+    if (!code) {
+      console.error("Missing code in request");
+      return { 
+        valid: false, 
+        error: "Verification code is required",
         status: 400
       };
     }
@@ -188,10 +213,10 @@ async function parseRequestBody(req: Request): Promise<{
     
     return { valid: true, body };
   } catch (error) {
-    console.error("Failed to parse JSON:", error);
+    console.error("Failed to parse request:", error);
     return { 
       valid: false, 
-      error: "Invalid JSON in request body", 
+      error: "Invalid request body", 
       status: 400
     };
   }
@@ -293,6 +318,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log(`Received ${req.method} request to verify-email-code`);
+    console.log("Request headers:", Object.fromEntries(req.headers.entries()));
+    
     // Parse and validate request body
     const parsed = await parseRequestBody(req);
     

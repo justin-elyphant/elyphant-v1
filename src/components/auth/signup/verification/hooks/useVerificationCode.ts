@@ -84,23 +84,36 @@ export const useVerificationCode = ({
     setLastAttemptTime(Date.now());
     
     try {
+      // Enhanced request payload logging
+      const requestPayload = {
+        email: userEmail,
+        code: code
+      };
+      console.log("Verification request payload:", JSON.stringify(requestPayload));
+      
       // Improved response handling with detailed logging
-      const response = await supabase.functions.invoke('verify-email-code', {
-        body: {
-          email: userEmail,
-          code: code
-        }
+      const { data, error } = await supabase.functions.invoke('verify-email-code', {
+        body: requestPayload
       });
       
       // Enhanced logging for the full response
-      console.log("Full verification response:", response);
+      console.log("Full verification response:", { data, error });
       
-      const { data, error } = response;
+      if (error) {
+        console.error("Edge function error:", error);
+        setVerificationError("Verification failed: " + error.message);
+        setAttemptCount(prev => prev + 1);
+        setIsSubmitting(false);
+        toast.error("Verification failed", {
+          description: error.message || "Please try again"
+        });
+        return;
+      }
       
-      if (error || !data?.success) {
+      if (!data?.success) {
         let errorMessage = "Invalid verification code";
         
-        if (error?.message?.includes("expired") || data?.reason === "expired") {
+        if (data?.reason === "expired") {
           errorMessage = "Verification code has expired";
           toast.error("Verification code expired", {
             description: "Please request a new code"
@@ -116,7 +129,7 @@ export const useVerificationCode = ({
           });
         }
         
-        console.error("Verification failed:", errorMessage, { data, error });
+        console.error("Verification failed:", errorMessage, { data });
         setVerificationError(errorMessage);
         setAttemptCount(prev => prev + 1);
         setIsSubmitting(false);

@@ -5,6 +5,7 @@ import "@testing-library/jest-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import ProfileSetupFlow from "../ProfileSetupFlow";
+import { toast } from "sonner";
 
 // Mock the auth context
 jest.mock("@/contexts/auth", () => ({

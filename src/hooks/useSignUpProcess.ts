@@ -17,6 +17,11 @@ export function useSignUpProcess() {
   const [lastResendTime, setLastResendTime] = useState<number | null>(null);
   const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
 
+  // Debug logging for the verification code
+  useEffect(() => {
+    console.log("SignUp hook: testVerificationCode state updated to:", testVerificationCode);
+  }, [testVerificationCode]);
+
   // Check if user is already verified from URL parameters
   useEffect(() => {
     const verified = searchParams.get('verified') === 'true';
@@ -28,11 +33,6 @@ export function useSignUpProcess() {
       navigate("/dashboard");
     }
   }, [searchParams, navigate]);
-
-  // Debug logging for the verification code
-  useEffect(() => {
-    console.log("SignUp hook: testVerificationCode state updated to:", testVerificationCode);
-  }, [testVerificationCode]);
 
   const handleSignUpSubmit = async (values: SignUpFormValues) => {
     try {
@@ -71,16 +71,28 @@ export function useSignUpProcess() {
         setResendCount(0);
         setLastResendTime(Date.now());
         
-        // If it's a test email, save the verification code
-        if (emailResult.isTestEmail && emailResult.verificationCode) {
-          console.log(`Test email detected with code: ${emailResult.verificationCode}`);
+        // Enhanced extraction of verification code
+        if (emailResult.verificationCode) {
+          console.log(`Verification code found in response: ${emailResult.verificationCode}`);
           setTestVerificationCode(emailResult.verificationCode);
           
           // Show an immediate toast for the test email code
-          toast.info("Test account detected", {
+          toast.info("Verification code detected", {
             description: `Your verification code is: ${emailResult.verificationCode}`,
             duration: 10000 // Show for 10 seconds
           });
+        } 
+        // Check if code is in data property (matches the edge function structure)
+        else if (emailResult.data?.code) {
+          console.log(`Verification code found in data.code: ${emailResult.data.code}`);
+          setTestVerificationCode(emailResult.data.code);
+          
+          toast.info("Verification code detected", {
+            description: `Your verification code is: ${emailResult.data.code}`,
+            duration: 10000
+          });
+        } else {
+          console.log("No verification code found in response:", emailResult);
         }
 
         // Log the full emailResult for debugging
@@ -135,16 +147,27 @@ export function useSignUpProcess() {
         return { success: false };
       }
       
-      // If it's a test email, save the verification code
-      if (result.isTestEmail && result.verificationCode) {
-        console.log(`Test email resend detected, new code: ${result.verificationCode}`);
+      // Enhanced extraction of verification code for resend
+      if (result.verificationCode) {
+        console.log(`Resend - verification code found in response: ${result.verificationCode}`);
         setTestVerificationCode(result.verificationCode);
         
-        // Show an immediate toast for the test email code
-        toast.info("Test account detected", {
+        toast.info("Verification code detected", {
           description: `Your new verification code is: ${result.verificationCode}`,
-          duration: 10000 // Show for 10 seconds
+          duration: 10000
         });
+      } 
+      // Check if code is in data property
+      else if (result.data?.code) {
+        console.log(`Resend - verification code found in data.code: ${result.data.code}`);
+        setTestVerificationCode(result.data.code);
+        
+        toast.info("Verification code detected", {
+          description: `Your new verification code is: ${result.data.code}`,
+          duration: 10000
+        });
+      } else {
+        console.log("Resend - no verification code found in response:", result);
       }
       
       setResendCount(prev => prev + 1);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const VerificationContainer = ({
   const [isLoading, setIsLoading] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [localTestCode, setLocalTestCode] = useState<string | null>(null);
 
   // Enhanced logging for debugging
   console.log("VerificationContainer: Rendering with props:", {
@@ -45,16 +47,19 @@ const VerificationContainer = ({
     testVerificationCode: testVerificationCode || "none"
   });
 
-  // Show toast when testVerificationCode changes
+  // If we receive a testVerificationCode prop, update our local state
   useEffect(() => {
-    if (testVerificationCode) {
-      console.log("VerificationContainer: Test code detected in props, showing toast:", testVerificationCode);
-      toast.info("Test verification code", {
+    if (testVerificationCode && testVerificationCode !== localTestCode) {
+      console.log("VerificationContainer: Updating local test code from props:", testVerificationCode);
+      setLocalTestCode(testVerificationCode);
+      
+      // Show toast when new code is received
+      toast.info("Test verification code received", {
         description: `Code: ${testVerificationCode}`,
         duration: 10000
       });
     }
-  }, [testVerificationCode]);
+  }, [testVerificationCode, localTestCode]);
 
   const checkEmailVerification = async () => {
     try {
@@ -118,12 +123,14 @@ const VerificationContainer = ({
         
         <VerificationAlert useCode={true} />
         
-        {testVerificationCode && (
+        {(testVerificationCode || localTestCode) && (
           <Alert className="bg-blue-50 border-blue-200">
             <Info className="h-4 w-4 text-blue-500 mr-2" />
             <AlertDescription className="text-blue-700">
               <span className="font-semibold">Test account detected!</span> Your verification code is:{' '}
-              <code className="bg-blue-100 px-2 py-0.5 rounded font-mono">{testVerificationCode}</code>
+              <code className="bg-blue-100 px-2 py-0.5 rounded font-mono">
+                {testVerificationCode || localTestCode}
+              </code>
             </AlertDescription>
           </Alert>
         )}
@@ -139,7 +146,7 @@ const VerificationContainer = ({
             <VerificationForm 
               userEmail={userEmail}
               onVerificationSuccess={handleVerificationSuccess}
-              testVerificationCode={testVerificationCode}
+              testVerificationCode={testVerificationCode || localTestCode}
             />
             
             <VerificationActions

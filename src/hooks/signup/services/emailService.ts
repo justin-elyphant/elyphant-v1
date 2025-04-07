@@ -120,34 +120,55 @@ export const sendVerificationEmail = async (email: string, name: string, verific
       throw new Error(emailResponse.error.message || "Failed to send verification email");
     }
     
-    // Check for test email and verification code in the response data
-    console.log("Checking for test email verification code in response:", emailResponse.data);
+    // Enhanced logging and verification code extraction
+    console.log("Checking for verification code in response:", emailResponse.data);
     
     // Extract verification code and testBypass flag from response
     const verificationCode = emailResponse.data?.code;
     const testBypass = emailResponse.data?.testBypass;
     
-    // Log the full data to help debug
-    console.log("Email function response data:", {
-      verificationCode,
+    // Enhanced logging to show all possible places the code might be
+    console.log("Email function response structure:", {
+      directCode: emailResponse.data?.code,
+      nestedDataCode: emailResponse.data?.data?.code,
       testBypass,
+      hasData: !!emailResponse.data,
+      dataKeys: emailResponse.data ? Object.keys(emailResponse.data) : [],
       fullData: emailResponse.data
     });
     
-    if (testBypass && verificationCode) {
-      console.log(`🧪 TEST BYPASS MODE ACTIVE: Verification code is ${verificationCode}`);
+    // Check for verification code in multiple possible locations
+    let extractedCode = verificationCode;
+    if (!extractedCode && emailResponse.data?.data?.code) {
+      extractedCode = emailResponse.data.data.code;
+      console.log("Found verification code in nested data:", extractedCode);
+    }
+    
+    if (testBypass && extractedCode) {
+      console.log(`🧪 TEST BYPASS MODE ACTIVE: Verification code is ${extractedCode}`);
       return { 
         success: true, 
         isTestEmail: true, 
-        verificationCode,
-        testBypass: true
+        verificationCode: extractedCode,
+        testBypass: true,
+        data: emailResponse.data // Include full data for additional extraction if needed
       };
-    } else if (verificationCode) {
-      console.log(`🧪 TEST MODE: Verification code is ${verificationCode}`);
-      return { success: true, isTestEmail: true, verificationCode };
+    } else if (extractedCode) {
+      console.log(`🧪 TEST MODE: Verification code is ${extractedCode}`);
+      return { 
+        success: true, 
+        isTestEmail: true, 
+        verificationCode: extractedCode,
+        data: emailResponse.data // Include full data for additional extraction if needed
+      };
     }
     
-    return { success: true };
+    // If we couldn't find the code in the usual places, return the full data
+    // for potential extraction in the calling code
+    return { 
+      success: true,
+      data: emailResponse.data
+    };
   } catch (error) {
     console.error("Failed to send custom verification email:", error);
     return { success: false, error };

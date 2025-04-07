@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useVerificationCode } from "./hooks/useVerificationCode";
 import VerificationCodeInput from "./components/VerificationCodeInput";
 import VerificationButton from "./components/VerificationButton";
@@ -15,6 +15,11 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   onVerificationSuccess, 
   testVerificationCode 
 }) => {
+  // Add logging to track testVerificationCode
+  useEffect(() => {
+    console.log("VerificationForm received testVerificationCode:", testVerificationCode);
+  }, [testVerificationCode]);
+  
   const {
     verificationCode,
     setVerificationCode,

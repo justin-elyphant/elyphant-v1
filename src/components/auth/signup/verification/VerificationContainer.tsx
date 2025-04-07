@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -123,7 +122,7 @@ const VerificationContainer = ({
           <Alert className="bg-blue-50 border-blue-200">
             <Info className="h-4 w-4 text-blue-500 mr-2" />
             <AlertDescription className="text-blue-700">
-              <span className="font-semibold">Test email detected!</span> Your verification code is:{' '}
+              <span className="font-semibold">Test account detected!</span> Your verification code is:{' '}
               <code className="bg-blue-100 px-2 py-0.5 rounded font-mono">{testVerificationCode}</code>
             </AlertDescription>
           </Alert>

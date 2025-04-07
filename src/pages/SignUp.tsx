@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useSignUpProcess } from "@/hooks/useSignUpProcess";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 
@@ -10,10 +10,15 @@ const SignUp: React.FC = () => {
     userName,
     resendCount,
     testVerificationCode,
-    handleSignUpSubmit,
+    onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
   } = useSignUpProcess();
+  
+  // Add logging to check testVerificationCode value
+  useEffect(() => {
+    console.log("SignUp page testVerificationCode:", testVerificationCode);
+  }, [testVerificationCode]);
 
   return (
     <div className="container max-w-md mx-auto py-10 px-4">
@@ -23,7 +28,7 @@ const SignUp: React.FC = () => {
         userName={userName || ""}
         resendCount={resendCount || 0}
         testVerificationCode={testVerificationCode}
-        onSignUpSubmit={handleSignUpSubmit}
+        onSignUpSubmit={onSignUpSubmit}
         handleResendVerification={handleResendVerification}
         handleBackToSignUp={handleBackToSignUp}
       />

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import VerificationContainer from "@/components/auth/signup/verification/VerificationContainer";
 
 interface VerificationViewProps {
@@ -19,6 +19,11 @@ const VerificationView: React.FC<VerificationViewProps> = ({
   resendCount,
   testVerificationCode
 }) => {
+  // Add logging to check if testVerificationCode is reaching this component
+  useEffect(() => {
+    console.log("VerificationView received testVerificationCode:", testVerificationCode);
+  }, [testVerificationCode]);
+
   return (
     <VerificationContainer
       userEmail={userEmail}

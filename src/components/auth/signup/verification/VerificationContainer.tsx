@@ -61,6 +61,11 @@ const VerificationContainer = ({
     }
   }, [testVerificationCode, localTestCode]);
 
+  // Additional debug effect to monitor local state
+  useEffect(() => {
+    console.log("VerificationContainer: localTestCode updated to:", localTestCode);
+  }, [localTestCode]);
+
   const checkEmailVerification = async () => {
     try {
       setVerificationChecking(true);
@@ -99,6 +104,19 @@ const VerificationContainer = ({
     }, 1500);
   };
 
+  // Function to manually set the verification code (for testing)
+  const setVerificationCode = (code: string) => {
+    console.log("Manually setting verification code:", code);
+    setLocalTestCode(code);
+    toast.info("Verification code set manually", {
+      description: `Code: ${code}`,
+      duration: 5000
+    });
+  };
+
+  // Find the effective code to use (prop or local state)
+  const effectiveVerificationCode = testVerificationCode || localTestCode;
+
   return (
     <Card>
       <CardHeader>
@@ -123,13 +141,13 @@ const VerificationContainer = ({
         
         <VerificationAlert useCode={true} />
         
-        {(testVerificationCode || localTestCode) && (
+        {effectiveVerificationCode && (
           <Alert className="bg-blue-50 border-blue-200">
             <Info className="h-4 w-4 text-blue-500 mr-2" />
             <AlertDescription className="text-blue-700">
               <span className="font-semibold">Test account detected!</span> Your verification code is:{' '}
               <code className="bg-blue-100 px-2 py-0.5 rounded font-mono">
-                {testVerificationCode || localTestCode}
+                {effectiveVerificationCode}
               </code>
             </AlertDescription>
           </Alert>
@@ -146,7 +164,7 @@ const VerificationContainer = ({
             <VerificationForm 
               userEmail={userEmail}
               onVerificationSuccess={handleVerificationSuccess}
-              testVerificationCode={testVerificationCode || localTestCode}
+              testVerificationCode={effectiveVerificationCode}
             />
             
             <VerificationActions
@@ -156,6 +174,21 @@ const VerificationContainer = ({
               onCheckVerification={checkEmailVerification}
               resendCount={resendCount}
             />
+            
+            {/* Debug section for manual code entry (only in development) */}
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="mt-4 p-2 border border-dashed border-gray-300 rounded-md">
+                <p className="text-xs text-gray-500 mb-2">Debug: Manually set verification code</p>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    className="text-xs p-1 border rounded flex-1"
+                    placeholder="Enter code" 
+                    onChange={(e) => e.target.value.length === 6 && setVerificationCode(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
             
             <TroubleshootingGuide />
             <ImportantNoteAlert />

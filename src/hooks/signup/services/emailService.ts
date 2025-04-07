@@ -74,6 +74,27 @@ export const sendVerificationEmail = async (email: string, name: string, verific
         
         // Log the raw response for debugging
         console.log(`Email function raw response:`, emailResponse);
+        console.log(`Email function response type:`, typeof emailResponse);
+        console.log(`Email function response data type:`, typeof emailResponse.data);
+        
+        // Enhanced debugging for response data structure
+        if (emailResponse.data) {
+          console.log(`Email function response data keys:`, Object.keys(emailResponse.data));
+          console.log(`Email function response data:`, JSON.stringify(emailResponse.data));
+          
+          // Specifically check for code in various locations
+          console.log(`Direct code property:`, emailResponse.data.code);
+          console.log(`Direct verificationCode property:`, emailResponse.data.verificationCode);
+          
+          if (typeof emailResponse.data === 'object' && emailResponse.data !== null) {
+            // If data is an object, check for nested data property
+            if (emailResponse.data.data) {
+              console.log(`Nested data property keys:`, Object.keys(emailResponse.data.data));
+              console.log(`Nested data.code:`, emailResponse.data.data.code);
+              console.log(`Nested data.verificationCode:`, emailResponse.data.data.verificationCode);
+            }
+          }
+        }
         
         if (emailResponse.error) {
           console.error("Edge function error details:", {
@@ -120,45 +141,57 @@ export const sendVerificationEmail = async (email: string, name: string, verific
       throw new Error(emailResponse.error.message || "Failed to send verification email");
     }
     
-    // Enhanced logging and verification code extraction
+    // Extract verification code with comprehensive logging
     console.log("Checking for verification code in response:", emailResponse.data);
     
-    // Extract verification code and testBypass flag from response
-    const verificationCode = emailResponse.data?.code;
-    const testBypass = emailResponse.data?.testBypass;
+    // Standard code properties
+    let verificationCode = emailResponse.data?.code;
+    let testBypass = emailResponse.data?.testBypass;
     
-    // Enhanced logging to show all possible places the code might be
-    console.log("Email function response structure:", {
+    // Log all possible locations for the code
+    console.log("Email function response data structure:", {
       directCode: emailResponse.data?.code,
-      nestedDataCode: emailResponse.data?.data?.code,
+      verificationCode: emailResponse.data?.verificationCode,
+      dataCode: emailResponse.data?.data?.code,
       testBypass,
       hasData: !!emailResponse.data,
-      dataKeys: emailResponse.data ? Object.keys(emailResponse.data) : [],
-      fullData: emailResponse.data
+      dataKeys: emailResponse.data ? Object.keys(emailResponse.data) : []
     });
     
-    // Check for verification code in multiple possible locations
-    let extractedCode = verificationCode;
-    if (!extractedCode && emailResponse.data?.data?.code) {
-      extractedCode = emailResponse.data.data.code;
-      console.log("Found verification code in nested data:", extractedCode);
+    // If standard code property is not found, look for alternatives
+    if (!verificationCode) {
+      // Check for verificationCode property
+      if (emailResponse.data?.verificationCode) {
+        verificationCode = emailResponse.data.verificationCode;
+        console.log("Found verification code in verificationCode property:", verificationCode);
+      } 
+      // Check for nested data.code property
+      else if (emailResponse.data?.data?.code) {
+        verificationCode = emailResponse.data.data.code;
+        console.log("Found verification code in nested data.code:", verificationCode);
+      }
+      // Check for nested data.verificationCode property
+      else if (emailResponse.data?.data?.verificationCode) {
+        verificationCode = emailResponse.data.data.verificationCode;
+        console.log("Found verification code in nested data.verificationCode:", verificationCode);
+      }
     }
     
-    if (testBypass && extractedCode) {
-      console.log(`🧪 TEST BYPASS MODE ACTIVE: Verification code is ${extractedCode}`);
+    if (testBypass && verificationCode) {
+      console.log(`🧪 TEST BYPASS MODE ACTIVE: Verification code is ${verificationCode}`);
       return { 
         success: true, 
         isTestEmail: true, 
-        verificationCode: extractedCode,
+        verificationCode: verificationCode,
         testBypass: true,
         data: emailResponse.data // Include full data for additional extraction if needed
       };
-    } else if (extractedCode) {
-      console.log(`🧪 TEST MODE: Verification code is ${extractedCode}`);
+    } else if (verificationCode) {
+      console.log(`🧪 TEST MODE: Verification code is ${verificationCode}`);
       return { 
         success: true, 
         isTestEmail: true, 
-        verificationCode: extractedCode,
+        verificationCode: verificationCode,
         data: emailResponse.data // Include full data for additional extraction if needed
       };
     }

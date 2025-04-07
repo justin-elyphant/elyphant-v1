@@ -33,6 +33,20 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
     testVerificationCode
   });
 
+  // Auto-fill the code if we have a test verification code
+  useEffect(() => {
+    if (testVerificationCode && testVerificationCode.length === 6) {
+      console.log("Auto-filling verification code:", testVerificationCode);
+      setVerificationCode(testVerificationCode);
+      
+      // Optional: Auto-submit after a short delay
+      // const timer = setTimeout(() => {
+      //   handleVerifyCode();
+      // }, 1000);
+      // return () => clearTimeout(timer);
+    }
+  }, [testVerificationCode, setVerificationCode]);
+
   return (
     <div className="flex flex-col items-center justify-center">
       <p className="text-sm text-gray-600 mb-4">

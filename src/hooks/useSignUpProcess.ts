@@ -1,190 +1,178 @@
-import { useState, useCallback, useEffect } from "react";
+
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { SignUpValues } from "@/components/auth/signup/SignUpForm";
-import { useProfileImage } from "./signup/useProfileImage";
-import { useEmailVerification } from "./signup/useEmailVerification";
-import { useProfileData } from "./signup/useProfileData";
-import { 
-  signUpUser, 
-  sendVerificationEmail,
-  updateUserProfile,
-  createConnection
-} from "./signup/signupService";
 import { supabase } from "@/integrations/supabase/client";
+import { SignUpFormValues } from "@/components/auth/signup/SignUpContentWrapper";
+import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService";
 
-export const useSignUpProcess = (invitedBy: string | null, senderUserId: string | null) => {
-  const [step, setStep] = useState(1);
-  const [profileType, setProfileType] = useState<string | null>(null);
-  const [formValues, setFormValues] = useState<SignUpValues | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  
-  const { profileImage, setProfileImage, handleImageUpload, uploadProfileImage } = useProfileImage();
-  const { profileData, handleProfileDataChange } = useProfileData();
-  
-  const [isVerifiedState, setIsVerifiedState] = useState(false);
-  const setIsVerified = useCallback((value: boolean) => {
-    console.log("Setting isVerified state to:", value);
-    setIsVerifiedState(value);
-  }, []);
+export function useSignUpProcess() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [step, setStep] = useState<"signup" | "verification">("signup");
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
+  const [emailSent, setEmailSent] = useState<boolean>(false);
+  const [resendCount, setResendCount] = useState<number>(0);
+  const [lastResendTime, setLastResendTime] = useState<number | null>(null);
+  const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
 
-  const { 
-    verificationChecking, 
-    isVerified, 
-    isLoading, 
-    checkEmailVerification,
-    verifyWithCode 
-  } = useEmailVerification(
-    emailSent, 
-    userEmail, 
-    isVerifiedState, 
-    setIsVerified
-  );
-
+  // Check if user is already verified from URL parameters
   useEffect(() => {
-    const checkSession = async () => {
-      console.log("Checking for existing session");
-      const { data, error } = await supabase.auth.getSession();
+    const verified = searchParams.get('verified') === 'true';
+    const email = searchParams.get('email');
+    
+    if (verified && email) {
+      console.log("Email verified from URL parameters!");
+      setUserEmail(email);
+      navigate("/dashboard");
+    }
+  }, [searchParams, navigate]);
+
+  // Debug logging for the verification code
+  useEffect(() => {
+    console.log("SignUp hook: testVerificationCode state updated to:", testVerificationCode);
+  }, [testVerificationCode]);
+
+  const handleSignUpSubmit = async (values: SignUpFormValues) => {
+    try {
+      console.log("Sign up initiated for", values.email);
       
-      if (data?.session) {
-        console.log("User already has a session:", data.session.user);
-        setUserId(data.session.user.id);
-        setUserEmail(data.session.user.email);
+      const result = await signUpUser(values, null, null);
+      
+      if (!result) {
+        toast.error("Signup failed", {
+          description: "Unable to create account. Please try again.",
+        });
+        return;
+      }
+      
+      console.log("User created successfully:", result);
+      
+      setUserEmail(values.email);
+      setUserName(values.name);
+      
+      const currentOrigin = window.location.origin;
+      console.log("Using origin for verification:", currentOrigin);
+      
+      const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
+      
+      console.log("Email verification result:", emailResult);
+      
+      if (!emailResult.success) {
+        console.error("Failed to send verification code:", emailResult.error);
+        toast.error("Failed to send verification code", {
+          description: "Please try again or contact support.",
+        });
+        return;
+      } else {
+        console.log("Custom verification email sent successfully");
+        toast.success("Account created! Check your email for verification code.");
+        setResendCount(0);
+        setLastResendTime(Date.now());
         
-        if (!formValues && data.session.user.email) {
-          const name = data.session.user.user_metadata?.name || "User";
-          setFormValues({
-            name,
-            email: data.session.user.email,
-            password: "",
-            captcha: ""
+        // If it's a test email, save the verification code
+        if (emailResult.isTestEmail && emailResult.verificationCode) {
+          console.log(`Test email detected with code: ${emailResult.verificationCode}`);
+          setTestVerificationCode(emailResult.verificationCode);
+          
+          // Show an immediate toast for the test email code
+          toast.info("Test account detected", {
+            description: `Your verification code is: ${emailResult.verificationCode}`,
+            duration: 10000 // Show for 10 seconds
           });
         }
-      }
-    };
-    
-    checkSession();
-  }, [formValues]);
-  
-  useEffect(() => {
-    if (isVerified && emailSent && step === 1) {
-      console.log("Email verified, advancing to step 2");
-      setStep(2);
-    }
-  }, [isVerified, emailSent, step]);
 
-  const handleSignUpSubmit = async (values: SignUpValues) => {
+        // Log the full emailResult for debugging
+        console.log("Full emailResult:", JSON.stringify(emailResult));
+      }
+      
+      setEmailSent(true);
+      setStep("verification");
+    } catch (err: any) {
+      console.error("Signup failed:", err);
+      
+      if (err.message?.includes("already registered") || err.message?.includes("user_exists")) {
+        toast.error("Email already registered", {
+          description: "Please use a different email address or try to sign in.",
+        });
+      } else {
+        toast.error("Signup failed", {
+          description: err.message || "An unexpected error occurred",
+        });
+      }
+    }
+  };
+
+  const handleResendVerification = async () => {
     try {
-      console.log("Starting signup process for email:", values.email);
+      // Rate limiting check (client-side enforcement)
+      if (lastResendTime && Date.now() - lastResendTime < 60000) {
+        toast.error("Please wait before requesting another code", {
+          description: "You can request a new code once per minute."
+        });
+        return { success: false, rateLimited: true };
+      }
       
-      const userData = await signUpUser(values, invitedBy, senderUserId);
+      const currentOrigin = window.location.origin;
+      console.log("Resending verification using origin:", currentOrigin);
       
-      if (userData.user) {
-        console.log("User created successfully, ID:", userData.user.id);
-        setUserId(userData.user.id);
-        setUserEmail(values.email);
-        
-        try {
-          const currentOrigin = window.location.origin;
-          console.log("Using origin for verification:", currentOrigin);
-          
-          const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
-          
-          if (!emailResult.success) {
-            console.error("Custom verification email failed");
-            toast.error("Failed to send verification code. Please try again.");
-            return;
-          } else {
-            console.log("Custom verification email sent successfully");
-            toast.success("Account created! Check your email for verification code.");
-            setEmailSent(true);
-          }
-        } catch (emailError) {
-          console.error("Failed to send verification email:", emailError);
-          toast.error("Account created, but there was an issue sending the verification email. Please try again.");
-          return;
+      const result = await sendVerificationEmail(userEmail, userName, currentOrigin);
+      
+      console.log("Resend verification result:", result);
+      
+      if (!result.success) {
+        if (result.rateLimited) {
+          toast.error("Too many verification attempts", {
+            description: "Please wait a few minutes before trying again."
+          });
+          return { success: false, rateLimited: true };
         }
         
-        setFormValues(values);
+        toast.error("Failed to resend verification code", {
+          description: "Please try again later."
+        });
+        return { success: false };
       }
-    } catch (err: any) {
-      console.error("Sign up error:", err);
-      toast.error("Failed to create account", {
-        description: err.message || "Please try again later",
+      
+      // If it's a test email, save the verification code
+      if (result.isTestEmail && result.verificationCode) {
+        console.log(`Test email resend detected, new code: ${result.verificationCode}`);
+        setTestVerificationCode(result.verificationCode);
+        
+        // Show an immediate toast for the test email code
+        toast.info("Test account detected", {
+          description: `Your new verification code is: ${result.verificationCode}`,
+          duration: 10000 // Show for 10 seconds
+        });
+      }
+      
+      setResendCount(prev => prev + 1);
+      setLastResendTime(Date.now());
+      toast.success("Verification code resent", {
+        description: "Please check your email for the new code."
       });
+      return { success: true };
+    } catch (error) {
+      console.error("Error resending verification:", error);
+      toast.error("Failed to resend code");
+      return { success: false };
     }
   };
 
-  const handleProfileTypeSelection = (type: string) => {
-    console.log("Profile type selected:", type);
-    setProfileType(type);
-    setStep(3);
-  };
-
-  const completeOnboarding = async () => {
-    if (!userId) {
-      console.error("Cannot complete onboarding: no user ID");
-      return false;
-    }
-    
-    try {
-      console.log("Completing onboarding for user:", userId);
-      
-      let profileImageUrl = await uploadProfileImage(userId, profileImage);
-      
-      const profileUpdateResult = await updateUserProfile(userId, {
-        profile_image: profileImageUrl,
-        profile_type: profileType,
-        bio: profileData.bio,
-        interests: profileData.interests,
-      });
-      
-      if (!profileUpdateResult.success) {
-        console.error("Profile update failed");
-        return false;
-      }
-      
-      if (senderUserId) {
-        await createConnection(senderUserId, userId, invitedBy);
-      }
-      
-      console.log("Profile setup completed successfully");
-      toast.success("Profile set up successfully!");
-      return true;
-    } catch (err) {
-      console.error("Error completing onboarding:", err);
-      toast.error("Failed to complete profile setup");
-      return false;
-    }
-  };
-
-  const handleVerificationCheck = async (): Promise<{ verified: boolean }> => {
-    console.log("Checking verification status");
-    return await checkEmailVerification();
+  const handleBackToSignUp = () => {
+    setStep("signup");
   };
 
   return {
     step,
-    setStep,
-    profileType,
-    profileImage,
-    profileData,
-    formValues,
-    userId,
-    emailSent,
-    setEmailSent,
     userEmail,
-    setUserEmail,
-    verificationChecking,
-    isVerified,
+    userName,
+    emailSent,
+    resendCount,
+    testVerificationCode,
     handleSignUpSubmit,
-    handleProfileTypeSelection,
-    handleImageUpload,
-    handleProfileDataChange,
-    completeOnboarding,
-    checkEmailVerification: handleVerificationCheck,
-    setIsVerified,
-    verifyWithCode
+    handleResendVerification,
+    handleBackToSignUp,
   };
-};
+}

@@ -10,7 +10,7 @@ const SignUp: React.FC = () => {
     userName,
     resendCount,
     testVerificationCode,
-    onSignUpSubmit,
+    handleSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
   } = useSignUpProcess();
@@ -18,12 +18,12 @@ const SignUp: React.FC = () => {
   return (
     <div className="container max-w-md mx-auto py-10 px-4">
       <SignUpContentWrapper
-        step={step}
+        step={step as "signup" | "verification"}
         userEmail={userEmail}
-        userName={userName}
-        resendCount={resendCount}
+        userName={userName || ""}
+        resendCount={resendCount || 0}
         testVerificationCode={testVerificationCode}
-        onSignUpSubmit={onSignUpSubmit}
+        onSignUpSubmit={handleSignUpSubmit}
         handleResendVerification={handleResendVerification}
         handleBackToSignUp={handleBackToSignUp}
       />

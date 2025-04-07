@@ -10,7 +10,7 @@ const SignUp: React.FC = () => {
     userName,
     resendCount,
     testVerificationCode,
-    handleSignUpSubmit,
+    onSignUpSubmit, // This is the correct property name from the hook
     handleResendVerification,
     handleBackToSignUp,
   } = useSignUpProcess();
@@ -28,7 +28,7 @@ const SignUp: React.FC = () => {
         userName={userName || ""}
         resendCount={resendCount || 0}
         testVerificationCode={testVerificationCode}
-        onSignUpSubmit={handleSignUpSubmit}
+        onSignUpSubmit={onSignUpSubmit} // Changed from handleSignUpSubmit to onSignUpSubmit
         handleResendVerification={handleResendVerification}
         handleBackToSignUp={handleBackToSignUp}
       />

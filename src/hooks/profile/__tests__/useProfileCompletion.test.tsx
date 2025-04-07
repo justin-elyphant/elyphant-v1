@@ -1,5 +1,6 @@
 
 import { renderHook, act, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import { useProfileCompletion } from "../useProfileCompletion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";

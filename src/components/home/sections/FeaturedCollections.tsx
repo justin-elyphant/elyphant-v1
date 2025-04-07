@@ -1,53 +1,54 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { useProducts } from "@/contexts/ProductContext";
-import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 
-type CollectionProps = {
-  collections: {
-    id: number;
-    name: string;
-    image: string;
-    count: number;
-    searchTerm: string; // Added searchTerm for proper linking
-  }[];
+type Collection = {
+  id: number;
+  name: string;
+  image: string;
 };
 
-const FeaturedCollections = ({ collections }: CollectionProps) => {
-  const { products } = useProducts();
-  
-  const handleCollectionClick = () => {
-    if (products.length === 0) {
-      toast.info("Loading products...");
-    }
-  };
+type CollectionProps = {
+  collections: Collection[];
+};
+
+const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
+  if (!collections || collections.length === 0) {
+    return (
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">Featured Collections</h2>
+        <div className="flex items-center justify-center p-8 bg-gray-50 rounded-md">
+          <p className="text-muted-foreground">No collections available</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-12">
-      <h2 className="text-2xl font-bold mb-6">Shop by Occasion</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Featured Collections</h2>
+        <Link to="/gifting" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+          View all collections
+        </Link>
+      </div>
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {collections.map((collection) => (
-          <Link 
-            to={`/marketplace?search=${encodeURIComponent(collection.searchTerm)}`}
-            key={collection.id}
-            onClick={handleCollectionClick}
-          >
-            <div className="group relative overflow-hidden rounded-lg">
-              <div className="aspect-[4/3]">
+          <Link key={collection.id} to={`/gifting?collection=${collection.id}`}>
+            <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
+              <div className="aspect-video relative">
                 <img 
                   src={collection.image} 
                   alt={collection.name}
-                  className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                  className="object-cover w-full h-full"
                 />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                <div>
-                  <h3 className="text-white font-semibold">{collection.name}</h3>
-                  <p className="text-white/80 text-sm">{collection.count} items</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                  <h3 className="text-white font-medium text-lg">{collection.name}</h3>
                 </div>
               </div>
-            </div>
+            </Card>
           </Link>
         ))}
       </div>

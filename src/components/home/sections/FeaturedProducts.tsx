@@ -9,18 +9,29 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Product } from "@/contexts/ProductContext";
 
 type ProductProps = {
-  products: {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-    vendor: string;
-  }[];
+  products: Product[];
 };
 
-const FeaturedProducts = ({ products }: ProductProps) => {
+const FeaturedProducts = ({ products = [] }: ProductProps) => {
+  if (!products || products.length === 0) {
+    return (
+      <div className="mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Featured Products</h2>
+          <Link to="/gifting" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+            View all products
+          </Link>
+        </div>
+        <div className="flex items-center justify-center p-8 bg-gray-50 rounded-md">
+          <p className="text-muted-foreground">Loading featured products...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
@@ -41,8 +52,8 @@ const FeaturedProducts = ({ products }: ProductProps) => {
                       src={product.image} 
                       alt={product.name}
                       className="object-cover w-full h-full"
-                      loading="lazy" // Added lazy loading for performance
-                      decoding="async" // Enhanced image decoding
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                   <CardContent className="p-4">

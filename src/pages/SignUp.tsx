@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -133,6 +134,7 @@ const SignUp: React.FC = () => {
       
       // If it's a test email, save the verification code
       if (result.isTestEmail && result.verificationCode) {
+        console.log(`Test email resend detected, new code: ${result.verificationCode}`);
         setTestVerificationCode(result.verificationCode);
         toast.info("Test account detected", {
           description: `Your verification code is: ${result.verificationCode}`

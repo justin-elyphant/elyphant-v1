@@ -20,7 +20,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
  */
 export async function storeVerificationCode(email: string, code: string): Promise<boolean> {
   try {
-    console.log(`📝 Attempting to store verification code for ${email}`);
+    console.log(`📝 Attempting to store verification code for ${email}: ${code}`);
     
     // Check if there's an existing code that's not expired and update resend count
     const { data: existingCode, error: queryError } = await supabase
@@ -72,7 +72,7 @@ async function handleExistingCode(existingCode: any, email: string, code: string
   const { error: updateError } = await supabase
     .from("verification_codes")
     .update({
-      code: code,
+      code: code,  // Update with the new code
       resend_count: existingCode.resend_count + 1,
       last_resend_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // Reset expiration
@@ -93,7 +93,9 @@ async function handleExistingCode(existingCode: any, email: string, code: string
  */
 async function createNewVerificationCode(email: string, code: string): Promise<boolean> {
   try {
-    const { error: insertError } = await supabase
+    console.log(`🆕 Creating new verification code record for ${email} with code ${code}`);
+    
+    const { data, error: insertError } = await supabase
       .from("verification_codes")
       .insert({
         email: email,
@@ -101,14 +103,17 @@ async function createNewVerificationCode(email: string, code: string): Promise<b
         expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         last_resend_at: new Date().toISOString(),
         resend_count: 0,
-      });
+        attempts: 0,
+        used: false
+      })
+      .select();
     
     if (insertError) {
       console.error("🚨 Error inserting verification code:", insertError);
       return false;
     }
     
-    console.log(`✅ Successfully created new verification code for ${email}`);
+    console.log(`✅ Successfully created new verification code for ${email}`, data);
     return true;
   } catch (error) {
     console.error("🚨 Error creating verification code:", error);

@@ -33,9 +33,36 @@ const isValidVerificationCode = async (email: string, code: string): Promise<{
     const codeData = await fetchVerificationCode(email, code);
     
     if (!codeData) {
-      console.log("No verification code found for email:", email);
+      console.log("No verification code found for email:", email, "and code:", code);
+      
+      // Additional debugging: check if there are any recent codes for this email
+      const { data: recentCodes, error: recentError } = await supabase
+        .from("verification_codes")
+        .select("id, code, expires_at, created_at")
+        .eq("email", email)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      
+      if (recentCodes?.length) {
+        console.log("Recent codes found for this email:", recentCodes.map(c => ({
+          id: c.id,
+          partialCode: c.code ? `${c.code.substring(0, 2)}...${c.code.substring(4)}` : 'none',
+          expires_at: c.expires_at,
+          created_at: c.created_at
+        })));
+      } else {
+        console.log("No recent codes found for this email");
+      }
+      
       return { valid: false, reason: "invalid" };
     }
+    
+    console.log("Found verification code:", {
+      id: codeData.id,
+      expires_at: codeData.expires_at,
+      used: codeData.used,
+      attempts: codeData.attempts
+    });
     
     // Check if code is expired
     if (isCodeExpired(codeData.expires_at)) {
@@ -70,16 +97,24 @@ function isTestCode(code: string): boolean {
  * Fetch verification code from database
  */
 async function fetchVerificationCode(email: string, code: string) {
+  console.log(`Fetching verification code from DB for email: ${email}, code: ${code}`);
+  
   const { data, error } = await supabase
     .from("verification_codes")
     .select("id, code, expires_at, used, attempts")
     .eq("email", email)
     .eq("code", code)
     .eq("used", false)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .single();
   
   if (error) {
-    console.log("Error fetching verification code:", error.message);
+    if (error.message.includes('No rows found')) {
+      console.log(`No verification code found matching email: ${email} and code: ${code}`);
+    } else {
+      console.error("Error fetching verification code:", error.message);
+    }
     return null;
   }
   

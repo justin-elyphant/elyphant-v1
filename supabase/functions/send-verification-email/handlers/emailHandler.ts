@@ -62,9 +62,16 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
       
       // Store the code for consistency even in bypass mode
       try {
-        await storeVerificationCode(email, earlyBypassCode);
+        const stored = await storeVerificationCode(email, earlyBypassCode);
+        console.log(`Test code storage result: ${stored ? 'SUCCESS' : 'FAILED'}`);
+        
+        if (!stored) {
+          console.error(`⚠️ Failed to store test verification code for ${email}`);
+          // Continue anyway for test emails
+        }
       } catch (error) {
-        console.log("Error storing code in early bypass, continuing anyway:", error);
+        console.error("Error storing code in early bypass:", error);
+        // Continue anyway for test emails
       }
       
       return createSuccessResponse({

@@ -7,9 +7,8 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
     console.log("Signing up user with admin API and bypassing email verification");
     
     // First, check if we're correctly configured
-    // Instead of directly accessing .url property, log the project ref for debugging
-    const projectRef = supabase.projectRef;
-    console.log(`Will call create-user function in project: ${projectRef}`);
+    // Use a simple log without trying to access protected properties
+    console.log(`Will call create-user function through Supabase Functions API`);
     
     // Create the user through our Edge Function instead of Supabase Auth directly
     console.log("Sending create-user request with body:", {

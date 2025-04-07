@@ -153,76 +153,6 @@ async function confirmUserEmail(email: string): Promise<void> {
 }
 
 /**
- * Parse and validate request body
- */
-async function parseRequestBody(req: Request): Promise<{ 
-  valid: boolean; 
-  body?: any; 
-  error?: string;
-  status?: number;
-}> {
-  try {
-    // Improved body parsing with error handling
-    const bodyText = await req.text();
-    console.log("Raw request body:", bodyText);
-    
-    let body;
-    try {
-      body = JSON.parse(bodyText || '{}');
-    } catch (e) {
-      console.error("Failed to parse JSON body:", e, "Body text:", bodyText);
-      return { 
-        valid: false, 
-        error: "Invalid JSON format in request body",
-        status: 400
-      };
-    }
-    
-    console.log("Parsed body:", JSON.stringify(body));
-    
-    const { email, code } = body;
-    
-    if (!email) {
-      console.error("Missing email in request");
-      return { 
-        valid: false, 
-        error: "Email is required",
-        status: 400
-      };
-    }
-    
-    if (!code) {
-      console.error("Missing code in request");
-      return { 
-        valid: false, 
-        error: "Verification code is required",
-        status: 400
-      };
-    }
-    
-    // Validate code format
-    if (!isValidCodeFormat(code)) {
-      console.error("Invalid code format:", code);
-      return { 
-        valid: false, 
-        error: "Invalid verification code format. Must be 6 digits.",
-        reason: "format",
-        status: 400
-      };
-    }
-    
-    return { valid: true, body };
-  } catch (error) {
-    console.error("Failed to parse request:", error);
-    return { 
-      valid: false, 
-      error: "Invalid request body", 
-      status: 400
-    };
-  }
-}
-
-/**
  * Validate code format (6 digits)
  */
 function isValidCodeFormat(code: string): boolean {
@@ -267,6 +197,12 @@ function createSuccessResponse(message: string, data = {}): Response {
  * Handle verification process
  */
 async function handleVerification(email: string, code: string): Promise<Response> {
+  // Validate code format first
+  if (!isValidCodeFormat(code)) {
+    console.error("Invalid code format:", code);
+    return createErrorResponse("Invalid verification code format. Must be 6 digits.", "format");
+  }
+
   const { valid, reason } = await isValidVerificationCode(email, code);
   
   if (!valid) {
@@ -319,21 +255,41 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log(`Received ${req.method} request to verify-email-code`);
+    
+    // Detailed request logging - as requested by user
     console.log("Request headers:", Object.fromEntries(req.headers.entries()));
     
-    // Parse and validate request body
-    const parsed = await parseRequestBody(req);
+    // Clone the request to get the body for logging and processing
+    const clonedReq = req.clone();
+    const bodyText = await clonedReq.text();
     
-    if (!parsed.valid) {
-      return createErrorResponse(parsed.error || "Invalid request", undefined, parsed.status);
+    console.log("Raw request body:", bodyText);
+    
+    // Parse JSON with robust error handling
+    let body;
+    try {
+      body = JSON.parse(bodyText || '{}');
+    } catch (e) {
+      console.error("Failed to parse JSON body:", e);
+      return createErrorResponse("Invalid JSON format in request body", "format", 400);
     }
     
-    const { email, code } = parsed.body;
+    const { email, code } = body;
+    console.log("Parsed request payload:", { email, code });
     
-    console.log("Received verification request:", { email, code });
+    // Validate required fields
+    if (!email) {
+      console.error("Missing email in request");
+      return createErrorResponse("Email is required", "missing_field", 400);
+    }
+    
+    if (!code) {
+      console.error("Missing code in request");
+      return createErrorResponse("Verification code is required", "missing_field", 400);
+    }
+    
+    // Process verification with validated payload
     console.log(`Attempting to verify code ${code} for email ${email}`);
-    
-    // Process verification
     return await handleVerification(email, code);
     
   } catch (error: any) {

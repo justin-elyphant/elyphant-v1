@@ -126,9 +126,11 @@ export const sendVerificationEmail = async (email: string, name: string, verific
       return { success: false, error: "Rate limited", rateLimited: true };
     }
     
-    // For test emails, log the verification code if it was returned
-    if (emailResponse.data?.code) {
-      console.log(`🧪 TEST MODE: Verification code is ${emailResponse.data.code}`);
+    // For test emails, extract the verification code if it was returned
+    const verificationCode = emailResponse.data?.code;
+    if (verificationCode) {
+      console.log(`🧪 TEST MODE: Verification code is ${verificationCode}`);
+      return { success: true, isTestEmail: true, verificationCode };
     }
     
     return { success: true };

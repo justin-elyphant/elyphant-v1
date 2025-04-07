@@ -10,33 +10,44 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 interface VerificationFormProps {
   userEmail: string;
   onVerificationSuccess: () => void;
+  testVerificationCode?: string | null;
 }
 
-const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationFormProps) => {
+const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCode }: VerificationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [verificationError, setVerificationError] = useState<string>("");
   const [verificationCode, setVerificationCode] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
   const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
 
-  // Effect to automatically enter test code in development
+  // Effect to automatically enter test code in development or when provided
   useEffect(() => {
-    // Check if we're in development and using a test email
-    const isTestEmail = userEmail.includes('justncmeeks') || 
-                        userEmail.includes('test@example');
-    const isDevelopment = process.env.NODE_ENV === 'development' || 
-                        window.location.hostname === 'localhost';
-    
-    if (isDevelopment && isTestEmail) {
-      console.log("Auto-filling test verification code in development environment");
+    if (testVerificationCode) {
+      console.log("Auto-filling test verification code:", testVerificationCode);
       // Allow a moment for the component to mount
       const timer = setTimeout(() => {
-        setVerificationCode("123456");
+        setVerificationCode(testVerificationCode);
       }, 500);
       
       return () => clearTimeout(timer);
+    } else {
+      // Check if we're in development and using a test email
+      const isTestEmail = userEmail.includes('justncmeeks') || 
+                          userEmail.includes('test@example');
+      const isDevelopment = process.env.NODE_ENV === 'development' || 
+                          window.location.hostname === 'localhost';
+      
+      if (isDevelopment && isTestEmail) {
+        console.log("Auto-filling default test verification code in development environment");
+        // Allow a moment for the component to mount
+        const timer = setTimeout(() => {
+          setVerificationCode("123456");
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      }
     }
-  }, [userEmail]);
+  }, [userEmail, testVerificationCode]);
 
   const handleVerifyCode = async () => {
     if (verificationCode.length !== 6) {
@@ -110,10 +121,10 @@ const VerificationForm = ({ userEmail, onVerificationSuccess }: VerificationForm
 
   // Auto-verify when test code is entered
   useEffect(() => {
-    const isTestCode = verificationCode === "123456";
-    const isTestEmail = userEmail.includes('justncmeeks') || userEmail.includes('test@example');
+    const isCompleteCode = verificationCode.length === 6;
+    const isTestCode = verificationCode === testVerificationCode;
     
-    if (verificationCode.length === 6 && isTestCode && isTestEmail) {
+    if (isCompleteCode && isTestCode && testVerificationCode) {
       console.log("Test code detected, auto-verifying");
       handleVerifyCode();
     }

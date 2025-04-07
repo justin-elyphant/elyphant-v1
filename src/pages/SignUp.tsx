@@ -16,6 +16,8 @@ import {
 import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService";
 import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import VerificationContainer from "@/components/auth/signup/verification/VerificationContainer";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoCircled } from "lucide-react";
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const SignUp: React.FC = () => {
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [resendCount, setResendCount] = useState<number>(0);
   const [lastResendTime, setLastResendTime] = useState<number | null>(null);
+  const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
 
   useEffect(() => {
     const verified = searchParams.get('verified') === 'true';
@@ -72,6 +75,14 @@ const SignUp: React.FC = () => {
         toast.success("Account created! Check your email for verification code.");
         setResendCount(0);
         setLastResendTime(Date.now());
+        
+        // If it's a test email, save the verification code
+        if (emailResult.isTestEmail && emailResult.verificationCode) {
+          setTestVerificationCode(emailResult.verificationCode);
+          toast.info("Test account detected", {
+            description: `Your verification code is: ${emailResult.verificationCode}`
+          });
+        }
       }
       
       setEmailSent(true);
@@ -120,6 +131,14 @@ const SignUp: React.FC = () => {
         return { success: false };
       }
       
+      // If it's a test email, save the verification code
+      if (result.isTestEmail && result.verificationCode) {
+        setTestVerificationCode(result.verificationCode);
+        toast.info("Test account detected", {
+          description: `Your verification code is: ${result.verificationCode}`
+        });
+      }
+      
       setResendCount(prev => prev + 1);
       setLastResendTime(Date.now());
       toast.success("Verification code resent", {
@@ -166,6 +185,7 @@ const SignUp: React.FC = () => {
           onBackToSignUp={handleBackToSignUp}
           onResendVerification={handleResendVerification}
           resendCount={resendCount}
+          testVerificationCode={testVerificationCode}
         />
       )}
     </div>

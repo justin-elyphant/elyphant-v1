@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
+import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isComplete, loading } = useProfileCompletion();
   
   // Redirect to sign-up if not logged in
   useEffect(() => {
@@ -19,6 +21,16 @@ const Dashboard = () => {
   if (!user) {
     return null; // Don't render anything while redirecting
   }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // The redirect to /profile-setup is handled by the useProfileCompletion hook if profile is incomplete
 
   return (
     <div className="min-h-screen bg-gray-50">

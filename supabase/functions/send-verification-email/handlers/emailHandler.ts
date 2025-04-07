@@ -71,19 +71,16 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
     const isDevEnv = Deno.env.get("ENVIRONMENT") === "development";
     
     if (testMode) {
-      console.log(`Test email detected: ${email}`);
-      // For test emails in dev, just return the code directly without sending an email
-      if (isDevEnv) {
-        console.log("Development mode: Skipping email send for test address");
-        return createSuccessResponse({
-          message: "Verification code stored but email not sent (test email in dev mode)",
-          code: verificationCode,
-          testBypass: true
-        });
-      }
+      console.log(`Test email detected: ${email} - BYPASSING EMAIL SEND in ALL environments`);
+      // For test emails, always bypass the actual email sending and just return the code
+      return createSuccessResponse({
+        message: "Verification code stored but email not sent (test email bypass)",
+        code: verificationCode,
+        testBypass: true
+      });
     }
     
-    // Send the email with the verification code
+    // Only proceed with sending an email for non-test email addresses
     try {
       console.log(`Sending verification email to ${email}`);
       const emailResult = await sendEmailWithRetry(email, name || email, verificationCode);
@@ -104,19 +101,9 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
       }
       
       console.log(`Email successfully sent to ${email}`);
-      // For test emails we also include the code in the response for easier testing
-      if (testMode) {
-        return createSuccessResponse({
-          message: "Verification code sent successfully via test pathway",
-          code: verificationCode,
-          testBypass: false
-        });
-      } else {
-        // Don't include the code in production for security
-        return createSuccessResponse({
-          message: "Verification code sent successfully"
-        });
-      }
+      return createSuccessResponse({
+        message: "Verification code sent successfully"
+      });
     } catch (error) {
       console.error(`Error sending email to ${email}:`, error);
       return new Response(

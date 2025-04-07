@@ -57,27 +57,46 @@ export const sendVerificationEmail = async (email: string, name: string, verific
         console.log(`Using test email: ${email} - this should bypass the actual send`);
       }
       
-      console.log(`Calling send-verification-email function with params:`, { 
-        email, 
-        name, 
+      const requestBody = {
+        email: email,
+        name: name,
         verificationUrl: baseUrl,
-        useVerificationCode: true 
-      });
+        useVerificationCode: true
+      };
       
-      emailResponse = await supabase.functions.invoke('send-verification-email', {
-        body: {
-          email: email,
-          name: name,
-          verificationUrl: baseUrl, // Send just the origin, the function will append the path
-          useVerificationCode: true  // Explicitly request code-based verification
+      console.log(`Calling send-verification-email function with params:`, requestBody);
+      
+      try {
+        // Call the Supabase edge function
+        emailResponse = await supabase.functions.invoke('send-verification-email', {
+          body: requestBody
+        });
+        
+        // Log the raw response for debugging
+        console.log(`Email function raw response:`, emailResponse);
+        
+        if (emailResponse.error) {
+          console.error("Edge function error details:", {
+            status: emailResponse.error.status,
+            message: emailResponse.error.message,
+            context: emailResponse.error.context,
+            name: emailResponse.error.name,
+            stack: emailResponse.error.stack
+          });
         }
-      });
-      
-      console.log(`Email function response (attempt ${retries + 1}):`, emailResponse);
-      
-      if (!emailResponse.error) {
-        success = true;
-        break;
+        
+        if (!emailResponse.error) {
+          success = true;
+          break;
+        }
+      } catch (invocationError) {
+        console.error("Function invocation error:", invocationError);
+        emailResponse = { 
+          error: {
+            message: invocationError?.toString() || "Unknown error during function invocation",
+            status: 500,
+          }
+        };
       }
       
       // If it's not a rate limit error, don't retry

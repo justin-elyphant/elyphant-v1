@@ -1,176 +1,148 @@
 
-import { createSuccessResponse, createErrorResponse, createRateLimitErrorResponse, handleEmailSendingError } from "../utils/responses.ts";
 import { generateVerificationCode, isTestEmail } from "../utils/verification.ts";
 import { storeVerificationCode } from "../services/dbService.ts";
 import { sendEmailWithRetry } from "../utils/email.ts";
+import { 
+  createSuccessResponse, 
+  createErrorResponse,
+  createRateLimitErrorResponse
+} from "../utils/responses.ts";
 import { corsHeaders } from "../utils/cors.ts";
 
 /**
- * Main handler for verification email requests
+ * Handle email verification requests
  */
-export async function handleVerificationEmail(req: Request): Promise<Response> {
-  // Parse request body
-  const body = await parseRequestBody(req);
-  if (!body.valid) {
-    return createErrorResponse(body.error || "Invalid request", undefined, body.status);
-  }
+export const handleVerificationEmail = async (req: Request): Promise<Response> => {
+  console.log("---------------------------------------");
+  console.log(`Send verification email function called: ${new Date().toISOString()}`);
+  console.log("---------------------------------------");
   
-  const { email, name, useVerificationCode = true } = body.data;
-  console.log("Request received for:", { email, name: name || "[NOT PROVIDED]", useVerificationCode });
-
-  // ENHANCED LOGGING: Log environment information
-  const environment = Deno.env.get("ENVIRONMENT") || "development";
-  console.log(`📝 ENVIRONMENT CHECK: Currently running in '${environment}' environment`);
-  
-  // ENHANCED LOGGING: Detailed test email check
-  console.log(`📧 TEST EMAIL CHECK: Checking if '${email}' is a test email...`);
-  const isTest = isTestEmail(email);
-  console.log(`📧 TEST EMAIL RESULT: '${email}' ${isTest ? 'IS' : 'is NOT'} a test email`);
-  
-  // CRITICAL: Test email bypass check - Must run BEFORE any other logic
-  // This ensures test emails never hit rate limits or actual email services
-  const shouldBypass = isTest && environment !== "production";
-  console.log(`🔍 BYPASS CHECK: Should bypass email sending? ${shouldBypass ? 'YES' : 'NO'}`);
-  console.log(`🔍 BYPASS DETAILS: isTest=${isTest}, environment=${environment}, notProduction=${environment !== "production"}`);
-  
-  if (shouldBypass) {
-    console.log(`🧪 TEST EMAIL DETECTED: ${email} - Bypassing all remaining logic`);
+  try {
+    // Validate request method
+    if (req.method !== "POST") {
+      console.error(`Invalid method: ${req.method}`);
+      return createErrorResponse("Method not allowed. Use POST.", "method_error", 405);
+    }
     
-    // Generate verification code for test accounts
-    const verificationCode = generateVerificationCode();
-    console.log(`Test verification code generated: ${verificationCode}`);
+    // Validate content type
+    const contentType = req.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.error(`Invalid content type: ${contentType}`);
+      return createErrorResponse("Content-Type must be application/json", "content_type_error", 400);
+    }
     
-    // For test accounts in dev/staging, also store code 123456 as fallback
+    // Parse request body
+    let data: any;
     try {
-      if (environment === "development" || environment === "staging") {
-        console.log("For testing: verification code 123456 will also work");
-        await storeVerificationCode(email, "123456").catch(error => {
-          console.error("Error storing test fallback code 123456:", error);
-        });
-      }
-      
-      // Store the real verification code too
-      await storeVerificationCode(email, verificationCode);
-      
-      // Return success with the code directly (only for test emails in non-production)
-      console.log(`Returning test mode response with code: ${verificationCode}`);
-      return createSuccessResponse({ 
-        id: "test-mode-email", 
-        code: verificationCode,
-        testBypass: true
+      data = await req.json();
+      console.log("Request body received:", {
+        email: data.email ? `${data.email.substring(0, 3)}...` : undefined, // Partial logging for privacy
+        name: data.name ? `${data.name.substring(0, 3)}...` : undefined,
+        hasVerificationUrl: !!data.verificationUrl,
+        useVerificationCode: !!data.useVerificationCode,
       });
     } catch (error) {
-      console.error("Error in test email bypass flow:", error);
-      return createErrorResponse("Failed to store verification code", "database_error", 500);
-    }
-  }
-
-  // Handle regular email flow (non-test emails)
-  try {
-    return await handleRegularEmail(email, name, environment);
-  } catch (error) {
-    console.error("Unexpected error in handleVerificationEmail:", error);
-    return createErrorResponse("Server error processing email verification", "server_error", 500);
-  }
-}
-
-/**
- * Parse and validate request body
- */
-async function parseRequestBody(req: Request): Promise<{ 
-  valid: boolean; 
-  data?: any; 
-  error?: string;
-  status?: number;
-}> {
-  const contentType = req.headers.get("content-type");
-  if (!contentType || !contentType.includes("application/json")) {
-    return {
-      valid: false, 
-      error: "Content-Type must be application/json", 
-      status: 400
-    };
-  }
-  
-  try {
-    const body = await req.json();
-    console.log("Request body:", JSON.stringify({
-      email: body.email,
-      name: body.name || "[NOT PROVIDED]",
-      verificationUrl: body.verificationUrl || "[NOT PROVIDED]",
-      useVerificationCode: body.useVerificationCode
-    }));
-    
-    if (!body.email) {
-      return {
-        valid: false,
-        error: "Email is required",
-        status: 400
-      };
+      console.error("Failed to parse request body:", error);
+      return createErrorResponse(`Invalid JSON in request body: ${error}`, "json_parse_error", 400);
     }
     
-    return { valid: true, data: body };
+    // Validate required fields
+    const { email, name } = data;
+    if (!email) {
+      console.error("Missing email in request");
+      return createErrorResponse("Email is required", "missing_email", 400);
+    }
     
-  } catch (jsonError) {
-    console.error("JSON parse error:", jsonError);
-    return { 
-      valid: false, 
-      error: "Invalid JSON in request body", 
-      status: 400,
-      details: jsonError.toString()
-    };
-  }
-}
-
-/**
- * Handle regular (non-test) email verification flow
- */
-async function handleRegularEmail(
-  email: string, 
-  name: string, 
-  environment: string
-): Promise<Response> {
-  console.log(`📨 Processing verification email for regular (non-test) address: ${email}`);
-  
-  try {
     // Generate verification code
     const verificationCode = generateVerificationCode();
-    console.log(`Generated verification code: ${verificationCode}`);
+    console.log(`Generated verification code for ${email}: ${verificationCode}`);
     
-    // Store verification code in database
-    const storedCode = await storeVerificationCode(email, verificationCode);
-    
-    if (!storedCode) {
-      console.warn(`⚠️ Failed to store verification code for ${email} - possible rate limit`);
+    // Store verification code
+    // This also handles rate limiting checks
+    console.log(`Attempting to store code for ${email}`);
+    const codeStored = await storeVerificationCode(email, verificationCode);
+    if (!codeStored) {
+      console.warn(`Rate limit or storage error for ${email}`);
       return createRateLimitErrorResponse();
     }
-
-    // For backup/debugging in development environments, allow test code 123456
-    if (environment !== "production") {
-      console.log("🔧 DEV/STAGING ENVIRONMENT: Adding fallback code 123456");
-      
-      try {
-        // Store test code in database too
-        await storeVerificationCode(email, "123456");
-      } catch (error) {
-        console.warn("⚠️ Failed to store fallback code, but continuing:", error);
-        // Non-critical error, continue with main flow
+    
+    // Check if this is a test email - if so, bypass actual sending
+    const testMode = isTestEmail(email);
+    const isDevEnv = Deno.env.get("ENVIRONMENT") === "development";
+    
+    if (testMode) {
+      console.log(`Test email detected: ${email}`);
+      // For test emails in dev, just return the code directly without sending an email
+      if (isDevEnv) {
+        console.log("Development mode: Skipping email send for test address");
+        return createSuccessResponse({
+          message: "Verification code stored but email not sent (test email in dev mode)",
+          code: verificationCode,
+          testBypass: true
+        });
       }
     }
     
-    // Send email with retry logic
-    console.log(`🚀 Attempting to send verification email to ${email}`);
-    const emailResult = await sendEmailWithRetry(email, name, verificationCode);
-    
-    if (!emailResult.success) {
-      console.error("❌ Email sending failed after retries:", emailResult.error);
-      return handleEmailSendingError(emailResult.error);
+    // Send the email with the verification code
+    try {
+      console.log(`Sending verification email to ${email}`);
+      const emailResult = await sendEmailWithRetry(email, name || email, verificationCode);
+      
+      if (!emailResult.success) {
+        console.error(`Failed to send email to ${email}:`, emailResult.error);
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to send verification email",
+            success: false,
+            details: emailResult.error
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
+      console.log(`Email successfully sent to ${email}`);
+      // For test emails we also include the code in the response for easier testing
+      if (testMode) {
+        return createSuccessResponse({
+          message: "Verification code sent successfully via test pathway",
+          code: verificationCode,
+          testBypass: false
+        });
+      } else {
+        // Don't include the code in production for security
+        return createSuccessResponse({
+          message: "Verification code sent successfully"
+        });
+      }
+    } catch (error) {
+      console.error(`Error sending email to ${email}:`, error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to send verification email",
+          success: false,
+          details: error
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
-
-    console.log(`✅ Successfully sent verification email to ${email}`);
-    return createSuccessResponse(emailResult.data);
   } catch (error) {
-    console.error("❌ Unexpected error in handleRegularEmail:", error);
-    return createErrorResponse("Failed to process verification email", "server_error", 500);
+    console.error("Unexpected error in handleVerificationEmail:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: "Internal server error",
+        success: false,
+        details: error
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   }
-}
+};

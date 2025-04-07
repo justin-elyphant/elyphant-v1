@@ -7,7 +7,19 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   try {
     console.log("Signing up user with admin API and bypassing email verification");
     
+    // First, check if we're correctly configured
+    const functionUrl = `${supabase.functions.url}/create-user`;
+    console.log(`Will call create-user function at: ${functionUrl}`);
+    
     // Create the user through our Edge Function instead of Supabase Auth directly
+    console.log("Sending create-user request with body:", {
+      email: values.email,
+      name: values.name,
+      password: "[REDACTED]",
+      invitedBy: invitedBy,
+      senderUserId: senderUserId
+    });
+    
     const response = await supabase.functions.invoke('create-user', {
       body: {
         email: values.email,
@@ -16,6 +28,20 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
         invitedBy: invitedBy,
         senderUserId: senderUserId
       }
+    });
+    
+    console.log("Create user response received:", {
+      error: response.error ? {
+        message: response.error.message,
+        status: response.error.status,
+        name: response.error.name
+      } : null,
+      data: response.data ? {
+        success: response.data.success,
+        hasUser: !!response.data.user,
+        error: response.data.error,
+        code: response.data.code
+      } : null
     });
     
     if (response.error) {

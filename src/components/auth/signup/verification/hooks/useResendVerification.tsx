@@ -25,6 +25,11 @@ export const useResendVerification = ({ onResendVerification }: UseResendVerific
           });
         }
       }
+      
+      return result; // Return the result object from the function
+    } catch (error) {
+      console.error("Error in handleResendVerification:", error);
+      return { success: false }; // Return a default error object
     } finally {
       setIsResending(false);
     }

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService";
 
-export function useSignUp() {
+export function useSignUpProcess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<"signup" | "verification">("signup");

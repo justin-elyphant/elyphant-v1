@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useSignUp } from "@/hooks/useSignUpProcess";
+import { useSignUpProcess } from "@/hooks/useSignUpProcess";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 
 const SignUp: React.FC = () => {
@@ -13,7 +13,7 @@ const SignUp: React.FC = () => {
     onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
-  } = useSignUp();
+  } = useSignUpProcess();
 
   return (
     <div className="container max-w-md mx-auto py-10 px-4">

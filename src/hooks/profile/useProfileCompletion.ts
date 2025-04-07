@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isProfileComplete } from "@/contexts/auth/authUtils";
 
 export const useProfileCompletion = (redirectToSetup: boolean = true) => {
-  const { user } = useAuth();
+  const { user, isDebugMode } = useAuth();
   const navigate = useNavigate();
   const [isComplete, setIsComplete] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,6 +15,18 @@ export const useProfileCompletion = (redirectToSetup: boolean = true) => {
     const checkProfileCompletion = async () => {
       if (!user) {
         setLoading(false);
+        return;
+      }
+      
+      // If in debug mode, just set a default value and skip the API call
+      if (isDebugMode) {
+        console.log('🔧 Debug mode: Mocking profile completion check');
+        setIsComplete(false); // Default to incomplete for testing the flow
+        setLoading(false);
+        
+        if (redirectToSetup) {
+          navigate("/profile-setup");
+        }
         return;
       }
       
@@ -44,7 +56,7 @@ export const useProfileCompletion = (redirectToSetup: boolean = true) => {
     };
     
     checkProfileCompletion();
-  }, [user, navigate, redirectToSetup]);
+  }, [user, navigate, redirectToSetup, isDebugMode]);
 
   return { isComplete, loading };
 };

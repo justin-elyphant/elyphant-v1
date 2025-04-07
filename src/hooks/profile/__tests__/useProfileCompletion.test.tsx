@@ -38,6 +38,7 @@ describe("useProfileCompletion", () => {
     // Mock user is logged in
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: "test-user-id" },
+      isDebugMode: false
     });
 
     // Mock incomplete profile (missing required fields)
@@ -67,6 +68,7 @@ describe("useProfileCompletion", () => {
     // Mock user is logged in
     (useAuth as jest.Mock).mockReturnValue({
       user: { id: "test-user-id" },
+      isDebugMode: false
     });
 
     // Mock complete profile with all required fields

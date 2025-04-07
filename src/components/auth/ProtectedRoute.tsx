@@ -12,8 +12,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectPath = "/sign-in",
   children,
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isDebugMode } = useAuth();
   const location = useLocation();
+
+  // If in debug mode, log that we're bypassing auth
+  useEffect(() => {
+    if (isDebugMode && !user) {
+      console.log('🔧 Debug mode: ProtectedRoute would normally redirect, but bypassing');
+    }
+  }, [isDebugMode, user]);
 
   // If still loading auth state, render nothing 
   // (or could show a loading spinner here)
@@ -22,7 +29,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // If no user and finished loading, redirect to login
-  if (!user) {
+  // Unless we're in debug mode with auth bypass
+  if (!user && !isDebugMode) {
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 

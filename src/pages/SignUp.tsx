@@ -17,7 +17,7 @@ import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService"
 import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import VerificationContainer from "@/components/auth/signup/verification/VerificationContainer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoCircled } from "lucide-react";
+import { Info } from "lucide-react";
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();

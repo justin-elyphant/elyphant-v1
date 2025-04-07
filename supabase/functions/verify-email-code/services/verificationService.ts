@@ -14,9 +14,9 @@ export const isValidVerificationCode = async (email: string, code: string): Prom
   try {
     console.log(`Checking code ${code} for email ${email}`);
     
-    // Check for test code in non-production environments
+    // Enhanced logging for test code detection
     if (isTestCode(code)) {
-      console.log("Accepting test code 123456");
+      console.log(`✅ Test code ${code} detected and accepted in ${Deno.env.get("ENVIRONMENT") || "unknown"} environment`);
       return { valid: true };
     }
     
@@ -66,10 +66,13 @@ async function fetchVerificationCode(email: string, code: string) {
   
   const supabase = getSupabaseClient();
   
+  // Normalize email to lowercase for consistency when querying
+  const normalizedEmail = email.toLowerCase();
+  
   const { data, error } = await supabase
     .from("verification_codes")
     .select("id, code, expires_at, used, attempts")
-    .eq("email", email)
+    .eq("email", normalizedEmail)
     .eq("code", code)
     .eq("used", false)
     .order("created_at", { ascending: false })
@@ -78,7 +81,7 @@ async function fetchVerificationCode(email: string, code: string) {
   
   if (error) {
     if (error.message.includes('No rows found')) {
-      console.log(`No verification code found matching email: ${email} and code: ${code}`);
+      console.log(`No verification code found matching email: ${normalizedEmail} and code: ${code}`);
     } else {
       console.error("Error fetching verification code:", error.message);
     }
@@ -137,10 +140,13 @@ export async function incrementCodeAttempts(codeId: string): Promise<void> {
 async function checkRecentCodes(email: string): Promise<void> {
   const supabase = getSupabaseClient();
   
+  // Normalize email to lowercase for consistency
+  const normalizedEmail = email.toLowerCase();
+  
   const { data: recentCodes, error: recentError } = await supabase
     .from("verification_codes")
-    .select("id, code, expires_at, created_at")
-    .eq("email", email)
+    .select("id, code, expires_at, created_at, used")
+    .eq("email", normalizedEmail)
     .order("created_at", { ascending: false })
     .limit(3);
   
@@ -149,7 +155,8 @@ async function checkRecentCodes(email: string): Promise<void> {
       id: c.id,
       partialCode: c.code ? `${c.code.substring(0, 2)}...${c.code.substring(4)}` : 'none',
       expires_at: c.expires_at,
-      created_at: c.created_at
+      created_at: c.created_at,
+      used: c.used
     })));
   } else {
     console.log("No recent codes found for this email");

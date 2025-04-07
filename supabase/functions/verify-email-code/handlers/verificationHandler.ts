@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
 import { corsHeaders } from "../utils/cors.ts";
 import { createErrorResponse, createSuccessResponse } from "../utils/responses.ts";
-import { isValidCodeFormat } from "../utils/validation.ts";
+import { isValidCodeFormat, isTestCode } from "../utils/validation.ts";
 import { isValidVerificationCode, markCodeAsUsed } from "../services/verificationService.ts";
 import { confirmUserEmail } from "../services/userService.ts";
 import { trackInvalidAttempt } from "../services/trackingService.ts";
@@ -80,6 +80,14 @@ async function handleVerification(email: string, code: string): Promise<Response
   if (!isValidCodeFormat(code)) {
     console.error("Invalid code format:", code);
     return createErrorResponse("Invalid verification code format. Must be 6 digits.", "format");
+  }
+
+  // Special handling for test codes
+  if (isTestCode(code)) {
+    console.log("🧪 Test code accepted! Confirming email without DB check:", email);
+    // For test codes, confirm the email without further validation
+    await confirmUserEmail(email);
+    return createSuccessResponse("Test code accepted. Email verified successfully");
   }
 
   const { valid, reason, codeId } = await isValidVerificationCode(email, code);

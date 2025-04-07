@@ -50,5 +50,9 @@ export function isTestBypass(emailResponse: any): boolean {
  * Check if the provided email is a test email
  */
 export function isTestEmail(email: string): boolean {
-  return email?.includes("justncmeeks") || email?.includes("test@example");
+  if (!email) return false;
+  
+  // Always normalize to lowercase for consistent checking
+  const normalizedEmail = email.toLowerCase();
+  return normalizedEmail.includes("justncmeeks") || normalizedEmail.includes("test@example");
 }

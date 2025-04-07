@@ -54,19 +54,23 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
       return createErrorResponse("Email is required", "missing_email", 400);
     }
     
+    // Normalize email to lowercase for consistency
+    const normalizedEmail = email.toLowerCase();
+    console.log(`Normalized email: ${normalizedEmail.substring(0, 3)}...`);
+    
     // EARLY TEST BYPASS: Check if this is a test email right away
-    if (email.toLowerCase().includes("justncmeeks")) {
-      console.log(`🚨 EARLY BYPASS: Test email "${email}" detected at top of function`);
+    if (normalizedEmail.toLowerCase().includes("justncmeeks") || normalizedEmail.toLowerCase().includes("test@example")) {
+      console.log(`🚨 EARLY BYPASS: Test email "${normalizedEmail}" detected at top of function`);
       const earlyBypassCode = generateVerificationCode();
       console.log(`Generated early bypass code: ${earlyBypassCode}`);
       
       // Store the code for consistency even in bypass mode
       try {
-        const stored = await storeVerificationCode(email, earlyBypassCode);
+        const stored = await storeVerificationCode(normalizedEmail, earlyBypassCode);
         console.log(`Test code storage result: ${stored ? 'SUCCESS' : 'FAILED'}`);
         
         if (!stored) {
-          console.error(`⚠️ Failed to store test verification code for ${email}`);
+          console.error(`⚠️ Failed to store test verification code for ${normalizedEmail}`);
           // Continue anyway for test emails
         }
       } catch (error) {
@@ -84,25 +88,25 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
     
     // Generate verification code
     const verificationCode = generateVerificationCode();
-    console.log(`Generated verification code for ${email}: ${verificationCode}`);
+    console.log(`Generated verification code for ${normalizedEmail}: ${verificationCode}`);
     
     // Store verification code
     // This also handles rate limiting checks
-    console.log(`Attempting to store code for ${email}`);
-    const codeStored = await storeVerificationCode(email, verificationCode);
+    console.log(`Attempting to store code for ${normalizedEmail}`);
+    const codeStored = await storeVerificationCode(normalizedEmail, verificationCode);
     if (!codeStored) {
-      console.warn(`Rate limit or storage error for ${email}`);
+      console.warn(`Rate limit or storage error for ${normalizedEmail}`);
       return createRateLimitErrorResponse();
     }
     
     // Check if this is a test email - if so, bypass actual sending
-    const testMode = isTestEmail(email);
+    const testMode = isTestEmail(normalizedEmail);
     const isDevEnv = Deno.env.get("ENVIRONMENT") === "development";
     
-    console.log(`Test email check: email=${email}, testMode=${testMode}, env=${isDevEnv ? "development" : "production"}`);
+    console.log(`Test email check: email=${normalizedEmail}, testMode=${testMode}, env=${isDevEnv ? "development" : "production"}`);
     
     if (testMode) {
-      console.log(`🚫 Test email detected: ${email} - BYPASSING EMAIL SEND in ALL environments`);
+      console.log(`🚫 Test email detected: ${normalizedEmail} - BYPASSING EMAIL SEND in ALL environments`);
       // For test emails, always bypass the actual email sending and just return the code
       return createSuccessResponse({
         message: "Verification code stored but email not sent (test email bypass)",
@@ -114,11 +118,11 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
     
     // Only proceed with sending an email for non-test email addresses
     try {
-      console.log(`📧 Sending verification email to ${email}`);
-      const emailResult = await sendEmailWithRetry(email, name || email, verificationCode);
+      console.log(`📧 Sending verification email to ${normalizedEmail}`);
+      const emailResult = await sendEmailWithRetry(normalizedEmail, name || normalizedEmail, verificationCode);
       
       if (!emailResult.success) {
-        console.error(`❌ Failed to send email to ${email}:`, emailResult.error);
+        console.error(`❌ Failed to send email to ${normalizedEmail}:`, emailResult.error);
         return new Response(
           JSON.stringify({ 
             error: "Failed to send verification email",
@@ -132,12 +136,12 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
         );
       }
       
-      console.log(`✅ Email successfully sent to ${email}`);
+      console.log(`✅ Email successfully sent to ${normalizedEmail}`);
       return createSuccessResponse({
         message: "Verification code sent successfully"
       });
     } catch (error) {
-      console.error(`Error sending email to ${email}:`, error);
+      console.error(`Error sending email to ${normalizedEmail}:`, error);
       return new Response(
         JSON.stringify({ 
           error: "Failed to send verification email",

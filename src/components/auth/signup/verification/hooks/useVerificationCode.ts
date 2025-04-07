@@ -84,9 +84,12 @@ export const useVerificationCode = ({
     setLastAttemptTime(Date.now());
     
     try {
+      // Normalize email to lowercase for consistency
+      const normalizedEmail = userEmail.toLowerCase();
+      
       // Enhanced request payload logging
       const requestPayload = {
-        email: userEmail,
+        email: normalizedEmail,
         code: code
       };
       console.log("Verification request payload:", JSON.stringify(requestPayload));

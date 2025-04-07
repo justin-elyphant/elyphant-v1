@@ -3,38 +3,29 @@
  * Generate a 6-digit verification code
  */
 export function generateVerificationCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate a random 6-digit code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  console.log(`Generated verification code: ${code}`);
+  return code;
 }
 
 /**
- * Check if an email is a test email that should bypass actual sending
+ * Check if the provided email is a test email
  */
 export function isTestEmail(email: string): boolean {
-  if (!email) return false;
+  // Normalize email to lowercase for consistent checking
+  const normalizedEmail = email.toLowerCase();
+  const isTestPattern = normalizedEmail.includes("test@example") || 
+                         normalizedEmail.includes("justncmeeks");
   
-  const lowerEmail = email.toLowerCase();
-  
-  // List of test email patterns
-  const testPatterns = [
-    "justncmeeks",
-    "test@example.com",
-    "test+",
-    "demo@"
-  ];
-  
-  // ENHANCED LOGGING: Detailed pattern matching
-  console.log(`🔍 TEST EMAIL PATTERNS CHECK for ${email}:`);
-  for (const pattern of testPatterns) {
-    const matches = lowerEmail.includes(pattern);
-    console.log(`  - Pattern "${pattern}": ${matches ? 'MATCHES ✓' : 'does not match ✗'}`);
-    if (matches) {
-      console.log(`  > MATCHED PATTERN: "${pattern}" found in "${lowerEmail}"`);
-    }
-  }
-  
-  // Check if any pattern is found in the email
-  const isTest = testPatterns.some(pattern => lowerEmail.includes(pattern));
-  
-  console.log(`Email ${email} final test status: ${isTest ? 'IS TEST EMAIL ✓' : 'is NOT a test email ✗'}`);
-  return isTest;
+  console.log(`Testing email ${normalizedEmail.substring(0, 3)}... for test pattern: ${isTestPattern}`);
+  return isTestPattern;
+}
+
+/**
+ * Check if we are in a test/development environment
+ */
+export function isTestEnvironment(): boolean {
+  const environment = Deno.env.get("ENVIRONMENT");
+  return environment !== "production";
 }

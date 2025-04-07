@@ -32,6 +32,7 @@ import FundingSuccess from "./pages/FundingSuccess";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/auth";
+import ProfileSetup from "./pages/ProfileSetup";
 
 const App = () => {
   // Move QueryClient instantiation inside the component
@@ -59,6 +60,7 @@ const App = () => {
                     <Route path="/sign-in" element={<SignIn />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile/:userId" element={<UserProfile />} />
+                    <Route path="/profile-setup" element={<ProfileSetup />} />
                     <Route path="/wishlists" element={<Wishlists />} />
                     <Route path="/events" element={<Events />} />
                     <Route path="/orders" element={<Orders />} />

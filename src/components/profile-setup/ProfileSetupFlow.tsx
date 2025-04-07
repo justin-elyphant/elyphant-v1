@@ -6,12 +6,14 @@ import { Separator } from "@/components/ui/separator";
 import { Stepper, Step, StepLabel } from "./Stepper";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 import BasicInfoStep from "./steps/BasicInfoStep";
 import DateOfBirthStep from "./steps/DateOfBirthStep";
 import ShippingAddressStep from "./steps/ShippingAddressStep";
 import GiftPreferencesStep from "./steps/GiftPreferencesStep";
 import DataSharingStep from "./steps/DataSharingStep";
+import { SharingLevel } from "@/types/supabase";
 
 interface ProfileSetupFlowProps {
   onComplete: () => void;
@@ -34,9 +36,9 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     },
     gift_preferences: [] as { category: string; importance: 'high' | 'medium' | 'low' }[],
     data_sharing_settings: {
-      dob: "friends" as const,
-      shipping_address: "private" as const,
-      gift_preferences: "public" as const
+      dob: "friends" as SharingLevel,
+      shipping_address: "private" as SharingLevel,
+      gift_preferences: "public" as SharingLevel
     }
   });
 

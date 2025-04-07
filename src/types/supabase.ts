@@ -1,4 +1,3 @@
-
 export type Profile = {
   id: string;
   name: string | null;
@@ -12,6 +11,7 @@ export type Profile = {
   shipping_address: ShippingAddress | null;
   gift_preferences: GiftPreference[] | null;
   data_sharing_settings: DataSharingSettings | null;
+  bio?: string | null;
 };
 
 export type ShippingAddress = {

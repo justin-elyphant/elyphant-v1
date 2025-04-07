@@ -83,9 +83,13 @@ const SignUp: React.FC = () => {
           console.log(`Test email detected, verification code: ${emailResult.verificationCode}`);
           setTestVerificationCode(emailResult.verificationCode);
           toast.info("Test account detected", {
-            description: `Your verification code is: ${emailResult.verificationCode}`
+            description: `Your verification code is: ${emailResult.verificationCode}`,
+            duration: 10000 // Show for 10 seconds
           });
         }
+
+        // Log the full emailResult for debugging
+        console.log("Full emailResult:", JSON.stringify(emailResult));
       }
       
       setEmailSent(true);
@@ -141,7 +145,8 @@ const SignUp: React.FC = () => {
         console.log(`Test email resend detected, new code: ${result.verificationCode}`);
         setTestVerificationCode(result.verificationCode);
         toast.info("Test account detected", {
-          description: `Your verification code is: ${result.verificationCode}`
+          description: `Your verification code is: ${result.verificationCode}`,
+          duration: 10000 // Show for 10 seconds
         });
       }
       
@@ -161,6 +166,11 @@ const SignUp: React.FC = () => {
   const handleBackToSignUp = () => {
     setStep("signup");
   };
+
+  // Debug logging for the verification code
+  useEffect(() => {
+    console.log("SignUp component: testVerificationCode state updated to:", testVerificationCode);
+  }, [testVerificationCode]);
 
   return (
     <div className="container max-w-md mx-auto py-10 px-4">

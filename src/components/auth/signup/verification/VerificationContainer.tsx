@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -38,8 +38,24 @@ const VerificationContainer = ({
   const [verificationChecking, setVerificationChecking] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
-  // Log the test verification code when it changes
-  console.log("VerificationContainer received testVerificationCode:", testVerificationCode);
+  // Enhanced logging for debugging
+  console.log("VerificationContainer: Rendering with props:", {
+    userEmail,
+    userName,
+    resendCount,
+    testVerificationCode: testVerificationCode || "none"
+  });
+
+  // Show toast when test code is available
+  useEffect(() => {
+    if (testVerificationCode) {
+      console.log("VerificationContainer: Test code detected, showing toast:", testVerificationCode);
+      toast.info("Test verification code", {
+        description: `Code: ${testVerificationCode}`,
+        duration: 10000
+      });
+    }
+  }, [testVerificationCode]);
 
   const checkEmailVerification = async () => {
     try {

@@ -21,28 +21,33 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
   const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
   const [autoVerifyTriggered, setAutoVerifyTriggered] = useState(false);
 
-  // Log when component mounts with test verification code
-  console.log("VerificationForm: Mounted with testVerificationCode =", testVerificationCode);
+  // Enhanced debugging
+  console.log("VerificationForm: Rendered with props:", {
+    userEmail,
+    testVerificationCode: testVerificationCode || "none"
+  });
 
-  // Effect to automatically enter test code in development or when provided
+  // Effect to automatically enter test code when provided
   useEffect(() => {
-    if (testVerificationCode) {
+    if (testVerificationCode && verificationCode !== testVerificationCode) {
       console.log("Auto-filling test verification code:", testVerificationCode);
-      // Allow a moment for the component to mount
+      
+      // Use a timeout to ensure DOM is ready
       const timer = setTimeout(() => {
+        console.log("Setting verification code state to:", testVerificationCode);
         setVerificationCode(testVerificationCode);
-        console.log("Verification code state set to:", testVerificationCode);
         
-        // After auto-filling, trigger verification
+        // After auto-filling, schedule auto-verification
         const verifyTimer = setTimeout(() => {
-          if (!autoVerifyTriggered) {
-            console.log("Auto-triggering verification for test code");
+          console.log("Auto-triggering verification for test code");
+          if (!isSubmitting && !autoVerifyTriggered) {
+            setAutoVerifyTriggered(true);
             handleVerifyCode();
           }
-        }, 1000);
+        }, 1500);
         
         return () => clearTimeout(verifyTimer);
-      }, 300);
+      }, 500);
       
       return () => clearTimeout(timer);
     }
@@ -64,7 +69,6 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
     setIsSubmitting(true);
     setVerificationError("");
     setLastAttemptTime(Date.now());
-    setAutoVerifyTriggered(true);
     
     try {
       const { data, error } = await supabase.functions.invoke('verify-email-code', {
@@ -119,25 +123,31 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
     }
   };
 
-  // Auto-verify when test code is fully entered and matches the test code
+  // This useEffect monitors when all 6 digits have been entered
+  // and the code matches the test code, then auto-verifies
   useEffect(() => {
-    // Only proceed if we have a test code and the entered code is complete
-    if (testVerificationCode && 
-        verificationCode.length === 6 && 
-        verificationCode === testVerificationCode &&
-        !isSubmitting && 
-        !autoVerifyTriggered) {
-      console.log("Test code fully entered, auto-verifying");
+    const shouldAutoVerify = 
+      testVerificationCode && 
+      verificationCode === testVerificationCode &&
+      verificationCode.length === 6 && 
+      !isSubmitting && 
+      !autoVerifyTriggered;
+      
+    if (shouldAutoVerify) {
+      console.log("Test code fully entered and matches:", verificationCode);
+      console.log("Auto-verification will trigger shortly");
+      
       setAutoVerifyTriggered(true);
+      
       // Small delay to show the completed code before verification
       const timer = setTimeout(() => {
-        console.log("Auto-verification triggered after delay");
+        console.log("Auto-verification now triggering after delay");
         handleVerifyCode();
-      }, 500);
+      }, 800);
       
       return () => clearTimeout(timer);
     }
-  }, [verificationCode, testVerificationCode, isSubmitting, autoVerifyTriggered]);
+  }, [verificationCode, testVerificationCode, isSubmitting]);
 
   return (
     <div className="flex flex-col items-center justify-center">

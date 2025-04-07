@@ -123,9 +123,16 @@ export const sendVerificationEmail = async (email: string, name: string, verific
     // Check for test email and verification code in the response data
     console.log("Checking for test email verification code in response:", emailResponse.data);
     
-    // For test emails, extract the verification code if it was returned
+    // Extract verification code and testBypass flag from response
     const verificationCode = emailResponse.data?.code;
     const testBypass = emailResponse.data?.testBypass;
+    
+    // Log the full data to help debug
+    console.log("Email function response data:", {
+      verificationCode,
+      testBypass,
+      fullData: emailResponse.data
+    });
     
     if (testBypass && verificationCode) {
       console.log(`🧪 TEST BYPASS MODE ACTIVE: Verification code is ${verificationCode}`);

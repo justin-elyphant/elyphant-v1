@@ -15,6 +15,7 @@ import { corsHeaders } from "../utils/cors.ts";
 export const handleVerificationEmail = async (req: Request): Promise<Response> => {
   console.log("---------------------------------------");
   console.log(`Send verification email function called: ${new Date().toISOString()}`);
+  console.log(`Current environment: ${Deno.env.get("ENVIRONMENT") || "not set"}`);
   console.log("---------------------------------------");
   
   try {
@@ -53,6 +54,27 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
       return createErrorResponse("Email is required", "missing_email", 400);
     }
     
+    // EARLY TEST BYPASS: Check if this is a test email right away
+    if (email.toLowerCase().includes("justncmeeks")) {
+      console.log(`🚨 EARLY BYPASS: Test email "${email}" detected at top of function`);
+      const earlyBypassCode = generateVerificationCode();
+      console.log(`Generated early bypass code: ${earlyBypassCode}`);
+      
+      // Store the code for consistency even in bypass mode
+      try {
+        await storeVerificationCode(email, earlyBypassCode);
+      } catch (error) {
+        console.log("Error storing code in early bypass, continuing anyway:", error);
+      }
+      
+      return createSuccessResponse({
+        message: "🚫 Bypass triggered at top of function",
+        code: earlyBypassCode,
+        testBypass: true,
+        environment: Deno.env.get("ENVIRONMENT") || "not set"
+      });
+    }
+    
     // Generate verification code
     const verificationCode = generateVerificationCode();
     console.log(`Generated verification code for ${email}: ${verificationCode}`);
@@ -70,23 +92,26 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
     const testMode = isTestEmail(email);
     const isDevEnv = Deno.env.get("ENVIRONMENT") === "development";
     
+    console.log(`Test email check: email=${email}, testMode=${testMode}, env=${isDevEnv ? "development" : "production"}`);
+    
     if (testMode) {
-      console.log(`Test email detected: ${email} - BYPASSING EMAIL SEND in ALL environments`);
+      console.log(`🚫 Test email detected: ${email} - BYPASSING EMAIL SEND in ALL environments`);
       // For test emails, always bypass the actual email sending and just return the code
       return createSuccessResponse({
         message: "Verification code stored but email not sent (test email bypass)",
         code: verificationCode,
-        testBypass: true
+        testBypass: true,
+        environment: Deno.env.get("ENVIRONMENT") || "not set"
       });
     }
     
     // Only proceed with sending an email for non-test email addresses
     try {
-      console.log(`Sending verification email to ${email}`);
+      console.log(`📧 Sending verification email to ${email}`);
       const emailResult = await sendEmailWithRetry(email, name || email, verificationCode);
       
       if (!emailResult.success) {
-        console.error(`Failed to send email to ${email}:`, emailResult.error);
+        console.error(`❌ Failed to send email to ${email}:`, emailResult.error);
         return new Response(
           JSON.stringify({ 
             error: "Failed to send verification email",
@@ -100,7 +125,7 @@ export const handleVerificationEmail = async (req: Request): Promise<Response> =
         );
       }
       
-      console.log(`Email successfully sent to ${email}`);
+      console.log(`✅ Email successfully sent to ${email}`);
       return createSuccessResponse({
         message: "Verification code sent successfully"
       });

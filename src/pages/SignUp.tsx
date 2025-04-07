@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { useSignUpProcess } from "@/hooks/useSignUpProcess";
+import { useSignUpProcess } from "@/hooks/signup/useSignUpProcess";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 
 const SignUp: React.FC = () => {

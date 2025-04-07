@@ -19,6 +19,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
   const [verificationCode, setVerificationCode] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
   const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
+  const [autoVerifyTriggered, setAutoVerifyTriggered] = useState(false);
 
   // Effect to automatically enter test code in development or when provided
   useEffect(() => {
@@ -27,27 +28,11 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
       // Allow a moment for the component to mount
       const timer = setTimeout(() => {
         setVerificationCode(testVerificationCode);
-      }, 500);
+      }, 300);
       
       return () => clearTimeout(timer);
-    } else {
-      // Check if we're in development and using a test email
-      const isTestEmail = userEmail.includes('justncmeeks') || 
-                          userEmail.includes('test@example');
-      const isDevelopment = process.env.NODE_ENV === 'development' || 
-                          window.location.hostname === 'localhost';
-      
-      if (isDevelopment && isTestEmail) {
-        console.log("Auto-filling default test verification code in development environment");
-        // Allow a moment for the component to mount
-        const timer = setTimeout(() => {
-          setVerificationCode("123456");
-        }, 500);
-        
-        return () => clearTimeout(timer);
-      }
     }
-  }, [userEmail, testVerificationCode]);
+  }, [testVerificationCode]);
 
   const handleVerifyCode = async () => {
     if (verificationCode.length !== 6) {
@@ -119,16 +104,24 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
     }
   };
 
-  // Auto-verify when test code is entered
+  // Auto-verify when test code is fully entered and matches the test code
   useEffect(() => {
-    const isCompleteCode = verificationCode.length === 6;
-    const isTestCode = verificationCode === testVerificationCode;
-    
-    if (isCompleteCode && isTestCode && testVerificationCode) {
-      console.log("Test code detected, auto-verifying");
-      handleVerifyCode();
+    // Only proceed if we have a test code and the entered code is complete
+    if (testVerificationCode && 
+        verificationCode.length === 6 && 
+        verificationCode === testVerificationCode &&
+        !isSubmitting && 
+        !autoVerifyTriggered) {
+      console.log("Test code fully entered, auto-verifying");
+      setAutoVerifyTriggered(true);
+      // Small delay to show the completed code before verification
+      const timer = setTimeout(() => {
+        handleVerifyCode();
+      }, 300);
+      
+      return () => clearTimeout(timer);
     }
-  }, [verificationCode]);
+  }, [verificationCode, testVerificationCode, isSubmitting, autoVerifyTriggered]);
 
   return (
     <div className="flex flex-col items-center justify-center">

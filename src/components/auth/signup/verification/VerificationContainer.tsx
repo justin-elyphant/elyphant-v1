@@ -1,20 +1,12 @@
 
-import React, { useState, useEffect } from "react";
-import { ArrowLeft, Info } from "lucide-react";
+import React from "react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-
-import VerificationForm from "./VerificationForm";
-import VerificationActions from "./VerificationActions";
-import TroubleshootingGuide from "@/components/auth/signup/email-verification/TroubleshootingGuide";
+import { Card, CardHeader } from "@/components/ui/card";
 import VerificationHeader from "@/components/auth/signup/email-verification/VerificationHeader";
-import VerificationAlert from "@/components/auth/signup/email-verification/VerificationAlert";
-import ImportantNoteAlert from "@/components/auth/signup/email-verification/ImportantNoteAlert";
-import VerificationStatus from "@/components/auth/signup/email-verification/VerificationStatus";
+import VerificationContentSection from "./components/VerificationContentSection";
+import { useVerificationContainer } from "./hooks/useVerificationContainer";
+import { useResendVerification } from "./hooks/useResendVerification";
 
 interface VerificationContainerProps {
   userEmail: string;
@@ -25,7 +17,7 @@ interface VerificationContainerProps {
   testVerificationCode?: string | null;
 }
 
-const VerificationContainer = ({ 
+const VerificationContainer: React.FC<VerificationContainerProps> = ({ 
   userEmail, 
   userName, 
   onBackToSignUp,
@@ -33,93 +25,20 @@ const VerificationContainer = ({
   resendCount,
   testVerificationCode
 }: VerificationContainerProps) => {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [verificationChecking, setVerificationChecking] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [localCode, setLocalCode] = useState<string | null>(null);
+  const {
+    isLoading,
+    verificationChecking,
+    isVerified,
+    effectiveVerificationCode,
+    handleVerificationSuccess,
+    setVerificationCode,
+    checkEmailVerification
+  } = useVerificationContainer({ userEmail, testVerificationCode });
   
-  // Use either the prop code or the locally stored code
-  const effectiveVerificationCode = testVerificationCode || localCode;
-
-  // Enhanced logging for debugging with full state details
-  useEffect(() => {
-    console.log("VerificationContainer: Full state details", {
-      userEmail,
-      userName,
-      resendCount,
-      testVerificationCode,
-      localCode,
-      effectiveVerificationCode,
-      isLoading,
-      verificationChecking,
-      isVerified
-    });
-  }, [userEmail, userName, resendCount, testVerificationCode, localCode, effectiveVerificationCode, isLoading, verificationChecking, isVerified]);
-
-  // If we receive a testVerificationCode prop, update our local state
-  useEffect(() => {
-    if (testVerificationCode && testVerificationCode !== localCode) {
-      console.log("VerificationContainer: Updating local code from props:", testVerificationCode);
-      setLocalCode(testVerificationCode);
-      
-      // Show toast when new code is received
-      toast.info("Test verification code received", {
-        description: `Code: ${testVerificationCode}`,
-        duration: 10000
-      });
-    }
-  }, [testVerificationCode, localCode]);
-
-  const checkEmailVerification = async () => {
-    try {
-      setVerificationChecking(true);
-      
-      const { data, error } = await supabase.auth.getSession();
-      console.log("Email verification check result:", { data, error });
-      
-      if (error) {
-        toast.error("Failed to check verification status");
-        return;
-      }
-      
-      if (data?.session?.user?.email_confirmed_at) {
-        setIsVerified(true);
-        toast.success("Email verified!");
-        
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
-        return;
-      }
-      
-      toast.error("Email not verified yet", {
-        description: "Please enter the verification code sent to your email."
-      });
-    } catch (err) {
-      console.error("Error during verification check:", err);
-      toast.error("Failed to check verification status");
-    } finally {
-      setVerificationChecking(false);
-    }
-  };
-
-  const handleVerificationSuccess = () => {
-    setIsVerified(true);
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1500);
-  };
-
-  // Function to manually set the verification code (for testing)
-  const setVerificationCode = (code: string) => {
-    console.log("Manually setting verification code:", code);
-    setLocalCode(code);
-    toast.info("Verification code set manually", {
-      description: `Code: ${code}`,
-      duration: 5000
-    });
-  };
+  const {
+    isResending,
+    handleResendVerification
+  } = useResendVerification({ onResendVerification });
 
   return (
     <Card>
@@ -135,70 +54,23 @@ const VerificationContainer = ({
         
         <VerificationHeader userEmail={userEmail} />
         
-        <CardDescription className="text-base">
+        <p className="text-base text-muted-foreground">
           We've sent a verification code to your email. Please check your inbox and enter the code below.
-        </CardDescription>
+        </p>
       </CardHeader>
       
-      <CardContent className="space-y-4">
-        <VerificationStatus verificationChecking={verificationChecking} />
-        
-        <VerificationAlert useCode={true} />
-        
-        {effectiveVerificationCode && (
-          <Alert className="bg-blue-50 border-blue-200">
-            <Info className="h-4 w-4 text-blue-500 mr-2" />
-            <AlertDescription className="text-blue-700">
-              <span className="font-semibold">Test account detected!</span> Your verification code is:{' '}
-              <code className="bg-blue-100 px-2 py-0.5 rounded font-mono">
-                {effectiveVerificationCode}
-              </code>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {isVerified ? (
-          <Alert className="bg-green-50 border-green-200">
-            <AlertDescription className="text-green-700">
-              Your email has been verified successfully! Redirecting to dashboard...
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <>
-            <VerificationForm 
-              userEmail={userEmail}
-              onVerificationSuccess={handleVerificationSuccess}
-              testVerificationCode={effectiveVerificationCode}
-            />
-            
-            <VerificationActions
-              isLoading={isLoading}
-              verificationChecking={verificationChecking}
-              onResendVerification={onResendVerification}
-              onCheckVerification={checkEmailVerification}
-              resendCount={resendCount}
-            />
-            
-            {/* Debug section for manual code entry (only in development) */}
-            {process.env.NODE_ENV !== 'production' && (
-              <div className="mt-4 p-2 border border-dashed border-gray-300 rounded-md">
-                <p className="text-xs text-gray-500 mb-2">Debug: Manually set verification code</p>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    className="text-xs p-1 border rounded flex-1"
-                    placeholder="Enter code" 
-                    onChange={(e) => e.target.value.length === 6 && setVerificationCode(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-            
-            <TroubleshootingGuide />
-            <ImportantNoteAlert />
-          </>
-        )}
-      </CardContent>
+      <VerificationContentSection
+        userEmail={userEmail}
+        verificationChecking={verificationChecking}
+        isVerified={isVerified}
+        isLoading={isLoading || isResending}
+        effectiveVerificationCode={effectiveVerificationCode}
+        resendCount={resendCount}
+        onVerificationSuccess={handleVerificationSuccess}
+        onResendVerification={handleResendVerification}
+        onCheckVerification={checkEmailVerification}
+        setVerificationCode={setVerificationCode}
+      />
     </Card>
   );
 };

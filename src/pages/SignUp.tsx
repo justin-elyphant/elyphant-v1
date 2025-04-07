@@ -10,7 +10,7 @@ const SignUp: React.FC = () => {
     userName,
     resendCount,
     testVerificationCode,
-    onSignUpSubmit,
+    handleSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
   } = useSignUpProcess();
@@ -28,7 +28,7 @@ const SignUp: React.FC = () => {
         userName={userName || ""}
         resendCount={resendCount || 0}
         testVerificationCode={testVerificationCode}
-        onSignUpSubmit={onSignUpSubmit}
+        onSignUpSubmit={handleSignUpSubmit}
         handleResendVerification={handleResendVerification}
         handleBackToSignUp={handleBackToSignUp}
       />

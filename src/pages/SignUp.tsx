@@ -64,6 +64,8 @@ const SignUp: React.FC = () => {
       
       const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
       
+      console.log("Email verification result:", emailResult);
+      
       if (!emailResult.success) {
         console.error("Failed to send verification code:", emailResult.error);
         toast.error("Failed to send verification code", {
@@ -117,6 +119,8 @@ const SignUp: React.FC = () => {
       console.log("Resending verification using origin:", currentOrigin);
       
       const result = await sendVerificationEmail(userEmail, userName, currentOrigin);
+      
+      console.log("Resend verification result:", result);
       
       if (!result.success) {
         if (result.rateLimited) {

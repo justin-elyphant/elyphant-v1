@@ -38,6 +38,9 @@ const VerificationContainer = ({
   const [verificationChecking, setVerificationChecking] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
+  // Log the test verification code when it changes
+  console.log("VerificationContainer received testVerificationCode:", testVerificationCode);
+
   const checkEmailVerification = async () => {
     try {
       setVerificationChecking(true);

@@ -21,6 +21,9 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
   const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
   const [autoVerifyTriggered, setAutoVerifyTriggered] = useState(false);
 
+  // Log when component mounts with test verification code
+  console.log("VerificationForm: Mounted with testVerificationCode =", testVerificationCode);
+
   // Effect to automatically enter test code in development or when provided
   useEffect(() => {
     if (testVerificationCode) {
@@ -28,6 +31,17 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
       // Allow a moment for the component to mount
       const timer = setTimeout(() => {
         setVerificationCode(testVerificationCode);
+        console.log("Verification code state set to:", testVerificationCode);
+        
+        // After auto-filling, trigger verification
+        const verifyTimer = setTimeout(() => {
+          if (!autoVerifyTriggered) {
+            console.log("Auto-triggering verification for test code");
+            handleVerifyCode();
+          }
+        }, 1000);
+        
+        return () => clearTimeout(verifyTimer);
       }, 300);
       
       return () => clearTimeout(timer);
@@ -50,6 +64,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
     setIsSubmitting(true);
     setVerificationError("");
     setLastAttemptTime(Date.now());
+    setAutoVerifyTriggered(true);
     
     try {
       const { data, error } = await supabase.functions.invoke('verify-email-code', {
@@ -83,6 +98,7 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
         console.error("Verification failed:", errorMessage, { data, error });
         setVerificationError(errorMessage);
         setAttemptCount(prev => prev + 1);
+        setIsSubmitting(false);
         return;
       }
       
@@ -99,7 +115,6 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
         description: error.message || "Please try again"
       });
       setAttemptCount(prev => prev + 1);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -116,8 +131,9 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
       setAutoVerifyTriggered(true);
       // Small delay to show the completed code before verification
       const timer = setTimeout(() => {
+        console.log("Auto-verification triggered after delay");
         handleVerifyCode();
-      }, 300);
+      }, 500);
       
       return () => clearTimeout(timer);
     }

@@ -120,15 +120,22 @@ export const sendVerificationEmail = async (email: string, name: string, verific
       throw new Error(emailResponse.error.message || "Failed to send verification email");
     }
     
-    // Check for rate limiting in the response data
-    if (emailResponse.data?.rateLimited) {
-      console.warn("Rate limit flag detected in successful response");
-      return { success: false, error: "Rate limited", rateLimited: true };
-    }
+    // Check for test email and verification code in the response data
+    console.log("Checking for test email verification code in response:", emailResponse.data);
     
     // For test emails, extract the verification code if it was returned
     const verificationCode = emailResponse.data?.code;
-    if (verificationCode) {
+    const testBypass = emailResponse.data?.testBypass;
+    
+    if (testBypass && verificationCode) {
+      console.log(`🧪 TEST BYPASS MODE ACTIVE: Verification code is ${verificationCode}`);
+      return { 
+        success: true, 
+        isTestEmail: true, 
+        verificationCode,
+        testBypass: true
+      };
+    } else if (verificationCode) {
       console.log(`🧪 TEST MODE: Verification code is ${verificationCode}`);
       return { success: true, isTestEmail: true, verificationCode };
     }

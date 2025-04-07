@@ -99,3 +99,15 @@ export const initializeStorageBucket = async () => {
     return false;
   }
 };
+
+export const isProfileComplete = (profile: Profile | null): boolean => {
+  if (!profile) return false;
+  
+  // Check for basic profile fields
+  const hasBasicInfo = !!profile.name && !!profile.profile_image;
+  
+  // Check for extended profile fields
+  const hasExtendedInfo = !!profile.dob || !!profile.shipping_address || !!profile.gift_preferences;
+  
+  return hasBasicInfo && hasExtendedInfo;
+};

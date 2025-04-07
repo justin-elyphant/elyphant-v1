@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      auto_gifting_rules: {
+        Row: {
+          budget_limit: number | null
+          created_at: string | null
+          date_type: string
+          gift_preferences: Json | null
+          id: string
+          is_active: boolean | null
+          recipient_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          budget_limit?: number | null
+          created_at?: string | null
+          date_type: string
+          gift_preferences?: Json | null
+          id?: string
+          is_active?: boolean | null
+          recipient_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          budget_limit?: number | null
+          created_at?: string | null
+          date_type?: string
+          gift_preferences?: Json | null
+          id?: string
+          is_active?: boolean | null
+          recipient_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_gifting_rules_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_gifting_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contributions: {
         Row: {
           amount: number
@@ -131,39 +182,178 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          data_sharing_settings: Json | null
+          dob: string | null
           email: string | null
+          gift_preferences: Json | null
           id: string
           name: string | null
           profile_image: string | null
           profile_type: string | null
+          shipping_address: Json | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          data_sharing_settings?: Json | null
+          dob?: string | null
           email?: string | null
+          gift_preferences?: Json | null
           id: string
           name?: string | null
           profile_image?: string | null
           profile_type?: string | null
+          shipping_address?: Json | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          data_sharing_settings?: Json | null
+          dob?: string | null
           email?: string | null
+          gift_preferences?: Json | null
           id?: string
           name?: string | null
           profile_image?: string | null
           profile_type?: string | null
+          shipping_address?: Json | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_addresses: {
+        Row: {
+          address: Json
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address: Json
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: Json
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_connections: {
+        Row: {
+          connected_user_id: string
+          created_at: string | null
+          data_access_permissions: Json | null
+          id: string
+          relationship_type: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          connected_user_id: string
+          created_at?: string | null
+          data_access_permissions?: Json | null
+          id?: string
+          relationship_type: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          connected_user_id?: string
+          created_at?: string | null
+          data_access_permissions?: Json | null
+          id?: string
+          relationship_type?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_connections_connected_user_id_fkey"
+            columns: ["connected_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_special_dates: {
+        Row: {
+          created_at: string | null
+          date: string
+          date_type: string
+          id: string
+          updated_at: string | null
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          date_type: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          date_type?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_special_dates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      are_users_connected: {
+        Args: { user_id_1: string; user_id_2: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

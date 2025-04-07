@@ -1,0 +1,121 @@
+
+import React from "react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DataSharingSettings, SharingLevel } from "@/types/supabase";
+import { Shield, Calendar, MapPin, Gift } from "lucide-react";
+
+interface DataSharingStepProps {
+  values: DataSharingSettings;
+  onChange: (settings: DataSharingSettings) => void;
+}
+
+const DataSharingStep: React.FC<DataSharingStepProps> = ({ values, onChange }) => {
+  const handleChange = (field: keyof DataSharingSettings, value: SharingLevel) => {
+    onChange({
+      ...values,
+      [field]: value
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-medium">Privacy Settings</h3>
+        <p className="text-sm text-muted-foreground">
+          Control who can see your personal information
+        </p>
+      </div>
+      
+      <div className="space-y-6">
+        <div className="flex items-center justify-between space-x-4">
+          <div className="flex items-center space-x-3">
+            <Calendar className="h-5 w-5 text-blue-500" />
+            <div>
+              <Label className="text-base">Birthday</Label>
+              <p className="text-sm text-muted-foreground">Who can see your birthday</p>
+            </div>
+          </div>
+          <div className="w-32">
+            <Select 
+              value={values.dob} 
+              onValueChange={(val) => handleChange('dob', val as SharingLevel)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">Everyone</SelectItem>
+                <SelectItem value="friends">Friends Only</SelectItem>
+                <SelectItem value="private">Only Me</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between space-x-4">
+          <div className="flex items-center space-x-3">
+            <MapPin className="h-5 w-5 text-red-500" />
+            <div>
+              <Label className="text-base">Shipping Address</Label>
+              <p className="text-sm text-muted-foreground">Who can see your address</p>
+            </div>
+          </div>
+          <div className="w-32">
+            <Select 
+              value={values.shipping_address} 
+              onValueChange={(val) => handleChange('shipping_address', val as SharingLevel)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">Everyone</SelectItem>
+                <SelectItem value="friends">Friends Only</SelectItem>
+                <SelectItem value="private">Only Me</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between space-x-4">
+          <div className="flex items-center space-x-3">
+            <Gift className="h-5 w-5 text-purple-500" />
+            <div>
+              <Label className="text-base">Gift Preferences</Label>
+              <p className="text-sm text-muted-foreground">Who can see your gift preferences</p>
+            </div>
+          </div>
+          <div className="w-32">
+            <Select 
+              value={values.gift_preferences} 
+              onValueChange={(val) => handleChange('gift_preferences', val as SharingLevel)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">Everyone</SelectItem>
+                <SelectItem value="friends">Friends Only</SelectItem>
+                <SelectItem value="private">Only Me</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-6 p-4 bg-muted rounded-lg flex items-start space-x-3">
+        <Shield className="h-5 w-5 text-green-500 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium">Your privacy is important</p>
+          <p className="text-muted-foreground mt-1">
+            You can change these settings any time from your profile settings. 
+            We never share your personal information with third parties without your explicit consent.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DataSharingStep;

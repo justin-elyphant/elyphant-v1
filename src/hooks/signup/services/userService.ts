@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -8,8 +7,9 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
     console.log("Signing up user with admin API and bypassing email verification");
     
     // First, check if we're correctly configured
-    const functionUrl = `${supabase.functions.url}/create-user`;
-    console.log(`Will call create-user function at: ${functionUrl}`);
+    // Instead of directly accessing .url property, log the project ref for debugging
+    const projectRef = supabase.projectRef;
+    console.log(`Will call create-user function in project: ${projectRef}`);
     
     // Create the user through our Edge Function instead of Supabase Auth directly
     console.log("Sending create-user request with body:", {

@@ -82,6 +82,8 @@ const SignUp: React.FC = () => {
         if (emailResult.isTestEmail && emailResult.verificationCode) {
           console.log(`Test email detected with code: ${emailResult.verificationCode}`);
           setTestVerificationCode(emailResult.verificationCode);
+          
+          // Show an immediate toast for the test email code
           toast.info("Test account detected", {
             description: `Your verification code is: ${emailResult.verificationCode}`,
             duration: 10000 // Show for 10 seconds
@@ -144,8 +146,10 @@ const SignUp: React.FC = () => {
       if (result.isTestEmail && result.verificationCode) {
         console.log(`Test email resend detected, new code: ${result.verificationCode}`);
         setTestVerificationCode(result.verificationCode);
+        
+        // Show an immediate toast for the test email code
         toast.info("Test account detected", {
-          description: `Your verification code is: ${result.verificationCode}`,
+          description: `Your new verification code is: ${result.verificationCode}`,
           duration: 10000 // Show for 10 seconds
         });
       }

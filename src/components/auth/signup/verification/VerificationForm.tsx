@@ -29,6 +29,17 @@ const VerificationForm = ({ userEmail, onVerificationSuccess, testVerificationCo
     currentVerificationCode: verificationCode
   });
 
+  // Effect to test the props value on initial render
+  useEffect(() => {
+    if (testVerificationCode) {
+      console.log("VerificationForm: testVerificationCode detected in props:", testVerificationCode);
+      toast.info("Verification form received test code", {
+        description: `Code: ${testVerificationCode}`,
+        duration: 10000
+      });
+    }
+  }, []);
+
   // Effect to automatically enter test code when provided
   useEffect(() => {
     if (testVerificationCode && verificationCode !== testVerificationCode) {

@@ -46,10 +46,10 @@ const VerificationContainer = ({
     testVerificationCode: testVerificationCode || "none"
   });
 
-  // Show toast when test code is available
+  // Show toast when testVerificationCode changes
   useEffect(() => {
     if (testVerificationCode) {
-      console.log("VerificationContainer: Test code detected, showing toast:", testVerificationCode);
+      console.log("VerificationContainer: Test code detected in props, showing toast:", testVerificationCode);
       toast.info("Test verification code", {
         description: `Code: ${testVerificationCode}`,
         duration: 10000

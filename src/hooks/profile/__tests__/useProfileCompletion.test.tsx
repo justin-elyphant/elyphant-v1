@@ -59,7 +59,7 @@ describe("useProfileCompletion", () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
-    }, { timeout: 1000 });
+    });
     
     expect(mockNavigate).toHaveBeenCalledWith("/profile-setup");
     expect(result.current.isComplete).toBe(false);
@@ -102,7 +102,7 @@ describe("useProfileCompletion", () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
-    }, { timeout: 1000 });
+    });
     
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(result.current.isComplete).toBe(true);

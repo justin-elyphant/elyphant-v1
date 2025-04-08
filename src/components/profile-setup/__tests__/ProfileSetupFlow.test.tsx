@@ -70,7 +70,7 @@ describe("ProfileSetupFlow", () => {
     // Second step (Birthday)
     await waitFor(() => {
       expect(screen.getByText("When is your birthday?")).toBeInTheDocument();
-    }, { timeout: 1000 });
+    });
   });
 
   it("completes the profile setup process", async () => {
@@ -86,7 +86,7 @@ describe("ProfileSetupFlow", () => {
       fireEvent.click(screen.getByText("Next Step"));
       await waitFor(() => {
         // Just wait for the next step to render
-      }, { timeout: 1000 });
+      });
     }
     
     // Now we should be at the final step
@@ -98,7 +98,7 @@ describe("ProfileSetupFlow", () => {
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith("profiles");
       expect(onCompleteMock).toHaveBeenCalled();
-    }, { timeout: 1000 });
+    });
   });
 
   it("allows skipping the profile setup", () => {

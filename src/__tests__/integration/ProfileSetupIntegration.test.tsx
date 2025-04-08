@@ -72,7 +72,7 @@ describe("Profile Setup Integration", () => {
     // Then redirect to profile setup
     await waitFor(() => {
       expect(useProfileCompletion).toHaveBeenCalled();
-    }, { timeout: 1000 });
+    });
   });
   
   it("allows access to dashboard when profile is complete", async () => {
@@ -93,6 +93,6 @@ describe("Profile Setup Integration", () => {
     
     await waitFor(() => {
       expect(screen.getByTestId("dashboard-grid")).toBeInTheDocument();
-    }, { timeout: 1000 });
+    });
   });
 });

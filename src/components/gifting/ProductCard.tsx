@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingCart } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import ProductRating from "@/components/shared/ProductRating";
 
 interface ProductCardProps {
@@ -35,8 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.stopPropagation();
     addToCart(product);
     
-    toast({
-      title: "Added to Cart",
+    toast.success("Added to Cart", {
       description: `${product.name} has been added to your cart`
     });
   };

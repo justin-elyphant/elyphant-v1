@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/toast";
 import { useSearchProducts } from "./useSearchProducts";
 import { useFilterProducts } from "./useFilterProducts";
 import { usePageInfo } from "./usePageInfo";
@@ -65,8 +65,7 @@ export const useMarketplaceSearch = () => {
       // If there's a search term in the URL, search for products using Zinc API
       if (searchParam) {
         // Immediately dismiss any existing toasts
-        toast({
-          id: "search-in-progress",
+        toast("search-in-progress", { 
           duration: 0 // Use 0 to immediately dismiss
         });
         

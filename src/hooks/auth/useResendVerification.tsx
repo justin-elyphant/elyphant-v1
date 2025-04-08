@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { sendVerificationEmail } from "@/hooks/signup/signupService";
+import { extractVerificationCode } from "@/hooks/signup/services/email/utils/responseParser";
 
 interface UseResendVerificationProps {
   userEmail: string;
@@ -55,12 +56,13 @@ export const useResendVerification = ({
       setLastResendTime(Date.now());
       
       // Check for test verification code in response and update it
-      if (result.code) {
-        console.log("Test code in resend:", result.code);
-        setTestVerificationCode(result.code);
+      const verificationCode = extractVerificationCode(result);
+      if (verificationCode) {
+        console.log("Test code in resend:", verificationCode);
+        setTestVerificationCode(verificationCode);
         
         toast.info("Test verification code", {
-          description: `Your verification code is: ${result.code}`,
+          description: `Your verification code is: ${verificationCode}`,
           duration: 10000
         });
       }

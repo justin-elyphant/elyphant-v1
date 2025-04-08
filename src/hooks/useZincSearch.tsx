@@ -56,7 +56,7 @@ export const useZincSearch = (searchTerm: string) => {
               // Map the Zinc API response to match our expected format
               const formattedResults = results.map((item, index) => ({
                 product_id: item.product_id,
-                title: item.title,
+                title: item.title || "Product",
                 price: typeof item.price === 'number' ? item.price / 100 : parseFloat(item.price),
                 image: item.image,
                 description: item.description || "",

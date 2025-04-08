@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateAction<Product[]>>) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,10 +15,8 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
     
     try {
       console.log(`Searching for products with term: "${searchParam}"`);
-      toast({
-        title: "Searching...",
-        description: `Looking for products matching "${searchParam}"`,
-        id: "search-in-progress"
+      toast.loading("Searching...", {
+        description: `Looking for products matching "${searchParam}"`
       });
       
       const results = await searchProducts(searchParam);
@@ -27,7 +25,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
         // Convert to Product format
         const amazonProducts = results.map((product, index) => ({
           id: 1000 + index,
-          name: product.title,
+          name: product.title || "Product",
           price: product.price,
           category: product.category || "Electronics",
           image: product.image || "/placeholder.svg",
@@ -51,11 +49,8 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
           setTimeout(() => {
             if (!toastShownRef.current) {
               toastShownRef.current = true;
-              toast({
-                title: "Search Complete",
-                description: `Found ${Math.min(amazonProducts.length, RESULTS_LIMIT)} products matching "${searchParam}"`,
-                id: "search-complete",
-                duration: 3000
+              toast.success("Search Complete", {
+                description: `Found ${Math.min(amazonProducts.length, RESULTS_LIMIT)} products matching "${searchParam}"`
               });
             }
           }, 500);
@@ -68,12 +63,8 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
           setTimeout(() => {
             if (!toastShownRef.current) {
               toastShownRef.current = true;
-              toast({
-                title: "No Results",
-                description: `No products found matching "${searchParam}"`,
-                variant: "destructive",
-                id: "no-results",
-                duration: 3000
+              toast.error("No Results", {
+                description: `No products found matching "${searchParam}"`
               });
             }
           }, 500);
@@ -90,12 +81,8 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
         setTimeout(() => {
           if (!toastShownRef.current) {
             toastShownRef.current = true;
-            toast({
-              title: "Search Error",
-              description: "Error connecting to Amazon. Please try again later.",
-              variant: "destructive",
-              id: "search-error",
-              duration: 3000
+            toast.error("Search Error", {
+              description: "Error connecting to Amazon. Please try again later."
             });
           }
         }, 500);

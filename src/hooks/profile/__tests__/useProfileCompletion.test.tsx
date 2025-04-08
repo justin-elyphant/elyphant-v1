@@ -86,9 +86,9 @@ describe("useProfileCompletion", () => {
       },
       gift_preferences: [{ category: "Books", importance: "high" }],
       data_sharing_settings: {
-        dob: "friends",
-        shipping_address: "private",
-        gift_preferences: "public"
+        dob: "friends" as SharingLevel,
+        shipping_address: "private" as SharingLevel,
+        gift_preferences: "public" as SharingLevel
       }
     };
     

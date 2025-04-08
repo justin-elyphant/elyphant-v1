@@ -30,7 +30,18 @@ export const useFilteredProducts = (
         (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+      // Updated category matching logic to handle specific occasion categories
+      const matchesCategory = 
+        selectedCategory === "all" || 
+        product.category === selectedCategory ||
+        (selectedCategory === "birthday" && product.category.toLowerCase().includes("birthday")) ||
+        (selectedCategory === "wedding" && product.category.toLowerCase().includes("wedding")) ||
+        (selectedCategory === "anniversary" && product.category.toLowerCase().includes("anniversary")) ||
+        (selectedCategory === "graduation" && product.category.toLowerCase().includes("graduation")) ||
+        (selectedCategory === "baby_shower" && (
+          product.category.toLowerCase().includes("baby") || 
+          product.category.toLowerCase().includes("shower")
+        ));
       
       let matchesPrice = true;
       if (priceRange === "under25") matchesPrice = product.price < 25;

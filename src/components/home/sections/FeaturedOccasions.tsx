@@ -1,10 +1,8 @@
 
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
-import { useProducts } from "@/contexts/ProductContext";
-import { guessCategory } from "@/components/marketplace/zinc/utils/categoryUtils";
 import { toast } from "sonner";
 
 const occasions = [
@@ -77,11 +75,9 @@ const FeaturedOccasions = () => {
   const [loadingOccasion, setLoadingOccasion] = useState<string | null>(null);
   const navigate = useNavigate();
   
-  const handleOccasionClick = (e: React.MouseEvent, category: string, occasionName: string) => {
-    e.preventDefault(); // Prevent default navigation
-    
+  const handleOccasionClick = (category: string, occasionName: string) => {
+    // Prevent multiple clicks while loading
     if (loadingOccasion) {
-      // Prevent multiple clicks while loading
       return;
     }
     
@@ -90,37 +86,39 @@ const FeaturedOccasions = () => {
     // Set loading state for this specific occasion
     setLoadingOccasion(category);
     
-    // Add a small delay to show the loading state and then navigate
+    // Show feedback to the user
+    toast.success(`Exploring ${occasionName.toLowerCase()} gift ideas...`);
+    
+    // Navigate immediately to the gifting page with the appropriate category
+    if (category === "all") {
+      navigate(`/gifting?tab=products`);
+    } else {
+      navigate(`/gifting?tab=products&category=${category}`);
+    }
+    
+    // Clear loading state after a short delay
     setTimeout(() => {
-      // Clear loading state
       setLoadingOccasion(null);
-      
-      // Show feedback to the user
-      toast.success(`Exploring ${occasionName.toLowerCase()} gift ideas...`);
-        
-      // Navigate to the gifting page with the appropriate category
-      if (category === "all") {
-        navigate(`/gifting?tab=products`);
-      } else {
-        navigate(`/gifting?tab=products&category=${category}`);
-      }
-    }, 300);
+    }, 500);
   };
 
   return (
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Featured Occasions</h2>
-        <Link to="/gifting?tab=products" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+        <a 
+          href="/gifting?tab=products" 
+          className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+        >
           View all categories
-        </Link>
+        </a>
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {occasions.map((occasion) => (
           <div 
             key={occasion.id} 
-            onClick={(e) => handleOccasionClick(e, occasion.category, occasion.name)}
+            onClick={() => handleOccasionClick(occasion.category, occasion.name)}
             className="cursor-pointer"
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { useProducts } from "@/contexts/ProductContext";
 
 type Collection = {
   id: number;
@@ -20,66 +19,44 @@ type CollectionProps = {
 
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const navigate = useNavigate();
-  const { products } = useProducts();
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
 
-  const handleCollectionClick = (e: React.MouseEvent, collection: Collection) => {
-    e.preventDefault(); // Prevent default navigation
-
-    // If the collection has a direct URL, use that
-    if (collection.url) {
-      // If the URL contains a category, we're good
-      if (collection.url.includes('category=')) {
-        navigate(collection.url);
-        return;
-      }
+  const handleCollectionClick = (collection: Collection) => {
+    // If already loading, don't allow multiple clicks
+    if (loadingCollection !== null) {
+      return;
     }
-    
-    // Extract the search term from the collection name - use the full name to improve search results
-    const searchTerm = collection.name;
     
     // Set loading state
     setLoadingCollection(collection.id);
-    console.log(`FeaturedCollections: Collection clicked: ${collection.name}, search term: ${searchTerm}`);
+    console.log(`FeaturedCollections: Collection clicked: ${collection.name}`);
     
     try {
-      // Check if we have matching products
-      const matchingProducts = products.filter(product => {
-        const productNameLower = product.name.toLowerCase();
-        const productCategoryLower = (product.category || "").toLowerCase();
-        const searchTermLower = searchTerm.toLowerCase();
-        const productDescriptionLower = (product.description || "").toLowerCase();
-
-        // Expanded search to include more fields and partial matches
-        return productNameLower.includes(searchTermLower) || 
-               productCategoryLower.includes(searchTermLower) ||
-               productDescriptionLower.includes(searchTermLower) ||
-               // Look for individual words in the search term
-               searchTermLower.split(" ").some(word => {
-                 if (word.length < 3) return false; // Skip short words
-                 return productNameLower.includes(word) || 
-                        productCategoryLower.includes(word) ||
-                        productDescriptionLower.includes(word);
-               });
-      });
+      // Show loading toast
+      toast.success(`Exploring ${collection.name} collection...`);
       
-      console.log(`Found ${matchingProducts.length} products for collection ${collection.name}`);
+      // If the collection has a direct URL, use that
+      if (collection.url) {
+        navigate(collection.url);
+      }
+      // If it has a category, use that
+      else if (collection.category) {
+        navigate(`/gifting?tab=products&category=${collection.category}`);
+      }
+      // Otherwise use the name as a search term
+      else {
+        const searchTerm = collection.name;
+        navigate(`/gifting?tab=products&search=${encodeURIComponent(searchTerm)}`);
+      }
       
-      // Navigate to the gifting page with the appropriate URL params
-      // Use search instead of category for collections since they're more about keyword matching
+      // Reset loading state after a delay
       setTimeout(() => {
         setLoadingCollection(null);
-        if (matchingProducts.length > 0) {
-          toast.success(`Found ${matchingProducts.length} items in ${collection.name}`);
-        } else {
-          toast.info(`Exploring ${collection.name} collection...`);
-        }
-        navigate(`/gifting?tab=products&search=${encodeURIComponent(searchTerm)}`);
-      }, 300);
-      
+      }, 500);
     } catch (error) {
       console.error(`Error handling collection click for ${collection.name}:`, error);
       setLoadingCollection(null);
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -98,16 +75,19 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Featured Collections</h2>
-        <Link to="/gifting?tab=products" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+        <a 
+          href="/gifting?tab=products" 
+          className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+        >
           View all collections
-        </Link>
+        </a>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {collections.map((collection) => (
           <div 
             key={collection.id} 
-            onClick={(e) => handleCollectionClick(e, collection)}
+            onClick={() => handleCollectionClick(collection)}
             className="cursor-pointer"
           >
             <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">

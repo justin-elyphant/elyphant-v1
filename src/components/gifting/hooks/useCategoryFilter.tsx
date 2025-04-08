@@ -33,123 +33,52 @@ export const useCategoryFilter = (products: Product[]) => {
   const matchesOccasionCategory = (product: Product, category: string): boolean => {
     if (!product || !category || category === "all") return true;
     
-    // Make sure we're working with lowercase strings
+    // Make sure we're working with lowercase strings to avoid case-sensitivity issues
     const categoryLower = (product.category || "").toLowerCase();
     const nameLower = (product.name || "").toLowerCase();
     const descLower = (product.description || "").toLowerCase();
     const brandLower = (product.brand || "").toLowerCase();
     const vendorLower = (product.vendor || "").toLowerCase();
+    const targetCategoryLower = category.toLowerCase();
     
-    // Log debug info for better troubleshooting
-    console.log(`Checking if product "${product.name}" matches category "${category}"`);
+    // Enhanced keywords matching for different categories
+    const keywordMaps: Record<string, string[]> = {
+      "birthday": ["birthday", "celebration", "party", "gift", "present", "occasion"],
+      "wedding": ["wedding", "bride", "groom", "marriage", "couple", "ceremony", "matrimony"],
+      "anniversary": ["anniversary", "years together", "celebrate", "couple", "marriage", "relationship"],
+      "graduation": ["graduation", "graduate", "academic", "achievement", "diploma", "degree", "school", "college"],
+      "baby_shower": ["baby", "shower", "infant", "newborn", "child", "toddler", "nursery"],
+      "pets": ["pet", "dog", "cat", "animal", "companion", "furry", "bird", "fish"],
+      "office": ["office", "desk", "work", "professional", "business", "stationery", "supplies"],
+      "summer": ["summer", "beach", "vacation", "hot weather", "sun", "outdoor", "swimming"],
+      "home decor": ["home", "decor", "decoration", "interior", "house", "furnishing", "living"]
+    };
     
-    // Enhanced matching logic with more terms and better debug logging
-    switch(category.toLowerCase()) {
-      case "birthday":
-        return categoryLower.includes("birthday") || 
-               categoryLower.includes("celebration") ||
-               nameLower.includes("birthday") ||
-               descLower.includes("birthday") ||
-               descLower.includes("celebration");
-      
-      case "wedding":
-        return categoryLower.includes("wedding") || 
-               categoryLower.includes("bride") || 
-               categoryLower.includes("groom") ||
-               nameLower.includes("wedding") ||
-               nameLower.includes("bride") ||
-               nameLower.includes("groom") ||
-               descLower.includes("wedding") ||
-               descLower.includes("matrimony") ||
-               descLower.includes("marriage");
-      
-      case "anniversary":
-        return categoryLower.includes("anniversary") ||
-               nameLower.includes("anniversary") ||
-               categoryLower.includes("couple") ||
-               descLower.includes("anniversary") ||
-               descLower.includes("years together");
-      
-      case "graduation":
-        return categoryLower.includes("graduation") || 
-               categoryLower.includes("graduate") ||
-               nameLower.includes("graduation") ||
-               categoryLower.includes("academic") ||
-               descLower.includes("graduation") ||
-               descLower.includes("academic achievement");
-      
-      case "baby_shower":
-        return categoryLower.includes("baby") || 
-               categoryLower.includes("shower") ||
-               nameLower.includes("baby") ||
-               categoryLower.includes("infant") ||
-               categoryLower.includes("newborn") ||
-               descLower.includes("baby") ||
-               descLower.includes("newborn") ||
-               descLower.includes("infant");
-      
-      case "pets":
-        return categoryLower.includes("pet") || 
-               categoryLower.includes("dog") ||
-               categoryLower.includes("cat") ||
-               nameLower.includes("pet") ||
-               nameLower.includes("dog") ||
-               nameLower.includes("cat") ||
-               descLower.includes("pet") ||
-               descLower.includes("animal") ||
-               descLower.includes("dog") ||
-               descLower.includes("cat");
-               
-      case "office":
-        return categoryLower.includes("office") ||
-               categoryLower.includes("desk") ||
-               categoryLower.includes("work") ||
-               nameLower.includes("office") ||
-               nameLower.includes("desk") ||
-               nameLower.includes("work") ||
-               nameLower.includes("stationery") ||
-               nameLower.includes("organizer") ||
-               descLower.includes("office") ||
-               descLower.includes("work") ||
-               descLower.includes("desk") ||
-               descLower.includes("professional") ||
-               descLower.includes("business");
-               
-      case "summer":
-        return categoryLower.includes("summer") ||
-               categoryLower.includes("beach") ||
-               nameLower.includes("summer") ||
-               nameLower.includes("beach") ||
-               nameLower.includes("vacation") ||
-               descLower.includes("summer") ||
-               descLower.includes("beach") ||
-               descLower.includes("vacation") ||
-               descLower.includes("hot weather");
-               
-      case "home decor":
-        return categoryLower.includes("home") ||
-               categoryLower.includes("decor") ||
-               categoryLower.includes("decoration") ||
-               nameLower.includes("home") ||
-               nameLower.includes("decor") ||
-               nameLower.includes("decoration") ||
-               descLower.includes("home") ||
-               descLower.includes("decor") ||
-               descLower.includes("decoration") ||
-               descLower.includes("interior");
-      
-      default:
-        // Direct match with the category
-        const isMatch = categoryLower === category.toLowerCase() || 
-                        categoryLower.includes(category.toLowerCase()) || 
-                        nameLower.includes(category.toLowerCase()) ||
-                        brandLower.includes(category.toLowerCase()) ||
-                        vendorLower.includes(category.toLowerCase()) ||
-                        descLower.includes(category.toLowerCase());
-        
-        console.log(`Category match result for ${product.name}: ${isMatch ? 'MATCH' : 'NO MATCH'}`);
-        return isMatch;
+    // Get the relevant keywords for this category
+    const categoryKeywords = keywordMaps[targetCategoryLower] || [targetCategoryLower];
+    
+    // Check if any of the keywords match in any of the product fields
+    for (const keyword of categoryKeywords) {
+      if (categoryLower.includes(keyword) || 
+          nameLower.includes(keyword) || 
+          descLower.includes(keyword) ||
+          brandLower.includes(keyword) || 
+          vendorLower.includes(keyword)) {
+        return true;
+      }
     }
+    
+    // If we have an exact category match in the product's category, that's a match too
+    if (categoryLower === targetCategoryLower) {
+      return true;
+    }
+    
+    // Special case for "all" category
+    if (targetCategoryLower === "all") {
+      return true;
+    }
+
+    return false;
   };
   
   return {

@@ -43,9 +43,11 @@ const ProductGallery = ({
       isLoading, 
       filteredProductsLength: filteredProducts?.length || 0,
       initialProductsLength: initialProducts?.length || 0,
-      hasShopifyProducts: filteredProducts?.some(p => p.vendor === "Shopify") || false
+      searchTerm,
+      selectedCategory,
+      priceRange
     });
-  }, [isLoading, filteredProducts, initialProducts]);
+  }, [isLoading, filteredProducts, initialProducts, searchTerm, selectedCategory, priceRange]);
   
   if (isLoading) {
     return <ProductLoading />;
@@ -57,7 +59,10 @@ const ProductGallery = ({
     return <div>Error loading products. Please try refreshing the page.</div>;
   }
   
-  if (filteredProducts.length === 0 && searchTerm === "" && selectedCategory === "all" && priceRange === "all") {
+  // Special case: if we have search/category but no products, show a message
+  const hasActiveFilters = searchTerm !== "" || selectedCategory !== "all" || priceRange !== "all";
+  
+  if (filteredProducts.length === 0 && !hasActiveFilters) {
     return <ProductEmpty />;
   }
   
@@ -90,20 +95,20 @@ const ProductGallery = ({
         {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {filteredProducts.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            isWishlisted={wishlistedProducts.includes(product.id)}
-            isGifteeView={isGifteeView}
-            onToggleWishlist={handleWishlistToggle}
-            onClick={() => onProductSelect && onProductSelect(product)}
-          />
-        ))}
-      </div>
-      
-      {filteredProducts.length === 0 && (
+      {filteredProducts.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              isWishlisted={wishlistedProducts.includes(product.id)}
+              isGifteeView={isGifteeView}
+              onToggleWishlist={handleWishlistToggle}
+              onClick={() => onProductSelect && onProductSelect(product)}
+            />
+          ))}
+        </div>
+      ) : (
         <ProductNoResults clearFilters={clearFilters} />
       )}
     </div>

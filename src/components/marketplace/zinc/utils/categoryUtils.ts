@@ -7,7 +7,7 @@ export function guessCategory(term: string): string {
   term = term.toLowerCase();
   
   // Enhanced occasion-based category guessing
-  if (term.includes('birthday') || term.includes('celebration')) {
+  if (term.includes('birthday') || term.includes('celebration') || term.includes('party')) {
     return 'birthday';
   } else if (term.includes('wedding') || term.includes('bride') || term.includes('groom') || term.includes('marriage')) {
     return 'wedding';
@@ -30,7 +30,8 @@ export function guessCategory(term: string): string {
     return 'Footwear';
   } else if (term.includes('shirt') || term.includes('jacket') || term.includes('pant') || term.includes('dress')) {
     return 'Clothing';
-  } else if (term.includes('phone') || term.includes('laptop') || term.includes('computer') || term.includes('tablet')) {
+  } else if (term.includes('phone') || term.includes('laptop') || term.includes('computer') || term.includes('tablet') || 
+             term.includes('tech') || term.includes('gadget') || term.includes('electronics')) {
     return 'Electronics';
   } else if (term.includes('game') || term.includes('xbox') || term.includes('playstation') || term.includes('nintendo')) {
     return 'Gaming';

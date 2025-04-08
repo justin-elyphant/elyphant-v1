@@ -19,7 +19,7 @@ export const useCategoryFilter = (products: Product[]) => {
   }, [categoryParam]);
   
   // Define special occasion categories
-  const occasionCategories = ["birthday", "wedding", "anniversary", "graduation", "baby_shower", "pets", "office"];
+  const occasionCategories = ["birthday", "wedding", "anniversary", "graduation", "baby_shower", "pets", "office", "summer", "home decor"];
   
   // Extract unique categories from products
   const productCategories = Array.from(new Set(products.map(p => p.category)));
@@ -38,7 +38,9 @@ export const useCategoryFilter = (products: Product[]) => {
     const nameLower = (product.name || "").toLowerCase();
     const descLower = (product.description || "").toLowerCase();
     const brandLower = (product.brand || "").toLowerCase();
+    const vendorLower = (product.vendor || "").toLowerCase();
     
+    // Log debug info for better troubleshooting
     console.log(`Checking if product "${product.name}" matches category "${category}"`);
     
     // Enhanced matching logic with more terms and better debug logging
@@ -112,6 +114,29 @@ export const useCategoryFilter = (products: Product[]) => {
                descLower.includes("desk") ||
                descLower.includes("professional") ||
                descLower.includes("business");
+               
+      case "summer":
+        return categoryLower.includes("summer") ||
+               categoryLower.includes("beach") ||
+               nameLower.includes("summer") ||
+               nameLower.includes("beach") ||
+               nameLower.includes("vacation") ||
+               descLower.includes("summer") ||
+               descLower.includes("beach") ||
+               descLower.includes("vacation") ||
+               descLower.includes("hot weather");
+               
+      case "home decor":
+        return categoryLower.includes("home") ||
+               categoryLower.includes("decor") ||
+               categoryLower.includes("decoration") ||
+               nameLower.includes("home") ||
+               nameLower.includes("decor") ||
+               nameLower.includes("decoration") ||
+               descLower.includes("home") ||
+               descLower.includes("decor") ||
+               descLower.includes("decoration") ||
+               descLower.includes("interior");
       
       default:
         // Direct match with the category
@@ -119,8 +144,10 @@ export const useCategoryFilter = (products: Product[]) => {
                         categoryLower.includes(category.toLowerCase()) || 
                         nameLower.includes(category.toLowerCase()) ||
                         brandLower.includes(category.toLowerCase()) ||
+                        vendorLower.includes(category.toLowerCase()) ||
                         descLower.includes(category.toLowerCase());
         
+        console.log(`Category match result for ${product.name}: ${isMatch ? 'MATCH' : 'NO MATCH'}`);
         return isMatch;
     }
   };

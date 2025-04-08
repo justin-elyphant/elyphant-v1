@@ -34,11 +34,13 @@ export const useFilteredProducts = (
         const vendor = (product.vendor || "").toLowerCase();
         const description = (product.description || "").toLowerCase();
         const category = (product.category || "").toLowerCase();
+        const brand = (product.brand || "").toLowerCase();
         
         // Direct full string match
         if (productName.includes(lowerSearchTerm) || 
             vendor.includes(lowerSearchTerm) ||
             description.includes(lowerSearchTerm) ||
+            brand.includes(lowerSearchTerm) ||
             category.includes(lowerSearchTerm)) {
           return true;
         }
@@ -50,11 +52,12 @@ export const useFilteredProducts = (
           const matchCount = searchWords.filter(word => 
             productName.includes(word) || 
             description.includes(word) || 
-            category.includes(word)
+            category.includes(word) ||
+            brand.includes(word)
           ).length;
           
           // Match if we find at least 70% of the words or at least 2 words
-          return matchCount >= Math.max(2, Math.floor(searchWords.length * 0.7));
+          return matchCount >= Math.max(1, Math.floor(searchWords.length * 0.5));
         }
         
         return false;
@@ -63,14 +66,6 @@ export const useFilteredProducts = (
       // Category filter - Use the matchesOccasionCategory function from useCategoryFilter
       const matchesCategory = selectedCategory === "all" || matchesOccasionCategory(product, selectedCategory);
       
-      // Debugging for selected category
-      if (selectedCategory !== "all" && !matchesCategory) {
-        console.log(`Product doesn't match ${selectedCategory} category: ${product.name}`, {
-          category: product.category,
-          name: product.name
-        });
-      }
-
       // Price range filter
       let matchesPrice = true;
       if (priceRange === "under25") matchesPrice = product.price < 25;
@@ -78,7 +73,27 @@ export const useFilteredProducts = (
       else if (priceRange === "50to100") matchesPrice = product.price > 50 && product.price <= 100;
       else if (priceRange === "over100") matchesPrice = product.price > 100;
       
-      return matchesSearch && matchesCategory && matchesPrice;
+      // Log filter results for debugging problematic products
+      if (selectedCategory !== "all" && !matchesCategory) {
+        console.log(`Product doesn't match ${selectedCategory} category: ${product.name}`, {
+          name: product.name,
+          category: product.category,
+          matched: matchesCategory
+        });
+      }
+      
+      const result = matchesSearch && matchesCategory && matchesPrice;
+      
+      // Log successful matches for debugging
+      if (result) {
+        console.log(`Product matched filters: ${product.name}`, {
+          matchesSearch,
+          matchesCategory,
+          matchesPrice
+        });
+      }
+      
+      return result;
     });
 
     console.log(`Filtered products result: ${filtered.length} products`);

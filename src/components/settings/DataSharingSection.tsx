@@ -4,17 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Gift } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { useFormContext } from "react-hook-form";
+import { SharingLevel } from "@/types/supabase";
 
-interface DataSharingSectionProps {
-  settings: {
-    dob: "public" | "friends" | "private";
-    shipping_address: "public" | "friends" | "private";
-    gift_preferences: "public" | "friends" | "private";
-  };
-  onChange: (setting: "dob" | "shipping_address" | "gift_preferences", value: "public" | "friends" | "private") => void;
-}
+const DataSharingSection = () => {
+  const form = useFormContext();
 
-const DataSharingSection: React.FC<DataSharingSectionProps> = ({ settings, onChange }) => {
   return (
     <Card>
       <CardHeader>
@@ -24,80 +20,113 @@ const DataSharingSection: React.FC<DataSharingSectionProps> = ({ settings, onCha
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex items-center justify-between space-x-4">
-          <div className="flex items-center space-x-3">
-            <Calendar className="h-5 w-5 text-blue-500" />
-            <div>
-              <Label className="text-base">Birthday</Label>
-              <p className="text-sm text-muted-foreground">Who can see your birthday</p>
-            </div>
-          </div>
-          <div className="w-32">
-            <Select 
-              value={settings.dob} 
-              onValueChange={(val) => onChange('dob', val as "public" | "friends" | "private")}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Everyone</SelectItem>
-                <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="private">Only Me</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="data_sharing_settings.dob"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="flex items-center space-x-3">
+                  <Calendar className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <Label className="text-base">Birthday</Label>
+                    <p className="text-sm text-muted-foreground">Who can see your birthday</p>
+                  </div>
+                </div>
+                <div className="w-32">
+                  <FormControl>
+                    <Select 
+                      value={field.value} 
+                      onValueChange={(val) => field.onChange(val as SharingLevel)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Everyone</SelectItem>
+                        <SelectItem value="friends">Friends Only</SelectItem>
+                        <SelectItem value="private">Only Me</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+          )}
+        />
         
-        <div className="flex items-center justify-between space-x-4">
-          <div className="flex items-center space-x-3">
-            <MapPin className="h-5 w-5 text-red-500" />
-            <div>
-              <Label className="text-base">Shipping Address</Label>
-              <p className="text-sm text-muted-foreground">Who can see your address</p>
-            </div>
-          </div>
-          <div className="w-32">
-            <Select 
-              value={settings.shipping_address} 
-              onValueChange={(val) => onChange('shipping_address', val as "public" | "friends" | "private")}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Everyone</SelectItem>
-                <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="private">Only Me</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="data_sharing_settings.shipping_address"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="flex items-center space-x-3">
+                  <MapPin className="h-5 w-5 text-red-500" />
+                  <div>
+                    <Label className="text-base">Shipping Address</Label>
+                    <p className="text-sm text-muted-foreground">Who can see your address</p>
+                  </div>
+                </div>
+                <div className="w-32">
+                  <FormControl>
+                    <Select 
+                      value={field.value} 
+                      onValueChange={(val) => field.onChange(val as SharingLevel)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Everyone</SelectItem>
+                        <SelectItem value="friends">Friends Only</SelectItem>
+                        <SelectItem value="private">Only Me</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+          )}
+        />
         
-        <div className="flex items-center justify-between space-x-4">
-          <div className="flex items-center space-x-3">
-            <Gift className="h-5 w-5 text-purple-500" />
-            <div>
-              <Label className="text-base">Gift Preferences</Label>
-              <p className="text-sm text-muted-foreground">Who can see your gift preferences</p>
-            </div>
-          </div>
-          <div className="w-32">
-            <Select 
-              value={settings.gift_preferences} 
-              onValueChange={(val) => onChange('gift_preferences', val as "public" | "friends" | "private")}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Everyone</SelectItem>
-                <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="private">Only Me</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="data_sharing_settings.gift_preferences"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="flex items-center space-x-3">
+                  <Gift className="h-5 w-5 text-purple-500" />
+                  <div>
+                    <Label className="text-base">Gift Preferences</Label>
+                    <p className="text-sm text-muted-foreground">Who can see your gift preferences</p>
+                  </div>
+                </div>
+                <div className="w-32">
+                  <FormControl>
+                    <Select 
+                      value={field.value} 
+                      onValueChange={(val) => field.onChange(val as SharingLevel)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Everyone</SelectItem>
+                        <SelectItem value="friends">Friends Only</SelectItem>
+                        <SelectItem value="private">Only Me</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

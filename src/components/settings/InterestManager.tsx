@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
-import InterestsFormSection from "./InterestsFormSection";
+import { useFormContext } from "react-hook-form";
 
 interface InterestManagerProps {
   interests: string[];
@@ -17,6 +17,7 @@ export const InterestManager: React.FC<InterestManagerProps> = ({
   onRemove 
 }) => {
   const [newInterest, setNewInterest] = useState("");
+  const form = useFormContext();
 
   const handleAddInterest = () => {
     if (newInterest.trim()) {

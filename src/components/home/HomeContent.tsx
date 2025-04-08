@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Hero from "./Hero";
@@ -10,7 +9,6 @@ import HomeCTA from "./sections/HomeCTA";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/contexts/ProductContext";
-import { getExactProductImage } from "@/components/marketplace/zinc/utils/images/productImageUtils";
 
 const HomeContent = () => {
   const { isDebugMode } = useAuth();

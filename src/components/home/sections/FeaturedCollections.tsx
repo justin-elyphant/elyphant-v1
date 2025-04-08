@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { getExactProductImage } from "@/components/marketplace/zinc/utils/images/productImageUtils";
+import ProductImage from "@/components/marketplace/product-item/ProductImage";
 
 type Collection = {
   id: number;
   name: string;
-  image: string;
+  image: string | null;
   callToAction?: string;
   url?: string;
   category?: string;
@@ -19,7 +19,6 @@ type CollectionProps = {
 
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
-  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   const handleCollectionClick = (collection: Collection) => {
     // If already loading, don't allow multiple clicks
@@ -58,11 +57,6 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     }
   };
 
-  const handleImageError = (collectionId: number) => {
-    console.log(`Image failed to load for collection ID: ${collectionId}`);
-    setImageErrors(prev => ({...prev, [collectionId]: true}));
-  };
-
   if (!collections || collections.length === 0) {
     return (
       <div className="mb-12">
@@ -87,39 +81,34 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {collections.map((collection) => {
-          // Get a proper image from productImageUtils directly
-          const amazonImage = getExactProductImage(collection.name, collection.category || collection.name);
-          
-          // Use Amazon image or fallback to collection image if Amazon image fails
-          const imageToUse = imageErrors[collection.id] ? collection.image : amazonImage;
-            
-          return (
-            <div 
-              key={collection.id} 
-              onClick={() => handleCollectionClick(collection)}
-              className="cursor-pointer"
-            >
-              <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
-                <div className="aspect-video relative">
-                  <img 
-                    src={imageToUse} 
-                    alt={collection.name}
-                    className="object-cover w-full h-full"
-                    onError={() => handleImageError(collection.id)}
+        {collections.map((collection) => (
+          <div 
+            key={collection.id} 
+            onClick={() => handleCollectionClick(collection)}
+            className="cursor-pointer"
+          >
+            <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
+              <div className="aspect-video relative">
+                <div className="w-full h-full">
+                  <ProductImage 
+                    product={{
+                      name: `${collection.name}`,
+                      category: collection.category || collection.name,
+                      image: null // Force it to use the Zinc API
+                    }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
-                    <h3 className="text-white font-medium text-lg">{collection.name}</h3>
-                    <div className="flex items-center text-white/90 text-sm mt-1 hover:text-white">
-                      <span>{loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}</span>
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
+                  <h3 className="text-white font-medium text-lg">{collection.name}</h3>
+                  <div className="flex items-center text-white/90 text-sm mt-1 hover:text-white">
+                    <span>{loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}</span>
+                    <ArrowRight className="h-4 w-4 ml-1" />
                   </div>
                 </div>
-              </Card>
-            </div>
-          );
-        })}
+              </div>
+            </Card>
+          </div>
+        ))}
       </div>
     </div>
   );

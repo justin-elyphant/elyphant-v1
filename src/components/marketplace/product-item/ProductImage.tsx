@@ -21,20 +21,22 @@ const ProductImage = ({ product }: ProductImageProps) => {
     setImageError(false);
     setFallbackImageError(false);
     
-    // Get the initial image URL
-    const initialUrl = getProductImage();
-    setImageUrl(initialUrl);
+    // Get a fresh image URL directly from Amazon/Zinc
+    const categoryName = product.category || 'Electronics';
+    const directImageUrl = getExactProductImage(product.name, categoryName);
+    setImageUrl(directImageUrl);
     
-    console.log(`ProductImage: Initial image URL for ${product.name}: ${initialUrl}`);
-  }, [product.name, product.image, product.category]);
+    console.log(`ProductImage: Initial image URL for ${product.name}: ${directImageUrl}`);
+  }, [product.name, product.category]);
   
   const handleImageError = () => {
     console.log(`Image failed to load for product: ${product.name}`);
     setImageError(true);
     
-    // Try Amazon image directly when original fails
-    const amazonImage = getExactProductImage(product.name, product.category || 'Electronics');
-    setImageUrl(amazonImage);
+    // Try one more time with a different category
+    const alternativeCategory = product.category === 'Electronics' ? 'Home' : 'Electronics';
+    const fallbackUrl = getExactProductImage(product.name, alternativeCategory);
+    setImageUrl(fallbackUrl);
   };
 
   const handleFallbackImageError = () => {
@@ -42,19 +44,9 @@ const ProductImage = ({ product }: ProductImageProps) => {
     setFallbackImageError(true);
   };
 
-  const getProductImage = () => {
-    // If we have a valid image that's not a placeholder or unsplash, use it
-    if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
-      return product.image;
-    }
-    
-    // Otherwise, get an Amazon image based on product name and category
-    return getExactProductImage(product.name, product.category || 'Electronics');
-  };
-
   if (imageError && fallbackImageError) {
     return (
-      <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
         <ImageOff className="h-8 w-8 text-gray-400" />
       </div>
     );
@@ -66,7 +58,7 @@ const ProductImage = ({ product }: ProductImageProps) => {
         <img 
           src={imageUrl}
           alt={product.name}
-          className="w-full h-48 object-cover"
+          className="w-full h-full object-cover"
           onError={imageError ? handleFallbackImageError : handleImageError}
           loading="lazy"
         />

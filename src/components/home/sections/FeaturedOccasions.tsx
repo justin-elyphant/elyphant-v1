@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 import { toast } from "sonner";
-import { getExactProductImage } from "@/components/marketplace/zinc/utils/images/productImageUtils";
 import ProductImage from "@/components/marketplace/product-item/ProductImage";
 
 const occasions = [
@@ -131,11 +130,11 @@ const FeaturedOccasions = () => {
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>
               <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className="rounded-full p-3 bg-white shadow-sm mb-3 relative overflow-hidden">
+                <div className="rounded-full p-0 bg-white shadow-sm mb-3 relative overflow-hidden h-16 w-16">
                   <ProductImage 
                     product={{
                       name: `${occasion.name} gifts`,
-                      category: occasion.category || "gifts",
+                      category: occasion.category,
                       image: null // Force it to use the API
                     }}
                   />

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { LogIn, User, LogOut } from "lucide-react";
+import { LogIn, User, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth";
@@ -65,18 +65,29 @@ const AuthButtons = () => {
 
   return (
     <nav className="flex items-center space-x-3">
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/sign-in">
-          <LogIn className="mr-2 h-4 w-4" />
-          Sign In
-        </Link>
-      </Button>
-      <Button size="sm" className="bg-purple-600 hover:bg-purple-700" asChild>
-        <Link to="/sign-up">
-          <User className="mr-2 h-4 w-4" />
-          Sign Up
-        </Link>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button className="bg-purple-600 hover:bg-purple-700" size="sm">
+            <LogIn className="mr-2 h-4 w-4" />
+            Sign In
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem asChild>
+            <Link to="/sign-in" className="flex w-full items-center">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/sign-up" className="flex w-full items-center">
+              <User className="mr-2 h-4 w-4" />
+              Create Account
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </nav>
   );
 };

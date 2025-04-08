@@ -68,7 +68,7 @@ describe('useProfileCompletion', () => {
 
   it('should redirect to profile setup if shouldRedirect is true and profile is incomplete', async () => {
     // Mock incomplete profile
-    jest.mocked(useProfileCompletion).mockImplementationOnce(() => ({
+    jest.spyOn(require('@/integrations/supabase/client'), 'supabase').mockImplementation(() => ({
       from: jest.fn(() => ({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
@@ -81,7 +81,7 @@ describe('useProfileCompletion', () => {
       }))
     }));
 
-    const { result } = renderHook(() => useProfileCompletion(), { wrapper });
+    const { result } = renderHook(() => useProfileCompletion({ shouldRedirect: true }), { wrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -91,6 +91,4 @@ describe('useProfileCompletion', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/profile-setup');
     });
   });
-
-  // More tests here if needed
 });

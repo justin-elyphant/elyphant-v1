@@ -44,7 +44,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       // Check if storage bucket exists, if not we'll use base64 data
       const { data: bucketData, error: bucketError } = await supabase
         .storage
-        .getBuckets();
+        .listBuckets();
       
       let imageUrl = '';
       

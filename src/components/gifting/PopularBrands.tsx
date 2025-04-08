@@ -68,17 +68,20 @@ const PopularBrands = () => {
     e.preventDefault(); // Prevent default navigation
     console.log(`PopularBrands: Brand clicked: ${brandName}, products available: ${products.length}`);
     
-    // For Apple, navigate immediately to prevent freezing
-    if (brandName.toLowerCase() === "apple") {
-      console.log("Apple detected, navigating immediately");
-      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
-      return;
-    }
-    
     // Set loading state for this specific brand
     setLoadingBrand(brandName);
     
+    // Create a page title for the brand
+    const pageTitle = `${brandName} Products`;
+    
     try {
+      // For Apple, navigate immediately to prevent freezing
+      if (brandName.toLowerCase() === "apple") {
+        console.log("Apple detected, navigating immediately");
+        navigate(`/marketplace?brand=${encodeURIComponent(brandName)}&pageTitle=${encodeURIComponent(pageTitle)}`);
+        return;
+      }
+      
       // Set a timeout to prevent hanging
       const timeoutId = setTimeout(() => {
         if (loadingBrand === brandName) {
@@ -86,7 +89,7 @@ const PopularBrands = () => {
           setLoadingBrand(null);
           toast.error(`Loading ${brandName} products took too long`, { id: "loading-brand-products" });
           // Navigate anyway after timeout
-          navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
+          navigate(`/marketplace?brand=${encodeURIComponent(brandName)}&pageTitle=${encodeURIComponent(pageTitle)}`);
         }
       }, 3000); // 3 second timeout
       
@@ -97,12 +100,12 @@ const PopularBrands = () => {
       clearTimeout(timeoutId);
       
       // Navigate to the marketplace
-      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
+      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}&pageTitle=${encodeURIComponent(pageTitle)}`);
     } catch (error) {
       console.error(`Error loading ${brandName} products:`, error);
       toast.error(`Failed to load ${brandName} products`);
       // Navigate anyway even if there was an error
-      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
+      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}&pageTitle=${encodeURIComponent(pageTitle)}`);
     } finally {
       // Clear loading state
       setLoadingBrand(null);

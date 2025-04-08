@@ -11,6 +11,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
+import GiftingHeader from "@/components/gifting/GiftingHeader";
 
 const Gifting = () => {
   return (
@@ -25,13 +26,14 @@ const GiftingWrapper = () => {
   const tabParam = searchParams.get("tab");
   const categoryParam = searchParams.get("category");
   const searchParam = searchParams.get("search");
+  const pageTitleParam = searchParams.get("pageTitle");
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("wishlists");
   const [initialProducts, setInitialProducts] = useState<Product[]>([]);
   
   // Handle initial load and parameters
   useEffect(() => {
-    console.log("URL params in Gifting:", { tabParam, categoryParam, searchParam });
+    console.log("URL params in Gifting:", { tabParam, categoryParam, searchParam, pageTitleParam });
     
     // Priority handling: If category or search is present, switch to products tab 
     if (categoryParam || searchParam) {
@@ -72,40 +74,46 @@ const GiftingWrapper = () => {
     }
   }, []);
 
+  // Custom page title for the products tab
+  const productTabTitle = pageTitleParam || "Gift Ideas";
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
-          <TabsTrigger value="wishlists">My Wishlists</TabsTrigger>
-          <TabsTrigger value="friends">Friends' Gifts</TabsTrigger>
-          <TabsTrigger value="events">Upcoming Events</TabsTrigger>
-          <TabsTrigger value="products">Explore Products</TabsTrigger>
-        </TabsList>
+    <>
+      <GiftingHeader />
+      <div className="container mx-auto py-8 px-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
+            <TabsTrigger value="wishlists">My Wishlists</TabsTrigger>
+            <TabsTrigger value="friends">Friends' Gifts</TabsTrigger>
+            <TabsTrigger value="events">Upcoming Events</TabsTrigger>
+            <TabsTrigger value="products">Explore Products</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="wishlists">
+            <MyWishlists />
+          </TabsContent>
+          
+          <TabsContent value="friends">
+            <FriendsWishlists />
+          </TabsContent>
+          
+          <TabsContent value="events">
+            <UpcomingEvents />
+          </TabsContent>
+          
+          <TabsContent value="products">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">{productTabTitle}</h2>
+              <ProductGallery initialProducts={initialProducts} />
+            </div>
+          </TabsContent>
+        </Tabs>
         
-        <TabsContent value="wishlists">
-          <MyWishlists />
-        </TabsContent>
-        
-        <TabsContent value="friends">
-          <FriendsWishlists />
-        </TabsContent>
-        
-        <TabsContent value="events">
-          <UpcomingEvents />
-        </TabsContent>
-        
-        <TabsContent value="products">
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Gift Ideas</h2>
-            <ProductGallery initialProducts={initialProducts} />
-          </div>
-        </TabsContent>
-      </Tabs>
-      
-      <div className="mt-12">
-        <PopularBrands />
+        <div className="mt-12">
+          <PopularBrands />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

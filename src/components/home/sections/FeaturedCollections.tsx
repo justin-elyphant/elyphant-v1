@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -43,12 +42,13 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
         }
         // If it has a category, use that
         else if (collection.category) {
-          window.location.href = `/gifting?tab=products&category=${collection.category}`;
+          // Include the collection name as a pageTitle parameter
+          window.location.href = `/gifting?tab=products&category=${collection.category}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
         }
         // Otherwise use the name as a search term
         else {
           const searchTerm = collection.name;
-          window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}`;
+          window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
         }
       }, 100);
     } catch (error) {

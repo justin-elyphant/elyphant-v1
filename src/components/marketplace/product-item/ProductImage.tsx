@@ -27,13 +27,16 @@ const ProductImage = ({ product, useMock = false }: ProductImageProps) => {
       const mockUrl = getMockImageForCategory(product.name, product.category || 'Electronics');
       setImageUrl(mockUrl);
       console.log(`ProductImage: Using mock image URL for ${product.name}: ${mockUrl}`);
+    } else if (product.image) {
+      // Use the provided image URL if available
+      setImageUrl(product.image);
     } else {
       // Get a fresh image URL directly from Amazon/Zinc
       const directImageUrl = getExactProductImage(product.name, product.category || 'Electronics');
       setImageUrl(directImageUrl);
       console.log(`ProductImage: Initial image URL for ${product.name}: ${directImageUrl}`);
     }
-  }, [product.name, product.category, useMock]);
+  }, [product.name, product.category, product.image, useMock]);
   
   const handleImageError = () => {
     console.log(`Image failed to load for product: ${product.name}`);
@@ -55,41 +58,43 @@ const ProductImage = ({ product, useMock = false }: ProductImageProps) => {
   // Get a consistent mock image based on category
   const getMockImageForCategory = (name: string, category?: string): string => {
     const normalizedCategory = category?.toLowerCase() || '';
+    const normalizedName = name.toLowerCase();
     
     // Collection thumbnails
-    if (normalizedCategory.includes('summer')) {
+    if (normalizedCategory.includes('summer') || normalizedName.includes('summer')) {
       return "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('office')) {
+    if (normalizedCategory.includes('office') || normalizedName.includes('office')) {
       return "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=500&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('electronics')) {
+    if (normalizedCategory.includes('electronics') || normalizedName.includes('electronics')) {
       return "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('pet')) {
+    if (normalizedCategory.includes('pet') || normalizedName.includes('pet')) {
       return "https://images.unsplash.com/photo-1560743641-3914f2c45636?w=500&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('home') || normalizedCategory.includes('decor')) {
+    if (normalizedCategory.includes('home') || normalizedCategory.includes('decor') || 
+        normalizedName.includes('home') || normalizedName.includes('decor')) {
       return "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=500&h=300&fit=crop";
     }
     
     // Occasion thumbnails
-    if (normalizedCategory.includes('birthday')) {
+    if (normalizedCategory.includes('birthday') || normalizedName.includes('birthday')) {
       return "https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=300&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('wedding')) {
+    if (normalizedCategory.includes('wedding') || normalizedName.includes('wedding')) {
       return "https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?w=300&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('anniversary')) {
+    if (normalizedCategory.includes('anniversary') || normalizedName.includes('anniversary')) {
       return "https://images.unsplash.com/photo-1537274942065-eda9d00a6293?w=300&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('graduation')) {
+    if (normalizedCategory.includes('graduation') || normalizedName.includes('graduation')) {
       return "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=300&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('baby')) {
+    if (normalizedCategory.includes('baby') || normalizedName.includes('baby')) {
       return "https://images.unsplash.com/photo-1544126592-55d068bdcbe9?w=300&h=300&fit=crop";
     }
-    if (normalizedCategory.includes('pet')) {
+    if (normalizedCategory.includes('pet') || normalizedName.includes('pet')) {
       return "https://images.unsplash.com/photo-1560743641-3914f2c45636?w=300&h=300&fit=crop";
     }
     

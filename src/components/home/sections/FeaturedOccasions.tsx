@@ -97,11 +97,14 @@ const FeaturedOccasions = () => {
     
     // Add a small delay to ensure the toast is visible
     setTimeout(() => {
-      // Navigate to the gifting page with the appropriate category
+      // Generate a page title based on the occasion
+      const pageTitle = `Gifts for ${occasionName}`;
+      
+      // Navigate to the gifting page with the appropriate category and title
       if (category === "all") {
-        window.location.href = "/gifting?tab=products";
+        window.location.href = `/gifting?tab=products&pageTitle=${encodeURIComponent(pageTitle)}`;
       } else {
-        window.location.href = `/gifting?tab=products&category=${category}`;
+        window.location.href = `/gifting?tab=products&category=${category}&pageTitle=${encodeURIComponent(pageTitle)}`;
       }
       
       // Reset loading state after navigation (although page will reload)

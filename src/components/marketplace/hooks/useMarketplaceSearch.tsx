@@ -43,6 +43,7 @@ export const useMarketplaceSearch = () => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get("category");
     const searchParam = params.get("search");
+    const brandParam = params.get("brand");
     
     // Only process if the search parameter has actually changed
     if (searchParam !== lastSearchTermRef.current) {
@@ -72,11 +73,14 @@ export const useMarketplaceSearch = () => {
         searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
           filterBySearch(searchParam, amazonProducts);
         });
+      } else if (brandParam) {
+        // If there's a brand parameter but no search, we'll handle it elsewhere
+        console.log(`Using brand parameter: ${brandParam}`);
       } else if (categoryParam) {
-        // Filter by category if no search term
+        // Filter by category if no search term or brand
         filterByCategory(categoryParam);
       } else {
-        // No search term or category, show all products
+        // No search term, brand, or category, show all products
         filterByCategory(null);
       }
     }

@@ -18,13 +18,18 @@ const Marketplace = () => {
 
 const MarketplaceWrapper = () => {
   const { filteredProducts, isLoading, getPageInfo } = useMarketplaceSearch();
-  const { pageTitle, subtitle } = getPageInfo();
   const location = useLocation();
   const { products, setProducts } = useProducts();
   const [searchParams] = useSearchParams();
   const [isBrandLoading, setIsBrandLoading] = useState(false);
   const [attemptedBrands, setAttemptedBrands] = useState<string[]>([]);
   const [brandProducts, setBrandProducts] = useState<any[]>([]);
+  
+  // Get custom page title from URL if provided
+  const pageTitleParam = searchParams.get("pageTitle");
+  const { pageTitle: defaultPageTitle, subtitle: defaultSubtitle } = getPageInfo();
+  const pageTitle = pageTitleParam || defaultPageTitle;
+  const subtitle = defaultSubtitle;
   
   const loadBrandProducts = useCallback(async (brandName: string) => {
     console.log(`MarketplaceWrapper: Processing brand parameter: ${brandName}`);

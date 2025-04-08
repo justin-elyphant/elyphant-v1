@@ -10,6 +10,7 @@ import Settings from './pages/Settings';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { ProductProvider } from './contexts/ProductContext';
 import DebugPanel from './components/debug/DebugPanel';
 import MainLayout from './components/layout/MainLayout';
 
@@ -18,32 +19,34 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Index />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/settings" element={
+          <ProductProvider>
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Index />} />
+                <Route path="/sign-in" element={<SignIn />} />
+                <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+              </Route>
+              
+              <Route path="/profile-setup" element={
                 <ProtectedRoute>
-                  <Settings />
+                  <ProfileSetup />
                 </ProtectedRoute>
               } />
-            </Route>
-            
-            <Route path="/profile-setup" element={
-              <ProtectedRoute>
-                <ProfileSetup />
-              </ProtectedRoute>
-            } />
 
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-          </Routes>
-          
-          <DebugPanel />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+            </Routes>
+            
+            <DebugPanel />
+          </ProductProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

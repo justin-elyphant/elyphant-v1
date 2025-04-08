@@ -10,6 +10,7 @@ import { ProductProvider } from "@/contexts/ProductContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { Product } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 
 const Gifting = () => {
   return (
@@ -23,22 +24,31 @@ const GiftingWrapper = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const categoryParam = searchParams.get("category");
+  const searchParam = searchParams.get("search");
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("wishlists");
   const [initialProducts, setInitialProducts] = useState<Product[]>([]);
-
-  // Important - make sure we switch to products tab when a category param is present
+  
+  // Handle initial load and parameters
   useEffect(() => {
-    console.log("URL params in Gifting:", { tabParam, categoryParam });
+    console.log("URL params in Gifting:", { tabParam, categoryParam, searchParam });
     
-    if (categoryParam) {
-      console.log("Category param detected, switching to products tab");
+    // Priority handling: If category or search is present, switch to products tab 
+    if (categoryParam || searchParam) {
+      console.log("Category or search param detected, switching to products tab");
       setActiveTab("products");
+      
+      // If we don't have tab=products in URL, add it
+      if (tabParam !== "products") {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set("tab", "products");
+        navigate(`?${newParams.toString()}`, { replace: true });
+      }
     } 
     else if (tabParam && ["wishlists", "friends", "events", "products"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
-  }, [tabParam, categoryParam]);
+  }, [tabParam, categoryParam, searchParam, navigate, searchParams]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -47,6 +57,11 @@ const GiftingWrapper = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("tab", value);
     navigate(`?${newParams.toString()}`, { replace: true });
+    
+    // Show indicator if there's an active category or search when switching tabs
+    if (value !== "products" && (categoryParam || searchParam)) {
+      toast.info("Your search filters will be preserved when returning to Products tab");
+    }
   };
 
   useEffect(() => {

@@ -22,19 +22,22 @@ const HomeContent = () => {
       id: 1, 
       name: "Summer Essentials", 
       image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-      callToAction: "Explore Summer Gifts"
+      callToAction: "Explore Summer Gifts",
+      category: "summer"
     },
     { 
       id: 2, 
       name: "Office Gear", 
       image: "https://images.unsplash.com/photo-1497215842964-222b430dc094?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-      callToAction: "Shop Office Tech Gifts"
+      callToAction: "Shop Office Tech Gifts",
+      category: "office"
     },
     { 
       id: 3, 
       name: "Tech Gifts", 
       image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-      callToAction: "Discover Tech Gifts"
+      callToAction: "Discover Tech Gifts",
+      category: "electronics"
     },
     { 
       id: 4, 
@@ -47,7 +50,8 @@ const HomeContent = () => {
       id: 5, 
       name: "Home Decor", 
       image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-      callToAction: "Find Home Decor Gifts"
+      callToAction: "Find Home Decor Gifts",
+      category: "home decor"
     }
   ];
 

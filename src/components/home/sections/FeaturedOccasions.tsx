@@ -1,8 +1,11 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
+import { useProducts } from "@/contexts/ProductContext";
+import { guessCategory } from "@/components/marketplace/zinc/utils/categoryUtils";
+import { toast } from "sonner";
 
 const occasions = [
   {
@@ -10,7 +13,7 @@ const occasions = [
     name: "Birthdays",
     icon: <PartyPopper className="h-6 w-6 text-blue-500" />,
     description: "Find the perfect birthday gifts",
-    url: "/gifting?tab=products&category=birthday",
+    category: "birthday",
     color: "bg-blue-50 border-blue-200",
     cta: "Gifts for Birthdays"
   },
@@ -19,7 +22,7 @@ const occasions = [
     name: "Weddings",
     icon: <Heart className="h-6 w-6 text-pink-500" />,
     description: "Celebrate special unions",
-    url: "/gifting?tab=products&category=wedding",
+    category: "wedding",
     color: "bg-pink-50 border-pink-200",
     cta: "Wedding Gift Ideas"
   },
@@ -28,7 +31,7 @@ const occasions = [
     name: "Anniversaries",
     icon: <Calendar className="h-6 w-6 text-purple-500" />,
     description: "Commemorate years together",
-    url: "/gifting?tab=products&category=anniversary",
+    category: "anniversary",
     color: "bg-purple-50 border-purple-200",
     cta: "Anniversary Gifts"
   },
@@ -37,7 +40,7 @@ const occasions = [
     name: "Graduations",
     icon: <GraduationCap className="h-6 w-6 text-green-500" />,
     description: "Celebrate academic achievements",
-    url: "/gifting?tab=products&category=graduation",
+    category: "graduation",
     color: "bg-green-50 border-green-200",
     cta: "Graduation Gift Ideas"
   },
@@ -46,7 +49,7 @@ const occasions = [
     name: "Baby Showers",
     icon: <Baby className="h-6 w-6 text-yellow-500" />,
     description: "Welcome new arrivals",
-    url: "/gifting?tab=products&category=baby_shower",
+    category: "baby_shower",
     color: "bg-yellow-50 border-yellow-200",
     cta: "Baby Shower Gifts"
   },
@@ -55,7 +58,7 @@ const occasions = [
     name: "Pet Gifts",
     icon: <Dog className="h-6 w-6 text-orange-500" />,
     description: "Spoil your furry friends",
-    url: "/gifting?tab=products&category=pets",
+    category: "pets",
     color: "bg-orange-50 border-orange-200",
     cta: "Gifts for Pets"
   },
@@ -64,13 +67,99 @@ const occasions = [
     name: "All Occasions",
     icon: <Gift className="h-6 w-6 text-teal-500" />,
     description: "Explore gifts for any event",
-    url: "/gifting?tab=products",
+    category: "all",
     color: "bg-teal-50 border-teal-200",
     cta: "Browse All Gift Ideas"
   },
 ];
 
 const FeaturedOccasions = () => {
+  const { products, setProducts } = useProducts();
+  const [loadingOccasion, setLoadingOccasion] = useState<string | null>(null);
+  const navigate = useNavigate();
+  
+  const handleOccasionClick = (e: React.MouseEvent, category: string) => {
+    e.preventDefault(); // Prevent default navigation
+    console.log(`FeaturedOccasions: Occasion clicked: ${category}`);
+    
+    // Set loading state for this specific occasion
+    setLoadingOccasion(category);
+    
+    try {
+      // Make sure we have products matching this category
+      const matchingProducts = products.filter(product => {
+        const categoryLower = product.category.toLowerCase();
+        const nameLower = product.name.toLowerCase();
+        
+        if (category === "all") return true;
+        
+        // Match based on category and occasion logic from useFilteredProducts.tsx
+        if (category === "birthday") {
+          return categoryLower.includes("birthday") || 
+                 categoryLower.includes("celebration") ||
+                 nameLower.includes("birthday");
+        } 
+        else if (category === "wedding") {
+          return categoryLower.includes("wedding") || 
+                 categoryLower.includes("bride") || 
+                 categoryLower.includes("groom") ||
+                 nameLower.includes("wedding");
+        } 
+        else if (category === "anniversary") {
+          return categoryLower.includes("anniversary") ||
+                 nameLower.includes("anniversary") ||
+                 categoryLower.includes("couple");
+        } 
+        else if (category === "graduation") {
+          return categoryLower.includes("graduation") || 
+                 categoryLower.includes("graduate") ||
+                 nameLower.includes("graduation") ||
+                 categoryLower.includes("academic");
+        } 
+        else if (category === "baby_shower") {
+          return categoryLower.includes("baby") || 
+                 categoryLower.includes("shower") ||
+                 nameLower.includes("baby") ||
+                 categoryLower.includes("infant") ||
+                 categoryLower.includes("newborn");
+        }
+        else if (category === "pets") {
+          return categoryLower.includes("pet") || 
+                 categoryLower.includes("dog") ||
+                 categoryLower.includes("cat") ||
+                 nameLower.includes("pet") ||
+                 nameLower.includes("dog") ||
+                 nameLower.includes("cat") ||
+                 product.description?.toLowerCase().includes("pet");
+        }
+        
+        return false;
+      });
+      
+      // If we don't have enough matching products, we'll use the search term to add more
+      if (matchingProducts.length < 10) {
+        toast.loading(`Finding more ${category} gift ideas...`, { id: "loading-occasion-products" });
+        
+        // Use the search term to add product categories
+        const searchTerm = category === "all" ? "gift ideas" : `${category} gift ideas`;
+        
+        // Add a small delay to allow time for navigation
+        setTimeout(() => {
+          navigate(`/gifting?tab=products&category=${category}`);
+        }, 300);
+      } else {
+        console.log(`Found ${matchingProducts.length} products for category ${category}. Navigating...`);
+        toast.success(`Found ${matchingProducts.length} gift ideas for ${category}`);
+        navigate(`/gifting?tab=products&category=${category}`);
+      }
+    } catch (error) {
+      console.error(`Error loading ${category} products:`, error);
+    } finally {
+      // Clear loading state
+      setLoadingOccasion(null);
+    }
+  };
+
   return (
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
@@ -82,7 +171,11 @@ const FeaturedOccasions = () => {
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {occasions.map((occasion) => (
-          <Link to={occasion.url} key={occasion.id}>
+          <div 
+            key={occasion.id} 
+            onClick={(e) => handleOccasionClick(e, occasion.category)}
+            className="cursor-pointer"
+          >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>
               <CardContent className="p-4 flex flex-col items-center text-center">
                 <div className="rounded-full p-3 bg-white shadow-sm mb-3">
@@ -91,11 +184,11 @@ const FeaturedOccasions = () => {
                 <h3 className="font-medium">{occasion.name}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{occasion.description}</p>
                 <span className="text-xs font-medium text-purple-600 hover:text-purple-800 mt-2">
-                  {occasion.cta}
+                  {loadingOccasion === occasion.category ? "Loading..." : occasion.cta}
                 </span>
               </CardContent>
             </Card>
-          </Link>
+          </div>
         ))}
       </div>
     </div>

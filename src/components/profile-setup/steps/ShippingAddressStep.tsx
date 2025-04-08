@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShippingAddress } from "@/types/supabase";
+import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
 
 interface ShippingAddressStepProps {
   value: ShippingAddress;
@@ -33,6 +34,22 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
     });
   };
 
+  const handleAddressSelect = (fullAddress: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  }) => {
+    onChange({
+      street: fullAddress.address,
+      city: fullAddress.city,
+      state: fullAddress.state,
+      zipCode: fullAddress.zipCode,
+      country: fullAddress.country
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -44,12 +61,10 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="street">Street Address</Label>
-          <Input
-            id="street"
-            placeholder="123 Main St"
+          <AddressAutocomplete
             value={value.street}
-            onChange={(e) => handleChange('street', e.target.value)}
+            onChange={(val) => handleChange('street', val)}
+            onAddressSelect={handleAddressSelect}
           />
         </div>
         

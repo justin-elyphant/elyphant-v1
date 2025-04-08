@@ -2,25 +2,22 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 
 interface BasicInfoSectionProps {
   formData: {
     name: string;
     email: string;
-    username: string;
     birthday?: Date;
-    bio: string;
   };
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleBirthdayChange: (date: Date | undefined) => void;
-  user: any | null;
+  user: any;
 }
 
 const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
@@ -29,10 +26,17 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
   handleBirthdayChange,
   user
 }) => {
+  // Function to format the birthday for display, showing only month and day
+  const formatBirthday = (date: Date | undefined) => {
+    if (!date) return "";
+    return format(date, "MMMM d"); // Only display month and day, no year
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Basic Information</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
           <Input 
@@ -40,36 +44,28 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Your full name"
+            placeholder="Enter your name"
           />
         </div>
-      
+        
         <div className="space-y-2">
           <Label htmlFor="email">Email Address</Label>
           <Input 
             id="email"
             name="email"
             type="email"
-            value={formData.email}
+            value={formData.email || user?.email || ""}
             onChange={handleChange}
-            placeholder="your@email.com"
-            disabled={!!user}
+            disabled={!!user?.email}
+            placeholder="email@example.com"
           />
+          {user?.email && (
+            <p className="text-xs text-muted-foreground">
+              Email is managed by your account and cannot be changed here
+            </p>
+          )}
         </div>
-      
-        <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
-          <Input 
-            id="username"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            placeholder="username"
-          />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
         <div className="space-y-2">
           <Label htmlFor="birthday">Birthday</Label>
           <Popover>
@@ -82,11 +78,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.birthday ? (
-                  format(formData.birthday, "PPP")
-                ) : (
-                  <span>Pick a date</span>
-                )}
+                {formData.birthday ? formatBirthday(formData.birthday) : <span>Select your birthday</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -95,22 +87,13 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                 selected={formData.birthday}
                 onSelect={handleBirthdayChange}
                 initialFocus
-                className={cn("p-3 pointer-events-auto")}
+                disabled={(date) => date > new Date()}
+                captionLayout="dropdown-buttons"
+                fromYear={1900}
+                toYear={new Date().getFullYear()}
               />
             </PopoverContent>
           </Popover>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea
-            id="bio"
-            name="bio"
-            value={formData.bio}
-            onChange={handleChange}
-            placeholder="Tell us about yourself"
-            rows={3}
-          />
         </div>
       </div>
     </div>

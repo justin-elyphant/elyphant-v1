@@ -33,12 +33,12 @@ export const useFilteredProducts = (
       // Updated category matching logic to handle specific occasion categories
       const matchesCategory = 
         selectedCategory === "all" || 
-        product.category === selectedCategory ||
-        (selectedCategory === "birthday" && product.category.toLowerCase().includes("birthday")) ||
-        (selectedCategory === "wedding" && product.category.toLowerCase().includes("wedding")) ||
-        (selectedCategory === "anniversary" && product.category.toLowerCase().includes("anniversary")) ||
-        (selectedCategory === "graduation" && product.category.toLowerCase().includes("graduation")) ||
-        (selectedCategory === "baby_shower" && (
+        (product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()) ||
+        (selectedCategory === "birthday" && product.category && product.category.toLowerCase().includes("birthday")) ||
+        (selectedCategory === "wedding" && product.category && product.category.toLowerCase().includes("wedding")) ||
+        (selectedCategory === "anniversary" && product.category && product.category.toLowerCase().includes("anniversary")) ||
+        (selectedCategory === "graduation" && product.category && product.category.toLowerCase().includes("graduation")) ||
+        (selectedCategory === "baby_shower" && product.category && (
           product.category.toLowerCase().includes("baby") || 
           product.category.toLowerCase().includes("shower")
         ));

@@ -10,7 +10,7 @@ const occasions = [
     name: "Birthdays",
     icon: <PartyPopper className="h-6 w-6 text-blue-500" />,
     description: "Find the perfect birthday gifts",
-    url: "/gifting?category=birthday",
+    url: "/gifting?tab=products&category=birthday",
     color: "bg-blue-50 border-blue-200",
     cta: "Gifts for Birthdays"
   },
@@ -19,7 +19,7 @@ const occasions = [
     name: "Weddings",
     icon: <Heart className="h-6 w-6 text-pink-500" />,
     description: "Celebrate special unions",
-    url: "/gifting?category=wedding",
+    url: "/gifting?tab=products&category=wedding",
     color: "bg-pink-50 border-pink-200",
     cta: "Wedding Gift Ideas"
   },
@@ -28,7 +28,7 @@ const occasions = [
     name: "Anniversaries",
     icon: <Calendar className="h-6 w-6 text-purple-500" />,
     description: "Commemorate years together",
-    url: "/gifting?category=anniversary",
+    url: "/gifting?tab=products&category=anniversary",
     color: "bg-purple-50 border-purple-200",
     cta: "Anniversary Gifts"
   },
@@ -37,7 +37,7 @@ const occasions = [
     name: "Graduations",
     icon: <GraduationCap className="h-6 w-6 text-green-500" />,
     description: "Celebrate academic achievements",
-    url: "/gifting?category=graduation",
+    url: "/gifting?tab=products&category=graduation",
     color: "bg-green-50 border-green-200",
     cta: "Graduation Gift Ideas"
   },
@@ -46,7 +46,7 @@ const occasions = [
     name: "Baby Showers",
     icon: <Baby className="h-6 w-6 text-yellow-500" />,
     description: "Welcome new arrivals",
-    url: "/gifting?category=baby_shower",
+    url: "/gifting?tab=products&category=baby_shower",
     color: "bg-yellow-50 border-yellow-200",
     cta: "Baby Shower Gifts"
   },
@@ -55,7 +55,7 @@ const occasions = [
     name: "All Occasions",
     icon: <Gift className="h-6 w-6 text-teal-500" />,
     description: "Explore gifts for any event",
-    url: "/gifting",
+    url: "/gifting?tab=products",
     color: "bg-teal-50 border-teal-200",
     cta: "Browse All Gift Ideas"
   },
@@ -66,7 +66,7 @@ const FeaturedOccasions = () => {
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Featured Occasions</h2>
-        <Link to="/gifting" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+        <Link to="/gifting?tab=products" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
           View all categories
         </Link>
       </div>

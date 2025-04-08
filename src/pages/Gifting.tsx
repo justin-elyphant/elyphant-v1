@@ -17,6 +17,13 @@ const Gifting = () => {
   const [activeTab, setActiveTab] = useState(tabParam || "wishlists");
   const [initialProducts, setInitialProducts] = useState<Product[]>([]);
 
+  // Update active tab when URL params change
+  useEffect(() => {
+    if (tabParam && ["wishlists", "friends", "events", "products"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   useEffect(() => {
     // Try to load products from localStorage when the component mounts
     const savedProducts = loadSavedProducts();
@@ -29,7 +36,7 @@ const Gifting = () => {
   return (
     <ProductProvider>
       <div className="container mx-auto py-8 px-4">
-        <Tabs defaultValue={activeTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
             <TabsTrigger value="wishlists">My Wishlists</TabsTrigger>
             <TabsTrigger value="friends">Friends' Gifts</TabsTrigger>

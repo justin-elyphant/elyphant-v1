@@ -2,7 +2,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Hero from "./Hero";
-import FeaturedProducts from "./sections/FeaturedProducts";
 import FeaturedCollections from "./sections/FeaturedCollections";
 import FeaturedBrands from "./sections/FeaturedBrands";
 import FeaturedOccasions from "./sections/FeaturedOccasions"; 
@@ -33,14 +32,10 @@ const HomeContent = () => {
     { id: 5, name: "Microsoft", logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Microsoft", featured: false }
   ];
   
-  // Select featured products for the component - handle potential undefined values
-  const featuredProducts = products ? products.slice(0, 8) : [];
-  
   return (
     <div className="min-h-screen bg-white">
       <Hero />
       <div className="container mx-auto px-4 py-8">
-        <FeaturedProducts products={featuredProducts} />
         <FeaturedCollections collections={mockCollections} />
         <FeaturedBrands brands={mockBrands} />
         <FeaturedOccasions />

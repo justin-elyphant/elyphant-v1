@@ -5,6 +5,7 @@ import { useProfileCompletion } from "../useProfileCompletion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { SharingLevel } from "@/types/supabase";
 
 // Mock react-router-dom
 jest.mock("react-router-dom", () => ({
@@ -58,7 +59,7 @@ describe("useProfileCompletion", () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
-    });
+    }, { timeout: 1000 });
     
     expect(mockNavigate).toHaveBeenCalledWith("/profile-setup");
     expect(result.current.isComplete).toBe(false);
@@ -101,7 +102,7 @@ describe("useProfileCompletion", () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
-    });
+    }, { timeout: 1000 });
     
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(result.current.isComplete).toBe(true);

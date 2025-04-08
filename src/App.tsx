@@ -13,6 +13,7 @@ import { CartProvider } from './contexts/CartContext';
 import { ProductProvider } from './contexts/ProductContext';
 import DebugPanel from './components/debug/DebugPanel';
 import MainLayout from './components/layout/MainLayout';
+import { Toaster } from './components/ui/sonner';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
               } />
             </Routes>
             
+            <Toaster />
             <DebugPanel />
           </ProductProvider>
         </CartProvider>

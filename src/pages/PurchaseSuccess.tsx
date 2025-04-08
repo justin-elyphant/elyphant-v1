@@ -4,19 +4,18 @@ import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/toast';
 
 const PurchaseSuccess = () => {
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const productId = searchParams.get('product');
 
   useEffect(() => {
-    toast({
-      title: "Purchase Successful!",
+    // Use the correct Sonner toast format without 'title' property
+    toast.success("Purchase Successful!", {
       description: "Your order has been confirmed and will be processed shortly."
     });
-  }, [toast]);
+  }, []);
 
   return (
     <div className="container mx-auto py-16 px-4">

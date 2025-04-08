@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -21,8 +21,9 @@ interface ProfileSetupFlowProps {
 }
 
 const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip }) => {
-  const { user } = useAuth();
+  const { user, getUserProfile } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [profileData, setProfileData] = useState({
     name: "",
@@ -42,6 +43,32 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     }
   });
 
+  // Fetch initial user data if available
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const profile = await getUserProfile();
+        if (profile) {
+          console.log("Loaded initial profile data:", profile);
+          setProfileData(prevData => ({
+            ...prevData,
+            name: profile.name || prevData.name,
+            dob: profile.dob || prevData.dob,
+            shipping_address: profile.shipping_address || prevData.shipping_address,
+            gift_preferences: profile.gift_preferences || prevData.gift_preferences,
+            data_sharing_settings: profile.data_sharing_settings || prevData.data_sharing_settings
+          }));
+        }
+      } catch (error) {
+        console.error("Error loading profile data:", error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user, getUserProfile]);
+
   const steps = [
     "Basic Info",
     "Birthday",
@@ -60,6 +87,8 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
 
   const handleComplete = async () => {
     try {
+      setIsLoading(true);
+      
       // Save all profile data
       const { data, error } = await supabase
         .from('profiles')
@@ -68,7 +97,8 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
           dob: profileData.dob,
           shipping_address: profileData.shipping_address,
           gift_preferences: profileData.gift_preferences,
-          data_sharing_settings: profileData.data_sharing_settings
+          data_sharing_settings: profileData.data_sharing_settings,
+          updated_at: new Date().toISOString()
         })
         .eq('id', user?.id)
         .select()
@@ -76,11 +106,13 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       
       if (error) throw error;
       
-      toast.success("Profile setup complete!");
+      console.log("Profile setup completed successfully:", data);
       onComplete();
     } catch (err) {
       console.error("Error completing profile setup:", err);
       toast.error("Failed to save profile data");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,6 +121,26 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       onSkip();
     } else {
       onComplete();
+    }
+  };
+
+  const validateCurrentStep = () => {
+    switch (activeStep) {
+      case 0:
+        return !!profileData.name?.trim();
+      case 1:
+        return !!profileData.dob?.trim();
+      case 2:
+        return !!profileData.shipping_address?.street?.trim() &&
+               !!profileData.shipping_address?.city?.trim() &&
+               !!profileData.shipping_address?.state?.trim() &&
+               !!profileData.shipping_address?.zipCode?.trim();
+      case 3:
+        return profileData.gift_preferences?.length > 0;
+      case 4:
+        return true;
+      default:
+        return true;
     }
   };
 
@@ -161,9 +213,19 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
         </div>
         <div>
           {activeStep < steps.length - 1 ? (
-            <Button onClick={handleNext}>Next Step</Button>
+            <Button 
+              onClick={handleNext}
+              disabled={!validateCurrentStep() || isLoading}
+            >
+              Next Step
+            </Button>
           ) : (
-            <Button onClick={handleComplete}>Complete Setup</Button>
+            <Button 
+              onClick={handleComplete}
+              disabled={!validateCurrentStep() || isLoading}
+            >
+              {isLoading ? "Saving..." : "Complete Setup"}
+            </Button>
           )}
         </div>
       </CardFooter>

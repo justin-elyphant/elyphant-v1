@@ -9,9 +9,9 @@ import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isComplete, loading } = useProfileCompletion();
+  const { isComplete, loading } = useProfileCompletion(true); // Set to true to enable redirects
   
-  // Redirect to sign-up if not logged in
+  // Redirect to sign-in if not logged in
   useEffect(() => {
     if (!user) {
       navigate("/sign-in");
@@ -31,7 +31,7 @@ const Dashboard = () => {
   }
 
   // The redirect to /profile-setup is handled by the useProfileCompletion hook if profile is incomplete
-
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container max-w-6xl mx-auto py-8 px-4">

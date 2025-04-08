@@ -31,6 +31,9 @@ const GiftingWrapper = () => {
   const [activeTab, setActiveTab] = useState("wishlists");
   const [initialProducts, setInitialProducts] = useState<Product[]>([]);
   
+  // Check if we're in a specific collection or category view
+  const isSpecificView = Boolean(categoryParam || pageTitleParam);
+  
   // Handle initial load and parameters
   useEffect(() => {
     console.log("URL params in Gifting:", { tabParam, categoryParam, searchParam, pageTitleParam });
@@ -85,33 +88,42 @@ const GiftingWrapper = () => {
     <>
       <GiftingHeader />
       <div className="container mx-auto py-8 px-4">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
-            <TabsTrigger value="wishlists">My Wishlists</TabsTrigger>
-            <TabsTrigger value="friends">Friends' Gifts</TabsTrigger>
-            <TabsTrigger value="events">Upcoming Events</TabsTrigger>
-            <TabsTrigger value="products">Explore Products</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="wishlists">
-            <MyWishlists />
-          </TabsContent>
-          
-          <TabsContent value="friends">
-            <FriendsWishlists />
-          </TabsContent>
-          
-          <TabsContent value="events">
-            <UpcomingEvents />
-          </TabsContent>
-          
-          <TabsContent value="products">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">{productTabTitle}</h2>
-              <ProductGallery initialProducts={initialProducts} />
-            </div>
-          </TabsContent>
-        </Tabs>
+        {!isSpecificView && (
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
+              <TabsTrigger value="wishlists">My Wishlists</TabsTrigger>
+              <TabsTrigger value="friends">Friends' Gifts</TabsTrigger>
+              <TabsTrigger value="events">Upcoming Events</TabsTrigger>
+              <TabsTrigger value="products">Explore Products</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="wishlists">
+              <MyWishlists />
+            </TabsContent>
+            
+            <TabsContent value="friends">
+              <FriendsWishlists />
+            </TabsContent>
+            
+            <TabsContent value="events">
+              <UpcomingEvents />
+            </TabsContent>
+            
+            <TabsContent value="products">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold">{productTabTitle}</h2>
+                <ProductGallery initialProducts={initialProducts} />
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
+        
+        {isSpecificView && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">{productTabTitle}</h2>
+            <ProductGallery initialProducts={initialProducts} />
+          </div>
+        )}
         
         <div className="mt-12">
           <PopularBrands />

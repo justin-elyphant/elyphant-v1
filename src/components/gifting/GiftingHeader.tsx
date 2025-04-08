@@ -19,15 +19,6 @@ const GiftingHeader = () => {
               <User className="h-5 w-5" />
             </Button>
             
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <img 
-                src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
-                alt="Gift" 
-                className="mr-2 h-4 w-4"
-              />
-              Create Wishlist
-            </Button>
-            
             <Avatar className="h-8 w-8">
               <AvatarImage src="/placeholder.svg" alt="User" />
               <AvatarFallback>U</AvatarFallback>

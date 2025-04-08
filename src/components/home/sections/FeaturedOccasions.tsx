@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 import { toast } from "sonner";
-import ProductImage from "@/components/marketplace/product-item/ProductImage";
 
 const occasions = [
   {
@@ -14,7 +13,6 @@ const occasions = [
     category: "birthday",
     color: "bg-blue-50 border-blue-200",
     cta: "Gifts for Birthdays",
-    image: null // Will be fetched directly from API
   },
   {
     id: 2,
@@ -24,7 +22,6 @@ const occasions = [
     category: "wedding",
     color: "bg-pink-50 border-pink-200",
     cta: "Wedding Gift Ideas",
-    image: null
   },
   {
     id: 3,
@@ -34,7 +31,6 @@ const occasions = [
     category: "anniversary",
     color: "bg-purple-50 border-purple-200",
     cta: "Anniversary Gifts",
-    image: null
   },
   {
     id: 4,
@@ -44,7 +40,6 @@ const occasions = [
     category: "graduation",
     color: "bg-green-50 border-green-200",
     cta: "Graduation Gift Ideas",
-    image: null
   },
   {
     id: 5,
@@ -54,7 +49,6 @@ const occasions = [
     category: "baby_shower",
     color: "bg-yellow-50 border-yellow-200",
     cta: "Baby Shower Gifts",
-    image: null
   },
   {
     id: 6,
@@ -64,7 +58,6 @@ const occasions = [
     category: "pets",
     color: "bg-orange-50 border-orange-200",
     cta: "Gifts for Pets",
-    image: null
   },
   {
     id: 7,
@@ -74,7 +67,6 @@ const occasions = [
     category: "all",
     color: "bg-teal-50 border-teal-200",
     cta: "Browse All Gift Ideas",
-    image: null
   },
 ];
 
@@ -133,15 +125,8 @@ const FeaturedOccasions = () => {
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>
               <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className="rounded-full p-0 bg-white shadow-sm mb-3 relative overflow-hidden h-16 w-16">
-                  <ProductImage 
-                    product={{
-                      name: `${occasion.name} gifts`,
-                      category: occasion.category,
-                      image: null
-                    }}
-                    useMock={true} // Use mock images for thumbnails
-                  />
+                <div className="rounded-full p-3 bg-white shadow-sm mb-3">
+                  {occasion.icon}
                 </div>
                 <h3 className="font-medium">{occasion.name}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{occasion.description}</p>

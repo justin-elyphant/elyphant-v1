@@ -33,36 +33,45 @@ export const useCategoryFilter = (products: Product[]) => {
   const matchesOccasionCategory = (product: Product, category: string): boolean => {
     if (!product || !category || category === "all") return true;
     
-    const categoryLower = product.category?.toLowerCase() || "";
-    const nameLower = product.name?.toLowerCase() || "";
-    const descLower = product.description?.toLowerCase() || "";
+    // Make sure we're working with lowercase strings
+    const categoryLower = (product.category || "").toLowerCase();
+    const nameLower = (product.name || "").toLowerCase();
+    const descLower = (product.description || "").toLowerCase();
     
+    // Enhanced matching logic with more terms and better debug logging
     switch(category.toLowerCase()) {
       case "birthday":
         return categoryLower.includes("birthday") || 
                categoryLower.includes("celebration") ||
                nameLower.includes("birthday") ||
-               descLower.includes("birthday celebration");
+               descLower.includes("birthday") ||
+               descLower.includes("celebration");
       
       case "wedding":
         return categoryLower.includes("wedding") || 
                categoryLower.includes("bride") || 
                categoryLower.includes("groom") ||
                nameLower.includes("wedding") ||
-               descLower.includes("wedding");
+               nameLower.includes("bride") ||
+               nameLower.includes("groom") ||
+               descLower.includes("wedding") ||
+               descLower.includes("matrimony") ||
+               descLower.includes("marriage");
       
       case "anniversary":
         return categoryLower.includes("anniversary") ||
                nameLower.includes("anniversary") ||
                categoryLower.includes("couple") ||
-               descLower.includes("anniversary");
+               descLower.includes("anniversary") ||
+               descLower.includes("years together");
       
       case "graduation":
         return categoryLower.includes("graduation") || 
                categoryLower.includes("graduate") ||
                nameLower.includes("graduation") ||
                categoryLower.includes("academic") ||
-               descLower.includes("graduation");
+               descLower.includes("graduation") ||
+               descLower.includes("academic achievement");
       
       case "baby_shower":
         return categoryLower.includes("baby") || 
@@ -70,7 +79,9 @@ export const useCategoryFilter = (products: Product[]) => {
                nameLower.includes("baby") ||
                categoryLower.includes("infant") ||
                categoryLower.includes("newborn") ||
-               descLower.includes("baby");
+               descLower.includes("baby") ||
+               descLower.includes("newborn") ||
+               descLower.includes("infant");
       
       case "pets":
         return categoryLower.includes("pet") || 
@@ -79,13 +90,19 @@ export const useCategoryFilter = (products: Product[]) => {
                nameLower.includes("pet") ||
                nameLower.includes("dog") ||
                nameLower.includes("cat") ||
-               descLower.includes("pet");
+               descLower.includes("pet") ||
+               descLower.includes("animal") ||
+               descLower.includes("dog") ||
+               descLower.includes("cat");
       
       default:
         // Direct match with the category
-        return categoryLower === category.toLowerCase() || 
-               categoryLower.includes(category.toLowerCase()) || 
-               nameLower.includes(category.toLowerCase());
+        const isMatch = categoryLower === category.toLowerCase() || 
+                        categoryLower.includes(category.toLowerCase()) || 
+                        nameLower.includes(category.toLowerCase()) ||
+                        descLower.includes(category.toLowerCase());
+        
+        return isMatch;
     }
   };
   

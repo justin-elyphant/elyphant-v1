@@ -37,6 +37,14 @@ export const useFilteredProducts = (
       
       // Category filter - Use the matchesOccasionCategory function from useCategoryFilter
       const matchesCategory = selectedCategory === "all" || matchesOccasionCategory(product, selectedCategory);
+      
+      // Debugging for selected wedding category
+      if (selectedCategory === "wedding" && !matchesCategory) {
+        console.log(`Product doesn't match wedding category: ${product.name}`, {
+          category: product.category,
+          name: product.name
+        });
+      }
 
       // Price range filter
       let matchesPrice = true;

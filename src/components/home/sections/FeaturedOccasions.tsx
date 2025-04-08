@@ -74,88 +74,56 @@ const occasions = [
 ];
 
 const FeaturedOccasions = () => {
-  const { products, setProducts } = useProducts();
+  const { products } = useProducts();
   const [loadingOccasion, setLoadingOccasion] = useState<string | null>(null);
   const navigate = useNavigate();
   
   const handleOccasionClick = (e: React.MouseEvent, category: string) => {
     e.preventDefault(); // Prevent default navigation
+    
+    if (loadingOccasion) {
+      // Prevent multiple clicks while loading
+      return;
+    }
+    
     console.log(`FeaturedOccasions: Occasion clicked: ${category}`);
     
     // Set loading state for this specific occasion
     setLoadingOccasion(category);
     
     try {
-      // Make sure we have products matching this category
+      // Check if we have products matching this category first
       const matchingProducts = products.filter(product => {
-        const categoryLower = product.category.toLowerCase();
-        const nameLower = product.name.toLowerCase();
-        
         if (category === "all") return true;
         
-        // Match based on category and occasion logic from useFilteredProducts.tsx
-        if (category === "birthday") {
-          return categoryLower.includes("birthday") || 
-                 categoryLower.includes("celebration") ||
-                 nameLower.includes("birthday");
-        } 
-        else if (category === "wedding") {
-          return categoryLower.includes("wedding") || 
-                 categoryLower.includes("bride") || 
-                 categoryLower.includes("groom") ||
-                 nameLower.includes("wedding");
-        } 
-        else if (category === "anniversary") {
-          return categoryLower.includes("anniversary") ||
-                 nameLower.includes("anniversary") ||
-                 categoryLower.includes("couple");
-        } 
-        else if (category === "graduation") {
-          return categoryLower.includes("graduation") || 
-                 categoryLower.includes("graduate") ||
-                 nameLower.includes("graduation") ||
-                 categoryLower.includes("academic");
-        } 
-        else if (category === "baby_shower") {
-          return categoryLower.includes("baby") || 
-                 categoryLower.includes("shower") ||
-                 nameLower.includes("baby") ||
-                 categoryLower.includes("infant") ||
-                 categoryLower.includes("newborn");
-        }
-        else if (category === "pets") {
-          return categoryLower.includes("pet") || 
-                 categoryLower.includes("dog") ||
-                 categoryLower.includes("cat") ||
-                 nameLower.includes("pet") ||
-                 nameLower.includes("dog") ||
-                 nameLower.includes("cat") ||
-                 product.description?.toLowerCase().includes("pet");
-        }
+        const categoryLower = product.category.toLowerCase();
+        const nameLower = product.name.toLowerCase();
+        const descLower = product.description?.toLowerCase() || '';
         
-        return false;
+        return categoryLower.includes(category) || 
+               nameLower.includes(category) ||
+               descLower.includes(category);
       });
       
-      // If we don't have enough matching products, we'll use the search term to add more
-      if (matchingProducts.length < 10) {
-        toast.loading(`Finding more ${category} gift ideas...`, { id: "loading-occasion-products" });
-        
-        // Use the search term to add product categories
-        const searchTerm = category === "all" ? "gift ideas" : `${category} gift ideas`;
-        
-        // Add a small delay to allow time for navigation
-        setTimeout(() => {
+      console.log(`Found ${matchingProducts.length} matching products for ${category}`);
+      
+      // Add a small delay to show the loading state and then navigate
+      setTimeout(() => {
+        if (category === "all") {
+          navigate(`/gifting?tab=products`);
+        } else {
           navigate(`/gifting?tab=products&category=${category}`);
-        }, 300);
-      } else {
-        console.log(`Found ${matchingProducts.length} products for category ${category}. Navigating...`);
-        toast.success(`Found ${matchingProducts.length} gift ideas for ${category}`);
-        navigate(`/gifting?tab=products&category=${category}`);
-      }
+        }
+        
+        // Clear loading state after navigation
+        setTimeout(() => {
+          setLoadingOccasion(null);
+        }, 500);
+      }, 300);
+      
     } catch (error) {
-      console.error(`Error loading ${category} products:`, error);
-    } finally {
-      // Clear loading state
+      console.error(`Error processing ${category} occasion click:`, error);
+      toast.error("Something went wrong. Please try again.");
       setLoadingOccasion(null);
     }
   };

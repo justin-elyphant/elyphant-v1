@@ -27,20 +27,45 @@ export const useFilteredProducts = (
     }
 
     const filtered = products.filter(product => {
-      // Search term filter
-      const matchesSearch = 
-        searchTerm === "" || 
-        product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.vendor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
+      // Search term filter - enhanced to handle more complex cases
+      const matchesSearch = searchTerm === "" || (() => {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        const productName = (product.name || "").toLowerCase();
+        const vendor = (product.vendor || "").toLowerCase();
+        const description = (product.description || "").toLowerCase();
+        const category = (product.category || "").toLowerCase();
+        
+        // Direct full string match
+        if (productName.includes(lowerSearchTerm) || 
+            vendor.includes(lowerSearchTerm) ||
+            description.includes(lowerSearchTerm) ||
+            category.includes(lowerSearchTerm)) {
+          return true;
+        }
+        
+        // Word-by-word matching for multi-word search terms
+        const searchWords = lowerSearchTerm.split(" ").filter(word => word.length > 2);
+        if (searchWords.length > 1) {
+          // If we find most of the words, consider it a match
+          const matchCount = searchWords.filter(word => 
+            productName.includes(word) || 
+            description.includes(word) || 
+            category.includes(word)
+          ).length;
+          
+          // Match if we find at least 70% of the words or at least 2 words
+          return matchCount >= Math.max(2, Math.floor(searchWords.length * 0.7));
+        }
+        
+        return false;
+      })();
       
       // Category filter - Use the matchesOccasionCategory function from useCategoryFilter
       const matchesCategory = selectedCategory === "all" || matchesOccasionCategory(product, selectedCategory);
       
-      // Debugging for selected wedding category
-      if (selectedCategory === "wedding" && !matchesCategory) {
-        console.log(`Product doesn't match wedding category: ${product.name}`, {
+      // Debugging for selected category
+      if (selectedCategory !== "all" && !matchesCategory) {
+        console.log(`Product doesn't match ${selectedCategory} category: ${product.name}`, {
           category: product.category,
           name: product.name
         });

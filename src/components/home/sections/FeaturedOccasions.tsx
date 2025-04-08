@@ -78,7 +78,7 @@ const FeaturedOccasions = () => {
   const [loadingOccasion, setLoadingOccasion] = useState<string | null>(null);
   const navigate = useNavigate();
   
-  const handleOccasionClick = (e: React.MouseEvent, category: string) => {
+  const handleOccasionClick = (e: React.MouseEvent, category: string, occasionName: string) => {
     e.preventDefault(); // Prevent default navigation
     
     if (loadingOccasion) {
@@ -86,7 +86,7 @@ const FeaturedOccasions = () => {
       return;
     }
     
-    console.log(`FeaturedOccasions: Occasion clicked: ${category}`);
+    console.log(`FeaturedOccasions: Occasion clicked: ${category}, ${occasionName}`);
     
     // Set loading state for this specific occasion
     setLoadingOccasion(category);
@@ -96,29 +96,43 @@ const FeaturedOccasions = () => {
       const matchingProducts = products.filter(product => {
         if (category === "all") return true;
         
-        const categoryLower = product.category.toLowerCase();
-        const nameLower = product.name.toLowerCase();
-        const descLower = product.description?.toLowerCase() || '';
+        const categoryLower = (product.category || "").toLowerCase();
+        const nameLower = (product.name || "").toLowerCase();
+        const descLower = (product.description || "") .toLowerCase();
+        const brandLower = (product.brand || "").toLowerCase();
         
+        // Enhanced matching for better results
         return categoryLower.includes(category) || 
                nameLower.includes(category) ||
-               descLower.includes(category);
+               descLower.includes(category) ||
+               // If the category is specific like "baby_shower", check for individual words
+               category.includes("_") && category.split("_").some(word => 
+                 categoryLower.includes(word) ||
+                 nameLower.includes(word) ||
+                 descLower.includes(word)
+               );
       });
       
       console.log(`Found ${matchingProducts.length} matching products for ${category}`);
       
       // Add a small delay to show the loading state and then navigate
       setTimeout(() => {
+        // Clear loading state
+        setLoadingOccasion(null);
+        
+        // Show feedback to the user
+        const toastMessage = matchingProducts.length > 0 
+          ? `Found ${matchingProducts.length} gifts for ${occasionName}`
+          : `Exploring ${occasionName.toLowerCase()} gift ideas...`;
+          
+        toast.info(toastMessage);
+          
+        // Navigate to the gifting page with the appropriate category
         if (category === "all") {
           navigate(`/gifting?tab=products`);
         } else {
           navigate(`/gifting?tab=products&category=${category}`);
         }
-        
-        // Clear loading state after navigation
-        setTimeout(() => {
-          setLoadingOccasion(null);
-        }, 500);
       }, 300);
       
     } catch (error) {
@@ -141,7 +155,7 @@ const FeaturedOccasions = () => {
         {occasions.map((occasion) => (
           <div 
             key={occasion.id} 
-            onClick={(e) => handleOccasionClick(e, occasion.category)}
+            onClick={(e) => handleOccasionClick(e, occasion.category, occasion.name)}
             className="cursor-pointer"
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>

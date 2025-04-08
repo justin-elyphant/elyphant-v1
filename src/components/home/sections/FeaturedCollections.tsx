@@ -36,43 +36,51 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       }
     }
     
-    // Extract the category from the collection name
-    const category = collection.category || collection.name.split(' ')[0].toLowerCase();
+    // Extract the search term from the collection name - use the full name to improve search results
+    const searchTerm = collection.name;
     
     // Set loading state
     setLoadingCollection(collection.id);
-    console.log(`FeaturedCollections: Collection clicked: ${collection.name}, category: ${category}`);
+    console.log(`FeaturedCollections: Collection clicked: ${collection.name}, search term: ${searchTerm}`);
     
     try {
       // Check if we have matching products
       const matchingProducts = products.filter(product => {
         const productNameLower = product.name.toLowerCase();
-        const productCategoryLower = product.category.toLowerCase();
-        const categoryLower = category.toLowerCase();
+        const productCategoryLower = (product.category || "").toLowerCase();
+        const searchTermLower = searchTerm.toLowerCase();
+        const productDescriptionLower = (product.description || "").toLowerCase();
 
-        return productNameLower.includes(categoryLower) || 
-               productCategoryLower.includes(categoryLower) ||
-               (product.description && product.description.toLowerCase().includes(categoryLower));
+        // Expanded search to include more fields and partial matches
+        return productNameLower.includes(searchTermLower) || 
+               productCategoryLower.includes(searchTermLower) ||
+               productDescriptionLower.includes(searchTermLower) ||
+               // Look for individual words in the search term
+               searchTermLower.split(" ").some(word => {
+                 if (word.length < 3) return false; // Skip short words
+                 return productNameLower.includes(word) || 
+                        productCategoryLower.includes(word) ||
+                        productDescriptionLower.includes(word);
+               });
       });
       
       console.log(`Found ${matchingProducts.length} products for collection ${collection.name}`);
       
-      if (matchingProducts.length > 5) {
-        toast.success(`Found ${matchingProducts.length} items in ${collection.name}`);
-      } else {
-        toast.info(`Exploring ${collection.name} collection...`);
-      }
-      
       // Navigate to the gifting page with the appropriate URL params
-      const url = `/gifting?tab=products&search=${encodeURIComponent(collection.name)}`;
-      navigate(url);
-    } catch (error) {
-      console.error(`Error handling collection click for ${collection.name}:`, error);
-    } finally {
-      // Clear loading state after a short delay
+      // Use search instead of category for collections since they're more about keyword matching
       setTimeout(() => {
         setLoadingCollection(null);
+        if (matchingProducts.length > 0) {
+          toast.success(`Found ${matchingProducts.length} items in ${collection.name}`);
+        } else {
+          toast.info(`Exploring ${collection.name} collection...`);
+        }
+        navigate(`/gifting?tab=products&search=${encodeURIComponent(searchTerm)}`);
       }, 300);
+      
+    } catch (error) {
+      console.error(`Error handling collection click for ${collection.name}:`, error);
+      setLoadingCollection(null);
     }
   };
 

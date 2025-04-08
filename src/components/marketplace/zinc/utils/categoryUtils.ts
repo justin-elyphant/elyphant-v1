@@ -19,10 +19,11 @@ export function guessCategory(term: string): string {
     return 'baby_shower';
   } else if (term.includes('pet') || term.includes('dog') || term.includes('cat') || term.includes('animal')) {
     return 'pets';
+  } else if (term.includes('office') || term.includes('work') || term.includes('desk') || term.includes('professional') || 
+             term.includes('stationery') || term.includes('supplies') || term.includes('gear')) {
+    return 'office';
   } else if (term.includes('summer') || term.includes('beach') || term.includes('vacation') || term.includes('hot weather')) {
     return 'summer';
-  } else if (term.includes('office') || term.includes('work') || term.includes('desk') || term.includes('professional')) {
-    return 'office';
   } else if (term.includes('home') || term.includes('decor') || term.includes('decoration') || term.includes('interior')) {
     return 'home decor';
   } else if (term.includes('shoe') || term.includes('sneaker') || term.includes('boots')) {

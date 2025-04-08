@@ -19,14 +19,14 @@ export const useCategoryFilter = (products: Product[]) => {
   }, [categoryParam]);
   
   // Define special occasion categories
-  const occasionCategories = ["birthday", "wedding", "anniversary", "graduation", "baby_shower", "pets"];
+  const occasionCategories = ["birthday", "wedding", "anniversary", "graduation", "baby_shower", "pets", "office"];
   
   // Extract unique categories from products
   const productCategories = Array.from(new Set(products.map(p => p.category)));
   
   // Combine and ensure "all" is the first option
   const categories = ["all", ...occasionCategories, ...productCategories.filter(
-    cat => !occasionCategories.includes(cat.toLowerCase())
+    cat => cat && !occasionCategories.includes(cat.toLowerCase())
   )];
   
   // Helper function to check if a product matches a specific occasion category
@@ -37,6 +37,9 @@ export const useCategoryFilter = (products: Product[]) => {
     const categoryLower = (product.category || "").toLowerCase();
     const nameLower = (product.name || "").toLowerCase();
     const descLower = (product.description || "").toLowerCase();
+    const brandLower = (product.brand || "").toLowerCase();
+    
+    console.log(`Checking if product "${product.name}" matches category "${category}"`);
     
     // Enhanced matching logic with more terms and better debug logging
     switch(category.toLowerCase()) {
@@ -94,12 +97,28 @@ export const useCategoryFilter = (products: Product[]) => {
                descLower.includes("animal") ||
                descLower.includes("dog") ||
                descLower.includes("cat");
+               
+      case "office":
+        return categoryLower.includes("office") ||
+               categoryLower.includes("desk") ||
+               categoryLower.includes("work") ||
+               nameLower.includes("office") ||
+               nameLower.includes("desk") ||
+               nameLower.includes("work") ||
+               nameLower.includes("stationery") ||
+               nameLower.includes("organizer") ||
+               descLower.includes("office") ||
+               descLower.includes("work") ||
+               descLower.includes("desk") ||
+               descLower.includes("professional") ||
+               descLower.includes("business");
       
       default:
         // Direct match with the category
         const isMatch = categoryLower === category.toLowerCase() || 
                         categoryLower.includes(category.toLowerCase()) || 
                         nameLower.includes(category.toLowerCase()) ||
+                        brandLower.includes(category.toLowerCase()) ||
                         descLower.includes(category.toLowerCase());
         
         return isMatch;

@@ -1,3 +1,4 @@
+
 export type Profile = {
   id: string;
   name: string | null;
@@ -25,6 +26,7 @@ export type ShippingAddress = {
 export type GiftPreference = {
   category: string;
   importance: 'high' | 'medium' | 'low';
+  isExperience?: boolean; // New field to indicate if this is an experience
 };
 
 export type DataSharingSettings = {

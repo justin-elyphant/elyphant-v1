@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Gift, Plus, X } from "lucide-react";
+import { Gift, Plus, X, Ticket } from "lucide-react";
 import { GiftPreference } from "@/types/supabase";
 
 interface GiftPreferencesStepProps {
@@ -13,10 +13,13 @@ interface GiftPreferencesStepProps {
   onChange: (preferences: GiftPreference[]) => void;
 }
 
-// Common interest categories
+// Common interest categories with added experience categories
 const suggestedCategories = [
   "Books", "Technology", "Fashion", "Home Decor", "Cooking", "Fitness",
-  "Travel", "Music", "Art", "Gaming", "Beauty", "Outdoors", "Sports"
+  "Travel", "Music", "Art", "Gaming", "Beauty", "Outdoors", "Sports",
+  // New experience categories
+  "Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", 
+  "Golf", "Adventure", "Workshops", "Wine Tasting", "Experiences"
 ];
 
 const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onChange }) => {
@@ -45,6 +48,16 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
     setNewCategory(category);
   };
 
+  // Helper function to determine if a preference is an experience
+  const isExperienceCategory = (category: string) => {
+    const experienceCategories = ["Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", 
+      "Golf", "Adventure", "Workshops", "Wine Tasting", "Experiences"];
+    return experienceCategories.includes(category) || 
+           category.toLowerCase().includes("experience") ||
+           category.toLowerCase().includes("class") ||
+           category.toLowerCase().includes("tour");
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -60,7 +73,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
             <Label htmlFor="category">Gift Category or Interest</Label>
             <Input
               id="category"
-              placeholder="e.g., Books, Technology, Fashion"
+              placeholder="e.g., Books, Spa Day, Theater Tickets"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
             />
@@ -103,7 +116,9 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
                          pref.importance === "medium" ? "secondary" : "outline"}
                   className="flex items-center gap-1 px-3 py-1"
                 >
-                  <Gift className="h-3 w-3" />
+                  {isExperienceCategory(pref.category) ? 
+                    <Ticket className="h-3 w-3" /> : 
+                    <Gift className="h-3 w-3" />}
                   <span>{pref.category}</span>
                   <Button 
                     type="button" 
@@ -120,10 +135,35 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
           </div>
         )}
         
+        <div className="mt-6">
+          <Label className="text-sm mb-2 block">Experiences</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Some people prefer experiences over physical gifts. Select any experiences you'd enjoy.
+          </p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {["Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", "Golf", 
+              "Adventure", "Workshops", "Wine Tasting", "Experiences"].map((category) => (
+              <Button
+                key={category}
+                variant="outline"
+                size="sm"
+                onClick={() => handleSelectSuggestion(category)}
+                className="rounded-full text-xs"
+              >
+                <Ticket className="h-3 w-3 mr-1" />
+                {category}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
         <div className="mt-4">
           <Label className="text-sm mb-2 block">Suggested Categories</Label>
           <div className="flex flex-wrap gap-2">
-            {suggestedCategories.map((category) => (
+            {suggestedCategories
+              .filter(category => !["Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", 
+                "Golf", "Adventure", "Workshops", "Wine Tasting", "Experiences"].includes(category))
+              .map((category) => (
               <Button
                 key={category}
                 variant="outline"

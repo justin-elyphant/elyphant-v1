@@ -7,6 +7,7 @@ import FeaturedCollections from "./sections/FeaturedCollections";
 import FeaturedBrands from "./sections/FeaturedBrands";
 import AutomationFeatures from "./sections/AutomationFeatures";
 import HomeCTA from "./sections/HomeCTA";
+import UpcomingEvents from "../gifting/UpcomingEvents";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/contexts/ProductContext";
@@ -38,11 +39,22 @@ const HomeContent = () => {
   return (
     <div className="min-h-screen bg-white">
       <Hero />
-      <FeaturedProducts products={featuredProducts} />
-      <FeaturedCollections collections={mockCollections} />
-      <FeaturedBrands brands={mockBrands} />
-      <AutomationFeatures />
-      <HomeCTA />
+      <div className="container mx-auto px-4 py-8">
+        <FeaturedProducts products={featuredProducts} />
+        <FeaturedCollections collections={mockCollections} />
+        <FeaturedBrands brands={mockBrands} />
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Featured Occasions</h2>
+            <Link to="/events" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+              View all events
+            </Link>
+          </div>
+          <UpcomingEvents />
+        </div>
+        <AutomationFeatures />
+        <HomeCTA />
+      </div>
       
       {isDebugMode && (
         <div className="fixed bottom-20 right-4 flex flex-col gap-2 z-40">

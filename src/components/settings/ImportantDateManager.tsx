@@ -2,39 +2,37 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon, Plus, X } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useFormContext } from "react-hook-form";
-import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-interface ImportantDateType {
+export interface ImportantDateType {
   date: Date;
   description: string;
 }
 
 interface ImportantDateManagerProps {
   importantDates: ImportantDateType[];
-  onAdd: (date: Date | undefined, description: string) => void;
+  onAdd: (date: ImportantDateType) => void;
   onRemove: (index: number) => void;
 }
 
 export const ImportantDateManager: React.FC<ImportantDateManagerProps> = ({ 
-  importantDates,
+  importantDates, 
   onAdd, 
   onRemove 
 }) => {
-  const [newDate, setNewDate] = useState<Date | undefined>(undefined);
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [description, setDescription] = useState("");
   const form = useFormContext();
-  
+
   const handleAddDate = () => {
-    if (newDate && description.trim()) {
-      onAdd(newDate, description);
-      setNewDate(undefined);
+    if (date && description.trim()) {
+      onAdd({ date, description });
+      setDate(undefined);
       setDescription("");
     }
   };
@@ -42,90 +40,71 @@ export const ImportantDateManager: React.FC<ImportantDateManagerProps> = ({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Important Dates</h3>
-      <p className="text-sm text-muted-foreground">
-        Keep track of important dates like anniversaries and special occasions
-      </p>
+      <p className="text-sm text-muted-foreground">Add important dates like anniversaries or special occasions</p>
       
-      <div className="space-y-4">
+      <div className="flex flex-wrap gap-3 mb-4">
         {importantDates.map((item, index) => (
           <div 
-            key={index}
-            className="flex items-center justify-between bg-muted p-3 rounded-md"
+            key={index} 
+            className="bg-muted px-3 py-1 rounded-md flex items-center gap-2"
           >
-            <div>
-              <span className="font-medium">{format(item.date, "MMMM d")}</span>
-              <span className="mx-2">—</span>
-              <span>{item.description}</span>
-            </div>
-            <Button 
-              type="button"
-              variant="ghost" 
-              size="sm" 
+            <span className="font-medium">{format(item.date, 'MMM d')}</span>
+            <span className="text-sm">-</span>
+            <span>{item.description}</span>
+            <button 
+              type="button" 
               onClick={() => onRemove(index)}
+              className="text-muted-foreground hover:text-foreground"
             >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Remove</span>
-            </Button>
+              <X className="h-3 w-3" />
+            </button>
           </div>
         ))}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="date">Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full pl-3 text-left font-normal",
-                  !newDate && "text-muted-foreground"
-                )}
-              >
-                {newDate ? (
-                  format(newDate, "MMMM d")
-                ) : (
-                  <span>Pick a date</span>
-                )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={newDate}
-                onSelect={setNewDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+              type="button"
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? format(date, "PPP") : <span>Pick a date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
         
-        <div className="space-y-2">
-          <Label htmlFor="date-description">Description</Label>
+        <div className="flex-1">
           <Input
-            id="date-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Anniversary, Friend's birthday, etc."
+            placeholder="Description (e.g., Anniversary, Graduation)"
           />
         </div>
         
-        <div className="flex items-end">
-          <Button 
-            type="button"
-            variant="outline" 
-            onClick={handleAddDate}
-            className="h-10"
-            disabled={!newDate || !description.trim()}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Date
-          </Button>
-        </div>
+        <Button 
+          type="button" 
+          variant="outline"
+          onClick={handleAddDate}
+          disabled={!date || !description.trim()}
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Add
+        </Button>
       </div>
     </div>
   );
 };
-
-export default ImportantDateManager;

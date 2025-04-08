@@ -12,10 +12,12 @@ export const useCategoryFilter = (products: Product[]) => {
   useEffect(() => {
     if (categoryParam) {
       setSelectedCategory(categoryParam);
+    } else {
+      setSelectedCategory("all"); // Reset to all if no category in URL
     }
   }, [categoryParam]);
   
-  // Add special occasion categories that might not be in the products data
+  // Define special occasion categories
   const occasionCategories = ["birthday", "wedding", "anniversary", "graduation", "baby_shower"];
   
   // Extract unique categories from products
@@ -29,6 +31,7 @@ export const useCategoryFilter = (products: Product[]) => {
   return {
     categories,
     selectedCategory,
-    setSelectedCategory
+    setSelectedCategory,
+    occasionCategories
   };
 };

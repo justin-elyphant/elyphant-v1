@@ -5,16 +5,16 @@
 export function guessCategory(term: string): string {
   term = term.toLowerCase();
   
-  // Add occasion-based category guessing
+  // Enhanced occasion-based category guessing
   if (term.includes('birthday') || term.includes('celebration')) {
     return 'Birthday';
-  } else if (term.includes('wedding') || term.includes('bride') || term.includes('groom')) {
+  } else if (term.includes('wedding') || term.includes('bride') || term.includes('groom') || term.includes('marriage')) {
     return 'Wedding';
-  } else if (term.includes('anniversary')) {
+  } else if (term.includes('anniversary') || term.includes('years together')) {
     return 'Anniversary';
-  } else if (term.includes('graduation') || term.includes('graduate')) {
+  } else if (term.includes('graduation') || term.includes('graduate') || term.includes('academic')) {
     return 'Graduation';
-  } else if (term.includes('baby') || term.includes('shower')) {
+  } else if (term.includes('baby') || term.includes('shower') || term.includes('newborn') || term.includes('infant')) {
     return 'Baby Shower';
   } else if (term.includes('shoe') || term.includes('sneaker') || term.includes('boots')) {
     return 'Footwear';

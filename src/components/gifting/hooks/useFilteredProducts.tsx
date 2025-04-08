@@ -23,26 +23,72 @@ export const useFilteredProducts = (
     }
 
     const filtered = products.filter(product => {
+      // Search term filter
       const matchesSearch = 
         searchTerm === "" || 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.vendor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      // Updated category matching logic to handle specific occasion categories
-      const matchesCategory = 
-        selectedCategory === "all" || 
-        (product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()) ||
-        (selectedCategory === "birthday" && product.category && product.category.toLowerCase().includes("birthday")) ||
-        (selectedCategory === "wedding" && product.category && product.category.toLowerCase().includes("wedding")) ||
-        (selectedCategory === "anniversary" && product.category && product.category.toLowerCase().includes("anniversary")) ||
-        (selectedCategory === "graduation" && product.category && product.category.toLowerCase().includes("graduation")) ||
-        (selectedCategory === "baby_shower" && product.category && (
-          product.category.toLowerCase().includes("baby") || 
-          product.category.toLowerCase().includes("shower")
-        ));
+      // Category filter - special handling for occasion categories
+      let matchesCategory = selectedCategory === "all";
       
+      if (!matchesCategory && product.category) {
+        const productCategoryLower = product.category.toLowerCase();
+        const selectedCategoryLower = selectedCategory.toLowerCase();
+        
+        // Check direct match
+        if (productCategoryLower === selectedCategoryLower) {
+          matchesCategory = true;
+        } 
+        // Check for birthday occasion
+        else if (selectedCategoryLower === "birthday" && (
+          productCategoryLower.includes("birthday") || 
+          productCategoryLower.includes("celebration") ||
+          product.name?.toLowerCase().includes("birthday")
+        )) {
+          matchesCategory = true;
+        } 
+        // Check for wedding occasion
+        else if (selectedCategoryLower === "wedding" && (
+          productCategoryLower.includes("wedding") || 
+          productCategoryLower.includes("bride") || 
+          productCategoryLower.includes("groom") ||
+          product.name?.toLowerCase().includes("wedding")
+        )) {
+          matchesCategory = true;
+        } 
+        // Check for anniversary occasion
+        else if (selectedCategoryLower === "anniversary" && (
+          productCategoryLower.includes("anniversary") ||
+          product.name?.toLowerCase().includes("anniversary") ||
+          productCategoryLower.includes("couple")
+        )) {
+          matchesCategory = true;
+        } 
+        // Check for graduation occasion
+        else if (selectedCategoryLower === "graduation" && (
+          productCategoryLower.includes("graduation") || 
+          productCategoryLower.includes("graduate") ||
+          product.name?.toLowerCase().includes("graduation") ||
+          productCategoryLower.includes("academic")
+        )) {
+          matchesCategory = true;
+        } 
+        // Check for baby shower occasion
+        else if (selectedCategoryLower === "baby_shower" && (
+          productCategoryLower.includes("baby") || 
+          productCategoryLower.includes("shower") ||
+          product.name?.toLowerCase().includes("baby") ||
+          productCategoryLower.includes("infant") ||
+          productCategoryLower.includes("newborn")
+        )) {
+          matchesCategory = true;
+        }
+      }
+
+      // Price range filter
       let matchesPrice = true;
       if (priceRange === "under25") matchesPrice = product.price < 25;
       else if (priceRange === "25to50") matchesPrice = product.price >= 25 && product.price <= 50;

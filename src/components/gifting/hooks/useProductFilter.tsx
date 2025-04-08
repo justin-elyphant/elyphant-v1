@@ -10,7 +10,7 @@ import { useFilteredProducts } from "./useFilteredProducts";
 
 export const useProductFilter = (products: Product[]) => {
   const { searchTerm, setSearchTerm } = useSearchFilter();
-  const { categories, selectedCategory, setSelectedCategory } = useCategoryFilter(products);
+  const { categories, selectedCategory, setSelectedCategory, occasionCategories } = useCategoryFilter(products);
   const { priceRange, setPriceRange } = usePriceFilter();
   const { filtersVisible, setFiltersVisible } = useFilterVisibility();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -27,6 +27,8 @@ export const useProductFilter = (products: Product[]) => {
     if (searchParam) setSearchTerm(searchParam);
     if (categoryParam) setSelectedCategory(categoryParam);
     if (priceParam) setPriceRange(priceParam);
+    
+    console.log(`URL params - category: ${categoryParam}, search: ${searchParam}, price: ${priceParam}`);
   }, [searchParams, setSearchTerm, setSelectedCategory, setPriceRange]);
   
   // Update URL when filters change
@@ -51,6 +53,12 @@ export const useProductFilter = (products: Product[]) => {
       newParams.delete("price");
     }
     
+    // Preserve the tab parameter
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      newParams.set("tab", tabParam);
+    }
+    
     setSearchParams(newParams, { replace: true });
   }, [searchTerm, selectedCategory, priceRange, searchParams, setSearchParams]);
   
@@ -66,12 +74,19 @@ export const useProductFilter = (products: Product[]) => {
     newParams.delete("search");
     newParams.delete("category");
     newParams.delete("price");
+    
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      newParams.set("tab", tabParam);
+    }
+    
     setSearchParams(newParams, { replace: true });
   }, [setSearchTerm, setSelectedCategory, setPriceRange, searchParams, setSearchParams]);
 
   return {
     filteredProducts,
     categories,
+    occasionCategories,
     searchTerm,
     setSearchTerm,
     priceRange,

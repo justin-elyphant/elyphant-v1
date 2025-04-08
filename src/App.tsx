@@ -8,7 +8,7 @@ import Dashboard from './pages/Dashboard';
 import ProfileSetup from './pages/ProfileSetup';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/auth';
 import { CartProvider } from './contexts/CartContext';
 import { ProductProvider } from './contexts/ProductContext';
 import DebugPanel from './components/debug/DebugPanel';

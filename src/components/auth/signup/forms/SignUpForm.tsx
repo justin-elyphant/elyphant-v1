@@ -46,6 +46,7 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
     
     try {
       setIsSubmitting(true);
+      console.log("Submitting signup form with values:", { ...values, password: "[REDACTED]" });
       await onSubmit(values);
     } catch (error: any) {
       console.error("Form submission error:", error);

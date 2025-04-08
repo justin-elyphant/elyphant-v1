@@ -1,8 +1,7 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { sendVerificationEmail } from "@/hooks/signup/signupService";
-import { extractVerificationCode } from "@/hooks/signup/services/email/utils/responseParser";
 
 interface UseResendVerificationProps {
   userEmail: string;
@@ -17,60 +16,67 @@ export const useResendVerification = ({
 }: UseResendVerificationProps) => {
   const [resendCount, setResendCount] = useState<number>(0);
   const [lastResendTime, setLastResendTime] = useState<number | null>(null);
+  const cooldownTimeRef = useRef<number>(30000); // 30 seconds cooldown
 
   const handleResendVerification = async () => {
+    // Check for rate limiting
+    if (lastResendTime && (Date.now() - lastResendTime < cooldownTimeRef.current)) {
+      const remainingCooldown = Math.ceil((cooldownTimeRef.current - (Date.now() - lastResendTime)) / 1000);
+      
+      toast.error(`Please wait before requesting another code`, {
+        description: `You can request a new code in ${remainingCooldown} seconds.`,
+      });
+      
+      return { success: false, rateLimited: true };
+    }
+    
+    // Increase cooldown time with each request
+    if (resendCount > 0) {
+      cooldownTimeRef.current = Math.min(cooldownTimeRef.current * 2, 300000); // Max 5 minutes
+    }
+    
     try {
-      // Rate limiting check (client-side enforcement)
-      if (lastResendTime && Date.now() - lastResendTime < 60000) {
-        toast.error("Please wait before requesting another code", {
-          description: "You can request a new code once per minute."
-        });
-        return { success: false, rateLimited: true };
-      }
+      console.log("Resending verification code to:", userEmail);
       
       const currentOrigin = window.location.origin;
-      console.log("Resending verification using origin:", currentOrigin);
-      
       const result = await sendVerificationEmail(userEmail, userName, currentOrigin);
       
-      console.log("Resend verification result:", result);
+      console.log("Email resend result:", result);
       
       if (!result.success) {
-        if (result.rateLimited) {
-          toast.error("Too many verification attempts", {
-            description: "Please wait a few minutes before trying again."
-          });
-          return { success: false, rateLimited: true };
-        }
-        
-        toast.error("Failed to resend verification code", {
-          description: "Please try again later."
+        toast.error("Failed to resend verification email", {
+          description: result.error || "Please try again later.",
         });
         return { success: false };
       }
       
-      // Extract and handle the verification code
-      const code = extractVerificationCode(result);
-      if (code) {
-        console.log(`Test email resend detected, new code: ${code}`);
-        setTestVerificationCode(code);
+      // Update state
+      setResendCount(prev => prev + 1);
+      setLastResendTime(Date.now());
+      
+      // Check for test verification code in response and update it
+      if (result.code) {
+        console.log("Test code in resend:", result.code);
+        setTestVerificationCode(result.code);
         
-        // Show an immediate toast for the test email code
-        toast.info("Test account detected", {
-          description: `Your new verification code is: ${code}`,
-          duration: 10000 // Show for 10 seconds
+        toast.info("Test verification code", {
+          description: `Your verification code is: ${result.code}`,
+          duration: 10000
         });
       }
       
-      setResendCount(prev => prev + 1);
-      setLastResendTime(Date.now());
-      toast.success("Verification code resent", {
-        description: "Please check your email for the new code."
+      toast.success("Verification email resent", {
+        description: "Please check your inbox and spam folder.",
       });
+      
       return { success: true };
     } catch (error) {
       console.error("Error resending verification:", error);
-      toast.error("Failed to resend code");
+      
+      toast.error("Failed to resend verification email", {
+        description: "An unexpected error occurred. Please try again.",
+      });
+      
       return { success: false };
     }
   };
@@ -78,6 +84,6 @@ export const useResendVerification = ({
   return {
     resendCount,
     lastResendTime,
-    handleResendVerification
+    handleResendVerification,
   };
 };

@@ -5,6 +5,9 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
+// Add the proper types for jest-dom
+import '@testing-library/jest-dom/extend-expect';
+
 // Mock implementations
 jest.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -47,3 +50,32 @@ jest.mock('@/hooks/useDebugMode', () => ({
     { bypassAuth: true, mockUserId: 'test-user-id', mockUserEmail: 'test@example.com' }
   ]),
 }));
+
+// Mock implementation for React Testing Library functions
+jest.mock('@testing-library/react', () => {
+  const originalModule = jest.requireActual('@testing-library/react');
+  return {
+    ...originalModule,
+    render: (...args) => {
+      if (args.length === 0) {
+        throw new Error('render called with no arguments');
+      }
+      return originalModule.render(...args);
+    },
+    screen: {
+      ...originalModule.screen,
+      getByText: (text) => {
+        if (!text) {
+          throw new Error('getByText called with no arguments');
+        }
+        return originalModule.screen.getByText(text);
+      },
+      getByTestId: (testId) => {
+        if (!testId) {
+          throw new Error('getByTestId called with no arguments');
+        }
+        return originalModule.screen.getByTestId(testId);
+      }
+    }
+  };
+});

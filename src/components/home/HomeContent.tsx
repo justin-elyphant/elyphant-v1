@@ -32,8 +32,8 @@ const HomeContent = () => {
     { id: 5, name: "Microsoft", logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Microsoft", featured: false }
   ];
   
-  // Select featured products for the component
-  const featuredProducts = isLoading ? [] : products.slice(0, 8);
+  // Select featured products for the component - handle potential undefined values
+  const featuredProducts = products ? products.slice(0, 8) : [];
   
   return (
     <div className="min-h-screen bg-white">

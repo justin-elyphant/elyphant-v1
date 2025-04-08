@@ -16,7 +16,10 @@ type ProductProps = {
 };
 
 const FeaturedProducts = ({ products = [] }: ProductProps) => {
-  if (!products || products.length === 0) {
+  // Added additional safety check
+  const safeProducts = products || [];
+  
+  if (safeProducts.length === 0) {
     return (
       <div className="mb-12">
         <div className="flex justify-between items-center mb-6">
@@ -43,7 +46,7 @@ const FeaturedProducts = ({ products = [] }: ProductProps) => {
       
       <Carousel className="w-full">
         <CarouselContent>
-          {products.map((product) => (
+          {safeProducts.map((product) => (
             <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/4">
               <div className="p-1">
                 <Card className="overflow-hidden hover:shadow-md transition-shadow">

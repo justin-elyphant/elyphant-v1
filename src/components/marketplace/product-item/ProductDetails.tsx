@@ -2,7 +2,7 @@
 import React from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ProductRating from "@/components/shared/ProductRating";
+import ProductRating from "@/components/marketplace/product-item/ProductRating";
 import { formatProductPrice } from "./productUtils";
 
 interface ProductDetailsProps {

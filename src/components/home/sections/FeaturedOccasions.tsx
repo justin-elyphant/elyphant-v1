@@ -1,9 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 import { toast } from "sonner";
-import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
 
 const occasions = [
   {
@@ -80,6 +80,12 @@ const occasions = [
 
 const FeaturedOccasions = () => {
   const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
+  const [fetchStatus, setFetchStatus] = useState<Record<number, string>>({});
+  
+  // Debug effect to monitor fetchStatus changes
+  useEffect(() => {
+    console.log("Fetch status updated:", fetchStatus);
+  }, [fetchStatus]);
   
   const handleOccasionClick = async (category: string, occasionName: string, occasionId: number, searchTerm: string) => {
     // Prevent multiple clicks while loading
@@ -91,6 +97,7 @@ const FeaturedOccasions = () => {
     
     // Set loading state for this specific occasion
     setLoadingOccasion(occasionId);
+    setFetchStatus(prev => ({...prev, [occasionId]: "starting"}));
     
     // Show feedback to the user
     toast.success(`Exploring ${occasionName.toLowerCase()} gift ideas...`);
@@ -102,11 +109,20 @@ const FeaturedOccasions = () => {
       if (searchTerm) {
         // Pre-fetch products before navigation to ensure the products are ready
         console.log(`Pre-fetching products for search term: ${searchTerm}`);
-        await searchProducts(searchTerm, 50); // Request 50 products
+        setFetchStatus(prev => ({...prev, [occasionId]: "fetching"}));
+        
+        const results = await searchProducts(searchTerm, 50); // Request 50 products
+        console.log(`Fetched ${results.length} products for "${searchTerm}"`);
+        setFetchStatus(prev => ({...prev, [occasionId]: `fetched ${results.length} products`}));
+        
+        if (results.length === 0) {
+          console.error(`No products found for search term: ${searchTerm}`);
+          setFetchStatus(prev => ({...prev, [occasionId]: "no products found"}));
+        }
       }
     } catch (error) {
       console.error(`Error pre-fetching products for ${occasionName}:`, error);
-      // Continue with navigation even if pre-fetch fails
+      setFetchStatus(prev => ({...prev, [occasionId]: "error fetching"}));
     } finally {
       // Navigate to the gifting page with the appropriate category and title
       if (category === "all") {
@@ -117,6 +133,7 @@ const FeaturedOccasions = () => {
       
       // Reset loading state after navigation (although page will reload)
       setLoadingOccasion(null);
+      setFetchStatus(prev => ({...prev, [occasionId]: "navigation complete"}));
     }
   };
 

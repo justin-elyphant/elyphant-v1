@@ -53,7 +53,7 @@ export const testPurchase = async (productId: string) => {
   return await processOrder(orderRequest);
 };
 
-// Re-export all the functions
+// Export searchProducts directly to make sure it's properly accessible
 export { 
   searchProducts, 
   fetchProductDetails,

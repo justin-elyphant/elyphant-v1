@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import ProductImage from "@/components/marketplace/product-item/ProductImage";
-import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import ProductRating from "@/components/shared/ProductRating";
 
 type Collection = {
@@ -42,10 +42,15 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     const searchTerm = collection.searchTerm || collection.name;
     
     try {
-      // Pre-fetch products before navigation if we have a search term
+      // Pre-fetch products before navigation and log the process
       if (searchTerm) {
         console.log(`Pre-fetching products for search term: ${searchTerm}`);
-        await searchProducts(searchTerm, 50); // Request 50 products
+        const results = await searchProducts(searchTerm, 50); // Request 50 products
+        console.log(`Fetched ${results.length} products for "${searchTerm}"`);
+        
+        if (results.length === 0) {
+          console.error(`No products found for search term: ${searchTerm}`);
+        }
       }
       
       // If the collection has a direct URL, use that

@@ -19,7 +19,7 @@ export const useCategoryFilter = (products: Product[]) => {
   }, [categoryParam]);
   
   // Define special occasion categories
-  const occasionCategories = ["birthday", "wedding", "anniversary", "graduation", "baby_shower"];
+  const occasionCategories = ["birthday", "wedding", "anniversary", "graduation", "baby_shower", "pets"];
   
   // Extract unique categories from products
   const productCategories = Array.from(new Set(products.map(p => p.category)));

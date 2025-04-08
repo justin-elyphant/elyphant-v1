@@ -9,6 +9,7 @@ type Collection = {
   name: string;
   image: string;
   callToAction?: string;
+  url?: string;
 };
 
 type CollectionProps = {
@@ -31,14 +32,14 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Featured Collections</h2>
-        <Link to="/gifting" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+        <Link to="/gifting?tab=products" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
           View all collections
         </Link>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {collections.map((collection) => (
-          <Link key={collection.id} to={`/marketplace?collection=${collection.id}`}>
+          <Link key={collection.id} to={collection.url || `/marketplace?collection=${collection.id}`}>
             <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
               <div className="aspect-video relative">
                 <img 

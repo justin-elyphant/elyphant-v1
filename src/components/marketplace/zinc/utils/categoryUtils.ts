@@ -16,6 +16,8 @@ export function guessCategory(term: string): string {
     return 'graduation';
   } else if (term.includes('baby') || term.includes('shower') || term.includes('newborn') || term.includes('infant')) {
     return 'baby_shower';
+  } else if (term.includes('pet') || term.includes('dog') || term.includes('cat') || term.includes('animal')) {
+    return 'pets';
   } else if (term.includes('shoe') || term.includes('sneaker') || term.includes('boots')) {
     return 'Footwear';
   } else if (term.includes('shirt') || term.includes('jacket') || term.includes('pant') || term.includes('dress')) {

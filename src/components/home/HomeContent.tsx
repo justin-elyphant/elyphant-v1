@@ -38,6 +38,13 @@ const HomeContent = () => {
     },
     { 
       id: 4, 
+      name: "Pet Gifts", 
+      image: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      callToAction: "Find Gifts for Pets",
+      url: "/gifting?tab=products&category=pets"
+    },
+    { 
+      id: 5, 
       name: "Home Decor", 
       image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
       callToAction: "Find Home Decor Gifts"

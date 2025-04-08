@@ -2,7 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper } from "lucide-react";
+import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 
 const occasions = [
   {
@@ -52,6 +52,15 @@ const occasions = [
   },
   {
     id: 6,
+    name: "Pet Gifts",
+    icon: <Dog className="h-6 w-6 text-orange-500" />,
+    description: "Spoil your furry friends",
+    url: "/gifting?tab=products&category=pets",
+    color: "bg-orange-50 border-orange-200",
+    cta: "Gifts for Pets"
+  },
+  {
+    id: 7,
     name: "All Occasions",
     icon: <Gift className="h-6 w-6 text-teal-500" />,
     description: "Explore gifts for any event",
@@ -71,7 +80,7 @@ const FeaturedOccasions = () => {
         </Link>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {occasions.map((occasion) => (
           <Link to={occasion.url} key={occasion.id}>
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>

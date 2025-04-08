@@ -89,6 +89,18 @@ export const useFilteredProducts = (
         )) {
           matchesCategory = true;
         }
+        // Check for pets occasion
+        else if (selectedCategoryLower === "pets" && (
+          productCategoryLower.includes("pet") || 
+          productCategoryLower.includes("dog") ||
+          productCategoryLower.includes("cat") ||
+          product.name?.toLowerCase().includes("pet") ||
+          product.name?.toLowerCase().includes("dog") ||
+          product.name?.toLowerCase().includes("cat") ||
+          product.description?.toLowerCase().includes("pet")
+        )) {
+          matchesCategory = true;
+        }
       }
 
       // Price range filter

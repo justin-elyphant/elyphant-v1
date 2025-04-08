@@ -1,5 +1,6 @@
+
 import { useLocation } from "react-router-dom";
-import { getCategoryName } from "./utils/categoryUtils";
+import { getCategoryName } from "@/components/marketplace/hooks/utils/categoryUtils";
 import { Product } from "@/contexts/ProductContext";
 
 export const usePageInfo = (currentCategory: string | null, filteredProducts: Product[]) => {

@@ -12,6 +12,8 @@ import { loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 import GiftingHeader from "@/components/gifting/GiftingHeader";
+import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
+import { convertZincProductToProduct } from "@/components/marketplace/zinc/utils/productConverter";
 
 const Gifting = () => {
   return (
@@ -30,6 +32,7 @@ const GiftingWrapper = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("wishlists");
   const [initialProducts, setInitialProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Check if we're in a specific collection or category view
   const isSpecificView = Boolean(categoryParam || pageTitleParam);
@@ -69,13 +72,49 @@ const GiftingWrapper = () => {
     }
   };
 
+  // Load products based on params
   useEffect(() => {
-    // Force reload products when category or search changes
     const loadProducts = async () => {
-      console.log("Loading products for category:", categoryParam);
-      const savedProducts = await loadSavedProducts();
-      console.log(`Gifting page: Loaded ${savedProducts.length} products from localStorage`);
-      setInitialProducts(savedProducts);
+      setIsLoading(true);
+      console.log(`Loading products for category: ${categoryParam}, search: ${searchParam}`);
+      
+      try {
+        // First, load base products from localStorage
+        const savedProducts = await loadSavedProducts();
+        console.log(`Gifting page: Loaded ${savedProducts.length} products from localStorage`);
+        
+        // If we have a search parameter, fetch products from the Zinc API
+        if (searchParam) {
+          console.log(`Searching for products with term: "${searchParam}"`);
+          const results = await searchProducts(searchParam, 75); // Request 75 products
+          
+          if (results.length > 0) {
+            // Convert Zinc products to our Product format
+            const zincProducts = results.map(product => convertZincProductToProduct(product));
+            console.log(`Found ${zincProducts.length} products for search term "${searchParam}"`);
+            
+            // Combine with saved products, preserving any that don't overlap
+            const combinedProducts = [
+              ...savedProducts.filter(p => p.vendor !== "Amazon via Zinc"),
+              ...zincProducts
+            ];
+            
+            setInitialProducts(combinedProducts);
+          } else {
+            setInitialProducts(savedProducts);
+          }
+        } else {
+          // Just use saved products if no search parameter
+          setInitialProducts(savedProducts);
+        }
+      } catch (error) {
+        console.error("Error loading products:", error);
+        // Load saved products as fallback
+        const savedProducts = await loadSavedProducts();
+        setInitialProducts(savedProducts);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     loadProducts();

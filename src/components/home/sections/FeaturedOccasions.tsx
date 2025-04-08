@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 import { toast } from "sonner";
+import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
 
 const occasions = [
   {
@@ -13,6 +14,7 @@ const occasions = [
     category: "birthday",
     color: "bg-blue-50 border-blue-200",
     cta: "Gifts for Birthdays",
+    searchTerm: "birthday gifts"
   },
   {
     id: 2,
@@ -22,6 +24,7 @@ const occasions = [
     category: "wedding",
     color: "bg-pink-50 border-pink-200",
     cta: "Wedding Gift Ideas",
+    searchTerm: "wedding gifts"
   },
   {
     id: 3,
@@ -31,6 +34,7 @@ const occasions = [
     category: "anniversary",
     color: "bg-purple-50 border-purple-200",
     cta: "Anniversary Gifts",
+    searchTerm: "anniversary gifts"
   },
   {
     id: 4,
@@ -40,6 +44,7 @@ const occasions = [
     category: "graduation",
     color: "bg-green-50 border-green-200",
     cta: "Graduation Gift Ideas",
+    searchTerm: "graduation gifts"
   },
   {
     id: 5,
@@ -49,6 +54,7 @@ const occasions = [
     category: "baby_shower",
     color: "bg-yellow-50 border-yellow-200",
     cta: "Baby Shower Gifts",
+    searchTerm: "baby shower gifts"
   },
   {
     id: 6,
@@ -58,6 +64,7 @@ const occasions = [
     category: "pets",
     color: "bg-orange-50 border-orange-200",
     cta: "Gifts for Pets",
+    searchTerm: "pet gifts"
   },
   {
     id: 7,
@@ -67,19 +74,20 @@ const occasions = [
     category: "all",
     color: "bg-teal-50 border-teal-200",
     cta: "Browse All Gift Ideas",
+    searchTerm: "popular gifts"
   },
 ];
 
 const FeaturedOccasions = () => {
   const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
   
-  const handleOccasionClick = (category: string, occasionName: string, occasionId: number) => {
+  const handleOccasionClick = async (category: string, occasionName: string, occasionId: number, searchTerm: string) => {
     // Prevent multiple clicks while loading
     if (loadingOccasion !== null) {
       return;
     }
     
-    console.log(`FeaturedOccasions: Occasion clicked: ${category}, ${occasionName}, ID: ${occasionId}`);
+    console.log(`FeaturedOccasions: Occasion clicked: ${category}, ${occasionName}, ID: ${occasionId}, searchTerm: ${searchTerm}`);
     
     // Set loading state for this specific occasion
     setLoadingOccasion(occasionId);
@@ -87,21 +95,29 @@ const FeaturedOccasions = () => {
     // Show feedback to the user
     toast.success(`Exploring ${occasionName.toLowerCase()} gift ideas...`);
     
-    // Add a small delay to ensure the toast is visible
-    setTimeout(() => {
-      // Generate a page title based on the occasion
-      const pageTitle = `Gifts for ${occasionName}`;
-      
+    // Generate a page title based on the occasion
+    const pageTitle = `Gifts for ${occasionName}`;
+    
+    try {
+      if (searchTerm) {
+        // Pre-fetch products before navigation to ensure the products are ready
+        console.log(`Pre-fetching products for search term: ${searchTerm}`);
+        await searchProducts(searchTerm, 50); // Request 50 products
+      }
+    } catch (error) {
+      console.error(`Error pre-fetching products for ${occasionName}:`, error);
+      // Continue with navigation even if pre-fetch fails
+    } finally {
       // Navigate to the gifting page with the appropriate category and title
       if (category === "all") {
-        window.location.href = `/gifting?tab=products&pageTitle=${encodeURIComponent(pageTitle)}`;
+        window.location.href = `/gifting?tab=products&pageTitle=${encodeURIComponent(pageTitle)}&search=${encodeURIComponent(searchTerm)}`;
       } else {
-        window.location.href = `/gifting?tab=products&category=${category}&pageTitle=${encodeURIComponent(pageTitle)}`;
+        window.location.href = `/gifting?tab=products&category=${category}&pageTitle=${encodeURIComponent(pageTitle)}&search=${encodeURIComponent(searchTerm)}`;
       }
       
       // Reset loading state after navigation (although page will reload)
       setLoadingOccasion(null);
-    }, 100);
+    }
   };
 
   return (
@@ -120,7 +136,7 @@ const FeaturedOccasions = () => {
         {occasions.map((occasion) => (
           <div 
             key={occasion.id} 
-            onClick={() => handleOccasionClick(occasion.category, occasion.name, occasion.id)}
+            onClick={() => handleOccasionClick(occasion.category, occasion.name, occasion.id, occasion.searchTerm)}
             className="cursor-pointer"
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>

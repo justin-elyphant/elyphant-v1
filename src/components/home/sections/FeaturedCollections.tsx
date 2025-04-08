@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import ProductImage from "@/components/marketplace/product-item/ProductImage";
+import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
 
 type Collection = {
   id: number;
@@ -11,6 +12,7 @@ type Collection = {
   callToAction?: string;
   url?: string;
   category?: string;
+  searchTerm?: string;
 };
 
 type CollectionProps = {
@@ -20,7 +22,7 @@ type CollectionProps = {
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
 
-  const handleCollectionClick = (collection: Collection) => {
+  const handleCollectionClick = async (collection: Collection) => {
     // If already loading, don't allow multiple clicks
     if (loadingCollection !== null) {
       return;
@@ -28,33 +30,43 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     
     // Set loading state
     setLoadingCollection(collection.id);
-    console.log(`FeaturedCollections: Collection clicked: ${collection.name}`);
+    console.log(`FeaturedCollections: Collection clicked: ${collection.name}, searchTerm: ${collection.searchTerm || collection.name}`);
+    
+    // Show loading toast
+    toast.success(`Exploring ${collection.name} collection...`);
+    
+    const searchTerm = collection.searchTerm || collection.name;
     
     try {
-      // Show loading toast
-      toast.success(`Exploring ${collection.name} collection...`);
+      // Pre-fetch products before navigation if we have a search term
+      if (searchTerm) {
+        console.log(`Pre-fetching products for search term: ${searchTerm}`);
+        await searchProducts(searchTerm, 50); // Request 50 products
+      }
       
-      // Add a small delay to ensure the toast is visible
-      setTimeout(() => {
-        // If the collection has a direct URL, use that
-        if (collection.url) {
-          window.location.href = collection.url;
-        }
-        // If it has a category, use that
-        else if (collection.category) {
-          // Include the collection name as a pageTitle parameter
-          window.location.href = `/gifting?tab=products&category=${collection.category}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
-        }
-        // Otherwise use the name as a search term
-        else {
-          const searchTerm = collection.name;
-          window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
-        }
-      }, 100);
+      // If the collection has a direct URL, use that
+      if (collection.url) {
+        window.location.href = collection.url;
+      }
+      // If it has a category, use that along with the search term
+      else if (collection.category) {
+        // Include the collection name as a pageTitle parameter and search term
+        window.location.href = `/gifting?tab=products&category=${collection.category}&pageTitle=Collection: ${encodeURIComponent(collection.name)}&search=${encodeURIComponent(searchTerm)}`;
+      }
+      // Otherwise use the name as a search term
+      else {
+        window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
+      }
     } catch (error) {
       console.error(`Error handling collection click for ${collection.name}:`, error);
+      // Continue with navigation even if pre-fetch fails
+      if (collection.url) {
+        window.location.href = collection.url;
+      } else {
+        window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
+      }
+    } finally {
       setLoadingCollection(null);
-      toast.error("Something went wrong. Please try again.");
     }
   };
 

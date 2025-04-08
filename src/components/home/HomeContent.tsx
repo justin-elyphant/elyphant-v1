@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Hero from "./Hero";
@@ -16,42 +17,47 @@ const HomeContent = () => {
   const navigate = useNavigate();
   const [collectionsLoaded, setCollectionsLoaded] = useState(false);
 
-  // Create collections with real API product images
+  // Create collections with real API product images and search terms
   const mockCollections = [
     { 
       id: 1, 
       name: "Summer Essentials", 
       image: null, // Will be loaded from API by ProductImage
       callToAction: "Explore Summer Gifts",
-      category: "summer"
+      category: "summer",
+      searchTerm: "summer essentials gifts"
     },
     { 
       id: 2, 
       name: "Office Gear", 
       image: null, // Will be loaded from API by ProductImage
       callToAction: "Shop Office Tech Gifts",
-      category: "office"
+      category: "office",
+      searchTerm: "office gear tech gifts"
     },
     { 
       id: 3, 
       name: "Tech Gifts", 
       image: null, // Will be loaded from API by ProductImage
       callToAction: "Discover Tech Gifts",
-      category: "electronics"
+      category: "electronics",
+      searchTerm: "tech gadgets gifts"
     },
     { 
       id: 4, 
       name: "Pet Gifts", 
       image: null, // Will be loaded from API by ProductImage
       callToAction: "Find Gifts for Pets",
-      url: "/gifting?tab=products&category=pets"
+      url: "/gifting?tab=products&category=pets",
+      searchTerm: "pet gifts accessories"
     },
     { 
       id: 5, 
       name: "Home Decor", 
       image: null, // Will be loaded from API by ProductImage
       callToAction: "Find Home Decor Gifts",
-      category: "home decor"
+      category: "home decor",
+      searchTerm: "home decor gifts"
     }
   ];
 

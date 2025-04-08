@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
 import { fetchProductDetails } from "../productService";
 
@@ -50,8 +50,7 @@ export const useZincConnection = () => {
       
       setIsConnected(true);
       setLastSync(Date.now());
-      toast({
-        title: "Connection successful",
+      toast.success("Connection successful", {
         description: "Successfully connected to Zinc API"
       });
       
@@ -59,10 +58,8 @@ export const useZincConnection = () => {
     } catch (err) {
       console.error("Error connecting to Zinc:", err);
       setError("Failed to connect to Zinc API. Please check your API key and try again.");
-      toast({
-        title: "Connection failed",
-        description: "Failed to connect to Zinc API. Please check your API key.",
-        variant: "destructive"
+      toast.error("Connection failed", {
+        description: "Failed to connect to Zinc API. Please check your API key."
       });
       return false;
     } finally {
@@ -74,8 +71,7 @@ export const useZincConnection = () => {
     localStorage.removeItem("zincConnection");
     setIsConnected(false);
     setApiKey("");
-    toast({
-      title: "Disconnected",
+    toast.success("Disconnected", {
       description: "Disconnected from Zinc API"
     });
     

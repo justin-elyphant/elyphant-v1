@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useZincProducts } from "./hooks/useZincProducts";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const ZincProductsTab = () => {
   const { products } = useProducts();
@@ -38,10 +38,8 @@ const ZincProductsTab = () => {
         await handleSearch(localSearchTerm);
       } catch (error) {
         console.error("Search error:", error);
-        toast({
-          title: "Search Failed",
-          description: "There was an error processing your search",
-          variant: "destructive"
+        toast.error("Search Failed", {
+          description: "There was an error processing your search"
         });
       } finally {
         searchInProgressRef.current = false;

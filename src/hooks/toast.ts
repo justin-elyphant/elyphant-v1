@@ -5,6 +5,21 @@ import { toast as sonnerToast } from "sonner";
 // Re-export the toast function
 export const toast = sonnerToast;
 
+// Export the useToast hook (to match shadcn API)
+export const useToast = () => {
+  return {
+    toast: sonnerToast,
+    // Add necessary properties to make it compatible with shadcn/ui toast
+    dismiss: (toastId?: string) => {
+      if (toastId) {
+        sonnerToast.dismiss(toastId);
+      } else {
+        sonnerToast.dismiss();
+      }
+    }
+  };
+};
+
 // Helper function that correctly formats toast without 'title' property
 export const showToast = (
   type: 'success' | 'error' | 'info' | 'loading', 

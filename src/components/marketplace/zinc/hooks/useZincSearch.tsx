@@ -1,8 +1,7 @@
-
 import { useState, useRef } from "react";
 import { searchProducts } from "../zincService";
 import { ZincProduct } from "../types";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useZincSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,10 +54,8 @@ export const useZincSearch = () => {
       // Only show toast for empty results and only once per search session
       if (searchResults.length === 0 && !toastShownRef.current) {
         toastShownRef.current = true;
-        toast({
-          title: "No results found",
+        toast.error("No results found", {
           description: `No products found for "${term}"`,
-          variant: "destructive",
           id: "no-results" // Use consistent ID to prevent duplicates
         });
         resetToastStatus();
@@ -72,10 +69,8 @@ export const useZincSearch = () => {
       // Only show error toast once per search session
       if (!toastShownRef.current) {
         toastShownRef.current = true;
-        toast({
-          title: "Search Error",
+        toast.error("Search Error", {
           description: "Failed to search products. Please try again.",
-          variant: "destructive",
           id: "search-error" // Use consistent ID to prevent duplicates
         });
         resetToastStatus();

@@ -1,3 +1,3 @@
 
-import { useToast, toast } from "./toast";
+import { toast, useToast } from "./toast";
 export { useToast, toast };

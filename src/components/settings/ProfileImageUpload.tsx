@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
 interface ProfileImageUploadProps {
@@ -41,29 +41,44 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `profile-images/${fileName}`;
       
-      const { data, error } = await supabase
+      // Check if storage bucket exists, if not we'll use base64 data
+      const { data: bucketData, error: bucketError } = await supabase
         .storage
-        .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
+        .getBuckets();
       
-      if (error) {
-        throw error;
+      let imageUrl = '';
+      
+      // If the avatars bucket exists, upload to Supabase Storage
+      if (bucketData && bucketData.some(bucket => bucket.name === 'avatars')) {
+        const { data, error } = await supabase
+          .storage
+          .from('avatars')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Get the public URL
+        const { data: publicUrlData } = supabase
+          .storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        
+        imageUrl = publicUrlData.publicUrl;
+      } else {
+        // Fallback to base64 if storage not configured
+        imageUrl = preview || '';
       }
-      
-      // Get the public URL
-      const { data: publicUrlData } = supabase
-        .storage
-        .from('avatars')
-        .getPublicUrl(filePath);
       
       // Update profile record
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          profile_image: publicUrlData.publicUrl
+          profile_image: imageUrl
         })
         .eq('id', user.id);
       
@@ -71,12 +86,16 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
         throw updateError;
       }
       
-      onImageUpdate(publicUrlData.publicUrl);
+      onImageUpdate(imageUrl);
       toast.success("Profile image updated successfully");
       
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image");
+      // Fallback to base64 data on error
+      if (preview) {
+        onImageUpdate(preview);
+      }
     } finally {
       setUploading(false);
     }

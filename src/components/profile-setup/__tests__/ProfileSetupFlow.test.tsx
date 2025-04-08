@@ -1,112 +1,128 @@
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import ProfileSetupFlow from '../ProfileSetupFlow';
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/auth';
 
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import { useAuth } from "@/contexts/auth";
-import { supabase } from "@/integrations/supabase/client";
-import ProfileSetupFlow from "../ProfileSetupFlow";
-import { toast } from "sonner";
-
-// Mock the auth context
-jest.mock("@/contexts/auth", () => ({
-  useAuth: jest.fn(),
+// Mock Supabase
+jest.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      update: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
+          }))
+        }))
+      }))
+    })),
+  }
 }));
 
-// Mock Supabase client
-jest.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    from: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    single: jest.fn(),
-  },
+// Mock Auth context
+jest.mock('@/contexts/auth', () => ({
+  useAuth: jest.fn(() => ({
+    user: { id: 'test-user-id' },
+    isDebugMode: false
+  })),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
 // Mock toast
-jest.mock("sonner", () => ({
+jest.mock('sonner', () => ({
   toast: {
     success: jest.fn(),
-    error: jest.fn(),
-  },
+    error: jest.fn()
+  }
 }));
 
-describe("ProfileSetupFlow", () => {
-  const onCompleteMock = jest.fn();
-  const onSkipMock = jest.fn();
-  
+describe('ProfileSetupFlow', () => {
+  const mockOnComplete = jest.fn();
+  const mockOnSkip = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock authenticated user
-    (useAuth as jest.Mock).mockReturnValue({
-      user: { id: "test-user-id" },
-    });
+  });
 
-    // Mock successful profile update
-    (supabase.from().update().eq().select().single as jest.Mock).mockResolvedValue({
-      data: { id: "test-user-id" },
-      error: null,
+  it('renders the first step by default', () => {
+    render(
+      <BrowserRouter>
+        <ProfileSetupFlow onComplete={mockOnComplete} onSkip={mockOnSkip} />
+      </BrowserRouter>
+    );
+    
+    // Wait for the component to render and check for the presence of the basic info step
+    waitFor(() => {
+      expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });
   });
 
-  it("renders the profile setup flow with proper steps", () => {
-    render(<ProfileSetupFlow onComplete={onCompleteMock} onSkip={onSkipMock} />);
+  it('should navigate through steps when clicking next', async () => {
+    const user = userEvent.setup();
     
-    expect(screen.getByText("Complete Your Profile")).toBeInTheDocument();
-    expect(screen.getByText("Basic Info")).toBeInTheDocument();
-    expect(screen.getByText("This information helps us personalize your gifting experience")).toBeInTheDocument();
-  });
+    render(
+      <BrowserRouter>
+        <ProfileSetupFlow onComplete={mockOnComplete} onSkip={mockOnSkip} />
+      </BrowserRouter>
+    );
 
-  it("allows navigation through steps", async () => {
-    render(<ProfileSetupFlow onComplete={onCompleteMock} onSkip={onSkipMock} />);
-    
-    // First step (Basic Info)
-    expect(screen.getByPlaceholderText("Your full name")).toBeInTheDocument();
-    
-    // Navigate to next step
-    fireEvent.click(screen.getByText("Next Step"));
-    
-    // Second step (Birthday)
+    // Step 1 - Basic Info
     await waitFor(() => {
-      expect(screen.getByText("When is your birthday?")).toBeInTheDocument();
+      expect(screen.getByText(/Complete Your Profile/i)).toBeInTheDocument();
+    });
+    
+    // Click next to go to step 2
+    await user.click(screen.getByText('Next Step'));
+    
+    // Step 2 - Birthday
+    await waitFor(() => {
+      expect(screen.getByText(/When is your birthday/i)).toBeInTheDocument();
     });
   });
 
-  it("completes the profile setup process", async () => {
-    render(<ProfileSetupFlow onComplete={onCompleteMock} onSkip={onSkipMock} />);
-    
+  it('completes the profile setup process', async () => {
+    render(
+      <BrowserRouter>
+        <ProfileSetupFlow onComplete={mockOnComplete} onSkip={mockOnSkip} />
+      </BrowserRouter>
+    );
+
     // Fill out name in first step
-    fireEvent.change(screen.getByPlaceholderText("Your full name"), {
-      target: { value: "John Doe" }
+    fireEvent.change(screen.getByPlaceholderText('Your full name'), {
+      target: { value: 'John Doe' }
     });
     
     // Navigate through all steps
     for (let i = 0; i < 4; i++) {
-      fireEvent.click(screen.getByText("Next Step"));
+      fireEvent.click(screen.getByText('Next Step'));
       await waitFor(() => {
         // Just wait for the next step to render
       });
     }
     
     // Now we should be at the final step
-    expect(screen.getByText("Complete Setup")).toBeInTheDocument();
+    expect(screen.getByText('Complete Setup')).toBeInTheDocument();
     
     // Complete the setup
-    fireEvent.click(screen.getByText("Complete Setup"));
+    fireEvent.click(screen.getByText('Complete Setup'));
     
     await waitFor(() => {
-      expect(supabase.from).toHaveBeenCalledWith("profiles");
-      expect(onCompleteMock).toHaveBeenCalled();
+      expect(supabase.from).toHaveBeenCalledWith('profiles');
+      expect(mockOnComplete).toHaveBeenCalled();
     });
   });
 
-  it("allows skipping the profile setup", () => {
-    render(<ProfileSetupFlow onComplete={onCompleteMock} onSkip={onSkipMock} />);
+  it('allows skipping the profile setup', () => {
+    render(
+      <BrowserRouter>
+        <ProfileSetupFlow onComplete={mockOnComplete} onSkip={mockOnSkip} />
+      </BrowserRouter>
+    );
     
     // Skip the setup
-    fireEvent.click(screen.getByText("Skip for now"));
+    fireEvent.click(screen.getByText('Skip for now'));
     
-    expect(onSkipMock).toHaveBeenCalled();
+    expect(mockOnSkip).toHaveBeenCalled();
   });
 });

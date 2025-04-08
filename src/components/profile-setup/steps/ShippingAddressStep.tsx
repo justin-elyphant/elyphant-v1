@@ -46,7 +46,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       city: fullAddress.city,
       state: fullAddress.state,
       zipCode: fullAddress.zipCode,
-      country: fullAddress.country
+      country: fullAddress.country || value.country
     });
   };
 
@@ -61,11 +61,15 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       
       <div className="space-y-4">
         <div className="space-y-2">
+          <Label htmlFor="autocomplete">Street Address</Label>
           <AddressAutocomplete
             value={value.street}
             onChange={(val) => handleChange('street', val)}
             onAddressSelect={handleAddressSelect}
           />
+          <p className="text-xs text-muted-foreground">
+            Start typing to see address suggestions
+          </p>
         </div>
         
         <div className="grid grid-cols-2 gap-4">

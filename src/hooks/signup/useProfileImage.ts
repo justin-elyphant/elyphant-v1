@@ -9,7 +9,7 @@ export const useProfileImage = () => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onload = () => {
         setProfileImage(reader.result as string);
       };
       reader.readAsDataURL(file);
@@ -21,29 +21,54 @@ export const useProfileImage = () => {
       return imageData;
     }
 
-    // Extract file data from base64 string
-    const fileExt = imageData.substring(imageData.indexOf('/') + 1, imageData.indexOf(';base64'));
-    const fileName = `${userId}.${fileExt}`;
-    const fileData = imageData.replace(/^data:image\/\w+;base64,/, '');
-    
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, decode(fileData), {
-        contentType: `image/${fileExt}`,
-        upsert: true
-      });
+    try {
+      // Extract file data from base64 string
+      const fileExt = imageData.substring(imageData.indexOf('/') + 1, imageData.indexOf(';base64'));
+      const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileData = imageData.replace(/^data:image\/\w+;base64,/, '');
       
-    if (error) {
-      console.error("Error uploading profile image:", error);
+      // Check if the bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'avatars');
+      
+      // If bucket doesn't exist, try to create it (this may fail due to permissions)
+      if (!bucketExists) {
+        try {
+          const { error: createBucketError } = await supabase.storage
+            .createBucket('avatars', { public: true });
+          
+          if (createBucketError) {
+            console.warn("Unable to create avatars bucket:", createBucketError);
+            return imageData; // Return the base64 data if we can't create the bucket
+          }
+        } catch (err) {
+          console.warn("Error creating bucket:", err);
+          return imageData; // Return the base64 data if we can't create the bucket
+        }
+      }
+      
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, decode(fileData), {
+          contentType: `image/${fileExt}`,
+          upsert: true
+        });
+        
+      if (error) {
+        console.error("Error uploading profile image:", error);
+        return imageData;
+      }
+      
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+            
+      return publicUrlData.publicUrl;
+    } catch (err) {
+      console.error("Error in upload process:", err);
       return imageData;
     }
-    
-    const { data: publicUrlData } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(fileName);
-        
-    return publicUrlData.publicUrl;
   };
   
   // Helper function to decode base64 to binary

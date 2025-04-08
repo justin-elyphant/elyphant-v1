@@ -67,12 +67,16 @@ const GiftingWrapper = () => {
   };
 
   useEffect(() => {
-    const savedProducts = loadSavedProducts();
-    if (savedProducts && savedProducts.length > 0) {
+    // Force reload products when category or search changes
+    const loadProducts = async () => {
+      console.log("Loading products for category:", categoryParam);
+      const savedProducts = await loadSavedProducts();
       console.log(`Gifting page: Loaded ${savedProducts.length} products from localStorage`);
       setInitialProducts(savedProducts);
-    }
-  }, []);
+    };
+    
+    loadProducts();
+  }, [categoryParam, searchParam]);
 
   // Custom page title for the products tab
   const productTabTitle = pageTitleParam || "Gift Ideas";

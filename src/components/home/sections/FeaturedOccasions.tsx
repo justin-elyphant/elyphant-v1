@@ -135,8 +135,9 @@ const FeaturedOccasions = () => {
                     product={{
                       name: `${occasion.name} gifts`,
                       category: occasion.category,
-                      image: null // Force it to use the API
+                      image: null
                     }}
+                    useMock={true} // Use mock images for thumbnails
                   />
                 </div>
                 <h3 className="font-medium">{occasion.name}</h3>

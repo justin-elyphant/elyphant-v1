@@ -6,18 +6,27 @@ import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import ProfileSetup from './pages/ProfileSetup';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import DebugPanel from './components/debug/DebugPanel';
+import MainLayout from './components/layout/MainLayout';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Index />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+          </Route>
           
           <Route path="/profile-setup" element={
             <ProtectedRoute>
@@ -32,7 +41,6 @@ function App() {
           } />
         </Routes>
         
-        {/* Add Debug Panel */}
         <DebugPanel />
       </AuthProvider>
     </BrowserRouter>

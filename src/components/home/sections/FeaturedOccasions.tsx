@@ -12,6 +12,7 @@ const occasions = [
     description: "Find the perfect birthday gifts",
     url: "/marketplace?category=birthday",
     color: "bg-blue-50 border-blue-200",
+    cta: "Gifts for Birthdays"
   },
   {
     id: 2,
@@ -20,6 +21,7 @@ const occasions = [
     description: "Celebrate special unions",
     url: "/marketplace?category=wedding",
     color: "bg-pink-50 border-pink-200",
+    cta: "Wedding Gift Ideas"
   },
   {
     id: 3,
@@ -28,6 +30,7 @@ const occasions = [
     description: "Commemorate years together",
     url: "/marketplace?category=anniversary",
     color: "bg-purple-50 border-purple-200",
+    cta: "Anniversary Gifts"
   },
   {
     id: 4,
@@ -36,6 +39,7 @@ const occasions = [
     description: "Celebrate academic achievements",
     url: "/marketplace?category=graduation",
     color: "bg-green-50 border-green-200",
+    cta: "Graduation Gift Ideas"
   },
   {
     id: 5,
@@ -44,6 +48,7 @@ const occasions = [
     description: "Welcome new arrivals",
     url: "/marketplace?category=baby_shower",
     color: "bg-yellow-50 border-yellow-200",
+    cta: "Baby Shower Gifts"
   },
   {
     id: 6,
@@ -52,6 +57,7 @@ const occasions = [
     description: "Explore gifts for any event",
     url: "/marketplace",
     color: "bg-teal-50 border-teal-200",
+    cta: "Browse All Gift Ideas"
   },
 ];
 
@@ -75,6 +81,9 @@ const FeaturedOccasions = () => {
                 </div>
                 <h3 className="font-medium">{occasion.name}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{occasion.description}</p>
+                <span className="text-xs font-medium text-purple-600 hover:text-purple-800 mt-2">
+                  {occasion.cta}
+                </span>
               </CardContent>
             </Card>
           </Link>

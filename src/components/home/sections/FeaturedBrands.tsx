@@ -42,13 +42,18 @@ const FeaturedBrands = ({ brands = [] }: BrandsProps) => {
           <Link 
             key={brand.id} 
             to={`/marketplace?brand=${brand.name}`}
-            className="bg-white rounded-lg p-6 flex items-center justify-center hover:shadow-md transition-shadow border border-gray-100"
+            className="bg-white rounded-lg p-6 flex flex-col items-center justify-center hover:shadow-md transition-shadow border border-gray-100 group"
           >
-            <img 
-              src={brand.logo} 
-              alt={brand.name}
-              className="max-h-12 max-w-full"
-            />
+            <div className="h-16 flex items-center justify-center mb-2">
+              <img 
+                src={brand.logo} 
+                alt={brand.name}
+                className="max-h-12 max-w-full object-contain"
+              />
+            </div>
+            <p className="text-sm font-medium mt-2 text-center text-gray-600 group-hover:text-purple-600">
+              Shop {brand.name}
+            </p>
           </Link>
         ))}
       </div>

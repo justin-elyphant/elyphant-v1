@@ -2,11 +2,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight } from "lucide-react";
 
 type Collection = {
   id: number;
   name: string;
   image: string;
+  callToAction?: string;
 };
 
 type CollectionProps = {
@@ -36,7 +38,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {collections.map((collection) => (
-          <Link key={collection.id} to={`/gifting?collection=${collection.id}`}>
+          <Link key={collection.id} to={`/marketplace?collection=${collection.id}`}>
             <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
               <div className="aspect-video relative">
                 <img 
@@ -44,8 +46,12 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                   alt={collection.name}
                   className="object-cover w-full h-full"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
                   <h3 className="text-white font-medium text-lg">{collection.name}</h3>
+                  <div className="flex items-center text-white/90 text-sm mt-1 hover:text-white">
+                    <span>{collection.callToAction || "Shop now"}</span>
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </div>
                 </div>
               </div>
             </Card>

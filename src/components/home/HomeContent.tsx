@@ -16,20 +16,65 @@ const HomeContent = () => {
   const { products, isLoading } = useProducts();
   const navigate = useNavigate();
 
-  // Create mock data for collections and brands
+  // Create mock data for collections and brands with high-quality stock photos
   const mockCollections = [
-    { id: 1, name: "Summer Essentials", image: "https://placehold.co/300x300/e2e8f0/64748b?text=Summer" },
-    { id: 2, name: "Office Gear", image: "https://placehold.co/300x300/e2e8f0/64748b?text=Office" },
-    { id: 3, name: "Tech Gifts", image: "https://placehold.co/300x300/e2e8f0/64748b?text=Tech" },
-    { id: 4, name: "Home Decor", image: "https://placehold.co/300x300/e2e8f0/64748b?text=Home" }
+    { 
+      id: 1, 
+      name: "Summer Essentials", 
+      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      callToAction: "Explore Summer Gifts"
+    },
+    { 
+      id: 2, 
+      name: "Office Gear", 
+      image: "https://images.unsplash.com/photo-1497215842964-222b430dc094?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      callToAction: "Shop Office Tech Gifts"
+    },
+    { 
+      id: 3, 
+      name: "Tech Gifts", 
+      image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      callToAction: "Discover Tech Gifts"
+    },
+    { 
+      id: 4, 
+      name: "Home Decor", 
+      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      callToAction: "Find Home Decor Gifts"
+    }
   ];
 
   const mockBrands = [
-    { id: 1, name: "Apple", logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Apple", featured: true },
-    { id: 2, name: "Samsung", logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Samsung", featured: true },
-    { id: 3, name: "Nike", logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Nike", featured: true },
-    { id: 4, name: "Sony", logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Sony", featured: true },
-    { id: 5, name: "Microsoft", logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Microsoft", featured: false }
+    { 
+      id: 1, 
+      name: "Apple", 
+      logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg", 
+      featured: true 
+    },
+    { 
+      id: 2, 
+      name: "Samsung", 
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/2560px-Samsung_Logo.svg.png", 
+      featured: true 
+    },
+    { 
+      id: 3, 
+      name: "Nike", 
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1200px-Logo_NIKE.svg.png", 
+      featured: true 
+    },
+    { 
+      id: 4, 
+      name: "Sony", 
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Sony_logo.svg/2560px-Sony_logo.svg.png", 
+      featured: true 
+    },
+    { 
+      id: 5, 
+      name: "Microsoft", 
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/2048px-Microsoft_logo.svg.png", 
+      featured: false 
+    }
   ];
   
   return (

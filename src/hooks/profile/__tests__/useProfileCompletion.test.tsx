@@ -54,7 +54,7 @@ describe("useProfileCompletion", () => {
       error: null,
     });
 
-    const { result } = renderHook(() => useProfileCompletion());
+    const { result } = renderHook(() => useProfileCompletion(true));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -97,7 +97,7 @@ describe("useProfileCompletion", () => {
       error: null,
     });
 
-    const { result } = renderHook(() => useProfileCompletion());
+    const { result } = renderHook(() => useProfileCompletion(false));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

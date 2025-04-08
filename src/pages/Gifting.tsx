@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MyWishlists from "@/components/gifting/MyWishlists";
@@ -26,8 +27,12 @@ const GiftingWrapper = () => {
   const [activeTab, setActiveTab] = useState("wishlists");
   const [initialProducts, setInitialProducts] = useState<Product[]>([]);
 
+  // Important - make sure we switch to products tab when a category param is present
   useEffect(() => {
-    if (categoryParam && !tabParam) {
+    console.log("URL params in Gifting:", { tabParam, categoryParam });
+    
+    if (categoryParam) {
+      console.log("Category param detected, switching to products tab");
       setActiveTab("products");
     } 
     else if (tabParam && ["wishlists", "friends", "events", "products"].includes(tabParam)) {
@@ -38,6 +43,7 @@ const GiftingWrapper = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     
+    // Preserve any category parameter when changing tabs
     const newParams = new URLSearchParams(searchParams);
     newParams.set("tab", value);
     navigate(`?${newParams.toString()}`, { replace: true });

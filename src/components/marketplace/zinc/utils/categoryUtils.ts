@@ -7,15 +7,15 @@ export function guessCategory(term: string): string {
   
   // Enhanced occasion-based category guessing
   if (term.includes('birthday') || term.includes('celebration')) {
-    return 'Birthday';
+    return 'birthday';
   } else if (term.includes('wedding') || term.includes('bride') || term.includes('groom') || term.includes('marriage')) {
-    return 'Wedding';
+    return 'wedding';
   } else if (term.includes('anniversary') || term.includes('years together')) {
-    return 'Anniversary';
+    return 'anniversary';
   } else if (term.includes('graduation') || term.includes('graduate') || term.includes('academic')) {
-    return 'Graduation';
+    return 'graduation';
   } else if (term.includes('baby') || term.includes('shower') || term.includes('newborn') || term.includes('infant')) {
-    return 'Baby Shower';
+    return 'baby_shower';
   } else if (term.includes('shoe') || term.includes('sneaker') || term.includes('boots')) {
     return 'Footwear';
   } else if (term.includes('shirt') || term.includes('jacket') || term.includes('pant') || term.includes('dress')) {

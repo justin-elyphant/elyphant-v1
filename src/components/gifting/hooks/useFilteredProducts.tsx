@@ -38,6 +38,9 @@ export const useFilteredProducts = (
         const productCategoryLower = product.category.toLowerCase();
         const selectedCategoryLower = selectedCategory.toLowerCase();
         
+        // Debug logging
+        console.log(`Checking if product "${product.name}" (category: ${productCategoryLower}) matches selected category: ${selectedCategoryLower}`);
+        
         // Check direct match
         if (productCategoryLower === selectedCategoryLower) {
           matchesCategory = true;

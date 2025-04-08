@@ -11,6 +11,7 @@ export const useCategoryFilter = (products: Product[]) => {
   // Update selected category when URL params change
   useEffect(() => {
     if (categoryParam) {
+      console.log("Category parameter detected:", categoryParam);
       setSelectedCategory(categoryParam);
     } else {
       setSelectedCategory("all"); // Reset to all if no category in URL

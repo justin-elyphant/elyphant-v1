@@ -25,7 +25,12 @@ export const useProductFilter = (products: Product[]) => {
     const priceParam = searchParams.get("price");
     
     if (searchParam) setSearchTerm(searchParam);
-    if (categoryParam) setSelectedCategory(categoryParam);
+    
+    if (categoryParam) {
+      console.log(`useProductFilter: Setting category from URL param: ${categoryParam}`);
+      setSelectedCategory(categoryParam);
+    }
+    
     if (priceParam) setPriceRange(priceParam);
     
     console.log(`URL params - category: ${categoryParam}, search: ${searchParam}, price: ${priceParam}`);
@@ -57,6 +62,9 @@ export const useProductFilter = (products: Product[]) => {
     const tabParam = searchParams.get("tab");
     if (tabParam) {
       newParams.set("tab", tabParam);
+    } else if (selectedCategory && selectedCategory !== "all") {
+      // If we have a category filter but no tab, set tab to products
+      newParams.set("tab", "products");
     }
     
     setSearchParams(newParams, { replace: true });

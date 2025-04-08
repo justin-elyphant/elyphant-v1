@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { getExactProductImage } from "@/components/marketplace/zinc/utils/images/productImageUtils";

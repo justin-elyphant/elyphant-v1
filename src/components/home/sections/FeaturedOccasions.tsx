@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 import { toast } from "sonner";
 import { getExactProductImage } from "@/components/marketplace/zinc/utils/images/productImageUtils";
+import ProductImage from "@/components/marketplace/product-item/ProductImage";
 
 const occasions = [
   {
@@ -15,7 +15,7 @@ const occasions = [
     category: "birthday",
     color: "bg-blue-50 border-blue-200",
     cta: "Gifts for Birthdays",
-    image: getExactProductImage("Birthday Gifts", "birthday")
+    image: null // Will be fetched directly from API
   },
   {
     id: 2,
@@ -25,7 +25,7 @@ const occasions = [
     category: "wedding",
     color: "bg-pink-50 border-pink-200",
     cta: "Wedding Gift Ideas",
-    image: getExactProductImage("Wedding Gifts", "wedding")
+    image: null
   },
   {
     id: 3,
@@ -35,7 +35,7 @@ const occasions = [
     category: "anniversary",
     color: "bg-purple-50 border-purple-200",
     cta: "Anniversary Gifts",
-    image: getExactProductImage("Anniversary Gifts", "anniversary")
+    image: null
   },
   {
     id: 4,
@@ -45,7 +45,7 @@ const occasions = [
     category: "graduation",
     color: "bg-green-50 border-green-200",
     cta: "Graduation Gift Ideas",
-    image: getExactProductImage("Graduation Gifts", "graduation")
+    image: null
   },
   {
     id: 5,
@@ -55,7 +55,7 @@ const occasions = [
     category: "baby_shower",
     color: "bg-yellow-50 border-yellow-200",
     cta: "Baby Shower Gifts",
-    image: getExactProductImage("Baby Shower Gifts", "baby_shower")
+    image: null
   },
   {
     id: 6,
@@ -65,7 +65,7 @@ const occasions = [
     category: "pets",
     color: "bg-orange-50 border-orange-200",
     cta: "Gifts for Pets",
-    image: getExactProductImage("Pet Gifts", "pets")
+    image: null
   },
   {
     id: 7,
@@ -75,35 +75,12 @@ const occasions = [
     category: "all",
     color: "bg-teal-50 border-teal-200",
     cta: "Browse All Gift Ideas",
-    image: getExactProductImage("Gift Ideas", "all")
+    image: null
   },
 ];
 
 const FeaturedOccasions = () => {
   const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
-  const [cachedImages, setCachedImages] = useState<Record<number, string>>({});
-  const navigate = useNavigate();
-  
-  // Preload images after component mounts
-  useEffect(() => {
-    const preloadImages = async () => {
-      const imageCache: Record<number, string> = {};
-      
-      for (const occasion of occasions) {
-        try {
-          // Get direct Amazon image URL for the occasion
-          const imageUrl = getExactProductImage(occasion.name + " gifts", occasion.category || "");
-          imageCache[occasion.id] = imageUrl;
-        } catch (error) {
-          console.error(`Failed to preload image for occasion: ${occasion.name}`, error);
-        }
-      }
-      
-      setCachedImages(imageCache);
-    };
-    
-    preloadImages();
-  }, []);
   
   const handleOccasionClick = (category: string, occasionName: string, occasionId: number) => {
     // Prevent multiple clicks while loading
@@ -154,14 +131,14 @@ const FeaturedOccasions = () => {
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>
               <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className="rounded-full p-3 bg-white shadow-sm mb-3 relative">
-                  {/* Show image with fallback to icon */}
-                  {cachedImages[occasion.id] ? (
-                    <div 
-                      className="h-10 w-10 rounded-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${cachedImages[occasion.id]})` }}
-                    ></div>
-                  ) : occasion.icon}
+                <div className="rounded-full p-3 bg-white shadow-sm mb-3 relative overflow-hidden">
+                  <ProductImage 
+                    product={{
+                      name: `${occasion.name} gifts`,
+                      category: occasion.category || "gifts",
+                      image: null // Force it to use the API
+                    }}
+                  />
                 </div>
                 <h3 className="font-medium">{occasion.name}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{occasion.description}</p>

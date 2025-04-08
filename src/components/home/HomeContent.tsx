@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Hero from "./Hero";
 import FeaturedCollections from "./sections/FeaturedCollections";
@@ -16,46 +16,55 @@ const HomeContent = () => {
   const { isDebugMode } = useAuth();
   const { products, isLoading } = useProducts();
   const navigate = useNavigate();
+  const [collectionsLoaded, setCollectionsLoaded] = useState(false);
 
-  // Create collections with Amazon product images instead of Unsplash
+  // Create collections with real API product images
   const mockCollections = [
     { 
       id: 1, 
       name: "Summer Essentials", 
-      image: getExactProductImage("Summer Essentials", "summer"),
+      image: null, // Will be loaded from API by ProductImage
       callToAction: "Explore Summer Gifts",
       category: "summer"
     },
     { 
       id: 2, 
       name: "Office Gear", 
-      image: getExactProductImage("Office Gear", "office"),
+      image: null, // Will be loaded from API by ProductImage
       callToAction: "Shop Office Tech Gifts",
       category: "office"
     },
     { 
       id: 3, 
       name: "Tech Gifts", 
-      image: getExactProductImage("Tech Gifts", "electronics"),
+      image: null, // Will be loaded from API by ProductImage
       callToAction: "Discover Tech Gifts",
       category: "electronics"
     },
     { 
       id: 4, 
       name: "Pet Gifts", 
-      image: getExactProductImage("Pet Gifts", "pets"),
+      image: null, // Will be loaded from API by ProductImage
       callToAction: "Find Gifts for Pets",
       url: "/gifting?tab=products&category=pets"
     },
     { 
       id: 5, 
       name: "Home Decor", 
-      image: getExactProductImage("Home Decor", "home decor"),
+      image: null, // Will be loaded from API by ProductImage
       callToAction: "Find Home Decor Gifts",
       category: "home decor"
     }
   ];
 
+  useEffect(() => {
+    // Mark collections as loaded after a short delay
+    setTimeout(() => {
+      setCollectionsLoaded(true);
+    }, 500);
+  }, []);
+
+  // Mock brands
   const mockBrands = [
     { 
       id: 1, 

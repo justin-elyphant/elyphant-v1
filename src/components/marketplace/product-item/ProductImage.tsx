@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ImageOff } from "lucide-react";
 import { getExactProductImage } from "../zinc/utils/images/productImageUtils";
 
@@ -14,10 +14,27 @@ interface ProductImageProps {
 const ProductImage = ({ product }: ProductImageProps) => {
   const [imageError, setImageError] = useState(false);
   const [fallbackImageError, setFallbackImageError] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Reset state when product changes
+    setImageError(false);
+    setFallbackImageError(false);
+    
+    // Get the initial image URL
+    const initialUrl = getProductImage();
+    setImageUrl(initialUrl);
+    
+    console.log(`ProductImage: Initial image URL for ${product.name}: ${initialUrl}`);
+  }, [product.name, product.image, product.category]);
   
   const handleImageError = () => {
     console.log(`Image failed to load for product: ${product.name}`);
     setImageError(true);
+    
+    // Try Amazon image directly when original fails
+    const amazonImage = getExactProductImage(product.name, product.category || 'Electronics');
+    setImageUrl(amazonImage);
   };
 
   const handleFallbackImageError = () => {
@@ -45,19 +62,13 @@ const ProductImage = ({ product }: ProductImageProps) => {
 
   return (
     <>
-      {imageError ? (
+      {imageUrl && (
         <img 
-          src={getExactProductImage(product.name, product.category || 'Electronics')}
+          src={imageUrl}
           alt={product.name}
           className="w-full h-48 object-cover"
-          onError={handleFallbackImageError}
-        />
-      ) : (
-        <img 
-          src={getProductImage()} 
-          alt={product.name} 
-          className="w-full h-48 object-cover"
-          onError={handleImageError}
+          onError={imageError ? handleFallbackImageError : handleImageError}
+          loading="lazy"
         />
       )}
     </>

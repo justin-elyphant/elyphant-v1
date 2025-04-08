@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
-import ProductRating from "./ProductRating";
+import ProductRating from "@/components/shared/ProductRating";
 
 interface ProductInfoProps {
   product: Product;
@@ -23,7 +23,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     <div className="flex flex-col space-y-4">
       <div>
         <h3 className="text-2xl font-bold">${product.price.toFixed(2)}</h3>
-        <ProductRating rating={product.rating} reviewCount={product.reviewCount} />
+        <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="lg" />
         <span className="text-green-600 text-sm block mt-2">Free shipping</span>
       </div>
       

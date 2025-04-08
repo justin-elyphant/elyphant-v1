@@ -3,10 +3,11 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart, Star, StarHalf } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
+import ProductRating from "@/components/shared/ProductRating";
 
 interface ProductCardProps {
   product: Product;
@@ -43,30 +44,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   // Format price to always show 2 decimal places
   const formatPrice = (price: number) => {
     return price.toFixed(2);
-  };
-
-  // Render star ratings if available
-  const renderRating = () => {
-    if (!product.rating) return null;
-    
-    // Calculate full and half stars
-    const fullStars = Math.floor(product.rating);
-    const hasHalfStar = product.rating % 1 >= 0.5;
-    
-    return (
-      <div className="flex items-center gap-1 mt-1">
-        <div className="flex text-yellow-500">
-          {[...Array(fullStars)].map((_, i) => (
-            <Star key={i} className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-          ))}
-          {hasHalfStar && <StarHalf className="h-3 w-3 fill-yellow-500 text-yellow-500" />}
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {product.rating.toFixed(1)}
-          {product.reviewCount && ` (${product.reviewCount})`}
-        </span>
-      </div>
-    );
   };
 
   return (
@@ -120,7 +97,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
         <p className="font-semibold text-sm">${formatPrice(product.price)}</p>
         
-        {renderRating()}
+        <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
         
         {product.category && (
           <Badge variant="outline" className="mt-2 text-xs">

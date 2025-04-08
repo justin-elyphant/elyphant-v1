@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
-import { Heart, ShoppingCart, Star, StarHalf } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import ProductRating from "@/components/shared/ProductRating";
 import { 
   Carousel,
   CarouselContent,
@@ -54,27 +55,16 @@ const ProductDetailsDialog = ({
   
   console.log("Final images to display:", images);
 
-  const renderRating = (rating?: number, reviewCount?: number) => {
-    if (!rating) return null;
-    
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
-    return (
-      <div className="flex items-center gap-1 mt-1">
-        <div className="flex text-yellow-500">
-          {[...Array(fullStars)].map((_, i) => (
-            <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-          ))}
-          {hasHalfStar && <StarHalf className="h-4 w-4 fill-yellow-500 text-yellow-500" />}
-        </div>
-        <span className="text-sm text-muted-foreground">
-          {rating.toFixed(1)}
-          {reviewCount && ` (${reviewCount})`}
-        </span>
-      </div>
-    );
-  };
+  // If description is empty, generate a simple one based on the product name and category
+  let description = product.description;
+  if (!description || description.trim() === "") {
+    const productType = product.name.split(' ').slice(1).join(' ');
+    const brand = product.name.split(' ')[0];
+    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This ${product.category.toLowerCase()} item features premium materials and exceptional craftsmanship for long-lasting use.`;
+  }
+  
+  const features = product.features || [];
+  const specifications = product.specifications || {};
 
   // Create a function to render the carousel
   const renderCarousel = () => {
@@ -134,17 +124,6 @@ const ProductDetailsDialog = ({
     );
   };
 
-  // If description is empty, generate a simple one based on the product name and category
-  let description = product.description;
-  if (!description || description.trim() === "") {
-    const productType = product.name.split(' ').slice(1).join(' ');
-    const brand = product.name.split(' ')[0];
-    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This ${product.category.toLowerCase()} item features premium materials and exceptional craftsmanship for long-lasting use.`;
-  }
-  
-  const features = product.features || [];
-  const specifications = product.specifications || {};
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
@@ -163,7 +142,7 @@ const ProductDetailsDialog = ({
           <div className="flex flex-col space-y-4">
             <div>
               <h3 className="text-2xl font-bold">${product.price.toFixed(2)}</h3>
-              {renderRating(product.rating, product.reviewCount)}
+              <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="lg" />
               <span className="text-green-600 text-sm block mt-2">Free shipping</span>
             </div>
             

@@ -10,6 +10,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Product } from "@/contexts/ProductContext";
+import ProductRating from "@/components/shared/ProductRating";
 
 type ProductProps = {
   products: Product[];
@@ -63,6 +64,7 @@ const FeaturedProducts = ({ products = [] }: ProductProps) => {
                     <h3 className="font-medium mb-1 line-clamp-1">{product.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{product.vendor}</p>
                     <p className="font-semibold">${product.price.toFixed(2)}</p>
+                    <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
                   </CardContent>
                 </Card>
               </div>

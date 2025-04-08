@@ -5,7 +5,7 @@ import { useZincSearch } from "@/hooks/useZincSearch";
 import SearchPrompt from "./search/SearchPrompt";
 import SearchGroup from "./search/SearchGroup";
 import SearchFooter from "./search/SearchFooter";
-import { Badge } from "@/components/ui/badge";
+import ProductRating from "@/components/shared/ProductRating";
 
 interface SearchResultsProps {
   searchTerm: string;
@@ -108,7 +108,9 @@ const SearchResults = ({
               title: product.title,
               name: product.title,
               image: product.image,
-              isTopSeller: true
+              isTopSeller: true,
+              rating: product.rating || product.stars,
+              reviewCount: product.review_count || product.num_reviews
             }))} 
             onSelect={handleSelect} 
           />
@@ -121,7 +123,9 @@ const SearchResults = ({
               id: `other-${product.id || product.product_id || Math.random().toString()}`,
               title: product.title,
               name: product.title,
-              image: product.image
+              image: product.image,
+              rating: product.rating || product.stars,
+              reviewCount: product.review_count || product.num_reviews
             }))} 
             onSelect={handleSelect} 
           />
@@ -132,7 +136,9 @@ const SearchResults = ({
           items={filteredProducts.map((product) => ({ 
             id: `local-${product.id}`,
             name: product.name,
-            image: product.image
+            image: product.image,
+            rating: product.rating,
+            reviewCount: product.reviewCount
           }))} 
           onSelect={handleSelect} 
         />

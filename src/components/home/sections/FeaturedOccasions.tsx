@@ -72,34 +72,35 @@ const occasions = [
 ];
 
 const FeaturedOccasions = () => {
-  const [loadingOccasion, setLoadingOccasion] = useState<string | null>(null);
+  const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
   const navigate = useNavigate();
   
-  const handleOccasionClick = (category: string, occasionName: string) => {
+  const handleOccasionClick = (category: string, occasionName: string, occasionId: number) => {
     // Prevent multiple clicks while loading
-    if (loadingOccasion) {
+    if (loadingOccasion !== null) {
       return;
     }
     
-    console.log(`FeaturedOccasions: Occasion clicked: ${category}, ${occasionName}`);
+    console.log(`FeaturedOccasions: Occasion clicked: ${category}, ${occasionName}, ID: ${occasionId}`);
     
     // Set loading state for this specific occasion
-    setLoadingOccasion(category);
+    setLoadingOccasion(occasionId);
     
     // Show feedback to the user
     toast.success(`Exploring ${occasionName.toLowerCase()} gift ideas...`);
     
-    // Navigate immediately to the gifting page with the appropriate category
-    if (category === "all") {
-      navigate(`/gifting?tab=products`);
-    } else {
-      navigate(`/gifting?tab=products&category=${category}`);
-    }
-    
-    // Clear loading state after a short delay
+    // Add a small delay to ensure the toast is visible
     setTimeout(() => {
+      // Navigate to the gifting page with the appropriate category
+      if (category === "all") {
+        window.location.href = "/gifting?tab=products";
+      } else {
+        window.location.href = `/gifting?tab=products&category=${category}`;
+      }
+      
+      // Reset loading state after navigation (although page will reload)
       setLoadingOccasion(null);
-    }, 500);
+    }, 100);
   };
 
   return (
@@ -118,7 +119,7 @@ const FeaturedOccasions = () => {
         {occasions.map((occasion) => (
           <div 
             key={occasion.id} 
-            onClick={() => handleOccasionClick(occasion.category, occasion.name)}
+            onClick={() => handleOccasionClick(occasion.category, occasion.name, occasion.id)}
             className="cursor-pointer"
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>
@@ -129,7 +130,7 @@ const FeaturedOccasions = () => {
                 <h3 className="font-medium">{occasion.name}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{occasion.description}</p>
                 <span className="text-xs font-medium text-purple-600 hover:text-purple-800 mt-2">
-                  {loadingOccasion === occasion.category ? "Loading..." : occasion.cta}
+                  {loadingOccasion === occasion.id ? "Loading..." : occasion.cta}
                 </span>
               </CardContent>
             </Card>

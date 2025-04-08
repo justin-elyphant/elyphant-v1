@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +17,6 @@ type CollectionProps = {
 };
 
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
-  const navigate = useNavigate();
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
 
   const handleCollectionClick = (collection: Collection) => {
@@ -35,24 +33,22 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       // Show loading toast
       toast.success(`Exploring ${collection.name} collection...`);
       
-      // If the collection has a direct URL, use that
-      if (collection.url) {
-        navigate(collection.url);
-      }
-      // If it has a category, use that
-      else if (collection.category) {
-        navigate(`/gifting?tab=products&category=${collection.category}`);
-      }
-      // Otherwise use the name as a search term
-      else {
-        const searchTerm = collection.name;
-        navigate(`/gifting?tab=products&search=${encodeURIComponent(searchTerm)}`);
-      }
-      
-      // Reset loading state after a delay
+      // Add a small delay to ensure the toast is visible
       setTimeout(() => {
-        setLoadingCollection(null);
-      }, 500);
+        // If the collection has a direct URL, use that
+        if (collection.url) {
+          window.location.href = collection.url;
+        }
+        // If it has a category, use that
+        else if (collection.category) {
+          window.location.href = `/gifting?tab=products&category=${collection.category}`;
+        }
+        // Otherwise use the name as a search term
+        else {
+          const searchTerm = collection.name;
+          window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}`;
+        }
+      }, 100);
     } catch (error) {
       console.error(`Error handling collection click for ${collection.name}:`, error);
       setLoadingCollection(null);

@@ -26,16 +26,18 @@ export const useFilteredProducts = (
       return [];
     }
 
-    // Always return some products for known categories/search terms, even if they don't match exactly
-    // This ensures users always see results for common categories
+    // Flag for common categories that should always return some products
     const isCommonCategory = ["birthday", "wedding", "anniversary", "graduation", 
-                            "baby_shower", "pets", "office", "summer", "home decor"].includes(selectedCategory);
+                            "baby_shower", "pets", "office", "summer", "home decor",
+                            "electronics", "clothing", "footwear"].includes(selectedCategory.toLowerCase());
     
-    const isCommonSearch = ["Nike", "Office", "Tech", "Pet", "Home", "Summer", "Birthday", "Wedding"]
+    const isCommonSearch = ["Nike", "Office", "Tech", "Pet", "Home", "Summer", "Birthday", "Wedding",
+                           "Gift", "Present", "Apple", "Electronics", "Clothing", "Shoes", "Furniture"]
                             .some(term => searchTerm.toLowerCase().includes(term.toLowerCase()));
 
+    // First pass - try to filter according to criteria
     const filtered = products.filter(product => {
-      // Search term filter - enhanced to handle more complex cases
+      // Search term filter
       const matchesSearch = searchTerm === "" || (() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
         const productName = (product.name || "").toLowerCase();
@@ -82,39 +84,41 @@ export const useFilteredProducts = (
       else if (priceRange === "50to100") matchesPrice = product.price > 50 && product.price <= 100;
       else if (priceRange === "over100") matchesPrice = product.price > 100;
       
-      // Log filter results for debugging problematic products
-      if (selectedCategory !== "all" && !matchesCategory) {
-        console.log(`Product doesn't match ${selectedCategory} category: ${product.name}`, {
-          name: product.name,
-          category: product.category,
-          matched: matchesCategory
-        });
-      }
-      
-      const result = matchesSearch && matchesCategory && matchesPrice;
-      
-      // Log successful matches for debugging
-      if (result) {
-        console.log(`Product matched filters: ${product.name}`, {
-          matchesSearch,
-          matchesCategory,
-          matchesPrice
-        });
-      }
-      
-      return result;
+      return matchesSearch && matchesCategory && matchesPrice;
     });
-
-    console.log(`Filtered products result: ${filtered.length} products`);
     
-    // Fallback for common categories/searches if no matches were found
-    if (filtered.length === 0 && (isCommonCategory || isCommonSearch)) {
-      console.log("No matches found but using fallback for common category/search");
-      // Return some products anyway (first 5-10 products)
-      return products.slice(0, Math.min(10, products.length));
+    console.log(`Initial filtered products: ${filtered.length} products`);
+    
+    // If we have results, return them
+    if (filtered.length > 0) {
+      return filtered;
     }
     
-    return filtered;
+    // Second pass - if we have no results but a common category or search term, be more permissive
+    if (isCommonCategory || isCommonSearch) {
+      console.log("No matches found but trying more permissive search for common category/search");
+      
+      const secondPassFiltered = products.filter(product => {
+        // Only filter by price as it's the most restrictive
+        let matchesPrice = true;
+        if (priceRange === "under25") matchesPrice = product.price < 25;
+        else if (priceRange === "25to50") matchesPrice = product.price >= 25 && product.price <= 50;
+        else if (priceRange === "50to100") matchesPrice = product.price > 50 && product.price <= 100;
+        else if (priceRange === "over100") matchesPrice = product.price > 100;
+        
+        return matchesPrice;
+      });
+      
+      console.log(`Second pass filtered products: ${secondPassFiltered.length} products`);
+      
+      if (secondPassFiltered.length > 0) {
+        return secondPassFiltered.slice(0, Math.min(15, secondPassFiltered.length));
+      }
+    }
+    
+    // Last resort - if still no results after permissive filter, show some products anyway
+    console.log("No matches found but using fallback to show some products");
+    return products.slice(0, Math.min(10, products.length));
   }, [products, searchTerm, selectedCategory, priceRange, matchesOccasionCategory]);
 
   return filteredProducts;

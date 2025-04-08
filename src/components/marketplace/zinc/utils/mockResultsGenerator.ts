@@ -40,6 +40,12 @@ export const createMockResults = (
     // Generate a real product image URL based on title and category
     const imageUrl = getExactProductImage(title, category);
     
+    // Generate multiple images for each product
+    const additionalImages = [
+      getExactProductImage(title + " variant", category),
+      getExactProductImage(title + " accessory", category)
+    ];
+    
     // Generate a detailed product description
     const description = generateDescription(title, category);
     
@@ -48,6 +54,7 @@ export const createMockResults = (
       title: title,
       price: price,
       image: imageUrl,
+      images: [imageUrl, ...additionalImages],
       description: description,
       brand: brand || getBrandFromTitle(title),
       category: category,

@@ -23,34 +23,76 @@ export const useProductImages = (product: Product | null) => {
     });
     
     async function loadAndSetImages() {
-      // Try to fetch additional images for Amazon products
-      if (product.vendor === "Amazon via Zinc" && product.image && product.image.includes('amazon.com')) {
+      // For Amazon products, prioritize real Amazon images
+      if (product.vendor === "Amazon via Zinc" || product.image?.includes('amazon.com')) {
         try {
-          // If it's an Amazon product, try to fetch more details using the product's ID
-          const productIdToUse = String(product.id); // Convert the numeric ID to string
+          // Generate multiple category-specific images
+          const mainCategoryImage = getExactProductImage(product.name, product.category);
+          const variantImage = getExactProductImage(product.name + " variant", product.category);
+          const accessoryImage = getExactProductImage(product.name + " detailed", product.category);
           
-          console.log("Fetching additional product details for Amazon product:", productIdToUse);
-          const details = await fetchProductDetails(productIdToUse);
+          // Create an array of images with the main image first
+          const amazonImageArray = [
+            product.image && !product.image.includes('unsplash.com') && !product.image.includes('placeholder') 
+              ? product.image 
+              : mainCategoryImage,
+            mainCategoryImage,
+            variantImage,
+            accessoryImage
+          ];
           
-          if (details && details.images && details.images.length > 0) {
-            console.log("Found additional images from product details:", details.images.length);
-            setImages([...new Set(details.images)]);
-            return;
-          }
+          // Filter out any duplicate images using Set
+          const uniqueImageArray = [...new Set(amazonImageArray)];
+          
+          console.log("Generated Amazon image array:", uniqueImageArray);
+          setImages(uniqueImageArray);
+          return;
         } catch (error) {
-          console.error("Error fetching additional product images:", error);
+          console.error("Error generating Amazon product images:", error);
         }
       }
       
-      // Process images from the product if we couldn't fetch additional ones
-      const processedImages = getProcessedImages(product);
+      // Check if the product already has an images array
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        // Filter out any placeholder or unsplash images
+        const filteredImages = product.images.filter(img => 
+          !!img && img !== '/placeholder.svg' && !img.includes('unsplash.com')
+        );
+        
+        // If we have filtered images, use them
+        if (filteredImages.length > 0) {
+          console.log("Using product.images array:", filteredImages);
+          setImages(filteredImages);
+          return;
+        }
+      }
       
-      // Ensure we have unique images by using Set
-      const uniqueImages = Array.from(new Set(processedImages));
+      // If we get here, try to create category-specific images
+      if (product.category) {
+        const mainImage = product.image && !product.image.includes('unsplash.com') && !product.image.includes('placeholder')
+          ? product.image
+          : getExactProductImage(product.name, product.category);
+          
+        const additionalImages = [
+          getExactProductImage(product.name + " variant", product.category),
+          getExactProductImage(product.name + " detail", product.category)
+        ];
+        
+        // Use Set to ensure unique images
+        const uniqueImages = [...new Set([mainImage, ...additionalImages])];
+        
+        console.log("Generated category-based images:", uniqueImages);
+        setImages(uniqueImages);
+        return;
+      }
       
-      // Set the final image array
-      console.log("Final unique image array length:", uniqueImages.length);
-      setImages(uniqueImages);
+      // Last resort - just use the single product image or placeholder
+      const imageToUse = product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')
+        ? product.image
+        : getExactProductImage(product.name, "Electronics");
+      
+      console.log("Using single product image:", imageToUse);
+      setImages([imageToUse]);
     }
     
     loadAndSetImages();
@@ -58,50 +100,3 @@ export const useProductImages = (product: Product | null) => {
 
   return images;
 };
-
-/**
- * Process and return images from a product, ensuring uniqueness
- */
-function getProcessedImages(product: Product): string[] {
-  // Case 1: Product has an 'images' array with content
-  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    // Filter out any invalid image URLs and placeholders
-    const filteredImages = product.images.filter(img => 
-      !!img && img !== '/placeholder.svg' && !img.includes('unsplash.com')
-    );
-    
-    // If we have valid images after filtering, use them
-    if (filteredImages.length > 0) {
-      console.log("Using product.images array:", filteredImages);
-      return filteredImages;
-    }
-  } 
-  
-  // Case 2: Product only has a single image
-  if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
-    // For Amazon products, try to add a category-specific image as well
-    if (product.image.includes('amazon.com') || product.image.includes('m.media-amazon.com')) {
-      const result = [product.image];
-      
-      // Try to add a category-specific image if applicable
-      if (product.category) {
-        const specificImage = getExactProductImage(product.name, product.category);
-        if (specificImage && specificImage !== product.image) {
-          result.push(specificImage);
-        }
-      }
-      
-      console.log("Using Amazon product image with category image:", result);
-      return result;
-    }
-    
-    // For non-Amazon images, just use the single image
-    console.log("Using single product.image:", [product.image]);
-    return [product.image];
-  }
-  
-  // Case 3: Fallback to placeholder only if no valid product images
-  console.log("Using placeholder image");
-  return ["/placeholder.svg"];
-}
-

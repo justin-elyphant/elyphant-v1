@@ -6,7 +6,9 @@ export function getExactProductImage(title: string, category: string): string {
   const lowerTitle = title.toLowerCase();
   const lowerCategory = category.toLowerCase();
   
-  // Apple Products with exact Amazon images
+  // Use real Amazon product images with proper links
+  
+  // Apple Products 
   if (lowerTitle.includes('macbook') || lowerCategory === 'macbook') {
     return 'https://m.media-amazon.com/images/I/61L5QgPvgqL._AC_SL1500_.jpg';
   }
@@ -47,12 +49,29 @@ export function getExactProductImage(title: string, category: string): string {
     return 'https://m.media-amazon.com/images/I/61i8Vjb17SL._SL1500_.jpg';
   }
   
-  if (lowerTitle.includes('nike') && (lowerTitle.includes('shoe') || lowerTitle.includes('sneaker'))) {
-    return 'https://m.media-amazon.com/images/I/71jeoX0rMBL._AC_UX695_.jpg';
+  // Category-specific images for featured occasions
+  if (lowerCategory === 'birthday' || lowerTitle.includes('birthday')) {
+    return 'https://m.media-amazon.com/images/I/71Bz7V7vgQL._AC_SL1500_.jpg';
   }
   
-  if (lowerTitle.includes('adidas') && (lowerTitle.includes('shoe') || lowerTitle.includes('sneaker'))) {
-    return 'https://m.media-amazon.com/images/I/81bTuA9K9qL._AC_UX695_.jpg';
+  if (lowerCategory === 'wedding' || lowerTitle.includes('wedding')) {
+    return 'https://m.media-amazon.com/images/I/71u-1gA4sEL._AC_SL1500_.jpg';
+  }
+  
+  if (lowerCategory === 'anniversary' || lowerTitle.includes('anniversary')) {
+    return 'https://m.media-amazon.com/images/I/81n0+4G0NHL._AC_SL1500_.jpg';
+  }
+  
+  if (lowerCategory === 'graduation' || lowerTitle.includes('graduation')) {
+    return 'https://m.media-amazon.com/images/I/71awGJRl0YL._AC_SL1500_.jpg';
+  }
+  
+  if (lowerCategory === 'baby_shower' || lowerTitle.includes('baby')) {
+    return 'https://m.media-amazon.com/images/I/81F-QS3DsRL._SL1500_.jpg';
+  }
+  
+  if (lowerCategory === 'pets' || lowerTitle.includes('pet') || lowerTitle.includes('dog') || lowerTitle.includes('cat')) {
+    return 'https://m.media-amazon.com/images/I/81irQM60KdL._AC_SL1500_.jpg';
   }
   
   if (lowerCategory.includes('electronics')) {
@@ -75,5 +94,6 @@ export function getExactProductImage(title: string, category: string): string {
     return 'https://m.media-amazon.com/images/I/716QOWr4QFL._AC_SL1500_.jpg';
   }
   
+  // Default Amazon product image for anything else
   return 'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg';
 }

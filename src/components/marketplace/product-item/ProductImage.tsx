@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { ImageOff } from "lucide-react";
-import { getProductFallbackImage } from "./productImageUtils";
+import { getExactProductImage } from "../zinc/utils/images/productImageUtils";
 
 interface ProductImageProps {
   product: {
@@ -19,12 +18,22 @@ const ProductImage = ({ product }: ProductImageProps) => {
     setImageError(true);
   };
 
+  const getProductImage = () => {
+    // If we have a valid image that's not a placeholder or unsplash, use it
+    if (product.image && product.image !== '/placeholder.svg' && !product.image.includes('unsplash.com')) {
+      return product.image;
+    }
+    
+    // Otherwise, get an Amazon image based on product name and category
+    return getExactProductImage(product.name, product.category || 'Electronics');
+  };
+
   return (
     <>
       {imageError ? (
         <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
           <img 
-            src={getProductFallbackImage(product.name, product.category)}
+            src={getExactProductImage(product.name, product.category || 'Electronics')}
             alt={product.name}
             className="w-full h-48 object-cover"
             onError={() => console.log(`Fallback image also failed for: ${product.name}`)}
@@ -32,7 +41,7 @@ const ProductImage = ({ product }: ProductImageProps) => {
         </div>
       ) : (
         <img 
-          src={product.image || '/placeholder.svg'} 
+          src={getProductImage()} 
           alt={product.name} 
           className="w-full h-48 object-cover"
           onError={handleImageError}

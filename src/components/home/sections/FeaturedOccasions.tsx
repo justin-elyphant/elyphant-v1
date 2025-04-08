@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 import { toast } from "sonner";
+import { getExactProductImage } from "@/components/marketplace/zinc/utils/images/productImageUtils";
 
 const occasions = [
   {
@@ -13,7 +14,8 @@ const occasions = [
     description: "Find the perfect birthday gifts",
     category: "birthday",
     color: "bg-blue-50 border-blue-200",
-    cta: "Gifts for Birthdays"
+    cta: "Gifts for Birthdays",
+    image: "https://m.media-amazon.com/images/I/71Bz7V7vgQL._AC_SL1500_.jpg"
   },
   {
     id: 2,
@@ -22,7 +24,8 @@ const occasions = [
     description: "Celebrate special unions",
     category: "wedding",
     color: "bg-pink-50 border-pink-200",
-    cta: "Wedding Gift Ideas"
+    cta: "Wedding Gift Ideas",
+    image: "https://m.media-amazon.com/images/I/71u-1gA4sEL._AC_SL1500_.jpg"
   },
   {
     id: 3,
@@ -31,7 +34,8 @@ const occasions = [
     description: "Commemorate years together",
     category: "anniversary",
     color: "bg-purple-50 border-purple-200",
-    cta: "Anniversary Gifts"
+    cta: "Anniversary Gifts",
+    image: "https://m.media-amazon.com/images/I/81n0+4G0NHL._AC_SL1500_.jpg"
   },
   {
     id: 4,
@@ -40,7 +44,8 @@ const occasions = [
     description: "Celebrate academic achievements",
     category: "graduation",
     color: "bg-green-50 border-green-200",
-    cta: "Graduation Gift Ideas"
+    cta: "Graduation Gift Ideas",
+    image: "https://m.media-amazon.com/images/I/71awGJRl0YL._AC_SL1500_.jpg"
   },
   {
     id: 5,
@@ -49,7 +54,8 @@ const occasions = [
     description: "Welcome new arrivals",
     category: "baby_shower",
     color: "bg-yellow-50 border-yellow-200",
-    cta: "Baby Shower Gifts"
+    cta: "Baby Shower Gifts",
+    image: "https://m.media-amazon.com/images/I/81F-QS3DsRL._SL1500_.jpg"
   },
   {
     id: 6,
@@ -58,7 +64,8 @@ const occasions = [
     description: "Spoil your furry friends",
     category: "pets",
     color: "bg-orange-50 border-orange-200",
-    cta: "Gifts for Pets"
+    cta: "Gifts for Pets",
+    image: "https://m.media-amazon.com/images/I/81irQM60KdL._AC_SL1500_.jpg"
   },
   {
     id: 7,
@@ -67,7 +74,8 @@ const occasions = [
     description: "Explore gifts for any event",
     category: "all",
     color: "bg-teal-50 border-teal-200",
-    cta: "Browse All Gift Ideas"
+    cta: "Browse All Gift Ideas",
+    image: "https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg"
   },
 ];
 

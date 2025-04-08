@@ -1,7 +1,9 @@
+
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { getExactProductImage } from "@/components/marketplace/zinc/utils/images/productImageUtils";
 
 type Collection = {
   id: number;
@@ -80,30 +82,41 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {collections.map((collection) => (
-          <div 
-            key={collection.id} 
-            onClick={() => handleCollectionClick(collection)}
-            className="cursor-pointer"
-          >
-            <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
-              <div className="aspect-video relative">
-                <img 
-                  src={collection.image} 
-                  alt={collection.name}
-                  className="object-cover w-full h-full"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
-                  <h3 className="text-white font-medium text-lg">{collection.name}</h3>
-                  <div className="flex items-center text-white/90 text-sm mt-1 hover:text-white">
-                    <span>{loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}</span>
-                    <ArrowRight className="h-4 w-4 ml-1" />
+        {collections.map((collection) => {
+          // Get a proper image for this collection based on its name and category
+          const collectionImage = collection.image && !collection.image.includes('unsplash.com') 
+            ? collection.image 
+            : getExactProductImage(collection.name, collection.category || collection.name);
+            
+          return (
+            <div 
+              key={collection.id} 
+              onClick={() => handleCollectionClick(collection)}
+              className="cursor-pointer"
+            >
+              <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
+                <div className="aspect-video relative">
+                  <img 
+                    src={collectionImage} 
+                    alt={collection.name}
+                    className="object-cover w-full h-full"
+                    onError={(e) => {
+                      console.error(`Failed to load image for collection: ${collection.name}`);
+                      e.currentTarget.src = 'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
+                    <h3 className="text-white font-medium text-lg">{collection.name}</h3>
+                    <div className="flex items-center text-white/90 text-sm mt-1 hover:text-white">
+                      <span>{loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}</span>
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          </div>
-        ))}
+              </Card>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

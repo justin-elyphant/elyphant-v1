@@ -29,6 +29,7 @@ export function getExactProductImage(title: string, category: string): string {
     return 'https://m.media-amazon.com/images/I/71+3+8VcGFL._AC_SL1500_.jpg';
   }
   
+  // Samsung Products
   if (lowerTitle.includes('samsung') && lowerTitle.includes('galaxy')) {
     return 'https://m.media-amazon.com/images/I/61a2y1FCAJL._AC_SL1500_.jpg';
   }
@@ -37,6 +38,7 @@ export function getExactProductImage(title: string, category: string): string {
     return 'https://m.media-amazon.com/images/I/91RfzivKmwL._AC_SL1500_.jpg';
   }
   
+  // Gaming Products
   if (lowerTitle.includes('playstation') || lowerTitle.includes('ps5')) {
     return 'https://m.media-amazon.com/images/I/51QkER5ynaL._SL1500_.jpg';
   }
@@ -50,31 +52,47 @@ export function getExactProductImage(title: string, category: string): string {
   }
   
   // Category-specific images for featured occasions
-  if (lowerCategory === 'birthday' || lowerTitle.includes('birthday')) {
+  if (lowerCategory.includes('birthday') || lowerTitle.includes('birthday')) {
     return 'https://m.media-amazon.com/images/I/71Bz7V7vgQL._AC_SL1500_.jpg';
   }
   
-  if (lowerCategory === 'wedding' || lowerTitle.includes('wedding')) {
+  if (lowerCategory.includes('wedding') || lowerTitle.includes('wedding')) {
     return 'https://m.media-amazon.com/images/I/71u-1gA4sEL._AC_SL1500_.jpg';
   }
   
-  if (lowerCategory === 'anniversary' || lowerTitle.includes('anniversary')) {
+  if (lowerCategory.includes('anniversary') || lowerTitle.includes('anniversary')) {
     return 'https://m.media-amazon.com/images/I/81n0+4G0NHL._AC_SL1500_.jpg';
   }
   
-  if (lowerCategory === 'graduation' || lowerTitle.includes('graduation')) {
+  if (lowerCategory.includes('graduation') || lowerTitle.includes('graduation')) {
     return 'https://m.media-amazon.com/images/I/71awGJRl0YL._AC_SL1500_.jpg';
   }
   
-  if (lowerCategory === 'baby_shower' || lowerTitle.includes('baby')) {
+  if (lowerCategory.includes('baby') || lowerCategory.includes('baby_shower')) {
     return 'https://m.media-amazon.com/images/I/81F-QS3DsRL._SL1500_.jpg';
   }
   
-  if (lowerCategory === 'pets' || lowerTitle.includes('pet') || lowerTitle.includes('dog') || lowerTitle.includes('cat')) {
+  if (lowerCategory.includes('pet') || lowerTitle.includes('pet') || lowerTitle.includes('dog') || lowerTitle.includes('cat')) {
     return 'https://m.media-amazon.com/images/I/81irQM60KdL._AC_SL1500_.jpg';
   }
   
-  if (lowerCategory.includes('electronics')) {
+  // Also match "pets" category
+  if (lowerCategory === 'pets' || lowerCategory.includes('pets')) {
+    return 'https://m.media-amazon.com/images/I/71jdA5tRvBL._AC_SL1500_.jpg';
+  }
+  
+  // Summer Products
+  if (lowerCategory.includes('summer') || lowerTitle.includes('summer')) {
+    return 'https://m.media-amazon.com/images/I/81SxsPuSVFL._AC_SL1500_.jpg';
+  }
+  
+  // Office Products
+  if (lowerCategory.includes('office') || lowerTitle.includes('office')) {
+    return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
+  }
+  
+  // Technology and electronics
+  if (lowerCategory.includes('electronics') || lowerTitle.includes('tech')) {
     return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
   }
   
@@ -94,6 +112,29 @@ export function getExactProductImage(title: string, category: string): string {
     return 'https://m.media-amazon.com/images/I/716QOWr4QFL._AC_SL1500_.jpg';
   }
   
-  // Default Amazon product image for anything else
-  return 'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg';
+  if (lowerCategory === 'all' || lowerTitle.includes('all occasions')) {
+    return 'https://m.media-amazon.com/images/I/71vjUCzQCaL._SL1500_.jpg';
+  }
+  
+  // Home category
+  if (lowerCategory.includes('home') || lowerTitle.includes('home')) {
+    return 'https://m.media-amazon.com/images/I/81WQpftHHxL._AC_SL1500_.jpg';
+  }
+  
+  // Default Amazon product image for anything else - we have a few fallbacks
+  const defaultImages = [
+    'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg',
+    'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg',
+    'https://m.media-amazon.com/images/I/81gC7frRJyL._AC_SL1500_.jpg',
+    'https://m.media-amazon.com/images/I/71+3+8VcGFL._AC_SL1500_.jpg'
+  ];
+  
+  // Use a deterministic but seemingly random selection based on the title and category
+  const hash = (title + category).split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  
+  const index = Math.abs(hash) % defaultImages.length;
+  return defaultImages[index];
 }

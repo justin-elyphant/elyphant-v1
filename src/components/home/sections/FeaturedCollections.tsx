@@ -20,6 +20,7 @@ type CollectionProps = {
 
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   const handleCollectionClick = (collection: Collection) => {
     // If already loading, don't allow multiple clicks
@@ -58,6 +59,11 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     }
   };
 
+  const handleImageError = (collectionId: number) => {
+    console.log(`Image failed to load for collection ID: ${collectionId}`);
+    setImageErrors(prev => ({...prev, [collectionId]: true}));
+  };
+
   if (!collections || collections.length === 0) {
     return (
       <div className="mb-12">
@@ -83,10 +89,11 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {collections.map((collection) => {
-          // Get a proper image for this collection based on its name and category
-          const collectionImage = collection.image && !collection.image.includes('unsplash.com') 
-            ? collection.image 
-            : getExactProductImage(collection.name, collection.category || collection.name);
+          // Get a proper image from productImageUtils directly
+          const amazonImage = getExactProductImage(collection.name, collection.category || collection.name);
+          
+          // Use Amazon image or fallback to collection image if Amazon image fails
+          const imageToUse = imageErrors[collection.id] ? collection.image : amazonImage;
             
           return (
             <div 
@@ -97,13 +104,10 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
               <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
                 <div className="aspect-video relative">
                   <img 
-                    src={collectionImage} 
+                    src={imageToUse} 
                     alt={collection.name}
                     className="object-cover w-full h-full"
-                    onError={(e) => {
-                      console.error(`Failed to load image for collection: ${collection.name}`);
-                      e.currentTarget.src = 'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg';
-                    }}
+                    onError={() => handleImageError(collection.id)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
                     <h3 className="text-white font-medium text-lg">{collection.name}</h3>

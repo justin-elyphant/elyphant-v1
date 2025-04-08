@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { ImageOff } from "lucide-react";
 import { getExactProductImage } from "../zinc/utils/images/productImageUtils";
@@ -12,10 +13,16 @@ interface ProductImageProps {
 
 const ProductImage = ({ product }: ProductImageProps) => {
   const [imageError, setImageError] = useState(false);
+  const [fallbackImageError, setFallbackImageError] = useState(false);
   
   const handleImageError = () => {
     console.log(`Image failed to load for product: ${product.name}`);
     setImageError(true);
+  };
+
+  const handleFallbackImageError = () => {
+    console.log(`Fallback image also failed for: ${product.name}`);
+    setFallbackImageError(true);
   };
 
   const getProductImage = () => {
@@ -28,17 +35,23 @@ const ProductImage = ({ product }: ProductImageProps) => {
     return getExactProductImage(product.name, product.category || 'Electronics');
   };
 
+  if (imageError && fallbackImageError) {
+    return (
+      <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+        <ImageOff className="h-8 w-8 text-gray-400" />
+      </div>
+    );
+  }
+
   return (
     <>
       {imageError ? (
-        <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-          <img 
-            src={getExactProductImage(product.name, product.category || 'Electronics')}
-            alt={product.name}
-            className="w-full h-48 object-cover"
-            onError={() => console.log(`Fallback image also failed for: ${product.name}`)}
-          />
-        </div>
+        <img 
+          src={getExactProductImage(product.name, product.category || 'Electronics')}
+          alt={product.name}
+          className="w-full h-48 object-cover"
+          onError={handleFallbackImageError}
+        />
       ) : (
         <img 
           src={getProductImage()} 

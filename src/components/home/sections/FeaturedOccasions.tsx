@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
@@ -15,7 +15,7 @@ const occasions = [
     category: "birthday",
     color: "bg-blue-50 border-blue-200",
     cta: "Gifts for Birthdays",
-    image: "https://m.media-amazon.com/images/I/71Bz7V7vgQL._AC_SL1500_.jpg"
+    image: getExactProductImage("Birthday Gifts", "birthday")
   },
   {
     id: 2,
@@ -25,7 +25,7 @@ const occasions = [
     category: "wedding",
     color: "bg-pink-50 border-pink-200",
     cta: "Wedding Gift Ideas",
-    image: "https://m.media-amazon.com/images/I/71u-1gA4sEL._AC_SL1500_.jpg"
+    image: getExactProductImage("Wedding Gifts", "wedding")
   },
   {
     id: 3,
@@ -35,7 +35,7 @@ const occasions = [
     category: "anniversary",
     color: "bg-purple-50 border-purple-200",
     cta: "Anniversary Gifts",
-    image: "https://m.media-amazon.com/images/I/81n0+4G0NHL._AC_SL1500_.jpg"
+    image: getExactProductImage("Anniversary Gifts", "anniversary")
   },
   {
     id: 4,
@@ -45,7 +45,7 @@ const occasions = [
     category: "graduation",
     color: "bg-green-50 border-green-200",
     cta: "Graduation Gift Ideas",
-    image: "https://m.media-amazon.com/images/I/71awGJRl0YL._AC_SL1500_.jpg"
+    image: getExactProductImage("Graduation Gifts", "graduation")
   },
   {
     id: 5,
@@ -55,7 +55,7 @@ const occasions = [
     category: "baby_shower",
     color: "bg-yellow-50 border-yellow-200",
     cta: "Baby Shower Gifts",
-    image: "https://m.media-amazon.com/images/I/81F-QS3DsRL._SL1500_.jpg"
+    image: getExactProductImage("Baby Shower Gifts", "baby_shower")
   },
   {
     id: 6,
@@ -65,7 +65,7 @@ const occasions = [
     category: "pets",
     color: "bg-orange-50 border-orange-200",
     cta: "Gifts for Pets",
-    image: "https://m.media-amazon.com/images/I/81irQM60KdL._AC_SL1500_.jpg"
+    image: getExactProductImage("Pet Gifts", "pets")
   },
   {
     id: 7,
@@ -75,13 +75,35 @@ const occasions = [
     category: "all",
     color: "bg-teal-50 border-teal-200",
     cta: "Browse All Gift Ideas",
-    image: "https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg"
+    image: getExactProductImage("Gift Ideas", "all")
   },
 ];
 
 const FeaturedOccasions = () => {
   const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
+  const [cachedImages, setCachedImages] = useState<Record<number, string>>({});
   const navigate = useNavigate();
+  
+  // Preload images after component mounts
+  useEffect(() => {
+    const preloadImages = async () => {
+      const imageCache: Record<number, string> = {};
+      
+      for (const occasion of occasions) {
+        try {
+          // Get direct Amazon image URL for the occasion
+          const imageUrl = getExactProductImage(occasion.name + " gifts", occasion.category || "");
+          imageCache[occasion.id] = imageUrl;
+        } catch (error) {
+          console.error(`Failed to preload image for occasion: ${occasion.name}`, error);
+        }
+      }
+      
+      setCachedImages(imageCache);
+    };
+    
+    preloadImages();
+  }, []);
   
   const handleOccasionClick = (category: string, occasionName: string, occasionId: number) => {
     // Prevent multiple clicks while loading
@@ -132,8 +154,14 @@ const FeaturedOccasions = () => {
           >
             <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>
               <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className="rounded-full p-3 bg-white shadow-sm mb-3">
-                  {occasion.icon}
+                <div className="rounded-full p-3 bg-white shadow-sm mb-3 relative">
+                  {/* Show image with fallback to icon */}
+                  {cachedImages[occasion.id] ? (
+                    <div 
+                      className="h-10 w-10 rounded-full bg-cover bg-center"
+                      style={{ backgroundImage: `url(${cachedImages[occasion.id]})` }}
+                    ></div>
+                  ) : occasion.icon}
                 </div>
                 <h3 className="font-medium">{occasion.name}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{occasion.description}</p>

@@ -67,10 +67,10 @@ export const useProfileForm = () => {
         setTimeout(() => {
           if (user) {
             setInitialFormData({
-              name: user.name || 'User',
+              name: user.email?.split('@')[0] || 'User', // Use email prefix as name fallback
               email: user.email || '',
               bio: 'I love giving and receiving thoughtful gifts!',
-              profile_image: user.profile_image || null,
+              profile_image: null, // User type doesn't have profile_image
               address: {
                 street: '123 Main St',
                 city: 'New York',

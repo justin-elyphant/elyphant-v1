@@ -28,10 +28,15 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
       ? parseInt(zincProduct.review_count, 10) || 0
       : 0;
   
+  // Ensure price is always a number
+  const price = typeof zincProduct.price === 'string' 
+    ? parseFloat(zincProduct.price) || 0
+    : (zincProduct.price || 0);
+  
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
-    price: typeof zincProduct.price === 'string' ? parseFloat(zincProduct.price) : zincProduct.price,
+    price: price,
     description: description,
     category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",
@@ -51,17 +56,18 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
  * Convert our Product format back to a Zinc product
  */
 export const convertProductToZincProduct = (product: Product): ZincProduct => {
+  // Ensure all numeric values are properly typed
   return {
     product_id: product.id.toString(),
     title: product.name,
-    price: product.price,
+    price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
     description: product.description,
     category: product.category,
     retailer: "Amazon via Zinc",
     image: product.image,
     images: product.images || [product.image],
-    rating: product.rating,
-    review_count: product.reviewCount,
+    rating: typeof product.rating === 'number' ? product.rating : (parseFloat(String(product.rating)) || 0),
+    review_count: typeof product.reviewCount === 'number' ? product.reviewCount : (parseInt(String(product.reviewCount), 10) || 0),
     brand: product.brand || (product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor)
   };
 };

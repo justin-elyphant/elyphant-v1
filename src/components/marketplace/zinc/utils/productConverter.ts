@@ -14,26 +14,20 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   const description = zincProduct.description || 
     `${zincProduct.title} by ${zincProduct.brand || 'Unknown'} - ${zincProduct.category || 'Product'}`;
   
-  // Convert string ratings to number if needed
+  // Convert price to number with fallback
+  const priceValue = typeof zincProduct.price === 'number' 
+    ? zincProduct.price 
+    : parseFloat(String(zincProduct.price || 0)) || 0;
+  
+  // Convert rating to number with fallback
   const rating = typeof zincProduct.rating === 'number' 
     ? zincProduct.rating 
-    : typeof zincProduct.rating === 'string'
-      ? parseFloat(zincProduct.rating) || 0
-      : 0;
+    : parseFloat(String(zincProduct.rating || 0)) || 0;
       
-  // Convert string review counts to number if needed
+  // Convert review count to number with fallback
   const reviewCount = typeof zincProduct.review_count === 'number'
     ? zincProduct.review_count
-    : typeof zincProduct.review_count === 'string'
-      ? parseInt(zincProduct.review_count, 10) || 0
-      : 0;
-  
-  // Ensure price is always a number
-  const priceValue = typeof zincProduct.price === 'number'
-    ? zincProduct.price
-    : typeof zincProduct.price === 'string'
-      ? parseFloat(zincProduct.price) || 0
-      : 0;
+    : parseInt(String(zincProduct.review_count || 0), 10) || 0;
   
   return {
     id: zincProduct.product_id,
@@ -58,21 +52,38 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
  * Convert our Product format back to a Zinc product
  */
 export const convertProductToZincProduct = (product: Product): ZincProduct => {
-  // Ensure all numeric values are properly typed
-  const priceValue = typeof product.price === 'number' 
-    ? product.price 
-    : parseFloat(String(product.price)) || 0;
-    
-  const ratingValue = typeof product.rating === 'number'
-    ? product.rating
-    : parseFloat(String(product.rating)) || 0;
-    
-  const reviewCountValue = typeof product.reviewCount === 'number'
-    ? product.reviewCount
-    : parseInt(String(product.reviewCount), 10) || 0;
+  // For product_id, ensure we have a string (force conversion)
+  const productId = String(product.id);
+  
+  // Explicitly handle price to ensure it's a number
+  let priceValue: number = 0;
+  if (typeof product.price === 'number') {
+    priceValue = product.price;
+  } else {
+    // Handle string or any other type by explicit parsing
+    priceValue = parseFloat(String(product.price || 0)) || 0;
+  }
+  
+  // Explicitly handle rating to ensure it's a number
+  let ratingValue: number = 0;
+  if (typeof product.rating === 'number') {
+    ratingValue = product.rating;
+  } else if (product.rating) {
+    // Only try to parse if it's defined
+    ratingValue = parseFloat(String(product.rating)) || 0;
+  }
+  
+  // Explicitly handle review count to ensure it's a number
+  let reviewCountValue: number = 0;
+  if (typeof product.reviewCount === 'number') {
+    reviewCountValue = product.reviewCount;
+  } else if (product.reviewCount) {
+    // Only try to parse if it's defined
+    reviewCountValue = parseInt(String(product.reviewCount), 10) || 0;
+  }
   
   return {
-    product_id: String(product.id),
+    product_id: productId,
     title: product.name,
     price: priceValue,
     description: product.description || "",

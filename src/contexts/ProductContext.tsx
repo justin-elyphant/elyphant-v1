@@ -19,6 +19,9 @@ export type Product = {
   specifications?: Record<string, string>;
   isBestSeller?: boolean;
   brand?: string; // Added brand field
+  createdAt?: string; // Added to match productConverter return type
+  updatedAt?: string; // Added to match productConverter return type
+  originalZincProduct?: any; // Added to store original product data
 };
 
 type ProductContextType = {

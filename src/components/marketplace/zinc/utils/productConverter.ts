@@ -61,21 +61,15 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
   // Ensure all numeric values are properly typed
   const priceValue = typeof product.price === 'number' 
     ? product.price 
-    : typeof product.price === 'string'
-      ? parseFloat(String(product.price)) || 0 
-      : 0;
+    : parseFloat(String(product.price)) || 0;
     
   const ratingValue = typeof product.rating === 'number'
     ? product.rating
-    : typeof product.rating === 'string'
-      ? parseFloat(String(product.rating)) || 0
-      : 0;
+    : parseFloat(String(product.rating)) || 0;
     
   const reviewCountValue = typeof product.reviewCount === 'number'
     ? product.reviewCount
-    : typeof product.reviewCount === 'string'
-      ? parseInt(String(product.reviewCount), 10) || 0
-      : 0;
+    : parseInt(String(product.reviewCount), 10) || 0;
   
   return {
     product_id: String(product.id),

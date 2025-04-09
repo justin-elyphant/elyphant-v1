@@ -176,7 +176,10 @@ const SearchResults = ({
         {searchTerm.toLowerCase().includes('macbook') && groupedResults.appleProducts?.length > 0 && (
           <SearchGroup 
             heading="Apple MacBooks" 
-            items={groupedResults.appleProducts} 
+            items={groupedResults.appleProducts.map((product) => ({ 
+              ...product,
+              isTopSeller: true
+            }))} 
             onSelect={handleSelect} 
           />
         )}

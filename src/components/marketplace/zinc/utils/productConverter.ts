@@ -46,8 +46,8 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
     retailer: "Amazon via Zinc",
     image: product.image,
     images: product.images || [product.image],
-    rating: product.rating,  // Fix: Changed from string to number
-    review_count: product.reviewCount,  // Fix: Changed from string to number
+    rating: product.rating,
+    review_count: product.reviewCount,
     brand: product.brand || (product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor)
   };
 };

@@ -38,7 +38,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
-    price: priceValue, 
+    price: priceValue,
     description: description,
     category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",
@@ -62,19 +62,19 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
   const priceValue = typeof product.price === 'number' 
     ? product.price 
     : typeof product.price === 'string'
-      ? parseFloat(product.price) || 0 
+      ? parseFloat(product.price as string) || 0 
       : 0;
     
   const ratingValue = typeof product.rating === 'number'
     ? product.rating
     : typeof product.rating === 'string'
-      ? parseFloat(product.rating) || 0
+      ? parseFloat(product.rating as string) || 0
       : 0;
     
   const reviewCountValue = typeof product.reviewCount === 'number'
     ? product.reviewCount
     : typeof product.reviewCount === 'string'
-      ? parseInt(product.reviewCount, 10) || 0
+      ? parseInt(product.reviewCount as string, 10) || 0
       : 0;
   
   return {

@@ -1,23 +1,16 @@
 
-import React from "react";
-import { Control } from "react-hook-form";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RecipientInfoFormData } from "../RecipientInfoDialog";
+import React from 'react';
+import { Control } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
 interface PersonalInfoFieldsProps {
-  control: Control<RecipientInfoFormData>;
+  control: Control<any>;
 }
 
 export const PersonalInfoFields: React.FC<PersonalInfoFieldsProps> = ({ control }) => {
   return (
-    <>
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={control}
@@ -32,6 +25,7 @@ export const PersonalInfoFields: React.FC<PersonalInfoFieldsProps> = ({ control 
             </FormItem>
           )}
         />
+
         <FormField
           control={control}
           name="recipientLastName"
@@ -52,9 +46,9 @@ export const PersonalInfoFields: React.FC<PersonalInfoFieldsProps> = ({ control 
         name="recipientEmail"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Email</FormLabel>
+            <FormLabel>Email Address</FormLabel>
             <FormControl>
-              <Input type="email" placeholder="john.doe@example.com" {...field} />
+              <Input placeholder="john.doe@example.com" type="email" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -66,14 +60,14 @@ export const PersonalInfoFields: React.FC<PersonalInfoFieldsProps> = ({ control 
         name="recipientPhone"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Phone (optional)</FormLabel>
+            <FormLabel>Phone Number (Optional)</FormLabel>
             <FormControl>
-              <Input placeholder="(123) 456-7890" {...field} />
+              <Input placeholder="(555) 123-4567" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 };

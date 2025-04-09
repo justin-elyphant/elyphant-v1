@@ -2,7 +2,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -52,39 +52,8 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
 
   const handleSubmit = async (data: RecipientInfoFormData) => {
     try {
-      // Check if the recipient already has an account
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('email', data.recipientEmail)
-        .single();
-
-      // Send invitation if the user doesn't exist
-      if (!existingUser) {
-        // Call the Edge Function to send invitation
-        const response = await supabase.functions.invoke('send-gift-invitation', {
-          body: {
-            recipientFirstName: data.recipientFirstName,
-            recipientLastName: data.recipientLastName,
-            recipientEmail: data.recipientEmail,
-            recipientPhone: data.recipientPhone,
-            senderName: user?.user_metadata?.name || 'A friend',
-            senderUserId: user?.id, // Include the sender's user ID
-            productName
-          }
-        });
-
-        if (response.error) {
-          throw new Error(response.error);
-        }
-        
-        toast.success(`Invitation sent to ${data.recipientEmail}`);
-      } else {
-        console.log("Recipient already has an account");
-        // If the recipient already has an account, we could automatically create a connection here
-        toast.success(`${data.recipientFirstName} already has an account. They'll be notified about their gift!`);
-      }
-      
+      // In a full implementation, we would send an invitation to the recipient via edge function
+      toast.success(`Information saved for ${data.recipientFirstName}`);
       onSubmit(data);
     } catch (error) {
       console.error("Error processing recipient info:", error);

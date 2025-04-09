@@ -7,13 +7,15 @@ import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import ProfileSetup from './pages/ProfileSetup';
 import Settings from './pages/Settings';
+import PurchaseSuccess from './pages/PurchaseSuccess';
+import FundingSuccess from './pages/FundingSuccess';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/auth';
 import { CartProvider } from './contexts/CartContext';
 import { ProductProvider } from './contexts/ProductContext';
 import DebugPanel from './components/debug/DebugPanel';
 import MainLayout from './components/layout/MainLayout';
-import { Toaster } from './components/ui/sonner';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
                 <Route index element={<Index />} />
                 <Route path="/sign-in" element={<SignIn />} />
                 <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/purchase-success" element={<PurchaseSuccess />} />
+                <Route path="/funding-success" element={<FundingSuccess />} />
                 <Route path="/settings" element={
                   <ProtectedRoute>
                     <Settings />

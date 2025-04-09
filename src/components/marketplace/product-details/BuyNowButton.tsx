@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createCheckoutSession } from "@/integrations/stripe/client";
-import { toast } from "sonner";
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RecipientInfoDialog from './RecipientInfoDialog';
-import { supabase } from "@/integrations/supabase/client";
 
 interface BuyNowButtonProps {
   productId: number;
@@ -22,7 +21,6 @@ const BuyNowButton = ({ productId, productName, price, productImage, className }
   const [isPending, setIsPending] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showRecipientDialog, setShowRecipientDialog] = useState(false);
-  const [recipientInfo, setRecipientInfo] = useState<any>(null);
   const [isGiftPurchase, setIsGiftPurchase] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +51,17 @@ const BuyNowButton = ({ productId, productName, price, productImage, className }
       );
       
       if (url) {
+        // Save purchase intent to local storage for tracking
+        const pendingPurchases = JSON.parse(localStorage.getItem('pendingPurchases') || '[]');
+        pendingPurchases.push({
+          productId,
+          productName,
+          price,
+          timestamp: new Date().toISOString(),
+          type: 'direct'
+        });
+        localStorage.setItem('pendingPurchases', JSON.stringify(pendingPurchases));
+        
         // Redirect to Stripe Checkout
         window.location.href = url;
       } else {
@@ -66,20 +75,28 @@ const BuyNowButton = ({ productId, productName, price, productImage, className }
     }
   };
 
-  const handleBuyAsGift = async () => {
+  const handleBuyAsGift = () => {
     setIsGiftPurchase(false);
     setShowRecipientDialog(true);
   };
 
   const handleRecipientInfoSubmit = async (data: any) => {
-    setRecipientInfo(data);
     setShowRecipientDialog(false);
 
     try {
       setIsPending(true);
       
+      // Store recipient info in local storage
+      const giftRecipients = JSON.parse(localStorage.getItem('giftRecipients') || '[]');
+      const recipientData = {
+        ...data,
+        productId,
+        date: new Date().toISOString()
+      };
+      giftRecipients.push(recipientData);
+      localStorage.setItem('giftRecipients', JSON.stringify(giftRecipients));
+      
       // Create an augmented checkout session with recipient info
-      // In a real implementation, you would pass recipient info to the backend
       const { url } = await createCheckoutSession(
         productId,
         price, 
@@ -88,6 +105,18 @@ const BuyNowButton = ({ productId, productName, price, productImage, className }
       );
       
       if (url) {
+        // Save purchase intent to local storage for tracking
+        const pendingPurchases = JSON.parse(localStorage.getItem('pendingPurchases') || '[]');
+        pendingPurchases.push({
+          productId,
+          productName,
+          price,
+          timestamp: new Date().toISOString(),
+          type: 'gift',
+          recipientId: data.recipientEmail
+        });
+        localStorage.setItem('pendingPurchases', JSON.stringify(pendingPurchases));
+        
         // Redirect to Stripe Checkout
         window.location.href = url;
       } else {
@@ -103,7 +132,7 @@ const BuyNowButton = ({ productId, productName, price, productImage, className }
   
   const handleLogin = () => {
     setShowLoginDialog(false);
-    navigate("/sign-in");
+    navigate("/sign-in", { state: { redirectAfterLogin: `/marketplace/product/${productId}` } });
   };
   
   return (

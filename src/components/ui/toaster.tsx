@@ -1,8 +1,7 @@
 
-// We should use the Sonner toaster component since we've migrated to using sonner
+// We will use Sonner's toaster component for consistent toast notifications
 import { Toaster as SonnerToaster } from "sonner";
 
-// This component wraps the Sonner toaster with our custom styles
 export function Toaster() {
   return (
     <SonnerToaster 

@@ -59,7 +59,7 @@ export const generateMockProductResults = (query: string, maxResults: number | s
       retailer: "Amazon via Zinc",
       rating: rating,
       review_count: reviewCount,
-      isBestseller: i < 3, // First 3 items are bestsellers
+      isBestSeller: i < 3, // First 3 items are bestsellers
       features: [
         `Latest ${brand} technology`,
         "High performance processor",
@@ -111,7 +111,7 @@ export const createMockResults = (
       retailer: "Amazon via Zinc",
       rating: rating,
       review_count: reviewCount,
-      isBestseller: includeBestsellers ? (i < 3) : false // First 3 items are bestsellers if enabled
+      isBestSeller: includeBestsellers ? (i < 3) : false // First 3 items are bestsellers if enabled
     });
   }
   

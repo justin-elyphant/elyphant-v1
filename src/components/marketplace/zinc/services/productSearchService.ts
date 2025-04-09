@@ -3,7 +3,7 @@ import { ZINC_API_BASE_URL, getZincHeaders, isTestMode } from "../zincCore";
 import { ZincProduct } from "../types";
 import { getSpecialCaseProducts } from "../utils/specialCaseHandler";
 import { generateMockProductResults } from "../utils/mockResultsGenerator";
-import { correctSpelling } from "../utils/spellingCorrector";
+import { correctMisspellings } from "../utils/spellingCorrector";
 
 /**
  * Search for products using the Zinc API
@@ -65,7 +65,7 @@ export const searchProducts = async (
     }
     
     // Try with spelling correction
-    const correctedQuery = correctSpelling(normalizedQuery);
+    const correctedQuery = correctMisspellings(normalizedQuery);
     if (correctedQuery !== normalizedQuery) {
       console.log(`No results found for "${normalizedQuery}", trying with spelling correction: "${correctedQuery}"`);
       

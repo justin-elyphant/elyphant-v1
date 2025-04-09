@@ -57,7 +57,8 @@ export const testPurchase = async (productId: string): Promise<ZincOrder | null>
         zip_code: "12345",
         city: "Test City",
         state: "TS",
-        country: "US"
+        country: "US",
+        phone_number: "555-1234" // Added the required phone_number field
       }
     };
     

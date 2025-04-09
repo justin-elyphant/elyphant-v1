@@ -1,6 +1,5 @@
 
 import { ZincProduct } from '../types';
-import { handleSpecialCases, createResultsForMappedTerm } from './specialCaseHandler';
 
 /**
  * Get special case products for specific search terms
@@ -61,4 +60,51 @@ const getMappedSearchTerm = (query: string): string | null => {
   }
   
   return null;
+};
+
+/**
+ * Handle special case search queries that need custom results
+ */
+export const handleSpecialCases = (query: string): ZincProduct[] | null => {
+  const lowercaseQuery = query.toLowerCase().trim();
+  
+  // Add special case handling here if needed
+  // For now, return null to indicate no special handling
+  return null;
+};
+
+/**
+ * Create mock results for mapped search terms
+ */
+export const createResultsForMappedTerm = (mappedTerm: string): ZincProduct[] => {
+  // Generate mock products for the mapped term
+  // This is a simplified implementation
+  const mockProducts: ZincProduct[] = [
+    {
+      product_id: `MAPPED-${mappedTerm}-1`,
+      title: `Premium ${mappedTerm} - Model X`,
+      price: 99.99,
+      image: `https://picsum.photos/seed/${mappedTerm}/300/300`,
+      description: `High-quality ${mappedTerm} with premium features`,
+      brand: 'Brand Name',
+      category: mappedTerm.charAt(0).toUpperCase() + mappedTerm.slice(1),
+      retailer: 'Amazon via Zinc',
+      rating: 4.5,
+      review_count: 120
+    },
+    {
+      product_id: `MAPPED-${mappedTerm}-2`,
+      title: `Budget-friendly ${mappedTerm}`,
+      price: 49.99,
+      image: `https://picsum.photos/seed/${mappedTerm}2/300/300`,
+      description: `Affordable ${mappedTerm} for everyday use`,
+      brand: 'Value Brand',
+      category: mappedTerm.charAt(0).toUpperCase() + mappedTerm.slice(1),
+      retailer: 'Amazon via Zinc',
+      rating: 4.2,
+      review_count: 85
+    }
+  ];
+  
+  return mockProducts;
 };

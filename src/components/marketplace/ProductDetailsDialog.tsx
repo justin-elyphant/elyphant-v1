@@ -1,10 +1,11 @@
+
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Product } from "@/contexts/ProductContext";
-import ProductCarousel from "./ProductCarousel";
-import ProductInfo from "./ProductInfo";
-import ProductActions from "./ProductActions";
-import { useProductImages } from "./useProductImages";
+import ProductCarousel from "./product-details/ProductCarousel";
+import ProductInfo from "./product-details/ProductInfo";
+import ProductActions from "./product-details/ProductActions";
+import { useProductImages } from "./product-details/useProductImages";
 
 interface ProductDetailsDialogProps {
   product: Product | null;

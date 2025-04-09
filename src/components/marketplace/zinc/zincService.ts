@@ -1,9 +1,10 @@
-import { searchProducts } from "./services/productSearchService";
+
+import { searchProducts as searchProductsImpl } from "./services/productSearchService";
 import { convertZincProductToProduct } from "./utils/productConverter";
 import { Product } from "@/contexts/ProductContext";
 import { fetchProductDetails } from "./services/productDetailsService";
-import { ZincOrder } from "./types";
-import { ZincProduct } from "./types";
+import { ZincOrder, ZincProduct } from "./types";
+import { useProductValidation } from "./hooks/useProductValidation";
 
 /**
  * Search for products and convert them to our Product format
@@ -13,7 +14,7 @@ import { ZincProduct } from "./types";
  */
 export const searchZincProducts = async (query: string, maxResults: string = "8"): Promise<Product[]> => {
   try {
-    const zincResults = await searchProducts(query, maxResults);
+    const zincResults = await searchProductsImpl(query, maxResults);
     
     if (!zincResults || zincResults.length === 0) {
       console.log(`No Zinc results found for "${query}"`);
@@ -68,36 +69,26 @@ export const testPurchase = async (productId: string): Promise<ZincOrder | null>
   }
 };
 
-// Ensure better image handling in search results
+/**
+ * Enhance a product with valid images using our validation hooks
+ * @param product The product to enhance
+ * @returns The enhanced product
+ */
 export const enhanceProductWithImages = (product: ZincProduct): ZincProduct => {
-  // Import the validation logic
+  // Use the validation logic directly from the utils
   const { validateProductImages } = require("./services/search/productValidationUtils");
-  
-  // Use the validation logic to enhance the product
   return validateProductImages(product, product.title || "");
 };
 
 /**
- * Get a product-specific fallback image based on name and category
+ * Search for products directly, using the implementation from productSearchService
+ * @param query Search query
+ * @param maxResults Maximum results to return
+ * @returns Promise with array of ZincProduct results
  */
-const getProductFallbackImage = (name: string, category?: string): string => {
-  const productName = name.toLowerCase();
-  const productCategory = category?.toLowerCase() || '';
-  
-  // Try to match product name with specific products
-  if (productName.includes('hat') || productName.includes('cap')) {
-    return 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=500&h=500&fit=crop'; // Hat
-  }
-  if (productName.includes('padres')) {
-    return 'https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop'; // Baseball theme
-  }
-  if (productName.includes('macbook') || productName.includes('laptop')) {
-    return 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&h=500&fit=crop'; // Laptop image
-  }
-  
-  // Generic image based on category
-  return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop';
+export const searchProducts = async (query: string, maxResults: string = "10"): Promise<ZincProduct[]> => {
+  return searchProductsImpl(query, maxResults);
 };
 
-// Re-export searchProducts and fetchProductDetails to make them available directly from zincService
-export { searchProducts, fetchProductDetails };
+// Re-export fetchProductDetails for direct access
+export { fetchProductDetails };

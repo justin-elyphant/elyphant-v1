@@ -69,5 +69,42 @@ export const testPurchase = async (productId: string): Promise<ZincOrder | null>
   }
 };
 
+// Ensure better image handling in search results
+export const enhanceProductWithImages = (product: ZincProduct): ZincProduct => {
+  if (!product.images || product.images.length === 0) {
+    // If no images array but we have a single image, create the array
+    product.images = product.image ? [product.image] : [];
+  }
+  
+  // If we still don't have an image, try to get one based on product name/category
+  if ((!product.image || product.image === "/placeholder.svg") && 
+      (!product.images || product.images.length === 0)) {
+    const fallbackImage = getProductFallbackImage(product.title || "", product.category || "");
+    product.image = fallbackImage;
+    product.images = [fallbackImage];
+  }
+  
+  return product;
+};
+
+/**
+ * Get a product-specific fallback image based on name and category
+ */
+const getProductFallbackImage = (name: string, category?: string): string => {
+  const productName = name.toLowerCase();
+  const productCategory = category?.toLowerCase() || '';
+  
+  // Try to match product name with specific products
+  if (productName.includes('hat') || productName.includes('cap')) {
+    return 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=500&h=500&fit=crop'; // Hat
+  }
+  if (productName.includes('padres')) {
+    return 'https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop'; // Baseball theme
+  }
+  
+  // Generic image based on category
+  return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop';
+};
+
 // Re-export searchProducts and fetchProductDetails to make them available directly from zincService
 export { searchProducts, fetchProductDetails };

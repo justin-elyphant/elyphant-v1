@@ -1,61 +1,52 @@
 
-import { ZincProduct } from '../types';
-import { Product } from '@/contexts/ProductContext';
+import { ZincProduct } from "../types";
+import { Product } from "@/contexts/ProductContext";
 
 /**
- * Converts a ZincProduct to the Product format used by our application
+ * Convert a Zinc product to our Product format
  */
 export const convertZincProductToProduct = (zincProduct: ZincProduct): Product => {
-  // Generate a deterministic product ID based on the product_id if available
-  const getProductId = () => {
-    if (!zincProduct.product_id) return Math.floor(1000 + Math.random() * 9000);
-    
-    // Try to generate a numeric ID from the product_id string
-    try {
-      // Extract a number from the product ID if possible
-      const match = zincProduct.product_id.match(/\d+/);
-      if (match && match[0]) {
-        const numericPart = parseInt(match[0].substring(0, 4), 10); // Use first 4 digits
-        return 1000 + (numericPart % 9000); // Keep within our ID range
-      }
-    } catch (e) {
-      console.warn('Failed to parse product ID:', e);
-    }
-    
-    // Fallback to a random ID if parsing fails
-    return Math.floor(1000 + Math.random() * 9000);
-  };
-
+  // Make sure we're handling images properly
+  const productImage = zincProduct.images?.[0] || zincProduct.image || "/placeholder.svg";
+  const productImages = zincProduct.images || (zincProduct.image ? [zincProduct.image] : ["/placeholder.svg"]);
+  
+  // Create a formatted description
+  const description = zincProduct.description || 
+    `${zincProduct.title} by ${zincProduct.brand || 'Unknown'} - ${zincProduct.category || 'Product'}`;
+  
   return {
-    id: getProductId(),
-    name: zincProduct.title || "Product",
-    price: typeof zincProduct.price === 'number' ? zincProduct.price : parseFloat(zincProduct.price as string) || 0,
-    category: zincProduct.category || "Electronics",
-    image: zincProduct.image || "/placeholder.svg",
-    images: zincProduct.images || [zincProduct.image || "/placeholder.svg"],
+    id: zincProduct.product_id,
+    name: zincProduct.title,
+    price: zincProduct.price,
+    description: description,
+    category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",
-    description: zincProduct.description || `Details for ${zincProduct.title || "this product"}`,
-    rating: zincProduct.rating,
-    reviewCount: zincProduct.review_count,
-    brand: zincProduct.brand || ""
+    image: productImage,
+    images: productImages,
+    rating: typeof zincProduct.rating === 'number' ? zincProduct.rating : 0,
+    reviewCount: typeof zincProduct.review_count === 'number' ? zincProduct.review_count : 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    // Store the original zinc product data too
+    originalZincProduct: zincProduct
   };
 };
 
 /**
- * Convert Product back to ZincProduct format when needed
+ * Convert our Product format back to a Zinc product
  */
 export const convertProductToZincProduct = (product: Product): ZincProduct => {
   return {
-    product_id: `product-${product.id}`,
+    product_id: product.id.toString(),
     title: product.name,
     price: product.price,
+    description: product.description,
+    category: product.category,
+    retailer: "Amazon via Zinc",
     image: product.image,
     images: product.images || [product.image],
-    description: product.description || "",
-    brand: product.brand || "",
-    category: product.category,
-    retailer: product.vendor,
-    rating: product.rating || 0,
-    review_count: product.reviewCount || 0
+    rating: typeof product.rating === 'number' ? product.rating : 0,
+    review_count: typeof product.reviewCount === 'number' ? product.reviewCount : 0,
+    brand: product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor
   };
 };

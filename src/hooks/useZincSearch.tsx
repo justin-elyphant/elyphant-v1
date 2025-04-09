@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '@/contexts/ProductContext';
 import { searchProducts } from '@/components/marketplace/zinc/zincService';
@@ -54,19 +53,24 @@ export const useZincSearch = (searchTerm: string) => {
         // Process results
         if (results && Array.isArray(results)) {
           console.log(`Found ${results.length} results from Zinc API for "${searchTerm}"`);
+          console.log("Sample result with image data:", results[0]);
           
-          // Map to consistent format
+          // Map to consistent format - ensure we capture image URLs properly
           const processedResults = results.map(item => ({
             id: item.product_id,
             product_id: item.product_id,
             title: item.title,
             price: item.price,
-            image: item.image,
+            // Use image array if available, otherwise use single image, fallback to placeholder
+            image: item.images?.[0] || item.image || "/placeholder.svg",
+            images: item.images || (item.image ? [item.image] : ["/placeholder.svg"]),
             rating: item.rating || 0,
             stars: item.rating || 0, 
             review_count: item.review_count || 0,
             num_reviews: item.review_count || 0,
-            brand: item.brand
+            brand: item.brand,
+            // Keep the original data for reference
+            originalProduct: item
           }));
           
           setZincResults(processedResults);

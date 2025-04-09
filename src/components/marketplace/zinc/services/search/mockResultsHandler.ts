@@ -4,8 +4,7 @@
  */
 import { ZincProduct } from "../../types";
 import { generateMockProductResults } from "../../utils/mockResultsGenerator";
-import { validateProductImages } from "./productValidationUtils";
-import { filterRelevantProducts } from "./productValidationUtils";
+import { validateProductImages, filterRelevantProducts } from "./productValidationUtils";
 
 /**
  * Get mock results for a query when API fails or returns no results

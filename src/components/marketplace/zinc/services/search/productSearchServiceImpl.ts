@@ -6,9 +6,38 @@ import { ZincProduct } from "../../types";
 import { getSpecialCaseProducts } from "../../utils/specialCaseHandler";
 import { isTestMode } from "../../zincCore";
 import { validateSearchQuery, enhanceSearchQuery, correctSearchQuery, getPadresHatQuery } from "./searchValidationUtils";
-import { validateProductImages, filterRelevantProducts } from "./productValidationUtils";
 import { getMockResults } from "./mockResultsHandler";
 import { searchZincApi } from "./zincApiService";
+import { useProductValidation } from "../../hooks/useProductValidation";
+
+// Create instances of the hooks
+const productValidation = (() => {
+  // Since we can't use hooks directly in regular functions, 
+  // we'll create a simple factory that mimics the hook functionality
+  const validateProductImages = (product: ZincProduct, query: string): ZincProduct => {
+    // Make a copy to avoid mutating the original
+    const validatedProduct = { ...product };
+    
+    // Import validation logic directly from the utility file
+    const { validateProductImages } = require("../search/productValidationUtils");
+    return validateProductImages(validatedProduct, query);
+  };
+  
+  const filterRelevantProducts = (
+    products: ZincProduct[], 
+    query: string,
+    maxResults: number
+  ): ZincProduct[] => {
+    // Import filtering logic directly from the utility file
+    const { filterRelevantProducts } = require("../search/productValidationUtils");
+    return filterRelevantProducts(products, query, maxResults);
+  };
+  
+  return {
+    validateProductImages,
+    filterRelevantProducts,
+  };
+})();
 
 /**
  * Search for products using the Zinc API
@@ -47,11 +76,11 @@ export const searchProducts = async (
     
     // Ensure each product has valid images
     const validatedResults = specialCaseResults.map(product => 
-      validateProductImages(product, finalQuery)
+      productValidation.validateProductImages(product, finalQuery)
     );
     
     // Filter and return relevant results
-    return filterRelevantProducts(validatedResults, finalQuery, numResults);
+    return productValidation.filterRelevantProducts(validatedResults, finalQuery, numResults);
   }
 
   // Check if we're in test mode and should use mock data
@@ -67,11 +96,11 @@ export const searchProducts = async (
     if (apiResults && apiResults.length > 0) {
       // Ensure each product has valid images
       const validatedResults = apiResults.map(product => 
-        validateProductImages(product, finalQuery)
+        productValidation.validateProductImages(product, finalQuery)
       );
       
       // Filter and return relevant results
-      return filterRelevantProducts(validatedResults, finalQuery, numResults);
+      return productValidation.filterRelevantProducts(validatedResults, finalQuery, numResults);
     }
     
     // Try with spelling correction
@@ -86,11 +115,11 @@ export const searchProducts = async (
         
         // Ensure each product has valid images
         const validatedResults = correctedResults.map(product => 
-          validateProductImages(product, correctedQuery)
+          productValidation.validateProductImages(product, correctedQuery)
         );
         
         // Filter and return relevant results
-        return filterRelevantProducts(validatedResults, correctedQuery, numResults);
+        return productValidation.filterRelevantProducts(validatedResults, correctedQuery, numResults);
       }
     }
     

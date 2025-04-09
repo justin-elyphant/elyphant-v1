@@ -1,4 +1,3 @@
-
 import { searchProducts } from "./services/productSearchService";
 import { convertZincProductToProduct } from "./utils/productConverter";
 import { Product } from "@/contexts/ProductContext";
@@ -71,20 +70,11 @@ export const testPurchase = async (productId: string): Promise<ZincOrder | null>
 
 // Ensure better image handling in search results
 export const enhanceProductWithImages = (product: ZincProduct): ZincProduct => {
-  if (!product.images || product.images.length === 0) {
-    // If no images array but we have a single image, create the array
-    product.images = product.image ? [product.image] : [];
-  }
+  // Import the validation logic
+  const { validateProductImages } = require("./services/search/productValidationUtils");
   
-  // If we still don't have an image, try to get one based on product name/category
-  if ((!product.image || product.image === "/placeholder.svg") && 
-      (!product.images || product.images.length === 0)) {
-    const fallbackImage = getProductFallbackImage(product.title || "", product.category || "");
-    product.image = fallbackImage;
-    product.images = [fallbackImage];
-  }
-  
-  return product;
+  // Use the validation logic to enhance the product
+  return validateProductImages(product, product.title || "");
 };
 
 /**

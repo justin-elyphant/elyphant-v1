@@ -25,6 +25,7 @@ const SearchBar = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
+      // Ensure we navigate to marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
     }
@@ -48,6 +49,7 @@ const SearchBar = () => {
     if (value.trim()) {
       setSearchTerm(value);
       setIsSearchOpen(false);
+      // Always navigate to the marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     }
   };

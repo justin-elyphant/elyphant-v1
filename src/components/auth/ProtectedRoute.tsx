@@ -22,16 +22,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }, [isDebugMode, user]);
 
-  // If still loading auth state, render nothing 
-  // (or could show a loading spinner here)
+  // If still loading auth state, render loading indicator
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <span className="ml-3 text-lg">Loading...</span>
+      </div>
+    );
   }
 
   // If no user and finished loading, redirect to login
   // Unless we're in debug mode with auth bypass
   if (!user && !isDebugMode) {
-    return <Navigate to={redirectPath} state={{ from: location }} replace />;
+    // Save the current path to redirect back after login
+    return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
   }
 
   // If there are children, render them, otherwise render the Outlet

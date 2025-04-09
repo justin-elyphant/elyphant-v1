@@ -5,7 +5,7 @@ import { useZincSearch } from "@/hooks/useZincSearch";
 import SearchPrompt from "./search/SearchPrompt";
 import SearchGroup from "./search/SearchGroup";
 import SearchFooter from "./search/SearchFooter";
-import ProductRating from "@/components/shared/ProductRating";
+import { useNavigate } from "react-router-dom";
 
 interface SearchResultsProps {
   searchTerm: string;
@@ -19,6 +19,7 @@ const SearchResults = ({
   onItemSelect 
 }: SearchResultsProps) => {
   const { loading, zincResults, filteredProducts, hasResults } = useZincSearch(searchTerm);
+  const navigate = useNavigate();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchTerm.trim()) {
@@ -27,20 +28,12 @@ const SearchResults = ({
     }
   };
 
-  const friendsData = [
-    { id: "friend-1", name: "Alex's Wishlist" },
-    { id: "friend-2", name: "Sarah's Birthday" }
-  ];
-
-  const experiencesData = [
-    { id: "exp-1", name: "Virtual Wine Tasting" },
-    { id: "exp-2", name: "Spa Day Package" },
-    { id: "exp-3", name: "Easter Egg Hunt" }
-  ];
-
+  // Handle item selection - navigate to marketplace with search term
   const handleSelect = (value: string) => {
     if (value) {
       onItemSelect(value);
+      // Navigate to marketplace with search query
+      navigate(`/marketplace?search=${encodeURIComponent(value)}`);
     }
   };
 
@@ -87,6 +80,17 @@ const SearchResults = ({
   const topSellerCount = Math.max(1, Math.ceil(sortedZincResults.length * 0.3));
   const topSellers = sortedZincResults.slice(0, topSellerCount);
   const otherProducts = sortedZincResults.slice(topSellerCount);
+
+  const friendsData = [
+    { id: "friend-1", name: "Alex's Wishlist" },
+    { id: "friend-2", name: "Sarah's Birthday" }
+  ];
+
+  const experiencesData = [
+    { id: "exp-1", name: "Virtual Wine Tasting" },
+    { id: "exp-2", name: "Spa Day Package" },
+    { id: "exp-3", name: "Easter Egg Hunt" }
+  ];
 
   return (
     <Command onKeyDown={handleKeyDown}>

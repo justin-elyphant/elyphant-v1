@@ -29,16 +29,19 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
       : 0;
   
   // Ensure price is always a number
-  const priceValue = typeof zincProduct.price === 'number' 
-    ? zincProduct.price 
-    : typeof zincProduct.price === 'string'
-      ? parseFloat(zincProduct.price) || 0
-      : 0;
+  let priceValue: number;
+  if (typeof zincProduct.price === 'number') {
+    priceValue = zincProduct.price;
+  } else if (typeof zincProduct.price === 'string') {
+    priceValue = parseFloat(zincProduct.price) || 0;
+  } else {
+    priceValue = 0;
+  }
   
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
-    price: Number(priceValue), // Explicitly cast to Number to ensure it's not a string
+    price: priceValue,
     description: description,
     category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",

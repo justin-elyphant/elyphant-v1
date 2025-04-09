@@ -31,7 +31,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
-    price: zincProduct.price,
+    price: typeof zincProduct.price === 'string' ? parseFloat(zincProduct.price) : zincProduct.price,
     description: description,
     category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",

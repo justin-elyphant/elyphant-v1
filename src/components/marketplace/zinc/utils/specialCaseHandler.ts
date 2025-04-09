@@ -41,6 +41,15 @@ export const handleSpecialCases = (query: string): ZincProduct[] | null => {
 };
 
 /**
+ * Get special case products - wrapper around handleSpecialCases for better API naming
+ */
+export const getSpecialCaseProducts = async (query: string): Promise<ZincProduct[] | null> => {
+  // This is a wrapper function that makes the handleSpecialCases function async
+  // to match the expected signature in productSearchService
+  return handleSpecialCases(query);
+};
+
+/**
  * Create planter-specific mock results
  */
 const createPlanterResults = (query: string): ZincProduct[] => {

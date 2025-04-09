@@ -1,12 +1,16 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '@/contexts/ProductContext';
+import { searchProducts } from '@/components/marketplace/zinc/zincService';
+import { toast } from 'sonner';
 
 export const useZincSearch = (searchTerm: string) => {
   const [loading, setLoading] = useState(false);
   const [zincResults, setZincResults] = useState<any[]>([]);
   const { products } = useProducts();
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const toastRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const fetchZincResults = async () => {
@@ -19,35 +23,20 @@ export const useZincSearch = (searchTerm: string) => {
 
       setLoading(true);
       
+      // Cancel previous request if it exists
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      abortControllerRef.current = new AbortController();
+      
       try {
-        // This is a mock implementation for now
-        // In a real app, you would fetch from an API
-        setTimeout(() => {
-          // Generate mock zinc search results
-          const mockZincResults = [
-            {
-              product_id: 'z1001',
-              title: `${searchTerm} Product 1`,
-              price: 99.99,
-              image: 'https://source.unsplash.com/random/300x300/?product',
-              rating: 4.5,
-              review_count: 120,
-            },
-            {
-              product_id: 'z1002',
-              title: `${searchTerm} Product 2`,
-              price: 149.99,
-              image: 'https://source.unsplash.com/random/300x300/?electronics',
-              rating: 4.2,
-              review_count: 85,
-            },
-          ];
-          
-          setZincResults(mockZincResults);
-          setLoading(false);
-        }, 500);
+        // Show loading toast
+        if (toastRef.current) {
+          toast.dismiss(toastRef.current);
+        }
         
-        // Filter local products
+        // Filter local products first (faster response)
         const term = searchTerm.toLowerCase();
         const filtered = products.filter(
           product => 
@@ -56,13 +45,57 @@ export const useZincSearch = (searchTerm: string) => {
         );
         setFilteredProducts(filtered);
         
+        // Now search Zinc API
+        console.log(`Searching Zinc API for "${searchTerm}"...`);
+        
+        // Get results from Zinc API (through our service)
+        const results = await searchProducts(searchTerm);
+        
+        // Process results
+        if (results && Array.isArray(results)) {
+          console.log(`Found ${results.length} results from Zinc API for "${searchTerm}"`);
+          
+          // Map to consistent format
+          const processedResults = results.map(item => ({
+            id: item.product_id,
+            product_id: item.product_id,
+            title: item.title,
+            price: item.price,
+            image: item.image,
+            rating: item.rating || 0,
+            stars: item.rating || 0, 
+            review_count: item.review_count || 0,
+            num_reviews: item.review_count || 0,
+            brand: item.brand
+          }));
+          
+          setZincResults(processedResults);
+        } else {
+          console.log(`No results found from Zinc API for "${searchTerm}"`);
+          setZincResults([]);
+        }
+        
       } catch (error) {
-        console.error('Error searching Zinc API:', error);
+        // Only log error if not aborted
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          console.error('Error searching Zinc API:', error);
+        }
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchZincResults();
+    // Debounce function to avoid making too many requests
+    const timeoutId = setTimeout(() => {
+      fetchZincResults();
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [searchTerm, products]);
 
   return {

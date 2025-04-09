@@ -37,11 +37,13 @@ const SearchResults = ({
     }
   };
 
+  // Improved search suggestion logic
   const getSearchSuggestion = () => {
     if (!searchTerm || searchTerm.trim().length < 2) return "";
     
     const term = searchTerm.toLowerCase().trim();
     
+    // Enhanced suggestions based on partial matches
     const suggestions: Record<string, string> = {
       "n": "nike shoes",
       "ni": "nike shoes",
@@ -57,7 +59,15 @@ const SearchResults = ({
       "p": "playstation",
       "pl": "playstation",
       "x": "xbox",
-      "xb": "xbox"
+      "xb": "xbox",
+      "he": "headphones",
+      "hea": "headphones",
+      "wat": "apple watch",
+      "pad": "ipad",
+      "san": "san diego padres",
+      "san d": "san diego padres",
+      "san di": "san diego padres",
+      "can": "scented candle"
     };
     
     if (suggestions[term]) {
@@ -81,15 +91,17 @@ const SearchResults = ({
   const topSellers = sortedZincResults.slice(0, topSellerCount);
   const otherProducts = sortedZincResults.slice(topSellerCount);
 
+  // More realistic friend data based on wishlist
   const friendsData = [
     { id: "friend-1", name: "Alex's Wishlist" },
     { id: "friend-2", name: "Sarah's Birthday" }
   ];
 
+  // More realistic experiences data
   const experiencesData = [
     { id: "exp-1", name: "Virtual Wine Tasting" },
     { id: "exp-2", name: "Spa Day Package" },
-    { id: "exp-3", name: "Easter Egg Hunt" }
+    { id: "exp-3", name: "San Diego Padres Game" }
   ];
 
   return (
@@ -135,17 +147,19 @@ const SearchResults = ({
           />
         )}
         
-        <SearchGroup 
-          heading="Store Products" 
-          items={filteredProducts.map((product) => ({ 
-            id: `local-${product.id}`,
-            name: product.name,
-            image: product.image,
-            rating: product.rating,
-            reviewCount: product.reviewCount
-          }))} 
-          onSelect={handleSelect} 
-        />
+        {filteredProducts.length > 0 && (
+          <SearchGroup 
+            heading="Store Products" 
+            items={filteredProducts.map((product) => ({ 
+              id: `local-${product.id}`,
+              name: product.name,
+              image: product.image,
+              rating: product.rating,
+              reviewCount: product.reviewCount
+            }))} 
+            onSelect={handleSelect} 
+          />
+        )}
         
         {searchTerm.trim().length > 1 && !loading && (
           <>

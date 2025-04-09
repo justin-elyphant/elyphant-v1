@@ -3,6 +3,15 @@ import { searchProducts } from './services/productSearchService';
 import { fetchProductDetails } from './services/productDetailsService';
 import { processOrder, getOrderStatus, cancelOrder } from './services/orderProcessingService';
 
+// Re-export all the services for direct import
+export { 
+  searchProducts, 
+  fetchProductDetails,
+  processOrder,
+  getOrderStatus,
+  cancelOrder
+};
+
 /**
  * Test a live purchase through the Zinc API
  * @param productId The product ID to purchase
@@ -51,13 +60,4 @@ export const testPurchase = async (productId: string) => {
 
   // Process the order
   return await processOrder(orderRequest);
-};
-
-// Export searchProducts directly to make sure it's properly accessible
-export { 
-  searchProducts, 
-  fetchProductDetails,
-  processOrder,
-  getOrderStatus,
-  cancelOrder
 };

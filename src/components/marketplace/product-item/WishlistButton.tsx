@@ -1,55 +1,39 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
-import WishlistSelectionPopover from "../WishlistSelectionPopover";
+import { cn } from "@/lib/utils";
 
 interface WishlistButtonProps {
   userData: any;
   productId: number;
   productName: string;
   onWishlistClick: (e: React.MouseEvent) => void;
-  isFavorited?: boolean;
+  isFavorited: boolean;
 }
 
-const WishlistButton = ({ userData, productId, productName, onWishlistClick, isFavorited = false }: WishlistButtonProps) => {
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent product click when clicking the wishlist button
-    onWishlistClick(e);
-  };
-  
-  if (userData) {
-    return (
-      <WishlistSelectionPopover 
-        productId={productId}
-        productName={productName}
-        trigger={
-          <Button 
-            size="icon"
-            variant="ghost" 
-            className={`absolute top-2 right-2 ${isFavorited 
-              ? 'bg-red-500 hover:bg-red-600' 
-              : 'bg-white/80 hover:bg-white'} rounded-full h-8 w-8`}
-            onClick={handleClick}
-          >
-            <Heart className={`h-4 w-4 ${isFavorited ? 'fill-white text-white' : ''}`} />
-          </Button>
-        }
-      />
-    );
-  }
-  
+const WishlistButton = ({
+  userData,
+  productId,
+  productName,
+  onWishlistClick,
+  isFavorited
+}: WishlistButtonProps) => {
   return (
-    <Button 
-      size="icon"
-      variant="ghost" 
-      className={`absolute top-2 right-2 ${isFavorited 
-        ? 'bg-red-500 hover:bg-red-600' 
-        : 'bg-white/80 hover:bg-white'} rounded-full h-8 w-8`}
-      onClick={handleClick}
+    <button
+      className={cn(
+        "absolute top-2 right-2 h-8 w-8 rounded-full flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all",
+        isFavorited ? "text-red-500" : "text-gray-600 hover:text-red-500"
+      )}
+      onClick={onWishlistClick}
+      aria-label={isFavorited ? `Remove ${productName} from favorites` : `Add ${productName} to favorites`}
     >
-      <Heart className={`h-4 w-4 ${isFavorited ? 'fill-white text-white' : ''}`} />
-    </Button>
+      <Heart
+        className={cn(
+          "h-5 w-5",
+          isFavorited ? "fill-current" : "fill-none"
+        )}
+      />
+    </button>
   );
 };
 

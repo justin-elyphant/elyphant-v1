@@ -4,9 +4,9 @@ import SharedProductRating from "@/components/shared/ProductRating";
 
 interface ProductRatingProps {
   rating?: number;
-  reviewCount?: number;
-  size?: "sm" | "md" | "lg";  // Add size prop to match SharedProductRating
-  className?: string;         // Also add className for consistency
+  reviewCount?: number | string;  // Allow both number and string
+  size?: "sm" | "md" | "lg";  
+  className?: string;         
 }
 
 const ProductRating = ({ rating, reviewCount, size, className }: ProductRatingProps) => {

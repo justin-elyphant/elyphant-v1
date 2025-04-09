@@ -1,67 +1,63 @@
 
 import { ZincProduct } from '../types';
-import { createMockResults } from './mockResultsGenerator';
+import { handleSpecialCases, createResultsForMappedTerm } from './specialCaseHandler';
 
 /**
- * Handles special case searches to return appropriate mock results
+ * Get special case products for specific search terms
  */
-export const handleSpecialCases = (query: string): ZincProduct[] | null => {
-  const lowercaseQuery = query.toLowerCase().trim();
-  
-  // Special handling for MacBook misspellings
-  if (lowercaseQuery.includes("mackbook") || 
-      (lowercaseQuery.includes("mac") && lowercaseQuery.includes("book")) ||
-      (lowercaseQuery.includes("apple") && lowercaseQuery.includes("mackbook"))) {
-    console.log(`SearchUtils: Found special match for Apple MacBook`);
-    return createMockResults("Apple MacBook", "MacBook", 100, 4.5, 5.0, "Apple", true);
+export const getSpecialCaseProducts = async (query: string): Promise<ZincProduct[] | null> => {
+  // First check direct special cases
+  const specialCaseResults = handleSpecialCases(query);
+  if (specialCaseResults) {
+    return specialCaseResults;
   }
   
-  // Direct matching for common searches
-  if (lowercaseQuery === "nike shoes" || 
-      lowercaseQuery === "nike shoe" || 
-      (lowercaseQuery.includes("nike") && lowercaseQuery.includes("shoe"))) {
-    console.log(`SearchUtils: Found special match for Nike Shoes`);
-    return createMockResults("Nike Shoes", "Footwear", 100, 4.5, 5.0, "Nike", true);
-  }
-  
-  // Apple products special handling
-  if (lowercaseQuery.includes("apple") || 
-      lowercaseQuery.includes("iphone") || 
-      lowercaseQuery.includes("macbook") || 
-      lowercaseQuery.includes("ipad")) {
-    console.log(`SearchUtils: Found special match for Apple products`);
-    return createMockResults("Apple Products", "Apple", 100, 4.2, 5.0, "Apple", true);
+  // Check if we have a mapped term
+  const mappedTerm = getMappedSearchTerm(query);
+  if (mappedTerm && mappedTerm !== query) {
+    console.log(`Using mapped search term: "${query}" -> "${mappedTerm}"`);
+    return createResultsForMappedTerm(mappedTerm);
   }
   
   return null;
 };
 
 /**
- * Creates appropriate mock results for a mapped term
+ * Maps common search terms to more specific ones
  */
-export const createResultsForMappedTerm = (mappedTerm: string): ZincProduct[] | null => {
-  if (mappedTerm === "dallas cowboys") {
-    return createMockResults(mappedTerm, "Sports", 100, 4.3, 5.0, "Sports", true);
-  } 
+const getMappedSearchTerm = (query: string): string | null => {
+  const lowercaseQuery = query.toLowerCase().trim();
   
-  if (mappedTerm.includes("shoes")) {
-    return createMockResults(mappedTerm, "Footwear", 100, 4.1, 5.0, mappedTerm.split(' ')[0], true);
-  } 
+  // Common search term mappings
+  const mappings: Record<string, string> = {
+    'phone': 'smartphone',
+    'computer': 'laptop computer',
+    'tv': 'television',
+    'laptop': 'laptop computer',
+    'headphone': 'headphones',
+    'watch': 'wristwatch',
+    'earbuds': 'wireless earbuds',
+    'earphone': 'earphones',
+    'speaker': 'bluetooth speaker',
+    'camera': 'digital camera',
+    'tablet': 'tablet computer',
+    'game': 'video game',
+    'console': 'gaming console',
+    'football': 'american football',
+    'soccer': 'soccer ball',
+    'cowboys': 'dallas cowboys',
+  };
   
-  if (mappedTerm.includes("samsung") || mappedTerm.includes("iphone")) {
-    return createMockResults(
-      mappedTerm, 
-      mappedTerm.includes("samsung") ? "Samsung" : "Apple", 
-      100, 
-      4.4, 
-      5.0, 
-      mappedTerm.split(' ')[0], 
-      true
-    );
-  } 
+  // Check if we have an exact match
+  if (mappings[lowercaseQuery]) {
+    return mappings[lowercaseQuery];
+  }
   
-  if (mappedTerm.includes("xbox") || mappedTerm.includes("playstation")) {
-    return createMockResults(mappedTerm, "Gaming", 100, 4.7, 5.0, mappedTerm.split(' ')[0], true);
+  // Check if query contains any of our mappable terms
+  for (const [key, value] of Object.entries(mappings)) {
+    if (lowercaseQuery.includes(key)) {
+      return value;
+    }
   }
   
   return null;

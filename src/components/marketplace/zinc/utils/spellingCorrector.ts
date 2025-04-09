@@ -1,3 +1,11 @@
+
+/**
+ * Corrects common misspellings in search queries
+ */
+export const correctSpelling = (query: string): string => {
+  return correctMisspellings(query);
+};
+
 /**
  * Corrects common misspellings in search queries
  */

@@ -4,7 +4,7 @@ import SharedProductRating from "@/components/shared/ProductRating";
 
 interface ProductRatingProps {
   rating?: number;
-  reviewCount?: number;
+  reviewCount?: number | string;  // Allow both number and string
 }
 
 const ProductRating = ({ rating, reviewCount }: ProductRatingProps) => {

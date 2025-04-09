@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface ProductRatingProps {
   rating?: number;
-  reviewCount?: string; // Changed from number to string or undefined
+  reviewCount?: number | string; // Accept both number and string
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -40,6 +40,9 @@ const ProductRating: React.FC<ProductRatingProps> = ({
   const starSize = getStarSize();
   const textSize = getTextSize();
   
+  // Convert reviewCount to string if it's a number
+  const reviewCountStr = reviewCount !== undefined ? reviewCount.toString() : undefined;
+  
   return (
     <div className={cn("flex items-center", className)}>
       <div className="flex items-center">
@@ -55,9 +58,9 @@ const ProductRating: React.FC<ProductRatingProps> = ({
           />
         ))}
       </div>
-      {reviewCount && (
+      {reviewCountStr && (
         <span className={`ml-1 text-muted-foreground ${textSize}`}>
-          ({reviewCount})
+          ({reviewCountStr})
         </span>
       )}
     </div>

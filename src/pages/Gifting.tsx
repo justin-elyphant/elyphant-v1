@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MyWishlists from "@/components/gifting/MyWishlists";
@@ -34,19 +33,15 @@ const GiftingWrapper = () => {
   const [initialProducts, setInitialProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Check if we're in a specific collection or category view
   const isSpecificView = Boolean(categoryParam || pageTitleParam);
   
-  // Handle initial load and parameters
   useEffect(() => {
     console.log("URL params in Gifting:", { tabParam, categoryParam, searchParam, pageTitleParam });
     
-    // Priority handling: If category or search is present, switch to products tab 
     if (categoryParam || searchParam) {
       console.log("Category or search param detected, switching to products tab");
       setActiveTab("products");
       
-      // If we don't have tab=products in URL, add it
       if (tabParam !== "products") {
         const newParams = new URLSearchParams(searchParams);
         newParams.set("tab", "products");
@@ -58,35 +53,29 @@ const GiftingWrapper = () => {
     }
   }, [tabParam, categoryParam, searchParam, navigate, searchParams]);
 
-  // Load products based on params
   useEffect(() => {
     const loadProducts = async () => {
       setIsLoading(true);
       console.log(`Loading products for category: ${categoryParam}, search: ${searchParam}`);
       
       try {
-        // First, load base products from localStorage
         const savedProducts = await loadSavedProducts();
         console.log(`Gifting page: Loaded ${savedProducts.length} products from localStorage`);
         
-        // If we have a search parameter, fetch products from the Zinc API
         if (searchParam) {
           console.log(`Searching for products with term: "${searchParam}"`);
           
-          // Show loading toast for better UX
           toast.loading(`Searching for ${searchParam}...`, { id: "product-search" });
           
-          const results = await searchProducts(searchParam, 75); // Request 75 products
+          const results = await searchProducts(searchParam, "75");
           
           toast.dismiss("product-search");
           
           if (results.length > 0) {
-            // Convert Zinc products to our Product format
             const zincProducts = results.map(product => convertZincProductToProduct(product));
             console.log(`Found ${zincProducts.length} products for search term "${searchParam}"`);
             toast.success(`Found ${zincProducts.length} products for "${searchParam}"`);
             
-            // Combine with saved products, preserving any that don't overlap
             const combinedProducts = [
               ...savedProducts.filter(p => p.vendor !== "Amazon via Zinc"),
               ...zincProducts
@@ -99,13 +88,11 @@ const GiftingWrapper = () => {
             setInitialProducts(savedProducts);
           }
         } else {
-          // Just use saved products if no search parameter
           setInitialProducts(savedProducts);
         }
       } catch (error) {
         console.error("Error loading products:", error);
         toast.error("Error searching for products. Showing available products instead.");
-        // Load saved products as fallback
         const savedProducts = await loadSavedProducts();
         setInitialProducts(savedProducts);
       } finally {
@@ -119,18 +106,15 @@ const GiftingWrapper = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     
-    // Preserve any category parameter when changing tabs
     const newParams = new URLSearchParams(searchParams);
     newParams.set("tab", value);
     navigate(`?${newParams.toString()}`, { replace: true });
     
-    // Show indicator if there's an active category or search when switching tabs
     if (value !== "products" && (categoryParam || searchParam)) {
       toast.info("Your search filters will be preserved when returning to Products tab");
     }
   };
 
-  // Custom page title for the products tab
   const productTabTitle = pageTitleParam || "Gift Ideas";
 
   return (

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     });
   };
 
-  // Format price to always show 2 decimal places
   const formatPrice = (price: number) => {
     return price.toFixed(2);
   };

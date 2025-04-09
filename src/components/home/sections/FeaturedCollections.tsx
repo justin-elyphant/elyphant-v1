@@ -44,7 +44,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       // Pre-fetch products before navigation and log the process
       if (searchTerm) {
         console.log(`Pre-fetching products for search term: ${searchTerm}`);
-        const results = await searchProducts(searchTerm, 50); // Request 50 products
+        const results = await searchProducts(searchTerm, "50"); // Request 50 products as string
         console.log(`Fetched ${results.length} products for "${searchTerm}"`);
         
         if (results.length === 0) {

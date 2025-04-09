@@ -1,4 +1,3 @@
-
 import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";

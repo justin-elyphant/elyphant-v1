@@ -1,159 +1,45 @@
 
+// Helper functions for product image handling
+
 /**
- * Generate an exact product image URL based on title and category
+ * Get an appropriate image URL for a specific product
  */
-export function getExactProductImage(title: string, category: string): string {
-  const lowerTitle = title.toLowerCase();
-  const lowerCategory = category.toLowerCase();
+export const getExactProductImage = (productName: string, category: string): string => {
+  const lowercaseTitle = productName.toLowerCase();
+  const lowercaseCategory = category.toLowerCase();
   
-  // Special case for San Diego Padres hats - use real Padres hat images
-  if ((lowerTitle.includes('padres') || lowerTitle.includes('san diego')) && 
-      (lowerTitle.includes('hat') || lowerTitle.includes('cap') || lowerCategory.includes('baseball'))) {
-    // Use rotating images for variety
-    const padresHatImages = [
-      'https://m.media-amazon.com/images/I/71UT1A3myCL._AC_SL1500_.jpg', // Padres New Era Cap
-      'https://m.media-amazon.com/images/I/71cYpZFfbGL._AC_SL1500_.jpg', // Padres Adjustable Cap
-      'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg',    // Padres Fitted Hat
-      'https://m.media-amazon.com/images/I/71AJrQfE7ZL._AC_SL1500_.jpg'  // Padres Baseball Cap
-    ];
+  // Handle garden/planter products
+  if (lowercaseCategory.includes('planter') || 
+      lowercaseCategory.includes('garden') || 
+      lowercaseTitle.includes('planter') || 
+      lowercaseTitle.includes('plant pot') || 
+      lowercaseTitle.includes('flower pot')) {
     
-    // Select an image based on a hash of the title for consistency
-    const hash = title.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-    return padresHatImages[Math.abs(hash) % padresHatImages.length];
+    // Check if it's outdoor specific
+    if (lowercaseTitle.includes('outdoor') || lowercaseTitle.includes('patio')) {
+      return 'https://images.unsplash.com/photo-1596521884071-39833e7ba6a6?w=500&h=500&fit=crop';
+    }
+    
+    // Default planter image
+    return 'https://images.unsplash.com/photo-1604762512526-b7068fe9474a?w=500&h=500&fit=crop';
   }
   
-  // Sports team merchandise - baseball caps and hats
-  if (lowerCategory.includes('baseball') || lowerCategory.includes('hat') || lowerCategory.includes('cap')) {
-    return 'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg';
+  // Handle Padres hat products
+  if ((lowercaseTitle.includes('padres') || lowercaseTitle.includes('san diego')) && 
+      (lowercaseTitle.includes('hat') || lowercaseTitle.includes('cap'))) {
+    return 'https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop';
   }
   
-  // Apple Products 
-  if (lowerTitle.includes('macbook') || lowerCategory === 'macbook') {
-    return 'https://m.media-amazon.com/images/I/61L5QgPvgqL._AC_SL1500_.jpg';
+  // Handle tech products
+  if (lowercaseCategory.includes('electronics') || 
+      lowercaseTitle.includes('headphone') || 
+      lowercaseTitle.includes('speaker') || 
+      lowercaseTitle.includes('laptop') || 
+      lowercaseTitle.includes('tablet') || 
+      lowercaseTitle.includes('phone')) {
+    return 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&h=500&fit=crop';
   }
   
-  if (lowerTitle.includes('iphone')) {
-    return 'https://m.media-amazon.com/images/I/61bK6PMOC3L._AC_SL1500_.jpg';
-  }
-  
-  if (lowerTitle.includes('ipad')) {
-    return 'https://m.media-amazon.com/images/I/81gC7frRJyL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerTitle.includes('airpods')) {
-    return 'https://m.media-amazon.com/images/I/71zny7BTRlL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerTitle.includes('apple watch')) {
-    return 'https://m.media-amazon.com/images/I/71+3+8VcGFL._AC_SL1500_.jpg';
-  }
-  
-  // Samsung Products
-  if (lowerTitle.includes('samsung') && lowerTitle.includes('galaxy')) {
-    return 'https://m.media-amazon.com/images/I/61a2y1FCAJL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerTitle.includes('samsung') && lowerTitle.includes('tv')) {
-    return 'https://m.media-amazon.com/images/I/91RfzivKmwL._AC_SL1500_.jpg';
-  }
-  
-  // Gaming Products
-  if (lowerTitle.includes('playstation') || lowerTitle.includes('ps5')) {
-    return 'https://m.media-amazon.com/images/I/51QkER5ynaL._SL1500_.jpg';
-  }
-  
-  if (lowerTitle.includes('xbox')) {
-    return 'https://m.media-amazon.com/images/I/61-jjE67aHL._SL1500_.jpg';
-  }
-  
-  if (lowerTitle.includes('nintendo') || lowerTitle.includes('switch')) {
-    return 'https://m.media-amazon.com/images/I/61i8Vjb17SL._SL1500_.jpg';
-  }
-  
-  // Category-specific images for featured occasions
-  if (lowerCategory.includes('birthday') || lowerTitle.includes('birthday')) {
-    return 'https://m.media-amazon.com/images/I/71Bz7V7vgQL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('wedding') || lowerTitle.includes('wedding')) {
-    return 'https://m.media-amazon.com/images/I/71u-1gA4sEL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('anniversary') || lowerTitle.includes('anniversary')) {
-    return 'https://m.media-amazon.com/images/I/81n0+4G0NHL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('graduation') || lowerTitle.includes('graduation')) {
-    return 'https://m.media-amazon.com/images/I/71awGJRl0YL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('baby') || lowerCategory.includes('baby_shower')) {
-    return 'https://m.media-amazon.com/images/I/81F-QS3DsRL._SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('pet') || lowerTitle.includes('pet') || lowerTitle.includes('dog') || lowerTitle.includes('cat')) {
-    return 'https://m.media-amazon.com/images/I/81irQM60KdL._AC_SL1500_.jpg';
-  }
-  
-  // Also match "pets" category
-  if (lowerCategory === 'pets' || lowerCategory.includes('pets')) {
-    return 'https://m.media-amazon.com/images/I/71jdA5tRvBL._AC_SL1500_.jpg';
-  }
-  
-  // Summer Products
-  if (lowerCategory.includes('summer') || lowerTitle.includes('summer')) {
-    return 'https://m.media-amazon.com/images/I/81SxsPuSVFL._AC_SL1500_.jpg';
-  }
-  
-  // Office Products
-  if (lowerCategory.includes('office') || lowerTitle.includes('office')) {
-    return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
-  }
-  
-  // Technology and electronics
-  if (lowerCategory.includes('electronics') || lowerTitle.includes('tech')) {
-    return 'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('footwear') || lowerCategory.includes('shoes')) {
-    return 'https://m.media-amazon.com/images/I/61-Ww4OnWIL._AC_UX695_.jpg';
-  }
-  
-  if (lowerCategory.includes('sports')) {
-    return 'https://m.media-amazon.com/images/I/81YpuRoACeL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('headphones')) {
-    return 'https://m.media-amazon.com/images/I/61+WYAjltpL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory.includes('speakers')) {
-    return 'https://m.media-amazon.com/images/I/716QOWr4QFL._AC_SL1500_.jpg';
-  }
-  
-  if (lowerCategory === 'all' || lowerTitle.includes('all occasions')) {
-    return 'https://m.media-amazon.com/images/I/71vjUCzQCaL._SL1500_.jpg';
-  }
-  
-  // Home category
-  if (lowerCategory.includes('home') || lowerTitle.includes('home')) {
-    return 'https://m.media-amazon.com/images/I/81WQpftHHxL._AC_SL1500_.jpg';
-  }
-  
-  // Default Amazon product image for anything else - we have a few fallbacks
-  const defaultImages = [
-    'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg',
-    'https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg',
-    'https://m.media-amazon.com/images/I/81gC7frRJyL._AC_SL1500_.jpg',
-    'https://m.media-amazon.com/images/I/71+3+8VcGFL._AC_SL1500_.jpg'
-  ];
-  
-  // Use a deterministic but seemingly random selection based on the title and category
-  const hash = (title + category).split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0);
-    return a & a;
-  }, 0);
-  
-  const index = Math.abs(hash) % defaultImages.length;
-  return defaultImages[index];
-}
+  // Default fallback image
+  return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop';
+};

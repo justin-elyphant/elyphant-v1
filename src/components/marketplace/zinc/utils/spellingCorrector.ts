@@ -1,63 +1,53 @@
 
 /**
- * Corrects common misspellings in search queries
- */
-export const correctSpelling = (query: string): string => {
-  return correctMisspellings(query);
-};
-
-/**
- * Corrects common misspellings in search queries
+ * Correct common misspellings in search queries
  */
 export const correctMisspellings = (query: string): string => {
-  // Common brand name misspellings
-  const misspellings: Record<string, string> = {
-    // Apple variants
-    "aple": "apple",
-    "appl": "apple",
-    "appel": "apple",
-    "apppe": "apple",
+  const corrections: Record<string, string> = {
+    // Brand corrections
+    'nike': 'Nike',
+    'addidas': 'Adidas',
+    'adiddas': 'Adidas',
+    'appl': 'Apple',
+    'aple': 'Apple',
+    'padres': 'Padres',
+    'padrés': 'Padres',
+    'sony': 'Sony',
+    'samung': 'Samsung',
+    'samsng': 'Samsung',
+    'microsft': 'Microsoft',
     
-    // MacBook variants
-    "mackbook": "macbook",
-    "macbok": "macbook",
-    "makbook": "macbook",
-    "macbuk": "macbook",
+    // Category corrections
+    'labtop': 'laptop',
+    'latop': 'laptop',
+    'headfone': 'headphone',
+    'headphne': 'headphone',
+    'sneeker': 'sneaker',
+    'sneaker': 'sneaker',
+    'plantr': 'planter',
+    'plnter': 'planter',
+    'gardn': 'garden',
+    'outdor': 'outdoor',
     
-    // iPhone variants
-    "ifone": "iphone",
-    "ipone": "iphone",
-    "iphne": "iphone",
-    "iphon": "iphone",
-    
-    // Samsung variants
-    "samsng": "samsung",
-    "samsun": "samsung",
-    "sansung": "samsung",
-    "samson": "samsung",
-    
-    // Nike variants
-    "nkie": "nike",
-    "nikey": "nike",
-    "nik": "nike",
-    
-    // Other common brands
-    "guci": "gucci",
-    "adiddas": "adidas",
-    "addidas": "adidas",
-    "adids": "adidas",
-    "amazn": "amazon",
-    "mikrosoft": "microsoft",
-    "microsfot": "microsoft",
-    "sonny": "sony"
+    // Product corrections
+    'airpod': 'AirPods',
+    'ear pod': 'EarPods',
+    'macbok': 'MacBook',
+    'mackbook': 'MacBook',
   };
   
-  // Split query into words and check each one
-  const words = query.split(' ');
+  let correctedQuery = query;
+  
+  // Split the query into words
+  const words = query.toLowerCase().split(/\s+/);
+  
+  // Check each word for corrections
   const correctedWords = words.map(word => {
-    // Check if this word is a known misspelling
-    return misspellings[word] || word;
+    return corrections[word] || word;
   });
   
-  return correctedWords.join(' ');
+  // Join the words back together
+  correctedQuery = correctedWords.join(' ');
+  
+  return correctedQuery;
 };

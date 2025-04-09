@@ -1,110 +1,176 @@
 
 import { ZincProduct } from '../types';
+import { createMockResults } from './mockResultsGenerator';
 
 /**
- * Get special case products for specific search terms
- */
-export const getSpecialCaseProducts = async (query: string): Promise<ZincProduct[] | null> => {
-  // First check direct special cases
-  const specialCaseResults = handleSpecialCases(query);
-  if (specialCaseResults) {
-    return specialCaseResults;
-  }
-  
-  // Check if we have a mapped term
-  const mappedTerm = getMappedSearchTerm(query);
-  if (mappedTerm && mappedTerm !== query) {
-    console.log(`Using mapped search term: "${query}" -> "${mappedTerm}"`);
-    return createResultsForMappedTerm(mappedTerm);
-  }
-  
-  return null;
-};
-
-/**
- * Maps common search terms to more specific ones
- */
-const getMappedSearchTerm = (query: string): string | null => {
-  const lowercaseQuery = query.toLowerCase().trim();
-  
-  // Common search term mappings
-  const mappings: Record<string, string> = {
-    'phone': 'smartphone',
-    'computer': 'laptop computer',
-    'tv': 'television',
-    'laptop': 'laptop computer',
-    'headphone': 'headphones',
-    'watch': 'wristwatch',
-    'earbuds': 'wireless earbuds',
-    'earphone': 'earphones',
-    'speaker': 'bluetooth speaker',
-    'camera': 'digital camera',
-    'tablet': 'tablet computer',
-    'game': 'video game',
-    'console': 'gaming console',
-    'football': 'american football',
-    'soccer': 'soccer ball',
-    'cowboys': 'dallas cowboys',
-  };
-  
-  // Check if we have an exact match
-  if (mappings[lowercaseQuery]) {
-    return mappings[lowercaseQuery];
-  }
-  
-  // Check if query contains any of our mappable terms
-  for (const [key, value] of Object.entries(mappings)) {
-    if (lowercaseQuery.includes(key)) {
-      return value;
-    }
-  }
-  
-  return null;
-};
-
-/**
- * Handle special case search queries that need custom results
+ * Handle special cases for certain search queries
  */
 export const handleSpecialCases = (query: string): ZincProduct[] | null => {
-  const lowercaseQuery = query.toLowerCase().trim();
+  const lowercaseQuery = query.toLowerCase();
   
-  // Add special case handling here if needed
-  // For now, return null to indicate no special handling
+  // Special case for Padres hat searches
+  if ((lowercaseQuery.includes("padres") || lowercaseQuery.includes("san diego")) && 
+      (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
+    return createMockResults(
+      "San Diego Padres Baseball Hat", 
+      "Baseball Team Merchandise", 
+      15, 
+      4.0, 
+      5.0, 
+      "San Diego Padres", 
+      true
+    );
+  }
+  
+  // Special case for planter searches
+  if (lowercaseQuery.includes("planter") || 
+      (lowercaseQuery.includes("pot") && 
+      (lowercaseQuery.includes("garden") || lowercaseQuery.includes("plant") || lowercaseQuery.includes("flower")))) {
+    return createPlanterResults(lowercaseQuery);
+  }
+  
+  // Special case for garden searches
+  if (lowercaseQuery.includes("garden") && 
+      !lowercaseQuery.includes("electronics") && 
+      !lowercaseQuery.includes("headphones")) {
+    return createPlanterResults(lowercaseQuery);
+  }
+  
+  // No special case needed
   return null;
 };
 
 /**
- * Create mock results for mapped search terms
+ * Create planter-specific mock results
  */
-export const createResultsForMappedTerm = (mappedTerm: string): ZincProduct[] => {
-  // Generate mock products for the mapped term
-  // This is a simplified implementation
-  const mockProducts: ZincProduct[] = [
-    {
-      product_id: `MAPPED-${mappedTerm}-1`,
-      title: `Premium ${mappedTerm} - Model X`,
-      price: 99.99,
-      image: `https://picsum.photos/seed/${mappedTerm}/300/300`,
-      description: `High-quality ${mappedTerm} with premium features`,
-      brand: 'Brand Name',
-      category: mappedTerm.charAt(0).toUpperCase() + mappedTerm.slice(1),
-      retailer: 'Amazon via Zinc',
-      rating: 4.5,
-      review_count: 120
-    },
-    {
-      product_id: `MAPPED-${mappedTerm}-2`,
-      title: `Budget-friendly ${mappedTerm}`,
-      price: 49.99,
-      image: `https://picsum.photos/seed/${mappedTerm}2/300/300`,
-      description: `Affordable ${mappedTerm} for everyday use`,
-      brand: 'Value Brand',
-      category: mappedTerm.charAt(0).toUpperCase() + mappedTerm.slice(1),
-      retailer: 'Amazon via Zinc',
-      rating: 4.2,
-      review_count: 85
+const createPlanterResults = (query: string): ZincProduct[] => {
+  // Determine if this is an outdoor specific query
+  const isOutdoor = query.includes("outdoor") || query.includes("patio");
+  const baseCategory = isOutdoor ? "Outdoor Garden Planters" : "Garden Planters";
+  
+  const planterResults = createMockResults(
+    isOutdoor ? "Outdoor Garden Planter" : "Garden Planter",
+    baseCategory,
+    20,
+    4.2,
+    4.9,
+    undefined,
+    true
+  );
+  
+  // Enhance with planter-specific attributes
+  return planterResults.map(product => {
+    // Ensure planter-specific titles
+    if (!product.title?.toLowerCase().includes("planter")) {
+      product.title = generatePlanterTitle(query, isOutdoor);
     }
+    
+    // Set specific planter category
+    product.category = baseCategory;
+    
+    // Add planter-specific brands
+    product.brand = getPlanterBrand();
+    
+    // Set appropriate planter images
+    product.image = getPlanterImage(isOutdoor);
+    product.images = [product.image];
+    
+    // Add planter description
+    product.description = generatePlanterDescription(product.title, isOutdoor);
+    
+    return product;
+  });
+};
+
+/**
+ * Generate appropriate planter titles
+ */
+const generatePlanterTitle = (query: string, isOutdoor: boolean): string => {
+  const prefixes = isOutdoor ? 
+    ["Outdoor", "Patio", "Garden", "Deck", "Balcony"] : 
+    ["Indoor", "Home", "Decorative", "Modern", "Ceramic"];
+    
+  const materials = isOutdoor ?
+    ["Plastic", "Terracotta", "Concrete", "Resin", "Metal", "Stone", "Wood"] :
+    ["Ceramic", "Clay", "Porcelain", "Glass", "Metal", "Wooden"];
+    
+  const types = ["Planter", "Pot", "Planter Box", "Plant Container", "Flower Pot"];
+  const sizes = ["Large", "Medium", "Small", "10-inch", "12-inch", "Set of 3"];
+  
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const material = materials[Math.floor(Math.random() * materials.length)];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const size = sizes[Math.floor(Math.random() * sizes.length)];
+  
+  return `${prefix} ${size} ${material} ${type} for Plants`;
+};
+
+/**
+ * Get planter-specific brands
+ */
+const getPlanterBrand = (): string => {
+  const brands = [
+    "Bloem", "Mkono", "La Jolie Muse", "Kante", "Novelty", 
+    "Southern Patio", "Gardenix Decor", "Classic Garden", 
+    "Plant Buddies", "Terrain", "Costa Farms", "Greenery Unlimited"
   ];
   
-  return mockProducts;
+  return brands[Math.floor(Math.random() * brands.length)];
+};
+
+/**
+ * Get planter-specific images
+ */
+const getPlanterImage = (isOutdoor: boolean): string => {
+  const outdoorPlanterImages = [
+    "https://images.unsplash.com/photo-1596521884071-39833e7ba6a6?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1623320976222-2e4ffa56a198?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1623310922825-954679412f4c?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1620803222629-1fe4239b6394?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1628768709591-f0c5928f7a31?w=500&h=500&fit=crop"
+  ];
+  
+  const indoorPlanterImages = [
+    "https://images.unsplash.com/photo-1628929141148-760a004c8fa8?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1604762512526-b7068fe9474a?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1637520419769-52a740a3c55a?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1524055530917-50e8e2c1d9a9?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1622122201714-77da0ca9e9b9?w=500&h=500&fit=crop"
+  ];
+  
+  const imageArray = isOutdoor ? outdoorPlanterImages : indoorPlanterImages;
+  return imageArray[Math.floor(Math.random() * imageArray.length)];
+};
+
+/**
+ * Generate planter-specific descriptions
+ */
+const generatePlanterDescription = (title: string, isOutdoor: boolean): string => {
+  const outdoorFeatures = [
+    "Weather-resistant", "Durable in all seasons", "UV protected", 
+    "Drainage holes included", "Frost-resistant", "Perfect for patios and decks"
+  ];
+  
+  const indoorFeatures = [
+    "Elegant design", "Perfect for home decor", "Drainage tray included", 
+    "Non-marking base", "Enhances any room", "Perfect for succulents and small plants"
+  ];
+  
+  const features = isOutdoor ? outdoorFeatures : indoorFeatures;
+  const randomFeatures = features.sort(() => 0.5 - Math.random()).slice(0, 3);
+  
+  return `${title}. ${randomFeatures.join('. ')}. Adds beauty to your ${isOutdoor ? 'outdoor' : 'indoor'} space while providing a healthy environment for your plants.`;
+};
+
+/**
+ * Create mapped term results
+ */
+export const createResultsForMappedTerm = (mappedTerm: string): ZincProduct[] | null => {
+  // Handle planter searches with the mapped term
+  if (mappedTerm.includes("planter") || mappedTerm.includes("garden")) {
+    return createPlanterResults(mappedTerm);
+  }
+  
+  // Default behavior - let the standard search handle it
+  return null;
 };

@@ -1,133 +1,75 @@
 
-// Utility function to map search terms to image categories
-
-// Define a simple mapping object instead of using require
-const categoryMapping: Record<string, string> = {
-  // Electronics
-  "iphone": "electronics",
-  "airpods": "electronics",
-  "macbook": "electronics",
-  "laptop": "electronics",
-  "headphones": "electronics",
-  "tablet": "electronics",
-  "ipad": "electronics",
-  "kindle": "electronics",
-  "camera": "electronics",
-  "alexa": "electronics",
-  "echo": "electronics",
-  "playstation": "electronics",
-  "xbox": "electronics",
-  "nintendo": "electronics",
-  "gaming": "electronics",
-  "tv": "electronics",
-  "computer": "electronics",
-  "monitor": "electronics",
-  
-  // Clothing
-  "shirt": "clothing",
-  "dress": "clothing",
-  "pants": "clothing",
-  "shoes": "clothing",
-  "nike": "clothing",
-  "adidas": "clothing",
-  "puma": "clothing",
-  "jacket": "clothing",
-  "hat": "clothing",
-  "cap": "clothing",
-  "socks": "clothing",
-  "padres": "clothing",  // Specifically add padres to clothing
-  "cowboys": "clothing", // Sports teams generally map to clothing
-  
-  // Home
-  "furniture": "home",
-  "chair": "home",
-  "table": "home",
-  "desk": "home",
-  "sofa": "home",
-  "kitchenware": "home",
-  "cookware": "home",
-  "bedding": "home",
-  "pillow": "home",
-  "mattress": "home",
-  "decor": "home",
-  
-  // Fitness
-  "yoga": "fitness",
-  "exercise": "fitness",
-  "fitness": "fitness",
-  "weights": "fitness",
-  "treadmill": "fitness",
-  "gym": "fitness",
-  
-  // Beauty
-  "makeup": "beauty",
-  "skincare": "beauty",
-  "haircare": "beauty",
-  "perfume": "beauty",
-  "cosmetics": "beauty",
-  
-  // Kids
-  "toys": "kids",
-  "baby": "kids",
-  "kids": "kids",
-  "children": "kids",
-  
-  // Generic fallbacks by brand
-  "amazon": "electronics",
-  "apple": "electronics",
-  "samsung": "electronics",
-  "google": "electronics",
-  "microsoft": "electronics",
-  "sony": "electronics",
-  "lg": "electronics",
-  "bose": "electronics",
-  "dell": "electronics",
-  "hp": "electronics",
-  "asus": "electronics",
-  "lenovo": "electronics"
-};
-
 /**
- * Get the most appropriate image category for a search query
+ * Maps search queries to appropriate image categories for better visual results
  */
 export const getImageCategory = (query: string): string => {
   const lowercaseQuery = query.toLowerCase();
   
-  // Special case handlers
-  if (lowercaseQuery.includes("macbook") || lowercaseQuery.includes("mac book")) {
-    return "electronics";
+  // Garden and planter category detection
+  if (lowercaseQuery.includes('planter') || 
+      lowercaseQuery.includes('pot') || 
+      lowercaseQuery.includes('garden') || 
+      lowercaseQuery.includes('plant')) {
+    return 'Garden';
   }
   
-  if (lowercaseQuery.includes("padres") && (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
-    return "clothing";
+  // Electronics category detection
+  if (lowercaseQuery.includes('headphone') || 
+      lowercaseQuery.includes('speaker') || 
+      lowercaseQuery.includes('tv') || 
+      lowercaseQuery.includes('monitor') || 
+      lowercaseQuery.includes('laptop') || 
+      lowercaseQuery.includes('computer') || 
+      lowercaseQuery.includes('tablet') || 
+      lowercaseQuery.includes('phone')) {
+    return 'Electronics';
   }
   
-  // Check for specific keyword matches
-  for (const [keyword, category] of Object.entries(categoryMapping)) {
-    if (lowercaseQuery.includes(keyword)) {
-      return category;
-    }
+  // Apparel category detection
+  if (lowercaseQuery.includes('hat') || 
+      lowercaseQuery.includes('cap') || 
+      lowercaseQuery.includes('shirt') || 
+      lowercaseQuery.includes('jersey') || 
+      lowercaseQuery.includes('clothing') ||
+      lowercaseQuery.includes('shoes') ||
+      lowercaseQuery.includes('sneakers')) {
+    return 'Clothing';
   }
   
-  // If no specific mapping found, determine based on common patterns
-  if (
-    lowercaseQuery.includes("phone") || 
-    lowercaseQuery.includes("tech") || 
-    lowercaseQuery.includes("gadget")
-  ) {
-    return "electronics";
+  // Sports merchandise
+  if (lowercaseQuery.includes('padres') || 
+      lowercaseQuery.includes('baseball') || 
+      lowercaseQuery.includes('nfl') || 
+      lowercaseQuery.includes('nba') || 
+      lowercaseQuery.includes('sport')) {
+    return 'Sports Merchandise';
   }
   
-  if (
-    lowercaseQuery.includes("wear") || 
-    lowercaseQuery.includes("fashion") ||
-    lowercaseQuery.includes("apparel") ||
-    lowercaseQuery.includes("hat") ||
-    lowercaseQuery.includes("cap")
-  ) {
-    return "clothing";
+  // Office supplies
+  if (lowercaseQuery.includes('office') || 
+      lowercaseQuery.includes('desk') || 
+      lowercaseQuery.includes('chair') || 
+      lowercaseQuery.includes('stationery')) {
+    return 'Office';
   }
   
-  // Default fallback
-  return "electronics";
+  // Default to a generic category if no matches
+  return 'Home & Garden';
+};
+
+/**
+ * Get more precise category for product filtering
+ */
+export const getPreciseCategory = (query: string): string => {
+  const lowercaseQuery = query.toLowerCase();
+  
+  // Garden and planter specific categorization
+  if (lowercaseQuery.includes('planter') || 
+      lowercaseQuery.includes('garden pot') || 
+      lowercaseQuery.includes('flower pot')) {
+    return 'Garden Planters';
+  }
+  
+  // Use the more general category mapping as a fallback
+  return getImageCategory(query);
 };

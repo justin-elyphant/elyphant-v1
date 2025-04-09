@@ -1,131 +1,86 @@
 
-/**
- * Maps search terms to appropriate full search terms
- */
-export const getWellKnownTermMappings = (): Record<string, string> => {
-  return {
-    // Sports teams
-    "dallas": "dallas cowboys team merchandise",
-    "cowboys": "dallas cowboys team merchandise",
-    "padres": "san diego padres baseball hat",
-    "san diego": "san diego padres baseball hat",
-    "san diego padres": "san diego padres baseball hat clothing",
-    
-    // Baseball teams with explicit clothing
-    "yankees": "new york yankees baseball hat clothing",
-    "dodgers": "los angeles dodgers baseball hat clothing",
-    "athletics": "oakland athletics baseball hat clothing",
-    "giants": "san francisco giants baseball hat clothing",
-    
-    // Apparel and clothing items with clear category
-    "hat": "baseball hat clothing apparel",
-    "cap": "baseball cap clothing apparel",
-    "shirt": "t-shirt clothing apparel",
-    "jersey": "sports team jersey clothing apparel",
-    "clothing": "clothing apparel",
-    
-    // Apple products
-    "macbook": "apple macbook laptop",
-    "iphone": "apple iphone smartphone",
-    "ipad": "apple ipad tablet",
-    "airpods": "apple airpods headphones",
-    "apple watch": "apple watch smartwatch",
-    
-    // Samsung products
-    "samsung": "samsung galaxy smartphone",
-    "galaxy": "samsung galaxy smartphone",
-    
-    // Gaming consoles
-    "playstation": "sony playstation gaming console",
-    "xbox": "microsoft xbox gaming console",
-    
-    // Brands with product type
-    "adidas": "adidas shoes clothing",
-    "puma": "puma shoes clothing",
-    "nike": "nike shoes clothing"
-  };
-};
+// Helper functions for mapping search terms to more specific queries
 
 /**
- * Checks if a search term contains well-known terms and returns the mapped term
+ * Map common search terms to more specific queries to improve search relevance
  */
 export const findMappedTerm = (query: string): string | null => {
-  const lowercaseQuery = query.toLowerCase();
-  const wellKnownTerms = getWellKnownTermMappings();
+  const lowercaseTerm = query.toLowerCase().trim();
   
-  // Perfect match - check if the entire query matches a key exactly
-  if (wellKnownTerms[lowercaseQuery]) {
-    return wellKnownTerms[lowercaseQuery];
+  // Category-specific mappings
+  const mappings: Record<string, string> = {
+    // Electronics
+    'macbook': 'apple macbook laptop',
+    'mac book': 'apple macbook laptop',
+    'airpods': 'apple airpods headphones',
+    'ipad': 'apple ipad tablet',
+    'iphone': 'apple iphone smartphone',
+    
+    // Padres merchandise
+    'padres hat': 'san diego padres baseball hat',
+    'san diego hat': 'san diego padres baseball hat',
+    'padres cap': 'san diego padres baseball cap',
+    
+    // Planter/Garden items
+    'planter': 'garden planter pot container for plants',
+    'outdoor planter': 'outdoor garden planter pot for plants patio',
+    'plant pot': 'garden planter pot for plants',
+    'flower pot': 'garden flower planter pot',
+    'garden pot': 'outdoor garden planter pot for plants',
+    
+    // Generic categories
+    'nike': 'nike shoes clothing athletic',
+    'pet': 'pet supplies dog cat',
+    'office': 'office supplies desk',
+    'tech': 'electronics gadgets',
+    'summer': 'summer outdoor beach',
+    'birthday': 'birthday gift party',
+    'wedding': 'wedding gift celebration',
+  };
+  
+  // Check for exact matches first
+  if (mappings[lowercaseTerm]) {
+    return mappings[lowercaseTerm];
   }
   
-  // Special case: padres hat/cap combination
-  if ((lowercaseQuery.includes("padres") || lowercaseQuery.includes("san diego")) && 
-      (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
-    return "san diego padres baseball hat clothing apparel";
-  }
-  
-  // Special case: any team + hat/cap combination
-  if ((lowercaseQuery.includes("team") || 
-       lowercaseQuery.includes("baseball") ||
-       lowercaseQuery.includes("football") ||
-       lowercaseQuery.includes("basketball")) && 
-      (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
-    return lowercaseQuery + " clothing apparel";
-  }
-  
-  // Check for specific product categories
-  if (lowercaseQuery.includes("macbook") || lowercaseQuery.includes("mac book")) {
-    return "apple macbook laptop";
-  }
-  
-  // Enhanced mapping for hats/caps - ensure they're mapped to clothing
-  if (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap")) {
-    return "baseball hat cap clothing apparel";
-  }
-  
-  // Check for partial matches - find the longest matching term
-  let bestMatch = null;
-  let bestMatchLength = 0;
-  
-  for (const term in wellKnownTerms) {
-    if (lowercaseQuery.includes(term) && term.length > bestMatchLength) {
-      bestMatch = wellKnownTerms[term];
-      bestMatchLength = term.length;
+  // Check for partial matches
+  for (const [key, value] of Object.entries(mappings)) {
+    if (lowercaseTerm.includes(key)) {
+      return value;
     }
   }
   
-  return bestMatch;
+  return null;
 };
 
 /**
- * Add category hints to a search query to improve relevance
+ * Add category hints to improve search relevance
  */
 export const addCategoryHints = (query: string): string => {
-  const lowercaseQuery = query.toLowerCase();
+  const lowercaseTerm = query.toLowerCase();
   
-  // Add category hints for clothing searches
-  if (lowercaseQuery.includes("hat") || 
-      lowercaseQuery.includes("cap") ||
-      lowercaseQuery.includes("shirt") ||
-      lowercaseQuery.includes("jersey")) {
+  // Add gardening category hints for planter-related searches
+  if (lowercaseTerm.includes('planter') || 
+      lowercaseTerm.includes('pot') || 
+      lowercaseTerm.includes('garden')) {
+    return `${query} garden plant container`;
+  }
+  
+  // Add clothing category hints for apparel searches
+  if (lowercaseTerm.includes('hat') || 
+      lowercaseTerm.includes('cap') || 
+      lowercaseTerm.includes('shirt') || 
+      lowercaseTerm.includes('shoes')) {
     return `${query} clothing apparel`;
   }
   
-  // Add category hints for sports team merchandise
-  if (lowercaseQuery.includes("padres") ||
-      lowercaseQuery.includes("cowboys") ||
-      lowercaseQuery.includes("yankees") ||
-      lowercaseQuery.includes("lakers")) {
-    if (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap")) {
-      return `${query} baseball hat team merchandise clothing`;
-    }
-    return `${query} team merchandise`;
-  }
-  
-  // Specific combination for San Diego Padres hat
-  if ((lowercaseQuery.includes("san diego") || lowercaseQuery.includes("padres")) &&
-      (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
-    return `${query} baseball clothing apparel`;
+  // Add electronics category for tech searches
+  if (lowercaseTerm.includes('headphone') || 
+      lowercaseTerm.includes('speaker') || 
+      lowercaseTerm.includes('laptop') ||
+      lowercaseTerm.includes('phone') ||
+      lowercaseTerm.includes('tablet')) {
+    return `${query} electronics`;
   }
   
   return query;

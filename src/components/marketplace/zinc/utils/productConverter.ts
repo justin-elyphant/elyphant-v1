@@ -1,4 +1,3 @@
-
 import { ZincProduct } from "../types";
 import { Product } from "@/contexts/ProductContext";
 
@@ -182,7 +181,50 @@ export const isProductRelevantToSearch = (product: ZincProduct, searchTerm: stri
   const productBrand = (product.brand || "").toLowerCase();
   const productDescription = (product.description || "").toLowerCase();
   
-  // Check for key search terms
+  // Planter/garden search filtering
+  const searchPlanter = lowercaseSearch.includes("planter") || 
+                        lowercaseSearch.includes("pot") || 
+                        lowercaseSearch.includes("garden");
+                        
+  if (searchPlanter) {
+    // Electronics categories should be excluded from planter searches
+    const electronicsCategories = [
+      "electronics", "computer", "laptop", "camera", "phone", 
+      "tablet", "monitor", "tv", "television", "headphone", 
+      "speaker", "audio"
+    ];
+    
+    // Check if product category matches any electronics categories
+    for (const category of electronicsCategories) {
+      if (productCategory.includes(category) || 
+          productTitle.includes(category + " ") ||
+          (productTitle.includes("sony") && !productTitle.includes("garden")) ||
+          (productTitle.includes("apple") && !productTitle.includes("garden")) ||
+          (productTitle.includes("hp") && !productTitle.includes("garden")) ||
+          (productTitle.includes("dell") && !productTitle.includes("garden")) ||
+          (productTitle.includes("bose") && !productTitle.includes("garden"))) {
+        console.log(`Filtering out "${product.title}" - planter search with electronics category: ${productCategory}`);
+        return false;
+      }
+    }
+    
+    // If not explicitly mentioned as a planter/garden item in title or description, exclude
+    const gardenTerms = ["planter", "pot", "garden", "plant", "flower", "outdoor", "patio"];
+    
+    // Check if the product contains any garden-related terms
+    const hasGardenTerm = gardenTerms.some(term => 
+      productTitle.includes(term) || 
+      productCategory.includes(term) ||
+      productDescription.includes(term)
+    );
+    
+    if (!hasGardenTerm) {
+      console.log(`Filtering out "${product.title}" - planter search but product doesn't appear to be garden-related`);
+      return false;
+    }
+  }
+  
+  // Check for hat searches
   const searchHat = lowercaseSearch.includes("hat") || lowercaseSearch.includes("cap");
   const searchPadres = lowercaseSearch.includes("padres") || lowercaseSearch.includes("san diego");
   const searchTeam = searchPadres || lowercaseSearch.includes("team") || lowercaseSearch.includes("baseball");

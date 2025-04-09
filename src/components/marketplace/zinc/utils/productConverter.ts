@@ -3,9 +3,40 @@ import { ZincProduct } from "../types";
 import { Product } from "@/contexts/ProductContext";
 
 /**
+ * Parse a product ID string into a number with fallback
+ */
+const parseProductId = (productIdString: string | undefined): number => {
+  // If undefined, return a random number
+  if (!productIdString) {
+    console.log("Missing product_id, generating random ID");
+    return Math.floor(Math.random() * 100000);
+  }
+  
+  try {
+    // Remove any non-numeric characters and parse
+    const cleaned = String(productIdString).replace(/\D/g, '');
+    const parsed = parseInt(cleaned, 10);
+    
+    // If parsed is NaN or 0, generate random number
+    if (isNaN(parsed) || parsed === 0) {
+      console.log(`Invalid product_id format: "${productIdString}", generating random ID`);
+      return Math.floor(Math.random() * 100000);
+    }
+    
+    return parsed;
+  } catch (e) {
+    console.error(`Error parsing product_id: "${productIdString}"`, e);
+    return Math.floor(Math.random() * 100000);
+  }
+};
+
+/**
  * Convert a Zinc product to our Product format
  */
 export const convertZincProductToProduct = (zincProduct: ZincProduct): Product => {
+  // Log data source for debugging
+  console.log(`Converting Zinc product: ${zincProduct.title} (${zincProduct.product_id})`);
+  
   // Make sure we're handling images properly
   const productImage = zincProduct.images?.[0] || zincProduct.image || "/placeholder.svg";
   const productImages = zincProduct.images || (zincProduct.image ? [zincProduct.image] : ["/placeholder.svg"]);
@@ -29,10 +60,17 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     ? zincProduct.review_count
     : parseInt(String(zincProduct.review_count || 0), 10) || 0;
   
-  // Convert the string product_id to a number, or generate a random number if conversion fails
-  const productIdAsNumber = zincProduct.product_id 
-    ? parseInt(String(zincProduct.product_id).replace(/\D/g, ''), 10) || Math.floor(Math.random() * 100000)
-    : Math.floor(Math.random() * 100000);
+  // Convert the string product_id to a number
+  const productIdAsNumber = parseProductId(zincProduct.product_id);
+  
+  // Log data consistency issues for debugging
+  if (!zincProduct.image && !zincProduct.images?.length) {
+    console.warn(`No images for product: ${zincProduct.title} (${zincProduct.product_id})`);
+  }
+  
+  if (priceValue > 1000) {
+    console.warn(`Unusually high price for ${zincProduct.title}: $${priceValue}`);
+  }
   
   return {
     id: productIdAsNumber,
@@ -100,4 +138,67 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
     review_count: reviewCountValue,
     brand: product.brand || (product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor)
   };
+};
+
+/**
+ * Check if a product is relevant to the search query
+ * Used to filter out irrelevant results
+ */
+export const isProductRelevantToSearch = (product: ZincProduct, searchTerm: string): boolean => {
+  const lowercaseSearch = searchTerm.toLowerCase();
+  const productTitle = (product.title || "").toLowerCase();
+  const productCategory = (product.category || "").toLowerCase();
+  const productBrand = (product.brand || "").toLowerCase();
+  
+  // Clothing/apparel related searches
+  const isClothingSearch = lowercaseSearch.includes("hat") || 
+                          lowercaseSearch.includes("cap") || 
+                          lowercaseSearch.includes("shirt") || 
+                          lowercaseSearch.includes("jersey") ||
+                          lowercaseSearch.includes("apparel") ||
+                          lowercaseSearch.includes("clothing") ||
+                          lowercaseSearch.includes("padres");
+
+  // Electronics brands that shouldn't appear in clothing searches
+  const electronicsExcludedBrands = [
+    "samsung", "sony", "lg", "toshiba", "panasonic", "canon", "nikon", "dell", 
+    "hp", "viewsonic", "acer", "asus", "jbl", "bose", "sennheiser"
+  ];
+  
+  // Electronics categories that shouldn't appear in clothing searches
+  const electronicsExcludedCategories = [
+    "electronics", "headphones", "earbuds", "camera", "computer", "laptop", 
+    "monitor", "tv", "television", "audio", "speaker", "phone", "tablet"
+  ];
+  
+  // If this is a clothing search, exclude electronics
+  if (isClothingSearch) {
+    // Check if this product's category matches any excluded electronics categories
+    for (const excludedCategory of electronicsExcludedCategories) {
+      if (productCategory.includes(excludedCategory)) {
+        console.log(`Filtering out "${product.title}" - clothing search with electronics category: ${productCategory}`);
+        return false;
+      }
+    }
+    
+    // Check if this product's brand matches any excluded electronics brands
+    for (const excludedBrand of electronicsExcludedBrands) {
+      if (productBrand.includes(excludedBrand)) {
+        console.log(`Filtering out "${product.title}" - clothing search with electronics brand: ${productBrand}`);
+        return false;
+      }
+    }
+    
+    // If product title mentions specific electronics terms, exclude it
+    const electronicsTitleTerms = ["tv", "monitor", "headphone", "earbud", "camera", "laptop", "computer", "speaker"];
+    for (const term of electronicsTitleTerms) {
+      if (productTitle.includes(term)) {
+        console.log(`Filtering out "${product.title}" - clothing search with electronics term in title`);
+        return false;
+      }
+    }
+  }
+  
+  // All checks passed, the product is relevant
+  return true;
 };

@@ -29,13 +29,11 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
       : 0;
   
   // Ensure price is always a number
-  let priceValue: number;
+  let priceValue = 0; // Initialize with a default value
   if (typeof zincProduct.price === 'number') {
     priceValue = zincProduct.price;
   } else if (typeof zincProduct.price === 'string') {
     priceValue = parseFloat(zincProduct.price) || 0;
-  } else {
-    priceValue = 0;
   }
   
   return {

@@ -29,7 +29,7 @@ const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser, mockWishlists }: 
       </TabsContent>
       
       <TabsContent value="favorites" className="mt-6">
-        <FavoritesTabContent />
+        <FavoritesTabContent isCurrentUser={isCurrentUser} />
       </TabsContent>
       
       <TabsContent value="activity" className="mt-6">

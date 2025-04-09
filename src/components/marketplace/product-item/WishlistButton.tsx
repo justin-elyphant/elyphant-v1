@@ -9,9 +9,10 @@ interface WishlistButtonProps {
   productId: number;
   productName: string;
   onWishlistClick: (e: React.MouseEvent) => void;
+  isFavorited?: boolean;
 }
 
-const WishlistButton = ({ userData, productId, productName, onWishlistClick }: WishlistButtonProps) => {
+const WishlistButton = ({ userData, productId, productName, onWishlistClick, isFavorited = false }: WishlistButtonProps) => {
   if (userData) {
     return (
       <WishlistSelectionPopover 
@@ -21,9 +22,11 @@ const WishlistButton = ({ userData, productId, productName, onWishlistClick }: W
           <Button 
             size="icon"
             variant="ghost" 
-            className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full h-8 w-8" 
+            className={`absolute top-2 right-2 ${isFavorited 
+              ? 'bg-red-500 hover:bg-red-600' 
+              : 'bg-white/80 hover:bg-white'} rounded-full h-8 w-8`} 
           >
-            <Heart className="h-4 w-4" />
+            <Heart className={`h-4 w-4 ${isFavorited ? 'fill-white text-white' : ''}`} />
           </Button>
         }
       />
@@ -34,10 +37,12 @@ const WishlistButton = ({ userData, productId, productName, onWishlistClick }: W
     <Button 
       size="icon"
       variant="ghost" 
-      className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full h-8 w-8" 
+      className={`absolute top-2 right-2 ${isFavorited 
+        ? 'bg-red-500 hover:bg-red-600' 
+        : 'bg-white/80 hover:bg-white'} rounded-full h-8 w-8`}
       onClick={onWishlistClick}
     >
-      <Heart className="h-4 w-4" />
+      <Heart className={`h-4 w-4 ${isFavorited ? 'fill-white text-white' : ''}`} />
     </Button>
   );
 };

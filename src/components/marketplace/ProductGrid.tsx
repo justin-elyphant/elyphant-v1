@@ -1,6 +1,8 @@
+
 import React, { useState } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
@@ -17,15 +19,18 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   const [showProductDetails, setShowProductDetails] = useState<number | null>(null);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [userData] = useLocalStorage("userData", null);
+  const { handleFavoriteToggle, isFavorited } = useFavorites();
 
   React.useEffect(() => {
     setSortedProducts(sortProducts(products, sortOption));
   }, [products, sortOption]);
 
-  const handleWishlistClick = (e: React.MouseEvent) => {
+  const handleWishlistClick = (e: React.MouseEvent, productId: number) => {
     e.stopPropagation();
     if (!userData) {
       setShowSignUpDialog(true);
+    } else {
+      handleFavoriteToggle(productId);
     }
   };
   
@@ -61,7 +66,8 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
             product={product}
             viewMode={viewMode}
             onProductClick={handleProductClick}
-            onWishlistClick={handleWishlistClick}
+            onWishlistClick={(e) => handleWishlistClick(e, product.id)}
+            isFavorited={userData ? isFavorited(product.id) : false}
           />
         ))}
       </div>

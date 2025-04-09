@@ -14,13 +14,15 @@ interface ProductItemProps {
   viewMode: "grid" | "list";
   onProductClick: (productId: number) => void;
   onWishlistClick: (e: React.MouseEvent) => void;
+  isFavorited?: boolean;
 }
 
 const ProductItem = ({ 
   product, 
   viewMode, 
   onProductClick,
-  onWishlistClick
+  onWishlistClick,
+  isFavorited = false
 }: ProductItemProps) => {
   const { addToCart } = useCart();
   const [userData] = useLocalStorage("userData", null);
@@ -54,7 +56,8 @@ const ProductItem = ({
           userData={userData} 
           productId={product.id} 
           productName={product.name} 
-          onWishlistClick={onWishlistClick} 
+          onWishlistClick={onWishlistClick}
+          isFavorited={isFavorited}
         />
       </div>
       

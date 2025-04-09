@@ -5,8 +5,8 @@ import { useZincSearch } from "@/hooks/useZincSearch";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
 import { useResultGrouping } from "@/hooks/useResultGrouping";
 import SearchPrompt from "./search/SearchPrompt";
-import SearchGroup from "./search/SearchGroup";
 import SearchFooter from "./search/SearchFooter";
+import ResultGroups from "./search/ResultGroups";
 import { useNavigate } from "react-router-dom";
 
 interface SearchResultsProps {
@@ -70,102 +70,16 @@ const SearchResults = ({
           />
         </CommandEmpty>
         
-        {/* Render Apple MacBooks if applicable */}
-        {searchTerm.toLowerCase().includes('macbook') && groupedResults.appleProducts?.length > 0 && (
-          <SearchGroup 
-            heading="Apple MacBooks" 
-            items={groupedResults.appleProducts.map((product) => ({ 
-              ...product,
-              isTopSeller: true
-            }))} 
-            onSelect={handleSelect} 
-          />
-        )}
-        
-        {/* Render other laptop brands if applicable */}
-        {searchTerm.toLowerCase().includes('macbook') && groupedResults.otherBrandProducts?.length > 0 && (
-          <SearchGroup 
-            heading="Other Laptops" 
-            items={groupedResults.otherBrandProducts} 
-            onSelect={handleSelect} 
-          />
-        )}
-        
-        {/* Render Padres hats if applicable */}
-        {searchTerm.toLowerCase().includes('padres') && groupedResults.actualHats?.length > 0 && (
-          <SearchGroup 
-            heading="Padres Hats" 
-            items={groupedResults.actualHats} 
-            onSelect={handleSelect} 
-          />
-        )}
-        
-        {/* Render other Padres items if applicable */}
-        {searchTerm.toLowerCase().includes('padres') && groupedResults.otherProducts?.length > 0 && (
-          <SearchGroup 
-            heading="Other Padres Items" 
-            items={groupedResults.otherProducts} 
-            onSelect={handleSelect} 
-          />
-        )}
-        
-        {/* Render top sellers for other searches */}
-        {!searchTerm.toLowerCase().includes('macbook') && 
-         !searchTerm.toLowerCase().includes('padres') && 
-         groupedResults.topSellers?.length > 0 && (
-          <SearchGroup 
-            heading="Top Sellers" 
-            items={groupedResults.topSellers.map((product) => ({ 
-              ...product,
-              isTopSeller: true
-            }))} 
-            onSelect={handleSelect} 
-          />
-        )}
-        
-        {/* Render other products for other searches */}
-        {!searchTerm.toLowerCase().includes('macbook') && 
-         !searchTerm.toLowerCase().includes('padres') && 
-         groupedResults.otherProducts?.length > 0 && (
-          <SearchGroup 
-            heading="More Products" 
-            items={groupedResults.otherProducts} 
-            onSelect={handleSelect} 
-          />
-        )}
-        
-        {/* Render local store products if available */}
-        {filteredProducts.length > 0 && (
-          <SearchGroup 
-            heading="Store Products" 
-            items={filteredProducts.map((product) => ({ 
-              id: `local-${product.id}`,
-              name: product.name,
-              image: product.image,
-              rating: product.rating,
-              reviewCount: product.reviewCount,
-              originalProduct: product // Store the original product data
-            }))} 
-            onSelect={handleSelect} 
-          />
-        )}
-        
-        {/* Additional groups for friends and experiences */}
-        {searchTerm.trim().length > 1 && !loading && (
-          <>
-            <SearchGroup 
-              heading="Friends" 
-              items={friendsData} 
-              onSelect={handleSelect} 
-            />
-            
-            <SearchGroup 
-              heading="Experiences" 
-              items={experiencesData} 
-              onSelect={handleSelect} 
-            />
-          </>
-        )}
+        {/* Render all result groups */}
+        <ResultGroups 
+          searchTerm={searchTerm}
+          groupedResults={groupedResults}
+          filteredProducts={filteredProducts}
+          friendsData={friendsData}
+          experiencesData={experiencesData}
+          onSelect={handleSelect}
+          loading={loading}
+        />
         
         <SearchFooter 
           searchTerm={searchTerm}

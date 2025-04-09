@@ -14,6 +14,20 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   const description = zincProduct.description || 
     `${zincProduct.title} by ${zincProduct.brand || 'Unknown'} - ${zincProduct.category || 'Product'}`;
   
+  // Convert string ratings to number if needed
+  const rating = typeof zincProduct.rating === 'number' 
+    ? zincProduct.rating 
+    : typeof zincProduct.rating === 'string'
+      ? parseFloat(zincProduct.rating) || 0
+      : 0;
+      
+  // Convert string review counts to number if needed
+  const reviewCount = typeof zincProduct.review_count === 'number'
+    ? zincProduct.review_count
+    : typeof zincProduct.review_count === 'string'
+      ? parseInt(zincProduct.review_count, 10) || 0
+      : 0;
+  
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
@@ -23,9 +37,9 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     vendor: "Amazon via Zinc",
     image: productImage,
     images: productImages,
-    rating: typeof zincProduct.rating === 'number' ? zincProduct.rating : 0,
-    reviewCount: typeof zincProduct.review_count === 'number' ? zincProduct.review_count : 0,
-    brand: zincProduct.brand || "Unknown",  // Add brand field to ensure it's populated
+    rating: rating,
+    reviewCount: reviewCount,
+    brand: zincProduct.brand || "Unknown", 
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     // Store the original zinc product data too

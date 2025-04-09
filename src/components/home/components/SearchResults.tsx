@@ -1,6 +1,9 @@
+
 import React from "react";
 import { Command, CommandList, CommandEmpty } from "@/components/ui/command";
 import { useZincSearch } from "@/hooks/useZincSearch";
+import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
+import { useResultGrouping } from "@/hooks/useResultGrouping";
 import SearchPrompt from "./search/SearchPrompt";
 import SearchGroup from "./search/SearchGroup";
 import SearchFooter from "./search/SearchFooter";
@@ -19,6 +22,12 @@ const SearchResults = ({
 }: SearchResultsProps) => {
   const { loading, zincResults, filteredProducts, hasResults } = useZincSearch(searchTerm);
   const navigate = useNavigate();
+  
+  // Get search suggestions for the current term
+  const { searchSuggestion } = useSearchSuggestions(searchTerm);
+  
+  // Get grouped results based on search term and results
+  const { groupedResults } = useResultGrouping(searchTerm, zincResults);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchTerm.trim()) {
@@ -35,118 +44,6 @@ const SearchResults = ({
       navigate(`/marketplace?search=${encodeURIComponent(value)}`);
     }
   };
-
-  // Improved search suggestion logic
-  const getSearchSuggestion = () => {
-    if (!searchTerm || searchTerm.trim().length < 2) return "";
-    
-    const term = searchTerm.toLowerCase().trim();
-    
-    // Enhanced suggestions based on partial matches
-    const suggestions: Record<string, string> = {
-      "n": "nike shoes",
-      "ni": "nike shoes",
-      "nik": "nike shoes",
-      "d": "dallas cowboys",
-      "da": "dallas cowboys",
-      "dal": "dallas cowboys",
-      "ip": "iphone",
-      "iph": "iphone",
-      "s": "samsung galaxy",
-      "sa": "samsung galaxy",
-      "sam": "samsung galaxy",
-      "p": "playstation",
-      "pl": "playstation",
-      "x": "xbox",
-      "xb": "xbox",
-      "he": "headphones",
-      "hea": "headphones",
-      "wat": "apple watch",
-      "pad": "ipad",
-      "mac": "apple macbook",
-      "san": "san diego padres",
-      "san d": "san diego padres",
-      "san di": "san diego padres",
-      "pad": "san diego padres hat",
-      "padr": "san diego padres hat",
-      "can": "scented candle",
-      "47": "47 brand cap",
-      "47 b": "47 brand cap"
-    };
-    
-    if (suggestions[term]) {
-      return suggestions[term];
-    }
-    
-    return searchTerm;
-  };
-
-  const searchSuggestion = getSearchSuggestion();
-  
-  // Sort products by rating/review count to identify top sellers
-  const sortedZincResults = [...zincResults].sort((a, b) => {
-    const aScore = (a.rating || 0) * (a.review_count || a.reviewCount || 0);
-    const bScore = (b.rating || 0) * (b.review_count || b.reviewCount || 0);
-    return bScore - aScore;
-  });
-  
-  // Identify top sellers (top 30% of results)
-  const topSellerCount = Math.max(1, Math.ceil(sortedZincResults.length * 0.3));
-  const topSellers = sortedZincResults.slice(0, topSellerCount);
-  const otherProducts = sortedZincResults.slice(topSellerCount);
-
-  // Group search results by type for Apple MacBook searches
-  const getGroupedResults = () => {
-    if (searchTerm.toLowerCase().includes('macbook')) {
-      // Filter for actual Apple products
-      const appleProducts = sortedZincResults.filter(product => 
-        (product.title?.toLowerCase().includes('apple') && product.title?.toLowerCase().includes('macbook')) ||
-        (product.brand?.toLowerCase() === 'apple')
-      );
-      
-      // Other brand products
-      const otherBrandProducts = sortedZincResults.filter(product => 
-        !(product.title?.toLowerCase().includes('apple') && product.title?.toLowerCase().includes('macbook')) &&
-        product.brand?.toLowerCase() !== 'apple'
-      );
-      
-      return {
-        appleProducts,
-        otherBrandProducts
-      };
-    }
-    
-    // For sports merchandise searches
-    if (searchTerm.toLowerCase().includes('padres') && 
-        (searchTerm.toLowerCase().includes('hat') || searchTerm.toLowerCase().includes('cap'))) {
-      // Filter for actual hats/caps
-      const actualHats = sortedZincResults.filter(product => 
-        product.category?.toLowerCase().includes('clothing') || 
-        product.title?.toLowerCase().includes('hat') || 
-        product.title?.toLowerCase().includes('cap')
-      );
-      
-      // Other products
-      const otherProducts = sortedZincResults.filter(product => 
-        !(product.category?.toLowerCase().includes('clothing') || 
-          product.title?.toLowerCase().includes('hat') || 
-          product.title?.toLowerCase().includes('cap'))
-      );
-      
-      return {
-        actualHats,
-        otherProducts: otherProducts.length > 0 ? otherProducts : []
-      };
-    }
-    
-    // Default grouping
-    return {
-      topSellers,
-      otherProducts
-    };
-  };
-  
-  const groupedResults = getGroupedResults();
 
   // More realistic friend data based on wishlist
   const friendsData = [
@@ -173,6 +70,7 @@ const SearchResults = ({
           />
         </CommandEmpty>
         
+        {/* Render Apple MacBooks if applicable */}
         {searchTerm.toLowerCase().includes('macbook') && groupedResults.appleProducts?.length > 0 && (
           <SearchGroup 
             heading="Apple MacBooks" 
@@ -184,6 +82,7 @@ const SearchResults = ({
           />
         )}
         
+        {/* Render other laptop brands if applicable */}
         {searchTerm.toLowerCase().includes('macbook') && groupedResults.otherBrandProducts?.length > 0 && (
           <SearchGroup 
             heading="Other Laptops" 
@@ -192,6 +91,7 @@ const SearchResults = ({
           />
         )}
         
+        {/* Render Padres hats if applicable */}
         {searchTerm.toLowerCase().includes('padres') && groupedResults.actualHats?.length > 0 && (
           <SearchGroup 
             heading="Padres Hats" 
@@ -200,6 +100,7 @@ const SearchResults = ({
           />
         )}
         
+        {/* Render other Padres items if applicable */}
         {searchTerm.toLowerCase().includes('padres') && groupedResults.otherProducts?.length > 0 && (
           <SearchGroup 
             heading="Other Padres Items" 
@@ -208,12 +109,13 @@ const SearchResults = ({
           />
         )}
         
+        {/* Render top sellers for other searches */}
         {!searchTerm.toLowerCase().includes('macbook') && 
          !searchTerm.toLowerCase().includes('padres') && 
-         topSellers.length > 0 && (
+         groupedResults.topSellers?.length > 0 && (
           <SearchGroup 
             heading="Top Sellers" 
-            items={topSellers.map((product) => ({ 
+            items={groupedResults.topSellers.map((product) => ({ 
               ...product,
               isTopSeller: true
             }))} 
@@ -221,16 +123,18 @@ const SearchResults = ({
           />
         )}
         
+        {/* Render other products for other searches */}
         {!searchTerm.toLowerCase().includes('macbook') && 
          !searchTerm.toLowerCase().includes('padres') && 
-         otherProducts.length > 0 && (
+         groupedResults.otherProducts?.length > 0 && (
           <SearchGroup 
             heading="More Products" 
-            items={otherProducts} 
+            items={groupedResults.otherProducts} 
             onSelect={handleSelect} 
           />
         )}
         
+        {/* Render local store products if available */}
         {filteredProducts.length > 0 && (
           <SearchGroup 
             heading="Store Products" 
@@ -246,6 +150,7 @@ const SearchResults = ({
           />
         )}
         
+        {/* Additional groups for friends and experiences */}
         {searchTerm.trim().length > 1 && !loading && (
           <>
             <SearchGroup 

@@ -1,13 +1,16 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Heart, ChevronRight } from "lucide-react";
+import { Heart, ChevronRight, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const FavoritesCard = () => {
-  const { favoriteItems } = useFavorites();
-  const favoritesCount = favoriteItems.length;
+  const { laterItems, wishlistItems } = useFavorites();
+  const laterCount = laterItems.length;
+  const wishlistCount = wishlistItems.length;
+  const totalCount = laterCount + wishlistCount;
 
   return (
     <Card>
@@ -18,12 +21,31 @@ const FavoritesCard = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-sm">
-          {favoritesCount > 0 ? (
-            <p>{favoritesCount} products saved</p>
-          ) : (
-            <p className="text-muted-foreground">You haven't saved any favorites yet.</p>
-          )}
+        <Tabs defaultValue="later" className="w-full">
+          <TabsList className="grid grid-cols-2 mb-2">
+            <TabsTrigger value="later" className="text-xs">
+              <Clock className="h-3 w-3 mr-1" /> Save for Later ({laterCount})
+            </TabsTrigger>
+            <TabsTrigger value="wishlist" className="text-xs">
+              <Heart className="h-3 w-3 mr-1" /> My Wishlist ({wishlistCount})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="later">
+            {laterCount > 0 ? (
+              <p className="text-sm">{laterCount} items saved for later</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">No items saved for later.</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="wishlist">
+            {wishlistCount > 0 ? (
+              <p className="text-sm">{wishlistCount} items in your wishlist</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">No items in your wishlist.</p>
+            )}
+          </TabsContent>
           
           <div className="mt-4">
             <Link 
@@ -33,7 +55,7 @@ const FavoritesCard = () => {
               View all favorites <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-        </div>
+        </Tabs>
       </CardContent>
     </Card>
   );

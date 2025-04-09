@@ -4,8 +4,9 @@ import { Product } from "@/contexts/ProductContext";
 import ProductImage from "./ProductImage";
 import ProductRating from "./ProductRating";
 import ProductDetails from "./ProductDetails";
-import WishlistButton from "./WishlistButton";  // Fixed path
+import WishlistButton from "./WishlistButton";
 import { useAuth } from "@/contexts/auth";
+import { useFavorites, SavedItemType } from "@/components/gifting/hooks/useFavorites";
 
 interface ProductItemProps {
   product: Product;
@@ -22,7 +23,12 @@ const ProductItem = ({
   onWishlistClick,
   isFavorited 
 }: ProductItemProps) => {
-  const { user } = useAuth(); // Changed from userData to user
+  const { user } = useAuth();
+  const { handleSaveOptionSelect } = useFavorites();
+
+  const handleSaveOption = (option: SavedItemType, productId: number) => {
+    handleSaveOptionSelect(option, productId);
+  };
 
   return (
     <div 
@@ -35,13 +41,13 @@ const ProductItem = ({
       <div className={viewMode === 'grid' ? 'relative' : 'w-1/4'}>
         <ProductImage 
           product={product} 
-          // Remove className prop as it's not in ProductImageProps
         />
         <WishlistButton 
           userData={user}
           productId={product.id}
           productName={product.name}
           onWishlistClick={onWishlistClick}
+          onSaveOptionSelect={handleSaveOption}
           isFavorited={isFavorited}
         />
       </div>

@@ -29,8 +29,13 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     ? zincProduct.review_count
     : parseInt(String(zincProduct.review_count || 0), 10) || 0;
   
+  // Convert the string product_id to a number, or generate a random number if conversion fails
+  const productIdAsNumber = zincProduct.product_id 
+    ? parseInt(String(zincProduct.product_id).replace(/\D/g, ''), 10) || Math.floor(Math.random() * 100000)
+    : Math.floor(Math.random() * 100000);
+  
   return {
-    id: zincProduct.product_id,
+    id: productIdAsNumber,
     name: zincProduct.title,
     price: priceValue,
     description: description,

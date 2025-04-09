@@ -29,12 +29,11 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
       : 0;
   
   // Ensure price is always a number
-  let priceValue = 0; // Initialize with a default value
-  if (typeof zincProduct.price === 'number') {
-    priceValue = zincProduct.price;
-  } else if (typeof zincProduct.price === 'string') {
-    priceValue = parseFloat(zincProduct.price) || 0;
-  }
+  const priceValue = typeof zincProduct.price === 'number'
+    ? zincProduct.price
+    : typeof zincProduct.price === 'string'
+      ? parseFloat(zincProduct.price) || 0
+      : 0;
   
   return {
     id: zincProduct.product_id,
@@ -63,7 +62,7 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
   const priceValue = typeof product.price === 'number' 
     ? product.price 
     : typeof product.price === 'string'
-      ? parseFloat(product.price) || 0 
+      ? parseFloat(String(product.price)) || 0 
       : 0;
     
   const ratingValue = typeof product.rating === 'number'

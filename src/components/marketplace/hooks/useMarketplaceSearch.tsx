@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { useSearchProducts } from "./useSearchProducts";
 import { useFilterProducts } from "./useFilterProducts";
 import { usePageInfo } from "./usePageInfo";
+import { ZincProduct } from "../zinc/types";
+import { convertZincProductToProduct } from "../zinc/utils/productConverter";
 
 export const useMarketplaceSearch = () => {
   const location = useLocation();
@@ -29,6 +31,35 @@ export const useMarketplaceSearch = () => {
   } = useFilterProducts(products, RESULTS_LIMIT);
   
   const { getPageInfo } = usePageInfo(currentCategory, filteredProducts);
+
+  // Check for a stored product from search
+  useEffect(() => {
+    try {
+      const selectedProduct = sessionStorage.getItem('selected_search_product');
+      if (selectedProduct) {
+        // Convert the Zinc product to our product format
+        const parsedProduct = JSON.parse(selectedProduct);
+        
+        // Only add the product if we need to
+        const existingProductIndex = products.findIndex(p => 
+          (p.name === parsedProduct.title || p.id === parsedProduct.product_id)
+        );
+        
+        if (existingProductIndex === -1) {
+          // Convert ZincProduct to our Product format
+          const newProduct = convertZincProductToProduct(parsedProduct);
+          
+          // Add this product to the context
+          setProducts(prevProducts => [...prevProducts, newProduct]);
+        }
+        
+        // Clear from session storage after processing
+        sessionStorage.removeItem('selected_search_product');
+      }
+    } catch (e) {
+      console.error('Failed to process selected search product:', e);
+    }
+  }, []);
 
   // Reset toast shown flag when component unmounts
   useEffect(() => {

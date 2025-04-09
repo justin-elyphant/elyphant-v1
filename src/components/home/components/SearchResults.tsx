@@ -67,7 +67,9 @@ const SearchResults = ({
       "san": "san diego padres",
       "san d": "san diego padres",
       "san di": "san diego padres",
-      "can": "scented candle"
+      "can": "scented candle",
+      "47": "47 brand cap",
+      "47 b": "47 brand cap"
     };
     
     if (suggestions[term]) {
@@ -126,7 +128,8 @@ const SearchResults = ({
               image: product.image,
               isTopSeller: true,
               rating: product.rating || product.stars,
-              reviewCount: product.review_count || product.num_reviews
+              reviewCount: product.review_count || product.num_reviews,
+              originalProduct: product // Store the original product data
             }))} 
             onSelect={handleSelect} 
           />
@@ -141,7 +144,8 @@ const SearchResults = ({
               name: product.title,
               image: product.image,
               rating: product.rating || product.stars,
-              reviewCount: product.review_count || product.num_reviews
+              reviewCount: product.review_count || product.num_reviews,
+              originalProduct: product // Store the original product data
             }))} 
             onSelect={handleSelect} 
           />
@@ -155,7 +159,8 @@ const SearchResults = ({
               name: product.name,
               image: product.image,
               rating: product.rating,
-              reviewCount: product.reviewCount
+              reviewCount: product.reviewCount,
+              originalProduct: product // Store the original product data
             }))} 
             onSelect={handleSelect} 
           />

@@ -1,64 +1,81 @@
 
 import React from "react";
 import { CommandGroup, CommandItem } from "@/components/ui/command";
-import { Check } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import ProductRating from "@/components/shared/ProductRating";
-
-interface SearchItem {
-  id: string;
-  name: string;
-  title?: string;
-  image?: string;
-  isTopSeller?: boolean;
-  rating?: number;
-  reviewCount?: number;
-}
+import { Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SearchGroupProps {
   heading: string;
-  items: SearchItem[];
+  items: any[];
   onSelect: (value: string) => void;
 }
 
-const SearchGroup: React.FC<SearchGroupProps> = ({ heading, items, onSelect }) => {
-  if (!items || items.length === 0) {
-    return null;
-  }
+const SearchGroup = ({ heading, items, onSelect }: SearchGroupProps) => {
+  if (!items || items.length === 0) return null;
+
+  const handleItemClick = (item: any) => {
+    // If it's a product with a title, use that, otherwise use the name
+    const value = item.title || item.name;
+    onSelect(value);
+    
+    // Store selected item in sessionStorage to pass to marketplace
+    if (item.originalProduct) {
+      try {
+        sessionStorage.setItem('selected_search_product', JSON.stringify(item.originalProduct));
+      } catch (e) {
+        console.error('Failed to store search selection in session storage:', e);
+      }
+    }
+  };
 
   return (
-    <CommandGroup heading={heading}>
+    <CommandGroup heading={heading} className="px-2">
       {items.map((item) => (
         <CommandItem
           key={item.id}
-          value={item.name}
-          onSelect={() => onSelect(item.name)}
-          className="flex items-center gap-2"
+          value={item.title || item.name}
+          onSelect={() => handleItemClick(item)}
+          className="flex items-center gap-2 px-2 py-1"
         >
           {item.image && (
-            <div className="h-8 w-8 rounded overflow-hidden shrink-0">
+            <div className="h-8 w-8 overflow-hidden rounded-md bg-gray-100 shrink-0">
               <img
                 src={item.image}
-                alt={item.name}
+                alt={item.title || item.name}
                 className="h-full w-full object-cover"
-                loading="lazy"
               />
             </div>
           )}
-          <div className="flex-1">
-            <div className="truncate">
-              {item.name}
+          <div className="flex-1 truncate">
+            <p className="truncate text-sm">
+              {item.title || item.name}
               {item.isTopSeller && (
-                <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 text-xs">
-                  Best Seller
-                </Badge>
+                <span className="ml-2 rounded-full bg-yellow-100 text-yellow-800 text-xs px-1.5 py-0.5">
+                  Top Seller
+                </span>
               )}
-            </div>
-            {item.rating && (
-              <ProductRating rating={item.rating} reviewCount={item.reviewCount} size="sm" />
+            </p>
+            {(item.rating || item.reviewCount) && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "h-3 w-3",
+                        i < Math.floor(item.rating || 0)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "fill-gray-200 text-gray-200"
+                      )}
+                    />
+                  ))}
+                </div>
+                {item.reviewCount && (
+                  <span className="ml-1">({item.reviewCount})</span>
+                )}
+              </div>
             )}
           </div>
-          <Check className="h-4 w-4 opacity-0 group-aria-selected:opacity-100" />
         </CommandItem>
       ))}
     </CommandGroup>

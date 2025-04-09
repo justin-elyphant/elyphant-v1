@@ -1,20 +1,18 @@
 
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
-import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import ProductImage from "./ProductImage";
+import ProductRating from "./ProductRating";
 import ProductDetails from "./ProductDetails";
-import WishlistButton from "./WishlistButton";
-import { Badge } from "@/components/ui/badge";
+import WishlistButton from "../WishlistButton";
+import { useAuth } from "@/contexts/auth";
 
 interface ProductItemProps {
   product: Product;
   viewMode: "grid" | "list";
   onProductClick: (productId: number) => void;
   onWishlistClick: (e: React.MouseEvent) => void;
-  isFavorited?: boolean;
+  isFavorited: boolean;
 }
 
 const ProductItem = ({ 
@@ -22,48 +20,40 @@ const ProductItem = ({
   viewMode, 
   onProductClick,
   onWishlistClick,
-  isFavorited = false
+  isFavorited 
 }: ProductItemProps) => {
-  const { addToCart } = useCart();
-  const [userData] = useLocalStorage("userData", null);
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart(product);
-    toast.success(`${product.name} added to cart`);
-  };
+  const { userData } = useAuth();
 
   return (
     <div 
-      className={`${
-        viewMode === 'grid' 
-          ? 'group border rounded-md overflow-hidden hover:shadow-md transition-shadow cursor-pointer' 
-          : 'flex border rounded-md overflow-hidden hover:shadow-md transition-shadow cursor-pointer'
-      }`}
+      className={`group relative rounded-lg overflow-hidden border ${
+        viewMode === 'grid' ? 'h-full flex flex-col' : 'flex'
+      } bg-white hover:shadow-md transition-shadow cursor-pointer`}
       onClick={() => onProductClick(product.id)}
+      data-testid={`product-item-${product.id}`}
     >
-      <div className={`${viewMode === 'list' ? 'w-1/3' : 'w-full'} relative`}>
-        <ProductImage product={product} />
-        {product.isBestSeller && (
-          <Badge 
-            variant="default" 
-            className="absolute top-2 left-2 bg-yellow-500 text-white"
-          >
-            Best Seller
-          </Badge>
-        )}
+      <div className={viewMode === 'grid' ? 'relative' : 'w-1/4'}>
+        <ProductImage 
+          product={product} 
+          className={`
+            ${viewMode === 'grid' 
+              ? 'w-full aspect-square object-cover' 
+              : 'w-full h-full object-cover aspect-square'}
+          `}
+        />
         <WishlistButton 
-          userData={userData} 
-          productId={product.id} 
-          productName={product.name} 
+          userData={userData}
+          productId={product.id}
+          productName={product.name}
           onWishlistClick={onWishlistClick}
           isFavorited={isFavorited}
         />
       </div>
       
-      <div className={`${viewMode === 'list' ? 'w-2/3' : 'w-full'}`}>
-        <ProductDetails product={product} onAddToCart={handleAddToCart} />
-      </div>
+      <ProductDetails 
+        product={product} 
+        viewMode={viewMode}
+      />
     </div>
   );
 };

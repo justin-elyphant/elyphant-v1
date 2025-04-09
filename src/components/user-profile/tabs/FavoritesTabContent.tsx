@@ -3,9 +3,20 @@ import React from "react";
 import { Heart } from "lucide-react";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import ProductCard from "@/components/gifting/ProductCard";
+import { useNavigate } from "react-router-dom";
 
-const FavoritesTabContent = ({ isCurrentUser = false }) => {
+interface FavoritesTabContentProps {
+  isCurrentUser?: boolean;
+}
+
+const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser = false }) => {
   const { favoriteItems, handleFavoriteToggle, isFavorited } = useFavorites();
+  const navigate = useNavigate();
+
+  // Handle product click to navigate to the product or marketplace
+  const handleProductClick = (productId: number) => {
+    navigate(`/marketplace?productId=${productId}`);
+  };
 
   if (favoriteItems.length === 0) {
     return (
@@ -29,9 +40,14 @@ const FavoritesTabContent = ({ isCurrentUser = false }) => {
             key={product.id}
             product={product}
             isWishlisted={false}
+            isFavorited={isCurrentUser}
             isGifteeView={isCurrentUser}
-            onToggleWishlist={() => {}}
-            onClick={() => {}}
+            onToggleWishlist={() => {
+              if (isCurrentUser) {
+                handleFavoriteToggle(product.id);
+              }
+            }}
+            onClick={() => handleProductClick(product.id)}
           />
         ))}
       </div>

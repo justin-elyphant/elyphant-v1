@@ -13,6 +13,11 @@ interface WishlistButtonProps {
 }
 
 const WishlistButton = ({ userData, productId, productName, onWishlistClick, isFavorited = false }: WishlistButtonProps) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent product click when clicking the wishlist button
+    onWishlistClick(e);
+  };
+  
   if (userData) {
     return (
       <WishlistSelectionPopover 
@@ -24,7 +29,8 @@ const WishlistButton = ({ userData, productId, productName, onWishlistClick, isF
             variant="ghost" 
             className={`absolute top-2 right-2 ${isFavorited 
               ? 'bg-red-500 hover:bg-red-600' 
-              : 'bg-white/80 hover:bg-white'} rounded-full h-8 w-8`} 
+              : 'bg-white/80 hover:bg-white'} rounded-full h-8 w-8`}
+            onClick={handleClick}
           >
             <Heart className={`h-4 w-4 ${isFavorited ? 'fill-white text-white' : ''}`} />
           </Button>
@@ -40,7 +46,7 @@ const WishlistButton = ({ userData, productId, productName, onWishlistClick, isF
       className={`absolute top-2 right-2 ${isFavorited 
         ? 'bg-red-500 hover:bg-red-600' 
         : 'bg-white/80 hover:bg-white'} rounded-full h-8 w-8`}
-      onClick={onWishlistClick}
+      onClick={handleClick}
     >
       <Heart className={`h-4 w-4 ${isFavorited ? 'fill-white text-white' : ''}`} />
     </Button>

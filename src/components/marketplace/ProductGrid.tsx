@@ -42,8 +42,6 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   const selectedProduct = showProductDetails !== null 
     ? products.find(p => p.id === showProductDetails)
     : null;
-    
-  console.log("Selected product:", selectedProduct);
 
   if (sortedProducts.length === 0) {
     return (
@@ -76,7 +74,6 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
         product={selectedProduct}
         open={showProductDetails !== null}
         onOpenChange={(open) => {
-          console.log("Dialog open state changing to:", open);
           if (!open) setShowProductDetails(null);
         }}
         userData={userData}

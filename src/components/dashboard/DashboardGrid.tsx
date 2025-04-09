@@ -7,6 +7,7 @@ import FriendsCard from "./FriendsCard";
 import SettingsCard from "./SettingsCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import FindGiftsCard from "./FindGiftsCard";
+import FavoritesCard from "./FavoritesCard";
 
 const DashboardGrid = () => {
   return (
@@ -24,6 +25,7 @@ const DashboardGrid = () => {
       {/* Secondary cards - grid layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <WishlistsCard />
+        <FavoritesCard />
         <EventsCard />
         <OrdersCard />
         <FriendsCard />

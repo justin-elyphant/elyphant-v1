@@ -38,7 +38,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
-    price: priceValue, // Use the converted price value
+    price: priceValue, 
     description: description,
     category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",

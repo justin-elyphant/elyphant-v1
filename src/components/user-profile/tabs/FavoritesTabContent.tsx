@@ -19,7 +19,7 @@ const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser
     laterItems
   } = useFavorites();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<SavedItemType>("later");
+  const [activeTab, setActiveTab] = useState<SavedItemType>("wishlist");
 
   // Handle product click to navigate to the product or marketplace
   const handleProductClick = (productId: number) => {
@@ -58,17 +58,17 @@ const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser
     <div className="space-y-4">
       {isCurrentUser && (
         <Tabs 
-          defaultValue="later" 
+          defaultValue="wishlist" 
           value={activeTab} 
           onValueChange={(value) => setActiveTab(value as SavedItemType)}
           className="w-full"
         >
-          <TabsList className="grid grid-cols-2 w-64 mb-4">
-            <TabsTrigger value="later">
-              <Clock className="h-4 w-4 mr-2" /> Saved for Later
-            </TabsTrigger>
+          <TabsList className="grid grid-cols-2 w-72 mb-4">
             <TabsTrigger value="wishlist">
               <Heart className="h-4 w-4 mr-2" /> My Wishlist
+            </TabsTrigger>
+            <TabsTrigger value="later">
+              <Clock className="h-4 w-4 mr-2" /> Saved for Later
             </TabsTrigger>
           </TabsList>
         </Tabs>

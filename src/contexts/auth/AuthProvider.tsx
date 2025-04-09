@@ -1,8 +1,8 @@
 
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { AuthState } from "./types";
-import { useAuthSession } from "./useAuthSession";
+import { useAuthSession } from "@/hooks/auth/useAuthSession";
 import { useAuthFunctions } from "./authHooks";
 import { initializeStorageBucket } from "./authUtils";
 import { useDebugMode } from "@/hooks/useDebugMode";

@@ -38,7 +38,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
-    price: priceValue,
+    price: Number(priceValue), // Explicitly cast to Number to ensure it's not a string
     description: description,
     category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",

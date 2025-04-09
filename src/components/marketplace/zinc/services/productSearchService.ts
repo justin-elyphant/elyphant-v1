@@ -1,90 +1,101 @@
 
-import { ZincProduct } from '../types';
-import { ZINC_API_BASE_URL, getZincHeaders, isTestMode } from '../zincCore';
-import { findMatchingProducts } from '../utils/searchUtils';
-import { createMockResults } from '../utils/mockResultsGenerator';
+import { ZINC_API_BASE_URL, getZincHeaders, isTestMode } from "../zincCore";
+import { ZincProduct } from "../types";
+import { getSpecialCaseProducts } from "../utils/specialCaseHandler";
+import { generateMockProductResults } from "../utils/mockResultsGenerator";
+import { correctSpelling } from "../utils/spellingCorrector";
 
 /**
- * Search for products on multiple marketplaces via the Zinc API
- * @param query The search query
- * @param retailer The retailer to search (default: amazon)
- * @returns An array of products matching the search
+ * Search for products using the Zinc API
+ * @param query Search query string
+ * @param maxResults Maximum results to return (optional, defaults to 10)
+ * @returns Promise with array of product results
  */
-export const searchProducts = async (query: string, retailer = 'amazon'): Promise<ZincProduct[]> => {
+export const searchProducts = async (
+  query: string,
+  maxResults: string = "10"
+): Promise<ZincProduct[]> => {
+  // Convert maxResults to number for processing
+  const numResults = parseInt(maxResults, 10);
+  
+  // Handle empty queries
+  if (!query || query.trim() === "") {
+    console.warn("Empty search query provided");
+    return [];
+  }
+  
+  // Clean up and normalize the query
+  const normalizedQuery = query.trim().toLowerCase();
+  console.log(`Searching for products with query: "${normalizedQuery}", max results: ${maxResults}`);
+  
+  // Special case handling (for brands etc.)
+  const specialCaseResults = await getSpecialCaseProducts(normalizedQuery);
+  if (specialCaseResults && specialCaseResults.length > 0) {
+    console.log(`Using special case results for query: ${normalizedQuery}`);
+    return specialCaseResults.slice(0, numResults);
+  }
+
+  // Check if we're in test mode and should use mock data
+  if (isTestMode()) {
+    console.log(`Using mock data for product search: ${normalizedQuery}`);
+    // For special searches we want to return relevant mock data
+    const mockResults = generateMockProductResults(normalizedQuery, numResults);
+    console.log(`Generated ${mockResults.length} mock results for "${normalizedQuery}"`);
+    return mockResults;
+  }
+  
   try {
-    console.log(`Searching products for query: ${query}, minimum count: 100`);
-    
-    // Handle test/mock mode
-    if (isTestMode()) {
-      console.log("Using realistic mock search results for development");
-      
-      // Add randomness to results for development with seed from query
-      // This makes search results deterministic for the same query
-      const timestamp = Date.now();
-      const randomSeed = query.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const searchResults = findMatchingProducts(query);
-      
-      // Add some randomness to search results for more realistic results
-      const randomizedResults = searchResults.map(product => {
-        const randomFactor = (Math.sin(product.title.length * randomSeed) + 1) / 2;
-        const randomRating = 3.5 + randomFactor * 1.5;
-        const randomReviews = Math.floor(50 + randomFactor * 950);
-        
-        return {
-          ...product,
-          rating: parseFloat(randomRating.toFixed(1)),
-          review_count: randomReviews,
-          brand: product.brand || (query.includes('47') ? '47 Brand' : undefined)
-        };
-      });
-      
-      return randomizedResults;
-    }
-    
-    // In production, make a real API call to Zinc
-    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&retailer=${retailer}&max_results=100`;
-    const headers = getZincHeaders();
-    
-    const response = await fetch(url, { headers });
+    // Try with original query first
+    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(normalizedQuery)}&max_results=${maxResults}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getZincHeaders()
+    });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Zinc API error:', response.status, errorText);
-      
-      // Return mock results as fallback on error
-      console.log('Using mock results as fallback due to API error');
-      return createMockResults(query, undefined, 100, 4, 5, undefined, true);
+      throw new Error(`Zinc API error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
     
-    // If we get a valid response with results, return it
-    if (data && data.results && Array.isArray(data.results)) {
-      // Process and return search results
-      return data.results.map((item: any) => ({
-        product_id: item.product_id || item.asin || `result-${Math.random()}`,
-        title: item.title,
-        price: typeof item.price === 'number' ? item.price / 100 : parseFloat(item.price) || 0,
-        image: item.image_url || item.image || '/placeholder.svg',
-        images: item.images || [item.image_url || item.image || '/placeholder.svg'],
-        description: item.description || '',
-        rating: parseFloat(item.rating) || 0,
-        review_count: parseInt(item.review_count, 10) || 0,
-        retailer: 'Amazon via Zinc',
-        category: item.category || 'Electronics',
-        brand: item.brand || '',
-        features: item.features || []
-      }));
-    } else {
-      console.log('Empty or invalid response from Zinc API, using mock results');
-      return createMockResults(query, undefined, 100, 4, 5, undefined, true);
+    // If we get results, return them
+    if (data.results && data.results.length > 0) {
+      console.log(`Found ${data.results.length} results for "${normalizedQuery}"`);
+      return data.results;
     }
     
-  } catch (error) {
-    console.error('Error searching products:', error);
+    // Try with spelling correction
+    const correctedQuery = correctSpelling(normalizedQuery);
+    if (correctedQuery !== normalizedQuery) {
+      console.log(`No results found for "${normalizedQuery}", trying with spelling correction: "${correctedQuery}"`);
+      
+      const correctedUrl = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(correctedQuery)}&max_results=${maxResults}`;
+      const correctedResponse = await fetch(correctedUrl, {
+        method: 'GET',
+        headers: getZincHeaders()
+      });
+      
+      if (!correctedResponse.ok) {
+        throw new Error(`Zinc API error with corrected query: ${correctedResponse.status} ${correctedResponse.statusText}`);
+      }
+      
+      const correctedData = await correctedResponse.json();
+      
+      if (correctedData.results && correctedData.results.length > 0) {
+        console.log(`Found ${correctedData.results.length} results for corrected query "${correctedQuery}"`);
+        return correctedData.results;
+      }
+    }
     
-    // Return mock results as fallback on error
-    console.log('Using mock results as fallback due to error');
-    return createMockResults(query, undefined, 100, 4, 5, undefined, true);
+    // If still no results, return mock data as fallback
+    console.log(`No results found for "${normalizedQuery}" or "${correctedQuery}", using mock data as fallback`);
+    return generateMockProductResults(normalizedQuery, numResults);
+    
+  } catch (error) {
+    console.error(`Error searching for products: ${error}`);
+    
+    // Return mock results in case of error
+    const mockResults = generateMockProductResults(normalizedQuery, numResults);
+    return mockResults;
   }
 };

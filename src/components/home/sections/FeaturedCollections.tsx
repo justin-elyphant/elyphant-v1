@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -135,7 +134,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                   <div className="mb-1">
                     <ProductRating 
                       rating={collection.rating} 
-                      reviewCount={collection.reviewCount} 
+                      reviewCount={collection.reviewCount ? collection.reviewCount.toString() : undefined} 
                       size="sm" 
                       className="text-white"
                     />

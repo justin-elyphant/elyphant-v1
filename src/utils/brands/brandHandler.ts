@@ -57,7 +57,7 @@ export const handleBrandProducts = async (
     
     // Race the API call against the timeout
     const zincResults = await Promise.race([
-      searchProducts(searchQuery, MIN_PRODUCTS_COUNT), // Pass the minimum required products
+      searchProducts(searchQuery, MIN_PRODUCTS_COUNT.toString()), // Convert number to string
       timeoutPromise
     ]);
     

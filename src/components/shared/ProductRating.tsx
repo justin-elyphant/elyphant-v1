@@ -1,50 +1,65 @@
 
 import React from "react";
-import { Star, StarHalf } from "lucide-react";
+import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProductRatingProps {
   rating?: number;
-  reviewCount?: number;
+  reviewCount?: string; // Changed from number to string or undefined
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-const ProductRating = ({ 
-  rating, 
+const ProductRating: React.FC<ProductRatingProps> = ({ 
+  rating = 0, 
   reviewCount, 
-  size = "md", 
-  className 
-}: ProductRatingProps) => {
-  if (!rating) return null;
+  size = "md",
+  className = ""
+}) => {
+  // No reviews, don't display
+  if (!rating && !reviewCount) return null;
   
-  // Calculate full and half stars
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+  // Set the star size based on the size prop
+  const getStarSize = () => {
+    switch (size) {
+      case "sm": return "h-3 w-3";
+      case "lg": return "h-5 w-5";
+      default: return "h-4 w-4";
+    }
+  };
   
-  // Determine star size based on the size prop
-  const starSize = {
-    sm: "h-3 w-3",
-    md: "h-4 w-4",
-    lg: "h-5 w-5",
-  }[size];
+  // Set the text size based on the size prop
+  const getTextSize = () => {
+    switch (size) {
+      case "sm": return "text-xs";
+      case "lg": return "text-base";
+      default: return "text-sm";
+    }
+  };
   
-  // Define custom brand color for stars
-  const starColor = "text-purple-600"; // Using your brand's purple color
-  const starFill = "fill-purple-600";
+  const starSize = getStarSize();
+  const textSize = getTextSize();
   
   return (
-    <div className={cn("flex items-center gap-1", className)}>
-      <div className={`flex ${starColor}`}>
-        {[...Array(fullStars)].map((_, i) => (
-          <Star key={i} className={`${starSize} ${starFill} ${starColor}`} />
+    <div className={cn("flex items-center", className)}>
+      <div className="flex items-center">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={cn(
+              starSize,
+              i < Math.floor(rating) 
+                ? "fill-yellow-400 text-yellow-400" 
+                : "fill-gray-200 text-gray-200"
+            )}
+          />
         ))}
-        {hasHalfStar && <StarHalf className={`${starSize} ${starFill} ${starColor}`} />}
       </div>
-      <span className={`${size === "sm" ? "text-xs" : size === "lg" ? "text-base" : "text-sm"} text-muted-foreground`}>
-        {rating.toFixed(1)}
-        {reviewCount && ` (${reviewCount.toLocaleString()})`}
-      </span>
+      {reviewCount && (
+        <span className={`ml-1 text-muted-foreground ${textSize}`}>
+          ({reviewCount})
+        </span>
+      )}
     </div>
   );
 };

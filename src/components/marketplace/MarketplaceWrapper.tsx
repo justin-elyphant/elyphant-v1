@@ -11,7 +11,7 @@ const MarketplaceWrapper = () => {
   const [searchParams] = useSearchParams();
   const productId = searchParams.get("productId");
   const { products } = useProducts();
-  const { userData } = useAuth();
+  const { user } = useAuth(); // Changed from userData to user
   
   const [showProductDetails, setShowProductDetails] = useState<number | null>(
     productId ? parseInt(productId) : null
@@ -32,8 +32,14 @@ const MarketplaceWrapper = () => {
     
   return (
     <div className="min-h-screen bg-gray-50">
-      <MarketplaceHeader />
-      <MarketplaceContent />
+      <MarketplaceHeader 
+        title="Marketplace" 
+        subtitle="Discover unique products for everyone on your list"
+      />
+      <MarketplaceContent 
+        products={products}
+        isLoading={false}
+      />
       
       <ProductDetailsDialog 
         product={selectedProduct}
@@ -51,7 +57,7 @@ const MarketplaceWrapper = () => {
             setShowProductDetails(null);
           }
         }}
-        userData={userData}
+        userData={user}
       />
     </div>
   );

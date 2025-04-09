@@ -40,7 +40,6 @@ const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser
             key={product.id}
             product={product}
             isWishlisted={false}
-            isFavorited={isCurrentUser}
             isGifteeView={isCurrentUser}
             onToggleWishlist={() => {
               if (isCurrentUser) {

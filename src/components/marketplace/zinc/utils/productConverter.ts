@@ -29,14 +29,14 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
       : 0;
   
   // Ensure price is always a number
-  const price = typeof zincProduct.price === 'string' 
+  const priceValue = typeof zincProduct.price === 'string' 
     ? parseFloat(zincProduct.price) || 0
     : (zincProduct.price || 0);
   
   return {
     id: zincProduct.product_id,
     name: zincProduct.title,
-    price: price,
+    price: priceValue, // Use the converted price value
     description: description,
     category: zincProduct.category || "Unknown",
     vendor: "Amazon via Zinc",
@@ -57,17 +57,29 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
  */
 export const convertProductToZincProduct = (product: Product): ZincProduct => {
   // Ensure all numeric values are properly typed
+  const priceValue = typeof product.price === 'string' 
+    ? parseFloat(product.price) || 0 
+    : product.price;
+    
+  const ratingValue = typeof product.rating === 'string'
+    ? parseFloat(product.rating) || 0
+    : (product.rating || 0);
+    
+  const reviewCountValue = typeof product.reviewCount === 'string'
+    ? parseInt(product.reviewCount, 10) || 0
+    : (product.reviewCount || 0);
+  
   return {
     product_id: product.id.toString(),
     title: product.name,
-    price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+    price: priceValue,
     description: product.description,
     category: product.category,
     retailer: "Amazon via Zinc",
     image: product.image,
     images: product.images || [product.image],
-    rating: typeof product.rating === 'number' ? product.rating : (parseFloat(String(product.rating)) || 0),
-    review_count: typeof product.reviewCount === 'number' ? product.reviewCount : (parseInt(String(product.reviewCount), 10) || 0),
+    rating: ratingValue,
+    review_count: reviewCountValue,
     brand: product.brand || (product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor)
   };
 };

@@ -37,9 +37,40 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   // Log data source for debugging
   console.log(`Converting Zinc product: ${zincProduct.title} (${zincProduct.product_id})`);
   
-  // Make sure we're handling images properly
-  const productImage = zincProduct.images?.[0] || zincProduct.image || "/placeholder.svg";
-  const productImages = zincProduct.images || (zincProduct.image ? [zincProduct.image] : ["/placeholder.svg"]);
+  // IMPORTANT: Validate and clean up the image URLs
+  // Check if image is valid (not null or undefined)
+  let productImage = "/placeholder.svg";
+  let productImages: string[] = [];
+  
+  // First try to use images array
+  if (zincProduct.images && Array.isArray(zincProduct.images) && zincProduct.images.length > 0) {
+    // Filter out any null or undefined values
+    const validImages = zincProduct.images.filter(img => img && typeof img === 'string');
+    if (validImages.length > 0) {
+      productImages = validImages;
+      productImage = validImages[0];
+    }
+  } 
+  // Fallback to single image if images array is empty
+  if (productImages.length === 0 && zincProduct.image && typeof zincProduct.image === 'string') {
+    productImage = zincProduct.image;
+    productImages = [zincProduct.image];
+  }
+  
+  // If we still have no valid images, use fallback
+  if (productImages.length === 0) {
+    // For Padres or baseball merchandise, use a relevant image
+    if (zincProduct.title && 
+        (zincProduct.title.toLowerCase().includes('padres') || 
+         zincProduct.title.toLowerCase().includes('baseball') || 
+         zincProduct.title.toLowerCase().includes('hat'))) {
+      productImage = 'https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop';
+    } else {
+      productImage = '/placeholder.svg';
+    }
+    productImages = [productImage];
+    console.warn(`No valid images for product: ${zincProduct.title}, using fallback`);
+  }
   
   // Create a formatted description
   const description = zincProduct.description || 
@@ -64,8 +95,8 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   const productIdAsNumber = parseProductId(zincProduct.product_id);
   
   // Log data consistency issues for debugging
-  if (!zincProduct.image && !zincProduct.images?.length) {
-    console.warn(`No images for product: ${zincProduct.title} (${zincProduct.product_id})`);
+  if (!productImage || productImage === '/placeholder.svg') {
+    console.warn(`No valid image for product: ${zincProduct.title} (${zincProduct.product_id})`);
   }
   
   if (priceValue > 1000) {
@@ -149,54 +180,69 @@ export const isProductRelevantToSearch = (product: ZincProduct, searchTerm: stri
   const productTitle = (product.title || "").toLowerCase();
   const productCategory = (product.category || "").toLowerCase();
   const productBrand = (product.brand || "").toLowerCase();
+  const productDescription = (product.description || "").toLowerCase();
   
-  // Clothing/apparel related searches
-  const isClothingSearch = lowercaseSearch.includes("hat") || 
-                          lowercaseSearch.includes("cap") || 
-                          lowercaseSearch.includes("shirt") || 
-                          lowercaseSearch.includes("jersey") ||
-                          lowercaseSearch.includes("apparel") ||
-                          lowercaseSearch.includes("clothing") ||
-                          lowercaseSearch.includes("padres");
-
-  // Electronics brands that shouldn't appear in clothing searches
-  const electronicsExcludedBrands = [
-    "samsung", "sony", "lg", "toshiba", "panasonic", "canon", "nikon", "dell", 
-    "hp", "viewsonic", "acer", "asus", "jbl", "bose", "sennheiser"
-  ];
+  // Check for key search terms
+  const searchHat = lowercaseSearch.includes("hat") || lowercaseSearch.includes("cap");
+  const searchPadres = lowercaseSearch.includes("padres") || lowercaseSearch.includes("san diego");
+  const searchTeam = searchPadres || lowercaseSearch.includes("team") || lowercaseSearch.includes("baseball");
   
-  // Electronics categories that shouldn't appear in clothing searches
-  const electronicsExcludedCategories = [
-    "electronics", "headphones", "earbuds", "camera", "computer", "laptop", 
-    "monitor", "tv", "television", "audio", "speaker", "phone", "tablet"
-  ];
+  // Stronger clothing and hat search filtering
+  if (searchHat) {
+    // Electronics and non-clothing/hat categories should be excluded
+    if (productCategory.includes("electronics") || 
+        productCategory.includes("computer") ||
+        productCategory.includes("camera") ||
+        productCategory.includes("phone") ||
+        productCategory.includes("tablet") ||
+        productCategory.includes("monitor") ||
+        productCategory.includes("speaker") ||
+        productCategory.includes("headphone") ||
+        productCategory.includes("tv")) {
+      console.log(`Filtering out "${product.title}" - hat search with electronics category: ${productCategory}`);
+      return false;
+    }
+    
+    // If not explicitly mentioned as a hat in title or description, exclude
+    if (!(productTitle.includes("hat") || productTitle.includes("cap") || 
+          productCategory.includes("hat") || productCategory.includes("cap") ||
+          productDescription.includes("hat") || productDescription.includes("cap"))) {
+      console.log(`Filtering out "${product.title}" - hat search but product doesn't appear to be a hat`);
+      return false;
+    }
+  }
   
-  // If this is a clothing search, exclude electronics
-  if (isClothingSearch) {
-    // Check if this product's category matches any excluded electronics categories
-    for (const excludedCategory of electronicsExcludedCategories) {
-      if (productCategory.includes(excludedCategory)) {
-        console.log(`Filtering out "${product.title}" - clothing search with electronics category: ${productCategory}`);
-        return false;
-      }
+  // Team merchandise search filtering
+  if (searchPadres || searchTeam) {
+    // Electronics brands that shouldn't appear in team merchandise searches
+    const electronicsExcludedBrands = [
+      "samsung", "sony", "lg", "toshiba", "panasonic", "canon", "nikon", "dell", 
+      "hp", "viewsonic", "acer", "asus", "jbl", "bose", "sennheiser"
+    ];
+    
+    // If this is a team merchandise search, first check if the product actually mentions the team
+    if (searchPadres && 
+        !productTitle.includes("padres") && 
+        !productTitle.includes("san diego") && 
+        !productDescription.includes("padres") && 
+        !productDescription.includes("san diego")) {
+      console.log(`Filtering out "${product.title}" - padres search but product doesn't mention padres`);
+      return false;
     }
     
     // Check if this product's brand matches any excluded electronics brands
     for (const excludedBrand of electronicsExcludedBrands) {
       if (productBrand.includes(excludedBrand)) {
-        console.log(`Filtering out "${product.title}" - clothing search with electronics brand: ${productBrand}`);
+        console.log(`Filtering out "${product.title}" - team merchandise search with electronics brand: ${productBrand}`);
         return false;
       }
     }
-    
-    // If product title mentions specific electronics terms, exclude it
-    const electronicsTitleTerms = ["tv", "monitor", "headphone", "earbud", "camera", "laptop", "computer", "speaker"];
-    for (const term of electronicsTitleTerms) {
-      if (productTitle.includes(term)) {
-        console.log(`Filtering out "${product.title}" - clothing search with electronics term in title`);
-        return false;
-      }
-    }
+  }
+  
+  // If we have a null image, the product is not useful to display
+  if (!product.image) {
+    console.log(`Filtering out "${product.title}" - missing image`);
+    return false;
   }
   
   // All checks passed, the product is relevant

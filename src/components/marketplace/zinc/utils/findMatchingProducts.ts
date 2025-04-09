@@ -32,6 +32,34 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     console.log(`SearchUtils: Enhanced query from "${correctedQuery}" to "${enhancedQuery}"`);
   }
   
+  // Special case for San Diego Padres hat searches - explicitly use a very specific query
+  if ((normalizedQuery.includes("padres") || normalizedQuery.includes("san diego")) && 
+      (normalizedQuery.includes("hat") || normalizedQuery.includes("cap"))) {
+    const specificQuery = "san diego padres baseball hat clothing apparel";
+    console.log(`SearchUtils: Using specific query for Padres hat: "${specificQuery}"`);
+    
+    // Create custom results for Padres hats
+    const padresHatResults = createMockResults(
+      specificQuery, 
+      "Baseball Team Merchandise", 
+      20, 
+      4.0, 
+      5.0, 
+      "San Diego Padres", 
+      true
+    );
+    
+    // Filter out irrelevant products
+    const filteredPadresResults = padresHatResults.filter(product => {
+      // Ensure explicit clothing category for hat searches
+      product.category = "Baseball Team Apparel";
+      return isProductRelevantToSearch(product, specificQuery);
+    });
+    
+    console.log(`SearchUtils: Generated ${filteredPadresResults.length} custom Padres hat results`);
+    return filteredPadresResults;
+  }
+  
   // Get appropriate image category
   const imageCategory = getImageCategory(enhancedQuery);
   console.log(`SearchUtils: Using image category "${imageCategory}" for "${enhancedQuery}"`);
@@ -72,6 +100,16 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     // Create custom results for mapped terms
     const mappedResults = createResultsForMappedTerm(mappedTerm);
     if (mappedResults) {
+      // Ensure each product has a valid image
+      mappedResults.forEach(product => {
+        if (!product.image) {
+          product.image = "/placeholder.svg";
+        }
+        if (!product.images || product.images.length === 0) {
+          product.images = [product.image];
+        }
+      });
+      
       // Filter out irrelevant products
       const filteredMappedResults = mappedResults.filter(product => isProductRelevantToSearch(product, enhancedQuery));
       console.log(`SearchUtils: Filtered from ${mappedResults.length} to ${filteredMappedResults.length} relevant mapped results`);

@@ -6,7 +6,26 @@ export function getExactProductImage(title: string, category: string): string {
   const lowerTitle = title.toLowerCase();
   const lowerCategory = category.toLowerCase();
   
-  // Use real Amazon product images with proper links
+  // Special case for San Diego Padres hats - use real Padres hat images
+  if ((lowerTitle.includes('padres') || lowerTitle.includes('san diego')) && 
+      (lowerTitle.includes('hat') || lowerTitle.includes('cap') || lowerCategory.includes('baseball'))) {
+    // Use rotating images for variety
+    const padresHatImages = [
+      'https://m.media-amazon.com/images/I/71UT1A3myCL._AC_SL1500_.jpg', // Padres New Era Cap
+      'https://m.media-amazon.com/images/I/71cYpZFfbGL._AC_SL1500_.jpg', // Padres Adjustable Cap
+      'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg',    // Padres Fitted Hat
+      'https://m.media-amazon.com/images/I/71AJrQfE7ZL._AC_SL1500_.jpg'  // Padres Baseball Cap
+    ];
+    
+    // Select an image based on a hash of the title for consistency
+    const hash = title.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+    return padresHatImages[Math.abs(hash) % padresHatImages.length];
+  }
+  
+  // Sports team merchandise - baseball caps and hats
+  if (lowerCategory.includes('baseball') || lowerCategory.includes('hat') || lowerCategory.includes('cap')) {
+    return 'https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg';
+  }
   
   // Apple Products 
   if (lowerTitle.includes('macbook') || lowerCategory === 'macbook') {

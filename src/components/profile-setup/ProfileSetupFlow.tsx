@@ -107,6 +107,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       if (error) throw error;
       
       console.log("Profile setup completed successfully:", data);
+      toast.success("Profile updated successfully!");
       onComplete();
     } catch (err) {
       console.error("Error completing profile setup:", err);
@@ -117,6 +118,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
   };
 
   const handleSkip = () => {
+    toast.info("You can complete your profile later in settings");
     if (onSkip) {
       onSkip();
     } else {
@@ -145,9 +147,9 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
+    <Card className="w-full max-w-3xl mx-auto shadow-lg">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Complete Your Profile</CardTitle>
+        <CardTitle className="text-2xl font-bold text-purple-700">Complete Your Profile</CardTitle>
         <CardDescription>
           This information helps us personalize your gifting experience
         </CardDescription>
@@ -199,7 +201,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
         )}
       </CardContent>
       
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between pt-4 border-t">
         <div>
           {activeStep > 0 ? (
             <Button variant="outline" onClick={handleBack}>
@@ -214,6 +216,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
         <div>
           {activeStep < steps.length - 1 ? (
             <Button 
+              className="bg-purple-600 hover:bg-purple-700"
               onClick={handleNext}
               disabled={!validateCurrentStep() || isLoading}
             >
@@ -221,6 +224,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
             </Button>
           ) : (
             <Button 
+              className="bg-purple-600 hover:bg-purple-700"
               onClick={handleComplete}
               disabled={!validateCurrentStep() || isLoading}
             >

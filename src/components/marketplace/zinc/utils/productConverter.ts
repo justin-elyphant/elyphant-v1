@@ -76,7 +76,7 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
     
   const reviewCountValue: number = typeof product.reviewCount === 'number'
     ? product.reviewCount
-    : typeof product.rating === 'string'
+    : typeof product.reviewCount === 'string'
       ? parseInt(product.reviewCount as string, 10) || 0
       : 0;
   

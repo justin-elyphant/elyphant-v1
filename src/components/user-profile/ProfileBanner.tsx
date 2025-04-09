@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { 
   User, 
@@ -28,10 +28,10 @@ const ProfileBanner = ({
   onShare 
 }: ProfileBannerProps) => {
   return (
-    <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-48 rounded-t-lg relative mb-16">
+    <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-36 sm:h-48 rounded-t-lg relative mb-16">
       {/* Profile image */}
-      <div className="absolute -bottom-16 left-8">
-        <Avatar className="h-32 w-32 border-4 border-white">
+      <div className="absolute -bottom-12 sm:-bottom-16 left-4 sm:left-8">
+        <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white">
           {userData?.profileImage ? (
             <AvatarImage src={userData.profileImage} alt={userData?.name} />
           ) : (
@@ -43,19 +43,19 @@ const ProfileBanner = ({
       </div>
       
       {/* Action buttons */}
-      <div className="absolute bottom-4 right-4 flex gap-2">
+      <div className="absolute bottom-4 right-4 flex flex-wrap gap-2 justify-end max-w-[70%]">
         {isCurrentUser ? (
           <>
             <Button size="sm" variant="secondary" asChild>
-              <Link to="/profile/edit">
-                <Edit className="h-4 w-4 mr-1" />
-                Edit Profile
+              <Link to="/settings">
+                <Edit className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Edit Profile</span>
               </Link>
             </Button>
             <Button size="sm" variant="secondary" asChild>
               <Link to="/settings">
-                <Settings className="h-4 w-4 mr-1" />
-                Settings
+                <Settings className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Settings</span>
               </Link>
             </Button>
           </>
@@ -70,12 +70,12 @@ const ProfileBanner = ({
               {isFollowing ? (
                 <>
                   <User className="h-4 w-4 mr-1" />
-                  Following
+                  <span className="hidden sm:inline">Following</span>
                 </>
               ) : (
                 <>
                   <User className="h-4 w-4 mr-1" />
-                  Follow
+                  <span className="hidden sm:inline">Follow</span>
                 </>
               )}
             </Button>
@@ -83,7 +83,7 @@ const ProfileBanner = ({
               <DialogTrigger asChild>
                 <Button size="sm" variant="secondary">
                   <MessageCircle className="h-4 w-4 mr-1" />
-                  Message
+                  <span className="hidden sm:inline">Message</span>
                 </Button>
               </DialogTrigger>
               <DialogContent>

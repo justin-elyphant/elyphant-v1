@@ -15,10 +15,10 @@ interface ProfileTabsProps {
 const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser, mockWishlists }: ProfileTabsProps) => {
   return (
     <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="w-full">
-        <TabsTrigger value="wishlists" className="flex-1">Wishlists</TabsTrigger>
-        <TabsTrigger value="favorites" className="flex-1">Favorites</TabsTrigger>
-        <TabsTrigger value="activity" className="flex-1">Activity</TabsTrigger>
+      <TabsList className="w-full grid grid-cols-3">
+        <TabsTrigger value="wishlists">Wishlists</TabsTrigger>
+        <TabsTrigger value="favorites">Favorites</TabsTrigger>
+        <TabsTrigger value="activity">Activity</TabsTrigger>
       </TabsList>
       
       <TabsContent value="wishlists" className="mt-6">

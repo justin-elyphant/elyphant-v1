@@ -1,16 +1,15 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
 
 const FavoritesTabContent = () => {
   return (
-    <div className="text-center py-12">
-      <h3 className="text-lg font-medium mb-2">No favorites yet</h3>
-      <p className="text-muted-foreground mb-4">When you find products you love, save them here for later.</p>
-      <Button asChild>
-        <Link to="/marketplace">Explore Marketplace</Link>
-      </Button>
+    <div className="text-center py-8 border rounded-lg">
+      <Heart className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+      <h4 className="font-medium">No favorites yet</h4>
+      <p className="text-sm text-muted-foreground mt-1">
+        Favorited items will appear here.
+      </p>
     </div>
   );
 };

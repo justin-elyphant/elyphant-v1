@@ -1,11 +1,15 @@
 
 import React from "react";
+import { Activity } from "lucide-react";
 
 const ActivityTabContent = () => {
   return (
-    <div className="text-center py-12">
-      <h3 className="text-lg font-medium mb-2">Activity feed coming soon</h3>
-      <p className="text-muted-foreground">We're working on an activity feed to show your interactions.</p>
+    <div className="text-center py-8 border rounded-lg">
+      <Activity className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+      <h4 className="font-medium">No recent activity</h4>
+      <p className="text-sm text-muted-foreground mt-1">
+        Recent activity will appear here.
+      </p>
     </div>
   );
 };

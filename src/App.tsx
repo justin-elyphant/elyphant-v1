@@ -9,7 +9,8 @@ import ProfileSetup from './pages/ProfileSetup';
 import Settings from './pages/Settings';
 import PurchaseSuccess from './pages/PurchaseSuccess';
 import FundingSuccess from './pages/FundingSuccess';
-import Marketplace from './pages/Marketplace'; 
+import Marketplace from './pages/Marketplace';
+import UserProfile from './pages/UserProfile'; // Added new import for UserProfile page
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/auth';
 import { CartProvider } from './contexts/CartContext';
@@ -33,6 +34,9 @@ function App() {
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/purchase-success" element={<PurchaseSuccess />} />
                 <Route path="/funding-success" element={<FundingSuccess />} />
+                
+                {/* Public profile route */}
+                <Route path="/user/:userId" element={<UserProfile />} />
                 
                 {/* Protected routes within MainLayout */}
                 <Route path="/settings" element={

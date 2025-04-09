@@ -12,20 +12,20 @@ interface ProfileInfoProps {
 
 const ProfileInfo = ({ userData }: ProfileInfoProps) => {
   return (
-    <div className="pl-8 mb-8">
-      <h1 className="text-2xl font-bold">{userData?.name || "User Name"}</h1>
+    <div className="pl-4 sm:pl-8 mb-8 pt-14 sm:pt-4">
+      <h1 className="text-xl sm:text-2xl font-bold">{userData?.name || "User Name"}</h1>
       <div className="text-sm text-muted-foreground mb-2">@{userData?.username || "username"}</div>
-      <div className="flex items-center gap-6 mt-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-3 sm:gap-6 mt-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
         <div className="flex items-center">
-          <Users className="h-4 w-4 mr-1" />
+          <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
           <span className="font-medium">127</span> Followers
         </div>
         <div className="flex items-center">
-          <Users className="h-4 w-4 mr-1" />
+          <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
           <span className="font-medium">83</span> Following
         </div>
         <div className="flex items-center">
-          <Heart className="h-4 w-4 mr-1" />
+          <Heart className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
           <span className="font-medium">254</span> Likes
         </div>
       </div>
@@ -43,7 +43,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
       )}
       
       {/* Personal Info Card */}
-      {(userData?.birthday || userData?.address) && (
+      {(userData?.birthday || (userData?.address?.city && userData?.address?.country)) && (
         <Card className="mt-4 w-full">
           <CardHeader className="pb-2">
             <CardTitle className="text-md">Personal Information</CardTitle>

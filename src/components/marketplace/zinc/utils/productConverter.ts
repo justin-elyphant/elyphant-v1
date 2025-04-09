@@ -25,6 +25,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     images: productImages,
     rating: typeof zincProduct.rating === 'number' ? zincProduct.rating : 0,
     reviewCount: typeof zincProduct.review_count === 'number' ? zincProduct.review_count : 0,
+    brand: zincProduct.brand || "Unknown",  // Add brand field to ensure it's populated
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     // Store the original zinc product data too
@@ -45,8 +46,8 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
     retailer: "Amazon via Zinc",
     image: product.image,
     images: product.images || [product.image],
-    rating: typeof product.rating === 'number' ? product.rating : 0,
-    review_count: typeof product.reviewCount === 'number' ? product.reviewCount : 0,
-    brand: product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor
+    rating: product.rating,  // Fix: Changed from string to number
+    review_count: product.reviewCount,  // Fix: Changed from string to number
+    brand: product.brand || (product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor)
   };
 };

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Command, CommandList, CommandEmpty } from "@/components/ui/command";
 import { useZincSearch } from "@/hooks/useZincSearch";
@@ -64,9 +63,12 @@ const SearchResults = ({
       "hea": "headphones",
       "wat": "apple watch",
       "pad": "ipad",
+      "mac": "apple macbook",
       "san": "san diego padres",
       "san d": "san diego padres",
       "san di": "san diego padres",
+      "pad": "san diego padres hat",
+      "padr": "san diego padres hat",
       "can": "scented candle",
       "47": "47 brand cap",
       "47 b": "47 brand cap"
@@ -83,8 +85,8 @@ const SearchResults = ({
   
   // Sort products by rating/review count to identify top sellers
   const sortedZincResults = [...zincResults].sort((a, b) => {
-    const aScore = (a.rating || 0) * (a.review_count || 0);
-    const bScore = (b.rating || 0) * (b.review_count || 0);
+    const aScore = (a.rating || 0) * (a.review_count || a.reviewCount || 0);
+    const bScore = (b.rating || 0) * (b.review_count || b.reviewCount || 0);
     return bScore - aScore;
   });
   
@@ -92,6 +94,59 @@ const SearchResults = ({
   const topSellerCount = Math.max(1, Math.ceil(sortedZincResults.length * 0.3));
   const topSellers = sortedZincResults.slice(0, topSellerCount);
   const otherProducts = sortedZincResults.slice(topSellerCount);
+
+  // Group search results by type for Apple MacBook searches
+  const getGroupedResults = () => {
+    if (searchTerm.toLowerCase().includes('macbook')) {
+      // Filter for actual Apple products
+      const appleProducts = sortedZincResults.filter(product => 
+        (product.title?.toLowerCase().includes('apple') && product.title?.toLowerCase().includes('macbook')) ||
+        (product.brand?.toLowerCase() === 'apple')
+      );
+      
+      // Other brand products
+      const otherBrandProducts = sortedZincResults.filter(product => 
+        !(product.title?.toLowerCase().includes('apple') && product.title?.toLowerCase().includes('macbook')) &&
+        product.brand?.toLowerCase() !== 'apple'
+      );
+      
+      return {
+        appleProducts,
+        otherBrandProducts
+      };
+    }
+    
+    // For sports merchandise searches
+    if (searchTerm.toLowerCase().includes('padres') && 
+        (searchTerm.toLowerCase().includes('hat') || searchTerm.toLowerCase().includes('cap'))) {
+      // Filter for actual hats/caps
+      const actualHats = sortedZincResults.filter(product => 
+        product.category?.toLowerCase().includes('clothing') || 
+        product.title?.toLowerCase().includes('hat') || 
+        product.title?.toLowerCase().includes('cap')
+      );
+      
+      // Other products
+      const otherProducts = sortedZincResults.filter(product => 
+        !(product.category?.toLowerCase().includes('clothing') || 
+          product.title?.toLowerCase().includes('hat') || 
+          product.title?.toLowerCase().includes('cap'))
+      );
+      
+      return {
+        actualHats,
+        otherProducts: otherProducts.length > 0 ? otherProducts : []
+      };
+    }
+    
+    // Default grouping
+    return {
+      topSellers,
+      otherProducts
+    };
+  };
+  
+  const groupedResults = getGroupedResults();
 
   // More realistic friend data based on wishlist
   const friendsData = [
@@ -118,35 +173,57 @@ const SearchResults = ({
           />
         </CommandEmpty>
         
-        {topSellers.length > 0 && (
+        {searchTerm.toLowerCase().includes('macbook') && groupedResults.appleProducts?.length > 0 && (
+          <SearchGroup 
+            heading="Apple MacBooks" 
+            items={groupedResults.appleProducts} 
+            onSelect={handleSelect} 
+          />
+        )}
+        
+        {searchTerm.toLowerCase().includes('macbook') && groupedResults.otherBrandProducts?.length > 0 && (
+          <SearchGroup 
+            heading="Other Laptops" 
+            items={groupedResults.otherBrandProducts} 
+            onSelect={handleSelect} 
+          />
+        )}
+        
+        {searchTerm.toLowerCase().includes('padres') && groupedResults.actualHats?.length > 0 && (
+          <SearchGroup 
+            heading="Padres Hats" 
+            items={groupedResults.actualHats} 
+            onSelect={handleSelect} 
+          />
+        )}
+        
+        {searchTerm.toLowerCase().includes('padres') && groupedResults.otherProducts?.length > 0 && (
+          <SearchGroup 
+            heading="Other Padres Items" 
+            items={groupedResults.otherProducts} 
+            onSelect={handleSelect} 
+          />
+        )}
+        
+        {!searchTerm.toLowerCase().includes('macbook') && 
+         !searchTerm.toLowerCase().includes('padres') && 
+         topSellers.length > 0 && (
           <SearchGroup 
             heading="Top Sellers" 
             items={topSellers.map((product) => ({ 
-              id: `top-${product.id || product.product_id || Math.random().toString()}`,
-              title: product.title,
-              name: product.title,
-              image: product.image,
-              isTopSeller: true,
-              rating: product.rating || product.stars,
-              reviewCount: product.review_count || product.num_reviews,
-              originalProduct: product // Store the original product data
+              ...product,
+              isTopSeller: true
             }))} 
             onSelect={handleSelect} 
           />
         )}
         
-        {otherProducts.length > 0 && (
+        {!searchTerm.toLowerCase().includes('macbook') && 
+         !searchTerm.toLowerCase().includes('padres') && 
+         otherProducts.length > 0 && (
           <SearchGroup 
             heading="More Products" 
-            items={otherProducts.map((product) => ({ 
-              id: `other-${product.id || product.product_id || Math.random().toString()}`,
-              title: product.title,
-              name: product.title,
-              image: product.image,
-              rating: product.rating || product.stars,
-              reviewCount: product.review_count || product.num_reviews,
-              originalProduct: product // Store the original product data
-            }))} 
+            items={otherProducts} 
             onSelect={handleSelect} 
           />
         )}

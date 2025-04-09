@@ -58,7 +58,7 @@ export const testPurchase = async (productId: string): Promise<ZincOrder | null>
         city: "Test City",
         state: "TS",
         country: "US",
-        phone_number: "555-1234" // Added the required phone_number field
+        phone_number: "555-1234" // Added required phone_number
       }
     };
     
@@ -100,6 +100,9 @@ const getProductFallbackImage = (name: string, category?: string): string => {
   }
   if (productName.includes('padres')) {
     return 'https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop'; // Baseball theme
+  }
+  if (productName.includes('macbook') || productName.includes('laptop')) {
+    return 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&h=500&fit=crop'; // Laptop image
   }
   
   // Generic image based on category

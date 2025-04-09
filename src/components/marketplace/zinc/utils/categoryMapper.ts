@@ -33,7 +33,10 @@ const categoryMapping: Record<string, string> = {
   "puma": "clothing",
   "jacket": "clothing",
   "hat": "clothing",
+  "cap": "clothing",
   "socks": "clothing",
+  "padres": "clothing",  // Specifically add padres to clothing
+  "cowboys": "clothing", // Sports teams generally map to clothing
   
   // Home
   "furniture": "home",
@@ -90,6 +93,15 @@ const categoryMapping: Record<string, string> = {
 export const getImageCategory = (query: string): string => {
   const lowercaseQuery = query.toLowerCase();
   
+  // Special case handlers
+  if (lowercaseQuery.includes("macbook") || lowercaseQuery.includes("mac book")) {
+    return "electronics";
+  }
+  
+  if (lowercaseQuery.includes("padres") && (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
+    return "clothing";
+  }
+  
   // Check for specific keyword matches
   for (const [keyword, category] of Object.entries(categoryMapping)) {
     if (lowercaseQuery.includes(keyword)) {
@@ -109,7 +121,9 @@ export const getImageCategory = (query: string): string => {
   if (
     lowercaseQuery.includes("wear") || 
     lowercaseQuery.includes("fashion") ||
-    lowercaseQuery.includes("apparel")
+    lowercaseQuery.includes("apparel") ||
+    lowercaseQuery.includes("hat") ||
+    lowercaseQuery.includes("cap")
   ) {
     return "clothing";
   }

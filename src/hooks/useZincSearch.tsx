@@ -40,35 +40,48 @@ export const useZincSearch = (searchTerm: string) => {
         const filtered = products.filter(
           product => 
             product.name.toLowerCase().includes(term) || 
-            (product.description && product.description.toLowerCase().includes(term))
+            (product.description && product.description.toLowerCase().includes(term)) ||
+            (product.brand && product.brand.toLowerCase().includes(term))
         );
         setFilteredProducts(filtered);
         
         // Now search Zinc API
         console.log(`Searching Zinc API for "${searchTerm}"...`);
+
+        // Special case mappings for popular searches
+        let searchQuery = searchTerm;
+        if (term.includes('macbook') || term.includes('mac book')) {
+          searchQuery = 'apple macbook';
+          console.log(`Mapped search term to "${searchQuery}"`);
+        }
+        else if ((term.includes('padres') && (term.includes('hat') || term.includes('cap'))) ||
+                 (term.includes('san diego') && (term.includes('hat') || term.includes('cap')))) {
+          searchQuery = 'san diego padres baseball hat';
+          console.log(`Mapped search term to "${searchQuery}"`);
+        }
         
         // Get results from Zinc API (through our service)
-        const results = await searchProducts(searchTerm);
+        const results = await searchProducts(searchQuery);
         
         // Process results
         if (results && Array.isArray(results)) {
-          console.log(`Found ${results.length} results from Zinc API for "${searchTerm}"`);
-          console.log("Sample result with image data:", results[0]);
+          console.log(`Found ${results.length} results from Zinc API for "${searchQuery}"`);
+          console.log("Sample result:", results[0]);
           
-          // Map to consistent format - ensure we capture image URLs properly
+          // Map to consistent format with proper types
           const processedResults = results.map(item => ({
-            id: item.product_id,
+            id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
             product_id: item.product_id,
             title: item.title,
             price: item.price,
-            // Use image array if available, otherwise use single image, fallback to placeholder
             image: item.images?.[0] || item.image || "/placeholder.svg",
             images: item.images || (item.image ? [item.image] : ["/placeholder.svg"]),
-            rating: item.rating || 0,
-            stars: item.rating || 0, 
-            review_count: item.review_count || 0,
-            num_reviews: item.review_count || 0,
-            brand: item.brand,
+            rating: typeof item.rating === 'number' ? item.rating : 0,
+            stars: typeof item.rating === 'number' ? item.rating : 0, 
+            reviewCount: typeof item.review_count === 'number' ? item.review_count : 0,
+            num_reviews: typeof item.review_count === 'number' ? item.review_count : 0,
+            brand: item.brand || 'Unknown',
+            category: item.category || getSearchCategory(searchTerm),
             // Keep the original data for reference
             originalProduct: item
           }));
@@ -87,6 +100,21 @@ export const useZincSearch = (searchTerm: string) => {
       } finally {
         setLoading(false);
       }
+    };
+
+    // Helper function to determine category from search term
+    const getSearchCategory = (term: string): string => {
+      const lowercased = term.toLowerCase();
+      if (lowercased.includes('macbook') || lowercased.includes('laptop')) {
+        return 'Computers';
+      }
+      if (lowercased.includes('hat') || lowercased.includes('cap')) {
+        return 'Clothing';
+      }
+      if (lowercased.includes('padres') || lowercased.includes('cowboys')) {
+        return 'Sports Merchandise';
+      }
+      return 'Electronics';
     };
 
     // Debounce function to avoid making too many requests

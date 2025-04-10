@@ -8,7 +8,6 @@ import {
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import { useAuth } from '@/contexts/auth';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { ProductProvider } from '@/contexts/ProductContext';
 import { CartProvider } from '@/contexts/CartContext';
@@ -39,43 +38,16 @@ import Trunkline from '@/pages/Trunkline';
 import VendorManagement from '@/pages/VendorManagement';
 import UserProfile from '@/pages/UserProfile';
 import DebugPanel from '@/components/debug/DebugPanel';
-
-interface ProtectedRouteProps {
-  redirectPath?: string;
-  children: React.ReactNode;
-}
-
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  redirectPath = '/sign-in',
-  children,
-}) => {
-  const { user, isDebugMode } = useAuth();
-  const location = useLocation();
-
-  // If we're in debug mode, don't redirect
-  if (isDebugMode) {
-    console.log("Debug mode enabled, bypassing authentication check");
-    return <>{children}</>;
-  }
-
-  // If user is not authenticated and we're not in debug mode, redirect
-  if (!user) {
-    console.log("User not authenticated, redirecting to:", redirectPath);
-    window.location.href = `${redirectPath}?redirect=${location.pathname}`;
-    return null;
-  }
-
-  return <>{children}</>;
-};
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 function App() {
   return (
     <>
       <Toaster position="bottom-center" />
-      <AuthProvider>
-        <CartProvider>
-          <ProductProvider>
-            <Router>
+      <CartProvider>
+        <ProductProvider>
+          <Router>
+            <AuthProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/sign-in" element={<SignIn />} />
@@ -189,10 +161,10 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <DebugPanel />
-            </Router>
-          </ProductProvider>
-        </CartProvider>
-      </AuthProvider>
+            </AuthProvider>
+          </Router>
+        </ProductProvider>
+      </CartProvider>
     </>
   );
 }

@@ -25,8 +25,8 @@ export const useVerificationContainer = ({
   } = useVerificationStatus({ userEmail });
   
   // Use either the prop code or the locally stored code
-  const effectiveVerificationCode = testVerificationCode || localCode;
-
+  const effectiveVerificationCode = testVerificationCode || localCode || "123456"; // Default code for testing
+  
   // Enhanced logging for debugging with full state details
   useEffect(() => {
     console.log("VerificationContainer: Full state details", {
@@ -54,13 +54,25 @@ export const useVerificationContainer = ({
     }
   }, [testVerificationCode, localCode]);
 
-  // TEMPORARY: Show a testing banner
+  // TEMPORARY: Show a testing banner with more detailed information
   useEffect(() => {
     toast.info("TEST MODE ACTIVE", {
-      description: "Email verification is being bypassed for testing",
+      description: "Email verification is being bypassed for testing. You will be automatically redirected to profile setup.",
       duration: 5000
     });
-  }, []);
+    
+    // Auto-verify after a short delay to simulate successful verification
+    const timer = setTimeout(() => {
+      setIsVerified(true);
+      
+      // Redirect to profile setup after a short delay
+      setTimeout(() => {
+        navigate("/profile-setup");
+      }, 1500);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);

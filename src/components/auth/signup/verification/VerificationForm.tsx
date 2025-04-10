@@ -3,6 +3,8 @@ import React, { useEffect } from "react";
 import { useVerificationCode } from "./hooks/useVerificationCode";
 import VerificationCodeInput from "./components/VerificationCodeInput";
 import VerificationButton from "./components/VerificationButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface VerificationFormProps {
   userEmail: string;
@@ -51,9 +53,8 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
     }
   }, [testVerificationCode, setVerificationCode, handleVerifyCode]);
 
-  // TEMPORARY: Auto-verification for testing user journeys
+  // AUTO-VERIFICATION: Automatically trigger verification success for testing
   useEffect(() => {
-    // Automatically trigger verification success to redirect to profile setup
     console.log("AUTO-VERIFICATION: Bypassing email verification for testing");
     const timer = setTimeout(() => {
       onVerificationSuccess();
@@ -63,6 +64,13 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center">
+      <Alert className="bg-amber-50 border-amber-200 mb-4">
+        <Info className="h-4 w-4 text-amber-500 mr-2" />
+        <AlertDescription className="text-amber-700">
+          <span className="font-semibold">Testing mode active:</span> You will be automatically redirected to profile setup in a moment.
+        </AlertDescription>
+      </Alert>
+      
       <p className="text-sm text-gray-600 mb-4">
         Enter the 6-digit verification code sent to your email:
       </p>

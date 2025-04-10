@@ -38,6 +38,22 @@ export const useSignUpSubmit = ({
       setUserEmail(values.email);
       setUserName(values.name);
       
+      // For testing, skip actual verification email sending and simulate success
+      console.log("TESTING MODE: Bypassing actual email verification");
+      
+      // Set a dummy test verification code for display purposes
+      setTestVerificationCode("123456");
+      
+      // Show success toast for better user feedback
+      toast.success("Account created! For testing, verification is being bypassed", {
+        description: "You'll be redirected to profile setup automatically."
+      });
+      
+      setEmailSent(true);
+      setStep("verification");
+      
+      // Uncomment the following code when ready to use real email verification
+      /*
       const currentOrigin = window.location.origin;
       console.log("Using origin for verification:", currentOrigin);
       
@@ -74,6 +90,7 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       setStep("verification");
+      */
     } catch (err: any) {
       console.error("Signup failed:", err);
       

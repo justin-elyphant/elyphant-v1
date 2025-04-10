@@ -108,21 +108,27 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     try {
       setIsLoading(true);
       
-      // Prepare final data to save
+      // Format gift preferences correctly
+      const formattedGiftPreferences = profileData.gift_preferences.map(pref => ({
+        category: pref.category,
+        importance: pref.importance || "medium",
+        brand: pref.brand || null
+      }));
+      
+      // Prepare final data to save - remove username field which doesn't exist in the profiles table
       let dataToUpdate: any = {
         name: profileData.name,
         email: profileData.email,
         profile_image: profileData.profile_image,
         dob: profileData.dob,
         shipping_address: profileData.shipping_address,
-        gift_preferences: profileData.gift_preferences,
+        gift_preferences: formattedGiftPreferences,
         data_sharing_settings: profileData.data_sharing_settings,
         updated_at: new Date().toISOString(),
         
         // Add these fields to ensure they're saved for settings page
         bio: profileData.name ? `Hi, I'm ${profileData.name}` : "Hello!",
-        interests: profileData.gift_preferences.map(pref => pref.category),
-        address: profileData.shipping_address // Make sure there's also an address field
+        interests: formattedGiftPreferences.map(pref => pref.category)
       };
       
       // Log data we're saving for debugging

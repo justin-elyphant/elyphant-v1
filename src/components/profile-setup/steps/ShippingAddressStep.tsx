@@ -1,10 +1,13 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShippingAddress } from "@/types/supabase";
-import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
+import { useAddressAutocomplete } from "@/hooks/useAddressAutocomplete";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Loader2 } from "lucide-react";
 
 interface ShippingAddressStepProps {
   value: ShippingAddress;
@@ -34,6 +37,21 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
     });
   };
 
+  const {
+    streetQuery,
+    setStreetQuery,
+    suggestions,
+    loading,
+    selectAddress
+  } = useAddressAutocomplete();
+
+  const [open, setOpen] = useState(false);
+
+  React.useEffect(() => {
+    // Initialize the street query when the component mounts or value changes
+    setStreetQuery(value.street || "");
+  }, [value.street, setStreetQuery]);
+
   const handleAddressSelect = (address: {
     address: string;
     city: string;
@@ -41,6 +59,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
     zipCode: string;
     country: string;
   }) => {
+    selectAddress(address);
     onChange({
       street: address.address,
       city: address.city,
@@ -48,6 +67,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       zipCode: address.zipCode,
       country: address.country || value.country
     });
+    setOpen(false);
   };
 
   return (
@@ -60,12 +80,52 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       </div>
       
       <div className="space-y-4">
-        <AddressAutocomplete
-          value={value.street || ""}
-          onChange={(street) => handleChange("street", street)}
-          onAddressSelect={handleAddressSelect}
-          disabled={false}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="street">Street Address</Label>
+          <Popover open={open && suggestions.length > 0} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Input
+                  id="street"
+                  placeholder="123 Main St"
+                  value={value.street}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    handleChange('street', newValue);
+                    setStreetQuery(newValue);
+                    if (newValue.length > 2) {
+                      setOpen(true);
+                    }
+                  }}
+                  className="w-full"
+                />
+                {loading && (
+                  <div className="absolute right-3 top-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start">
+              <Command>
+                <CommandList>
+                  <CommandEmpty>No addresses found.</CommandEmpty>
+                  <CommandGroup heading="Suggested addresses">
+                    {suggestions.map((address, index) => (
+                      <CommandItem
+                        key={index}
+                        value={address.address}
+                        onSelect={() => handleAddressSelect(address)}
+                      >
+                        {address.address}, {address.city}, {address.state} {address.zipCode}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">

@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Store, Utensils, Shirt, Racket, Snowflake, CheckCircle, BarChart, Wallet, Globe } from "lucide-react";
+import { ShoppingBag, Store, Utensils, Shirt, Dumbbell, Paintbrush, CheckCircle, BarChart, Wallet, Globe } from "lucide-react";
 
 // Form schema
 const formSchema = z.object({
@@ -145,11 +145,11 @@ const VendorPartner = () => {
                 <span className="font-medium">Fashion</span>
               </div>
               <div className="flex flex-col items-center p-4">
-                <Racket className="h-10 w-10 text-purple-600 mb-2" />
+                <Dumbbell className="h-10 w-10 text-purple-600 mb-2" />
                 <span className="font-medium">Sport Shops</span>
               </div>
               <div className="flex flex-col items-center p-4">
-                <Snowflake className="h-10 w-10 text-purple-600 mb-2" />
+                <Paintbrush className="h-10 w-10 text-purple-600 mb-2" />
                 <span className="font-medium">Wellness</span>
               </div>
             </div>

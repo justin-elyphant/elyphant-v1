@@ -15,6 +15,7 @@ import InterestsFormSection from "./InterestsFormSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import DataSharingSection from "./DataSharingSection";
 import DeleteAccount from "./DeleteAccount";
+import { ShippingAddress, DataSharingSettings } from "@/types/supabase";
 
 // Define form schema
 const formSchema = z.object({
@@ -24,11 +25,11 @@ const formSchema = z.object({
   profile_image: z.string().nullable().optional(),
   birthday: z.date().nullable().optional(),
   address: z.object({
-    street: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zipCode: z.string().optional(),
-    country: z.string().optional(),
+    street: z.string().min(1, "Street address is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    zipCode: z.string().min(1, "ZIP code is required"),
+    country: z.string().min(1, "Country is required"),
   }),
   interests: z.array(z.string()),
   importantDates: z.array(z.object({
@@ -42,12 +43,19 @@ const formSchema = z.object({
   })
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const GeneralSettings = () => {
   const { user } = useAuth();
   const { profile, loading, updateProfile } = useProfile();
   const [isSaving, setIsSaving] = useState(false);
+  const [newInterest, setNewInterest] = useState("");
+  const [newImportantDate, setNewImportantDate] = useState({
+    date: undefined as Date | undefined,
+    description: ""
+  });
   
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -135,7 +143,7 @@ const GeneralSettings = () => {
     }
   }, [profile, loading, form, user]);
   
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: FormValues) => {
     if (!user) {
       toast.error("You must be logged in to update your profile");
       return;
@@ -164,10 +172,10 @@ const GeneralSettings = () => {
         bio: data.bio,
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
-        shipping_address: data.address,
+        shipping_address: data.address as ShippingAddress,
         gift_preferences: gift_preferences,
         important_dates: important_dates,
-        data_sharing_settings: data.data_sharing_settings,
+        data_sharing_settings: data.data_sharing_settings as DataSharingSettings,
         updated_at: new Date().toISOString()
       };
       
@@ -179,6 +187,49 @@ const GeneralSettings = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAddInterest = () => {
+    if (!newInterest.trim()) return;
+    const currentInterests = form.getValues("interests");
+    if (!currentInterests.includes(newInterest.trim())) {
+      form.setValue("interests", [...currentInterests, newInterest.trim()]);
+    }
+    setNewInterest("");
+  };
+
+  const handleRemoveInterest = (index: number) => {
+    const currentInterests = form.getValues("interests");
+    form.setValue(
+      "interests", 
+      currentInterests.filter((_, i) => i !== index)
+    );
+  };
+
+  const handleAddImportantDate = () => {
+    if (!newImportantDate.date || !newImportantDate.description.trim()) return;
+    
+    const currentDates = form.getValues("importantDates");
+    form.setValue("importantDates", [
+      ...currentDates, 
+      {
+        date: newImportantDate.date,
+        description: newImportantDate.description.trim()
+      }
+    ]);
+    
+    setNewImportantDate({
+      date: undefined,
+      description: ""
+    });
+  };
+
+  const handleRemoveImportantDate = (index: number) => {
+    const currentDates = form.getValues("importantDates");
+    form.setValue(
+      "importantDates", 
+      currentDates.filter((_, i) => i !== index)
+    );
   };
   
   if (loading) {
@@ -197,15 +248,33 @@ const GeneralSettings = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="col-span-1">
-              <ProfileImageSection />
+              <ProfileImageSection 
+                currentImage={form.getValues("profile_image") || null}
+                name={form.getValues("name")}
+                onImageUpdate={(url) => form.setValue("profile_image", url)}
+              />
             </div>
             
             <div className="col-span-1 md:col-span-2 space-y-8">
-              <BasicInfoSection />
+              <BasicInfoSection 
+                user={user}
+              />
               
-              <InterestsFormSection />
+              <InterestsFormSection 
+                interests={form.getValues("interests")}
+                removeInterest={handleRemoveInterest}
+                newInterest={newInterest}
+                setNewInterest={setNewInterest}
+                addInterest={handleAddInterest}
+              />
               
-              <ImportantDatesFormSection />
+              <ImportantDatesFormSection 
+                importantDates={form.getValues("importantDates")}
+                removeImportantDate={handleRemoveImportantDate}
+                newImportantDate={newImportantDate}
+                setNewImportantDate={setNewImportantDate}
+                addImportantDate={handleAddImportantDate}
+              />
             </div>
           </div>
           

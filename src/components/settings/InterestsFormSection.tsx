@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
 
-interface InterestsFormSectionProps {
+export interface InterestsFormSectionProps {
   interests: string[];
   removeInterest: (index: number) => void;
   newInterest: string;
@@ -19,6 +19,13 @@ const InterestsFormSection: React.FC<InterestsFormSectionProps> = ({
   setNewInterest,
   addInterest
 }) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addInterest();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Interests</h3>
@@ -46,6 +53,7 @@ const InterestsFormSection: React.FC<InterestsFormSectionProps> = ({
         <Input
           value={newInterest}
           onChange={(e) => setNewInterest(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Add an interest (e.g., Photography, Hiking)"
           className="flex-1"
         />
@@ -54,7 +62,7 @@ const InterestsFormSection: React.FC<InterestsFormSectionProps> = ({
           onClick={addInterest}
           variant="outline"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1" />
           Add
         </Button>
       </div>

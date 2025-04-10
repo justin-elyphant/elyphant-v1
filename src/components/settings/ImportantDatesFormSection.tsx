@@ -9,12 +9,12 @@ import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-interface ImportantDate {
+export interface ImportantDate {
   date: Date;
   description: string;
 }
 
-interface ImportantDatesFormSectionProps {
+export interface ImportantDatesFormSectionProps {
   importantDates: ImportantDate[];
   removeImportantDate: (index: number) => void;
   newImportantDate: {
@@ -47,6 +47,13 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
       ...newImportantDate,
       description: e.target.value
     });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && newImportantDate.date && newImportantDate.description) {
+      e.preventDefault();
+      addImportantDate();
+    }
   };
 
   return (
@@ -99,7 +106,7 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
                 selected={newImportantDate.date}
                 onSelect={handleDateChange}
                 initialFocus
-                className={cn("p-3 pointer-events-auto")}
+                className="p-3"
               />
             </PopoverContent>
           </Popover>
@@ -112,6 +119,7 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
               id="description"
               value={newImportantDate.description}
               onChange={handleDescriptionChange}
+              onKeyDown={handleKeyDown}
               placeholder="e.g., Anniversary"
               className="flex-1"
             />
@@ -120,7 +128,7 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
               onClick={addImportantDate}
               variant="outline"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-1" />
               Add
             </Button>
           </div>

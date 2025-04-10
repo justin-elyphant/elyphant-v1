@@ -2,7 +2,7 @@
 import React from "react";
 import ProfileImageUpload from "./ProfileImageUpload";
 
-interface ProfileImageSectionProps {
+export interface ProfileImageSectionProps {
   currentImage: string | null;
   name: string;
   onImageUpdate: (url: string | null) => void;

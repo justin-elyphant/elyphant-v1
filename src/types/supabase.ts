@@ -1,41 +1,46 @@
+export type SharingLevel = 'public' | 'friends' | 'private';
 
-export type Profile = {
-  id: string;
-  name: string | null;
-  email: string | null;
-  profile_image: string | null;
-  profile_type: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  // New fields
-  dob: string | null;
-  shipping_address: ShippingAddress | null;
-  gift_preferences: GiftPreference[] | null;
-  data_sharing_settings: DataSharingSettings | null;
-  bio?: string | null;
-};
-
-export type ShippingAddress = {
+export interface ShippingAddress {
   street: string;
   city: string;
   state: string;
   zipCode: string;
   country: string;
-};
+}
 
-export type GiftPreference = {
+export interface GiftPreference {
   category: string;
   importance: 'high' | 'medium' | 'low';
-  isExperience?: boolean; // New field to indicate if this is an experience
-};
+}
 
-export type DataSharingSettings = {
+export interface DataSharingSettings {
   dob: SharingLevel;
   shipping_address: SharingLevel;
   gift_preferences: SharingLevel;
-};
+}
 
-export type SharingLevel = 'public' | 'friends' | 'private';
+export interface ImportantDate {
+  date: string;
+  description: string;
+}
+
+export interface Profile {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  name?: string;
+  username?: string;
+  email?: string;
+  profile_image?: string | null;
+  profile_type?: string;
+  dob?: string;
+  shipping_address?: ShippingAddress;
+  gift_preferences?: GiftPreference[];
+  data_sharing_settings?: DataSharingSettings;
+  next_steps_option?: string;
+  bio?: string;
+  important_dates?: ImportantDate[];
+}
 
 export type UserConnection = {
   id: string;

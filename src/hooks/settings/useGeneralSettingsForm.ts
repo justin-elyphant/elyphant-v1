@@ -87,7 +87,7 @@ export const useGeneralSettingsForm = () => {
       }
       
       // Convert important dates if available
-      const importantDates = [];
+      const importantDates: {date: Date, description: string}[] = [];
       if (profile.important_dates && Array.isArray(profile.important_dates)) {
         profile.important_dates.forEach((date: any) => {
           if (date.date && date.description) {
@@ -202,8 +202,8 @@ export const useGeneralSettingsForm = () => {
     
     const currentDates = form.getValues("importantDates");
     
-    // Ensure we're adding a complete ImportantDate object with required date field
-    const newDate: {date: Date, description: string} = {
+    // Ensure we're adding a complete date object with required date field
+    const newDate = {
       date: newImportantDate.date,
       description: newImportantDate.description.trim()
     };

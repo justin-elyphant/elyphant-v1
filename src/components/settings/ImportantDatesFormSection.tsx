@@ -127,6 +127,7 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
               type="button" 
               onClick={addImportantDate}
               variant="outline"
+              disabled={!newImportantDate.date || !newImportantDate.description}
             >
               <Plus className="h-4 w-4 mr-1" />
               Add

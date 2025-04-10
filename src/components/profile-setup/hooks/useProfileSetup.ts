@@ -32,7 +32,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     profileData,
     updateProfileData,
     
-    // Validation
+    // Validation - now returns the boolean directly
     isCurrentStepValid,
     
     // Submission

@@ -14,9 +14,14 @@ export const getZincHeaders = () => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
+  // Validate token
+  if (!token || token.trim() === '') {
+    console.warn('No Zinc API token found. Please set a valid token.');
+  }
+  
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    'Authorization': `Bearer ${token || ''}`
   };
 };
 
@@ -47,8 +52,25 @@ export const isTestMode = (): boolean => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
+  // Show diagnostic info in console
+  if (!token || token.trim() === '') {
+    console.warn('No Zinc API token found. Using mock data instead.');
+    console.info('To use the real API, set a token using setZincApiToken() or provide it as VITE_ZINC_API_TOKEN.');
+  } else {
+    console.log('Found Zinc API token (length: ' + token.length + '). Using real API when possible.');
+  }
+  
   // Use mock data if we don't have a token and mock API is explicitly set
   return (!token || token.trim() === '') && MOCK_API_RESPONSE;
+};
+
+/**
+ * Check if we have a valid Zinc API token
+ */
+export const hasValidZincToken = (): boolean => {
+  const storedToken = localStorage.getItem('zincApiToken');
+  const token = storedToken || ZINC_API_TOKEN;
+  return !!(token && token.trim() !== '');
 };
 
 /**
@@ -58,6 +80,8 @@ export const setZincApiToken = (token: string): void => {
   if (token && token.trim() !== '') {
     localStorage.setItem('zincApiToken', token.trim());
     console.log('Zinc API token saved to localStorage');
+  } else {
+    console.warn('Attempted to save empty Zinc API token. No changes made.');
   }
 };
 
@@ -65,7 +89,9 @@ export const setZincApiToken = (token: string): void => {
  * Get the current Zinc API token
  */
 export const getZincApiToken = (): string => {
-  return localStorage.getItem('zincApiToken') || ZINC_API_TOKEN || '';
+  const storedToken = localStorage.getItem('zincApiToken') || '';
+  const envToken = ZINC_API_TOKEN || '';
+  return storedToken || envToken;
 };
 
 /**

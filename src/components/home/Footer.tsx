@@ -28,7 +28,7 @@ const Footer = () => {
               <h4 className="font-medium mb-3">Vendors</h4>
               <ul className="space-y-2">
                 <li><Link to="/vendor-signup" className="text-gray-400 hover:text-white text-sm">Become a Vendor</Link></li>
-                <li><Link to="/vendor-management" className="text-gray-400 hover:text-white text-sm">Vendor Management</Link></li>
+                <li><Link to="/vendor-portal" className="text-gray-400 hover:text-white text-sm">Vendor Portal Signin</Link></li>
               </ul>
             </div>
           </div>

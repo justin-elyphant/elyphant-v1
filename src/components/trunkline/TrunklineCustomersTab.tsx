@@ -150,7 +150,7 @@ const TrunklineCustomersTab = () => {
                     </div>
                   </div>
                   <div>
-                    <Badge variant={customer.status === 'active' ? "success" : "secondary"}>
+                    <Badge variant={customer.status === 'active' ? "default" : "secondary"} className={customer.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}>
                       {customer.status === 'active' ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
@@ -273,9 +273,9 @@ const TrunklineCustomersTab = () => {
                           <td className="px-4 py-3">{order.date}</td>
                           <td className="px-4 py-3">
                             <Badge variant={
-                              order.status === 'Delivered' ? 'success' : 
+                              order.status === 'Delivered' ? 'default' : 
                               order.status === 'Shipped' ? 'default' : 'secondary'
-                            }>
+                            } className={order.status === 'Delivered' ? 'bg-green-500 hover:bg-green-600' : ''}>
                               {order.status}
                             </Badge>
                           </td>
@@ -353,9 +353,9 @@ const TrunklineCustomersTab = () => {
                             <td className="px-4 py-3">{request.subject}</td>
                             <td className="px-4 py-3">
                               <Badge variant={
-                                request.status === 'Resolved' ? 'success' : 
+                                request.status === 'Resolved' ? 'default' : 
                                 request.status === 'Open' ? 'default' : 'secondary'
-                              }>
+                              } className={request.status === 'Resolved' ? 'bg-green-500 hover:bg-green-600' : ''}>
                                 {request.status}
                               </Badge>
                             </td>

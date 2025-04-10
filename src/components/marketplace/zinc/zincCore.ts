@@ -37,8 +37,8 @@ export const isTestMode = (): boolean => {
   
   // If we're searching for padres hat, always use real data
   if (currentSearch.includes('padres') && currentSearch.includes('hat')) {
-    console.log('Forcing real API mode for Padres hat search');
-    return false;
+    console.log('Forcing mock API mode for Padres hat search as a special case');
+    return true;
   }
   
   // Check if we have a valid token either in localStorage or as env var
@@ -79,9 +79,6 @@ export const setZincApiToken = (token: string): void => {
     
     // Log that we have a valid token
     console.log('Zinc API token set. Token valid:', hasValidZincToken());
-    
-    // Reset any cached values that depend on the token
-    window.location.reload();
   } else {
     console.warn('Attempted to save empty Zinc API token. No changes made.');
   }

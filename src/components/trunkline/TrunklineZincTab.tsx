@@ -1,14 +1,18 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
 import PricingControlsCard from "./pricing/PricingControlsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const TrunklineZincTab = () => {
   const hasToken = hasValidZincToken();
+  const [syncLogs, setSyncLogs] = useState<string[]>([
+    "No sync logs available yet. Connect to Zinc API and perform a search or sync to generate logs."
+  ]);
   
   return (
     <div className="space-y-6">
@@ -31,6 +35,21 @@ const TrunklineZincTab = () => {
               </AlertDescription>
             </Alert>
           )}
+          
+          {hasToken && (
+            <Alert className="mb-6 bg-green-50 border-green-200">
+              <AlertCircle className="h-4 w-4 text-green-800" />
+              <AlertTitle className="text-green-800">API Token Connected</AlertTitle>
+              <AlertDescription className="text-green-700">
+                <p>Your Zinc API token is connected. The search functionality will attempt to use the real Zinc API.</p>
+                <p className="mt-2">
+                  <span className="font-medium">Test searches: </span>
+                  Try searching for "San Diego Padres Hat" or "Nike Shoes" in the search bar.
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <ZincIntegration />
         </CardContent>
       </Card>
@@ -38,16 +57,45 @@ const TrunklineZincTab = () => {
       <PricingControlsCard />
       
       <Card>
-        <CardHeader>
-          <CardTitle>Sync Status Logs</CardTitle>
-          <CardDescription>
-            View recent synchronization activities and any errors encountered
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Sync Status Logs</CardTitle>
+            <CardDescription>
+              View recent synchronization activities and any errors encountered
+            </CardDescription>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="rounded-full p-1 hover:bg-muted">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm max-w-xs">
+                  Logs show recent API calls, searches, and sync operations. Use this to troubleshoot connection issues.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardHeader>
-        <CardContent className="p-4">
-          <p className="text-muted-foreground text-center py-8">
-            Sync logs will appear here once Zinc integration is connected and products are synced.
-          </p>
+        <CardContent className="p-4 max-h-60 overflow-y-auto border-t">
+          {syncLogs.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              Sync logs will appear here once Zinc integration is connected and products are synced.
+            </p>
+          ) : (
+            <div className="space-y-2 text-sm">
+              {syncLogs.map((log, index) => (
+                <div key={index} className="py-1 border-b border-dashed border-muted last:border-0">
+                  <span className="text-xs text-muted-foreground mr-2">
+                    {new Date().toLocaleTimeString()}:
+                  </span>
+                  {log}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

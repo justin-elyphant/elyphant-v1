@@ -12,7 +12,8 @@ export const useZincProducts = () => {
     setSearchTerm, 
     handleSearch, 
     isLoading: isSearchLoading, 
-    error: searchError 
+    error: searchError,
+    // Add other properties as needed
   } = useZincProductSearch();
   
   // Use our sync hook

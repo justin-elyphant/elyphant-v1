@@ -9,6 +9,7 @@ export const useZincProductSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const searchInProgressRef = useRef(false);
   
   const marketplaceProducts = products.filter(p => p.vendor === "Elyphant" || p.vendor === "Amazon via Zinc");
@@ -18,6 +19,7 @@ export const useZincProductSearch = () => {
     
     searchInProgressRef.current = true;
     setIsLoading(true);
+    setError(null); // Reset error state
     setSearchTerm(term);
     console.log(`ZincProductsTab: Submitting search for "${term}"`);
     
@@ -60,8 +62,10 @@ export const useZincProductSearch = () => {
         // Use the regular search for non-special cases
         await handleRegularSearch(term);
       }
-    } catch (error) {
-      console.error("Search error:", error);
+    } catch (err) {
+      console.error("Search error:", err);
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      setError(errorMessage);
       toast.error("Search Failed", {
         description: "There was an error processing your search. Using mock data instead."
       });
@@ -121,6 +125,7 @@ export const useZincProductSearch = () => {
         description: `Found ${formattedProducts.length} products matching "${term}"`
       });
     } else {
+      setError("No products found");
       toast.error("No Results", {
         description: `No products found for "${term}"`
       });
@@ -129,11 +134,14 @@ export const useZincProductSearch = () => {
 
   const syncProducts = async () => {
     setIsLoading(true);
+    setError(null); // Reset error state
     try {
       toast.success("Products Synced", {
         description: "Your product catalog has been updated."
       });
-    } catch (error) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      setError(errorMessage);
       toast.error("Sync Failed", {
         description: "There was an error syncing your products."
       });
@@ -150,6 +158,7 @@ export const useZincProductSearch = () => {
     handleSearch,
     syncProducts,
     isLoading,
-    marketplaceProducts
+    marketplaceProducts,
+    error
   };
 };

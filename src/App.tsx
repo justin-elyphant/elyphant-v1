@@ -24,6 +24,7 @@ import Settings from '@/pages/Settings';
 import SignIn from '@/pages/SignIn';
 import SignUp from '@/pages/SignUp';
 import VendorSignup from '@/pages/VendorSignup';
+import VendorPartner from '@/pages/VendorPartner';
 import Funding from '@/pages/Funding';
 import FundingDetails from '@/pages/FundingDetails';
 import FundingSuccess from '@/pages/FundingSuccess';
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/sign-in" element={<SignIn />} />
                 <Route path="/sign-up" element={<SignUp />} />
                 <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/vendor-partner" element={<VendorPartner />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Dashboard />

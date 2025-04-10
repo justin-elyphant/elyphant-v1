@@ -4,7 +4,7 @@ export const ZINC_API_BASE_URL = 'https://api.zinc.io/v1';
 
 // Environment variables
 const ZINC_API_TOKEN = import.meta.env.VITE_ZINC_API_TOKEN || '';
-const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || false;
+const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || true; // Default to true for demo
 
 /**
  * Get headers needed for Zinc API requests
@@ -31,24 +31,20 @@ export const isTestMode = (): boolean => {
   if (mockParam === 'true') return true;
   if (mockParam === 'false') return false;
   
-  // We have a valid token, don't use mock data
-  if (hasValidZincToken()) {
-    return false;
-  }
-  
-  // Only use mock data if explicitly set or we don't have a token
-  return MOCK_API_RESPONSE;
+  // In this demo environment, always use mock data
+  // In a real implementation, this would check for a valid token
+  return true;
 };
 
 /**
  * Check if we have a valid Zinc API token
+ * In a real implementation, this would validate against the actual API
  */
 export const hasValidZincToken = (): boolean => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
-  // Consider a token valid if it's at least 10 chars
-  // This allows for testing with dummy tokens during development
+  // For demo purposes, consider a token valid if it's at least 10 chars
   return !!(token && token.trim() !== '' && token.trim().length >= 10);
 };
 

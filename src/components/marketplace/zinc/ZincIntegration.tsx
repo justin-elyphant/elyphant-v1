@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, RefreshCcw, Info } from "lucide-react";
+import { Calendar, RefreshCcw, Info, ExternalLink } from "lucide-react";
 import ZincProductsTab from "./ZincProductsTab";
 import { hasValidZincToken } from "./zincCore";
 
@@ -35,28 +35,28 @@ const ZincIntegration = () => {
       {!isConnected ? (
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="apiKey">Zinc API Key</Label>
+            <Label htmlFor="apiKey">Demo Zinc API Key</Label>
             <Input
               id="apiKey"
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter your Zinc API key"
+              placeholder="Enter any string with 10+ characters"
               className="max-w-md"
             />
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p>
-                Enter your Zinc API key to connect. Don't have one? Sign up at{" "}
+                For this demo, enter any string with at least 10 characters to simulate a Zinc API connection.
+                In a production app, you would get a real API key from{" "}
                 <a
                   href="https://zinc.io/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-primary hover:underline inline-flex items-center"
                 >
-                  zinc.io
+                  zinc.io <ExternalLink className="h-3 w-3 ml-0.5" />
                 </a>
-                . <span className="font-medium">For testing, you can enter any string with at least 10 characters.</span>
               </p>
             </div>
           </div>
@@ -76,25 +76,23 @@ const ZincIntegration = () => {
             onClick={handleConnect}
             disabled={isLoading || !apiKey || apiKey.length < 10}
           >
-            {isLoading ? "Connecting..." : "Connect to Zinc"}
+            {isLoading ? "Connecting..." : "Connect to Demo"}
           </Button>
 
           {error && <p className="text-destructive text-sm">{error}</p>}
           
-          {!hasValidZincToken() && (
-            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-md p-3">
-              <p className="text-amber-800 font-medium">Testing with Mock Data</p>
-              <p className="text-amber-700 text-sm mt-1">
-                Without a valid API token, all product searches will use mock data. Enter any 10+ character string above and click "Connect" to test with real data.
-              </p>
-            </div>
-          )}
+          <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-md">
+            <p className="text-blue-700 text-sm">
+              <strong>Demo limitations:</strong> Browser security prevents direct API calls to Zinc.
+              In a real implementation, these requests would be routed through a server-side proxy.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">Connected to Zinc API</h3>
+              <h3 className="font-medium">Connected to Demo Zinc API</h3>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Calendar className="h-3.5 w-3.5 mr-1" />
                 Last synced: {formatLastSyncTime(lastSync)}
@@ -136,7 +134,7 @@ const ZincIntegration = () => {
                   </p>
                   
                   <div className="mt-4">
-                    <Label htmlFor="current-api-key">Current API Key</Label>
+                    <Label htmlFor="current-api-key">Current Demo API Key</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Input 
                         id="current-api-key" 
@@ -146,7 +144,7 @@ const ZincIntegration = () => {
                         className="max-w-md bg-muted" 
                       />
                       <Button variant="outline" size="sm" onClick={() => {
-                        const newApiKey = prompt("Enter a new API key:");
+                        const newApiKey = prompt("Enter a new API key (any string with 10+ characters):");
                         if (newApiKey && newApiKey.length >= 10) {
                           setApiKey(newApiKey);
                           handleConnect();

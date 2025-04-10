@@ -5,7 +5,7 @@ import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
 import PricingControlsCard from "./pricing/PricingControlsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
-import { AlertCircle, HelpCircle } from "lucide-react";
+import { AlertCircle, HelpCircle, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const TrunklineZincTab = () => {
@@ -27,11 +27,20 @@ const TrunklineZincTab = () => {
           {!hasToken && (
             <Alert className="mb-6 bg-amber-50 border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-800" />
-              <AlertTitle className="text-amber-800">API Token Required for Live Data</AlertTitle>
+              <AlertTitle className="text-amber-800">Demo Mode: Using Mock Data</AlertTitle>
               <AlertDescription className="text-amber-700">
-                <p>Set up your Zinc API token below to enable <strong>real product search</strong> from Amazon.</p>
-                <p className="mt-2 font-medium">For testing with the real API: Enter any string with at least 10 characters.</p>
-                <p className="mt-1">Example token: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">test_zinc_token_12345abcde</code></p>
+                <p>This is a <strong>demo environment</strong> that uses mock data for product searches.</p>
+                <p className="mt-2 font-medium">To simulate a connection, enter any string with at least 10 characters below.</p>
+                <p className="mt-2">Example token: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">test_zinc_token_12345abcde</code></p>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
+                  <p className="text-blue-700 flex items-start">
+                    <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <strong>In a production environment:</strong> Direct browser-to-API calls would be blocked by CORS. 
+                      A server-side proxy would be implemented to make secure API calls with your real Zinc API token.
+                    </span>
+                  </p>
+                </div>
               </AlertDescription>
             </Alert>
           )}
@@ -39,13 +48,22 @@ const TrunklineZincTab = () => {
           {hasToken && (
             <Alert className="mb-6 bg-green-50 border-green-200">
               <AlertCircle className="h-4 w-4 text-green-800" />
-              <AlertTitle className="text-green-800">API Token Connected</AlertTitle>
+              <AlertTitle className="text-green-800">Demo Connection Active</AlertTitle>
               <AlertDescription className="text-green-700">
-                <p>Your Zinc API token is connected. The search functionality will use the real Zinc API to find products.</p>
+                <p>Your demo Zinc API token is connected. Product searches will use simulated API responses.</p>
                 <p className="mt-2">
                   <span className="font-medium">Try searches: </span>
-                  Search for "Nike Shoes", "Headphones", or other products to see real results from Amazon.
+                  Search for "Nike Shoes", "Headphones", "Padres Hat", or other products to see simulated results.
                 </p>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
+                  <p className="text-blue-700 flex items-start">
+                    <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <strong>Note:</strong> In this demo, searches use mock data that simulates Zinc API responses. 
+                      In a production app, a server-side proxy would communicate with the actual Zinc API.
+                    </span>
+                  </p>
+                </div>
               </AlertDescription>
             </Alert>
           )}

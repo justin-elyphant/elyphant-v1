@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Gift, Plus, X, Ticket } from "lucide-react";
+import { Gift, Plus, X, Ticket, ShoppingBag } from "lucide-react";
 import { GiftPreference } from "@/types/supabase";
 
 interface GiftPreferencesStepProps {
@@ -13,13 +13,27 @@ interface GiftPreferencesStepProps {
   onChange: (preferences: GiftPreference[]) => void;
 }
 
-// Common interest categories with added experience categories
+// Common interest categories with added brand categories
 const suggestedCategories = [
   "Books", "Technology", "Fashion", "Home Decor", "Cooking", "Fitness",
   "Travel", "Music", "Art", "Gaming", "Beauty", "Outdoors", "Sports",
-  // New experience categories
-  "Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", 
-  "Golf", "Adventure", "Workshops", "Wine Tasting", "Experiences"
+  // Brand categories
+  "Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo", 
+  "Amazon", "Sephora", "Nordstrom", "Target", "Ikea"
+];
+
+// Experiences with emoji representations
+const experienceCategories = [
+  { name: "Spa Day", emoji: "💆" },
+  { name: "Concerts", emoji: "🎵" },
+  { name: "Theater", emoji: "🎭" },
+  { name: "Food Tours", emoji: "🍽️" },
+  { name: "Cooking Classes", emoji: "👨‍🍳" },
+  { name: "Golf", emoji: "⛳" },
+  { name: "Adventure", emoji: "🧗" },
+  { name: "Workshops", emoji: "🔨" },
+  { name: "Wine Tasting", emoji: "🍷" },
+  { name: "Experiences", emoji: "🎁" }
 ];
 
 const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onChange }) => {
@@ -50,12 +64,23 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
 
   // Helper function to determine if a preference is an experience
   const isExperienceCategory = (category: string) => {
-    const experienceCategories = ["Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", 
-      "Golf", "Adventure", "Workshops", "Wine Tasting", "Experiences"];
-    return experienceCategories.includes(category) || 
+    return experienceCategories.some(exp => exp.name === category) || 
            category.toLowerCase().includes("experience") ||
            category.toLowerCase().includes("class") ||
            category.toLowerCase().includes("tour");
+  };
+
+  // Helper function to get emoji for experience
+  const getExperienceEmoji = (category: string) => {
+    const experience = experienceCategories.find(exp => exp.name === category);
+    return experience ? experience.emoji : "🎁";
+  };
+
+  // Helper function to determine if a preference is a brand
+  const isBrandCategory = (category: string) => {
+    const brands = ["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo", 
+                    "Amazon", "Sephora", "Nordstrom", "Target", "Ikea"];
+    return brands.includes(category);
   };
 
   return (
@@ -70,10 +95,10 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
       <div className="space-y-4">
         <div className="flex items-end gap-2">
           <div className="flex-1 space-y-2">
-            <Label htmlFor="category">Gift Category or Interest</Label>
+            <Label htmlFor="category">Gift Category, Brand, or Interest</Label>
             <Input
               id="category"
-              placeholder="e.g., Books, Spa Day, Theater Tickets"
+              placeholder="e.g., Books, Nike, Spa Day, Theater Tickets"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
             />
@@ -116,9 +141,13 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
                          pref.importance === "medium" ? "secondary" : "outline"}
                   className="flex items-center gap-1 px-3 py-1"
                 >
-                  {isExperienceCategory(pref.category) ? 
-                    <Ticket className="h-3 w-3" /> : 
-                    <Gift className="h-3 w-3" />}
+                  {isExperienceCategory(pref.category) ? (
+                    <span className="mr-1">{getExperienceEmoji(pref.category)}</span>
+                  ) : isBrandCategory(pref.category) ? (
+                    <ShoppingBag className="h-3 w-3" />
+                  ) : (
+                    <Gift className="h-3 w-3" />
+                  )}
                   <span>{pref.category}</span>
                   <Button 
                     type="button" 
@@ -141,28 +170,46 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
             Some people prefer experiences over physical gifts. Select any experiences you'd enjoy.
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
-            {["Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", "Golf", 
-              "Adventure", "Workshops", "Wine Tasting", "Experiences"].map((category) => (
+            {experienceCategories.map(({ name, emoji }) => (
               <Button
-                key={category}
+                key={name}
                 variant="outline"
                 size="sm"
-                onClick={() => handleSelectSuggestion(category)}
+                onClick={() => handleSelectSuggestion(name)}
                 className="rounded-full text-xs"
               >
-                <Ticket className="h-3 w-3 mr-1" />
-                {category}
+                <span className="mr-1">{emoji}</span> {name}
               </Button>
             ))}
           </div>
         </div>
         
         <div className="mt-4">
-          <Label className="text-sm mb-2 block">Suggested Categories</Label>
+          <Label className="text-sm mb-2 block">Popular Brands</Label>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo"].map((brand) => (
+              <Button
+                key={brand}
+                variant="outline"
+                size="sm"
+                onClick={() => handleSelectSuggestion(brand)}
+                className="rounded-full text-xs"
+              >
+                <ShoppingBag className="h-3 w-3 mr-1" />
+                {brand}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="mt-4">
+          <Label className="text-sm mb-2 block">Other Categories</Label>
           <div className="flex flex-wrap gap-2">
             {suggestedCategories
-              .filter(category => !["Spa Day", "Concerts", "Theater", "Food Tours", "Cooking Classes", 
-                "Golf", "Adventure", "Workshops", "Wine Tasting", "Experiences"].includes(category))
+              .filter(category => 
+                !experienceCategories.some(exp => exp.name === category) && 
+                !["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo"].includes(category)
+              )
               .map((category) => (
               <Button
                 key={category}

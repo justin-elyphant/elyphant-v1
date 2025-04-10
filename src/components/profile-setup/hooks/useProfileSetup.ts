@@ -5,9 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { ShippingAddress, SharingLevel, GiftPreference } from "@/types/supabase";
 import { validateStep } from "../utils/stepValidation";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileData {
   name: string;
+  username: string;
+  email: string;
+  profile_image: string | null;
   dob: string;
   shipping_address: ShippingAddress;
   gift_preferences: GiftPreference[];
@@ -16,6 +20,7 @@ interface ProfileData {
     shipping_address: SharingLevel;
     gift_preferences: SharingLevel;
   };
+  next_steps_option: string;
 }
 
 interface UseProfileSetupProps {
@@ -25,11 +30,15 @@ interface UseProfileSetupProps {
 
 export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) => {
   const { user, getUserProfile } = useAuth();
+  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
+    username: "",
+    email: user?.email || "",
+    profile_image: null,
     dob: "",
     shipping_address: {
       street: "",
@@ -43,7 +52,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       dob: "friends" as SharingLevel,
       shipping_address: "private" as SharingLevel,
       gift_preferences: "public" as SharingLevel
-    }
+    },
+    next_steps_option: "dashboard"
   });
 
   // Fetch initial user data if available
@@ -58,6 +68,9 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
           setProfileData(prevData => ({
             ...prevData,
             name: profile.name || prevData.name,
+            username: profile.username || prevData.username || (profile.email ? profile.email.split('@')[0] : ''),
+            email: profile.email || user.email || '',
+            profile_image: profile.profile_image || prevData.profile_image,
             dob: profile.dob || prevData.dob,
             shipping_address: profile.shipping_address || prevData.shipping_address,
             gift_preferences: profile.gift_preferences || prevData.gift_preferences,
@@ -74,10 +87,13 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
   const steps = [
     "Basic Info",
+    "Username",
+    "Profile Photo",
     "Birthday",
     "Shipping Address",
     "Gift Preferences",
-    "Data Sharing"
+    "Data Sharing",
+    "Next Steps"
   ];
 
   const handleNext = () => {
@@ -97,6 +113,9 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         .from('profiles')
         .update({
           name: profileData.name,
+          username: profileData.username,
+          email: profileData.email,
+          profile_image: profileData.profile_image,
           dob: profileData.dob,
           shipping_address: profileData.shipping_address,
           gift_preferences: profileData.gift_preferences,
@@ -111,7 +130,24 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       
       console.log("Profile setup completed successfully:", data);
       toast.success("Profile updated successfully!");
-      onComplete();
+      
+      // Navigate based on next steps option
+      switch (profileData.next_steps_option) {
+        case "create_wishlist":
+          navigate("/wishlist/create");
+          break;
+        case "find_friends":
+          navigate("/connections");
+          break;
+        case "shop_gifts":
+          navigate("/marketplace");
+          break;
+        case "explore_marketplace":
+          navigate("/marketplace/explore");
+          break;
+        default:
+          onComplete();
+      }
     } catch (err) {
       console.error("Error completing profile setup:", err);
       toast.error("Failed to save profile data");

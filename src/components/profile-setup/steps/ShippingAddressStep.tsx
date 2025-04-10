@@ -61,7 +61,6 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="autocomplete">Street Address</Label>
           <AddressAutocomplete
             value={value.street}
             onChange={(val) => handleChange('street', val)}

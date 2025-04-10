@@ -1,18 +1,33 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfileSetupFlow from "@/components/profile-setup/ProfileSetupFlow";
 import Logo from "@/components/home/components/Logo";
+import { useAuth } from "@/contexts/auth";
 
 const ProfileSetup = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Redirect logged out users
+  React.useEffect(() => {
+    if (!user) {
+      toast.error("You must be logged in to set up your profile");
+      navigate("/sign-in");
+    }
+  }, [user, navigate]);
+
   const handleSetupComplete = () => {
-    window.location.href = "/dashboard";
+    toast.success("Profile setup complete!");
+    navigate("/dashboard");
   };
 
   const handleSkip = () => {
-    window.location.href = "/dashboard";
+    toast.info("You can complete your profile later in settings");
+    navigate("/dashboard");
   };
 
   return (
@@ -22,10 +37,10 @@ const ProfileSetup = () => {
           <div className="flex justify-between items-center">
             <Logo />
             <Button asChild variant="ghost" size="sm">
-              <Link to="/dashboard">
+              <span onClick={() => navigate("/dashboard")}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
-              </Link>
+              </span>
             </Button>
           </div>
         </div>

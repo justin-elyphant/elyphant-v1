@@ -10,10 +10,13 @@ import { useProfileSetup } from "./hooks/useProfileSetup";
 
 // Import the step components
 import BasicInfoStep from "./steps/BasicInfoStep";
+import UsernameStep from "./steps/UsernameStep";
+import ProfileImageStep from "./steps/ProfileImageStep";
 import DateOfBirthStep from "./steps/DateOfBirthStep";
 import ShippingAddressStep from "./steps/ShippingAddressStep";
 import GiftPreferencesStep from "./steps/GiftPreferencesStep";
 import DataSharingStep from "./steps/DataSharingStep";
+import NextStepsStep from "./steps/NextStepsStep";
 
 interface ProfileSetupFlowProps {
   onComplete: () => void;
@@ -51,30 +54,53 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
         )}
         
         {activeStep === 1 && (
+          <UsernameStep
+            value={profileData.username}
+            onChange={(username) => updateProfileData('username', username)}
+            email={profileData.email || ''}
+          />
+        )}
+        
+        {activeStep === 2 && (
+          <ProfileImageStep
+            value={profileData.profile_image}
+            onChange={(image) => updateProfileData('profile_image', image)}
+            name={profileData.name}
+          />
+        )}
+        
+        {activeStep === 3 && (
           <DateOfBirthStep
             value={profileData.dob}
             onChange={(dob) => updateProfileData('dob', dob)}
           />
         )}
         
-        {activeStep === 2 && (
+        {activeStep === 4 && (
           <ShippingAddressStep
             value={profileData.shipping_address}
             onChange={(address) => updateProfileData('shipping_address', address)}
           />
         )}
         
-        {activeStep === 3 && (
+        {activeStep === 5 && (
           <GiftPreferencesStep
             values={profileData.gift_preferences}
             onChange={(preferences) => updateProfileData('gift_preferences', preferences)}
           />
         )}
         
-        {activeStep === 4 && (
+        {activeStep === 6 && (
           <DataSharingStep
             values={profileData.data_sharing_settings}
             onChange={(settings) => updateProfileData('data_sharing_settings', settings)}
+          />
+        )}
+        
+        {activeStep === 7 && (
+          <NextStepsStep
+            onSelectOption={(option) => updateProfileData('next_steps_option', option)}
+            selectedOption={profileData.next_steps_option}
           />
         )}
       </CardContent>

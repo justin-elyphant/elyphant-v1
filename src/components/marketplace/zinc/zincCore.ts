@@ -55,7 +55,10 @@ export const isTestMode = (): boolean => {
 export const hasValidZincToken = (): boolean => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
-  return !!(token && token.trim() !== '');
+  
+  // Consider a token valid if it's at least 10 chars
+  // This allows for testing with dummy tokens during development
+  return !!(token && token.trim() !== '' && token.trim().length >= 10);
 };
 
 /**
@@ -63,6 +66,7 @@ export const hasValidZincToken = (): boolean => {
  */
 export const setZincApiToken = (token: string): void => {
   if (token && token.trim() !== '') {
+    // Store the token
     localStorage.setItem('zincApiToken', token.trim());
     console.log('Zinc API token saved to localStorage');
     
@@ -72,6 +76,9 @@ export const setZincApiToken = (token: string): void => {
       lastSync: Date.now()
     };
     localStorage.setItem("zincConnection", JSON.stringify(connection));
+    
+    // Log that we have a valid token
+    console.log('Zinc API token set. Token valid:', hasValidZincToken());
     
     // Reset any cached values that depend on the token
     window.location.reload();

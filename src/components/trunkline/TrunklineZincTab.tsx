@@ -25,8 +25,9 @@ const TrunklineZincTab = () => {
               <AlertCircle className="h-4 w-4 text-amber-800" />
               <AlertTitle className="text-amber-800">API Token Required</AlertTitle>
               <AlertDescription className="text-amber-700">
-                Set up your Zinc API token below to enable real product search across the application.
-                Without this token, all product searches will use mock data.
+                <p>Set up your Zinc API token below to enable real product search across the application.
+                Without this token, all product searches will use mock data.</p>
+                <p className="mt-2 font-medium">For testing: You can enter any string with at least 10 characters.</p>
               </AlertDescription>
             </Alert>
           )}

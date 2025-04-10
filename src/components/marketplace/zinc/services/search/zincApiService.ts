@@ -46,13 +46,16 @@ export const searchZincApi = async (
     }
     
     console.log(`Making real API call to Zinc for query: "${query}", max results: ${maxResults}`);
+    console.log('Using API token:', getZincHeaders()['Authorization'].substring(0, 10) + '...');
     
     const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
     const headers = getZincHeaders();
     
+    // Log detailed debug info about our request
+    console.log('API request URL:', url);
     console.log('API request headers:', {
       contentType: headers['Content-Type'],
-      authHeader: headers['Authorization'].substring(0, 15) + '...',
+      authHeaderStart: headers['Authorization'].substring(0, 15) + '...',
       hasToken: headers['Authorization'].length > 8
     });
     
@@ -62,10 +65,13 @@ export const searchZincApi = async (
     });
     
     if (!response.ok) {
-      throw new Error(`Zinc API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Zinc API response error:', response.status, errorText);
+      throw new Error(`Zinc API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
     
     const data = await response.json();
+    console.log('Zinc API response:', data);
     
     // If we get results, return them
     if (data.results && data.results.length > 0) {

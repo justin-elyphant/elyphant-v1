@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, RefreshCcw } from "lucide-react";
+import { Calendar, RefreshCcw, Info } from "lucide-react";
 import ZincProductsTab from "./ZincProductsTab";
+import { hasValidZincToken } from "./zincCore";
 
 const ZincIntegration = () => {
   const { 
@@ -43,18 +44,21 @@ const ZincIntegration = () => {
               placeholder="Enter your Zinc API key"
               className="max-w-md"
             />
-            <p className="text-sm text-muted-foreground">
-              Enter your Zinc API key to connect. Don't have one? Sign up at{" "}
-              <a
-                href="https://zinc.io/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                zinc.io
-              </a>
-              . For testing, you can enter any string with at least 10 characters.
-            </p>
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <p>
+                Enter your Zinc API key to connect. Don't have one? Sign up at{" "}
+                <a
+                  href="https://zinc.io/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  zinc.io
+                </a>
+                . <span className="font-medium">For testing, you can enter any string with at least 10 characters.</span>
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -76,6 +80,15 @@ const ZincIntegration = () => {
           </Button>
 
           {error && <p className="text-destructive text-sm">{error}</p>}
+          
+          {!hasValidZincToken() && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-md p-3">
+              <p className="text-amber-800 font-medium">Testing with Mock Data</p>
+              <p className="text-amber-700 text-sm mt-1">
+                Without a valid API token, all product searches will use mock data. Enter any 10+ character string above and click "Connect" to test with real data.
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -121,6 +134,28 @@ const ZincIntegration = () => {
                     When enabled, orders will be automatically fulfilled through Zinc
                     without requiring manual approval.
                   </p>
+                  
+                  <div className="mt-4">
+                    <Label htmlFor="current-api-key">Current API Key</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input 
+                        id="current-api-key" 
+                        type="password" 
+                        value={apiKey} 
+                        readOnly 
+                        className="max-w-md bg-muted" 
+                      />
+                      <Button variant="outline" size="sm" onClick={() => {
+                        const newApiKey = prompt("Enter a new API key:");
+                        if (newApiKey && newApiKey.length >= 10) {
+                          setApiKey(newApiKey);
+                          handleConnect();
+                        }
+                      }}>
+                        Change
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

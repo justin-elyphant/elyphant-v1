@@ -24,8 +24,13 @@ const ProfileSetup = () => {
   }, [user, navigate, isDebugMode]);
 
   const handleSetupComplete = () => {
+    console.log("Profile setup complete, navigating to dashboard");
     toast.success("Profile setup complete!");
-    navigate("/dashboard");
+    
+    // Ensure we reload the user profile before navigating
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 500);
   };
 
   const handleSkip = () => {

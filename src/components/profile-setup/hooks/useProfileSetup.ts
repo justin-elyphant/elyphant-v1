@@ -117,27 +117,12 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         shipping_address: profileData.shipping_address,
         gift_preferences: profileData.gift_preferences,
         data_sharing_settings: profileData.data_sharing_settings,
+        username: profileData.username,
         updated_at: new Date().toISOString()
       };
       
-      // Check if username column exists before trying to update it
-      try {
-        const { data: tableInfo, error: tableError } = await supabase
-          .rpc('get_column_names', { table_name: 'profiles' });
-        
-        if (!tableError && tableInfo) {
-          const hasUsernameColumn = tableInfo.includes('username');
-          
-          if (hasUsernameColumn) {
-            dataToUpdate.username = profileData.username;
-          } else {
-            console.log("Username column doesn't exist yet, not updating username");
-          }
-        }
-      } catch (err) {
-        console.error("Error checking for username column:", err);
-        // In case of error, still try to update what we can
-      }
+      // Ensure username is saved correctly
+      console.log("Saving final profile data:", dataToUpdate);
       
       // Save profile data
       const { data, error } = await supabase
@@ -146,7 +131,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         .eq('id', user?.id)
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating profile:", error);
+        throw error;
+      }
       
       console.log("Profile setup completed successfully:", data);
       toast.success("Profile updated successfully!");

@@ -5,7 +5,7 @@ import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
 import PricingControlsCard from "./pricing/PricingControlsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
-import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { AlertCircle } from "lucide-react";
 
 const TrunklineZincTab = () => {
   const hasToken = hasValidZincToken();
@@ -22,7 +22,7 @@ const TrunklineZincTab = () => {
         <CardContent>
           {!hasToken && (
             <Alert className="mb-6 bg-amber-50 border-amber-200">
-              <InfoCircledIcon className="h-4 w-4 text-amber-800" />
+              <AlertCircle className="h-4 w-4 text-amber-800" />
               <AlertTitle className="text-amber-800">API Token Required</AlertTitle>
               <AlertDescription className="text-amber-700">
                 Set up your Zinc API token below to enable real product search across the application.

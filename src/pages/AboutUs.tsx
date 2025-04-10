@@ -95,8 +95,8 @@ const AboutUs = () => {
                 <div className="md:w-1/2">
                   <div className="rounded-lg overflow-hidden shadow-md">
                     <img 
-                      src={elephantImage} 
-                      alt="Elephant in the wild" 
+                      src="https://images.unsplash.com/photo-1534692499563-57c0bdbfbf30?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80" 
+                      alt="Elephants in water in their natural habitat" 
                       className="w-full h-auto object-cover"
                     />
                     <p className="text-xs text-gray-500 italic p-2 bg-gray-50">

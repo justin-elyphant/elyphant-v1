@@ -45,7 +45,7 @@ export const useZincSearch = (searchTerm: string) => {
         );
         setFilteredProducts(filtered);
         
-        // Now search Zinc API
+        // Now search Zinc API for real products
         console.log(`Searching Zinc API for "${searchTerm}"...`);
 
         // Special case mappings for popular searches

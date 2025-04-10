@@ -38,9 +38,8 @@ export const isTestMode = (): boolean => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
-  // To prioritize real API calls, we'll set a more lenient token check
-  // This means we'll attempt real API calls more often
-  return false; // Always try real API first
+  // Only use mock data if we don't have a token
+  return !token || token.trim() === '';
 };
 
 /**

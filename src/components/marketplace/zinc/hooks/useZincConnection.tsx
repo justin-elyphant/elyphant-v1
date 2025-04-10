@@ -65,7 +65,7 @@ export const useZincConnection = () => {
         } else {
           console.warn("Product lookup returned null, but continuing with connection");
           toast.warning("Limited connection established", {
-            description: "API token saved, but product verification failed. Browser security may be blocking direct API calls."
+            description: "API token saved, but product verification failed. See browser console for CORS testing options."
           });
         }
       } catch (apiError) {
@@ -74,11 +74,11 @@ export const useZincConnection = () => {
         // Check if it's a CORS error
         if (apiError instanceof TypeError && apiError.message.includes('Failed to fetch')) {
           toast.warning("Connection established with limitations", {
-            description: "API token saved, but browser security (CORS) is preventing direct API calls. Search will use mock data."
+            description: "API token saved, but browser security (CORS) is preventing direct API calls. Try using a CORS browser extension for testing."
           });
         } else {
           toast.warning("Limited connection established", {
-            description: "API token saved, but verification failed. Browser security may be blocking direct API calls."
+            description: "API token saved, but verification failed. See browser console for testing options."
           });
         }
       }
@@ -89,10 +89,10 @@ export const useZincConnection = () => {
       return true;
     } catch (err) {
       console.error("Error connecting to Zinc:", err);
-      setError("Failed to connect to Zinc API due to browser security (CORS) restrictions. Your API token has been saved but real API calls may not work.");
+      setError("Failed to connect to Zinc API due to browser security (CORS) restrictions. Your API token has been saved but real API calls may not work without a CORS solution.");
       
       toast.error("Connection issues detected", {
-        description: "Browser security may prevent direct API calls. Your token is saved but searches may use mock data."
+        description: "Browser security may prevent direct API calls. Your token is saved but searches may use mock data until CORS is resolved."
       });
       
       return false;

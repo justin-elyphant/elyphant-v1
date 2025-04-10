@@ -39,7 +39,7 @@ const ZincConnectCard = () => {
     
     // Also show a CORS warning
     toast.warning("Browser Limitation", {
-      description: "Browser security may prevent direct API calls. If you encounter issues, check the console for CORS errors.",
+      description: "Browser security may prevent direct API calls. For testing, consider using a CORS browser extension.",
       duration: 8000
     });
     
@@ -81,14 +81,20 @@ const ZincConnectCard = () => {
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-medium text-amber-800">CORS Browser Limitation</h3>
+              <h3 className="font-medium text-amber-800">CORS Browser Limitation & Testing Options</h3>
               <p className="text-sm text-amber-700 mt-1">
                 Modern browsers enforce security restrictions (CORS) that prevent direct API calls to third-party services.
                 Even with a valid API token, direct browser-to-API calls may be blocked.
               </p>
+              <p className="text-sm text-amber-700 mt-2 font-medium">
+                Testing Options:
+              </p>
+              <ul className="text-sm text-amber-700 list-disc pl-5 mt-1">
+                <li>Install a CORS browser extension like "Allow CORS" for Chrome (for testing only!)</li>
+                <li>Create a server-side proxy (recommended for production)</li>
+              </ul>
               <p className="text-sm text-amber-700 mt-2">
-                In a production environment, you would need a server-side proxy to make these API calls.
-                This demo will fall back to mock data when direct API calls fail.
+                Without a CORS solution, this demo will fall back to mock data when direct API calls fail.
               </p>
             </div>
           </div>

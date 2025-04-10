@@ -40,7 +40,7 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
       }
       
       const data = await response.json();
-      console.log('Zinc product details response:', data);
+      console.log('Zinc API success! Product details response:', data);
       
       // Create a base image URL - ensure it's not undefined
       const mainImage = (data.images && data.images[0]) || data.image || '/placeholder.svg';
@@ -74,7 +74,11 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
       // Handle network errors (including CORS)
       if (fetchError instanceof TypeError && fetchError.message.includes('Failed to fetch')) {
         console.error('CORS or network error when calling Zinc API directly:', fetchError);
-        throw new Error('Browser security (CORS) is preventing direct API calls. A server-side proxy is required.');
+        console.log('To test live API in development, you can:');
+        console.log('1. Use a CORS browser extension like "Allow CORS" for Chrome (for testing only!)');
+        console.log('2. Create a server-side proxy (recommended for production)');
+        
+        throw new Error('Browser security (CORS) is preventing direct API calls. A server-side proxy is required or try using a CORS browser extension for testing.');
       }
       throw fetchError;
     }

@@ -38,7 +38,7 @@ const AddressAutocomplete = ({
 
   React.useEffect(() => {
     setStreetQuery(value);
-  }, [value]);
+  }, [value, setStreetQuery]);
 
   const handleAddressSelect = (address: any) => {
     onChange(address.address);
@@ -59,7 +59,7 @@ const AddressAutocomplete = ({
               onChange={(e) => {
                 onChange(e.target.value);
                 setStreetQuery(e.target.value);
-                if (e.target.value.length > 4) {
+                if (e.target.value.length > 2) {
                   setOpen(true);
                 }
               }}
@@ -76,10 +76,9 @@ const AddressAutocomplete = ({
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start">
           <Command>
-            <CommandInput placeholder="Search address..." />
             <CommandList>
               <CommandEmpty>No addresses found.</CommandEmpty>
-              <CommandGroup>
+              <CommandGroup heading="Suggested addresses">
                 {suggestions.map((address, index) => (
                   <CommandItem
                     key={index}

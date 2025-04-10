@@ -25,32 +25,28 @@ export const validateStep = (step: number, data: any) => {
     case 0:
       return !!data.name && data.name.trim().length > 1;
     
-    // Username step - username required
+    // Combined Profile step - username required (photo optional)
     case 1:
       return !!data.username && data.username.trim().length >= 3;
     
-    // Profile Photo step - optional, always valid
-    case 2:
-      return true;
-    
     // Birthday step - date required
-    case 3:
+    case 2:
       return !!data.dob;
     
     // Shipping Address step - all fields required
-    case 4:
+    case 3:
       return isValidAddress(data.shipping_address);
     
     // Gift Preferences step - at least one preference required
-    case 5:
+    case 4:
       return Array.isArray(data.gift_preferences) && data.gift_preferences.length > 0;
     
     // Data Sharing step - always valid
-    case 6:
+    case 5:
       return true;
       
     // Next Steps step - always valid
-    case 7:
+    case 6:
       return true;
     
     default:

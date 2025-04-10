@@ -58,8 +58,17 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
     onChange(updatedPreferences);
   };
   
-  const handleSelectSuggestion = (category: string) => {
-    setNewCategory(category);
+  const handleSelectSuggestion = (category: string, importance: "high" | "medium" | "low" = "medium") => {
+    // Check if the category already exists
+    const exists = values.some(pref => pref.category.toLowerCase() === category.toLowerCase());
+    if (exists) return;
+    
+    const newPreference = {
+      category: category,
+      importance: importance
+    };
+    
+    onChange([...values, newPreference]);
   };
 
   // Helper function to determine if a preference is an experience
@@ -79,7 +88,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
   // Helper function to determine if a preference is a brand
   const isBrandCategory = (category: string) => {
     const brands = ["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo", 
-                    "Amazon", "Sephora", "Nordstrom", "Target", "Ikea"];
+                   "Amazon", "Sephora", "Nordstrom", "Target", "Ikea"];
     return brands.includes(category);
   };
 
@@ -101,6 +110,12 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
               placeholder="e.g., Books, Nike, Spa Day, Theater Tickets"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newCategory.trim()) {
+                  e.preventDefault();
+                  handleAddPreference();
+                }
+              }}
             />
           </div>
           <Button type="button" size="icon" onClick={handleAddPreference}>
@@ -167,7 +182,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
         <div className="mt-6">
           <Label className="text-sm mb-2 block">Experiences</Label>
           <p className="text-xs text-muted-foreground mb-2">
-            Some people prefer experiences over physical gifts. Select any experiences you'd enjoy.
+            Some people prefer experiences over physical gifts. Click any experiences you'd enjoy.
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
             {experienceCategories.map(({ name, emoji }) => (
@@ -175,7 +190,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
                 key={name}
                 variant="outline"
                 size="sm"
-                onClick={() => handleSelectSuggestion(name)}
+                onClick={() => handleSelectSuggestion(name, "high")}
                 className="rounded-full text-xs"
               >
                 <span className="mr-1">{emoji}</span> {name}
@@ -186,13 +201,16 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
         
         <div className="mt-4">
           <Label className="text-sm mb-2 block">Popular Brands</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Click any brands you prefer for gifts.
+          </p>
           <div className="flex flex-wrap gap-2 mb-4">
             {["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo"].map((brand) => (
               <Button
                 key={brand}
                 variant="outline"
                 size="sm"
-                onClick={() => handleSelectSuggestion(brand)}
+                onClick={() => handleSelectSuggestion(brand, "medium")}
                 className="rounded-full text-xs"
               >
                 <ShoppingBag className="h-3 w-3 mr-1" />
@@ -204,6 +222,9 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
         
         <div className="mt-4">
           <Label className="text-sm mb-2 block">Other Categories</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Click any other categories you're interested in.
+          </p>
           <div className="flex flex-wrap gap-2">
             {suggestedCategories
               .filter(category => 
@@ -215,7 +236,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
                 key={category}
                 variant="outline"
                 size="sm"
-                onClick={() => handleSelectSuggestion(category)}
+                onClick={() => handleSelectSuggestion(category, "medium")}
                 className="rounded-full text-xs"
               >
                 {category}

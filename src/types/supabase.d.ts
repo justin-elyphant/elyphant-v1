@@ -33,6 +33,7 @@ export interface Profile {
   shipping_address?: ShippingAddress;
   gift_preferences?: GiftPreference[];
   data_sharing_settings?: DataSharingSettings;
+  next_steps_option?: string;
 }
 
 // Add more types as needed

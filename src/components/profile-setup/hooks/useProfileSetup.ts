@@ -85,10 +85,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     fetchUserProfile();
   }, [user, getUserProfile]);
 
+  // Reduced steps by combining username and profile photo
   const steps = [
     "Basic Info",
-    "Username",
-    "Profile Photo",
+    "Profile",
     "Birthday",
     "Shipping Address",
     "Gift Preferences",
@@ -108,23 +108,43 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     try {
       setIsLoading(true);
       
-      // Save all profile data
+      // Prepare final data to save
+      let dataToUpdate: any = {
+        name: profileData.name,
+        email: profileData.email,
+        profile_image: profileData.profile_image,
+        dob: profileData.dob,
+        shipping_address: profileData.shipping_address,
+        gift_preferences: profileData.gift_preferences,
+        data_sharing_settings: profileData.data_sharing_settings,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Check if username column exists before trying to update it
+      try {
+        const { data: tableInfo, error: tableError } = await supabase
+          .rpc('get_column_names', { table_name: 'profiles' });
+        
+        if (!tableError && tableInfo) {
+          const hasUsernameColumn = tableInfo.includes('username');
+          
+          if (hasUsernameColumn) {
+            dataToUpdate.username = profileData.username;
+          } else {
+            console.log("Username column doesn't exist yet, not updating username");
+          }
+        }
+      } catch (err) {
+        console.error("Error checking for username column:", err);
+        // In case of error, still try to update what we can
+      }
+      
+      // Save profile data
       const { data, error } = await supabase
         .from('profiles')
-        .update({
-          name: profileData.name,
-          username: profileData.username,
-          email: profileData.email,
-          profile_image: profileData.profile_image,
-          dob: profileData.dob,
-          shipping_address: profileData.shipping_address,
-          gift_preferences: profileData.gift_preferences,
-          data_sharing_settings: profileData.data_sharing_settings,
-          updated_at: new Date().toISOString()
-        })
+        .update(dataToUpdate)
         .eq('id', user?.id)
-        .select()
-        .single();
+        .select();
       
       if (error) throw error;
       
@@ -150,7 +170,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       }
     } catch (err) {
       console.error("Error completing profile setup:", err);
-      toast.error("Failed to save profile data");
+      toast.error("Failed to save profile data. Please try again.");
     } finally {
       setIsLoading(false);
     }

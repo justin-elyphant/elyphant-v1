@@ -17,7 +17,7 @@ export const useAddressAutocomplete = () => {
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (streetQuery.length < 5) {
+      if (streetQuery.length < 3) {
         setSuggestions([]);
         return;
       }
@@ -27,7 +27,7 @@ export const useAddressAutocomplete = () => {
         // This is a mock API call - in a real implementation,
         // you would use a service like Google Places API, Mapbox, etc.
         // We're simulating a delay and returning mock data
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Mock address data based on the query
         const mockSuggestions = generateMockAddresses(streetQuery);
@@ -40,7 +40,8 @@ export const useAddressAutocomplete = () => {
       }
     };
 
-    const debounceTimer = setTimeout(fetchSuggestions, 300);
+    // Use a shorter timeout for better responsiveness
+    const debounceTimer = setTimeout(fetchSuggestions, 200);
     return () => clearTimeout(debounceTimer);
   }, [streetQuery]);
 
@@ -49,25 +50,130 @@ export const useAddressAutocomplete = () => {
     setSuggestions([]);
   };
 
-  // This is a mock function for demonstration
-  // In a real app, you would integrate with a real address API
+  // Enhanced mock function to provide more realistic suggestions
   const generateMockAddresses = (query: string): AddressSuggestion[] => {
     const normalizedQuery = query.toLowerCase().trim();
     
-    // Common street types to make the suggestions look realistic
-    const streets = [
-      { street: `${normalizedQuery.charAt(0).toUpperCase() + normalizedQuery.slice(1)} Ave`, city: "New York", state: "NY", zipCode: "10001", country: "United States" },
-      { street: `${normalizedQuery.charAt(0).toUpperCase() + normalizedQuery.slice(1)} St`, city: "San Francisco", state: "CA", zipCode: "94105", country: "United States" },
-      { street: `${normalizedQuery.charAt(0).toUpperCase() + normalizedQuery.slice(1)} Blvd`, city: "Los Angeles", state: "CA", zipCode: "90001", country: "United States" },
-    ];
+    if (!normalizedQuery) return [];
     
-    return streets.map(s => ({
-      address: s.street,
-      city: s.city,
-      state: s.state,
-      zipCode: s.zipCode,
-      country: s.country
-    }));
+    // Generate more diverse mock addresses based on first letters
+    const firstChar = normalizedQuery.charAt(0).toUpperCase();
+    
+    // Create a list of street types for variety
+    const streetTypes = ["St", "Ave", "Blvd", "Dr", "Ln", "Rd", "Way", "Pl"];
+    const cities = {
+      "A": ["Atlanta", "Austin", "Albuquerque", "Albany"],
+      "B": ["Boston", "Baltimore", "Birmingham", "Buffalo"],
+      "C": ["Chicago", "Cleveland", "Columbus", "Charlotte", "Cincinnati"],
+      "D": ["Dallas", "Denver", "Detroit", "Durham"],
+      "E": ["Eugene", "El Paso", "Evanston", "Edison"],
+      "F": ["Fort Worth", "Fresno", "Fort Lauderdale", "Fargo"],
+      "G": ["Grand Rapids", "Green Bay", "Greensboro", "Gainesville"],
+      "H": ["Houston", "Honolulu", "Hartford", "Henderson"],
+      "I": ["Indianapolis", "Irving", "Irvine", "Independence"],
+      "J": ["Jacksonville", "Jersey City", "Jackson", "Jupiter"],
+      "K": ["Kansas City", "Knoxville", "Kent", "Kalamazoo"],
+      "L": ["Los Angeles", "Las Vegas", "Louisville", "Lincoln"],
+      "M": ["Miami", "Minneapolis", "Memphis", "Milwaukee"],
+      "N": ["New York", "Nashville", "New Orleans", "Newark"],
+      "O": ["Oakland", "Oklahoma City", "Omaha", "Orlando"],
+      "P": ["Philadelphia", "Phoenix", "Portland", "Pittsburgh"],
+      "Q": ["Queens", "Quincy", "Quakertown"],
+      "R": ["Raleigh", "Richmond", "Riverside", "Rochester"],
+      "S": ["San Francisco", "Seattle", "San Diego", "San Antonio"],
+      "T": ["Tampa", "Tucson", "Toledo", "Tulsa"],
+      "U": ["Union City", "Urban", "Utica"],
+      "V": ["Virginia Beach", "Vancouver", "Vallejo"],
+      "W": ["Washington", "Wichita", "Winston-Salem"],
+      "X": ["Xerox"], 
+      "Y": ["Youngstown", "Yonkers", "York"],
+      "Z": ["Zanesville", "Zion"]
+    };
+    
+    const states = {
+      "A": ["AL", "AK", "AZ", "AR"],
+      "B": ["CA"], // Berkeley
+      "C": ["CA", "CO", "CT"],
+      "D": ["DE", "DC"],
+      "E": ["FL"], // Everglades
+      "F": ["FL"],
+      "G": ["GA"],
+      "H": ["HI"],
+      "I": ["ID", "IL", "IN", "IA"],
+      "J": ["NJ"],
+      "K": ["KS", "KY"],
+      "L": ["LA"],
+      "M": ["ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT"],
+      "N": ["NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND"],
+      "O": ["OH", "OK", "OR"],
+      "P": ["PA"],
+      "Q": ["PA"], // Quakertown
+      "R": ["RI"],
+      "S": ["SC", "SD"],
+      "T": ["TN", "TX"],
+      "U": ["UT"],
+      "V": ["VT", "VA"],
+      "W": ["WA", "WV", "WI", "WY"],
+      "X": ["TX"], // No X states
+      "Y": ["NY"], // No Y states
+      "Z": ["OH"] // No Z states
+    };
+    
+    const citiesForLetter = cities[firstChar as keyof typeof cities] || cities["S"];
+    const statesForLetter = states[firstChar as keyof typeof states] || states["C"];
+    
+    // Generate 3-5 mock addresses
+    const numAddresses = Math.floor(Math.random() * 3) + 3;
+    const mockAddresses: AddressSuggestion[] = [];
+    
+    for (let i = 0; i < numAddresses; i++) {
+      // Create street number
+      const streetNum = Math.floor(Math.random() * 9900) + 100;
+      
+      // Create street name (possibly using part of the query)
+      let streetName;
+      if (normalizedQuery.length > 3) {
+        // Use part of the query as the street name
+        streetName = normalizedQuery.charAt(0).toUpperCase() + 
+                    normalizedQuery.slice(1, Math.min(normalizedQuery.length, 8));
+      } else {
+        // Random name based on first letter
+        const streetOptions = [
+          firstChar + "ackson", 
+          firstChar + "incoln",
+          firstChar + "ashington",
+          firstChar + "ranklin",
+          firstChar + "efferson"
+        ];
+        streetName = streetOptions[Math.floor(Math.random() * streetOptions.length)];
+      }
+      
+      // Pick a random street type
+      const streetType = streetTypes[Math.floor(Math.random() * streetTypes.length)];
+      
+      // Construct full address
+      const address = `${streetNum} ${streetName} ${streetType}`;
+      
+      // Pick a random city and state for this letter
+      const city = citiesForLetter[Math.floor(Math.random() * citiesForLetter.length)];
+      const state = statesForLetter[Math.floor(Math.random() * statesForLetter.length)];
+      
+      // Generate zipcode based on state
+      const zipPrefix = (states["C"].includes(state)) ? "9" : 
+                        (states["N"].includes(state)) ? "1" : 
+                        (states["T"].includes(state)) ? "7" : "3";
+      const zipCode = zipPrefix + Math.floor(Math.random() * 9000 + 1000).toString();
+      
+      mockAddresses.push({
+        address,
+        city,
+        state,
+        zipCode,
+        country: "United States"
+      });
+    }
+    
+    return mockAddresses;
   };
 
   return {

@@ -3,8 +3,13 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
 import PricingControlsCard from "./pricing/PricingControlsCard";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
 
 const TrunklineZincTab = () => {
+  const hasToken = hasValidZincToken();
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -15,6 +20,16 @@ const TrunklineZincTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!hasToken && (
+            <Alert className="mb-6 bg-amber-50 border-amber-200">
+              <InfoCircledIcon className="h-4 w-4 text-amber-800" />
+              <AlertTitle className="text-amber-800">API Token Required</AlertTitle>
+              <AlertDescription className="text-amber-700">
+                Set up your Zinc API token below to enable real product search across the application.
+                Without this token, all product searches will use mock data.
+              </AlertDescription>
+            </Alert>
+          )}
           <ZincIntegration />
         </CardContent>
       </Card>

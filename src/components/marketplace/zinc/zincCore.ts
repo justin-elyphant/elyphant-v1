@@ -16,7 +16,7 @@ export const getZincHeaders = () => {
   
   // Validate token
   if (!token || token.trim() === '') {
-    console.warn('No Zinc API token found. Please set a valid token.');
+    console.warn('No Zinc API token found. Please set a valid token in the Trunkline portal.');
   }
   
   return {
@@ -37,12 +37,10 @@ export const isTestMode = (): boolean => {
   if (mockParam === 'false') return false;
   
   // Force real API mode for specific searches
-  const pathName = window.location.pathname;
-  const search = window.location.search.toLowerCase();
-  
-  // If we're searching for padres hat, always use real data
   const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement | null;
   const currentSearch = searchInput?.value?.toLowerCase() || '';
+  
+  // If we're searching for padres hat, always use real data
   if (currentSearch.includes('padres') && currentSearch.includes('hat')) {
     console.log('Forcing real API mode for Padres hat search');
     return false;
@@ -52,10 +50,10 @@ export const isTestMode = (): boolean => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
-  // Show diagnostic info in console
+  // Log diagnostic info about the token status
   if (!token || token.trim() === '') {
     console.warn('No Zinc API token found. Using mock data instead.');
-    console.info('To use the real API, set a token using setZincApiToken() or provide it as VITE_ZINC_API_TOKEN.');
+    console.info('To use the real API, set a token in the Trunkline portal (/trunkline) or provide it as VITE_ZINC_API_TOKEN.');
   } else {
     console.log('Found Zinc API token (length: ' + token.length + '). Using real API when possible.');
   }
@@ -80,6 +78,13 @@ export const setZincApiToken = (token: string): void => {
   if (token && token.trim() !== '') {
     localStorage.setItem('zincApiToken', token.trim());
     console.log('Zinc API token saved to localStorage');
+    
+    // Also store connection status
+    const connection = {
+      autoFulfillment: false,
+      lastSync: Date.now()
+    };
+    localStorage.setItem("zincConnection", JSON.stringify(connection));
   } else {
     console.warn('Attempted to save empty Zinc API token. No changes made.');
   }
@@ -99,5 +104,6 @@ export const getZincApiToken = (): string => {
  */
 export const clearZincApiToken = (): void => {
   localStorage.removeItem('zincApiToken');
+  localStorage.removeItem("zincConnection");
   console.log('Zinc API token removed from localStorage');
 };

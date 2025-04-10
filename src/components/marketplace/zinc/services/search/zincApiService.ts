@@ -24,11 +24,15 @@ export const searchZincApi = async (
     // Verify we have a valid token before making the API call
     if (!hasValidZincToken()) {
       console.error('No valid Zinc API token found. Cannot make API request.');
-      toast.error('API Token Missing', {
-        description: 'Please add your Zinc API token in settings to search real products',
+      toast.error('API Token Required', {
+        description: 'Please add your Zinc API token in the Trunkline portal to search real products',
         duration: 5000,
+        action: {
+          label: 'Go to Trunkline',
+          onClick: () => window.location.href = '/trunkline'
+        }
       });
-      return null;
+      return generateMockSearchResults(query, parseInt(maxResults));
     }
     
     console.log(`Making real API call to Zinc for query: "${query}", max results: ${maxResults}`);
@@ -79,6 +83,7 @@ export const searchZincApi = async (
       });
     }
     
-    throw error;
+    // Fall back to mock data in case of error
+    return generateMockSearchResults(query, parseInt(maxResults));
   }
 };

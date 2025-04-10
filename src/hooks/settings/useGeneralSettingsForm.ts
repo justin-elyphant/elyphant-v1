@@ -204,7 +204,7 @@ export const useGeneralSettingsForm = () => {
     
     // Ensure we're adding a complete date object with required date field
     const newDate = {
-      date: newImportantDate.date,
+      date: newImportantDate.date as Date, // Ensure date is non-optional
       description: newImportantDate.description.trim()
     };
     

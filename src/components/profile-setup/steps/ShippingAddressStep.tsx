@@ -1,10 +1,9 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShippingAddress } from "@/types/supabase";
-import { useAddressAutocomplete } from "@/hooks/useAddressAutocomplete";
 import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
 
 interface ShippingAddressStepProps {
@@ -65,6 +64,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
           value={value.street || ""}
           onChange={(street) => handleChange("street", street)}
           onAddressSelect={handleAddressSelect}
+          disabled={false}
         />
         
         <div className="grid grid-cols-2 gap-4">

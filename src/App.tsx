@@ -10,6 +10,7 @@ import { Toaster } from 'sonner';
 
 import { useAuth } from '@/contexts/auth';
 import { ProductProvider } from '@/contexts/ProductContext';
+import { CartProvider } from '@/contexts/CartContext';
 import Dashboard from '@/pages/Dashboard';
 import Gifting from '@/pages/Gifting';
 import Index from '@/pages/Index';
@@ -62,122 +63,124 @@ function App() {
   return (
     <>
       <Toaster position="bottom-center" />
-      <ProductProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/sign-in" element={<SignIn />} />
-            <Route path="/sign-up" element={<SignUp />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile-setup" element={
-              <ProtectedRoute>
-                <ProfileSetup />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile/:userId" element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            } />
-            <Route path="/orders" element={
-              <ProtectedRoute>
-                <Orders />
-              </ProtectedRoute>
-            } />
-            <Route path="/orders/:orderId" element={
-              <ProtectedRoute>
-                <OrderDetail />
-              </ProtectedRoute>
-            } />
-            <Route path="/returns" element={
-              <ProtectedRoute>
-                <Returns />
-              </ProtectedRoute>
-            } />
-            <Route path="/funding" element={
-              <ProtectedRoute>
-                <Funding />
-              </ProtectedRoute>
-            } />
-            <Route path="/funding/:campaignId" element={
-              <ProtectedRoute>
-                <FundingDetails />
-              </ProtectedRoute>
-            } />
-            <Route path="/funding/success" element={
-              <ProtectedRoute>
-                <FundingSuccess />
-              </ProtectedRoute>
-            } />
-            <Route path="/connections" element={
-              <ProtectedRoute>
-                <Connections />
-              </ProtectedRoute>
-            } />
-            <Route path="/connections/:connectionId" element={
-              <ProtectedRoute>
-                <ConnectionDetails />
-              </ProtectedRoute>
-            } />
-            <Route path="/wishlists" element={
-              <ProtectedRoute>
-                <Wishlists />
-              </ProtectedRoute>
-            } />
-            <Route path="/gifting" element={
-              <ProtectedRoute>
-                <Gifting />
-              </ProtectedRoute>
-            } />
-            <Route path="/messages" element={
-              <ProtectedRoute>
-                <Messages />
-              </ProtectedRoute>
-            } />
-            <Route path="/events" element={
-              <ProtectedRoute>
-                <Events />
-              </ProtectedRoute>
-            } />
-            <Route path="/marketplace" element={
-              <ProtectedRoute>
-                <Marketplace />
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-            <Route path="/cart" element={
-              <ProtectedRoute>
-                <Cart />
-              </ProtectedRoute>
-            } />
-            <Route path="/purchase/success" element={
-              <ProtectedRoute>
-                <PurchaseSuccess />
-              </ProtectedRoute>
-            } />
-            <Route path="/vendor/signup" element={<VendorSignup />} />
-            <Route path="/trunkline" element={
-              <ProtectedRoute>
-                <Trunkline />
-              </ProtectedRoute>
-            } />
-            <Route path="/vendor" element={
-              <ProtectedRoute>
-                <VendorManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-      </ProductProvider>
+      <CartProvider>
+        <ProductProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/sign-in" element={<SignIn />} />
+              <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile-setup" element={
+                <ProtectedRoute>
+                  <ProfileSetup />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile/:userId" element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/orders" element={
+                <ProtectedRoute>
+                  <Orders />
+                </ProtectedRoute>
+              } />
+              <Route path="/orders/:orderId" element={
+                <ProtectedRoute>
+                  <OrderDetail />
+                </ProtectedRoute>
+              } />
+              <Route path="/returns" element={
+                <ProtectedRoute>
+                  <Returns />
+                </ProtectedRoute>
+              } />
+              <Route path="/funding" element={
+                <ProtectedRoute>
+                  <Funding />
+                </ProtectedRoute>
+              } />
+              <Route path="/funding/:campaignId" element={
+                <ProtectedRoute>
+                  <FundingDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/funding/success" element={
+                <ProtectedRoute>
+                  <FundingSuccess />
+                </ProtectedRoute>
+              } />
+              <Route path="/connections" element={
+                <ProtectedRoute>
+                  <Connections />
+                </ProtectedRoute>
+              } />
+              <Route path="/connections/:connectionId" element={
+                <ProtectedRoute>
+                  <ConnectionDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/wishlists" element={
+                <ProtectedRoute>
+                  <Wishlists />
+                </ProtectedRoute>
+              } />
+              <Route path="/gifting" element={
+                <ProtectedRoute>
+                  <Gifting />
+                </ProtectedRoute>
+              } />
+              <Route path="/messages" element={
+                <ProtectedRoute>
+                  <Messages />
+                </ProtectedRoute>
+              } />
+              <Route path="/events" element={
+                <ProtectedRoute>
+                  <Events />
+                </ProtectedRoute>
+              } />
+              <Route path="/marketplace" element={
+                <ProtectedRoute>
+                  <Marketplace />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+              <Route path="/cart" element={
+                <ProtectedRoute>
+                  <Cart />
+                </ProtectedRoute>
+              } />
+              <Route path="/purchase/success" element={
+                <ProtectedRoute>
+                  <PurchaseSuccess />
+                </ProtectedRoute>
+              } />
+              <Route path="/vendor/signup" element={<VendorSignup />} />
+              <Route path="/trunkline" element={
+                <ProtectedRoute>
+                  <Trunkline />
+                </ProtectedRoute>
+              } />
+              <Route path="/vendor" element={
+                <ProtectedRoute>
+                  <VendorManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
+        </ProductProvider>
+      </CartProvider>
     </>
   );
 }

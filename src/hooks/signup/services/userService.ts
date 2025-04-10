@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpValues } from "@/components/auth/signup/SignUpForm";
@@ -6,11 +7,7 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
   try {
     console.log("Signing up user with admin API and bypassing email verification");
     
-    // First, check if we're correctly configured
-    // Use a simple log without trying to access protected properties
-    console.log(`Will call create-user function through Supabase Functions API`);
-    
-    // Create the user through our Edge Function instead of Supabase Auth directly
+    // Create the user through our Edge Function
     console.log("Sending create-user request with body:", {
       email: values.email,
       name: values.name,
@@ -43,42 +40,47 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
       } : null
     });
     
-    if (response.error) {
-      console.error("Signup error from edge function:", response.error);
+    // Check for response.data even if there's an error - the edge function might return useful data
+    // with an error status code
+    if (response.data?.code === "user_exists") {
+      console.log("User already exists, attempting to sign in");
       
-      // Try to extract more detailed error information
-      const errorDetails = response.data?.details || {};
-      const errorMessage = response.error.message || 
-                          response.data?.error || 
-                          "Unknown error occurred";
+      // User exists, try to sign them in directly
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password
+      });
       
-      // Check for user already exists error
-      if (errorMessage.includes("already registered") || 
-          errorDetails.msg?.includes("already registered") ||
+      if (signInError) {
+        if (signInError.message.includes("Invalid login credentials")) {
+          throw new Error("Email already registered with a different password");
+        }
+        throw signInError;
+      }
+      
+      // If we get here, sign in succeeded with the provided credentials
+      console.log("Existing user signed in:", signInData);
+      return { 
+        success: true, 
+        user: signInData.user,
+        userExists: true
+      };
+    }
+    
+    if (response.error || !response.data?.success) {
+      // Extract error details from the response if possible
+      const errorMsg = response.data?.error || response.error?.message || "Failed to create user";
+      
+      // Handle specific error cases
+      if (errorMsg.includes("already registered") || 
           response.data?.code === "user_exists") {
         throw new Error("Email already registered");
       }
       
-      // Check for validation errors with field information
-      if (response.data?.field) {
-        throw new Error(`${response.data.error || "Invalid input"} (${response.data.field})`);
-      }
-      
-      // Check for other specific errors
-      if (response.data?.status === 422) {
-        const fieldInfo = response.data.field ? ` (${response.data.field})` : '';
-        throw new Error(`Validation error${fieldInfo}: ${response.data.error || "Invalid input format"}`);
-      }
-      
-      throw new Error(errorMessage);
+      throw new Error(errorMsg);
     }
     
-    if (!response.data?.success) {
-      console.error("Signup failed:", response.data?.error);
-      throw new Error(response.data?.error || "Failed to create user");
-    }
-    
-    console.log("User created:", response.data.user);
+    console.log("User created successfully:", response.data.user);
     
     // After creating the user, sign them in automatically
     const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -89,7 +91,6 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
     if (signInError) {
       console.error("Auto sign-in error:", signInError);
       // We don't throw here since the user was created successfully
-      // They can still sign in manually
     }
     
     return response.data;

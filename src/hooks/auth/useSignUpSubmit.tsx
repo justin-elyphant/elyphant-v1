@@ -1,6 +1,6 @@
 
 import { toast } from "sonner";
-import { SignUpFormValues } from "@/components/auth/signup/SignUpContentWrapper";
+import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { signUpUser } from "@/hooks/signup/signupService";
 
 interface UseSignUpSubmitProps {
@@ -32,7 +32,7 @@ export const useSignUpSubmit = ({
         return;
       }
       
-      console.log("User created successfully:", result);
+      console.log("Sign up successful:", result);
       
       setUserEmail(values.email);
       setUserName(values.name);
@@ -44,9 +44,15 @@ export const useSignUpSubmit = ({
       setTestVerificationCode("123456");
       
       // Show success toast for better user feedback
-      toast.success("Account created! For testing, verification is being bypassed", {
-        description: "You'll be redirected to profile setup automatically."
-      });
+      if (result.userExists) {
+        toast.success("Welcome back! Using existing account", {
+          description: "You'll be redirected to the dashboard shortly."
+        });
+      } else {
+        toast.success("Account created successfully!", {
+          description: "You'll be redirected to profile setup automatically."
+        });
+      }
       
       setEmailSent(true);
       setStep("verification");

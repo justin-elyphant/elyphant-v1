@@ -133,6 +133,39 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // First, check if a user with this email already exists
+    const checkUserResponse = await fetch(
+      `${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "apikey": SUPABASE_SERVICE_ROLE_KEY
+        }
+      }
+    );
+    
+    const checkUserData = await checkUserResponse.json();
+    
+    if (checkUserResponse.ok && checkUserData.users && checkUserData.users.length > 0) {
+      // User already exists
+      console.log(`User with email ${email} already exists`);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          code: "user_exists",
+          error: "Email already registered",
+          status: 200, // Return 200 so the client can handle this case gracefully
+          message: "Email already registered, please sign in instead"
+        }),
+        {
+          status: 200, // Use 200 instead of 400 for better client handling
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     // Create user with the admin API
     console.log(`Creating user with email ${email} and email_confirm=true`);
     const createUserResponse = await fetch(
@@ -180,11 +213,11 @@ const handler = async (req: Request): Promise<Response> => {
             error: "Email already registered",
             code: "user_exists",
             success: false,
-            status: createUserResponse.status,
+            status: 200, // Use 200 for better client handling
             details: parsedError
           }),
           {
-            status: 400,
+            status: 200, // Use 200 instead of 400 to allow client-side handling
             headers: { "Content-Type": "application/json", ...corsHeaders },
           }
         );

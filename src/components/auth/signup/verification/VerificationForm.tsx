@@ -52,9 +52,11 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   // AUTO-VERIFICATION: Automatically trigger verification success for testing
   useEffect(() => {
     console.log("AUTO-VERIFICATION: Bypassing email verification for testing");
+    // Use a slightly longer delay to make sure users see the verification form briefly 
     const timer = setTimeout(() => {
+      console.log("Auto-triggering verification success");
       onVerificationSuccess();
-    }, 1500);
+    }, 2000);
     return () => clearTimeout(timer);
   }, [onVerificationSuccess]);
 

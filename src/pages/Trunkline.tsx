@@ -9,6 +9,7 @@ import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
 import TrunklineOrdersTab from "@/components/trunkline/TrunklineOrdersTab";
 import TrunklineCustomersTab from "@/components/trunkline/TrunklineCustomersTab";
 import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
+import TrunklineSupportTab from "@/components/trunkline/TrunklineSupportTab";
 
 const Trunkline = () => {
   const navigate = useNavigate();
@@ -32,16 +33,17 @@ const Trunkline = () => {
           </div>
         </div>
         
-        <Tabs defaultValue="zinc">
+        <Tabs defaultValue="support">
           <TabsList className="mb-6">
-            <TabsTrigger value="zinc">Zinc Integration</TabsTrigger>
+            <TabsTrigger value="support">Support Requests</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
+            <TabsTrigger value="zinc">Zinc Integration</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="zinc">
-            <TrunklineZincTab />
+          <TabsContent value="support">
+            <TrunklineSupportTab />
           </TabsContent>
           
           <TabsContent value="orders">
@@ -54,6 +56,10 @@ const Trunkline = () => {
           
           <TabsContent value="vendors">
             <TrunklineVendorsTab />
+          </TabsContent>
+          
+          <TabsContent value="zinc">
+            <TrunklineZincTab />
           </TabsContent>
         </Tabs>
       </div>

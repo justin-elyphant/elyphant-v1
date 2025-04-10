@@ -9,6 +9,7 @@ import AdvertisingDashboard from "@/components/marketplace/AdvertisingDashboard"
 import VendorIntegrationsTab from "@/components/vendor/VendorIntegrationsTab";
 import VendorProductsTab from "@/components/vendor/VendorProductsTab";
 import VendorAnalyticsTab from "@/components/vendor/VendorAnalyticsTab";
+import VendorSupportTab from "@/components/vendor/VendorSupportTab";
 import IntegrationAddSheet from "@/components/vendor/IntegrationAddSheet";
 
 const VendorManagement = () => {
@@ -33,9 +34,10 @@ const VendorManagement = () => {
           <IntegrationAddSheet />
         </div>
         
-        <Tabs defaultValue="products">
+        <Tabs defaultValue="support">
           <TabsList className="mb-6">
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="support">Support & Returns</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="advertising">Advertising</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -43,6 +45,10 @@ const VendorManagement = () => {
           
           <TabsContent value="products">
             <VendorProductsTab />
+          </TabsContent>
+          
+          <TabsContent value="support">
+            <VendorSupportTab />
           </TabsContent>
           
           <TabsContent value="integrations">

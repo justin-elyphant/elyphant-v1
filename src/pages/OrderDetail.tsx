@@ -3,17 +3,28 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowLeft } from "lucide-react";
+import { MapPin, ArrowLeft, MessageSquare } from "lucide-react";
 import { getMockOrders } from "@/components/marketplace/zinc/orderService";
 import { toast } from "sonner";
 
-// Import our new components
+// Import our components
 import OrderStatusBadge from "@/components/orders/OrderStatusBadge";
 import OrderSummaryCard from "@/components/orders/OrderSummaryCard";
 import ShippingInfoCard from "@/components/orders/ShippingInfoCard";
 import OrderItemsTable from "@/components/orders/OrderItemsTable";
+import OrderNotesCard from "@/components/orders/OrderNotesCard";
 import OrderNotFound from "@/components/orders/OrderNotFound";
 import OrderSkeleton from "@/components/orders/OrderSkeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -21,6 +32,7 @@ const OrderDetail = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [vendorMessage, setVendorMessage] = useState("");
 
   // Redirect to sign-up if not logged in
   useEffect(() => {
@@ -50,6 +62,16 @@ const OrderDetail = () => {
       setIsLoading(false);
     }, 500);
   }, [orderId, navigate]);
+
+  const handleSendToVendor = () => {
+    if (!vendorMessage.trim()) return;
+    
+    toast.success("Message sent to vendor", {
+      description: "The vendor will be notified about your message."
+    });
+    
+    setVendorMessage("");
+  };
 
   if (!userData || isLoading) {
     return (
@@ -83,12 +105,44 @@ const OrderDetail = () => {
             Placed on {new Date(order.date).toLocaleDateString()} • <OrderStatusBadge status={order.status} />
           </p>
         </div>
-        {order.status === "shipped" && (
-          <Button>
-            <MapPin className="h-4 w-4 mr-2" />
-            Track Package
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Message Vendor
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Message Vendor</DialogTitle>
+                <DialogDescription>
+                  Send a message to the vendor regarding this order
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Textarea
+                  placeholder="Type your message to the vendor..."
+                  value={vendorMessage}
+                  onChange={(e) => setVendorMessage(e.target.value)}
+                  rows={4}
+                />
+              </div>
+              <DialogFooter>
+                <Button onClick={handleSendToVendor} disabled={!vendorMessage.trim()}>
+                  Send Message
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          {order.status === "shipped" && (
+            <Button>
+              <MapPin className="h-4 w-4 mr-2" />
+              Track Package
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Order Summary and Shipping Information */}
@@ -99,6 +153,11 @@ const OrderDetail = () => {
 
       {/* Order Items */}
       <OrderItemsTable order={order} />
+      
+      {/* Order Notes - For internal staff only */}
+      <div className="mt-6">
+        <OrderNotesCard orderId={order.id} />
+      </div>
 
       <div className="mt-6 flex justify-end">
         {order.status === "delivered" && (

@@ -35,6 +35,7 @@ const AddressAutocomplete = ({
   } = useAddressAutocomplete();
   
   const [open, setOpen] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     setStreetQuery(value);
@@ -45,6 +46,13 @@ const AddressAutocomplete = ({
     selectAddress(address);
     onAddressSelect(address);
     setOpen(false);
+    
+    // Restore focus to the input element after selection
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
   };
 
   return (
@@ -55,11 +63,18 @@ const AddressAutocomplete = ({
           <div className="relative">
             <Input
               id="street"
+              ref={inputRef}
               value={value}
               onChange={(e) => {
-                onChange(e.target.value);
-                setStreetQuery(e.target.value);
-                if (e.target.value.length > 2) {
+                const newValue = e.target.value;
+                onChange(newValue);
+                setStreetQuery(newValue);
+                if (newValue.length > 2) {
+                  setOpen(true);
+                }
+              }}
+              onFocus={() => {
+                if (value.length > 2 && suggestions.length > 0) {
                   setOpen(true);
                 }
               }}

@@ -18,6 +18,7 @@ export const useProfile = () => {
     setError(null);
     
     try {
+      console.log("Fetching profile for user:", user.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -26,6 +27,7 @@ export const useProfile = () => {
       
       if (error) throw error;
       
+      console.log("Fetched profile data:", data);
       setProfile(data);
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -46,6 +48,7 @@ export const useProfile = () => {
     }
     
     try {
+      console.log("Updating profile with:", updates);
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -55,6 +58,7 @@ export const useProfile = () => {
       
       if (error) throw error;
       
+      console.log("Profile updated successfully:", data);
       setProfile(prev => prev ? { ...prev, ...updates } : data);
       toast.success("Profile updated successfully");
       

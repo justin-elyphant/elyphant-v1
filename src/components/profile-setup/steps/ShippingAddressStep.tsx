@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +46,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
   } = useAddressAutocomplete();
 
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     // Initialize the street query when the component mounts or value changes
@@ -68,6 +69,13 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       country: address.country || value.country
     });
     setOpen(false);
+    
+    // Restore focus to the input element after selection
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
   };
 
   return (
@@ -87,6 +95,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
               <div className="relative">
                 <Input
                   id="street"
+                  ref={inputRef}
                   placeholder="123 Main St"
                   value={value.street}
                   onChange={(e) => {
@@ -94,6 +103,11 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
                     handleChange('street', newValue);
                     setStreetQuery(newValue);
                     if (newValue.length > 2) {
+                      setOpen(true);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (value.street && value.street.length > 2 && suggestions.length > 0) {
                       setOpen(true);
                     }
                   }}

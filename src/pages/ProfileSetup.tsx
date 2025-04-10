@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import ProfileSetupFlow from "@/components/profile-setup/ProfileSetupFlow";
 import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
@@ -23,14 +24,27 @@ const ProfileSetup = () => {
     }
   }, [user, navigate, isDebugMode]);
 
-  const handleSetupComplete = () => {
-    console.log("Profile setup complete, navigating to dashboard");
+  const handleSetupComplete = async () => {
+    console.log("Profile setup complete");
     toast.success("Profile setup complete!");
     
-    // Ensure we reload the user profile before navigating
-    setTimeout(() => {
+    try {
+      // Refresh the profile data from Supabase
+      if (user) {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error("Error refreshing session:", error);
+        }
+      }
+      
+      // Navigate to dashboard after a brief delay
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
+    } catch (error) {
+      console.error("Error during profile completion:", error);
       navigate("/dashboard");
-    }, 500);
+    }
   };
 
   const handleSkip = () => {

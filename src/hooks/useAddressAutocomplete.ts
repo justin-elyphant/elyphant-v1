@@ -27,7 +27,7 @@ export const useAddressAutocomplete = () => {
         // This is a mock API call - in a real implementation,
         // you would use a service like Google Places API, Mapbox, etc.
         // We're simulating a delay and returning mock data
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // Mock address data based on the query
         const mockSuggestions = generateMockAddresses(streetQuery);
@@ -41,7 +41,7 @@ export const useAddressAutocomplete = () => {
     };
 
     // Use a shorter timeout for better responsiveness
-    const debounceTimer = setTimeout(fetchSuggestions, 200);
+    const debounceTimer = setTimeout(fetchSuggestions, 150);
     return () => clearTimeout(debounceTimer);
   }, [streetQuery]);
 
@@ -119,25 +119,30 @@ export const useAddressAutocomplete = () => {
       "Z": ["OH"] // No Z states
     };
     
-    const citiesForLetter = cities[firstChar as keyof typeof cities] || cities["S"];
-    const statesForLetter = states[firstChar as keyof typeof states] || states["C"];
+    // Include more matching for common query terms
+    let addressMatches: AddressSuggestion[] = [];
     
-    // Generate 3-5 mock addresses
+    // Generate matches that contain the query string
     const numAddresses = Math.floor(Math.random() * 3) + 3;
-    const mockAddresses: AddressSuggestion[] = [];
     
     for (let i = 0; i < numAddresses; i++) {
       // Create street number
       const streetNum = Math.floor(Math.random() * 9900) + 100;
       
-      // Create street name (possibly using part of the query)
+      // Create street name that includes part of the query for better matching
       let streetName;
       if (normalizedQuery.length > 3) {
-        // Use part of the query as the street name
-        streetName = normalizedQuery.charAt(0).toUpperCase() + 
-                    normalizedQuery.slice(1, Math.min(normalizedQuery.length, 8));
+        // Try to incorporate the query into the street name
+        const queryWords = normalizedQuery.split(' ');
+        if (queryWords.length > 1) {
+          // Use parts of the multi-word query
+          streetName = queryWords[0].charAt(0).toUpperCase() + queryWords[0].slice(1);
+        } else {
+          // Use the single word query
+          streetName = normalizedQuery.charAt(0).toUpperCase() + normalizedQuery.slice(1);
+        }
       } else {
-        // Random name based on first letter
+        // For short queries, use names that start with the first letter
         const streetOptions = [
           firstChar + "ackson", 
           firstChar + "incoln",
@@ -154,17 +159,21 @@ export const useAddressAutocomplete = () => {
       // Construct full address
       const address = `${streetNum} ${streetName} ${streetType}`;
       
-      // Pick a random city and state for this letter
+      // Get lists for this letter
+      const citiesForLetter = cities[firstChar as keyof typeof cities] || cities["S"];
+      const statesForLetter = states[firstChar as keyof typeof states] || states["C"];
+      
+      // Pick random city and state
       const city = citiesForLetter[Math.floor(Math.random() * citiesForLetter.length)];
       const state = statesForLetter[Math.floor(Math.random() * statesForLetter.length)];
       
       // Generate zipcode based on state
       const zipPrefix = (states["C"].includes(state)) ? "9" : 
-                        (states["N"].includes(state)) ? "1" : 
-                        (states["T"].includes(state)) ? "7" : "3";
+                       (states["N"].includes(state)) ? "1" : 
+                       (states["T"].includes(state)) ? "7" : "3";
       const zipCode = zipPrefix + Math.floor(Math.random() * 9000 + 1000).toString();
       
-      mockAddresses.push({
+      addressMatches.push({
         address,
         city,
         state,
@@ -173,7 +182,7 @@ export const useAddressAutocomplete = () => {
       });
     }
     
-    return mockAddresses;
+    return addressMatches;
   };
 
   return {

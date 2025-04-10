@@ -3,6 +3,7 @@ import React from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info, Gift, GraduationCap, Heart } from "lucide-react";
+import elephantImage from "/public/lovable-uploads/f0a52aa3-9dcd-4367-9a66-0724e97f2641.png";
 
 const AboutUs = () => {
   return (
@@ -16,6 +17,7 @@ const AboutUs = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-12 mb-16">
+          {/* Our Story Card */}
           <div>
             <Card className="h-full">
               <CardContent className="pt-6">
@@ -42,6 +44,7 @@ const AboutUs = () => {
             </Card>
           </div>
 
+          {/* Our Mission Card */}
           <div>
             <Card className="h-full">
               <CardContent className="pt-6">
@@ -75,16 +78,35 @@ const AboutUs = () => {
                 <Heart className="mr-2 text-purple-600" />
                 Our Commitment to Wildlife
               </h2>
-              <p className="text-gray-700 mb-6">
-                At Elyphant, our commitment extends beyond human connections. We dedicate a portion of 
-                our profits to supporting wildlife conservation efforts around the world, with a 
-                special focus on elephant protection and habitat preservation.
-              </p>
-              <p className="text-gray-700 mb-6">
-                We believe that by protecting these magnificent creatures and their ecosystems, we're 
-                helping preserve the natural connections that sustain our planet.
-              </p>
-              <div className="bg-gray-100 p-6 rounded-lg">
+              
+              <div className="md:flex gap-6">
+                <div className="md:w-1/2 mb-6 md:mb-0">
+                  <p className="text-gray-700 mb-4">
+                    At Elyphant, our commitment extends beyond human connections. We dedicate a portion of 
+                    our profits to supporting wildlife conservation efforts around the world, with a 
+                    special focus on elephant protection and habitat preservation.
+                  </p>
+                  <p className="text-gray-700 mb-4">
+                    We believe that by protecting these magnificent creatures and their ecosystems, we're 
+                    helping preserve the natural connections that sustain our planet.
+                  </p>
+                </div>
+                
+                <div className="md:w-1/2">
+                  <div className="rounded-lg overflow-hidden shadow-md">
+                    <img 
+                      src={elephantImage} 
+                      alt="Elephant in the wild" 
+                      className="w-full h-auto object-cover"
+                    />
+                    <p className="text-xs text-gray-500 italic p-2 bg-gray-50">
+                      Elephants in their natural habitat, representing the wildlife we help protect
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-100 p-6 rounded-lg mt-6">
                 <h3 className="text-xl font-semibold mb-3 flex items-center">
                   <GraduationCap className="mr-2 text-purple-600" />
                   Why the Elephant?

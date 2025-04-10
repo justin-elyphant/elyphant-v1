@@ -1,12 +1,39 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Tag, Store } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import VendorSearch from "./vendors/VendorSearch";
+import AllVendorsContent from "./vendors/AllVendorsContent";
+import MarketingTagsContent from "./vendors/MarketingTagsContent";
+import PayoutsContent from "./vendors/PayoutsContent";
+import { mockVendors } from "./vendors/mockData";
+import { Vendor, VendorTabType } from "./vendors/types";
 
 const TrunklineVendorsTab = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [filteredVendors, setFilteredVendors] = useState<Vendor[]>([]);
+  const [activeTab, setActiveTab] = useState<VendorTabType>("all");
+
+  const handleSearch = () => {
+    if (!searchTerm.trim()) {
+      setFilteredVendors([]);
+      setHasSearched(false);
+      return;
+    }
+
+    const searchTermLower = searchTerm.toLowerCase();
+    const results = mockVendors.filter(vendor => 
+      vendor.name.toLowerCase().includes(searchTermLower) || 
+      vendor.productCategories.some(category => 
+        category.toLowerCase().includes(searchTermLower)
+      )
+    );
+    
+    setFilteredVendors(results);
+    setHasSearched(true);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -14,22 +41,13 @@ const TrunklineVendorsTab = () => {
           <CardTitle>Vendor Management</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="search" 
-                placeholder="Search vendors by name or product category..." 
-                className="pl-8" 
-              />
-            </div>
-            <Button>
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </div>
+          <VendorSearch 
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onSearch={handleSearch}
+          />
           
-          <Tabs defaultValue="all">
+          <Tabs defaultValue="all" onValueChange={(value) => setActiveTab(value as VendorTabType)}>
             <TabsList className="mb-4">
               <TabsTrigger value="all">All Vendors</TabsTrigger>
               <TabsTrigger value="marketing">Marketing Tags</TabsTrigger>
@@ -37,24 +55,18 @@ const TrunklineVendorsTab = () => {
             </TabsList>
             
             <TabsContent value="all">
-              <div className="border rounded-md p-8 text-center">
-                <Store className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Enter a search term to find vendors.</p>
-              </div>
+              <AllVendorsContent 
+                vendors={filteredVendors} 
+                hasSearched={hasSearched} 
+              />
             </TabsContent>
             
             <TabsContent value="marketing">
-              <div className="border rounded-md p-8 text-center">
-                <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No marketing tags configured. Tags allow you to segment vendors for campaigns.</p>
-                <Button className="mt-4">Create Tag</Button>
-              </div>
+              <MarketingTagsContent />
             </TabsContent>
             
             <TabsContent value="payouts">
-              <div className="border rounded-md p-8 text-center">
-                <p className="text-muted-foreground">Payout information will appear here once vendors complete Stripe Connect onboarding.</p>
-              </div>
+              <PayoutsContent />
             </TabsContent>
           </Tabs>
         </CardContent>

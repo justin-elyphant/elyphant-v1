@@ -1,27 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { ShippingAddress, SharingLevel, GiftPreference } from "@/types/supabase";
-
-export interface ProfileData {
-  name: string;
-  username: string;
-  email: string;
-  profile_image: string | null;
-  dob: string;
-  shipping_address: ShippingAddress;
-  gift_preferences: GiftPreference[];
-  data_sharing_settings: {
-    dob: SharingLevel;
-    shipping_address: SharingLevel;
-    gift_preferences: SharingLevel;
-  };
-  next_steps_option: string;
-}
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { ProfileData } from "./types";
 
 export const useProfileData = () => {
-  const { user, getUserProfile } = useAuth();
-  
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
     username: "",
@@ -37,9 +23,9 @@ export const useProfileData = () => {
     },
     gift_preferences: [],
     data_sharing_settings: {
-      dob: "friends" as SharingLevel,
-      shipping_address: "private" as SharingLevel,
-      gift_preferences: "public" as SharingLevel
+      dob: "friends",
+      shipping_address: "private",
+      gift_preferences: "public",
     },
     next_steps_option: "dashboard"
   });
@@ -49,28 +35,56 @@ export const useProfileData = () => {
       if (!user) return;
       
       try {
-        const profile = await getUserProfile();
-        if (profile) {
-          console.log("Loaded initial profile data:", profile);
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error("Error loading profile:", error);
+          return;
+        }
+        
+        if (data) {
+          console.log("Loaded initial profile data:", data);
+          
+          // Extract username from email if not present
+          const username = data.username || (data.email ? data.email.split('@')[0] : '');
+          
+          // Prepare sharing settings with defaults if missing
+          const sharing_settings = data.data_sharing_settings || {
+            dob: "friends",
+            shipping_address: "private",
+            gift_preferences: "public",
+          };
+          
+          // Map gift preferences to expected format
+          const gift_preferences = data.gift_preferences || [];
+          
           setProfileData(prevData => ({
             ...prevData,
-            name: profile.name || prevData.name,
-            username: profile.username || prevData.username || (profile.email ? profile.email.split('@')[0] : ''),
-            email: profile.email || user.email || '',
-            profile_image: profile.profile_image || prevData.profile_image,
-            dob: profile.dob || prevData.dob,
-            shipping_address: profile.shipping_address || prevData.shipping_address,
-            gift_preferences: profile.gift_preferences || prevData.gift_preferences,
-            data_sharing_settings: profile.data_sharing_settings || prevData.data_sharing_settings
+            name: data.name || prevData.name,
+            username: username,
+            email: data.email || user.email || '',
+            profile_image: data.profile_image || prevData.profile_image,
+            dob: data.dob || prevData.dob,
+            shipping_address: data.shipping_address || prevData.shipping_address,
+            gift_preferences: gift_preferences,
+            data_sharing_settings: sharing_settings
           }));
         }
       } catch (error) {
-        console.error("Error loading profile data:", error);
+        console.error("Error fetching profile data:", error);
+        toast.error("Failed to load profile data");
+      } finally {
+        setIsLoading(false);
       }
     };
     
     fetchUserProfile();
-  }, [user, getUserProfile]);
+  }, [user]);
 
   const updateProfileData = (field: keyof ProfileData, value: any) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
@@ -78,6 +92,7 @@ export const useProfileData = () => {
 
   return {
     profileData,
-    updateProfileData
+    updateProfileData,
+    isLoading
   };
 };

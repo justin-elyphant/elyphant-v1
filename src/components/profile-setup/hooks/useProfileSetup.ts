@@ -12,12 +12,14 @@ interface UseProfileSetupProps {
 export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) => {
   // Use the smaller, focused hooks
   const { activeStep, steps, handleNext, handleBack } = useProfileSteps();
-  const { profileData, updateProfileData } = useProfileData();
+  const { profileData, updateProfileData, isLoading: isDataLoading } = useProfileData();
   const { isCurrentStepValid } = useProfileValidation(activeStep, profileData);
-  const { isLoading, handleComplete, handleSkip } = useProfileSubmission({ 
+  const { isLoading: isSubmissionLoading, handleComplete, handleSkip } = useProfileSubmission({ 
     onComplete, 
     onSkip 
   });
+
+  const isLoading = isDataLoading || isSubmissionLoading;
 
   return {
     // Step navigation
@@ -31,7 +33,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     updateProfileData,
     
     // Validation
-    isCurrentStepValid: isCurrentStepValid(),
+    isCurrentStepValid,
     
     // Submission
     isLoading,

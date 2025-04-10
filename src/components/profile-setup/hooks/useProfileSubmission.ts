@@ -1,10 +1,9 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ProfileData } from "./useProfileData";
 import { useAuth } from "@/contexts/auth";
+import { ProfileData } from "./types";
 
 interface UseProfileSubmissionProps {
   onComplete: () => void;
@@ -13,78 +12,63 @@ interface UseProfileSubmissionProps {
 
 export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissionProps) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleComplete = async (profileData: ProfileData) => {
+    if (!user) {
+      toast.error("User not authenticated");
+      return;
+    }
+
     try {
       setIsLoading(true);
       
-      const formattedGiftPreferences = profileData.gift_preferences.map(pref => ({
-        category: pref.category,
-        importance: pref.importance || "medium"
-      }));
+      // Format gift preferences
+      const gift_preferences = profileData.gift_preferences.map(pref => {
+        if (typeof pref === 'string') {
+          return { category: pref, importance: "medium" };
+        }
+        return pref;
+      });
       
-      let dataToUpdate: any = {
+      // Prepare data for update
+      const updateData = {
         name: profileData.name,
         email: profileData.email,
+        username: profileData.username,
         profile_image: profileData.profile_image,
         dob: profileData.dob,
         shipping_address: profileData.shipping_address,
-        gift_preferences: formattedGiftPreferences,
+        gift_preferences: gift_preferences,
         data_sharing_settings: profileData.data_sharing_settings,
-        updated_at: new Date().toISOString(),
-        
-        bio: profileData.name ? `Hi, I'm ${profileData.name}` : "Hello!",
-        interests: formattedGiftPreferences.map(pref => pref.category)
+        profile_completed: true,
+        updated_at: new Date().toISOString()
       };
       
-      console.log("Saving final profile data:", dataToUpdate);
-      
-      const { data, error } = await supabase
+      // Update profile in Supabase
+      const { error } = await supabase
         .from('profiles')
-        .update(dataToUpdate)
-        .eq('id', user?.id)
-        .select();
+        .update(updateData)
+        .eq('id', user.id);
+        
+      if (error) throw error;
       
-      if (error) {
-        console.error("Error updating profile:", error);
-        throw error;
-      }
+      console.log("Profile setup completed successfully");
+      toast.success("Profile setup completed!");
       
-      console.log("Profile setup completed successfully:", data);
-      toast.success("Profile updated successfully!");
-      
-      switch (profileData.next_steps_option) {
-        case "create_wishlist":
-          navigate("/wishlist/create");
-          break;
-        case "find_friends":
-          navigate("/connections");
-          break;
-        case "shop_gifts":
-          navigate("/marketplace");
-          break;
-        case "explore_marketplace":
-          navigate("/marketplace/explore");
-          break;
-        default:
-          onComplete();
-      }
-    } catch (err) {
-      console.error("Error completing profile setup:", err);
-      toast.error("Failed to save profile data. Please try again.");
+      // Call the onComplete callback
+      onComplete();
+    } catch (error) {
+      console.error('Error completing profile setup:', error);
+      toast.error("Failed to save profile data");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSkip = () => {
-    toast.info("You can complete your profile later in settings");
     if (onSkip) {
       onSkip();
-    } else {
-      onComplete();
     }
   };
 

@@ -98,9 +98,6 @@ const AboutUs = () => {
                       alt="Elephants in their natural habitat" 
                       className="w-full h-auto object-cover"
                     />
-                    <p className="text-xs text-gray-500 italic p-2 bg-gray-50">
-                      Elephants in their natural habitat, representing the wildlife we help protect
-                    </p>
                   </div>
                 </div>
               </div>

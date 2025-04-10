@@ -37,6 +37,7 @@ function App() {
                 <Route path="/purchase-success" element={<PurchaseSuccess />} />
                 <Route path="/funding-success" element={<FundingSuccess />} />
                 <Route path="/vendor-portal" element={<VendorManagement />} />
+                <Route path="/trunkline" element={<Trunkline />} />
                 
                 {/* Public profile route */}
                 <Route path="/user/:userId" element={<UserProfile />} />
@@ -59,13 +60,6 @@ function App() {
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              } />
-              
-              {/* Internal Trunkline dashboard */}
-              <Route path="/trunkline" element={
-                <ProtectedRoute>
-                  <Trunkline />
                 </ProtectedRoute>
               } />
             </Routes>

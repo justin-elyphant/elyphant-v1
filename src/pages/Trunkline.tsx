@@ -2,11 +2,9 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
 import TrunklineOrdersTab from "@/components/trunkline/TrunklineOrdersTab";
 import TrunklineCustomersTab from "@/components/trunkline/TrunklineCustomersTab";
@@ -14,25 +12,6 @@ import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
 
 const Trunkline = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isInternalUser = user?.email?.endsWith('@elyphant.com') || user?.user_metadata?.isInternalUser;
-  
-  if (!isInternalUser) {
-    return (
-      <div className="container mx-auto py-16 px-4">
-        <Alert variant="destructive" className="max-w-xl mx-auto">
-          <ShieldAlert className="h-5 w-5" />
-          <AlertTitle>Access Denied</AlertTitle>
-          <AlertDescription>
-            You don't have permission to access the Trunkline dashboard. This area is restricted to Elyphant internal team members.
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-center mt-8">
-          <Button onClick={() => navigate('/')}>Return to Homepage</Button>
-        </div>
-      </div>
-    );
-  }
   
   return (
     <ProductProvider>

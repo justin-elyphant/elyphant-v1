@@ -27,11 +27,11 @@ const TrunklineZincTab = () => {
           {!hasToken && (
             <Alert className="mb-6 bg-amber-50 border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-800" />
-              <AlertTitle className="text-amber-800">API Token Required</AlertTitle>
+              <AlertTitle className="text-amber-800">API Token Required for Live Data</AlertTitle>
               <AlertDescription className="text-amber-700">
-                <p>Set up your Zinc API token below to enable real product search across the application.
-                Without this token, all product searches will use mock data.</p>
-                <p className="mt-2 font-medium">For testing: You can enter any string with at least 10 characters.</p>
+                <p>Set up your Zinc API token below to enable <strong>real product search</strong> from Amazon.</p>
+                <p className="mt-2 font-medium">For testing with the real API: Enter any string with at least 10 characters.</p>
+                <p className="mt-1">Example token: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">test_zinc_token_12345abcde</code></p>
               </AlertDescription>
             </Alert>
           )}
@@ -41,10 +41,10 @@ const TrunklineZincTab = () => {
               <AlertCircle className="h-4 w-4 text-green-800" />
               <AlertTitle className="text-green-800">API Token Connected</AlertTitle>
               <AlertDescription className="text-green-700">
-                <p>Your Zinc API token is connected. The search functionality will attempt to use the real Zinc API.</p>
+                <p>Your Zinc API token is connected. The search functionality will use the real Zinc API to find products.</p>
                 <p className="mt-2">
-                  <span className="font-medium">Test searches: </span>
-                  Try searching for "San Diego Padres Hat" or "Nike Shoes" in the search bar.
+                  <span className="font-medium">Try searches: </span>
+                  Search for "Nike Shoes", "Headphones", or other products to see real results from Amazon.
                 </p>
               </AlertDescription>
             </Alert>

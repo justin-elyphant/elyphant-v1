@@ -1,4 +1,3 @@
-
 /**
  * Service for making Zinc API calls
  */
@@ -19,22 +18,6 @@ export const searchZincApi = async (
   maxResults: string
 ): Promise<ZincProduct[] | null> => {
   try {
-    // Special case handling for known product search terms
-    if (query.toLowerCase().includes('padres') && 
-        (query.toLowerCase().includes('hat') || query.toLowerCase().includes('cap'))) {
-      console.log('Using special case handling for Padres hat search');
-      // Force mock data for Padres hats to ensure consistent results
-      const mockResults = findMatchingProducts(query);
-      console.log(`Generated ${mockResults.length} special case results for "${query}"`);
-      return mockResults;
-    }
-    
-    // Check if we should use mock data for other searches
-    if (isTestMode()) {
-      console.log(`Using mock data for product search: ${query}`);
-      return generateMockSearchResults(query, parseInt(maxResults));
-    }
-    
     // Verify we have a valid token before making the API call
     if (!hasValidZincToken()) {
       console.error('No valid Zinc API token found. Using mock data instead.');
@@ -98,9 +81,21 @@ export const searchZincApi = async (
       return data.results;
     }
     
-    // No results found - fall back to mock data
-    console.log(`No results found from Zinc API for "${query}", using mock data as fallback`);
-    return findMatchingProducts(query);
+    // For Padres hat searches, fall back to mock data (special case)
+    if (query.toLowerCase().includes('padres') && 
+        (query.toLowerCase().includes('hat') || query.toLowerCase().includes('cap'))) {
+      console.log('Using special case handling for Padres hat search');
+      return findMatchingProducts(query);
+    }
+    
+    // No results found - this is a real "no results" response from the API
+    console.log(`No results found from Zinc API for "${query}"`);
+    toast.error('No Results Found', {
+      description: `The Zinc API returned no results for "${query}"`,
+      duration: 5000,
+    });
+    
+    return [];
   } catch (error) {
     console.error(`Error calling Zinc API: ${error}`);
     
@@ -108,23 +103,26 @@ export const searchZincApi = async (
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
       console.error('Network error: Failed to connect to Zinc API');
       toast.error('Connection Error', {
-        description: 'Failed to connect to Zinc API. Using mock results instead.',
+        description: 'Failed to connect to Zinc API. Please check your connection and try again.',
         duration: 5000,
       });
     } else {
       toast.error('API Error', {
-        description: 'Error connecting to Zinc API. Using mock data instead.',
+        description: 'Error from Zinc API. Please check your API token and try again.',
         duration: 5000,
       });
     }
     
-    // Fall back to special case handler first
-    if (query.toLowerCase().includes('padres') && query.toLowerCase().includes('hat')) {
-      console.log('Falling back to special case handling for Padres hat search after API error');
-      return findMatchingProducts(query);
+    // Only fall back to mock data in specific cases or for testing
+    if (isTestMode() || 
+        (query.toLowerCase().includes('padres') && query.toLowerCase().includes('hat'))) {
+      console.log('Falling back to mock data after API error');
+      return query.toLowerCase().includes('padres') ? 
+        findMatchingProducts(query) : 
+        generateMockSearchResults(query, parseInt(maxResults));
     }
     
-    // Fall back to mock data in case of any error
-    return generateMockSearchResults(query, parseInt(maxResults));
+    // Otherwise, return empty results to indicate an error
+    return [];
   }
 };

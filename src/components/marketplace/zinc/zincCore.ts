@@ -31,22 +31,13 @@ export const isTestMode = (): boolean => {
   if (mockParam === 'true') return true;
   if (mockParam === 'false') return false;
   
-  // Force real API mode for specific searches
-  const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement | null;
-  const currentSearch = searchInput?.value?.toLowerCase() || '';
-  
-  // If we're searching for padres hat, always use real data
-  if (currentSearch.includes('padres') && currentSearch.includes('hat')) {
-    console.log('Forcing mock API mode for Padres hat search as a special case');
-    return true;
+  // We have a valid token, don't use mock data
+  if (hasValidZincToken()) {
+    return false;
   }
   
-  // Check if we have a valid token either in localStorage or as env var
-  const storedToken = localStorage.getItem('zincApiToken');
-  const token = storedToken || ZINC_API_TOKEN;
-  
-  // Use mock data if we don't have a token or if mock API is explicitly set
-  return !hasValidZincToken() || MOCK_API_RESPONSE;
+  // Only use mock data if explicitly set or we don't have a token
+  return MOCK_API_RESPONSE;
 };
 
 /**

@@ -44,39 +44,52 @@ export const searchProducts = async (
   // Use the appropriate query based on special cases
   let finalQuery = padresHatQuery || enhancedQuery;
   
-  // Special case handling (for brands etc.)
-  const specialCaseResults = await getSpecialCaseProducts(finalQuery);
-  if (specialCaseResults && specialCaseResults.length > 0) {
-    console.log(`Using special case results for query: ${finalQuery}`);
-    
-    // Ensure each product has valid images
-    const validatedResults = specialCaseResults.map(product => 
-      validateProductImages(product, finalQuery)
-    );
-    
-    // Filter and return relevant results
-    return filterRelevantProducts(validatedResults, finalQuery, numResults);
-  }
-  
-  // If we don't have a valid token, don't try to make API calls - go straight to mock data
-  if (!hasValidZincToken()) {
-    console.log(`No valid Zinc API token. Using mock data for: ${finalQuery}`);
-    return getMockResults(finalQuery, numResults);
-  }
-
-  // Check if we're in test mode and should use mock data
-  if (isTestMode()) {
-    console.log(`Using mock data for product search: ${finalQuery}`);
-    return getMockResults(finalQuery, numResults);
-  }
-  
   try {
-    // Try with original query first
-    const apiResults = await searchZincApi(finalQuery, maxResults);
+    // Always attempt to use the real API first if we have a token
+    if (hasValidZincToken()) {
+      console.log(`Using real Zinc API for query: "${finalQuery}"`);
+      
+      // Try with original query first
+      const apiResults = await searchZincApi(finalQuery, maxResults);
+      
+      if (apiResults && apiResults.length > 0) {
+        // Ensure each product has valid images
+        const validatedResults = apiResults.map(product => 
+          validateProductImages(product, finalQuery)
+        );
+        
+        // Filter and return relevant results
+        return filterRelevantProducts(validatedResults, finalQuery, numResults);
+      }
+      
+      // Try with spelling correction
+      const correctedQuery = correctSearchQuery(finalQuery);
+      if (correctedQuery !== finalQuery) {
+        console.log(`No results found for "${finalQuery}", trying with spelling correction: "${correctedQuery}"`);
+        
+        const correctedResults = await searchZincApi(correctedQuery, maxResults);
+        
+        if (correctedResults && correctedResults.length > 0) {
+          console.log(`Found ${correctedResults.length} results for corrected query "${correctedQuery}"`);
+          
+          // Ensure each product has valid images
+          const validatedResults = correctedResults.map(product => 
+            validateProductImages(product, correctedQuery)
+          );
+          
+          // Filter and return relevant results
+          return filterRelevantProducts(validatedResults, correctedQuery, numResults);
+        }
+      }
+    }
     
-    if (apiResults && apiResults.length > 0) {
+    // Special case handling (for brands etc.) only if no API results were found
+    const specialCaseResults = await getSpecialCaseProducts(finalQuery);
+    if (specialCaseResults && specialCaseResults.length > 0) {
+      console.log(`Using special case results for query: ${finalQuery}`);
+      
       // Ensure each product has valid images
-      const validatedResults = apiResults.map(product => 
+      const validatedResults = specialCaseResults.map(product => 
         validateProductImages(product, finalQuery)
       );
       
@@ -84,34 +97,25 @@ export const searchProducts = async (
       return filterRelevantProducts(validatedResults, finalQuery, numResults);
     }
     
-    // Try with spelling correction
-    const correctedQuery = correctSearchQuery(finalQuery);
-    if (correctedQuery !== finalQuery) {
-      console.log(`No results found for "${finalQuery}", trying with spelling correction: "${correctedQuery}"`);
-      
-      const correctedResults = await searchZincApi(correctedQuery, maxResults);
-      
-      if (correctedResults && correctedResults.length > 0) {
-        console.log(`Found ${correctedResults.length} results for corrected query "${correctedQuery}"`);
-        
-        // Ensure each product has valid images
-        const validatedResults = correctedResults.map(product => 
-          validateProductImages(product, correctedQuery)
-        );
-        
-        // Filter and return relevant results
-        return filterRelevantProducts(validatedResults, correctedQuery, numResults);
-      }
+    // Last resort - if we have no token or if set to test mode, use mock data
+    if (!hasValidZincToken() || isTestMode()) {
+      console.log(`Using mock data for product search: ${finalQuery}`);
+      return getMockResults(finalQuery, numResults);
     }
     
-    // If still no results, return mock data as fallback
-    console.log(`No results found for "${finalQuery}" or "${correctedQuery}", using mock data as fallback`);
-    return getMockResults(finalQuery, numResults);
+    // If we reached here, we tried everything and found no results
+    console.log(`No results found for "${finalQuery}" with any method`);
+    return [];
     
   } catch (error) {
     console.error(`Error searching for products: ${error}`);
     
-    // Return mock results in case of error
-    return getMockResults(finalQuery, numResults);
+    // Only use mock results for fallback in case of errors
+    if (isTestMode() || !hasValidZincToken()) {
+      return getMockResults(finalQuery, numResults);
+    }
+    
+    // Return empty array to indicate error with real API
+    return [];
   }
 };

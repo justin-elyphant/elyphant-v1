@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,7 @@ interface UseAuthSessionReturn {
   isProcessingToken: boolean;
 }
 
-export const useAuthSession = (): UseAuthSessionReturn => {
+export function useAuthSession(): UseAuthSessionReturn {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,4 +99,4 @@ export const useAuthSession = (): UseAuthSessionReturn => {
   }, [navigate, location, isProcessingToken]);
 
   return { user, session, isLoading, isProcessingToken };
-};
+}

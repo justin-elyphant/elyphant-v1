@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
 import { fetchProductDetails } from "../productService";
+import { setZincApiToken, getZincApiToken, clearZincApiToken } from "../zincCore";
 
 export const useZincConnection = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -19,11 +21,17 @@ export const useZincConnection = () => {
       try {
         const connection = JSON.parse(savedConnection);
         setIsConnected(true);
-        setApiKey(connection.apiKey || "");
+        setApiKey(getZincApiToken());
         setEnableAutoFulfillment(connection.autoFulfillment || false);
         setLastSync(connection.lastSync || null);
       } catch (e) {
         console.error("Error parsing Zinc connection data:", e);
+      }
+    } else {
+      // If no saved connection but we have a token, set the API key
+      const token = getZincApiToken();
+      if (token) {
+        setApiKey(token);
       }
     }
   }, []);
@@ -33,6 +41,9 @@ export const useZincConnection = () => {
     setError(null);
     
     try {
+      // Save the API key to localStorage first
+      setZincApiToken(apiKey);
+      
       // Verify API key by testing a product lookup
       const productResult = await fetchProductDetails("B081QSJNRJ"); // Test with a known ASIN
       
@@ -42,7 +53,6 @@ export const useZincConnection = () => {
       
       // Save connection info to localStorage
       const connection = {
-        apiKey,
         autoFulfillment: enableAutoFulfillment,
         lastSync: Date.now()
       };
@@ -69,6 +79,7 @@ export const useZincConnection = () => {
 
   const handleDisconnect = () => {
     localStorage.removeItem("zincConnection");
+    clearZincApiToken();
     setIsConnected(false);
     setApiKey("");
     toast.success("Disconnected", {

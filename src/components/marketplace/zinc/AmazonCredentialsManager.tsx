@@ -8,11 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Lock } from 'lucide-react';
+import { Lock, Info } from 'lucide-react';
 import { AmazonCredentials } from './types';
 import { useAmazonCredentials } from './hooks/useAmazonCredentials';
 import CredentialForm from './components/CredentialForm';
 import CredentialFooter from './components/CredentialFooter';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AmazonCredentialsManagerProps {
   isOpen: boolean;
@@ -47,12 +48,19 @@ const AmazonCredentialsManager: React.FC<AmazonCredentialsManagerProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Amazon Account Credentials</DialogTitle>
+          <DialogTitle>Amazon Business Credentials</DialogTitle>
           <DialogDescription>
-            Enter your Amazon account credentials for Zinc to process orders.
+            Enter your Amazon Business account credentials for Zinc to process orders.
             These will be securely stored on your device.
           </DialogDescription>
         </DialogHeader>
+        
+        <Alert className="bg-blue-50 border-blue-200 my-2">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            Zinc will use these credentials to place orders in your Amazon Business environment.
+          </AlertDescription>
+        </Alert>
         
         <CredentialForm 
           email={email}

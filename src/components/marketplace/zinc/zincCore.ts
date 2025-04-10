@@ -10,9 +10,13 @@ const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || false;
  * Get headers needed for Zinc API requests
  */
 export const getZincHeaders = () => {
+  // Get the token from localStorage if available, otherwise use env var
+  const storedToken = localStorage.getItem('zincApiToken');
+  const token = storedToken || ZINC_API_TOKEN;
+  
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${ZINC_API_TOKEN}`
+    'Authorization': `Bearer ${token}`
   };
 };
 
@@ -30,9 +34,36 @@ export const isTestMode = (): boolean => {
   // If MOCK_API_RESPONSE environment variable is explicitly set to true, use mock data
   if (MOCK_API_RESPONSE) return true;
   
-  // Check if ZINC_API_TOKEN is real or a placeholder
-  const isRealToken = ZINC_API_TOKEN !== '' && 
-                      ZINC_API_TOKEN.length > 10;
+  // Check if we have a valid token either in localStorage or as env var
+  const storedToken = localStorage.getItem('zincApiToken');
+  const token = storedToken || ZINC_API_TOKEN;
+  
+  const isRealToken = token !== '' && token.length > 10;
   
   return !isRealToken;
+};
+
+/**
+ * Set the Zinc API token in localStorage
+ */
+export const setZincApiToken = (token: string): void => {
+  if (token && token.trim() !== '') {
+    localStorage.setItem('zincApiToken', token.trim());
+    console.log('Zinc API token saved to localStorage');
+  }
+};
+
+/**
+ * Get the current Zinc API token
+ */
+export const getZincApiToken = (): string => {
+  return localStorage.getItem('zincApiToken') || ZINC_API_TOKEN || '';
+};
+
+/**
+ * Clear the Zinc API token from localStorage
+ */
+export const clearZincApiToken = (): void => {
+  localStorage.removeItem('zincApiToken');
+  console.log('Zinc API token removed from localStorage');
 };

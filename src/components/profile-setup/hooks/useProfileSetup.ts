@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +55,6 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     next_steps_option: "dashboard"
   });
 
-  // Fetch initial user data if available
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user) return;
@@ -85,7 +83,6 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     fetchUserProfile();
   }, [user, getUserProfile]);
 
-  // Reduced steps by combining username and profile photo
   const steps = [
     "Basic Info",
     "Profile",
@@ -108,14 +105,11 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     try {
       setIsLoading(true);
       
-      // Format gift preferences correctly
       const formattedGiftPreferences = profileData.gift_preferences.map(pref => ({
         category: pref.category,
-        importance: pref.importance || "medium",
-        brand: pref.brand || null
+        importance: pref.importance || "medium"
       }));
       
-      // Prepare final data to save - remove username field which doesn't exist in the profiles table
       let dataToUpdate: any = {
         name: profileData.name,
         email: profileData.email,
@@ -126,15 +120,12 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         data_sharing_settings: profileData.data_sharing_settings,
         updated_at: new Date().toISOString(),
         
-        // Add these fields to ensure they're saved for settings page
         bio: profileData.name ? `Hi, I'm ${profileData.name}` : "Hello!",
         interests: formattedGiftPreferences.map(pref => pref.category)
       };
       
-      // Log data we're saving for debugging
       console.log("Saving final profile data:", dataToUpdate);
       
-      // Save profile data
       const { data, error } = await supabase
         .from('profiles')
         .update(dataToUpdate)
@@ -149,7 +140,6 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       console.log("Profile setup completed successfully:", data);
       toast.success("Profile updated successfully!");
       
-      // Navigate based on next steps option
       switch (profileData.next_steps_option) {
         case "create_wishlist":
           navigate("/wishlist/create");

@@ -4,11 +4,14 @@
  */
 import { ZincProduct } from "../../types";
 import { getSpecialCaseProducts } from "../../utils/specialCaseHandler";
-import { isTestMode } from "../../zincCore";
+import { isTestMode, hasValidZincToken } from "../../zincCore";
 import { validateSearchQuery, enhanceSearchQuery, correctSearchQuery, getPadresHatQuery } from "./searchValidationUtils";
 import { getMockResults } from "./mockResultsHandler";
 import { searchZincApi } from "./zincApiService";
 import { validateProductImages, filterRelevantProducts } from "./productValidationUtils";
+
+// Track whether we've shown token error toast
+let hasShownTokenError = false;
 
 /**
  * Search for products using the Zinc API
@@ -23,6 +26,7 @@ export const searchProducts = async (
   // Validate query
   const normalizedQuery = validateSearchQuery(query);
   if (!normalizedQuery) {
+    console.log("Invalid search query. Returning empty results.");
     return [];
   }
   
@@ -52,6 +56,12 @@ export const searchProducts = async (
     
     // Filter and return relevant results
     return filterRelevantProducts(validatedResults, finalQuery, numResults);
+  }
+  
+  // If we don't have a valid token, don't try to make API calls - go straight to mock data
+  if (!hasValidZincToken()) {
+    console.log(`No valid Zinc API token. Using mock data for: ${finalQuery}`);
+    return getMockResults(finalQuery, numResults);
   }
 
   // Check if we're in test mode and should use mock data

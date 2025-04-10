@@ -14,11 +14,6 @@ export const getZincHeaders = () => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
-  // Validate token
-  if (!token || token.trim() === '') {
-    console.warn('No Zinc API token found. Please set a valid token in the Trunkline portal.');
-  }
-  
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token || ''}`
@@ -50,16 +45,8 @@ export const isTestMode = (): boolean => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
-  // Log diagnostic info about the token status
-  if (!token || token.trim() === '') {
-    console.warn('No Zinc API token found. Using mock data instead.');
-    console.info('To use the real API, set a token in the Trunkline portal (/trunkline) or provide it as VITE_ZINC_API_TOKEN.');
-  } else {
-    console.log('Found Zinc API token (length: ' + token.length + '). Using real API when possible.');
-  }
-  
-  // Use mock data if we don't have a token and mock API is explicitly set
-  return (!token || token.trim() === '') && MOCK_API_RESPONSE;
+  // Use mock data if we don't have a token or if mock API is explicitly set
+  return !hasValidZincToken() || MOCK_API_RESPONSE;
 };
 
 /**
@@ -85,6 +72,9 @@ export const setZincApiToken = (token: string): void => {
       lastSync: Date.now()
     };
     localStorage.setItem("zincConnection", JSON.stringify(connection));
+    
+    // Reset any cached values that depend on the token
+    window.location.reload();
   } else {
     console.warn('Attempted to save empty Zinc API token. No changes made.');
   }

@@ -10,6 +10,7 @@ export const useZincSearch = (searchTerm: string) => {
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const toastRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const hasShownTokenErrorRef = useRef(false);
 
   useEffect(() => {
     const fetchZincResults = async () => {
@@ -45,7 +46,7 @@ export const useZincSearch = (searchTerm: string) => {
         );
         setFilteredProducts(filtered);
         
-        // Now search Zinc API for real products
+        // Now search Zinc API for real products (or mocks if no token)
         console.log(`Searching Zinc API for "${searchTerm}"...`);
 
         // Special case mappings for popular searches
@@ -66,7 +67,6 @@ export const useZincSearch = (searchTerm: string) => {
         // Process results
         if (results && Array.isArray(results)) {
           console.log(`Found ${results.length} results from Zinc API for "${searchQuery}"`);
-          console.log("Sample result:", results[0]);
           
           // Map to consistent format with proper types
           const processedResults = results.map(item => ({

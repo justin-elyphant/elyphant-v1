@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useProducts } from "@/contexts/ProductContext";
-import { fetchProductDetails } from "../productService";
+import { fetchProductDetails } from "../services/productDetailsService";
 import { setZincApiToken, getZincApiToken, clearZincApiToken } from "../zincCore";
 
 export const useZincConnection = () => {
@@ -45,7 +45,8 @@ export const useZincConnection = () => {
       setZincApiToken(apiKey);
       
       // Verify API key by testing a product lookup
-      const productResult = await fetchProductDetails("B081QSJNRJ"); // Test with a known ASIN
+      // Using a known ASIN for a popular product
+      const productResult = await fetchProductDetails("B09G9FPHY6"); 
       
       if (!productResult) {
         throw new Error("Could not verify API key with Zinc");

@@ -3,7 +3,8 @@
  * Service for making Zinc API calls
  */
 import { ZincProduct } from "../../types";
-import { ZINC_API_BASE_URL, getZincHeaders } from "../../zincCore";
+import { ZINC_API_BASE_URL, getZincHeaders, isTestMode } from "../../zincCore";
+import { generateMockSearchResults } from "../../mocks/mockSearchResults";
 
 /**
  * Call the Zinc API to search for products
@@ -13,6 +14,14 @@ export const searchZincApi = async (
   maxResults: string
 ): Promise<ZincProduct[] | null> => {
   try {
+    // Check if we should use mock data
+    if (isTestMode()) {
+      console.log(`Using mock data for product search: ${query}`);
+      return generateMockSearchResults(query, parseInt(maxResults));
+    }
+    
+    console.log(`Making real API call to Zinc for query: "${query}", max results: ${maxResults}`);
+    
     const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
     const response = await fetch(url, {
       method: 'GET',

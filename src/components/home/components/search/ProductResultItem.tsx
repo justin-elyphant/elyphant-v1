@@ -9,6 +9,7 @@ interface ProductResultItemProps {
     title?: string;
     name?: string;
     image?: string;
+    images?: string[];
     price?: number | string;
     brand?: string;
     category?: string;
@@ -17,12 +18,17 @@ interface ProductResultItemProps {
 }
 
 const ProductResultItem = ({ product, onSelect }: ProductResultItemProps) => {
+  // Use title or name as the product name, fallback to "Unknown Product"
   const productName = product.title || product.name || "Unknown Product";
-  const productImage = product.image || "/placeholder.svg";
+  
+  // Handle image properly - first try images array, then image property, then fallback
+  const productImage = product.images?.[0] || product.image || "/placeholder.svg";
+  
+  // Handle price formatting consistently
   const price = typeof product.price === 'number' ? product.price : 
                typeof product.price === 'string' ? parseFloat(product.price) : null;
   
-  const formattedPrice = price !== null
+  const formattedPrice = price !== null && !isNaN(price)
     ? `$${price.toFixed(2)}` 
     : product.price 
       ? `$${product.price}` 
@@ -33,7 +39,7 @@ const ProductResultItem = ({ product, onSelect }: ProductResultItemProps) => {
       key={product.id} 
       value={productName}
       onSelect={onSelect}
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 py-2"
     >
       {productImage ? (
         <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">

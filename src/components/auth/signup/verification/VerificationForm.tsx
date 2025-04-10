@@ -51,6 +51,16 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
     }
   }, [testVerificationCode, setVerificationCode, handleVerifyCode]);
 
+  // TEMPORARY: Auto-verification for testing user journeys
+  useEffect(() => {
+    // Automatically trigger verification success
+    console.log("AUTO-VERIFICATION: Bypassing email verification for testing");
+    const timer = setTimeout(() => {
+      onVerificationSuccess();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [onVerificationSuccess]);
+
   return (
     <div className="flex flex-col items-center justify-center">
       <p className="text-sm text-gray-600 mb-4">

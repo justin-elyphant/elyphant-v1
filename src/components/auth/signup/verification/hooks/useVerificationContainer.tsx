@@ -54,6 +54,14 @@ export const useVerificationContainer = ({
     }
   }, [testVerificationCode, localCode]);
 
+  // TEMPORARY: Show a testing banner
+  useEffect(() => {
+    toast.info("TEST MODE ACTIVE", {
+      description: "Email verification is being bypassed for testing",
+      duration: 5000
+    });
+  }, []);
+
   const handleVerificationSuccess = () => {
     setIsVerified(true);
     setTimeout(() => {

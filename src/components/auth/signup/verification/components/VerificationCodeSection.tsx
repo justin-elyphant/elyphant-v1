@@ -29,6 +29,13 @@ const VerificationCodeSection: React.FC<VerificationCodeSectionProps> = ({
 
   return (
     <>
+      <Alert className="bg-amber-50 border-amber-200 mb-4">
+        <Info className="h-4 w-4 text-amber-500 mr-2" />
+        <AlertDescription className="text-amber-700">
+          <span className="font-semibold">Testing mode active:</span> Email verification will be bypassed automatically.
+        </AlertDescription>
+      </Alert>
+      
       {effectiveVerificationCode && (
         <Alert className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4 text-blue-500 mr-2" />

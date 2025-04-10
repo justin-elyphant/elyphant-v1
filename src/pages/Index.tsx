@@ -1,6 +1,5 @@
 
 import React from "react";
-import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import HomeContent from "@/components/home/HomeContent";
 import ZincConnectCard from "@/components/marketplace/zinc/ZincConnectCard";
@@ -8,7 +7,6 @@ import ZincConnectCard from "@/components/marketplace/zinc/ZincConnectCard";
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-grow">
         <HomeContent />
         <div className="container mx-auto px-4 py-8">

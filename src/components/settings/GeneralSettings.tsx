@@ -15,7 +15,7 @@ import InterestsFormSection from "./InterestsFormSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import DataSharingSection from "./DataSharingSection";
 import DeleteAccount from "./DeleteAccount";
-import { ShippingAddress, DataSharingSettings } from "@/types/supabase";
+import { ShippingAddress, DataSharingSettings, GiftPreference, ImportantDate } from "@/types/supabase";
 
 // Define form schema
 const formSchema = z.object({
@@ -153,14 +153,14 @@ const GeneralSettings = () => {
       setIsSaving(true);
       console.log("Submitting profile data:", data);
       
-      // Format gift preferences for storage
-      const gift_preferences = data.interests.map(interest => ({
+      // Format gift preferences for storage, ensuring importance is one of the allowed values
+      const gift_preferences: GiftPreference[] = data.interests.map(interest => ({
         category: interest,
-        importance: "medium"
+        importance: "medium" // Explicitly using a valid literal instead of a string
       }));
       
       // Format important dates
-      const important_dates = data.importantDates.map(date => ({
+      const important_dates: ImportantDate[] = data.importantDates.map(date => ({
         date: date.date.toISOString(),
         description: date.description
       }));
@@ -210,13 +210,14 @@ const GeneralSettings = () => {
     if (!newImportantDate.date || !newImportantDate.description.trim()) return;
     
     const currentDates = form.getValues("importantDates");
-    form.setValue("importantDates", [
-      ...currentDates, 
-      {
-        date: newImportantDate.date,
-        description: newImportantDate.description.trim()
-      }
-    ]);
+    
+    // Ensure we're adding a complete ImportantDate object with required fields
+    const newDate = {
+      date: newImportantDate.date,
+      description: newImportantDate.description.trim()
+    };
+    
+    form.setValue("importantDates", [...currentDates, newDate]);
     
     setNewImportantDate({
       date: undefined,

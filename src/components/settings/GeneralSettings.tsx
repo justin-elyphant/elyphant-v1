@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useProfileForm } from "@/hooks/settings/useProfileForm";
@@ -17,6 +16,7 @@ import { InterestManager } from "./InterestManager";
 import { ImportantDateManager } from "./ImportantDateManager";
 
 const GeneralSettings = () => {
+  
   const { 
     initialFormData,
     isLoading,
@@ -29,6 +29,7 @@ const GeneralSettings = () => {
     user
   } = useProfileForm();
 
+  
   const form = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: initialFormData,
@@ -49,6 +50,7 @@ const GeneralSettings = () => {
     return <div className="flex justify-center py-10">Loading profile information...</div>;
   }
 
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

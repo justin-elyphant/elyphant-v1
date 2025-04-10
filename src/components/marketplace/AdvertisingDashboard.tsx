@@ -1,176 +1,198 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line } from "recharts";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { PlusCircle, ImageUp, Calendar, Tag } from "lucide-react";
 
 const AdvertisingDashboard = () => {
-  // Simulated advertising performance data
-  const performanceData = [
-    { name: "Week 1", impressions: 5240, clicks: 420, conversions: 28 },
-    { name: "Week 2", impressions: 6120, clicks: 510, conversions: 32 },
-    { name: "Week 3", impressions: 7840, clicks: 620, conversions: 45 },
-    { name: "Week 4", impressions: 8450, clicks: 680, conversions: 52 },
-  ];
-  
-  // Simulated ad placements data
-  const placementData = [
-    { name: "Featured Banner", value: 45 },
-    { name: "Product Listings", value: 30 },
-    { name: "Search Results", value: 15 },
-    { name: "Category Pages", value: 10 },
-  ];
-  
-  const adConfig = {
-    impressions: { label: "Impressions", color: "hsl(var(--primary))" },
-    clicks: { label: "Clicks", color: "hsl(var(--cyan-600))" },
-    conversions: { label: "Conversions", color: "hsl(var(--green-600))" },
-  };
+  const [activePromos, setActivePromos] = useState(true);
   
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Ad Impressions</CardTitle>
-            <CardDescription>Total views across all campaigns</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">27,650</div>
-            <p className="text-sm text-green-600 flex items-center mt-1">
-              +12.5% from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Conversion Rate</CardTitle>
-            <CardDescription>Percent of clicks resulting in sales</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">7.8%</div>
-            <p className="text-sm text-green-600 flex items-center mt-1">
-              +1.2% from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Ad Revenue</CardTitle>
-            <CardDescription>Total revenue from advertising</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">$4,280</div>
-            <p className="text-sm text-green-600 flex items-center mt-1">
-              +8.3% from last month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
       <Card>
         <CardHeader>
-          <CardTitle>Advertising Performance</CardTitle>
-          <CardDescription>Track impressions, clicks, and conversions</CardDescription>
+          <CardTitle>Advertising & Promotions</CardTitle>
+          <CardDescription>
+            Increase visibility for your products with promotional campaigns
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={adConfig} className="h-80">
-            <LineChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line
-                type="monotone"
-                dataKey="impressions"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="clicks"
-                stroke="hsl(198, 93%, 60%)"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="conversions"
-                stroke="hsl(142, 71%, 45%)"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ChartContainer>
+          <Tabs defaultValue="campaigns">
+            <TabsList>
+              <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+              <TabsTrigger value="banners">Banners & Creatives</TabsTrigger>
+              <TabsTrigger value="labels">Promotional Labels</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="campaigns" className="mt-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="promo-toggle" 
+                    checked={activePromos} 
+                    onCheckedChange={setActivePromos} 
+                  />
+                  <Label htmlFor="promo-toggle">Show active promotions only</Label>
+                </div>
+                <Button>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create Campaign
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">Mother's Day Collection</h3>
+                        <p className="text-sm text-muted-foreground">Apr 15 - May 15, 2023</p>
+                        <div className="flex items-center mt-2">
+                          <Badge className="mr-2">Active</Badge>
+                          <span className="text-xs text-muted-foreground">Featured on homepage</span>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Manage</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">Summer Essentials</h3>
+                        <p className="text-sm text-muted-foreground">Jun 1 - Aug 31, 2023</p>
+                        <div className="flex items-center mt-2">
+                          <Badge variant="outline" className="mr-2">Scheduled</Badge>
+                          <span className="text-xs text-muted-foreground">Category feature</span>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Manage</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="banners" className="mt-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Banner Creatives</h3>
+                <Button>
+                  <ImageUp className="h-4 w-4 mr-2" />
+                  Upload Banner
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border rounded-md p-4 text-center">
+                  <div className="bg-gray-100 h-32 rounded flex items-center justify-center mb-2">
+                    <ImageUp className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Homepage Banner</p>
+                    <p className="text-xs text-muted-foreground">1200 x 400 px</p>
+                    <Button variant="outline" size="sm">Upload</Button>
+                  </div>
+                </div>
+                
+                <div className="border rounded-md p-4 text-center">
+                  <div className="bg-gray-100 h-32 rounded flex items-center justify-center mb-2">
+                    <ImageUp className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Category Banner</p>
+                    <p className="text-xs text-muted-foreground">800 x 300 px</p>
+                    <Button variant="outline" size="sm">Upload</Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="labels" className="mt-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Promotional Labels</h3>
+                <Button>
+                  <Tag className="h-4 w-4 mr-2" />
+                  Create Label
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="border rounded-md p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium mr-3">
+                        SALE
+                      </div>
+                      <div>
+                        <p className="font-medium">Sale Label</p>
+                        <p className="text-xs text-muted-foreground">Applied to 5 products</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm">Edit</Button>
+                  </div>
+                </div>
+                
+                <div className="border rounded-md p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium mr-3">
+                        NEW
+                      </div>
+                      <div>
+                        <p className="font-medium">New Arrival</p>
+                        <p className="text-xs text-muted-foreground">Applied to 3 products</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm">Edit</Button>
+                  </div>
+                </div>
+                
+                <div className="border rounded-md p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium mr-3">
+                        LIMITED
+                      </div>
+                      <div>
+                        <p className="font-medium">Limited Edition</p>
+                        <p className="text-xs text-muted-foreground">Applied to 2 products</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm">Edit</Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Ad Placement Performance</CardTitle>
-            <CardDescription>Effectiveness by placement location</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={placementData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Campaign</CardTitle>
-            <CardDescription>Set up a new advertising campaign</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Create a new advertising campaign to promote your products 
-              or boost visibility for specific vendors.
-            </p>
-            <div className="space-y-2">
-              <div className="bg-muted/50 p-3 rounded-md flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Featured Banner</h4>
-                  <p className="text-xs text-muted-foreground">Prime visibility on marketplace homepage</p>
-                </div>
-                <Button size="sm">Select</Button>
-              </div>
-              
-              <div className="bg-muted/50 p-3 rounded-md flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Product Sponsorship</h4>
-                  <p className="text-xs text-muted-foreground">Promote products in search results</p>
-                </div>
-                <Button size="sm">Select</Button>
-              </div>
-              
-              <div className="bg-muted/50 p-3 rounded-md flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Vendor Spotlight</h4>
-                  <p className="text-xs text-muted-foreground">Featured vendor on category pages</p>
-                </div>
-                <Button size="sm">Select</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
+  );
+};
+
+// Badge component needed for the advertising dashboard
+const Badge = ({ 
+  children, 
+  className = "", 
+  variant = "default" 
+}) => {
+  const baseClasses = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
+  const variantClasses = {
+    default: "bg-green-100 text-green-800",
+    outline: "bg-transparent text-gray-700 border border-gray-300",
+    secondary: "bg-gray-100 text-gray-800"
+  };
+  
+  return (
+    <span className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
+      {children}
+    </span>
   );
 };
 

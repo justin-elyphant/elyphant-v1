@@ -1,8 +1,12 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/auth";
 
 const Footer = () => {
+  const { user } = useAuth();
+  const isInternalUser = user?.email?.endsWith('@elyphant.com') || user?.user_metadata?.isInternalUser;
+
   return (
     <footer className="bg-gray-800 text-white py-8">
       <div className="container mx-auto px-4">
@@ -29,6 +33,9 @@ const Footer = () => {
               <ul className="space-y-2">
                 <li><Link to="/vendor-signup" className="text-gray-400 hover:text-white text-sm">Become a Vendor</Link></li>
                 <li><Link to="/vendor-portal" className="text-gray-400 hover:text-white text-sm">Vendor Portal Signin</Link></li>
+                {isInternalUser && (
+                  <li><Link to="/trunkline" className="text-gray-400 hover:text-white text-sm">Trunkline Dashboard</Link></li>
+                )}
               </ul>
             </div>
           </div>

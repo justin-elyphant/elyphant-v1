@@ -12,6 +12,7 @@ import FundingSuccess from './pages/FundingSuccess';
 import Marketplace from './pages/Marketplace';
 import UserProfile from './pages/UserProfile';
 import VendorManagement from './pages/VendorManagement';
+import Trunkline from './pages/Trunkline';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/auth';
 import { CartProvider } from './contexts/CartContext';
@@ -58,6 +59,13 @@ function App() {
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Internal Trunkline dashboard */}
+              <Route path="/trunkline" element={
+                <ProtectedRoute>
+                  <Trunkline />
                 </ProtectedRoute>
               } />
             </Routes>

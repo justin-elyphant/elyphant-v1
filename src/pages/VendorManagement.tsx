@@ -9,12 +9,9 @@ import AdvertisingDashboard from "@/components/marketplace/AdvertisingDashboard"
 import VendorIntegrationsTab from "@/components/vendor/VendorIntegrationsTab";
 import VendorProductsTab from "@/components/vendor/VendorProductsTab";
 import VendorAnalyticsTab from "@/components/vendor/VendorAnalyticsTab";
-import ShopifyPartnerAlert from "@/components/vendor/ShopifyPartnerAlert";
-import ShopifyPartnerInfo from "@/components/vendor/ShopifyPartnerInfo";
 import IntegrationAddSheet from "@/components/vendor/IntegrationAddSheet";
 
 const VendorManagement = () => {
-  const [showPartnerInfo, setShowPartnerInfo] = useState(false);
   const navigate = useNavigate();
   
   return (
@@ -36,19 +33,17 @@ const VendorManagement = () => {
           <IntegrationAddSheet />
         </div>
         
-        {!showPartnerInfo ? (
-          <ShopifyPartnerAlert onShowInfo={() => setShowPartnerInfo(true)} />
-        ) : (
-          <ShopifyPartnerInfo onHide={() => setShowPartnerInfo(false)} />
-        )}
-        
-        <Tabs defaultValue="integrations">
+        <Tabs defaultValue="products">
           <TabsList className="mb-6">
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="advertising">Advertising</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="products">
+            <VendorProductsTab />
+          </TabsContent>
           
           <TabsContent value="integrations">
             <VendorIntegrationsTab />
@@ -56,10 +51,6 @@ const VendorManagement = () => {
           
           <TabsContent value="advertising">
             <AdvertisingDashboard />
-          </TabsContent>
-          
-          <TabsContent value="products">
-            <VendorProductsTab />
           </TabsContent>
           
           <TabsContent value="analytics">

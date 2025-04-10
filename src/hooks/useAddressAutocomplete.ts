@@ -50,134 +50,71 @@ export const useAddressAutocomplete = () => {
     setSuggestions([]);
   };
 
-  // Enhanced mock function to provide more realistic suggestions
+  // Generate more realistic US address suggestions
   const generateMockAddresses = (query: string): AddressSuggestion[] => {
     const normalizedQuery = query.toLowerCase().trim();
     
     if (!normalizedQuery) return [];
     
-    // Generate more diverse mock addresses based on first letters
-    const firstChar = normalizedQuery.charAt(0).toUpperCase();
+    // Create realistic street numbers and names
+    const streetNumbers = ["123", "456", "789", "1010", "2250", "3725", "4200", "5500"];
+    const streetNames = [
+      "Main St",
+      "Oak Ave",
+      "Maple Dr",
+      "Washington Blvd",
+      "Park Pl",
+      "Broadway",
+      "Highland Ave",
+      "Sunset Blvd",
+      "Ocean Dr",
+      "Lake View Rd"
+    ];
     
-    // Create a list of street types for variety
-    const streetTypes = ["St", "Ave", "Blvd", "Dr", "Ln", "Rd", "Way", "Pl"];
-    const cities = {
-      "A": ["Atlanta", "Austin", "Albuquerque", "Albany"],
-      "B": ["Boston", "Baltimore", "Birmingham", "Buffalo"],
-      "C": ["Chicago", "Cleveland", "Columbus", "Charlotte", "Cincinnati"],
-      "D": ["Dallas", "Denver", "Detroit", "Durham"],
-      "E": ["Eugene", "El Paso", "Evanston", "Edison"],
-      "F": ["Fort Worth", "Fresno", "Fort Lauderdale", "Fargo"],
-      "G": ["Grand Rapids", "Green Bay", "Greensboro", "Gainesville"],
-      "H": ["Houston", "Honolulu", "Hartford", "Henderson"],
-      "I": ["Indianapolis", "Irving", "Irvine", "Independence"],
-      "J": ["Jacksonville", "Jersey City", "Jackson", "Jupiter"],
-      "K": ["Kansas City", "Knoxville", "Kent", "Kalamazoo"],
-      "L": ["Los Angeles", "Las Vegas", "Louisville", "Lincoln"],
-      "M": ["Miami", "Minneapolis", "Memphis", "Milwaukee"],
-      "N": ["New York", "Nashville", "New Orleans", "Newark"],
-      "O": ["Oakland", "Oklahoma City", "Omaha", "Orlando"],
-      "P": ["Philadelphia", "Phoenix", "Portland", "Pittsburgh"],
-      "Q": ["Queens", "Quincy", "Quakertown"],
-      "R": ["Raleigh", "Richmond", "Riverside", "Rochester"],
-      "S": ["San Francisco", "Seattle", "San Diego", "San Antonio"],
-      "T": ["Tampa", "Tucson", "Toledo", "Tulsa"],
-      "U": ["Union City", "Urban", "Utica"],
-      "V": ["Virginia Beach", "Vancouver", "Vallejo"],
-      "W": ["Washington", "Wichita", "Winston-Salem"],
-      "X": ["Xerox"], 
-      "Y": ["Youngstown", "Yonkers", "York"],
-      "Z": ["Zanesville", "Zion"]
-    };
+    // Cities and states
+    const cityStateZip = [
+      { city: "San Francisco", state: "CA", zip: "94103" },
+      { city: "Los Angeles", state: "CA", zip: "90001" },
+      { city: "New York", state: "NY", zip: "10001" },
+      { city: "Chicago", state: "IL", zip: "60601" },
+      { city: "Austin", state: "TX", zip: "78701" },
+      { city: "Seattle", state: "WA", zip: "98101" },
+      { city: "Miami", state: "FL", zip: "33101" },
+      { city: "Denver", state: "CO", zip: "80201" }
+    ];
     
-    const states = {
-      "A": ["AL", "AK", "AZ", "AR"],
-      "B": ["CA"], // Berkeley
-      "C": ["CA", "CO", "CT"],
-      "D": ["DE", "DC"],
-      "E": ["FL"], // Everglades
-      "F": ["FL"],
-      "G": ["GA"],
-      "H": ["HI"],
-      "I": ["ID", "IL", "IN", "IA"],
-      "J": ["NJ"],
-      "K": ["KS", "KY"],
-      "L": ["LA"],
-      "M": ["ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT"],
-      "N": ["NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND"],
-      "O": ["OH", "OK", "OR"],
-      "P": ["PA"],
-      "Q": ["PA"], // Quakertown
-      "R": ["RI"],
-      "S": ["SC", "SD"],
-      "T": ["TN", "TX"],
-      "U": ["UT"],
-      "V": ["VT", "VA"],
-      "W": ["WA", "WV", "WI", "WY"],
-      "X": ["TX"], // No X states
-      "Y": ["NY"], // No Y states
-      "Z": ["OH"] // No Z states
-    };
-    
-    // Include more matching for common query terms
-    let addressMatches: AddressSuggestion[] = [];
-    
-    // Generate matches that contain the query string
+    // Generate 3-5 suggestions based on the query
     const numAddresses = Math.floor(Math.random() * 3) + 3;
+    const addressMatches: AddressSuggestion[] = [];
     
     for (let i = 0; i < numAddresses; i++) {
-      // Create street number
-      const streetNum = Math.floor(Math.random() * 9900) + 100;
+      const streetNumber = streetNumbers[Math.floor(Math.random() * streetNumbers.length)];
       
-      // Create street name that includes part of the query for better matching
+      // Choose a street name that might include part of the query
       let streetName;
       if (normalizedQuery.length > 3) {
-        // Try to incorporate the query into the street name
-        const queryWords = normalizedQuery.split(' ');
-        if (queryWords.length > 1) {
-          // Use parts of the multi-word query
-          streetName = queryWords[0].charAt(0).toUpperCase() + queryWords[0].slice(1);
+        // Try to find a street name that contains part of the query
+        const possibleMatches = streetNames.filter(name => 
+          name.toLowerCase().includes(normalizedQuery.substring(0, 3))
+        );
+        
+        if (possibleMatches.length > 0) {
+          streetName = possibleMatches[Math.floor(Math.random() * possibleMatches.length)];
         } else {
-          // Use the single word query
-          streetName = normalizedQuery.charAt(0).toUpperCase() + normalizedQuery.slice(1);
+          streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
         }
       } else {
-        // For short queries, use names that start with the first letter
-        const streetOptions = [
-          firstChar + "ackson", 
-          firstChar + "incoln",
-          firstChar + "ashington",
-          firstChar + "ranklin",
-          firstChar + "efferson"
-        ];
-        streetName = streetOptions[Math.floor(Math.random() * streetOptions.length)];
+        streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
       }
       
-      // Pick a random street type
-      const streetType = streetTypes[Math.floor(Math.random() * streetTypes.length)];
-      
-      // Construct full address
-      const address = `${streetNum} ${streetName} ${streetType}`;
-      
-      // Get lists for this letter
-      const citiesForLetter = cities[firstChar as keyof typeof cities] || cities["S"];
-      const statesForLetter = states[firstChar as keyof typeof states] || states["C"];
-      
-      // Pick random city and state
-      const city = citiesForLetter[Math.floor(Math.random() * citiesForLetter.length)];
-      const state = statesForLetter[Math.floor(Math.random() * statesForLetter.length)];
-      
-      // Generate zipcode based on state
-      const zipPrefix = (states["C"].includes(state)) ? "9" : 
-                       (states["N"].includes(state)) ? "1" : 
-                       (states["T"].includes(state)) ? "7" : "3";
-      const zipCode = zipPrefix + Math.floor(Math.random() * 9000 + 1000).toString();
+      // Random city/state combo
+      const location = cityStateZip[Math.floor(Math.random() * cityStateZip.length)];
       
       addressMatches.push({
-        address,
-        city,
-        state,
-        zipCode,
+        address: `${streetNumber} ${streetName}`,
+        city: location.city,
+        state: location.state,
+        zipCode: location.zip,
         country: "United States"
       });
     }

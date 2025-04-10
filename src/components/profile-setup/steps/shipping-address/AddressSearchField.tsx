@@ -46,7 +46,7 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
         if (inputRef.current) {
           inputRef.current.focus();
         }
-      }, 0);
+      }, 50); // Slightly longer timeout to ensure DOM is updated
     }
   }, [open]);
 
@@ -72,7 +72,7 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
       if (inputRef.current) {
         inputRef.current.focus();
       }
-    }, 10);
+    }, 50);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,6 +80,13 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
     onChange(newValue);
     setStreetQuery(newValue);
     if (newValue.length > 2) {
+      setOpen(true);
+    }
+  };
+
+  // Handle click inside the input to keep focus
+  const handleInputClick = () => {
+    if (value && value.length > 2 && suggestions.length > 0) {
       setOpen(true);
     }
   };
@@ -93,7 +100,7 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
           setOpen(isOpen);
           // If popover is being closed, restore focus to input
           if (!isOpen && inputRef.current) {
-            setTimeout(() => inputRef.current?.focus(), 10);
+            setTimeout(() => inputRef.current?.focus(), 50);
           }
         }}
       >
@@ -105,12 +112,14 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
               placeholder="123 Main St"
               value={value || ""}
               onChange={handleInputChange}
+              onClick={handleInputClick}
               onFocus={() => {
                 if (value && value.length > 2 && suggestions.length > 0) {
                   setOpen(true);
                 }
               }}
               className="w-full"
+              autoComplete="off" // Disable browser autocomplete
             />
             {loading && (
               <div className="absolute right-3 top-3">

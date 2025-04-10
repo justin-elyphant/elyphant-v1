@@ -37,6 +37,8 @@ export const useProfileData = () => {
           return;
         }
         
+        console.log("Loading profile data for user:", user.id);
+        
         // Get profile data from Supabase
         const { data, error } = await supabase
           .from('profiles')
@@ -45,6 +47,7 @@ export const useProfileData = () => {
           .single();
           
         if (error) {
+          console.error("Error loading profile data:", error);
           throw error;
         }
         
@@ -77,7 +80,9 @@ export const useProfileData = () => {
           // Extract interests from gift preferences if available
           let interests: string[] = [];
           if (data.gift_preferences && Array.isArray(data.gift_preferences)) {
-            interests = data.gift_preferences.map((pref: any) => pref.category);
+            interests = data.gift_preferences.map((pref: any) => 
+              typeof pref === 'string' ? pref : pref.category || ''
+            ).filter(Boolean);
           } else if (data.interests && Array.isArray(data.interests)) {
             interests = data.interests;
           }
@@ -91,10 +96,13 @@ export const useProfileData = () => {
             country: ''
           };
           
+          console.log("Formatted address data:", address);
+          console.log("Formatted interests:", interests);
+          
           setInitialFormData({
             name: data.name || '',
             email: data.email || user.email || '',
-            bio: data.bio || `Hi, I'm ${data.name}`,
+            bio: data.bio || `Hi, I'm ${data.name || 'there'}`,
             profile_image: data.profile_image,
             birthday: birthdayDate,
             address: address,

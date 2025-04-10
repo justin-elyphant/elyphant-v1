@@ -58,7 +58,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
                       Birthday
                     </TableCell>
                     <TableCell>
-                      {format(new Date(userData.birthday), "PPP")}
+                      {format(new Date(userData.birthday), "MMMM d")}
                     </TableCell>
                   </TableRow>
                 )}

@@ -56,19 +56,15 @@ export const useAddressAutocomplete = () => {
     
     if (!normalizedQuery) return [];
     
-    // Create realistic street numbers and names
+    // Create realistic street prefixes and types
     const streetNumbers = ["123", "456", "789", "1010", "2250", "3725", "4200", "5500"];
+    const streetPrefixes = ["", "North ", "South ", "East ", "West "];
     const streetNames = [
-      "Main St",
-      "Oak Ave",
-      "Maple Dr",
-      "Washington Blvd",
-      "Park Pl",
-      "Broadway",
-      "Highland Ave",
-      "Sunset Blvd",
-      "Ocean Dr",
-      "Lake View Rd"
+      "Main", "Oak", "Maple", "Washington", "Park", 
+      "Broadway", "Highland", "Sunset", "Ocean", "Lake View"
+    ];
+    const streetTypes = [
+      "St", "Ave", "Dr", "Blvd", "Pl", "Ln", "Rd", "Ct", "Way"
     ];
     
     // Cities and states
@@ -89,9 +85,12 @@ export const useAddressAutocomplete = () => {
     
     for (let i = 0; i < numAddresses; i++) {
       const streetNumber = streetNumbers[Math.floor(Math.random() * streetNumbers.length)];
+      const streetPrefix = streetPrefixes[Math.floor(Math.random() * streetPrefixes.length)];
       
       // Choose a street name that might include part of the query
       let streetName;
+      let streetType;
+      
       if (normalizedQuery.length > 3) {
         // Try to find a street name that contains part of the query
         const possibleMatches = streetNames.filter(name => 
@@ -103,15 +102,18 @@ export const useAddressAutocomplete = () => {
         } else {
           streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
         }
+        
+        streetType = streetTypes[Math.floor(Math.random() * streetTypes.length)];
       } else {
         streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
+        streetType = streetTypes[Math.floor(Math.random() * streetTypes.length)];
       }
       
       // Random city/state combo
       const location = cityStateZip[Math.floor(Math.random() * cityStateZip.length)];
       
       addressMatches.push({
-        address: `${streetNumber} ${streetName}`,
+        address: `${streetNumber} ${streetPrefix}${streetName} ${streetType}`,
         city: location.city,
         state: location.state,
         zipCode: location.zip,

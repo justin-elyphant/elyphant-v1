@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,25 +36,29 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverWasOpen = useRef(false);
 
-  // Keep track of when the popover opens and closes to manage focus
+  // Initialize the street query when the component mounts or value changes
+  useEffect(() => {
+    setStreetQuery(value || "");
+  }, [value, setStreetQuery]);
+
+  // Improved cursor handling for popover
   useEffect(() => {
     if (open) {
       popoverWasOpen.current = true;
     } else if (popoverWasOpen.current) {
-      // If popover was previously open and now closed, restore focus to input
       popoverWasOpen.current = false;
+      // Don't focus immediately as it causes issues with the popover
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
+          
+          // Place cursor at the end of the text
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
         }
-      }, 50); // Slightly longer timeout to ensure DOM is updated
+      }, 10);
     }
   }, [open]);
-
-  useEffect(() => {
-    // Initialize the street query when the component mounts or value changes
-    setStreetQuery(value || "");
-  }, [value, setStreetQuery]);
 
   const handleAddressSelect = (address: {
     address: string;
@@ -67,24 +72,28 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
     onAddressSelect(address);
     setOpen(false);
     
-    // Restore focus to the input element after selection
+    // Focus back to input after selection with a small delay
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
       }
-    }, 50);
+    }, 10);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
     setStreetQuery(newValue);
+    
+    // Only open suggestions when we have at least 3 characters
     if (newValue.length > 2) {
       setOpen(true);
+    } else {
+      setOpen(false);
     }
   };
 
-  // Handle click inside the input to keep focus
+  // Handle click inside the input to maintain focus
   const handleInputClick = () => {
     if (value && value.length > 2 && suggestions.length > 0) {
       setOpen(true);
@@ -98,9 +107,17 @@ const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
         open={open && suggestions.length > 0} 
         onOpenChange={(isOpen) => {
           setOpen(isOpen);
-          // If popover is being closed, restore focus to input
+          // If popover is being closed, restore focus to input with a delay
           if (!isOpen && inputRef.current) {
-            setTimeout(() => inputRef.current?.focus(), 50);
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.focus();
+                
+                // Place cursor at the end of text
+                const length = inputRef.current.value.length;
+                inputRef.current.setSelectionRange(length, length);
+              }
+            }, 10);
           }
         }}
       >

@@ -42,6 +42,7 @@ const AddressAutocomplete = ({
     setStreetQuery(value);
   }, [value, setStreetQuery]);
 
+  // Improved focus handling
   useEffect(() => {
     if (open) {
       popoverWasOpen.current = true;
@@ -50,8 +51,12 @@ const AddressAutocomplete = ({
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
+          
+          // Place cursor at the end of text
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
         }
-      }, 0);
+      }, 10);
     }
   }, [open]);
 
@@ -61,6 +66,7 @@ const AddressAutocomplete = ({
     onAddressSelect(address);
     setOpen(false);
     
+    // Focus back on input after selection
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -72,7 +78,18 @@ const AddressAutocomplete = ({
     const newValue = e.target.value;
     onChange(newValue);
     setStreetQuery(newValue);
+    
+    // Only open suggestions when we have at least 3 characters
     if (newValue.length > 2) {
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  };
+
+  // Handle click inside the input to maintain focus
+  const handleInputClick = () => {
+    if (value && value.length > 2 && suggestions.length > 0) {
       setOpen(true);
     }
   };
@@ -85,7 +102,15 @@ const AddressAutocomplete = ({
         onOpenChange={(isOpen) => {
           setOpen(isOpen);
           if (!isOpen && inputRef.current) {
-            setTimeout(() => inputRef.current?.focus(), 10);
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.focus();
+                
+                // Place cursor at the end of text
+                const length = inputRef.current.value.length;
+                inputRef.current.setSelectionRange(length, length);
+              }
+            }, 10);
           }
         }}
       >
@@ -96,6 +121,7 @@ const AddressAutocomplete = ({
               ref={inputRef}
               value={value}
               onChange={handleInputChange}
+              onClick={handleInputClick}
               onFocus={() => {
                 if (value.length > 2 && suggestions.length > 0) {
                   setOpen(true);
@@ -104,6 +130,7 @@ const AddressAutocomplete = ({
               placeholder="123 Main St"
               disabled={disabled}
               className="w-full"
+              autoComplete="off"
             />
             {loading && (
               <div className="absolute right-3 top-3">

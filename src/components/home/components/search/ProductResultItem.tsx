@@ -9,7 +9,7 @@ interface ProductResultItemProps {
     title?: string;
     name?: string;
     image?: string;
-    price?: number;
+    price?: number | string;
     brand?: string;
     category?: string;
   };
@@ -19,9 +19,14 @@ interface ProductResultItemProps {
 const ProductResultItem = ({ product, onSelect }: ProductResultItemProps) => {
   const productName = product.title || product.name || "Unknown Product";
   const productImage = product.image || "/placeholder.svg";
-  const formattedPrice = product.price 
-    ? `$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}` 
-    : "";
+  const price = typeof product.price === 'number' ? product.price : 
+               typeof product.price === 'string' ? parseFloat(product.price) : null;
+  
+  const formattedPrice = price !== null
+    ? `$${price.toFixed(2)}` 
+    : product.price 
+      ? `$${product.price}` 
+      : "";
   
   return (
     <CommandItem 
@@ -31,12 +36,13 @@ const ProductResultItem = ({ product, onSelect }: ProductResultItemProps) => {
       className="flex items-center gap-2"
     >
       {productImage ? (
-        <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0">
+        <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">
           <img 
             src={productImage} 
             alt={productName} 
             className="w-full h-full object-cover"
             onError={(e) => {
+              console.log(`Image failed to load: ${productImage}`);
               // Fallback if image fails to load
               (e.target as HTMLImageElement).src = "/placeholder.svg";
             }}
@@ -46,8 +52,8 @@ const ProductResultItem = ({ product, onSelect }: ProductResultItemProps) => {
         <Package className="h-4 w-4 mr-2" />
       )}
       
-      <div className="flex flex-col">
-        <span className="line-clamp-1">{productName}</span>
+      <div className="flex flex-col overflow-hidden">
+        <span className="line-clamp-1 font-medium text-sm">{productName}</span>
         {(product.brand || product.category || formattedPrice) && (
           <span className="text-xs text-muted-foreground line-clamp-1">
             {[

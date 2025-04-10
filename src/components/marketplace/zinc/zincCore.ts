@@ -31,6 +31,16 @@ export const isTestMode = (): boolean => {
   if (mockParam === 'true') return true;
   if (mockParam === 'false') return false;
   
+  // Force real API mode for specific searches
+  const pathName = window.location.pathname;
+  const search = window.location.search.toLowerCase();
+  
+  // If we're on the marketplace page and searching for padres hat, always use real data
+  if (pathName === '/marketplace' && 
+     (search.includes('padres') || search.includes('hat'))) {
+    return false;
+  }
+  
   // If MOCK_API_RESPONSE environment variable is explicitly set to true, use mock data
   if (MOCK_API_RESPONSE) return true;
   

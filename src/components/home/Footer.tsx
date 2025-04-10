@@ -19,13 +19,20 @@ const Footer = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
             <div>
               <h4 className="font-medium mb-3">Platform</h4>
               <ul className="space-y-2">
                 <li><Link to="/gifting" className="text-gray-400 hover:text-white text-sm">Gifting</Link></li>
                 <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm">Marketplace</Link></li>
                 <li><Link to="/trunkline" className="text-gray-400 hover:text-white text-sm">Trunkline</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-3">Company</h4>
+              <ul className="space-y-2">
+                <li><Link to="/about-us" className="text-gray-400 hover:text-white text-sm">About Us</Link></li>
               </ul>
             </div>
             

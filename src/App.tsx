@@ -37,6 +37,7 @@ import PurchaseSuccess from '@/pages/PurchaseSuccess';
 import Trunkline from '@/pages/Trunkline';
 import VendorManagement from '@/pages/VendorManagement';
 import UserProfile from '@/pages/UserProfile';
+import AboutUs from '@/pages/AboutUs';
 import DebugPanel from '@/components/debug/DebugPanel';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -52,6 +53,7 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/sign-in" element={<SignIn />} />
                 <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Dashboard />

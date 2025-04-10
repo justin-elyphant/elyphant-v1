@@ -4,7 +4,7 @@ export const ZINC_API_BASE_URL = 'https://api.zinc.io/v1';
 
 // Environment variables
 const ZINC_API_TOKEN = import.meta.env.VITE_ZINC_API_TOKEN || '';
-const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || true; // Default to true for demo
+const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || false; // Default to false to use real API
 
 /**
  * Get headers needed for Zinc API requests
@@ -31,9 +31,8 @@ export const isTestMode = (): boolean => {
   if (mockParam === 'true') return true;
   if (mockParam === 'false') return false;
   
-  // In this demo environment, always use mock data
-  // In a real implementation, this would check for a valid token
-  return true;
+  // Default to using real API unless explicitly in mock mode
+  return MOCK_API_RESPONSE;
 };
 
 /**

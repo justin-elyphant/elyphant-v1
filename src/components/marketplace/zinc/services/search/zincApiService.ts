@@ -37,17 +37,15 @@ export const searchZincApi = async (
         });
       }
       
-      // Always return mock results when no token is available
+      // Fall back to mock results when no token is available
       return generateMockSearchResults(query, parseInt(maxResults));
     }
     
     console.log(`Making real API call to Zinc for query: "${query}", max results: ${maxResults}`);
     console.log('Using API token:', getZincHeaders()['Authorization'].substring(0, 10) + '...');
     
-    // Use a proxy URL to avoid CORS issues with the Zinc API
-    // For production, this should be a server-side implementation
-    // For demo purposes, we'll use a mock proxy endpoint
-    const useProxy = true; // Set to true to use proxy, false to use direct API call
+    // Set this to false to attempt a direct API call, true to use server proxy
+    const useProxy = false;
     
     const directUrl = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
     // In a real implementation, you would use your own backend proxy endpoint
@@ -64,34 +62,11 @@ export const searchZincApi = async (
       hasToken: headers['Authorization'].length > 8
     });
     
-    // Try the API call with a timeout
+    // Try the real API call with a timeout
     const timeoutPromise = new Promise<Response>((_, reject) => {
       setTimeout(() => reject(new Error('API request timed out after 10 seconds')), 10000);
     });
     
-    // For demo purposes, we'll simulate a successful API response
-    // In a real implementation, this would be an actual API call
-    if (useProxy) {
-      console.log('Using proxy to avoid CORS issues - for demonstration purposes');
-      
-      // Simulate a successful response with mock data
-      // In a real implementation, this would call your backend proxy
-      console.log('Simulating successful API response with mock data');
-      
-      // Add a small delay to simulate network latency
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Return mock data for the specific query
-      const mockResults = generateMockSearchResults(query, parseInt(maxResults));
-      
-      // Log the mock results
-      console.log(`Found ${mockResults.length} mock results for "${query}"`);
-      
-      return mockResults;
-    }
-    
-    // This direct API call will likely fail due to CORS issues in a browser environment
-    // In a real implementation, all API calls should go through a backend proxy
     try {
       const response = await Promise.race([
         fetch(url, {
@@ -123,15 +98,17 @@ export const searchZincApi = async (
         duration: 5000,
       });
       
-      return [];
+      // Fall back to mock data
+      console.log('Falling back to mock data due to no API results');
+      return generateMockSearchResults(query, parseInt(maxResults));
     } catch (error) {
       // This will catch CORS errors when making direct API calls from the browser
       console.error('CORS or network error when calling Zinc API directly:', error);
       
       if (!hasShownCorsErrorToast) {
         hasShownCorsErrorToast = true;
-        toast.error('CORS Error', {
-          description: 'Direct API calls to Zinc are blocked by CORS. Using mock data instead.',
+        toast.error('API Connection Error', {
+          description: 'Could not connect to Zinc API directly. This is likely due to CORS restrictions.',
           duration: 5000,
         });
       }
@@ -147,12 +124,12 @@ export const searchZincApi = async (
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
       console.error('Network error: Failed to connect to Zinc API');
       toast.error('Connection Error', {
-        description: 'Failed to connect to Zinc API. In a production app, this would use a server-side proxy.',
+        description: 'Failed to connect to Zinc API. Please check your internet connection.',
         duration: 5000,
       });
     } else {
       toast.error('API Error', {
-        description: 'Error from Zinc API. Using mock data for demonstration purposes.',
+        description: 'Error from Zinc API. Using mock data as fallback.',
         duration: 5000,
       });
     }

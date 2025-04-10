@@ -27,17 +27,17 @@ const TrunklineZincTab = () => {
           {!hasToken && (
             <Alert className="mb-6 bg-amber-50 border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-800" />
-              <AlertTitle className="text-amber-800">Demo Mode: Using Mock Data</AlertTitle>
+              <AlertTitle className="text-amber-800">API Key Required</AlertTitle>
               <AlertDescription className="text-amber-700">
-                <p>This is a <strong>demo environment</strong> that uses mock data for product searches.</p>
-                <p className="mt-2 font-medium">To simulate a connection, enter any string with at least 10 characters below.</p>
-                <p className="mt-2">Example token: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">test_zinc_token_12345abcde</code></p>
+                <p>You need to enter your Zinc API key to connect to Amazon's product catalog.</p>
+                <p className="mt-2 font-medium">Enter your Zinc API token below to establish a connection.</p>
+                <p className="mt-2">For testing: If you don't have a real Zinc API key, enter any string with at least 10 characters.</p>
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
                   <p className="text-blue-700 flex items-start">
                     <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>In a production environment:</strong> Direct browser-to-API calls would be blocked by CORS. 
-                      A server-side proxy would be implemented to make secure API calls with your real Zinc API token.
+                      <strong>Note:</strong> Direct browser-to-API calls may be blocked by CORS. 
+                      In a production environment, a server-side proxy would handle API requests securely.
                     </span>
                   </p>
                 </div>
@@ -48,19 +48,20 @@ const TrunklineZincTab = () => {
           {hasToken && (
             <Alert className="mb-6 bg-green-50 border-green-200">
               <AlertCircle className="h-4 w-4 text-green-800" />
-              <AlertTitle className="text-green-800">Demo Connection Active</AlertTitle>
+              <AlertTitle className="text-green-800">API Connection Active</AlertTitle>
               <AlertDescription className="text-green-700">
-                <p>Your demo Zinc API token is connected. Product searches will use simulated API responses.</p>
+                <p>Your Zinc API token is connected. Product searches will attempt to use the live API.</p>
                 <p className="mt-2">
                   <span className="font-medium">Try searches: </span>
-                  Search for "Nike Shoes", "Headphones", "Padres Hat", or other products to see simulated results.
+                  Search for "Nike Shoes", "Headphones", "Padres Hat", or other products to see results.
                 </p>
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
                   <p className="text-blue-700 flex items-start">
                     <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>Note:</strong> In this demo, searches use mock data that simulates Zinc API responses. 
-                      In a production app, a server-side proxy would communicate with the actual Zinc API.
+                      <strong>Note:</strong> If direct API calls fail due to CORS restrictions, the system will 
+                      fall back to using mock data. In a production environment, API requests would be routed 
+                      through a server-side proxy.
                     </span>
                   </p>
                 </div>

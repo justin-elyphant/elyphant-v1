@@ -6,8 +6,9 @@ import MarketplaceContent from "./MarketplaceContent";
 import { useProducts } from "@/contexts/ProductContext";
 import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
 import { useAuth } from "@/contexts/auth";
+import { ProductProvider } from "@/contexts/ProductContext";
 
-const MarketplaceWrapper = () => {
+const MarketplaceInner = () => {
   const [searchParams] = useSearchParams();
   const productId = searchParams.get("productId");
   const { products } = useProducts();
@@ -60,6 +61,14 @@ const MarketplaceWrapper = () => {
         userData={user}
       />
     </div>
+  );
+};
+
+const MarketplaceWrapper = () => {
+  return (
+    <ProductProvider>
+      <MarketplaceInner />
+    </ProductProvider>
   );
 };
 

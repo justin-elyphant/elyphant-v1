@@ -6,14 +6,18 @@ import Footer from "../home/Footer";
 import { useAuth } from "@/contexts/auth";
 import DebugPanel from "../debug/DebugPanel";
 
-const MainLayout = () => {
+interface MainLayoutProps {
+  children?: React.ReactNode;
+}
+
+const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isDebugMode } = useAuth();
   
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
-        <Outlet />
+        {children || <Outlet />}
       </main>
       <Footer />
       

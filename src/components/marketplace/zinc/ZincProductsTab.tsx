@@ -1,25 +1,20 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { useProducts } from "@/contexts/ProductContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Search, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useZincProducts } from "./hooks/useZincProducts";
-import { toast } from "sonner";
-import { findMatchingProducts } from "./utils/findMatchingProducts";
+import React, { useEffect } from "react";
+import { useZincProductSearch } from "./hooks/useZincProductSearch";
+import { ZincSearchForm } from "./components/ZincSearchForm";
+import { ZincProductResults } from "./components/ZincProductResults";
 
 const ZincProductsTab = () => {
-  const { products, setProducts } = useProducts();
   const { 
-    isLoading, 
     searchTerm, 
-    setSearchTerm, 
-    handleSearch, 
-    syncProducts 
-  } = useZincProducts();
-  const [localSearchTerm, setLocalSearchTerm] = useState("");
-  const searchInProgressRef = useRef(false);
+    setSearchTerm,
+    localSearchTerm, 
+    setLocalSearchTerm,
+    handleSearch,
+    syncProducts,
+    isLoading,
+    marketplaceProducts
+  } = useZincProductSearch();
   
   useEffect(() => {
     if (searchTerm && searchTerm !== localSearchTerm) {
@@ -27,84 +22,11 @@ const ZincProductsTab = () => {
     }
   }, [searchTerm]);
   
-  const marketplaceProducts = products.filter(p => p.vendor === "Elyphant" || p.vendor === "Amazon via Zinc");
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (localSearchTerm.trim() && !searchInProgressRef.current) {
-      searchInProgressRef.current = true;
-      console.log(`ZincProductsTab: Submitting search for "${localSearchTerm}"`);
-      
-      try {
-        // Check for special cases first
-        const isSpecialCase = localSearchTerm.toLowerCase().includes('padres') && 
-            (localSearchTerm.toLowerCase().includes('hat') || localSearchTerm.toLowerCase().includes('cap'));
-        
-        if (isSpecialCase) {
-          console.log('Using special case handling for Padres hat search in ZincProductsTab');
-          // Generate mock products for this special case
-          const specialCaseProducts = findMatchingProducts(localSearchTerm);
-          
-          // Convert to Product format and add to state
-          const formattedProducts = specialCaseProducts.map((product, index) => ({
-            id: 2000 + index,
-            name: product.title || "San Diego Padres Hat",
-            price: product.price || 29.99,
-            category: product.category || "Sports Merchandise",
-            image: product.image || "https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop",
-            vendor: "Amazon via Zinc",
-            description: product.description || "Official San Diego Padres baseball cap. Show your team spirit with this authentic MLB merchandise.",
-            rating: product.rating || 4.5,
-            reviewCount: product.review_count || 120
-          }));
-          
-          // Update products
-          setProducts(prevProducts => {
-            // Remove existing Padres products
-            const filtered = prevProducts.filter(p => 
-              !(p.name.toLowerCase().includes('padres') && p.name.toLowerCase().includes('hat'))
-            );
-            return [...filtered, ...formattedProducts];
-          });
-          
-          toast.success("Search Complete", {
-            description: `Found ${formattedProducts.length} products matching "${localSearchTerm}"`
-          });
-        } else {
-          // Use the regular search for non-special cases
-          await handleSearch(localSearchTerm);
-        }
-      } catch (error) {
-        console.error("Search error:", error);
-        toast.error("Search Failed", {
-          description: "There was an error processing your search. Using mock data instead."
-        });
-        
-        // Fall back to mock data
-        const mockProducts = findMatchingProducts(localSearchTerm);
-        if (mockProducts.length > 0) {
-          // Convert to Product format
-          const formattedMockProducts = mockProducts.map((product, index) => ({
-            id: 3000 + index,
-            name: product.title || localSearchTerm,
-            price: product.price || 19.99,
-            category: product.category || "Electronics",
-            image: product.image || "/placeholder.svg",
-            vendor: "Amazon via Zinc",
-            description: product.description || `Product related to ${localSearchTerm}`,
-            rating: product.rating || 4.0,
-            reviewCount: product.review_count || 50
-          }));
-          
-          // Update products
-          setProducts(prevProducts => {
-            return [...prevProducts, ...formattedMockProducts];
-          });
-        }
-      } finally {
-        searchInProgressRef.current = false;
-      }
+    if (localSearchTerm.trim()) {
+      await handleSearch(localSearchTerm);
     }
   };
   
@@ -113,39 +35,17 @@ const ZincProductsTab = () => {
       handleSubmit(e as unknown as React.FormEvent);
     }
   };
-  
+
   return (
     <div className="space-y-4 py-4">
-      <form className="flex gap-2" onSubmit={handleSubmit}>
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search products..."
-            className="pl-8"
-            value={localSearchTerm}
-            onChange={(e) => setLocalSearchTerm(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isLoading}
-          />
-        </div>
-        <Button 
-          type="submit" 
-          variant="default" 
-          disabled={isLoading || !localSearchTerm.trim()}
-        >
-          {isLoading ? "Searching..." : "Search"}
-        </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => syncProducts()} 
-          disabled={isLoading}
-        >
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Sync
-        </Button>
-      </form>
+      <ZincSearchForm
+        searchTerm={localSearchTerm}
+        setSearchTerm={setLocalSearchTerm}
+        handleSubmit={handleSubmit}
+        handleKeyDown={handleKeyDown}
+        syncProducts={syncProducts}
+        isLoading={isLoading}
+      />
       
       {searchTerm && (
         <p className="text-sm text-muted-foreground">
@@ -153,49 +53,11 @@ const ZincProductsTab = () => {
         </p>
       )}
       
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <p className="text-muted-foreground">Loading products...</p>
-        </div>
-      ) : marketplaceProducts.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-6">
-            <p className="text-center text-muted-foreground">
-              No products found. Search for products or sync to import products.
-            </p>
-            <p className="text-center text-sm mt-2">
-              Try searching for "San Diego Padres Hat" or "Nike Shoes" to see results.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {marketplaceProducts.map(product => (
-            <Card key={product.id}>
-              <CardContent className="p-4 flex gap-4">
-                <div className="w-20 h-20 rounded overflow-hidden shrink-0">
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // Replace broken images with placeholder
-                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium line-clamp-1">{product.name}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {product.description || "No description available."}
-                  </p>
-                  <p className="font-medium">${product.price.toFixed(2)}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <ZincProductResults
+        products={marketplaceProducts}
+        isLoading={isLoading}
+        searchTerm={searchTerm}
+      />
     </div>
   );
 };

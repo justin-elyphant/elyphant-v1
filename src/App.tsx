@@ -152,11 +152,8 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/vendor/signup" element={<VendorSignup />} />
-                <Route path="/trunkline" element={
-                  <ProtectedRoute>
-                    <Trunkline />
-                  </ProtectedRoute>
-                } />
+                {/* Remove ProtectedRoute for Trunkline to bypass authentication */}
+                <Route path="/trunkline" element={<Trunkline />} />
                 {/* Remove ProtectedRoute for VendorManagement to bypass authentication */}
                 <Route path="/vendor" element={<VendorManagement />} />
                 <Route path="*" element={<NotFound />} />

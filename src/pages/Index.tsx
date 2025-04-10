@@ -1,6 +1,5 @@
 
 import React from "react";
-import Footer from "@/components/home/Footer";
 import HomeContent from "@/components/home/HomeContent";
 import ZincConnectCard from "@/components/marketplace/zinc/ZincConnectCard";
 
@@ -15,7 +14,6 @@ const Index = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

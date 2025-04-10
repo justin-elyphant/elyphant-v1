@@ -108,7 +108,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     try {
       setIsLoading(true);
       
-      // Prepare final data to save
+      // Prepare final data to save, removing username field which doesn't exist in DB
       let dataToUpdate: any = {
         name: profileData.name,
         email: profileData.email,
@@ -117,11 +117,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         shipping_address: profileData.shipping_address,
         gift_preferences: profileData.gift_preferences,
         data_sharing_settings: profileData.data_sharing_settings,
-        username: profileData.username,
         updated_at: new Date().toISOString()
       };
       
-      // Ensure username is saved correctly
+      // Log data we're saving for debugging
       console.log("Saving final profile data:", dataToUpdate);
       
       // Save profile data

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Gift, X, ShoppingBag } from "lucide-react";
 import { GiftPreference } from "@/types/supabase";
+import { popularBrands } from "./utils";
 
 interface PreferenceListProps {
   preferences: GiftPreference[];
@@ -35,9 +36,13 @@ const PreferenceList: React.FC<PreferenceListProps> = ({
 
   // Helper function to determine if a preference is a brand
   const isBrandCategory = (category: string) => {
-    const brands = ["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo", 
-                  "Amazon", "Sephora", "Nordstrom", "Target", "Ikea"];
-    return brands.includes(category);
+    return popularBrands.some(brand => brand.label === category);
+  };
+
+  // Helper function to get logo URL for a brand
+  const getBrandLogoUrl = (category: string) => {
+    const brand = popularBrands.find(brand => brand.label === category);
+    return brand ? brand.logoUrl : undefined;
   };
 
   return (
@@ -54,7 +59,17 @@ const PreferenceList: React.FC<PreferenceListProps> = ({
             {isExperienceCategory(pref.category) ? (
               <span className="mr-1">{getExperienceEmoji(pref.category)}</span>
             ) : isBrandCategory(pref.category) ? (
-              <ShoppingBag className="h-3 w-3" />
+              <div className="h-3.5 w-auto max-w-[20px] mr-1 flex items-center">
+                {getBrandLogoUrl(pref.category) ? (
+                  <img 
+                    src={getBrandLogoUrl(pref.category)} 
+                    alt={pref.category} 
+                    className="h-3.5 w-auto max-w-[20px] object-contain" 
+                  />
+                ) : (
+                  <ShoppingBag className="h-3 w-3" />
+                )}
+              </div>
             ) : (
               <Gift className="h-3 w-3" />
             )}

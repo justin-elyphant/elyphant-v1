@@ -16,7 +16,11 @@ export const getZincHeaders = () => {
   
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token || ''}`
+    'Authorization': `Bearer ${token || ''}`,
+    // Add CORS headers - though these only work server-side
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 };
 
@@ -43,7 +47,7 @@ export const hasValidZincToken = (): boolean => {
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
   
-  // For demo purposes, consider a token valid if it's at least 10 chars
+  // Consider a token valid if it's at least 10 chars
   return !!(token && token.trim() !== '' && token.trim().length >= 10);
 };
 

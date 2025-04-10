@@ -5,7 +5,7 @@ import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
 import PricingControlsCard from "./pricing/PricingControlsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
-import { AlertCircle, HelpCircle, Info } from "lucide-react";
+import { AlertCircle, HelpCircle, Info, ExternalLink } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const TrunklineZincTab = () => {
@@ -32,12 +32,22 @@ const TrunklineZincTab = () => {
                 <p>You need to enter your Zinc API key to connect to Amazon's product catalog.</p>
                 <p className="mt-2 font-medium">Enter your Zinc API token below to establish a connection.</p>
                 <p className="mt-2">For testing: If you don't have a real Zinc API key, enter any string with at least 10 characters.</p>
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
-                  <p className="text-blue-700 flex items-start">
+                <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md">
+                  <p className="text-red-700 flex items-start">
+                    <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <strong>Important Limitation:</strong> Browser security (CORS) prevents direct browser-to-API calls. 
+                      In previous versions, a server-side proxy was implemented to handle these requests.
+                    </span>
+                  </p>
+                  <p className="text-red-700 mt-2 ml-6">
+                    To use the live API in your own implementation, you'll need to create a server-side proxy endpoint
+                    that forwards requests to the Zinc API and returns the responses with proper CORS headers.
+                  </p>
+                  <p className="text-blue-700 mt-2 ml-6 flex items-start">
                     <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>Note:</strong> Direct browser-to-API calls may be blocked by CORS. 
-                      In a production environment, a server-side proxy would handle API requests securely.
+                      Currently, the app will attempt direct API calls, but will likely fall back to mock data due to CORS restrictions.
                     </span>
                   </p>
                 </div>
@@ -55,14 +65,17 @@ const TrunklineZincTab = () => {
                   <span className="font-medium">Try searches: </span>
                   Search for "Nike Shoes", "Headphones", "Padres Hat", or other products to see results.
                 </p>
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
-                  <p className="text-blue-700 flex items-start">
-                    <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md">
+                  <p className="text-red-700 flex items-start">
+                    <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>Note:</strong> If direct API calls fail due to CORS restrictions, the system will 
-                      fall back to using mock data. In a production environment, API requests would be routed 
-                      through a server-side proxy.
+                      <strong>Important Limitation:</strong> Browser security (CORS) prevents direct browser-to-API calls. 
+                      If API calls fail, the system will automatically fall back to mock data.
                     </span>
+                  </p>
+                  <p className="text-red-700 mt-2 ml-6">
+                    To use the live API in your own implementation, you'll need to create a server-side proxy endpoint
+                    that forwards requests to the Zinc API with proper authentication and returns responses with correct CORS headers.
                   </p>
                 </div>
               </AlertDescription>

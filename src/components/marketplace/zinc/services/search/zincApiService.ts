@@ -44,14 +44,16 @@ export const searchZincApi = async (
     console.log(`Making real API call to Zinc for query: "${query}", max results: ${maxResults}`);
     console.log('Using API token:', getZincHeaders()['Authorization'].substring(0, 10) + '...');
     
-    // Set this to false to attempt a direct API call, true to use server proxy
-    const useProxy = false;
-    
+    // In a real implementation, you would have a server endpoint that proxies requests to Zinc
+    // Direct browser-to-API calls will be blocked by CORS
     const directUrl = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
-    // In a real implementation, you would use your own backend proxy endpoint
+    
+    // Set up a proxy URL - in a real app, this would point to your server endpoint 
+    // that handles the API request and adds proper CORS headers
     const proxyUrl = `/api/zinc/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
     
-    const url = useProxy ? proxyUrl : directUrl;
+    // For demo purposes, we'll try a direct call, knowing it might fail due to CORS
+    const url = directUrl;
     const headers = getZincHeaders();
     
     // Log detailed debug info about our request
@@ -68,10 +70,16 @@ export const searchZincApi = async (
     });
     
     try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      
+      // Race between the fetch and the timeout
       const response = await Promise.race([
         fetch(url, {
           method: 'GET',
-          headers: headers
+          headers: headers,
+          mode: 'cors', // This is important for CORS requests
+          signal
         }),
         timeoutPromise
       ]);
@@ -108,7 +116,7 @@ export const searchZincApi = async (
       if (!hasShownCorsErrorToast) {
         hasShownCorsErrorToast = true;
         toast.error('API Connection Error', {
-          description: 'Could not connect to Zinc API directly. This is likely due to CORS restrictions.',
+          description: 'Browser security (CORS) prevents direct API calls. A server-side proxy is required.',
           duration: 5000,
         });
       }

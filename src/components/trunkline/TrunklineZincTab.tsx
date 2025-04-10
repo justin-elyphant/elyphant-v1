@@ -31,24 +31,26 @@ const TrunklineZincTab = () => {
               <AlertDescription className="text-amber-700">
                 <p>You need to enter your Zinc API key to connect to Amazon's product catalog.</p>
                 <p className="mt-2 font-medium">Enter your Zinc API token below to establish a connection.</p>
-                <p className="mt-2">For testing: If you don't have a real Zinc API key, enter any string with at least 10 characters.</p>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
+                  <p className="text-blue-700 flex items-start">
+                    <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <strong>Example API Key:</strong> Just enter the token provided by Zinc (e.g. "5B394AAF6CD03728E9E33DDF").
+                      Do not include a colon or any other characters.
+                    </span>
+                  </p>
+                </div>
                 <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md">
                   <p className="text-red-700 flex items-start">
                     <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>Important Limitation:</strong> Browser security (CORS) prevents direct browser-to-API calls. 
-                      In previous versions, a server-side proxy was implemented to handle these requests.
+                      <strong>Important Limitation:</strong> Browser security (CORS) may prevent direct browser-to-API calls. 
+                      If you get CORS errors, the application will fall back to using mock data.
                     </span>
                   </p>
                   <p className="text-red-700 mt-2 ml-6">
-                    To use the live API in your own implementation, you'll need to create a server-side proxy endpoint
+                    To use the live API in your own implementation, you may need to create a server-side proxy endpoint
                     that forwards requests to the Zinc API and returns the responses with proper CORS headers.
-                  </p>
-                  <p className="text-blue-700 mt-2 ml-6 flex items-start">
-                    <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>
-                      Currently, the app will attempt direct API calls, but will likely fall back to mock data due to CORS restrictions.
-                    </span>
                   </p>
                 </div>
               </AlertDescription>
@@ -65,17 +67,22 @@ const TrunklineZincTab = () => {
                   <span className="font-medium">Try searches: </span>
                   Search for "Nike Shoes", "Headphones", "Padres Hat", or other products to see results.
                 </p>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
+                  <p className="text-blue-700 flex items-start">
+                    <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <strong>API Authentication:</strong> Using Basic Authentication with your provided API token.
+                      If you experience issues, verify your token is correct and that you're not including any extra characters.
+                    </span>
+                  </p>
+                </div>
                 <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md">
                   <p className="text-red-700 flex items-start">
                     <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>Important Limitation:</strong> Browser security (CORS) prevents direct browser-to-API calls. 
-                      If API calls fail, the system will automatically fall back to mock data.
+                      <strong>Important Note:</strong> If API calls fail due to CORS restrictions, 
+                      the system will automatically fall back to mock data.
                     </span>
-                  </p>
-                  <p className="text-red-700 mt-2 ml-6">
-                    To use the live API in your own implementation, you'll need to create a server-side proxy endpoint
-                    that forwards requests to the Zinc API with proper authentication and returns responses with correct CORS headers.
                   </p>
                 </div>
               </AlertDescription>

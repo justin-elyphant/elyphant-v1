@@ -7,16 +7,20 @@ const ZINC_API_TOKEN = import.meta.env.VITE_ZINC_API_TOKEN || '';
 const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || false; // Default to false to use real API
 
 /**
- * Get headers needed for Zinc API requests
+ * Get headers needed for Zinc API requests using Basic Auth
  */
 export const getZincHeaders = () => {
   // Get the token from localStorage if available, otherwise use env var
   const storedToken = localStorage.getItem('zincApiToken');
   const token = storedToken || ZINC_API_TOKEN;
+
+  // Using Basic Auth as shown in Zinc documentation
+  // Base64 encode the API token with empty password (token:)
+  const base64Credentials = btoa(`${token}:`); 
   
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token || ''}`,
+    'Authorization': `Basic ${base64Credentials}`,
     // Add CORS headers - though these only work server-side
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',

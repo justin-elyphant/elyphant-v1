@@ -42,26 +42,18 @@ export const searchZincApi = async (
     }
     
     console.log(`Making real API call to Zinc for query: "${query}", max results: ${maxResults}`);
-    console.log('Using API token:', getZincHeaders()['Authorization'].substring(0, 10) + '...');
+    console.log('Using API with Basic auth headers:', getZincHeaders()['Authorization'].substring(0, 20) + '...');
     
-    // In a real implementation, you would have a server endpoint that proxies requests to Zinc
-    // Direct browser-to-API calls will be blocked by CORS
-    const directUrl = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
-    
-    // Set up a proxy URL - in a real app, this would point to your server endpoint 
-    // that handles the API request and adds proper CORS headers
-    const proxyUrl = `/api/zinc/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
-    
-    // For demo purposes, we'll try a direct call, knowing it might fail due to CORS
-    const url = directUrl;
+    // Direct URL to the Zinc API
+    const url = `${ZINC_API_BASE_URL}/search?query=${encodeURIComponent(query)}&max_results=${maxResults}`;
     const headers = getZincHeaders();
     
     // Log detailed debug info about our request
     console.log('API request URL:', url);
     console.log('API request headers:', {
       contentType: headers['Content-Type'],
-      authHeaderStart: headers['Authorization'].substring(0, 15) + '...',
-      hasToken: headers['Authorization'].length > 8
+      authHeaderStart: headers['Authorization'].substring(0, 20) + '...',
+      hasAuth: headers['Authorization'].length > 10
     });
     
     // Try the real API call with a timeout

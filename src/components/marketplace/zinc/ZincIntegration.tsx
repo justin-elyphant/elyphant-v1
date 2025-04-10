@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useZincIntegration } from "./useZincIntegration";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,14 +37,13 @@ const ZincIntegration = () => {
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-medium text-yellow-800">About Direct API Access</h3>
+                <h3 className="font-medium text-yellow-800">About Zinc API Access</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Browser security (CORS) prevents direct browser-to-API calls to external services like Zinc.
-                  In a production environment, you would implement a server-side proxy to handle these requests.
+                  This integration uses Basic Authentication to connect to the Zinc API. Enter only your
+                  API token in the field below (without any colon or other characters).
                 </p>
                 <p className="text-sm text-yellow-700 mt-2">
-                  For this demo, we'll attempt direct API calls, but if they fail due to CORS restrictions,
-                  the system will automatically fall back to using mock data.
+                  Example token format: <code className="bg-yellow-100 px-1.5 py-0.5 rounded">5B394AAF6CD03728E9E33DDF</code>
                 </p>
               </div>
             </div>
@@ -78,7 +76,7 @@ const ZincIntegration = () => {
             <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
               <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p>
-                For testing: If you don't have a real Zinc API key, enter any string with at least 10 characters.
+                For testing: Enter the token provided in your Zinc documentation (example: "5B394AAF6CD03728E9E33DDF")
               </p>
             </div>
           </div>

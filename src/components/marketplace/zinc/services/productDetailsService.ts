@@ -13,7 +13,13 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
     const headers = getZincHeaders();
     
     console.log('Fetching product details from Zinc API:', url);
-    const response = await fetch(url, { headers });
+    console.log('Using Basic Auth headers:', headers['Authorization'].substring(0, 20) + '...');
+    
+    const response = await fetch(url, { 
+      method: 'GET',
+      headers,
+      mode: 'cors' 
+    });
     
     if (!response.ok) {
       const errorText = await response.text();

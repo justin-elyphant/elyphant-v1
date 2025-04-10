@@ -1,5 +1,6 @@
 
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useVerificationCode } from "./hooks/useVerificationCode";
 import VerificationCodeInput from "./components/VerificationCodeInput";
 import VerificationButton from "./components/VerificationButton";
@@ -17,6 +18,8 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   onVerificationSuccess, 
   testVerificationCode 
 }) => {
+  const navigate = useNavigate();
+  
   // Enhanced logging to track testVerificationCode
   useEffect(() => {
     console.log("VerificationForm - Full props:", {
@@ -43,15 +46,8 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
     if (testVerificationCode && testVerificationCode.length === 6) {
       console.log("Auto-filling verification code:", testVerificationCode);
       setVerificationCode(testVerificationCode);
-      
-      // Auto-submit after a short delay
-      const timer = setTimeout(() => {
-        console.log("Auto-submitting verification after delay");
-        handleVerifyCode();
-      }, 1000);
-      return () => clearTimeout(timer);
     }
-  }, [testVerificationCode, setVerificationCode, handleVerifyCode]);
+  }, [testVerificationCode, setVerificationCode]);
 
   // AUTO-VERIFICATION: Automatically trigger verification success for testing
   useEffect(() => {

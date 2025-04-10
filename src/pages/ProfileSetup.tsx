@@ -10,15 +10,18 @@ import { useAuth } from "@/contexts/auth";
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDebugMode } = useAuth();
   
   // Redirect logged out users
   React.useEffect(() => {
-    if (!user) {
+    if (!user && !isDebugMode) {
+      console.log("User not authenticated for profile setup, redirecting to sign-in");
       toast.error("You must be logged in to set up your profile");
       navigate("/sign-in");
+    } else {
+      console.log("User authenticated or debug mode enabled for profile setup");
     }
-  }, [user, navigate]);
+  }, [user, navigate, isDebugMode]);
 
   const handleSetupComplete = () => {
     toast.success("Profile setup complete!");

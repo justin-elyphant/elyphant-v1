@@ -76,6 +76,8 @@ export const useVerificationContainer = ({
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);
+    toast.success("Verification successful! Redirecting to profile setup...");
+    
     setTimeout(() => {
       // Redirect to profile setup instead of dashboard for new users
       navigate("/profile-setup");

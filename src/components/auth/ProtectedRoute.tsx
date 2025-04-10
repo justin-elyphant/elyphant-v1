@@ -1,11 +1,11 @@
 
-import React, { useEffect } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
 interface ProtectedRouteProps {
   redirectPath?: string;
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -15,12 +15,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, isLoading, isDebugMode } = useAuth();
   const location = useLocation();
 
-  // If in debug mode, log that we're bypassing auth
-  useEffect(() => {
-    if (isDebugMode && !user) {
-      console.log('🔧 Debug mode: ProtectedRoute would normally redirect, but bypassing');
-    }
-  }, [isDebugMode, user]);
+  // If in debug mode, bypass authentication
+  if (isDebugMode) {
+    console.log("Debug mode enabled, bypassing authentication check");
+    return <>{children}</>;
+  }
 
   // If still loading auth state, render loading indicator
   if (isLoading) {
@@ -33,14 +32,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // If no user and finished loading, redirect to login
-  // Unless we're in debug mode with auth bypass
-  if (!user && !isDebugMode) {
+  if (!user) {
+    console.log("User not authenticated, redirecting to:", redirectPath);
+    
     // Save the current path to redirect back after login
     return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
   }
 
-  // If there are children, render them, otherwise render the Outlet
-  return <>{children ? children : <Outlet />}</>;
+  // User is authenticated, render children
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

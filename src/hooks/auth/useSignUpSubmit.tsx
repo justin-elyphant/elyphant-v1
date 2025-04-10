@@ -1,8 +1,7 @@
 
 import { toast } from "sonner";
-import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
-import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService";
-import { extractVerificationCode } from "@/hooks/signup/services/email/utils/responseParser";
+import { SignUpFormValues } from "@/components/auth/signup/SignUpContentWrapper";
+import { signUpUser } from "@/hooks/signup/signupService";
 
 interface UseSignUpSubmitProps {
   setUserEmail: (email: string) => void;
@@ -38,7 +37,7 @@ export const useSignUpSubmit = ({
       setUserEmail(values.email);
       setUserName(values.name);
       
-      // For testing, skip actual verification email sending and simulate success
+      // TESTING MODE: Bypass actual email verification
       console.log("TESTING MODE: Bypassing actual email verification");
       
       // Set a dummy test verification code for display purposes
@@ -51,46 +50,6 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       setStep("verification");
-      
-      // Uncomment the following code when ready to use real email verification
-      /*
-      const currentOrigin = window.location.origin;
-      console.log("Using origin for verification:", currentOrigin);
-      
-      const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
-      
-      console.log("Email verification result:", emailResult);
-      
-      if (!emailResult.success) {
-        console.error("Failed to send verification code:", emailResult.error);
-        toast.error("Failed to send verification code", {
-          description: "Please try again or contact support.",
-        });
-        return;
-      } else {
-        console.log("Custom verification email sent successfully");
-        toast.success("Account created! Check your email for verification code.");
-        
-        // If it's a test email, save the verification code
-        const code = extractVerificationCode(emailResult);
-        if (code) {
-          console.log(`Test email detected with code: ${code}`);
-          setTestVerificationCode(code);
-          
-          // Show an immediate toast for the test email code
-          toast.info("Test account detected", {
-            description: `Your verification code is: ${code}`,
-            duration: 10000 // Show for 10 seconds
-          });
-        }
-
-        // Log the full emailResult for debugging
-        console.log("Full emailResult:", JSON.stringify(emailResult));
-      }
-      
-      setEmailSent(true);
-      setStep("verification");
-      */
     } catch (err: any) {
       console.error("Signup failed:", err);
       

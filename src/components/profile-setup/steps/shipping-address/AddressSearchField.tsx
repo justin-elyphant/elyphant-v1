@@ -1,15 +1,14 @@
-
-import React, { useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { useAddressAutocomplete } from "@/hooks/useAddressAutocomplete";
 
-interface AddressAutocompleteProps {
+interface AddressSearchFieldProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (street: string) => void;
   onAddressSelect: (address: {
     address: string;
     city: string;
@@ -17,15 +16,13 @@ interface AddressAutocompleteProps {
     zipCode: string;
     country: string;
   }) => void;
-  disabled?: boolean;
 }
 
-const AddressAutocomplete = ({
+const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
   value,
   onChange,
-  onAddressSelect,
-  disabled = false
-}: AddressAutocompleteProps) => {
+  onAddressSelect
+}) => {
   const {
     streetQuery,
     setStreetQuery,
@@ -33,19 +30,17 @@ const AddressAutocomplete = ({
     loading,
     selectAddress
   } = useAddressAutocomplete();
-  
-  const [open, setOpen] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const popoverWasOpen = React.useRef(false);
 
-  React.useEffect(() => {
-    setStreetQuery(value);
-  }, [value, setStreetQuery]);
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const popoverWasOpen = useRef(false);
 
+  // Keep track of when the popover opens and closes to manage focus
   useEffect(() => {
     if (open) {
       popoverWasOpen.current = true;
     } else if (popoverWasOpen.current) {
+      // If popover was previously open and now closed, restore focus to input
       popoverWasOpen.current = false;
       setTimeout(() => {
         if (inputRef.current) {
@@ -55,12 +50,24 @@ const AddressAutocomplete = ({
     }
   }, [open]);
 
-  const handleAddressSelect = (address: any) => {
-    onChange(address.address);
+  useEffect(() => {
+    // Initialize the street query when the component mounts or value changes
+    setStreetQuery(value || "");
+  }, [value, setStreetQuery]);
+
+  const handleAddressSelect = (address: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  }) => {
     selectAddress(address);
+    onChange(address.address);
     onAddressSelect(address);
     setOpen(false);
     
+    // Restore focus to the input element after selection
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -84,6 +91,7 @@ const AddressAutocomplete = ({
         open={open && suggestions.length > 0} 
         onOpenChange={(isOpen) => {
           setOpen(isOpen);
+          // If popover is being closed, restore focus to input
           if (!isOpen && inputRef.current) {
             setTimeout(() => inputRef.current?.focus(), 10);
           }
@@ -94,15 +102,14 @@ const AddressAutocomplete = ({
             <Input
               id="street"
               ref={inputRef}
-              value={value}
+              placeholder="123 Main St"
+              value={value || ""}
               onChange={handleInputChange}
               onFocus={() => {
-                if (value.length > 2 && suggestions.length > 0) {
+                if (value && value.length > 2 && suggestions.length > 0) {
                   setOpen(true);
                 }
               }}
-              placeholder="123 Main St"
-              disabled={disabled}
               className="w-full"
             />
             {loading && (
@@ -135,4 +142,4 @@ const AddressAutocomplete = ({
   );
 };
 
-export default AddressAutocomplete;
+export default AddressSearchField;

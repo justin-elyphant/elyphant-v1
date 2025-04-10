@@ -9,7 +9,7 @@ import { GiftPreference } from "@/types/supabase";
 interface PreferenceListProps {
   preferences: GiftPreference[];
   onRemove: (index: number) => void;
-  experienceCategories: { name: string; emoji: string }[];
+  experienceCategories: { label: string; emoji: string }[];
 }
 
 const PreferenceList: React.FC<PreferenceListProps> = ({ 
@@ -21,7 +21,7 @@ const PreferenceList: React.FC<PreferenceListProps> = ({
 
   // Helper function to determine if a preference is an experience
   const isExperienceCategory = (category: string) => {
-    return experienceCategories.some(exp => exp.name === category) || 
+    return experienceCategories.some(exp => exp.label === category) || 
           category.toLowerCase().includes("experience") ||
           category.toLowerCase().includes("class") ||
           category.toLowerCase().includes("tour");
@@ -29,7 +29,7 @@ const PreferenceList: React.FC<PreferenceListProps> = ({
 
   // Helper function to get emoji for experience
   const getExperienceEmoji = (category: string) => {
-    const experience = experienceCategories.find(exp => exp.name === category);
+    const experience = experienceCategories.find(exp => exp.label === category);
     return experience ? experience.emoji : "🎁";
   };
 

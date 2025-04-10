@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Profile, ShippingAddress, GiftPreference, DataSharingSettings } from "@/types/supabase";
 import { useAuth } from "@/contexts/auth";
@@ -11,7 +11,7 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return;
     
     setLoading(true);
@@ -35,11 +35,11 @@ export const useProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchProfile();
-  }, [user]);
+  }, [user, fetchProfile]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) {

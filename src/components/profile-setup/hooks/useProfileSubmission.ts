@@ -32,11 +32,10 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         return pref;
       });
       
-      // Prepare data for update
+      // Prepare data for update - remove username field which is causing errors
       const updateData = {
         name: profileData.name,
         email: profileData.email,
-        username: profileData.username,
         profile_image: profileData.profile_image,
         dob: profileData.dob,
         shipping_address: profileData.shipping_address,
@@ -48,17 +47,18 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
       console.log("Submitting profile data:", updateData);
       
       // Update profile in Supabase
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update(updateData)
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
         
       if (error) {
         console.error("Error saving profile:", error);
         throw error;
       }
       
-      console.log("Profile setup completed successfully");
+      console.log("Profile setup completed successfully:", data);
       toast.success("Profile setup completed!");
       
       // Call the onComplete callback

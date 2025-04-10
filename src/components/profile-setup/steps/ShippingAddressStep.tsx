@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,8 +46,24 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
 
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const popoverWasOpen = useRef(false);
 
-  React.useEffect(() => {
+  // Keep track of when the popover opens and closes to manage focus
+  useEffect(() => {
+    if (open) {
+      popoverWasOpen.current = true;
+    } else if (popoverWasOpen.current) {
+      // If popover was previously open and now closed, restore focus to input
+      popoverWasOpen.current = false;
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 0);
+    }
+  }, [open]);
+
+  useEffect(() => {
     // Initialize the street query when the component mounts or value changes
     setStreetQuery(value.street || "");
   }, [value.street, setStreetQuery]);
@@ -75,7 +90,16 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       if (inputRef.current) {
         inputRef.current.focus();
       }
-    }, 0);
+    }, 10);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    handleChange('street', newValue);
+    setStreetQuery(newValue);
+    if (newValue.length > 2) {
+      setOpen(true);
+    }
   };
 
   return (
@@ -90,22 +114,24 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="street">Street Address</Label>
-          <Popover open={open && suggestions.length > 0} onOpenChange={setOpen}>
+          <Popover 
+            open={open && suggestions.length > 0} 
+            onOpenChange={(isOpen) => {
+              setOpen(isOpen);
+              // If popover is being closed, restore focus to input
+              if (!isOpen && inputRef.current) {
+                setTimeout(() => inputRef.current?.focus(), 10);
+              }
+            }}
+          >
             <PopoverTrigger asChild>
               <div className="relative">
                 <Input
                   id="street"
                   ref={inputRef}
                   placeholder="123 Main St"
-                  value={value.street}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    handleChange('street', newValue);
-                    setStreetQuery(newValue);
-                    if (newValue.length > 2) {
-                      setOpen(true);
-                    }
-                  }}
+                  value={value.street || ""}
+                  onChange={handleInputChange}
                   onFocus={() => {
                     if (value.street && value.street.length > 2 && suggestions.length > 0) {
                       setOpen(true);
@@ -147,7 +173,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
             <Input
               id="city"
               placeholder="City"
-              value={value.city}
+              value={value.city || ""}
               onChange={(e) => handleChange('city', e.target.value)}
             />
           </div>
@@ -157,7 +183,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
             <Input
               id="state"
               placeholder="State/Province"
-              value={value.state}
+              value={value.state || ""}
               onChange={(e) => handleChange('state', e.target.value)}
             />
           </div>
@@ -169,7 +195,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
             <Input
               id="zipCode"
               placeholder="ZIP/Postal Code"
-              value={value.zipCode}
+              value={value.zipCode || ""}
               onChange={(e) => handleChange('zipCode', e.target.value)}
             />
           </div>
@@ -177,7 +203,7 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({ value, onChan
           <div className="space-y-2">
             <Label htmlFor="country">Country</Label>
             <Select 
-              value={value.country} 
+              value={value.country || ""} 
               onValueChange={(val) => handleChange('country', val)}
             >
               <SelectTrigger id="country">

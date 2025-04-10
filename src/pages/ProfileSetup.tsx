@@ -31,16 +31,19 @@ const ProfileSetup = () => {
     try {
       // Refresh the profile data from Supabase
       if (user) {
-        const { error } = await supabase.auth.refreshSession();
+        console.log("Refreshing user session after profile setup");
+        const { data, error } = await supabase.auth.refreshSession();
         if (error) {
           console.error("Error refreshing session:", error);
+        } else {
+          console.log("Session refreshed successfully:", data);
         }
       }
       
       // Navigate to dashboard after a brief delay
       setTimeout(() => {
         navigate("/dashboard");
-      }, 500);
+      }, 1000);
     } catch (error) {
       console.error("Error during profile completion:", error);
       navigate("/dashboard");

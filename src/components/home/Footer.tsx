@@ -25,6 +25,7 @@ const Footer = () => {
               <ul className="space-y-2">
                 <li><Link to="/gifting" className="text-gray-400 hover:text-white text-sm">Gifting</Link></li>
                 <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm">Marketplace</Link></li>
+                <li><Link to="/trunkline" className="text-gray-400 hover:text-white text-sm">Trunkline</Link></li>
               </ul>
             </div>
             
@@ -33,9 +34,6 @@ const Footer = () => {
               <ul className="space-y-2">
                 <li><Link to="/vendor-signup" className="text-gray-400 hover:text-white text-sm">Become a Vendor</Link></li>
                 <li><Link to="/vendor-portal" className="text-gray-400 hover:text-white text-sm">Vendor Portal Signin</Link></li>
-                {isInternalUser && (
-                  <li><Link to="/trunkline" className="text-gray-400 hover:text-white text-sm">Trunkline Dashboard</Link></li>
-                )}
               </ul>
             </div>
           </div>

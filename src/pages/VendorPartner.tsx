@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { VendorHero } from "@/components/vendor/VendorHero";
 import { BenefitsSection } from "@/components/vendor/BenefitsSection";
@@ -7,11 +7,18 @@ import { BusinessTypesSection } from "@/components/vendor/BusinessTypesSection";
 import { HowItWorksSection } from "@/components/vendor/HowItWorksSection";
 import { TestimonialsSection } from "@/components/vendor/TestimonialsSection";
 import { VendorContactForm } from "@/components/vendor/VendorContactForm";
+import { VendorPortalFeaturesSection } from "@/components/vendor/VendorPortalFeaturesSection";
 
 const VendorPartner = () => {
+  // Function to scroll to contact form
   const scrollToContactForm = () => {
     document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <MainLayout>
@@ -22,6 +29,9 @@ const VendorPartner = () => {
 
           {/* Benefits Section */}
           <BenefitsSection />
+
+          {/* Vendor Portal Features Section */}
+          <VendorPortalFeaturesSection />
 
           {/* Vendor Types Section */}
           <BusinessTypesSection />

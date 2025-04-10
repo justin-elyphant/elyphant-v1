@@ -1,6 +1,6 @@
 
-import React from "react";
-import { Outlet } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import Header from "../home/Header";
 import Footer from "../home/Footer";
 import { useAuth } from "@/contexts/auth";
@@ -12,6 +12,12 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isDebugMode } = useAuth();
+  const location = useLocation();
+  
+  // Scroll to top whenever the route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
   
   return (
     <div className="min-h-screen flex flex-col">

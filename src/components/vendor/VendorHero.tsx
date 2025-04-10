@@ -12,8 +12,12 @@ export const VendorHero = ({ onContactClick }: VendorHeroProps) => {
       <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
         Grow Your Business with Elyphant
       </h1>
-      <p className="text-xl text-gray-600 mb-8">
+      <p className="text-xl text-gray-600 mb-4">
         Join our marketplace and connect with customers looking for meaningful gifts
+      </p>
+      <p className="text-lg text-gray-600 mb-8">
+        Our seamless vendor portal makes it easy to showcase your products, manage inventory,
+        and track your success all in one place.
       </p>
       <Button 
         size="lg"

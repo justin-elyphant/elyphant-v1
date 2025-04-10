@@ -156,7 +156,7 @@ const GeneralSettings = () => {
       // Format gift preferences for storage, ensuring importance is one of the allowed values
       const gift_preferences: GiftPreference[] = data.interests.map(interest => ({
         category: interest,
-        importance: "medium" // Explicitly using a valid literal instead of a string
+        importance: "medium" as "high" | "medium" | "low" // Explicitly casting to the allowed literal types
       }));
       
       // Format important dates
@@ -211,8 +211,8 @@ const GeneralSettings = () => {
     
     const currentDates = form.getValues("importantDates");
     
-    // Ensure we're adding a complete ImportantDate object with required fields
-    const newDate = {
+    // Ensure we're adding a complete ImportantDate object with required date field
+    const newDate: {date: Date, description: string} = {
       date: newImportantDate.date,
       description: newImportantDate.description.trim()
     };

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShoppingBag, LogIn, ExternalLink } from "lucide-react";
+import { ShoppingBag, LogIn, ExternalLink, AlertTriangle, InfoIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { setZincApiToken, getZincApiToken } from "./zincCore";
@@ -34,7 +34,13 @@ const ZincConnectCard = () => {
     setZincApiToken(token);
     
     toast.success("Zinc API token saved", {
-      description: "You're ready to start using the Zinc API"
+      description: "The token has been saved. You can now use the Zinc API."
+    });
+    
+    // Also show a CORS warning
+    toast.warning("Browser Limitation", {
+      description: "Browser security may prevent direct API calls. If you encounter issues, check the console for CORS errors.",
+      duration: 8000
     });
     
     // Hide the test mode alert
@@ -71,6 +77,23 @@ const ZincConnectCard = () => {
         </Alert>
       )}
       <CardContent className="pt-6 space-y-4">
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-md mb-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-amber-800">CORS Browser Limitation</h3>
+              <p className="text-sm text-amber-700 mt-1">
+                Modern browsers enforce security restrictions (CORS) that prevent direct API calls to third-party services.
+                Even with a valid API token, direct browser-to-API calls may be blocked.
+              </p>
+              <p className="text-sm text-amber-700 mt-2">
+                In a production environment, you would need a server-side proxy to make these API calls.
+                This demo will fall back to mock data when direct API calls fail.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="zinc-token">Zinc Client Token</Label>
           <Input
@@ -80,9 +103,13 @@ const ZincConnectCard = () => {
             value={token}
             onChange={(e) => setToken(e.target.value)}
           />
-          <p className="text-sm text-muted-foreground">
-            Enter the client token provided by Zinc to connect. For testing, you can use the token: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">test_zinc_sk_abcdefgh123456</code>
-          </p>
+          <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
+            <InfoIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p>
+              Enter just the token provided by Zinc (e.g. <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">5B394AAF6CD03728E9E33DDF</code>).
+              Do not include a colon or other characters.
+            </p>
+          </div>
         </div>
       </CardContent>
       <CardFooter className="flex gap-2 justify-between">

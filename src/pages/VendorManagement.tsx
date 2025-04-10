@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -24,12 +24,15 @@ const VendorManagement = () => {
               variant="ghost" 
               size="sm" 
               className="flex items-center gap-1" 
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              Back to Site
             </Button>
             <h1 className="text-4xl font-bold">Vendor Portal</h1>
+            <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+              Test Mode (Authentication Bypassed)
+            </span>
           </div>
           <IntegrationAddSheet />
         </div>

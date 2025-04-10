@@ -157,11 +157,8 @@ function App() {
                     <Trunkline />
                   </ProtectedRoute>
                 } />
-                <Route path="/vendor" element={
-                  <ProtectedRoute>
-                    <VendorManagement />
-                  </ProtectedRoute>
-                } />
+                {/* Remove ProtectedRoute for VendorManagement to bypass authentication */}
+                <Route path="/vendor" element={<VendorManagement />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <DebugPanel />

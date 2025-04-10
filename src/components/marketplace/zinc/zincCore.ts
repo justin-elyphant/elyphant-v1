@@ -36,7 +36,8 @@ export const isTestMode = (): boolean => {
   const search = window.location.search.toLowerCase();
   
   // If we're searching for padres hat, always use real data
-  const currentSearch = document.querySelector('input[type="search"]')?.value?.toLowerCase() || '';
+  const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement | null;
+  const currentSearch = searchInput?.value?.toLowerCase() || '';
   if (currentSearch.includes('padres') && currentSearch.includes('hat')) {
     console.log('Forcing real API mode for Padres hat search');
     return false;

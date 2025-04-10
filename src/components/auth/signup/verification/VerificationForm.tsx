@@ -53,7 +53,7 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
 
   // TEMPORARY: Auto-verification for testing user journeys
   useEffect(() => {
-    // Automatically trigger verification success
+    // Automatically trigger verification success to redirect to profile setup
     console.log("AUTO-VERIFICATION: Bypassing email verification for testing");
     const timer = setTimeout(() => {
       onVerificationSuccess();

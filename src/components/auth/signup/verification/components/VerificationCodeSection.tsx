@@ -21,7 +21,7 @@ const VerificationCodeSection: React.FC<VerificationCodeSectionProps> = ({
     return (
       <Alert className="bg-green-50 border-green-200">
         <AlertDescription className="text-green-700">
-          Your email has been verified successfully! Redirecting to dashboard...
+          Your email has been verified successfully! Redirecting to profile setup...
         </AlertDescription>
       </Alert>
     );

@@ -65,7 +65,8 @@ export const useVerificationContainer = ({
   const handleVerificationSuccess = () => {
     setIsVerified(true);
     setTimeout(() => {
-      navigate("/dashboard");
+      // Redirect to profile setup instead of dashboard for new users
+      navigate("/profile-setup");
     }, 1500);
   };
 

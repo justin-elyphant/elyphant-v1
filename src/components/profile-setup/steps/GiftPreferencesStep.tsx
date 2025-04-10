@@ -1,40 +1,19 @@
 
 import React, { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Gift, Plus, X, Ticket, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { GiftPreference } from "@/types/supabase";
+
+// Import our smaller components
+import CategoryInput from "./gift-preferences/CategoryInput";
+import ImportanceSelector from "./gift-preferences/ImportanceSelector";
+import PreferenceList from "./gift-preferences/PreferenceList";
+import CategorySection from "./gift-preferences/CategorySection";
+import { experienceCategories, popularBrands, getOtherCategories } from "./gift-preferences/utils";
 
 interface GiftPreferencesStepProps {
   values: GiftPreference[];
   onChange: (preferences: GiftPreference[]) => void;
 }
-
-// Common interest categories with added brand categories
-const suggestedCategories = [
-  "Books", "Technology", "Fashion", "Home Decor", "Cooking", "Fitness",
-  "Travel", "Music", "Art", "Gaming", "Beauty", "Outdoors", "Sports",
-  // Brand categories
-  "Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo", 
-  "Amazon", "Sephora", "Nordstrom", "Target", "Ikea"
-];
-
-// Experiences with emoji representations
-const experienceCategories = [
-  { name: "Spa Day", emoji: "💆" },
-  { name: "Concerts", emoji: "🎵" },
-  { name: "Theater", emoji: "🎭" },
-  { name: "Food Tours", emoji: "🍽️" },
-  { name: "Cooking Classes", emoji: "👨‍🍳" },
-  { name: "Golf", emoji: "⛳" },
-  { name: "Adventure", emoji: "🧗" },
-  { name: "Workshops", emoji: "🔨" },
-  { name: "Wine Tasting", emoji: "🍷" },
-  { name: "Experiences", emoji: "🎁" }
-];
 
 const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onChange }) => {
   const [newCategory, setNewCategory] = useState("");
@@ -71,27 +50,6 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
     onChange([...values, newPreference]);
   };
 
-  // Helper function to determine if a preference is an experience
-  const isExperienceCategory = (category: string) => {
-    return experienceCategories.some(exp => exp.name === category) || 
-           category.toLowerCase().includes("experience") ||
-           category.toLowerCase().includes("class") ||
-           category.toLowerCase().includes("tour");
-  };
-
-  // Helper function to get emoji for experience
-  const getExperienceEmoji = (category: string) => {
-    const experience = experienceCategories.find(exp => exp.name === category);
-    return experience ? experience.emoji : "🎁";
-  };
-
-  // Helper function to determine if a preference is a brand
-  const isBrandCategory = (category: string) => {
-    const brands = ["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo", 
-                   "Amazon", "Sephora", "Nordstrom", "Target", "Ikea"];
-    return brands.includes(category);
-  };
-
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -102,148 +60,48 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onCha
       </div>
       
       <div className="space-y-4">
-        <div className="flex items-end gap-2">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="category">Gift Category, Brand, or Interest</Label>
-            <Input
-              id="category"
-              placeholder="e.g., Books, Nike, Spa Day, Theater Tickets"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newCategory.trim()) {
-                  e.preventDefault();
-                  handleAddPreference();
-                }
-              }}
-            />
-          </div>
-          <Button type="button" size="icon" onClick={handleAddPreference}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
+        <CategoryInput 
+          value={newCategory}
+          onChange={setNewCategory}
+          onAdd={handleAddPreference}
+        />
         
-        <div>
-          <Label className="text-sm">Importance Level</Label>
-          <RadioGroup 
-            value={selectedImportance} 
-            onValueChange={(val) => setSelectedImportance(val as "high" | "medium" | "low")}
-            className="flex space-x-2 mt-2"
-          >
-            <div className="flex items-center space-x-1">
-              <RadioGroupItem value="low" id="low" />
-              <Label htmlFor="low" className="text-sm font-normal">Low</Label>
-            </div>
-            <div className="flex items-center space-x-1">
-              <RadioGroupItem value="medium" id="medium" />
-              <Label htmlFor="medium" className="text-sm font-normal">Medium</Label>
-            </div>
-            <div className="flex items-center space-x-1">
-              <RadioGroupItem value="high" id="high" />
-              <Label htmlFor="high" className="text-sm font-normal">High</Label>
-            </div>
-          </RadioGroup>
-        </div>
+        <ImportanceSelector 
+          value={selectedImportance}
+          onChange={setSelectedImportance}
+        />
         
-        {values.length > 0 && (
-          <div className="mt-4">
-            <Label className="text-sm mb-2 block">Your Gift Preferences</Label>
-            <div className="flex flex-wrap gap-2">
-              {values.map((pref, index) => (
-                <Badge
-                  key={index}
-                  variant={pref.importance === "high" ? "default" : 
-                         pref.importance === "medium" ? "secondary" : "outline"}
-                  className="flex items-center gap-1 px-3 py-1"
-                >
-                  {isExperienceCategory(pref.category) ? (
-                    <span className="mr-1">{getExperienceEmoji(pref.category)}</span>
-                  ) : isBrandCategory(pref.category) ? (
-                    <ShoppingBag className="h-3 w-3" />
-                  ) : (
-                    <Gift className="h-3 w-3" />
-                  )}
-                  <span>{pref.category}</span>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-4 w-4 p-0 ml-1"
-                    onClick={() => handleRemovePreference(index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
+        <PreferenceList 
+          preferences={values}
+          onRemove={handleRemovePreference}
+          experienceCategories={experienceCategories}
+        />
         
-        <div className="mt-6">
-          <Label className="text-sm mb-2 block">Experiences</Label>
-          <p className="text-xs text-muted-foreground mb-2">
-            Some people prefer experiences over physical gifts. Click any experiences you'd enjoy.
-          </p>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {experienceCategories.map(({ name, emoji }) => (
-              <Button
-                key={name}
-                variant="outline"
-                size="sm"
-                onClick={() => handleSelectSuggestion(name, "high")}
-                className="rounded-full text-xs"
-              >
-                <span className="mr-1">{emoji}</span> {name}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <CategorySection 
+          title="Experiences"
+          description="Some people prefer experiences over physical gifts. Click any experiences you'd enjoy."
+          categories={experienceCategories}
+          onSelect={(category) => handleSelectSuggestion(category, "high")}
+          renderPrefix={(category) => (
+            typeof category !== 'string' && category.emoji ? 
+              <span className="mr-1">{category.emoji}</span> : null
+          )}
+        />
         
-        <div className="mt-4">
-          <Label className="text-sm mb-2 block">Popular Brands</Label>
-          <p className="text-xs text-muted-foreground mb-2">
-            Click any brands you prefer for gifts.
-          </p>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo"].map((brand) => (
-              <Button
-                key={brand}
-                variant="outline"
-                size="sm"
-                onClick={() => handleSelectSuggestion(brand, "medium")}
-                className="rounded-full text-xs"
-              >
-                <ShoppingBag className="h-3 w-3 mr-1" />
-                {brand}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <CategorySection 
+          title="Popular Brands"
+          description="Click any brands you prefer for gifts."
+          categories={popularBrands}
+          onSelect={(category) => handleSelectSuggestion(category, "medium")}
+          renderPrefix={() => <ShoppingBag className="h-3 w-3 mr-1" />}
+        />
         
-        <div className="mt-4">
-          <Label className="text-sm mb-2 block">Other Categories</Label>
-          <p className="text-xs text-muted-foreground mb-2">
-            Click any other categories you're interested in.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {suggestedCategories
-              .filter(category => 
-                !experienceCategories.some(exp => exp.name === category) && 
-                !["Apple", "Nike", "Adidas", "Samsung", "Sony", "Lego", "Nintendo"].includes(category)
-              )
-              .map((category) => (
-              <Button
-                key={category}
-                variant="outline"
-                size="sm"
-                onClick={() => handleSelectSuggestion(category, "medium")}
-                className="rounded-full text-xs"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <CategorySection 
+          title="Other Categories"
+          description="Click any other categories you're interested in."
+          categories={getOtherCategories()}
+          onSelect={(category) => handleSelectSuggestion(category, "medium")}
+        />
       </div>
     </div>
   );

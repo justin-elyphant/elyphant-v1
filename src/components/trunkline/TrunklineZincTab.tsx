@@ -2,6 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
+import PricingControlsCard from "./pricing/PricingControlsCard";
 
 const TrunklineZincTab = () => {
   return (
@@ -17,6 +18,8 @@ const TrunklineZincTab = () => {
           <ZincIntegration />
         </CardContent>
       </Card>
+      
+      <PricingControlsCard />
       
       <Card>
         <CardHeader>

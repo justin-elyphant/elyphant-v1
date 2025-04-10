@@ -36,8 +36,7 @@ const VendorIntegrationsTab = () => {
           <CardContent>
             <p className="text-muted-foreground text-sm">
               You can manage your products through our new enhanced product management interface.
-              This includes tools for adding products manually, importing via CSV, setting markups,
-              and configuring fulfillment methods.
+              This includes tools for adding products manually, importing via CSV, and configuring fulfillment methods.
             </p>
             <Button className="mt-4">Manage Products</Button>
           </CardContent>

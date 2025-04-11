@@ -15,7 +15,7 @@ const ProfileSetup = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
+  const maxRetries = 5; // Increased retries for more reliability
   
   // Check auth status on initial load with auto-retry
   useEffect(() => {
@@ -42,8 +42,9 @@ const ProfileSetup = () => {
               setRetryCount(nextRetry);
               console.log(`No authenticated session found, refreshing... (attempt ${nextRetry}/${maxRetries})`);
               
-              // Use increasing timeouts for retries
-              timeoutId = setTimeout(checkAuthStatus, nextRetry * 500);
+              // Use increasing timeouts for retries with exponential backoff
+              const delay = Math.min(1000 * Math.pow(1.5, nextRetry), 8000);
+              timeoutId = setTimeout(checkAuthStatus, delay);
               return;
             }
             
@@ -68,8 +69,10 @@ const ProfileSetup = () => {
       setIsInitializing(false);
     };
     
+    // Start the check immediately
     checkAuthStatus();
     
+    // Clean up timeout on unmount
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };

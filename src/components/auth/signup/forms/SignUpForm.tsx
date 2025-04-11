@@ -47,8 +47,10 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
       return;
     }
     
-    // Reset rate limit state
-    setRateLimited(false);
+    // Reset rate limit state if trying again
+    if (rateLimited) {
+      setRateLimited(false);
+    }
     
     try {
       setIsSubmitting(true);
@@ -57,17 +59,24 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
     } catch (error: any) {
       console.error("Form submission error:", error);
       
-      // Check for rate limit errors
-      if (error.message?.includes("rate limit") || 
-          error.message?.includes("exceeded") || 
+      // Enhanced rate limit detection with more comprehensive patterns
+      if (error.message?.toLowerCase().includes("rate limit") || 
+          error.message?.toLowerCase().includes("exceeded") || 
+          error.message?.toLowerCase().includes("too many") || 
           error.status === 429 || 
-          error.code === "over_email_send_rate_limit") {
+          error.code === "over_email_send_rate_limit" ||
+          error.code === "too_many_requests") {
+        console.log("Rate limit detected, showing rate limit message");
         setRateLimited(true);
+        
+        toast.error("Rate limit exceeded", {
+          description: "Please wait a moment before trying again."
+        });
+      } else {
+        toast.error("Sign up failed", {
+          description: error.message || "Please try again"
+        });
       }
-      
-      toast.error("Sign up failed", {
-        description: error.message || "Please try again"
-      });
     } finally {
       setIsSubmitting(false);
     }

@@ -2,6 +2,21 @@
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper to check for rate limit errors
+const isRateLimitError = (error: any): boolean => {
+  if (!error) return false;
+  
+  return (
+    error.status === 429 || 
+    error.code === "too_many_requests" ||
+    (typeof error.message === 'string' && (
+      error.message.toLowerCase().includes("rate limit") || 
+      error.message.toLowerCase().includes("exceeded") ||
+      error.message.toLowerCase().includes("too many")
+    ))
+  );
+};
+
 // Modified to use Supabase auth directly with email_confirm=true and rate limit handling
 export const signUpUser = async (
   values: SignUpFormValues,
@@ -32,11 +47,7 @@ export const signUpUser = async (
         
         if (signUpError) {
           // Check specifically for rate limit errors
-          if (signUpError.status === 429 || 
-              signUpError.message?.includes("rate limit") || 
-              signUpError.message?.includes("exceeded") ||
-              signUpError.code === "over_email_send_rate_limit") {
-            
+          if (isRateLimitError(signUpError)) {
             console.log("Rate limit encountered during sign-up attempt:", signUpError);
             
             if (retryCount < maxRetries) {
@@ -119,11 +130,7 @@ export const signUpUser = async (
         
       } catch (attemptError: any) {
         // Special handling for rate limits only
-        if (attemptError.status === 429 || 
-            attemptError.message?.includes("rate limit") || 
-            attemptError.message?.includes("exceeded") ||
-            attemptError.code === "over_email_send_rate_limit") {
-          
+        if (isRateLimitError(attemptError)) {
           if (retryCount < maxRetries) {
             // Wait before retry
             const delay = Math.pow(2, retryCount) * 1000;

@@ -26,21 +26,69 @@ export const useSignUpSubmit = ({
     try {
       console.log("Sign up initiated for", values.email);
       
-      // Call the create-user function with a forced creation flag
-      const result = await signUpUser(values, null, null);
+      // Track retries for rate limiting
+      let retryCount = 0;
+      const maxRetries = 1; // Limit retries to prevent excessive attempts
+      let error: any = null;
+      let result = null;
       
-      if (!result) {
-        toast.error("Signup failed", {
-          description: "Unable to create account. Please try again.",
-        });
-        return;
+      // Try signup with retry for rate limits
+      while (retryCount <= maxRetries && !result) {
+        try {
+          // Call the signUpUser function
+          result = await signUpUser(values, null, null);
+          
+          if (!result) {
+            throw new Error("Unable to create account. Please try again.");
+          }
+          
+          // Break out of loop on success
+          break;
+        } catch (err: any) {
+          error = err;
+          console.error(`Signup attempt ${retryCount + 1} failed:`, err);
+          
+          // Only retry on rate limit errors
+          if (err.message?.toLowerCase().includes("rate limit") || 
+              err.message?.toLowerCase().includes("exceeded") || 
+              err.status === 429 || 
+              err.code === "too_many_requests") {
+            retryCount++;
+            if (retryCount <= maxRetries) {
+              // Wait before retrying (exponential backoff)
+              const delay = Math.pow(2, retryCount) * 1000;
+              console.log(`Rate limit detected, waiting ${delay}ms before retry`);
+              await new Promise(r => setTimeout(r, delay));
+              continue;
+            }
+          }
+          
+          // For other errors or if retries exhausted, rethrow
+          throw err;
+        }
       }
       
-      // If the user already exists but we want to bypass that check
-      // We'll continue with the flow as if the signup was successful
+      // If we still have an error and no result after retries
+      if (!result && error) {
+        throw error;
+      }
+      
+      // Handle user_exists cases by continuing the flow
       if (result.code === "user_exists") {
         console.log("User exists issue detected, but we'll proceed with the flow");
-        // We'll log it but still continue with the profile setup flow
+        
+        // Try to sign in with the provided credentials
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password
+        });
+        
+        if (signInError) {
+          console.error("Sign in failed for existing user:", signInError);
+          throw new Error("Email exists but password is incorrect. Please try signing in instead.");
+        }
+        
+        console.log("Signed in existing user successfully");
       } else {
         console.log("Sign up successful:", result);
       }
@@ -61,22 +109,21 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       
-      // Use React Router navigation instead of direct location change
-      // This maintains the React component lifecycle better
+      // Navigate to profile setup
       navigate('/profile-setup', { replace: true });
     } catch (err: any) {
       console.error("Signup failed:", err);
       
       // Handle rate limit error specifically
-      if (err.message?.includes("rate limit") || 
-          err.message?.includes("exceeded") || 
+      if (err.message?.toLowerCase().includes("rate limit") || 
+          err.message?.toLowerCase().includes("exceeded") || 
           err.status === 429 || 
-          err.code === "over_email_send_rate_limit") {
+          err.code === "over_email_send_rate_limit" ||
+          err.code === "too_many_requests") {
         console.log("Rate limit detected:", err);
-        toast.error("Email rate limit exceeded", {
-          description: "Please try again in a few minutes or use a different email address.",
-        });
-        return;
+        
+        // Rethrow to let the form component handle the UI for rate limits
+        throw err;
       }
       
       // If there's an error about user already exists, we'll handle it specially
@@ -112,6 +159,7 @@ export const useSignUpSubmit = ({
             description: "Taking you to your profile."
           });
           
+          // Navigate directly to profile setup
           navigate('/profile-setup', { replace: true });
         } catch (signInErr: any) {
           console.error("Sign in attempt failed:", signInErr);
@@ -124,6 +172,9 @@ export const useSignUpSubmit = ({
           description: err.message || "An unexpected error occurred",
         });
       }
+      
+      // Rethrow to let SignUpForm handle generic errors
+      throw err;
     }
   };
 

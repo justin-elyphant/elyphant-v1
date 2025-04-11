@@ -79,10 +79,13 @@ export const useSignUpSubmit = ({
                 description: "Taking you to complete your profile."
               });
               
-              // Navigate directly to profile setup - both methods for reliability
-              navigate('/profile-setup', { replace: true });
-              setTimeout(() => window.location.href = '/profile-setup', 50);
+              // Set a flag in localStorage to indicate this is a new sign-up
+              localStorage.setItem("newSignUp", "true");
+              localStorage.setItem("userEmail", values.email);
+              localStorage.setItem("userName", values.name);
               
+              // Navigate directly to profile setup
+              navigate('/profile-setup', { replace: true });
               return; // Exit early
             }
           }
@@ -130,6 +133,11 @@ export const useSignUpSubmit = ({
       // Set a dummy verification code
       setTestVerificationCode("123456");
       
+      // Set localStorage flags for new user journey
+      localStorage.setItem("newSignUp", "true");
+      localStorage.setItem("userEmail", values.email);
+      localStorage.setItem("userName", values.name);
+      
       // Show success toast for better user feedback
       toast.success("Account created successfully!", {
         description: "Taking you to complete your profile."
@@ -137,9 +145,8 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       
-      // Navigate directly to profile setup - both methods for reliability
+      // Navigate directly to profile setup
       navigate('/profile-setup', { replace: true });
-      setTimeout(() => window.location.href = '/profile-setup', 50);
     } catch (err: any) {
       console.error("Signup failed:", err);
       
@@ -157,15 +164,18 @@ export const useSignUpSubmit = ({
         setTestVerificationCode("123456"); // Set dummy code
         setEmailSent(true);
         
+        // Set localStorage flags for new user journey
+        localStorage.setItem("newSignUp", "true");
+        localStorage.setItem("userEmail", values.email);
+        localStorage.setItem("userName", values.name);
+        
         // Show success toast
         toast.success("Rate limit detected, bypassing verification", {
           description: "Taking you directly to profile setup."
         });
         
-        // Navigate to profile setup - both methods for reliability
+        // Navigate to profile setup
         navigate('/profile-setup', { replace: true });
-        setTimeout(() => window.location.href = '/profile-setup', 50);
-        
         return; // Exit early
       }
       
@@ -202,9 +212,8 @@ export const useSignUpSubmit = ({
             description: "Taking you to your profile."
           });
           
-          // Navigate directly to profile setup - both methods for reliability
+          // Navigate directly to profile setup
           navigate('/profile-setup', { replace: true });
-          setTimeout(() => window.location.href = '/profile-setup', 50);
         } catch (signInErr: any) {
           console.error("Sign in attempt failed:", signInErr);
           toast.error("Email already registered", {

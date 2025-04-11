@@ -1,77 +1,68 @@
-
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { AuthState } from "./types";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthSession } from './useAuthSession';
-import { useAuthFunctions } from "./authHooks";
-import { initializeStorageBucket } from "./authUtils";
-import { useDebugMode } from "@/hooks/useDebugMode";
 
-const AuthContext = createContext<AuthState>({
-  user: null,
-  session: null,
-  isLoading: true,
-  isDebugMode: false,
-  signOut: async () => {},
-  getUserProfile: async () => null,
-  resendVerificationEmail: async () => {},
-  updateUserProfile: async () => {},
-  deleteUser: async () => {},
-});
+interface AuthContextProps {
+  user: any;
+  session: any;
+  isLoading: boolean;
+  isDebugMode: boolean;
+  toggleDebugMode: () => void;
+  isProcessingToken: boolean;
+}
 
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, session, isLoading } = useAuthSession();
-  const [isDebugMode, debugOptions] = useDebugMode();
-  
-  const {
-    signOut,
-    getUserProfile,
-    resendVerificationEmail,
-    updateUserProfile,
-    deleteUser,
-    bucketInitialized,
-    setBucketInitialized
-  } = useAuthFunctions(isDebugMode ? { id: debugOptions.mockUserId, email: debugOptions.mockUserEmail } : user);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const { user, session, isLoading, isProcessingToken } = useAuthSession();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isDebugMode, setIsDebugMode] = useState(false);
+
+  // Check for new signup flow from localStorage
   useEffect(() => {
-    if (isDebugMode && debugOptions.bypassAuth) {
-      console.log('🔧 Debug mode enabled: Authentication bypass active');
-      console.log(`Using mock user: ID=${debugOptions.mockUserId}, Email=${debugOptions.mockUserEmail}`);
+    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    
+    // If this is a new signup and we're not already on profile setup, redirect
+    if (isNewSignUp && location.pathname !== '/profile-setup') {
+      console.log("Detected new signup flag, redirecting to profile setup");
+      navigate('/profile-setup', { replace: true });
+      
+      // Clear the flag after redirection (will be reset if needed)
+      setTimeout(() => {
+        localStorage.removeItem("newSignUp");
+      }, 5000);
     }
-  }, [isDebugMode, debugOptions]);
+  }, [location.pathname, navigate]);
 
-  useEffect(() => {
-    initializeStorageBucket().then(result => {
-      setBucketInitialized(result);
-    });
-  }, [setBucketInitialized]);
+  const toggleDebugMode = () => {
+    setIsDebugMode(!isDebugMode);
+  };
 
-  // Create a mock user and session if we're in debug mode with bypass
-  const effectiveUser = (isDebugMode && debugOptions.bypassAuth) 
-    ? { id: debugOptions.mockUserId, email: debugOptions.mockUserEmail } as User
-    : user;
-  
-  const effectiveSession = (isDebugMode && debugOptions.bypassAuth && !session) 
-    ? { user: effectiveUser } as Session
-    : session;
-  
-  const effectiveIsLoading = (isDebugMode && debugOptions.bypassAuth) ? false : isLoading;
+  const value: AuthContextProps = {
+    user,
+    session,
+    isLoading,
+    isDebugMode,
+    toggleDebugMode,
+    isProcessingToken,
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      user: effectiveUser, 
-      session: effectiveSession, 
-      isLoading: effectiveIsLoading,
-      isDebugMode,
-      signOut, 
-      getUserProfile,
-      resendVerificationEmail,
-      updateUserProfile,
-      deleteUser
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = (): AuthContextProps => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };

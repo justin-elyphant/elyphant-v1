@@ -36,8 +36,8 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   }, [onVerificationSuccess, userEmail, navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <Alert className="bg-amber-50 border-amber-200 mb-4">
+    <div className="flex flex-col items-center justify-center w-full">
+      <Alert className="bg-amber-50 border-amber-200 mb-4 w-full">
         <Info className="h-4 w-4 text-amber-500 mr-2" />
         <AlertDescription className="text-amber-700">
           <span className="font-semibold">Auto-verification active:</span> Skipping verification and redirecting you automatically.

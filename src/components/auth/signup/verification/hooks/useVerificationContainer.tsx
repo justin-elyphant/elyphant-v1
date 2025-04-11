@@ -56,7 +56,7 @@ export const useVerificationContainer = ({
 
   // TESTING MODE: Auto-verify and redirect
   useEffect(() => {
-    if (userEmail) {
+    if (userEmail && !isVerified) {
       toast.info("TEST MODE ACTIVE", {
         description: "Email verification is being bypassed for testing. You will be automatically redirected to profile setup.",
         duration: 5000
@@ -78,7 +78,7 @@ export const useVerificationContainer = ({
       
       return () => clearTimeout(timer);
     }
-  }, [userEmail, navigate, setIsVerified]);
+  }, [userEmail, navigate, setIsVerified, isVerified]);
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);

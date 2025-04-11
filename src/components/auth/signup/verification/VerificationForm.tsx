@@ -17,34 +17,24 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // Multiple bypass mechanisms to ensure redirect works
+  // Simplified approach - focus on a single reliable redirect method
   useEffect(() => {
-    console.log("ULTIMATE BYPASS: Completely skipping email verification for", userEmail);
+    console.log("VERIFICATION FORM: Auto-verification activated for", userEmail);
     
     // Store in localStorage for persistence through redirects
     localStorage.setItem("newSignUp", "true");
     localStorage.setItem("userEmail", userEmail);
     
-    // Call verification success synchronously
+    // Call verification success handler first
     onVerificationSuccess();
     
-    // Show a toast notification to inform the user
+    // Show a success notification
     toast.success("Account created successfully!", {
       description: "Taking you to complete your profile."
     });
     
-    // IMPORTANT: Use a progressive redirect approach with multiple fallbacks
-    // First, try direct navigation to profile setup after a short delay
-    setTimeout(() => {
-      console.log("Primary redirect to profile setup");
-      navigate('/profile-setup', { replace: true });
-      
-      // Then use window.location as fallback after another delay
-      setTimeout(() => {
-        console.log("Executing fallback redirect to profile setup");
-        window.location.href = '/profile-setup';
-      }, 200);
-    }, 100);
+    // Use a single, reliable navigation method
+    navigate('/profile-setup', { replace: true });
   }, [onVerificationSuccess, userEmail, navigate]);
 
   return (
@@ -52,7 +42,7 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
       <Alert className="bg-amber-50 border-amber-200 mb-4 w-full">
         <Info className="h-4 w-4 text-amber-500 mr-2" />
         <AlertDescription className="text-amber-700">
-          <span className="font-semibold">Auto-verification active:</span> Skipping verification and redirecting you automatically.
+          <span className="font-semibold">Auto-verification active:</span> Skipping verification and redirecting you to profile setup.
         </AlertDescription>
       </Alert>
     </div>

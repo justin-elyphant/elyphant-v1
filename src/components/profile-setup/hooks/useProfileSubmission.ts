@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 import { ProfileData } from "./types";
 
 interface UseProfileSubmissionProps {
@@ -15,57 +15,57 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
   const [isLoading, setIsLoading] = useState(false);
 
   const handleComplete = async (profileData: ProfileData) => {
-    if (!user) {
-      toast.error("User not authenticated");
+    if (!user && !process.env.REACT_APP_DEBUG_MODE) {
+      console.error("Cannot complete profile setup: No user is logged in");
+      toast.error("You must be logged in to complete profile setup");
       return;
     }
-
+    
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
       console.log("Saving profile data:", profileData);
       
       // Format gift preferences
-      const gift_preferences = profileData.gift_preferences.map(pref => {
+      const giftPreferences = profileData.gift_preferences.map(pref => {
         if (typeof pref === 'string') {
           return { category: pref, importance: "medium" };
         }
         return pref;
       });
       
-      // Prepare data for update - remove username field which is causing errors
-      const updateData = {
+      // Prepare update data
+      const userData = {
         name: profileData.name,
+        username: profileData.username,
         email: profileData.email,
         profile_image: profileData.profile_image,
         dob: profileData.dob,
         shipping_address: profileData.shipping_address,
-        gift_preferences: gift_preferences,
+        gift_preferences: giftPreferences,
         data_sharing_settings: profileData.data_sharing_settings,
         updated_at: new Date().toISOString()
       };
       
-      console.log("Submitting profile data:", updateData);
+      if (user) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(userData)
+          .eq('id', user.id);
       
-      // Update profile in Supabase
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id)
-        .select();
+        if (error) throw error;
         
-      if (error) {
-        console.error("Error saving profile:", error);
-        throw error;
+        toast.success("Profile setup complete!");
+        onComplete();
+      } else if (process.env.REACT_APP_DEBUG_MODE) {
+        // Debug mode, just proceed
+        console.log("Debug mode: Would save profile data:", userData);
+        toast.success("Profile setup complete (Debug Mode)");
+        onComplete();
       }
-      
-      console.log("Profile setup completed successfully:", data);
-      toast.success("Profile setup completed!");
-      
-      // Call the onComplete callback
-      onComplete();
     } catch (error) {
-      console.error('Error completing profile setup:', error);
-      toast.error("Failed to save profile data. Please try again.");
+      console.error("Error saving profile:", error);
+      toast.error("Failed to save profile data");
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +74,9 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
   const handleSkip = () => {
     if (onSkip) {
       onSkip();
+    } else {
+      toast.info("You can complete your profile later in settings");
+      onComplete();
     }
   };
 

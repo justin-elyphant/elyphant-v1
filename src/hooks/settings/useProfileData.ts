@@ -27,10 +27,14 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
       if (profile.important_dates && Array.isArray(profile.important_dates)) {
         profile.important_dates.forEach((date: any) => {
           if (date.date && date.description) {
-            importantDates.push({
-              date: new Date(date.date),
-              description: date.description
-            });
+            try {
+              importantDates.push({
+                date: new Date(date.date),
+                description: date.description
+              });
+            } catch (e) {
+              console.error("Error parsing important date:", e);
+            }
           }
         });
       }
@@ -52,11 +56,12 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         country: ''
       };
       
+      // Make sure we're setting all available profile data
       form.reset({
         name: profile.name || '',
         email: profile.email || '',
         bio: profile.bio || '',
-        profile_image: profile.profile_image,
+        profile_image: profile.profile_image || null,
         birthday: birthdayDate,
         address: address,
         interests: interests,

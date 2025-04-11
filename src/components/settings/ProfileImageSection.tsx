@@ -14,7 +14,7 @@ const ProfileImageSection: React.FC<ProfileImageSectionProps> = ({
   onImageUpdate
 }) => {
   return (
-    <div className="flex justify-center mb-6">
+    <div className="flex flex-col items-center">
       <ProfileImageUpload 
         currentImage={currentImage} 
         name={name} 

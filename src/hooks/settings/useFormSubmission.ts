@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
 import { SettingsFormValues } from "./settingsFormSchema";
-import { ImportantDate, GiftPreference, ShippingAddress, DataSharingSettings } from "@/types/supabase";
 
 export const useFormSubmission = () => {
   const { user } = useAuth();
@@ -22,13 +21,13 @@ export const useFormSubmission = () => {
       console.log("Submitting profile data:", data);
       
       // Format gift preferences for storage, ensuring importance is one of the allowed values
-      const gift_preferences: GiftPreference[] = data.interests.map(interest => ({
+      const gift_preferences = data.interests.map(interest => ({
         category: interest,
-        importance: "medium" as "high" | "medium" | "low" // Explicitly casting to the allowed literal types
+        importance: "medium" as "high" | "medium" | "low" 
       }));
       
       // Format important dates
-      const important_dates: ImportantDate[] = data.importantDates.map(date => ({
+      const important_dates = data.importantDates.map(date => ({
         date: date.date.toISOString(),
         description: date.description
       }));
@@ -40,10 +39,10 @@ export const useFormSubmission = () => {
         bio: data.bio,
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
-        shipping_address: data.address as ShippingAddress,
+        shipping_address: data.address,
         gift_preferences: gift_preferences,
         important_dates: important_dates,
-        data_sharing_settings: data.data_sharing_settings as DataSharingSettings,
+        data_sharing_settings: data.data_sharing_settings,
         updated_at: new Date().toISOString()
       };
       

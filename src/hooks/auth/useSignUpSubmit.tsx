@@ -67,6 +67,18 @@ export const useSignUpSubmit = ({
     } catch (err: any) {
       console.error("Signup failed:", err);
       
+      // Handle rate limit error specifically
+      if (err.message?.includes("rate limit") || 
+          err.message?.includes("exceeded") || 
+          err.status === 429 || 
+          err.code === "over_email_send_rate_limit") {
+        console.log("Rate limit detected:", err);
+        toast.error("Email rate limit exceeded", {
+          description: "Please try again in a few minutes or use a different email address.",
+        });
+        return;
+      }
+      
       // If there's an error about user already exists, we'll handle it specially
       if (err.message?.includes("already registered") || err.message?.includes("user_exists")) {
         console.log("User exists error but we will try to sign in instead");
@@ -107,10 +119,6 @@ export const useSignUpSubmit = ({
             description: "Please use a different email address or try to sign in."
           });
         }
-      } else if (err.message?.includes("rate limit") || err.message?.includes("exceeded")) {
-        toast.error("Email rate limit exceeded", {
-          description: "Please try again in a few minutes or use a different email address.",
-        });
       } else {
         toast.error("Signup failed", {
           description: err.message || "An unexpected error occurred",
@@ -121,4 +129,3 @@ export const useSignUpSubmit = ({
 
   return { onSignUpSubmit };
 };
-

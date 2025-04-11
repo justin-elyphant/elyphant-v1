@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
 import { CaptchaField } from "../fields/CaptchaField";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 // Schema definition
 const signUpSchema = z.object({
@@ -26,6 +28,7 @@ interface SignUpFormProps {
 
 const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
   
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -44,12 +47,24 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
       return;
     }
     
+    // Reset rate limit state
+    setRateLimited(false);
+    
     try {
       setIsSubmitting(true);
       console.log("Submitting signup form with values:", { ...values, password: "[REDACTED]" });
       await onSubmit(values);
     } catch (error: any) {
       console.error("Form submission error:", error);
+      
+      // Check for rate limit errors
+      if (error.message?.includes("rate limit") || 
+          error.message?.includes("exceeded") || 
+          error.status === 429 || 
+          error.code === "over_email_send_rate_limit") {
+        setRateLimited(true);
+      }
+      
       toast.error("Sign up failed", {
         description: error.message || "Please try again"
       });
@@ -61,6 +76,15 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {rateLimited && (
+          <Alert className="bg-amber-50 border-amber-200 mb-4">
+            <Info className="h-4 w-4 text-amber-500 mr-2" />
+            <AlertDescription className="text-amber-700">
+              Email rate limit exceeded. Please try again in a few minutes or use a different email address.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <InputField
           form={form}
           name="name"

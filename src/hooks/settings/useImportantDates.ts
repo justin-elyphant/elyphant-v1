@@ -21,8 +21,8 @@ export const useImportantDates = (form: UseFormReturn<SettingsFormValues>) => {
     const currentDates = form.getValues("importantDates");
     
     // Create a properly typed ImportantDate object
-    const newDate: {date: Date, description: string} = {
-      date: newImportantDate.date,
+    const newDate = {
+      date: newImportantDate.date, // This is now definitely defined due to the if check above
       description: newImportantDate.description.trim()
     };
     

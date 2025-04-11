@@ -7,7 +7,7 @@ import BasicInfoSection from "./BasicInfoSection";
 import ProfileImageSection from "./ProfileImageSection";
 import AddressSection from "./AddressSection";
 import InterestsFormSection from "./InterestsFormSection";
-import ImportantDatesFormSection from "./ImportantDatesFormSection";
+import ImportantDatesFormSection, { ImportantDate } from "./ImportantDatesFormSection";
 import DataSharingSection from "./DataSharingSection";
 import DeleteAccount from "./DeleteAccount";
 
@@ -42,6 +42,9 @@ const GeneralSettings = () => {
     );
   }
   
+  // Cast the form values to the correct type to ensure TypeScript is happy
+  const importantDates = form.getValues("importantDates") as ImportantDate[];
+  
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold">General Settings</h2>
@@ -71,7 +74,7 @@ const GeneralSettings = () => {
               />
               
               <ImportantDatesFormSection 
-                importantDates={form.getValues("importantDates")}
+                importantDates={importantDates}
                 removeImportantDate={handleRemoveImportantDate}
                 newImportantDate={newImportantDate}
                 setNewImportantDate={setNewImportantDate}

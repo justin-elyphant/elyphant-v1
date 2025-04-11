@@ -17,7 +17,7 @@ export const formSchema = z.object({
   }),
   interests: z.array(z.string()),
   importantDates: z.array(z.object({
-    date: z.date(),
+    date: z.date(), // Make sure this is required, not optional
     description: z.string()
   })),
   data_sharing_settings: z.object({

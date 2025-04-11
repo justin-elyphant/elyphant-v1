@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { NewImportantDateState } from "@/hooks/settings/useGeneralSettingsForm";
 
 export interface ImportantDate {
-  date: Date;
+  date: Date; // This is required, not optional
   description: string;
 }
 

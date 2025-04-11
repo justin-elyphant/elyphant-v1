@@ -101,8 +101,8 @@ export const useSignUpSubmit = ({
       setUserEmail(values.email);
       setUserName(values.name);
       
-      // DIRECT FLOW: Skip email verification entirely
-      console.log("BYPASS MODE: Completely skipping email verification and going directly to profile setup");
+      // ULTRA BYPASS MODE: Always skip email verification
+      console.log("🔄 COMPLETING BYPASS: Skipping all verification and going directly to profile setup");
       
       // Set a dummy verification code
       setTestVerificationCode("123456");

@@ -18,7 +18,7 @@ export const useVerificationContainer = ({
   // IMMEDIATE AUTO-REDIRECT: Skip all verification and go directly to profile setup
   useEffect(() => {
     if (userEmail && !isVerified) {
-      console.log("AUTO-BYPASS: Skipping entire verification flow for", userEmail);
+      console.log("COMPLETE BYPASS: Immediately skipping entire verification for", userEmail);
       
       // Mark as verified immediately
       setIsVerified(true);
@@ -29,7 +29,9 @@ export const useVerificationContainer = ({
       });
       
       // Redirect to profile setup with minimal delay
-      navigate("/profile-setup", { replace: true });
+      setTimeout(() => {
+        navigate("/profile-setup", { replace: true });
+      }, 100);
     }
   }, [userEmail, navigate, isVerified]);
 

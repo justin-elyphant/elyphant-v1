@@ -17,9 +17,9 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // Immediately trigger success with no delay
+  // Multiple bypass mechanisms to ensure redirect works
   useEffect(() => {
-    console.log("BYPASS: Completely skipping email verification process for", userEmail);
+    console.log("ULTIMATE BYPASS: Completely skipping email verification for", userEmail);
     
     // Show a toast notification to inform the user
     toast.success("Account created successfully!", {
@@ -31,8 +31,16 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
     
     // Also directly navigate to the profile setup to ensure we don't get stuck
     setTimeout(() => {
-      navigate('/profile-setup', { replace: true });
-    }, 500);
+      // Try multiple ways to navigate in case one fails
+      try {
+        navigate('/profile-setup', { replace: true });
+        console.log("Navigate method 1 executed");
+      } catch (err) {
+        console.error("Primary navigation failed, trying backup:", err);
+        // Backup direct manipulation if React Router fails
+        window.location.href = '/profile-setup';
+      }
+    }, 100);
   }, [onVerificationSuccess, userEmail, navigate]);
 
   return (

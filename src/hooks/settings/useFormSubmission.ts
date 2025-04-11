@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
 import { SettingsFormValues } from "./settingsFormSchema";
-import { ShippingAddress } from "@/types/supabase";
+import { ShippingAddress, DataSharingSettings } from "@/types/supabase";
 
 export const useFormSubmission = () => {
   const { user } = useAuth();
@@ -42,6 +42,13 @@ export const useFormSubmission = () => {
         country: data.address.country || ""
       };
       
+      // Ensure data sharing settings have all required fields
+      const dataSharingSettings: DataSharingSettings = {
+        dob: data.data_sharing_settings.dob || "private",
+        shipping_address: data.data_sharing_settings.shipping_address || "private",
+        gift_preferences: data.data_sharing_settings.gift_preferences || "friends"
+      };
+      
       // Prepare update data
       const updateData = {
         name: data.name,
@@ -52,7 +59,7 @@ export const useFormSubmission = () => {
         shipping_address: shippingAddress,
         gift_preferences: gift_preferences,
         important_dates: important_dates,
-        data_sharing_settings: data.data_sharing_settings,
+        data_sharing_settings: dataSharingSettings,
         updated_at: new Date().toISOString()
       };
       

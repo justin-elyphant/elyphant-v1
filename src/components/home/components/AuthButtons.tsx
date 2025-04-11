@@ -15,7 +15,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const AuthButtons = () => {
-  const { user, signOut } = useAuth();
+  let user = null;
+  let signOut = async () => {};
+  
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    signOut = auth.signOut;
+  } catch (error) {
+    console.warn("Auth context not available in AuthButtons");
+    // Continue with default values if context is not available
+  }
 
   if (user) {
     return (

@@ -11,7 +11,17 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const { isDebugMode } = useAuth();
+  // Use a try/catch to handle the case where useAuth is called outside of AuthProvider
+  let isDebugMode = false;
+  
+  try {
+    const authContext = useAuth();
+    isDebugMode = authContext?.isDebugMode || false;
+  } catch (error) {
+    console.warn("Auth context not available in MainLayout");
+    // Continue with default values if context is not available
+  }
+  
   const location = useLocation();
   
   // Scroll to top whenever the route changes

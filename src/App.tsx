@@ -4,7 +4,6 @@ import {
   BrowserRouter as Router,
   Route,
   Routes,
-  useLocation,
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
@@ -39,7 +38,6 @@ import Trunkline from '@/pages/Trunkline';
 import VendorManagement from '@/pages/VendorManagement';
 import UserProfile from '@/pages/UserProfile';
 import AboutUs from '@/pages/AboutUs';
-import DebugPanel from '@/components/debug/DebugPanel';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 function App() {
@@ -158,7 +156,6 @@ function App() {
                 <Route path="/vendor" element={<VendorManagement />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <DebugPanel />
             </AuthProvider>
           </Router>
         </ProductProvider>

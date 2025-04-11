@@ -55,11 +55,12 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         gift_preferences: profileData.data_sharing_settings?.gift_preferences || "public"
       };
       
-      // Prepare update data
+      // Prepare update data with all the user profile fields
       const userData = {
+        id: user?.id, // Ensure we're updating the correct user
         name: profileData.name,
         username: profileData.username,
-        email: profileData.email,
+        email: profileData.email || user?.email, // Fallback to auth user email
         profile_image: profileData.profile_image,
         dob: profileData.dob,
         bio: profileData.bio || "",
@@ -67,17 +68,26 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         gift_preferences: giftPreferences,
         important_dates: importantDates,
         data_sharing_settings: dataSharingSettings,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        // Track that onboarding is complete
+        onboarding_completed: true
       };
       
+      console.log("Final profile data to save:", userData);
+      
       if (user) {
+        // Perform an upsert (update or insert) to ensure we have a profile
         const { error } = await supabase
           .from('profiles')
-          .update(userData)
-          .eq('id', user.id);
+          .upsert(userData)
+          .select();
       
-        if (error) throw error;
+        if (error) {
+          console.error("Error saving profile:", error);
+          throw error;
+        }
         
+        console.log("Profile saved successfully");
         toast.success("Profile setup complete!");
         onComplete();
       } else if (process.env.REACT_APP_DEBUG_MODE) {

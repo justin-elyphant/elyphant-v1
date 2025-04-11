@@ -37,7 +37,6 @@ export function useAuthSession(): UseAuthSessionReturn {
       }
       
       // Intercept ANY Supabase auth redirects - this captures both access_token and confirmation links
-      // This should not be triggered with our new signup flow, but we keep it as a safeguard
       if ((accessToken && !isProcessingToken) || 
           (type === 'signup' || type === 'recovery') || 
           confirmToken) {
@@ -53,7 +52,6 @@ export function useAuthSession(): UseAuthSessionReturn {
         
         setTimeout(() => {
           setIsProcessingToken(false);
-          toast.info("Please complete email verification using the 6-digit code we sent you");
         }, 500);
         
         return;
@@ -73,16 +71,15 @@ export function useAuthSession(): UseAuthSessionReturn {
         setIsLoading(false);
 
         if (event === 'SIGNED_IN') {
-          // Don't show success toast or redirect if we're processing a token
-          // or if we're on the sign-up page (which handles its own verification)
-          if (!isProcessingToken && !location.pathname.includes('/sign-up')) {
-            toast.success('Signed in successfully!');
+          // Don't show success toast or redirect if:
+          // 1. We're processing a token
+          // 2. We're on the sign-up page (which handles its own redirects)
+          // 3. We're already on the profile-setup page
+          if (!isProcessingToken && 
+              !location.pathname.includes('/sign-up') && 
+              location.pathname !== '/profile-setup') {
             
-            // Don't redirect if we're already on the profile setup page
-            if (location.pathname === '/profile-setup') {
-              console.log("Already on profile setup page, no redirect needed");
-              return;
-            }
+            toast.success('Signed in successfully!');
             
             try {
               // Check if this is a new user that needs profile setup
@@ -108,8 +105,10 @@ export function useAuthSession(): UseAuthSessionReturn {
               navigate('/profile-setup', { replace: true });
             }
           } else {
-            console.log("Skipping auto-redirect because isProcessingToken=", isProcessingToken, 
-                        "or on signup page:", location.pathname.includes('/sign-up'));
+            console.log("Skipping auto-redirect because:",
+                       "isProcessingToken=", isProcessingToken,
+                       "on signup page=", location.pathname.includes('/sign-up'),
+                       "on profile setup=", location.pathname === '/profile-setup');
           }
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');

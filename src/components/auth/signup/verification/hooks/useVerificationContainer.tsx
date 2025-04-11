@@ -70,7 +70,7 @@ export const useVerificationContainer = ({
         // Redirect to profile setup after a short delay
         const redirectTimer = setTimeout(() => {
           console.log("TEST MODE: Redirecting to profile setup");
-          navigate("/profile-setup");
+          navigate("/profile-setup", { replace: true });
         }, 1500);
         
         return () => clearTimeout(redirectTimer);
@@ -86,7 +86,7 @@ export const useVerificationContainer = ({
     
     setTimeout(() => {
       // Redirect to profile setup instead of dashboard for new users
-      navigate("/profile-setup");
+      navigate("/profile-setup", { replace: true });
     }, 1500);
   };
 

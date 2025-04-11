@@ -20,7 +20,7 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
     const timer = setTimeout(() => {
       console.log("Immediately triggering verification success without code");
       onVerificationSuccess();
-    }, 100); // Reduced delay to make it even faster
+    }, 50); // Reduced delay to make it even faster
     return () => clearTimeout(timer);
   }, [onVerificationSuccess]);
 

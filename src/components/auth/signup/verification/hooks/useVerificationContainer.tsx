@@ -31,7 +31,7 @@ export const useVerificationContainer = ({
       const timer = setTimeout(() => {
         console.log("Directly redirecting to profile setup");
         navigate("/profile-setup", { replace: true });
-      }, 300);
+      }, 100);
       
       return () => clearTimeout(timer);
     }
@@ -44,7 +44,7 @@ export const useVerificationContainer = ({
     // Redirect to profile setup
     setTimeout(() => {
       navigate("/profile-setup", { replace: true });
-    }, 300);
+    }, 100);
   };
 
   // Function to manually set the verification code (not needed anymore but kept for API compatibility)

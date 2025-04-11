@@ -23,7 +23,7 @@ export const useSignUpSubmit = ({
     try {
       console.log("Sign up initiated for", values.email);
       
-      // Call the create-user function directly, skipping email verification entirely
+      // Call the create-user function directly
       const result = await signUpUser(values, null, null);
       
       if (!result) {
@@ -52,7 +52,6 @@ export const useSignUpSubmit = ({
       setEmailSent(true);
       
       // Force redirection to profile setup with a direct page navigation
-      // Using window.location to force a complete page reload to reset any auth state issues
       window.location.href = "/profile-setup";
     } catch (err: any) {
       console.error("Signup failed:", err);

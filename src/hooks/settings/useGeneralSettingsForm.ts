@@ -36,13 +36,19 @@ const formSchema = z.object({
 
 export type SettingsFormValues = z.infer<typeof formSchema>;
 
+// Define a type for our newImportantDate state that matches the required fields
+export interface NewImportantDateState {
+  date: Date | undefined;
+  description: string;
+}
+
 export const useGeneralSettingsForm = () => {
   const { user } = useAuth();
   const { profile, loading, updateProfile } = useProfile();
   const [isSaving, setIsSaving] = useState(false);
   const [newInterest, setNewInterest] = useState("");
-  const [newImportantDate, setNewImportantDate] = useState({
-    date: undefined as Date | undefined,
+  const [newImportantDate, setNewImportantDate] = useState<NewImportantDateState>({
+    date: undefined,
     description: ""
   });
   
@@ -202,12 +208,13 @@ export const useGeneralSettingsForm = () => {
     
     const currentDates = form.getValues("importantDates");
     
-    // Ensure we're adding a complete date object with required date field
-    const newDate = {
-      date: newImportantDate.date as Date, // Ensure date is non-optional
+    // Create a properly typed ImportantDate object
+    const newDate: {date: Date, description: string} = {
+      date: newImportantDate.date,
       description: newImportantDate.description.trim()
     };
     
+    // Add the new date to the form
     form.setValue("importantDates", [...currentDates, newDate]);
     
     // Reset the form

@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { NewImportantDateState } from "@/hooks/settings/useGeneralSettingsForm";
 
 export interface ImportantDate {
   date: Date;
@@ -17,14 +18,8 @@ export interface ImportantDate {
 export interface ImportantDatesFormSectionProps {
   importantDates: ImportantDate[];
   removeImportantDate: (index: number) => void;
-  newImportantDate: {
-    date: Date | undefined;
-    description: string;
-  };
-  setNewImportantDate: (value: {
-    date: Date | undefined;
-    description: string;
-  }) => void;
+  newImportantDate: NewImportantDateState;
+  setNewImportantDate: (value: NewImportantDateState) => void;
   addImportantDate: () => void;
 }
 
@@ -67,7 +62,7 @@ const ImportantDatesFormSection: React.FC<ImportantDatesFormSectionProps> = ({
             key={index} 
             className="bg-muted px-3 py-1 rounded-full flex items-center gap-1"
           >
-            <span>{format(new Date(importantDate.date), "MMM d, yyyy")} - {importantDate.description}</span>
+            <span>{format(importantDate.date, "MMM d, yyyy")} - {importantDate.description}</span>
             <button 
               type="button" 
               onClick={() => removeImportantDate(index)}

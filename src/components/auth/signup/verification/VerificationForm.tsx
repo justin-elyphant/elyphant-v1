@@ -33,20 +33,17 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
       description: "Taking you to complete your profile."
     });
     
-    // Direct navigation using React Router
-    navigate('/profile-setup', { replace: true });
-    
-    // Ultra-reliable fallback: Also directly manipulate location after a slight delay
+    // IMPORTANT: Use a progressive redirect approach with multiple fallbacks
+    // First, try direct navigation to profile setup after a short delay
     setTimeout(() => {
-      // Try multiple ways to navigate in case one fails
-      try {
+      console.log("Primary redirect to profile setup");
+      navigate('/profile-setup', { replace: true });
+      
+      // Then use window.location as fallback after another delay
+      setTimeout(() => {
         console.log("Executing fallback redirect to profile setup");
         window.location.href = '/profile-setup';
-      } catch (err) {
-        console.error("Navigation error:", err);
-        // Last resort redirect
-        document.location.href = '/profile-setup';
-      }
+      }, 200);
     }, 100);
   }, [onVerificationSuccess, userEmail, navigate]);
 

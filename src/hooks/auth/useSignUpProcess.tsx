@@ -12,17 +12,37 @@ export function useSignUpProcess() {
   const [userName, setUserName] = useState<string>("");
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
+  const [redirectAttempted, setRedirectAttempted] = useState<boolean>(false);
 
   // Check for URL parameters indicating verified status
   useVerificationRedirect(navigate, setUserEmail);
   
   // DETECT DIRECT NAVIGATION TO PROFILE SETUP
   useEffect(() => {
-    if (emailSent && step === "verification") {
-      console.log("Auto-redirecting to profile setup");
+    if (emailSent && step === "verification" && !redirectAttempted) {
+      console.log("Auto-redirecting to profile setup from useSignUpProcess");
+      
+      // Store in localStorage for persistence across redirects
+      localStorage.setItem("newSignUp", "true");
+      localStorage.setItem("userEmail", userEmail);
+      localStorage.setItem("userName", userName || "");
+      
+      // Mark that we've attempted redirect
+      setRedirectAttempted(true);
+      
+      // Use a progressive multi-stage redirect strategy
       navigate('/profile-setup', { replace: true });
+      
+      // Fallback redirects with increasing delays
+      setTimeout(() => {
+        window.location.replace('/profile-setup');
+        
+        setTimeout(() => {
+          window.location.href = '/profile-setup';
+        }, 300);
+      }, 150);
     }
-  }, [emailSent, step, navigate]);
+  }, [emailSent, step, navigate, userEmail, userName, redirectAttempted]);
   
   // Handle signup form submission
   const { onSignUpSubmit } = useSignUpSubmit({
@@ -42,6 +62,7 @@ export function useSignUpProcess() {
 
   const handleBackToSignUp = () => {
     setStep("signup");
+    setRedirectAttempted(false);
   };
 
   return {

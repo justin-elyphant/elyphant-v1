@@ -34,14 +34,22 @@ export const useVerificationContainer = ({
         duration: 3000
       });
       
-      // Direct immediate navigation without delay
+      // Multi-stage redirect strategy with increasing delays
+      // First attempt
+      console.log("First attempt: direct navigation");
       navigate("/profile-setup", { replace: true });
-
-      // Fallback redirect in case the first one doesn't work
+      
+      // Second attempt with slight delay
       setTimeout(() => {
-        console.log("Executing fallback redirect to profile setup");
-        window.location.href = "/profile-setup";
-      }, 100);
+        console.log("Second attempt: location.replace");
+        window.location.replace("/profile-setup");
+        
+        // Third attempt with further delay
+        setTimeout(() => {
+          console.log("Third attempt: location.href");
+          window.location.href = "/profile-setup";
+        }, 300);
+      }, 150);
     }
   }, [userEmail, navigate, isVerified]);
 
@@ -49,11 +57,18 @@ export const useVerificationContainer = ({
     setIsVerified(true);
     toast.success("Account created successfully!");
     
-    // Attempt both navigation methods for maximum reliability
+    // Set localStorage for persistence
+    localStorage.setItem("newSignUp", "true");
+    localStorage.setItem("userEmail", userEmail);
+    
+    // Multi-stage navigation approach
+    console.log("handleVerificationSuccess: Redirecting to profile setup");
     navigate("/profile-setup", { replace: true });
+    
+    // Fallback redirect
     setTimeout(() => {
       window.location.href = "/profile-setup";
-    }, 50);
+    }, 200);
   };
 
   // Function to manually set the verification code (not needed anymore but kept for API compatibility)

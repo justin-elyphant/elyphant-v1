@@ -18,19 +18,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isDebugMode, setIsDebugMode] = useState(false);
   const { signOut, deleteUser } = useAuthFunctions(user);
 
-  // Check for new signup flow from localStorage
+  // Enhanced check for new signup flow from localStorage with retry logic
   useEffect(() => {
     const isNewSignUp = localStorage.getItem("newSignUp") === "true";
     
     // If this is a new signup and we're not already on profile setup, redirect
     if (isNewSignUp && location.pathname !== '/profile-setup') {
       console.log("Detected new signup flag, redirecting to profile setup");
+      
+      // Use progressive redirect strategy
       navigate('/profile-setup', { replace: true });
       
       // Clear the flag after redirection (will be reset if needed)
       setTimeout(() => {
-        localStorage.removeItem("newSignUp");
-      }, 5000);
+        // Only clear if we're now on the profile setup page
+        if (window.location.pathname === '/profile-setup') {
+          console.log("Successfully redirected to profile setup, clearing flag");
+          localStorage.removeItem("newSignUp");
+        } else {
+          // Try another redirect method if we're still not on profile setup
+          console.log("Still not on profile setup, trying direct location change");
+          window.location.href = '/profile-setup';
+        }
+      }, 1000);
     }
   }, [location.pathname, navigate]);
 

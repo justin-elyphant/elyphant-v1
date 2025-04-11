@@ -40,8 +40,9 @@ export const useSignUpSubmit = ({
       // TESTING MODE: Bypass actual email verification
       console.log("TESTING MODE: Bypassing actual email verification");
       
-      // Set a dummy test verification code for display purposes
-      setTestVerificationCode("123456");
+      // Set a test verification code
+      const testCode = "123456";
+      setTestVerificationCode(testCode);
       
       // Show success toast for better user feedback
       if (result.userExists) {
@@ -56,12 +57,22 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       setStep("verification");
+      
+      // Show the test verification code to the user
+      toast.info("Test verification code", {
+        description: `Your verification code is: ${testCode}`,
+        duration: 10000 // Show for 10 seconds
+      });
     } catch (err: any) {
       console.error("Signup failed:", err);
       
       if (err.message?.includes("already registered") || err.message?.includes("user_exists")) {
         toast.error("Email already registered", {
           description: "Please use a different email address or try to sign in.",
+        });
+      } else if (err.message?.includes("incorrect")) {
+        toast.error("Authentication failed", {
+          description: err.message || "Please try with a different email.",
         });
       } else {
         toast.error("Signup failed", {

@@ -54,7 +54,10 @@ export const useVerificationCode = ({
           console.log("Auto-triggering verification for test code");
           if (!isSubmitting && !autoVerifyTriggered) {
             setAutoVerifyTriggered(true);
-            handleVerifyCode(testVerificationCode);
+            
+            // In testing mode, bypass the actual verification
+            console.log("TEST MODE: Bypassing actual verification");
+            onVerificationSuccess();
           }
         }, 1000);
         
@@ -63,7 +66,7 @@ export const useVerificationCode = ({
       
       return () => clearTimeout(timer);
     }
-  }, [testVerificationCode, isSubmitting, autoVerifyTriggered]);
+  }, [testVerificationCode, isSubmitting, autoVerifyTriggered, onVerificationSuccess, verificationCode]);
 
   // Memoized handleVerifyCode function to prevent recreating it on renders
   const handleVerifyCode = useCallback(async (code = verificationCode) => {
@@ -84,6 +87,19 @@ export const useVerificationCode = ({
     setLastAttemptTime(Date.now());
     
     try {
+      // In testing mode, bypass verification and directly succeed
+      if (code === "123456" || code === testVerificationCode) {
+        console.log("TEST MODE: Bypassing verification API call");
+        setTimeout(() => {
+          console.log("TEST MODE: Verification successful");
+          toast.success("Email verified!", { 
+            description: "Your account is now ready to use." 
+          });
+          onVerificationSuccess();
+        }, 1000);
+        return;
+      }
+      
       // Normalize email to lowercase for consistency
       const normalizedEmail = userEmail.toLowerCase();
       
@@ -154,7 +170,7 @@ export const useVerificationCode = ({
       setAttemptCount(prev => prev + 1);
       setIsSubmitting(false);
     }
-  }, [verificationCode, userEmail, lastAttemptTime, attemptCount, onVerificationSuccess]);
+  }, [verificationCode, userEmail, lastAttemptTime, attemptCount, onVerificationSuccess, testVerificationCode]);
 
   return {
     verificationCode,

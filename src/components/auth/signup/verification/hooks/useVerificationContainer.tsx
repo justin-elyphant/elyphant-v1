@@ -54,25 +54,31 @@ export const useVerificationContainer = ({
     }
   }, [testVerificationCode, localCode]);
 
-  // TEMPORARY: Show a testing banner with more detailed information
+  // TESTING MODE: Auto-verify and redirect
   useEffect(() => {
-    toast.info("TEST MODE ACTIVE", {
-      description: "Email verification is being bypassed for testing. You will be automatically redirected to profile setup.",
-      duration: 5000
-    });
-    
-    // Auto-verify after a short delay to simulate successful verification
-    const timer = setTimeout(() => {
-      setIsVerified(true);
+    if (userEmail) {
+      toast.info("TEST MODE ACTIVE", {
+        description: "Email verification is being bypassed for testing. You will be automatically redirected to profile setup.",
+        duration: 5000
+      });
       
-      // Redirect to profile setup after a short delay
-      setTimeout(() => {
-        navigate("/profile-setup");
-      }, 1500);
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, [navigate]);
+      // Auto-verify after a short delay to simulate successful verification
+      const timer = setTimeout(() => {
+        console.log("TEST MODE: Auto-verifying user");
+        setIsVerified(true);
+        
+        // Redirect to profile setup after a short delay
+        const redirectTimer = setTimeout(() => {
+          console.log("TEST MODE: Redirecting to profile setup");
+          navigate("/profile-setup");
+        }, 1500);
+        
+        return () => clearTimeout(redirectTimer);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [userEmail, navigate, setIsVerified]);
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);

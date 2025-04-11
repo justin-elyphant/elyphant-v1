@@ -40,42 +40,63 @@ export const signUpUser = async (values: SignUpValues, invitedBy: string | null,
       } : null
     });
     
-    // Check for response.data even if there's an error - the edge function might return useful data
-    // with an error status code
+    // Check if we received a user_exists code but the user hasn't actually been created yet
     if (response.data?.code === "user_exists") {
-      console.log("User already exists, attempting to sign in");
+      console.log("System indicates user exists, attempting to create account directly");
       
-      // User exists, try to sign them in directly
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      // Try direct signup instead of going through the edge function
+      const { data: directSignUpData, error: directSignUpError } = await supabase.auth.signUp({
         email: values.email,
-        password: values.password
+        password: values.password,
+        options: {
+          data: {
+            name: values.name,
+            invited_by: invitedBy,
+            sender_user_id: senderUserId
+          }
+        }
       });
       
-      if (signInError) {
-        if (signInError.message.includes("Invalid login credentials")) {
-          throw new Error("Email already registered with a different password");
+      if (directSignUpError) {
+        // If this also failed with an existing user error, try signing in
+        if (directSignUpError.message.includes("already registered")) {
+          console.log("Direct signup confirmed user exists, attempting to sign in");
+          
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: values.email,
+            password: values.password
+          });
+          
+          if (signInError) {
+            if (signInError.message.includes("Invalid login credentials")) {
+              throw new Error("Email exists but password is incorrect. Try a different email or reset your password.");
+            }
+            throw signInError;
+          }
+          
+          console.log("Existing user signed in:", signInData);
+          return { 
+            success: true, 
+            user: signInData.user,
+            userExists: true
+          };
         }
-        throw signInError;
+        
+        throw directSignUpError;
       }
       
-      // If we get here, sign in succeeded with the provided credentials
-      console.log("Existing user signed in:", signInData);
+      // Direct signup worked - we successfully created a user
+      console.log("Direct signup successful:", directSignUpData);
       return { 
         success: true, 
-        user: signInData.user,
-        userExists: true
+        user: directSignUpData.user,
+        userExists: false
       };
     }
     
     if (response.error || !response.data?.success) {
       // Extract error details from the response if possible
       const errorMsg = response.data?.error || response.error?.message || "Failed to create user";
-      
-      // Handle specific error cases
-      if (errorMsg.includes("already registered") || 
-          response.data?.code === "user_exists") {
-        throw new Error("Email already registered");
-      }
       
       throw new Error(errorMsg);
     }

@@ -52,7 +52,8 @@ export const useSignUpSubmit = ({
           if (err.message?.toLowerCase().includes("rate limit") || 
               err.message?.toLowerCase().includes("exceeded") || 
               err.status === 429 || 
-              err.code === "too_many_requests") {
+              err.code === "too_many_requests" || 
+              err.code === "over_email_send_rate_limit") {
             retryCount++;
             if (retryCount <= maxRetries) {
               // Wait before retrying (exponential backoff)
@@ -74,8 +75,12 @@ export const useSignUpSubmit = ({
       }
       
       // Handle user_exists cases by continuing the flow
-      if (result.code === "user_exists") {
-        console.log("User exists issue detected, but we'll proceed with the flow");
+      if (result.code === "user_exists" || result.code === "invalid_credentials") {
+        console.log("User exists issue detected:", result.code);
+        
+        if (result.code === "invalid_credentials") {
+          throw new Error("Email exists but password is incorrect. Please try signing in instead.");
+        }
         
         // Try to sign in with the provided credentials
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -114,19 +119,17 @@ export const useSignUpSubmit = ({
     } catch (err: any) {
       console.error("Signup failed:", err);
       
-      // Handle rate limit error specifically
+      // Handle rate limit error specifically - propagate to form component for UI handling
       if (err.message?.toLowerCase().includes("rate limit") || 
           err.message?.toLowerCase().includes("exceeded") || 
           err.status === 429 || 
           err.code === "over_email_send_rate_limit" ||
           err.code === "too_many_requests") {
         console.log("Rate limit detected:", err);
-        
-        // Rethrow to let the form component handle the UI for rate limits
         throw err;
       }
       
-      // If there's an error about user already exists, we'll handle it specially
+      // If there's an error about user already exists, handle it specially
       if (err.message?.includes("already registered") || err.message?.includes("user_exists")) {
         console.log("User exists error but we will try to sign in instead");
         

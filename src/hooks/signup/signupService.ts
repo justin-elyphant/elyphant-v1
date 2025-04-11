@@ -2,19 +2,27 @@
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
 
-// Helper to check for rate limit errors
+// Improved helper to check for rate limit errors with more patterns
 const isRateLimitError = (error: any): boolean => {
   if (!error) return false;
   
   return (
     error.status === 429 || 
     error.code === "too_many_requests" ||
+    error.code === "over_email_send_rate_limit" ||
     (typeof error.message === 'string' && (
       error.message.toLowerCase().includes("rate limit") || 
       error.message.toLowerCase().includes("exceeded") ||
       error.message.toLowerCase().includes("too many")
     ))
   );
+};
+
+// Exponential backoff utility
+const calculateBackoff = (attempt: number, baseMs: number = 1000, maxMs: number = 30000): number => {
+  const backoff = Math.min(baseMs * Math.pow(2, attempt), maxMs);
+  // Add some jitter to prevent thundering herd
+  return backoff + (Math.random() * 500);
 };
 
 // Modified to use Supabase auth directly with email_confirm=true and rate limit handling
@@ -24,14 +32,21 @@ export const signUpUser = async (
   senderUserId: string | null = null
 ) => {
   try {
-    console.log(`Attempting direct signup for ${values.email}`);
+    console.log(`Attempting signup for ${values.email}`);
     
     // Set a retry count for rate limit handling
     let retryCount = 0;
-    const maxRetries = 1; // We'll try once more if we hit a rate limit
+    const maxRetries = 2; // We'll try a couple times if we hit a rate limit
     
     while (retryCount <= maxRetries) {
       try {
+        // If this is a retry, wait with exponential backoff
+        if (retryCount > 0) {
+          const delay = calculateBackoff(retryCount);
+          console.log(`Rate limit encountered, waiting ${delay}ms before retry #${retryCount}`);
+          await new Promise(r => setTimeout(r, delay));
+        }
+        
         // Try direct signup
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: values.email,
@@ -48,17 +63,14 @@ export const signUpUser = async (
         if (signUpError) {
           // Check specifically for rate limit errors
           if (isRateLimitError(signUpError)) {
-            console.log("Rate limit encountered during sign-up attempt:", signUpError);
+            console.log(`Rate limit encountered during sign-up attempt ${retryCount + 1}:`, signUpError);
             
             if (retryCount < maxRetries) {
-              // Wait before retry - exponential backoff
-              const delay = Math.pow(2, retryCount) * 1000; 
-              console.log(`Waiting ${delay}ms before retry #${retryCount + 1}`);
-              await new Promise(r => setTimeout(r, delay));
               retryCount++;
-              continue; // Try again
+              continue; // Try again after the delay
             } else {
               // We've tried enough, propagate the rate limit error
+              console.error("Rate limit persisted after multiple retries, giving up");
               throw signUpError;
             }
           }
@@ -102,24 +114,50 @@ export const signUpUser = async (
         // Auto sign-in the user after creation
         if (signUpData.user) {
           console.log("Auto signing in the user");
-          const { data, error: signInError } = await supabase.auth.signInWithPassword({
-            email: values.email,
-            password: values.password
-          });
           
-          if (signInError) {
-            console.error("Error signing in:", signInError);
-            throw signInError;
-          }
+          // Use a separate retry for sign-in
+          let signInRetries = 0;
+          const maxSignInRetries = 2;
           
-          console.log("User signed in successfully after creation:", data);
-          
-          // Force a session refresh to make sure auth state is updated
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.error("Error refreshing session:", refreshError);
-          } else {
-            console.log("Session refreshed successfully");
+          while (signInRetries <= maxSignInRetries) {
+            try {
+              const { data, error: signInError } = await supabase.auth.signInWithPassword({
+                email: values.email,
+                password: values.password
+              });
+              
+              if (signInError) {
+                // Only retry rate limit errors
+                if (isRateLimitError(signInError) && signInRetries < maxSignInRetries) {
+                  const delay = calculateBackoff(signInRetries);
+                  console.log(`Rate limit on sign-in, waiting ${delay}ms before retry`);
+                  await new Promise(r => setTimeout(r, delay));
+                  signInRetries++;
+                  continue;
+                }
+                
+                console.error("Error signing in:", signInError);
+                throw signInError;
+              }
+              
+              console.log("User signed in successfully after creation:", data);
+              
+              // Force a session refresh to make sure auth state is updated
+              const { error: refreshError } = await supabase.auth.refreshSession();
+              if (refreshError) {
+                console.error("Error refreshing session:", refreshError);
+              } else {
+                console.log("Session refreshed successfully");
+              }
+              
+              break; // Break out of sign-in retry loop
+            } catch (signInAttemptError) {
+              if (isRateLimitError(signInAttemptError) && signInRetries < maxSignInRetries) {
+                signInRetries++;
+                continue;
+              }
+              throw signInAttemptError;
+            }
           }
         }
         
@@ -132,12 +170,8 @@ export const signUpUser = async (
         // Special handling for rate limits only
         if (isRateLimitError(attemptError)) {
           if (retryCount < maxRetries) {
-            // Wait before retry
-            const delay = Math.pow(2, retryCount) * 1000;
-            console.log(`Waiting ${delay}ms before retry #${retryCount + 1}`);
-            await new Promise(r => setTimeout(r, delay));
             retryCount++;
-            continue; // Try again
+            continue; // Try again after the delay in the next loop iteration
           }
         }
         

@@ -54,7 +54,7 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
       
       form.reset({
         name: profile.name || '',
-        email: profile.email || profile.user?.email || '',
+        email: profile.email || '',
         bio: profile.bio || '',
         profile_image: profile.profile_image,
         birthday: birthdayDate,

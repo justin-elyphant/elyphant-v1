@@ -1,6 +1,5 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface UseVerificationContainerProps {
@@ -11,43 +10,19 @@ interface UseVerificationContainerProps {
 export const useVerificationContainer = ({ 
   userEmail 
 }: UseVerificationContainerProps) => {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   
-  // Simple, direct auto-redirect
-  useEffect(() => {
-    if (userEmail && !isVerified) {
-      console.log("useVerificationContainer: Auto-verifying user", userEmail);
-      
-      // Set flags in localStorage
-      localStorage.setItem("newSignUp", "true");
-      localStorage.setItem("userEmail", userEmail);
-      
-      // Mark as verified
-      setIsVerified(true);
-      
-      // Show success notification
-      toast.success("Account created successfully!", {
-        description: "Taking you to complete your profile",
-        duration: 3000
-      });
-      
-      // Direct navigation to profile setup
-      navigate("/profile-setup", { replace: true });
-    }
-  }, [userEmail, navigate, isVerified]);
-
+  // Simpler success handler - no navigation here to prevent conflicts
   const handleVerificationSuccess = () => {
+    console.log("useVerificationContainer: Verification success for", userEmail);
     setIsVerified(true);
-    toast.success("Account created successfully!");
     
-    // Set localStorage flags
+    // Just set the localStorage flags but don't navigate
     localStorage.setItem("newSignUp", "true");
     localStorage.setItem("userEmail", userEmail);
     
-    // Navigate to profile setup
-    navigate("/profile-setup", { replace: true });
+    toast.success("Account created successfully!");
   };
 
   // Function for API compatibility

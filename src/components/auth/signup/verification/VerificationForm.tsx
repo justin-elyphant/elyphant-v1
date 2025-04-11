@@ -17,24 +17,25 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // Simplified approach - focus on a single reliable redirect method
+  // Simplified, guaranteed-to-execute approach
   useEffect(() => {
-    console.log("VERIFICATION FORM: Auto-verification activated for", userEmail);
+    console.log("VERIFICATION FORM: Setting up new signup for", userEmail);
     
-    // Store in localStorage for persistence through redirects
+    // Set flags BEFORE calling any navigation
     localStorage.setItem("newSignUp", "true");
     localStorage.setItem("userEmail", userEmail);
     
-    // Call verification success handler first
+    // Call verification success handler
     onVerificationSuccess();
     
-    // Show a success notification
+    // Show success notification
     toast.success("Account created successfully!", {
       description: "Taking you to complete your profile."
     });
     
-    // Use a single, reliable navigation method
+    // Always replace the current location to prevent back button issues
     navigate('/profile-setup', { replace: true });
+    
   }, [onVerificationSuccess, userEmail, navigate]);
 
   return (
@@ -42,7 +43,7 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
       <Alert className="bg-amber-50 border-amber-200 mb-4 w-full">
         <Info className="h-4 w-4 text-amber-500 mr-2" />
         <AlertDescription className="text-amber-700">
-          <span className="font-semibold">Auto-verification active:</span> Skipping verification and redirecting you to profile setup.
+          <span className="font-semibold">Account created!</span> Redirecting you to profile setup...
         </AlertDescription>
       </Alert>
     </div>

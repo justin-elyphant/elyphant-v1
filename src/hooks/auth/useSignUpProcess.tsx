@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useVerificationRedirect } from "./useVerificationRedirect";
 import { useSignUpSubmit } from "./useSignUpSubmit";
 import { useResendVerification } from "./useResendVerification";
@@ -12,37 +12,24 @@ export function useSignUpProcess() {
   const [userName, setUserName] = useState<string>("");
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
-  const [redirectAttempted, setRedirectAttempted] = useState<boolean>(false);
 
   // Check for URL parameters indicating verified status
   useVerificationRedirect(navigate, setUserEmail);
   
-  // DETECT DIRECT NAVIGATION TO PROFILE SETUP
+  // AUTO-REDIRECT TO PROFILE SETUP WHEN EMAIL IS SENT
   useEffect(() => {
-    if (emailSent && step === "verification" && !redirectAttempted) {
+    if (emailSent && step === "verification") {
       console.log("Auto-redirecting to profile setup from useSignUpProcess");
       
-      // Store in localStorage for persistence across redirects
+      // Store in localStorage for persistence
       localStorage.setItem("newSignUp", "true");
       localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("userName", userName || "");
       
-      // Mark that we've attempted redirect
-      setRedirectAttempted(true);
-      
-      // Use a progressive multi-stage redirect strategy
+      // Use navigate with replace to prevent back-button issues
       navigate('/profile-setup', { replace: true });
-      
-      // Fallback redirects with increasing delays
-      setTimeout(() => {
-        window.location.replace('/profile-setup');
-        
-        setTimeout(() => {
-          window.location.href = '/profile-setup';
-        }, 300);
-      }, 150);
     }
-  }, [emailSent, step, navigate, userEmail, userName, redirectAttempted]);
+  }, [emailSent, step, navigate, userEmail, userName]);
   
   // Handle signup form submission
   const { onSignUpSubmit } = useSignUpSubmit({
@@ -62,7 +49,6 @@ export function useSignUpProcess() {
 
   const handleBackToSignUp = () => {
     setStep("signup");
-    setRedirectAttempted(false);
   };
 
   return {

@@ -18,22 +18,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isDebugMode, setIsDebugMode] = useState(false);
   const { signOut, deleteUser } = useAuthFunctions(user);
 
-  // Enhanced check for new signup flow from localStorage
+  // More robust check for new signup flow
   useEffect(() => {
-    // Only run this effect if we're not already on profile-setup
-    if (location.pathname !== '/profile-setup') {
-      const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    
+    if (isNewSignUp && location.pathname !== '/profile-setup') {
+      console.log("AuthProvider detected new signup flag, redirecting to profile setup");
       
-      if (isNewSignUp) {
-        console.log("AuthProvider detected new signup flag, redirecting to profile setup");
-        
-        // Use a direct, reliable navigation method
-        navigate('/profile-setup', { replace: true });
-      }
-    } else if (location.pathname === '/profile-setup') {
-      // We're on profile setup now, consider clearing the flag
-      console.log("On profile setup page, clearing newSignUp flag");
-      localStorage.removeItem("newSignUp");
+      // Don't overwrite other localStorage values here
+      
+      // Use a direct, reliable navigation method
+      navigate('/profile-setup', { replace: true });
     }
   }, [location.pathname, navigate]);
 

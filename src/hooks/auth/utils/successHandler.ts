@@ -28,14 +28,13 @@ export const handleSignupSuccess = ({
   setEmailSent,
   navigate
 }: SuccessHandlerProps): void => {
-  setUserEmail(email);
-  setUserName(name);
-  
-  // ULTRA BYPASS MODE: Always skip email verification
   console.log("🔄 COMPLETING BYPASS: Skipping all verification and going directly to profile setup");
   
-  // Set a dummy verification code
-  setTestVerificationCode("123456");
+  // Set application state
+  setUserEmail(email);
+  setUserName(name);
+  setTestVerificationCode("123456"); // Set dummy verification code
+  setEmailSent(true);
   
   // Set localStorage flags for new user journey
   localStorage.setItem("newSignUp", "true");
@@ -47,8 +46,14 @@ export const handleSignupSuccess = ({
     description: "Taking you to complete your profile."
   });
   
-  setEmailSent(true);
-  
-  // Navigate directly to profile setup
-  navigate('/profile-setup', { replace: true });
+  // Give state time to update before navigation
+  setTimeout(() => {
+    // Navigate directly to profile setup
+    navigate('/profile-setup', { replace: true });
+    
+    // Fallback direct location change if navigate doesn't work
+    setTimeout(() => {
+      window.location.href = "/profile-setup";
+    }, 100);
+  }, 50);
 };

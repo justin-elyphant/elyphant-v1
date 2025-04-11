@@ -53,17 +53,33 @@ export const handleExistingUser = async ({
     
     // If sign-in was successful, proceed with the flow
     console.log("Existing user signed in:", data);
+    
+    // Set application state
     setUserEmail(email);
     setUserName(name || "");
     setTestVerificationCode("123456");
     setEmailSent(true);
     
+    // Store in localStorage for persistence
+    localStorage.setItem("newSignUp", "true");
+    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userName", name || "");
+    
     toast.success("Signed in successfully!", {
       description: "Taking you to your profile."
     });
     
-    // Navigate directly to profile setup
-    navigate('/profile-setup', { replace: true });
+    // Give state time to update before navigation
+    setTimeout(() => {
+      // Navigate directly to profile setup
+      navigate('/profile-setup', { replace: true });
+      
+      // Fallback direct location change if navigate doesn't work
+      setTimeout(() => {
+        window.location.href = "/profile-setup";
+      }, 100);
+    }, 50);
+    
     return true;
   } catch (signInErr: any) {
     console.error("Sign in attempt failed:", signInErr);

@@ -29,23 +29,33 @@ export const handleRateLimit = ({
   navigate
 }: RateLimitHandlerProps): void => {
   console.log("Rate limit detected, bypassing verification entirely");
+  
+  // Set user state
   setUserEmail(email);
   setUserName(name);
   setTestVerificationCode("123456"); // Set dummy code
   setEmailSent(true);
+  
+  // Store in localStorage for persistence through redirects
+  localStorage.setItem("newSignUp", "true");
+  localStorage.setItem("userEmail", email);
+  localStorage.setItem("userName", name);
   
   // Show success toast
   toast.success("Account created successfully!", {
     description: "Taking you to complete your profile."
   });
   
-  // Set a flag in localStorage to indicate this is a new sign-up
-  localStorage.setItem("newSignUp", "true");
-  localStorage.setItem("userEmail", email);
-  localStorage.setItem("userName", name);
-  
-  // Navigate directly to profile setup
-  navigate('/profile-setup', { replace: true });
+  // Give the state a moment to update before navigating
+  setTimeout(() => {
+    // Navigate directly to profile setup with replacement (prevents back navigation)
+    navigate('/profile-setup', { replace: true });
+    
+    // Fallback direct location change if navigate doesn't work
+    setTimeout(() => {
+      window.location.href = "/profile-setup";
+    }, 100);
+  }, 50);
 };
 
 /**

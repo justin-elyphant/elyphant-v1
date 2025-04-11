@@ -88,8 +88,9 @@ export function useAuthSession(): UseAuthSessionReturn {
               
               console.log("Profile check for new user:", profile);
               
-              // New logic: ALWAYS go to profile setup for new signups
-              if (event === 'SIGNED_UP' || !profile || !profile.username) {
+              // Fix here: Don't use 'SIGNED_UP' in the condition, use a different approach
+              // If user just signed up or has incomplete profile, go to profile setup
+              if (!profile || !profile.username) {
                 console.log("New signup or incomplete profile, redirecting to profile setup");
                 navigate('/profile-setup', { replace: true });
               } else {

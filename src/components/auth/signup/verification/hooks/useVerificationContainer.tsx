@@ -16,6 +16,7 @@ export const useVerificationContainer = ({
   const [isVerified, setIsVerified] = useState(false);
   
   // IMMEDIATE AUTO-REDIRECT: Skip all verification and go directly to profile setup
+  // Execute this effect immediately on render with highest priority
   useEffect(() => {
     if (userEmail && !isVerified) {
       console.log("COMPLETE BYPASS: Immediately skipping entire verification for", userEmail);
@@ -23,14 +24,19 @@ export const useVerificationContainer = ({
       // Mark as verified immediately
       setIsVerified(true);
       
-      toast.info("Verification bypassed", {
+      // Show toast notification before redirecting
+      toast.success("Account created successfully!", {
         description: "Taking you to complete your profile",
         duration: 3000
       });
       
-      // Redirect to profile setup with minimal delay
+      // Direct immediate navigation without delay
+      navigate("/profile-setup", { replace: true });
+
+      // Fallback redirect in case the first one doesn't work
       setTimeout(() => {
-        navigate("/profile-setup", { replace: true });
+        console.log("Executing fallback redirect to profile setup");
+        window.location.href = "/profile-setup";
       }, 100);
     }
   }, [userEmail, navigate, isVerified]);
@@ -39,8 +45,11 @@ export const useVerificationContainer = ({
     setIsVerified(true);
     toast.success("Account created successfully!");
     
-    // Redirect to profile setup
+    // Attempt both navigation methods for maximum reliability
     navigate("/profile-setup", { replace: true });
+    setTimeout(() => {
+      window.location.href = "/profile-setup";
+    }, 50);
   };
 
   // Function to manually set the verification code (not needed anymore but kept for API compatibility)

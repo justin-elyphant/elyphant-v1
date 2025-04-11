@@ -21,26 +21,29 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   useEffect(() => {
     console.log("ULTIMATE BYPASS: Completely skipping email verification for", userEmail);
     
+    // Call verification success synchronously
+    onVerificationSuccess();
+    
     // Show a toast notification to inform the user
     toast.success("Account created successfully!", {
       description: "Taking you to complete your profile."
     });
     
-    // Call verification success synchronously
-    onVerificationSuccess();
+    // Direct navigation using React Router
+    navigate('/profile-setup', { replace: true });
     
-    // Also directly navigate to the profile setup to ensure we don't get stuck
+    // Ultra-reliable fallback: Also directly manipulate location after a slight delay
     setTimeout(() => {
       // Try multiple ways to navigate in case one fails
       try {
-        navigate('/profile-setup', { replace: true });
-        console.log("Navigate method 1 executed");
-      } catch (err) {
-        console.error("Primary navigation failed, trying backup:", err);
-        // Backup direct manipulation if React Router fails
+        console.log("Executing fallback redirect to profile setup");
         window.location.href = '/profile-setup';
+      } catch (err) {
+        console.error("Navigation error:", err);
+        // Last resort redirect
+        document.location.href = '/profile-setup';
       }
-    }, 100);
+    }, 50);
   }, [onVerificationSuccess, userEmail, navigate]);
 
   return (

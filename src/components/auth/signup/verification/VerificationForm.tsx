@@ -1,7 +1,9 @@
 
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { toast } from "sonner";
 
 interface VerificationFormProps {
   userEmail: string;
@@ -13,12 +15,25 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   userEmail, 
   onVerificationSuccess 
 }) => {
+  const navigate = useNavigate();
+  
   // Immediately trigger success with no delay
   useEffect(() => {
     console.log("BYPASS: Completely skipping email verification process for", userEmail);
+    
+    // Show a toast notification to inform the user
+    toast.success("Account created successfully!", {
+      description: "Taking you to complete your profile."
+    });
+    
     // Call verification success synchronously
     onVerificationSuccess();
-  }, [onVerificationSuccess, userEmail]);
+    
+    // Also directly navigate to the profile setup to ensure we don't get stuck
+    setTimeout(() => {
+      navigate('/profile-setup', { replace: true });
+    }, 500);
+  }, [onVerificationSuccess, userEmail, navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center">

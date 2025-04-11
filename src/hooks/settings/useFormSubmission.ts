@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
 import { SettingsFormValues } from "./settingsFormSchema";
+import { ShippingAddress } from "@/types/supabase";
 
 export const useFormSubmission = () => {
   const { user } = useAuth();
@@ -32,6 +33,15 @@ export const useFormSubmission = () => {
         description: date.description
       }));
       
+      // Ensure shipping address has all required fields
+      const shippingAddress: ShippingAddress = {
+        street: data.address.street || "",
+        city: data.address.city || "",
+        state: data.address.state || "",
+        zipCode: data.address.zipCode || "",
+        country: data.address.country || ""
+      };
+      
       // Prepare update data
       const updateData = {
         name: data.name,
@@ -39,7 +49,7 @@ export const useFormSubmission = () => {
         bio: data.bio,
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
-        shipping_address: data.address,
+        shipping_address: shippingAddress,
         gift_preferences: gift_preferences,
         important_dates: important_dates,
         data_sharing_settings: data.data_sharing_settings,

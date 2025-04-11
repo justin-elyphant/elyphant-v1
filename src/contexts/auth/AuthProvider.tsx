@@ -1,15 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthSession } from './useAuthSession';
-
-interface AuthContextProps {
-  user: any;
-  session: any;
-  isLoading: boolean;
-  isDebugMode: boolean;
-  toggleDebugMode: () => void;
-  isProcessingToken: boolean;
-}
+import { useAuthFunctions } from './authHooks';
+import { AuthContextProps } from './types';
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
@@ -22,6 +16,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isDebugMode, setIsDebugMode] = useState(false);
+  const { signOut, deleteUser } = useAuthFunctions(user);
 
   // Check for new signup flow from localStorage
   useEffect(() => {
@@ -50,6 +45,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isDebugMode,
     toggleDebugMode,
     isProcessingToken,
+    signOut,
+    deleteUser,
   };
 
   return (

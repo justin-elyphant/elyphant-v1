@@ -12,3 +12,14 @@ export interface AuthState {
   updateUserProfile: (updates: any) => Promise<void>;
   deleteUser: () => Promise<void>;
 }
+
+export interface AuthContextProps {
+  user: any;
+  session: any;
+  isLoading: boolean;
+  isDebugMode: boolean;
+  toggleDebugMode: () => void;
+  isProcessingToken: boolean;
+  signOut: () => Promise<void>;
+  deleteUser: () => Promise<void>;
+}

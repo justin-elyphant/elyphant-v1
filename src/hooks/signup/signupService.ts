@@ -11,25 +11,58 @@ export const signUpUser = async (
   try {
     console.log(`Attempting direct signup for ${values.email}`);
     
-    // Call the edge function directly to create pre-confirmed user
-    const response = await supabase.functions.invoke('create-user', {
-      body: {
-        email: values.email,
-        password: values.password,
-        name: values.name,
-        invitedBy,
-        senderUserId
+    // Try direct signup first - simpler and avoids edge function
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        data: {
+          name: values.name,
+          invited_by: invitedBy,
+          sender_user_id: senderUserId
+        }
       }
     });
     
-    if (response.error) {
-      throw new Error(response.error.message || "Failed to create user");
+    if (signUpError) {
+      // If signup failed with "already registered" error, try to get user details
+      if (signUpError.message.includes("already registered")) {
+        console.log("User already exists, trying direct sign-in");
+        
+        // Try signing in to check if credentials are valid
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password
+        });
+        
+        if (signInError) {
+          if (signInError.message.includes("Invalid login credentials")) {
+            console.log("Invalid credentials for existing user");
+            return {
+              success: false, 
+              code: "invalid_credentials",
+              error: "Email exists but password is incorrect"
+            };
+          }
+          throw signInError;
+        }
+        
+        console.log("Signed in existing user successfully");
+        return {
+          success: true,
+          user: signInData.user,
+          session: signInData.session
+        };
+      }
+      
+      // For other errors, throw them to be handled by the caller
+      throw signUpError;
     }
     
-    console.log("User created successfully:", response.data);
+    console.log("User signed up successfully:", signUpData);
     
     // Auto sign-in the user after creation
-    if (response.data.success) {
+    if (signUpData.user) {
       console.log("Auto signing in the user");
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email,
@@ -52,7 +85,10 @@ export const signUpUser = async (
       }
     }
     
-    return response.data;
+    return {
+      success: true,
+      user: signUpData.user
+    };
   } catch (error) {
     console.error("Error in signUpUser:", error);
     throw error;

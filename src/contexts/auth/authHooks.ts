@@ -1,78 +1,50 @@
 
-import { useState } from "react";
+import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getUserProfile as fetchUserProfile, updateUserProfile as updateProfile, resendVerificationEmail as resendEmail, sendDeletionEmail } from "./authUtils";
-import { Profile } from "@/types/supabase";
 
-export const useAuthFunctions = (user: any) => {
+export const useAuthFunctions = (user: User | null) => {
   const navigate = useNavigate();
-  const [bucketInitialized, setBucketInitialized] = useState(false);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-
-  const getUserProfile = async () => {
-    return await fetchUserProfile(user);
-  };
-  
-  const updateUserProfile = async (updates: Partial<Profile>) => {
-    await updateProfile(user, updates);
-  };
-  
-  const resendVerificationEmail = async () => {
-    await resendEmail(user?.email);
+  const signOut = async (): Promise<void> => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/");
+      toast.success("You have been signed out");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out");
+    }
   };
 
-  const deleteUser = async () => {
+  const deleteUser = async (): Promise<void> => {
     if (!user) {
-      toast.error('You must be logged in to delete your account');
+      toast.error("No user logged in");
       return;
     }
-    
+
     try {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', user.id)
-        .single();
+      // Delete user account
+      const { error } = await supabase.rpc('delete_user');
       
-      if (user.email) {
-        await sendDeletionEmail(user.email, profileData?.name);
-      }
+      if (error) throw error;
       
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-      
-      if (profileError) throw profileError;
-      
-      const { error: authError } = await supabase.auth.admin.deleteUser(
-        user.id
-      );
-      
-      if (authError) throw authError;
-      
+      // Sign out after deletion
       await supabase.auth.signOut();
-      navigate('/');
+      
+      // Redirect to home page
+      navigate("/");
+      toast.success("Your account has been deleted");
     } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete account');
+      console.error("Error deleting user account:", error);
+      toast.error("Failed to delete your account");
       throw error;
     }
   };
 
   return {
     signOut,
-    getUserProfile,
-    resendVerificationEmail,
-    updateUserProfile,
-    deleteUser,
-    bucketInitialized,
-    setBucketInitialized,
+    deleteUser
   };
 };

@@ -23,6 +23,7 @@ export const useSignUpSubmit = ({
     try {
       console.log("Sign up initiated for", values.email);
       
+      // Call the create-user function directly, skipping email verification entirely
       const result = await signUpUser(values, null, null);
       
       if (!result) {
@@ -37,8 +38,8 @@ export const useSignUpSubmit = ({
       setUserEmail(values.email);
       setUserName(values.name);
       
-      // TESTING MODE: Completely bypass email verification
-      console.log("BYPASS MODE: Skipping email verification entirely");
+      // DIRECT FLOW: Skip email verification entirely
+      console.log("BYPASS MODE: Completely skipping email verification and going directly to profile setup");
       
       // Set a dummy verification code
       setTestVerificationCode("123456");
@@ -50,8 +51,8 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       
-      // Force to verification step which will auto-redirect to profile setup
-      setStep("verification");
+      // Force to profile setup directly
+      window.location.href = "/profile-setup";
     } catch (err: any) {
       console.error("Signup failed:", err);
       
@@ -59,9 +60,9 @@ export const useSignUpSubmit = ({
         toast.error("Email already registered", {
           description: "Please use a different email address or try to sign in.",
         });
-      } else if (err.message?.includes("incorrect")) {
-        toast.error("Authentication failed", {
-          description: err.message || "Please try with a different email.",
+      } else if (err.message?.includes("rate limit") || err.message?.includes("exceeded")) {
+        toast.error("Email rate limit exceeded", {
+          description: "Please try again in a few minutes or use a different email address.",
         });
       } else {
         toast.error("Signup failed", {

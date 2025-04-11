@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useVerificationRedirect } from "./useVerificationRedirect";
 import { useSignUpSubmit } from "./useSignUpSubmit";
@@ -15,6 +15,14 @@ export function useSignUpProcess() {
 
   // Check for URL parameters indicating verified status
   useVerificationRedirect(navigate, setUserEmail);
+  
+  // DETECT DIRECT NAVIGATION TO PROFILE SETUP
+  useEffect(() => {
+    if (emailSent && step === "verification") {
+      console.log("Auto-redirecting to profile setup");
+      navigate('/profile-setup', { replace: true });
+    }
+  }, [emailSent, step, navigate]);
   
   // Handle signup form submission
   const { onSignUpSubmit } = useSignUpSubmit({

@@ -1,53 +1,36 @@
 
-import { ShippingAddress } from "@/types/supabase";
+import { ProfileData } from "../hooks/types";
 
-// Validate an email address string
-const isValidEmail = (email: string) => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
-};
-
-// Validate shipping address
-const isValidAddress = (address: ShippingAddress) => {
-  return (
-    !!address.street &&
-    !!address.city &&
-    !!address.state &&
-    !!address.zipCode &&
-    !!address.country
-  );
-};
-
-// Validate profile data based on current step
-export const validateStep = (step: number, data: any) => {
-  switch (step) {
-    // Basic Info step - name required
+export const validateStep = (activeStep: number, profileData: ProfileData): boolean => {
+  // For steps that need to be fixed
+  switch (activeStep) {
+    // Basic Info step
     case 0:
-      return !!data.name && data.name.trim().length > 1;
+      return !!profileData.name && profileData.name.trim() !== '';
     
-    // Combined Profile step - username required (photo optional)
+    // Profile
     case 1:
-      return !!data.username && data.username.trim().length >= 3;
+      return !!profileData.username && profileData.username.trim() !== '';
     
-    // Birthday step - date required
+    // Birthday
     case 2:
-      return !!data.dob;
+      return true; // Allow skipping this step for now
     
-    // Shipping Address step - all fields required
+    // Shipping Address
     case 3:
-      return isValidAddress(data.shipping_address);
+      return true; // Allow skipping this step for now
     
-    // Gift Preferences step - at least one preference required
+    // Gift Preferences
     case 4:
-      return Array.isArray(data.gift_preferences) && data.gift_preferences.length > 0;
+      return true; // Allow skipping this step for now
     
-    // Data Sharing step - always valid
+    // Data Sharing
     case 5:
-      return true;
-      
-    // Next Steps step - always valid
+      return true; // Allow skipping this step for now
+    
+    // Next Steps
     case 6:
-      return true;
+      return !!profileData.next_steps_option;
     
     default:
       return true;

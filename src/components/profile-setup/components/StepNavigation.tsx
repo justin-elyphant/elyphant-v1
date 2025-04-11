@@ -23,6 +23,11 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   onComplete,
   onSkip,
 }) => {
+  // Add debug information to help diagnose the issue
+  console.log("Step Navigation - Current step:", activeStep);
+  console.log("Step Navigation - Is valid:", isCurrentStepValid);
+  console.log("Step Navigation - Is loading:", isLoading);
+
   return (
     <div className="flex justify-between pt-4 border-t w-full">
       <div>
@@ -41,7 +46,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
             onClick={onNext}
-            disabled={!isCurrentStepValid || isLoading}
+            disabled={isLoading}
           >
             Next Step
           </Button>
@@ -49,7 +54,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
             onClick={onComplete}
-            disabled={!isCurrentStepValid || isLoading}
+            disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Complete Setup"}
           </Button>

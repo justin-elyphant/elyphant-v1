@@ -36,6 +36,11 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     updateProfileData
   } = useProfileSetup({ onComplete, onSkip });
 
+  // Add debug logging to help troubleshoot
+  console.log("ProfileSetupFlow - Current step:", activeStep);
+  console.log("ProfileSetupFlow - Is current step valid:", isCurrentStepValid);
+  console.log("ProfileSetupFlow - Profile data:", profileData);
+
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg">
       <CardHeader className="text-center">

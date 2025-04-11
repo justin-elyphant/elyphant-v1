@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,21 +78,28 @@ export function useAuthSession(): UseAuthSessionReturn {
           if (!isProcessingToken && !location.pathname.includes('/sign-up')) {
             toast.success('Signed in successfully!');
             
-            // Check if this is a new user that needs profile setup
-            // For new sign-ups, we'll check if they need profile setup
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('name, username')
-              .eq('id', session?.user?.id)
-              .single();
-            
-            // If profile is incomplete, redirect to profile setup
-            if (!profile || !profile.username) {
-              console.log("New or incomplete profile detected, redirecting to profile setup");
+            try {
+              // Check if this is a new user that needs profile setup
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('username, name')
+                .eq('id', session?.user?.id)
+                .single();
+              
+              console.log("Profile check for new user:", profile);
+              
+              // If profile is incomplete (missing username), redirect to profile setup
+              if (!profile || !profile.username) {
+                console.log("Incomplete profile detected, redirecting to profile setup");
+                navigate('/profile-setup', { replace: true });
+              } else {
+                // If profile is complete, go to dashboard
+                navigate('/dashboard', { replace: true });
+              }
+            } catch (error) {
+              console.error("Error checking profile:", error);
+              // Default to profile setup if we can't determine profile status
               navigate('/profile-setup', { replace: true });
-            } else {
-              // If profile is complete, go to dashboard
-              navigate('/dashboard', { replace: true });
             }
           }
         } else if (event === 'SIGNED_OUT') {

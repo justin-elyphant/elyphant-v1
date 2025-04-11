@@ -67,7 +67,7 @@ export function useAuthSession(): UseAuthSessionReturn {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state change event:", event);
+        console.log("Auth state change event:", event, "on path:", location.pathname);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
@@ -77,6 +77,12 @@ export function useAuthSession(): UseAuthSessionReturn {
           // or if we're on the sign-up page (which handles its own verification)
           if (!isProcessingToken && !location.pathname.includes('/sign-up')) {
             toast.success('Signed in successfully!');
+            
+            // Don't redirect if we're already on the profile setup page
+            if (location.pathname === '/profile-setup') {
+              console.log("Already on profile setup page, no redirect needed");
+              return;
+            }
             
             try {
               // Check if this is a new user that needs profile setup
@@ -101,6 +107,9 @@ export function useAuthSession(): UseAuthSessionReturn {
               // Default to profile setup if we can't determine profile status
               navigate('/profile-setup', { replace: true });
             }
+          } else {
+            console.log("Skipping auto-redirect because isProcessingToken=", isProcessingToken, 
+                        "or on signup page:", location.pathname.includes('/sign-up'));
           }
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');

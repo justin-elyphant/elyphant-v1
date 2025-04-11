@@ -31,7 +31,7 @@ export const signUpUser = async (
     // Auto sign-in the user after creation
     if (response.data.success) {
       console.log("Auto signing in the user");
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password
       });
@@ -41,7 +41,15 @@ export const signUpUser = async (
         throw signInError;
       }
       
-      console.log("User signed in successfully after creation");
+      console.log("User signed in successfully after creation:", data);
+      
+      // Force a session refresh to make sure auth state is updated
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error("Error refreshing session:", refreshError);
+      } else {
+        console.log("Session refreshed successfully");
+      }
     }
     
     return response.data;

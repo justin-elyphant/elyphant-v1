@@ -11,18 +11,37 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
-  const { user, isDebugMode } = useAuth();
+  const { user, isDebugMode, isLoading } = useAuth();
   
   // Redirect logged out users
   React.useEffect(() => {
-    if (!user && !isDebugMode) {
-      console.log("User not authenticated for profile setup, redirecting to sign-in");
-      toast.error("You must be logged in to set up your profile");
-      navigate("/sign-in");
-    } else {
-      console.log("User authenticated or debug mode enabled for profile setup");
-    }
-  }, [user, navigate, isDebugMode]);
+    const checkAuthStatus = async () => {
+      // First check if we're still loading
+      if (isLoading) {
+        console.log("Auth state still loading, waiting...");
+        return;
+      }
+      
+      // If no user and debug mode is off, check one more time with fresh session
+      if (!user && !isDebugMode) {
+        console.log("No user detected, checking session again before redirecting...");
+        
+        // Try refreshing the session once before redirecting
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          console.log("Still no authenticated user after refresh, redirecting to sign-in");
+          toast.error("You must be logged in to set up your profile");
+          navigate("/sign-in");
+        } else {
+          console.log("Session found after refresh, allowing profile setup");
+        }
+      } else {
+        console.log("User authenticated or debug mode enabled for profile setup");
+      }
+    };
+    
+    checkAuthStatus();
+  }, [user, navigate, isDebugMode, isLoading]);
 
   const handleSetupComplete = async () => {
     console.log("Profile setup complete");
@@ -54,6 +73,16 @@ const ProfileSetup = () => {
     toast.info("You can complete your profile later in settings");
     navigate("/dashboard");
   };
+
+  // Show a loading indicator if auth state is still loading
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <span className="ml-3">Loading your profile information...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

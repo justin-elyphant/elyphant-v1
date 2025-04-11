@@ -51,7 +51,8 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       
-      // Force to profile setup directly
+      // Force redirection to profile setup with a direct page navigation
+      // Using window.location to force a complete page reload to reset any auth state issues
       window.location.href = "/profile-setup";
     } catch (err: any) {
       console.error("Signup failed:", err);

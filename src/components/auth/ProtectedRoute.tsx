@@ -1,7 +1,8 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProtectedRouteProps {
   redirectPath?: string;
@@ -14,6 +15,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { user, isLoading, isDebugMode } = useAuth();
   const location = useLocation();
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [freshUser, setFreshUser] = useState<any>(null);
+
+  // Check for fresh session - useful right after signup when auth context might not be updated yet
+  useEffect(() => {
+    const checkFreshSession = async () => {
+      // Only do this extra check if the auth context shows no user
+      if (!user && !isDebugMode) {
+        console.log("No user in auth context, checking for fresh session");
+        const { data } = await supabase.auth.getSession();
+        setFreshUser(data.session?.user || null);
+      }
+      setIsCheckingSession(false);
+    };
+    
+    checkFreshSession();
+  }, [user, isDebugMode]);
 
   // If in debug mode, bypass authentication
   if (isDebugMode) {
@@ -21,8 +39,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <>{children}</>;
   }
 
-  // If still loading auth state, render loading indicator
-  if (isLoading) {
+  // If still loading auth state or checking session, render loading indicator
+  if (isLoading || isCheckingSession) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -31,8 +49,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Consider both the auth context user and any fresh session user
+  const effectiveUser = user || freshUser;
+
+  // Special case for profile-setup page - it's a protected route but we're more lenient
+  if (location.pathname === '/profile-setup') {
+    console.log("On profile setup page, being more lenient with auth checks");
+    if (!effectiveUser) {
+      // Only redirect if we're really sure there's no session
+      console.log("Confirmed no active user session for profile setup, redirecting");
+      return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
+    }
+    return <>{children}</>;
+  }
+
   // If no user and finished loading, redirect to login
-  if (!user) {
+  if (!effectiveUser) {
     console.log("User not authenticated, redirecting to:", redirectPath, "from:", location.pathname);
     
     // Save the current path to redirect back after login

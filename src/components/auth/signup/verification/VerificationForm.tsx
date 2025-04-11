@@ -21,6 +21,10 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   useEffect(() => {
     console.log("ULTIMATE BYPASS: Completely skipping email verification for", userEmail);
     
+    // Store in localStorage for persistence through redirects
+    localStorage.setItem("newSignUp", "true");
+    localStorage.setItem("userEmail", userEmail);
+    
     // Call verification success synchronously
     onVerificationSuccess();
     
@@ -43,7 +47,7 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
         // Last resort redirect
         document.location.href = '/profile-setup';
       }
-    }, 50);
+    }, 100);
   }, [onVerificationSuccess, userEmail, navigate]);
 
   return (

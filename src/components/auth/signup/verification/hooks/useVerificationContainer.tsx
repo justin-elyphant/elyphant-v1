@@ -21,6 +21,10 @@ export const useVerificationContainer = ({
     if (userEmail && !isVerified) {
       console.log("COMPLETE BYPASS: Immediately skipping entire verification for", userEmail);
       
+      // Store in localStorage for persistence
+      localStorage.setItem("newSignUp", "true");
+      localStorage.setItem("userEmail", userEmail);
+      
       // Mark as verified immediately
       setIsVerified(true);
       

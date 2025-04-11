@@ -79,13 +79,22 @@ const UserProfile = () => {
           id: data.id,
           name: data.name || "Unnamed User",
           email: data.email,
-          username: data.email?.split('@')[0] || "username",
+          username: data.username || data.email?.split('@')[0] || "username",
           bio: data.bio || "",
           profileImage: data.profile_image,
           birthday: data.dob,
           address: data.shipping_address,
-          interests: data.gift_preferences?.map((pref: any) => pref.category) || [],
-          importantDates: []  // Will be populated from user_special_dates table
+          interests: Array.isArray(data.gift_preferences) 
+            ? data.gift_preferences.map((pref: any) => 
+                typeof pref === 'string' ? pref : pref.category
+              ).filter(Boolean) 
+            : [],
+          importantDates: data.important_dates || [],
+          data_sharing_settings: data.data_sharing_settings || {
+            dob: "private",
+            shipping_address: "private",
+            gift_preferences: "friends"
+          }
         });
         
         // Fetch important dates if available

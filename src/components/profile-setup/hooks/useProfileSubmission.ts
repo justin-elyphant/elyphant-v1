@@ -34,6 +34,27 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         return pref;
       });
       
+      // Format important dates if available
+      const importantDates = Array.isArray(profileData.important_dates) 
+        ? profileData.important_dates 
+        : [];
+      
+      // Ensure shipping address has all required fields
+      const shippingAddress = {
+        street: profileData.shipping_address?.street || "",
+        city: profileData.shipping_address?.city || "",
+        state: profileData.shipping_address?.state || "",
+        zipCode: profileData.shipping_address?.zipCode || "",
+        country: profileData.shipping_address?.country || ""
+      };
+      
+      // Ensure data sharing settings have all required fields
+      const dataSharingSettings = {
+        dob: profileData.data_sharing_settings?.dob || "friends",
+        shipping_address: profileData.data_sharing_settings?.shipping_address || "private",
+        gift_preferences: profileData.data_sharing_settings?.gift_preferences || "public"
+      };
+      
       // Prepare update data
       const userData = {
         name: profileData.name,
@@ -41,9 +62,11 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         email: profileData.email,
         profile_image: profileData.profile_image,
         dob: profileData.dob,
-        shipping_address: profileData.shipping_address,
+        bio: profileData.bio || "",
+        shipping_address: shippingAddress,
         gift_preferences: giftPreferences,
-        data_sharing_settings: profileData.data_sharing_settings,
+        important_dates: importantDates,
+        data_sharing_settings: dataSharingSettings,
         updated_at: new Date().toISOString()
       };
       

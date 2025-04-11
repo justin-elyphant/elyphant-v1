@@ -3,7 +3,7 @@ import React from "react";
 import { Users, Heart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays, MapPin, Info } from "lucide-react";
 import { format } from "date-fns";
 
 interface ProfileInfoProps {
@@ -70,6 +70,17 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
                     </TableCell>
                     <TableCell>
                       {userData.address.city}, {userData.address.country}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {userData?.email && userData?.data_sharing_settings?.email === "public" && (
+                  <TableRow>
+                    <TableCell className="font-medium flex items-center">
+                      <Info className="h-4 w-4 mr-2" />
+                      Email
+                    </TableCell>
+                    <TableCell>
+                      {userData.email}
                     </TableCell>
                   </TableRow>
                 )}

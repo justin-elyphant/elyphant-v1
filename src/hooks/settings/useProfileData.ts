@@ -47,13 +47,20 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         ).filter(Boolean);
       }
       
-      // Map shipping_address to address
-      const address = profile.shipping_address || {
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: ''
+      // Map shipping_address to address, ensuring it has all required fields
+      const address = {
+        street: profile.shipping_address?.street || '',
+        city: profile.shipping_address?.city || '',
+        state: profile.shipping_address?.state || '',
+        zipCode: profile.shipping_address?.zipCode || '',
+        country: profile.shipping_address?.country || ''
+      };
+      
+      // Ensure data sharing settings have all required fields
+      const dataSharingSettings = {
+        dob: profile.data_sharing_settings?.dob || "private",
+        shipping_address: profile.data_sharing_settings?.shipping_address || "private",
+        gift_preferences: profile.data_sharing_settings?.gift_preferences || "friends"
       };
       
       // Make sure we're setting all available profile data
@@ -66,11 +73,7 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         address: address,
         interests: interests,
         importantDates: importantDates,
-        data_sharing_settings: profile.data_sharing_settings || {
-          dob: "private",
-          shipping_address: "private",
-          gift_preferences: "friends"
-        }
+        data_sharing_settings: dataSharingSettings
       });
     }
   };

@@ -1,5 +1,5 @@
 
-import { ShippingAddress, SharingLevel, GiftPreference } from "@/types/supabase";
+import { ShippingAddress, SharingLevel, GiftPreference, ImportantDate } from "@/types/supabase";
 
 export interface ProfileData {
   name: string;
@@ -7,8 +7,10 @@ export interface ProfileData {
   email: string;
   profile_image: string | null;
   dob: string;
+  bio?: string;
   shipping_address: ShippingAddress;
   gift_preferences: GiftPreference[];
+  important_dates?: ImportantDate[];
   data_sharing_settings: {
     dob: SharingLevel;
     shipping_address: SharingLevel;

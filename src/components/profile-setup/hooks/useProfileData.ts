@@ -14,6 +14,7 @@ export const useProfileData = () => {
     email: user?.email || "",
     profile_image: null,
     dob: "",
+    bio: "",
     shipping_address: {
       street: "",
       city: "",
@@ -22,6 +23,7 @@ export const useProfileData = () => {
       country: ""
     },
     gift_preferences: [],
+    important_dates: [],
     data_sharing_settings: {
       dob: "friends",
       shipping_address: "private",
@@ -69,9 +71,11 @@ export const useProfileData = () => {
             username: username,
             email: data.email || user.email || '',
             profile_image: data.profile_image || prevData.profile_image,
+            bio: data.bio || prevData.bio,
             dob: data.dob || prevData.dob,
             shipping_address: data.shipping_address || prevData.shipping_address,
             gift_preferences: gift_preferences,
+            important_dates: data.important_dates || [],
             data_sharing_settings: sharing_settings
           }));
         }

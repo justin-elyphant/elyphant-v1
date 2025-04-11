@@ -2,6 +2,7 @@
 import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { signUpUser } from "@/hooks/signup/signupService";
+import { useNavigate } from "react-router-dom";
 
 interface UseSignUpSubmitProps {
   setUserEmail: (email: string) => void;
@@ -18,6 +19,7 @@ export const useSignUpSubmit = ({
   setStep,
   setTestVerificationCode
 }: UseSignUpSubmitProps) => {
+  const navigate = useNavigate();
   
   const onSignUpSubmit = async (values: SignUpFormValues) => {
     try {
@@ -60,12 +62,9 @@ export const useSignUpSubmit = ({
       
       setEmailSent(true);
       
-      // Force redirection to profile setup with a direct page navigation
-      // Add a short timeout to ensure state is updated before navigation
-      setTimeout(() => {
-        console.log("Redirecting to profile setup");
-        window.location.href = "/profile-setup";
-      }, 10);
+      // Use React Router navigation instead of direct location change
+      // This maintains the React component lifecycle better
+      navigate('/profile-setup', { replace: true });
     } catch (err: any) {
       console.error("Signup failed:", err);
       

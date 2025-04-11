@@ -19,21 +19,17 @@ export const useVerificationContainer = ({
   useEffect(() => {
     if (userEmail && !isVerified) {
       console.log("AUTO-BYPASS: Skipping entire verification flow for", userEmail);
+      
+      // Mark as verified immediately
+      setIsVerified(true);
+      
       toast.info("Verification bypassed", {
         description: "Taking you to complete your profile",
         duration: 3000
       });
       
-      // Mark as verified immediately
-      setIsVerified(true);
-      
       // Redirect to profile setup with minimal delay
-      const timer = setTimeout(() => {
-        console.log("Directly redirecting to profile setup");
-        navigate("/profile-setup", { replace: true });
-      }, 100);
-      
-      return () => clearTimeout(timer);
+      navigate("/profile-setup", { replace: true });
     }
   }, [userEmail, navigate, isVerified]);
 
@@ -42,9 +38,7 @@ export const useVerificationContainer = ({
     toast.success("Account created successfully!");
     
     // Redirect to profile setup
-    setTimeout(() => {
-      navigate("/profile-setup", { replace: true });
-    }, 100);
+    navigate("/profile-setup", { replace: true });
   };
 
   // Function to manually set the verification code (not needed anymore but kept for API compatibility)

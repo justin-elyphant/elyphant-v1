@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
@@ -12,13 +12,14 @@ import { supabase } from "@/integrations/supabase/client";
 const ProfileSetup = () => {
   const navigate = useNavigate();
   const { user, isDebugMode, isLoading } = useAuth();
-  const [isInitializing, setIsInitializing] = React.useState(true);
-  const [sessionChecked, setSessionChecked] = React.useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
   
   // Check auth status on initial load with auto-retry
-  React.useEffect(() => {
-    let retryCount = 0;
-    const maxRetries = 3;
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     
     const checkAuthStatus = async () => {
       // First check if we're still loading
@@ -36,24 +37,28 @@ const ProfileSetup = () => {
           const { data } = await supabase.auth.getSession();
           
           if (!data.session) {
-            retryCount++;
             if (retryCount < maxRetries) {
-              console.log(`No authenticated session found, refreshing... (attempt ${retryCount + 1})`);
-              setTimeout(checkAuthStatus, 1000); // Retry after 1 second
+              const nextRetry = retryCount + 1;
+              setRetryCount(nextRetry);
+              console.log(`No authenticated session found, refreshing... (attempt ${nextRetry}/${maxRetries})`);
+              
+              // Use increasing timeouts for retries
+              timeoutId = setTimeout(checkAuthStatus, nextRetry * 500);
               return;
             }
             
-            console.log("No authenticated user after multiple refresh attempts, redirecting to sign-in");
-            toast.error("Authentication required", {
-              description: "Please sign in to continue setting up your profile"
-            });
-            navigate("/sign-in");
+            console.log("No authenticated user after multiple refresh attempts");
+            
+            // Instead of redirecting, we'll still show the profile setup
+            // This is important for the flow right after signup
+            setSessionChecked(true);
           } else {
             console.log("Session found:", data.session.user.email);
             setSessionChecked(true);
           }
         } catch (error) {
           console.error("Error checking session:", error);
+          setSessionChecked(true);
         }
       } else {
         console.log("User authenticated or debug mode enabled for profile setup");
@@ -64,7 +69,11 @@ const ProfileSetup = () => {
     };
     
     checkAuthStatus();
-  }, [user, navigate, isDebugMode, isLoading]);
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [user, navigate, isDebugMode, isLoading, retryCount]);
 
   const handleSetupComplete = async () => {
     console.log("Profile setup complete");
@@ -98,14 +107,16 @@ const ProfileSetup = () => {
   };
 
   // Show a loading indicator if still initializing or auth state is loading
-  if (isLoading || isInitializing) {
+  if (isLoading || (isInitializing && retryCount < maxRetries)) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
         <span className="text-lg font-medium">Setting up your profile...</span>
-        <p className="text-gray-500 mt-2 text-center max-w-md">
-          Just a moment while we prepare your profile information
-        </p>
+        {retryCount > 0 && (
+          <p className="text-gray-500 mt-2">
+            Verifying session ({retryCount}/{maxRetries})
+          </p>
+        )}
       </div>
     );
   }

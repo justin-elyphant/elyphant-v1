@@ -13,20 +13,19 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   userEmail, 
   onVerificationSuccess 
 }) => {
-  // COMPLETELY bypass verification - trigger success immediately
+  // Immediately trigger success with no delay
   useEffect(() => {
-    console.log("BYPASS: Completely skipping email verification process");
-    // Immediate success trigger without any delay
+    console.log("BYPASS: Completely skipping email verification process for", userEmail);
+    // Call verification success synchronously
     onVerificationSuccess();
-    
-  }, [onVerificationSuccess]);
+  }, [onVerificationSuccess, userEmail]);
 
   return (
     <div className="flex flex-col items-center justify-center">
       <Alert className="bg-amber-50 border-amber-200 mb-4">
         <Info className="h-4 w-4 text-amber-500 mr-2" />
         <AlertDescription className="text-amber-700">
-          <span className="font-semibold">Auto-redirect active:</span> Skipping verification. You will be redirected to profile setup automatically.
+          <span className="font-semibold">Auto-verification active:</span> Skipping verification and redirecting you automatically.
         </AlertDescription>
       </Alert>
     </div>

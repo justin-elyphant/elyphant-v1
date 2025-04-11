@@ -13,9 +13,13 @@ const ProfileSetup = () => {
   const navigate = useNavigate();
   const { user, isDebugMode, isLoading } = useAuth();
   const [isInitializing, setIsInitializing] = React.useState(true);
+  const [sessionChecked, setSessionChecked] = React.useState(false);
   
-  // Check auth status on initial load
+  // Check auth status on initial load with auto-retry
   React.useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
+    
     const checkAuthStatus = async () => {
       // First check if we're still loading
       if (isLoading) {
@@ -25,31 +29,35 @@ const ProfileSetup = () => {
       
       // If no user and debug mode is off, check one more time with fresh session
       if (!user && !isDebugMode) {
-        console.log("No user detected in ProfileSetup, checking session...");
+        console.log(`No user detected in ProfileSetup, checking session... (attempt ${retryCount + 1})`);
         
         try {
           // Try refreshing the session once before redirecting
           const { data } = await supabase.auth.getSession();
           
           if (!data.session) {
-            console.log("No authenticated session found, refreshing one more time...");
-            const refreshResult = await supabase.auth.refreshSession();
-            
-            if (!refreshResult.data.session) {
-              console.log("Still no authenticated user after refresh, redirecting to sign-in");
-              toast.error("You must be logged in to set up your profile");
-              navigate("/sign-in");
-            } else {
-              console.log("Session found after refresh:", refreshResult.data.session.user.email);
+            retryCount++;
+            if (retryCount < maxRetries) {
+              console.log(`No authenticated session found, refreshing... (attempt ${retryCount + 1})`);
+              setTimeout(checkAuthStatus, 1000); // Retry after 1 second
+              return;
             }
+            
+            console.log("No authenticated user after multiple refresh attempts, redirecting to sign-in");
+            toast.error("Authentication required", {
+              description: "Please sign in to continue setting up your profile"
+            });
+            navigate("/sign-in");
           } else {
             console.log("Session found:", data.session.user.email);
+            setSessionChecked(true);
           }
         } catch (error) {
           console.error("Error checking session:", error);
         }
       } else {
         console.log("User authenticated or debug mode enabled for profile setup");
+        setSessionChecked(true);
       }
       
       setIsInitializing(false);
@@ -77,7 +85,7 @@ const ProfileSetup = () => {
       // Navigate to dashboard after a brief delay
       setTimeout(() => {
         navigate("/dashboard");
-      }, 1000);
+      }, 500);
     } catch (error) {
       console.error("Error during profile completion:", error);
       navigate("/dashboard");
@@ -92,9 +100,12 @@ const ProfileSetup = () => {
   // Show a loading indicator if still initializing or auth state is loading
   if (isLoading || isInitializing) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        <span className="ml-3">Loading your profile information...</span>
+      <div className="flex flex-col justify-center items-center min-h-screen p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+        <span className="text-lg font-medium">Setting up your profile...</span>
+        <p className="text-gray-500 mt-2 text-center max-w-md">
+          Just a moment while we prepare your profile information
+        </p>
       </div>
     );
   }

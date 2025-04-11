@@ -16,12 +16,9 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   // COMPLETELY bypass verification - trigger success immediately
   useEffect(() => {
     console.log("BYPASS: Completely skipping email verification process");
-    // Use a small delay to ensure component is fully mounted
-    const timer = setTimeout(() => {
-      console.log("Immediately triggering verification success without code");
-      onVerificationSuccess();
-    }, 50); // Reduced delay to make it even faster
-    return () => clearTimeout(timer);
+    // Immediate success trigger without any delay
+    onVerificationSuccess();
+    
   }, [onVerificationSuccess]);
 
   return (

@@ -71,6 +71,15 @@ export function useAuthSession(): UseAuthSessionReturn {
         setIsLoading(false);
 
         if (event === 'SIGNED_IN') {
+          // Special handling for new signups - always direct to profile setup
+          const isSignUpRoute = location.pathname === '/sign-up' || location.pathname.includes('/sign-up');
+          
+          if (isSignUpRoute) {
+            console.log("Detected sign up flow, directing to profile setup");
+            navigate('/profile-setup', { replace: true });
+            return;
+          }
+          
           // Don't redirect if we're already on profile setup or handling a token
           if (!isProcessingToken && 
               !location.pathname.includes('/sign-up') && 

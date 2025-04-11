@@ -33,6 +33,15 @@ export const useSignUpSubmit = ({
         return;
       }
       
+      // Check if user already exists - in which case we shouldn't proceed with redirection
+      if (result.code === "user_exists") {
+        console.error("User already exists:", result.message);
+        toast.error("Email already registered", {
+          description: "Please use a different email address or try to sign in.",
+        });
+        return;
+      }
+      
       console.log("Sign up successful:", result);
       
       setUserEmail(values.email);

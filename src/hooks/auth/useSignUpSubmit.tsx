@@ -37,32 +37,21 @@ export const useSignUpSubmit = ({
       setUserEmail(values.email);
       setUserName(values.name);
       
-      // TESTING MODE: Bypass actual email verification
-      console.log("TESTING MODE: Bypassing actual email verification");
+      // TESTING MODE: Completely bypass email verification
+      console.log("BYPASS MODE: Skipping email verification entirely");
       
-      // Set a test verification code
-      const testCode = "123456";
-      setTestVerificationCode(testCode);
+      // Set a dummy verification code
+      setTestVerificationCode("123456");
       
       // Show success toast for better user feedback
-      if (result.userExists) {
-        toast.success("Welcome back! Using existing account", {
-          description: "You'll be redirected to the dashboard shortly."
-        });
-      } else {
-        toast.success("Account created successfully!", {
-          description: "You'll be redirected to profile setup automatically."
-        });
-      }
+      toast.success("Account created successfully!", {
+        description: "Taking you to complete your profile."
+      });
       
       setEmailSent(true);
-      setStep("verification");
       
-      // Show the test verification code to the user
-      toast.info("Test verification code", {
-        description: `Your verification code is: ${testCode}`,
-        duration: 10000 // Show for 10 seconds
-      });
+      // Force to verification step which will auto-redirect to profile setup
+      setStep("verification");
     } catch (err: any) {
       console.error("Signup failed:", err);
       

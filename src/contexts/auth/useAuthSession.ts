@@ -36,19 +36,19 @@ export function useAuthSession(): UseAuthSessionReturn {
         return;
       }
       
-      // Intercept ANY Supabase auth redirects - this captures both access_token and confirmation links
+      // For any auth redirects, take them to profile setup directly
       if ((accessToken && !isProcessingToken) || 
           (type === 'signup' || type === 'recovery') || 
           confirmToken) {
         setIsProcessingToken(true);
-        console.log("Intercepted Supabase auth redirect - redirecting to custom verification flow");
+        console.log("Intercepted auth redirect - redirecting to profile setup");
         
         // Clear URL parameters while preserving the path
         const cleanPath = location.pathname;
         window.history.replaceState(null, '', cleanPath);
         
-        // Always redirect to our custom verification flow regardless of the token source
-        navigate('/sign-up', { replace: true });
+        // Always redirect to profile setup
+        navigate('/profile-setup', { replace: true });
         
         setTimeout(() => {
           setIsProcessingToken(false);
@@ -71,10 +71,7 @@ export function useAuthSession(): UseAuthSessionReturn {
         setIsLoading(false);
 
         if (event === 'SIGNED_IN') {
-          // Don't show success toast or redirect if:
-          // 1. We're processing a token
-          // 2. We're on the sign-up page (which handles its own redirects)
-          // 3. We're already on the profile-setup page
+          // Don't redirect if we're already on profile setup or handling a token
           if (!isProcessingToken && 
               !location.pathname.includes('/sign-up') && 
               location.pathname !== '/profile-setup') {
@@ -91,9 +88,9 @@ export function useAuthSession(): UseAuthSessionReturn {
               
               console.log("Profile check for new user:", profile);
               
-              // If profile is incomplete (missing username), redirect to profile setup
-              if (!profile || !profile.username) {
-                console.log("Incomplete profile detected, redirecting to profile setup");
+              // New logic: ALWAYS go to profile setup for new signups
+              if (event === 'SIGNED_UP' || !profile || !profile.username) {
+                console.log("New signup or incomplete profile, redirecting to profile setup");
                 navigate('/profile-setup', { replace: true });
               } else {
                 // If profile is complete, go to dashboard
@@ -105,10 +102,7 @@ export function useAuthSession(): UseAuthSessionReturn {
               navigate('/profile-setup', { replace: true });
             }
           } else {
-            console.log("Skipping auto-redirect because:",
-                       "isProcessingToken=", isProcessingToken,
-                       "on signup page=", location.pathname.includes('/sign-up'),
-                       "on profile setup=", location.pathname === '/profile-setup');
+            console.log("Skipping auto-redirect because of special path condition");
           }
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');

@@ -35,13 +35,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (!user) {
     console.log("User not authenticated, redirecting to:", redirectPath, "from:", location.pathname);
     
-    // Special case: If we're coming from the signup page, we should redirect to profile setup
-    // This is a fallback in case other redirects failed
-    if (location.pathname.includes('/sign-up')) {
-      console.log("Coming from signup page, redirecting to profile setup instead");
-      return <Navigate to="/profile-setup" replace />;
-    }
-    
     // Save the current path to redirect back after login
     return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
   }

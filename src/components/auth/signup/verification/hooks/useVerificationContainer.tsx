@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useVerificationStatus } from "./useVerificationStatus";
 
 interface UseVerificationContainerProps {
   userEmail: string;
@@ -10,81 +9,57 @@ interface UseVerificationContainerProps {
 }
 
 export const useVerificationContainer = ({ 
-  userEmail, 
-  testVerificationCode 
+  userEmail 
 }: UseVerificationContainerProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [localCode, setLocalCode] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   
-  const {
-    verificationChecking,
-    isVerified,
-    setIsVerified,
-    checkEmailVerification
-  } = useVerificationStatus({ userEmail });
-  
-  const effectiveVerificationCode = testVerificationCode || localCode || "123456"; // Default code for testing
-  
-  // Enhanced logging for debugging with full state details
-  useEffect(() => {
-    console.log("VerificationContainer: Full state details", {
-      userEmail,
-      testVerificationCode,
-      localCode,
-      effectiveVerificationCode,
-      isLoading,
-      verificationChecking,
-      isVerified
-    });
-  }, [userEmail, testVerificationCode, localCode, effectiveVerificationCode, isLoading, verificationChecking, isVerified]);
-
-  // AUTO-SKIP: Immediately auto-verify and redirect to profile setup
+  // IMMEDIATE AUTO-REDIRECT: Skip all verification and go directly to profile setup
   useEffect(() => {
     if (userEmail && !isVerified) {
-      console.log("AUTO-SKIP: Completely bypassing verification flow");
-      toast.info("Verification bypassed for testing", {
-        description: "You will be redirected to profile setup automatically.",
+      console.log("AUTO-BYPASS: Skipping entire verification flow for", userEmail);
+      toast.info("Verification bypassed", {
+        description: "Taking you to complete your profile",
         duration: 3000
       });
       
-      // Auto-verify immediately
+      // Mark as verified immediately
       setIsVerified(true);
       
-      // Redirect to profile setup after a very short delay
+      // Redirect to profile setup with minimal delay
       const timer = setTimeout(() => {
-        console.log("AUTO-SKIP: Directly redirecting to profile setup");
+        console.log("Directly redirecting to profile setup");
         navigate("/profile-setup", { replace: true });
-      }, 1000);
+      }, 300);
       
       return () => clearTimeout(timer);
     }
-  }, [userEmail, navigate, setIsVerified, isVerified]);
+  }, [userEmail, navigate, isVerified]);
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);
-    toast.success("Account created successfully! Setting up your profile...");
+    toast.success("Account created successfully!");
     
-    // Redirect to profile setup instead of dashboard for new users
+    // Redirect to profile setup
     setTimeout(() => {
       navigate("/profile-setup", { replace: true });
-    }, 500);
+    }, 300);
   };
 
-  // Function to manually set the verification code (for testing)
+  // Function to manually set the verification code (not needed anymore but kept for API compatibility)
   const setVerificationCode = (code: string) => {
-    console.log("Manually setting verification code:", code);
-    setLocalCode(code);
+    console.log("Code setting ignored in bypass mode:", code);
   };
 
   return {
     isLoading,
     setIsLoading,
-    verificationChecking,
+    verificationChecking: false,
     isVerified,
-    effectiveVerificationCode,
+    effectiveVerificationCode: "123456", // Dummy code, not used
     handleVerificationSuccess,
     setVerificationCode,
-    checkEmailVerification
+    checkEmailVerification: () => Promise.resolve({verified: true})
   };
 };

@@ -24,17 +24,19 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
     setIsLoading(true);
     
     try {
-      console.log("Saving profile data:", profileData);
+      console.log("Saving full profile data:", profileData);
       
-      // Format gift preferences
-      const giftPreferences = profileData.gift_preferences.map(pref => {
-        if (typeof pref === 'string') {
-          return { category: pref, importance: "medium" };
-        }
-        return pref;
-      });
+      // Format gift preferences - ensure it's an array
+      const giftPreferences = Array.isArray(profileData.gift_preferences) 
+        ? profileData.gift_preferences.map(pref => {
+            if (typeof pref === 'string') {
+              return { category: pref, importance: "medium" };
+            }
+            return pref;
+          })
+        : [];
       
-      // Format important dates if available
+      // Format important dates - ensure it's an array  
       const importantDates = Array.isArray(profileData.important_dates) 
         ? profileData.important_dates 
         : [];
@@ -58,11 +60,11 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
       // Prepare update data with all the user profile fields
       const userData = {
         id: user?.id, // Ensure we're updating the correct user
-        name: profileData.name,
-        username: profileData.username,
+        name: profileData.name || "User",
+        username: profileData.username || `user_${Date.now().toString(36)}`,
         email: profileData.email || user?.email, // Fallback to auth user email
-        profile_image: profileData.profile_image,
-        dob: profileData.dob,
+        profile_image: profileData.profile_image || null,
+        dob: profileData.dob || null,
         bio: profileData.bio || "",
         shipping_address: shippingAddress,
         gift_preferences: giftPreferences,
@@ -73,7 +75,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         onboarding_completed: true
       };
       
-      console.log("Final profile data to save:", userData);
+      console.log("Final complete profile data to save:", userData);
       
       if (user) {
         // Perform an upsert (update or insert) to ensure we have a profile

@@ -52,7 +52,11 @@ export const useSignUpSubmit = ({
       setEmailSent(true);
       
       // Force redirection to profile setup with a direct page navigation
-      window.location.href = "/profile-setup";
+      // Add a short timeout to ensure state is updated before navigation
+      setTimeout(() => {
+        console.log("Redirecting to profile setup");
+        window.location.href = "/profile-setup";
+      }, 10);
     } catch (err: any) {
       console.error("Signup failed:", err);
       

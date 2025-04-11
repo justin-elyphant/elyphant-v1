@@ -12,8 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 const ProfileSetup = () => {
   const navigate = useNavigate();
   const { user, isDebugMode, isLoading } = useAuth();
+  const [isInitializing, setIsInitializing] = React.useState(true);
   
-  // Redirect logged out users
+  // Check auth status on initial load
   React.useEffect(() => {
     const checkAuthStatus = async () => {
       // First check if we're still loading
@@ -24,20 +25,34 @@ const ProfileSetup = () => {
       
       // If no user and debug mode is off, check one more time with fresh session
       if (!user && !isDebugMode) {
-        console.log("No user detected, checking session again before redirecting...");
+        console.log("No user detected in ProfileSetup, checking session...");
         
-        // Try refreshing the session once before redirecting
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          console.log("Still no authenticated user after refresh, redirecting to sign-in");
-          toast.error("You must be logged in to set up your profile");
-          navigate("/sign-in");
-        } else {
-          console.log("Session found after refresh, allowing profile setup");
+        try {
+          // Try refreshing the session once before redirecting
+          const { data } = await supabase.auth.getSession();
+          
+          if (!data.session) {
+            console.log("No authenticated session found, refreshing one more time...");
+            const refreshResult = await supabase.auth.refreshSession();
+            
+            if (!refreshResult.data.session) {
+              console.log("Still no authenticated user after refresh, redirecting to sign-in");
+              toast.error("You must be logged in to set up your profile");
+              navigate("/sign-in");
+            } else {
+              console.log("Session found after refresh:", refreshResult.data.session.user.email);
+            }
+          } else {
+            console.log("Session found:", data.session.user.email);
+          }
+        } catch (error) {
+          console.error("Error checking session:", error);
         }
       } else {
         console.log("User authenticated or debug mode enabled for profile setup");
       }
+      
+      setIsInitializing(false);
     };
     
     checkAuthStatus();
@@ -74,8 +89,8 @@ const ProfileSetup = () => {
     navigate("/dashboard");
   };
 
-  // Show a loading indicator if auth state is still loading
-  if (isLoading) {
+  // Show a loading indicator if still initializing or auth state is loading
+  if (isLoading || isInitializing) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

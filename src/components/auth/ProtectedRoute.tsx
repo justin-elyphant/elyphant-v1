@@ -25,7 +25,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       if (!user && !isDebugMode) {
         console.log("No user in auth context, checking for fresh session");
         const { data } = await supabase.auth.getSession();
-        setFreshUser(data.session?.user || null);
+        
+        if (data.session?.user) {
+          console.log("Fresh session found:", data.session.user.email);
+          setFreshUser(data.session.user);
+        } else {
+          console.log("No session found during fresh check");
+        }
       }
       setIsCheckingSession(false);
     };
@@ -56,9 +62,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (location.pathname === '/profile-setup') {
     console.log("On profile setup page, being more lenient with auth checks");
     if (!effectiveUser) {
-      // Only redirect if we're really sure there's no session
-      console.log("Confirmed no active user session for profile setup, redirecting");
-      return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
+      // Try one more refresh before redirecting
+      console.log("No user detected for profile setup, trying one final session refresh");
+      supabase.auth.refreshSession().then(({ data }) => {
+        if (data.session) {
+          console.log("Session found after refresh, reloading page");
+          window.location.reload();
+        } else {
+          console.log("Still no session after refresh, redirecting to sign-in");
+        }
+      });
+      
+      // Show loading state while refreshing
+      return (
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <span className="ml-3 text-lg">Checking authentication...</span>
+        </div>
+      );
     }
     return <>{children}</>;
   }

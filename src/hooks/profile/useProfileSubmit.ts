@@ -14,7 +14,7 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (profileData: ProfileData) => {
-    if (!user) {
+    if (!user && !process.env.REACT_APP_DEBUG_MODE) {
       console.error("Cannot submit profile: No user is logged in");
       toast.error("You must be logged in to save your profile");
       return;
@@ -26,10 +26,10 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     try {
       // Format the data for saving to the profiles table
       const formattedData = {
-        id: user.id,
+        id: user?.id,
         name: profileData.name || "User",
         username: profileData.username || `user_${Date.now().toString(36)}`,
-        email: profileData.email || user.email,
+        email: profileData.email || user?.email || '',
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,
         bio: profileData.bio || "",
@@ -50,16 +50,22 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         updated_at: new Date().toISOString()
       };
       
-      // Update the database - use upsert to create if not exists
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert(formattedData)
-        .select();
+      if (user) {
+        // Update the database - use upsert to create if not exists
+        const { data, error } = await supabase
+          .from('profiles')
+          .upsert(formattedData)
+          .select();
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      console.log("Profile data saved successfully:", data);
-      toast.success("Profile setup complete!");
+        console.log("Profile data saved successfully:", data);
+        toast.success("Profile setup complete!");
+      } else if (process.env.REACT_APP_DEBUG_MODE) {
+        // Debug mode, just proceed without saving
+        console.log("Debug mode: Would save profile data:", formattedData);
+        toast.success("Profile setup complete (Debug Mode)");
+      }
       
       // Wait a moment to show the success message before proceeding
       setTimeout(() => {

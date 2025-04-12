@@ -62,7 +62,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         id: user?.id, // Ensure we're updating the correct user
         name: profileData.name || "User",
         username: profileData.username || `user_${Date.now().toString(36)}`,
-        email: profileData.email || user?.email, // Fallback to auth user email
+        email: profileData.email || user?.email || '', // Fallback to auth user email
         profile_image: profileData.profile_image || null,
         dob: profileData.dob || null,
         bio: profileData.bio || "",
@@ -101,6 +101,8 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile data");
+      // Still allow the user to proceed even if saving fails
+      onComplete();
     } finally {
       setIsLoading(false);
     }

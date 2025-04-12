@@ -1,7 +1,8 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 // Import our newly created components
 import ProfileStepperHeader from "./components/ProfileStepperHeader";
@@ -40,6 +41,23 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
   console.log("ProfileSetupFlow - Current step:", activeStep);
   console.log("ProfileSetupFlow - Is current step valid:", isCurrentStepValid);
   console.log("ProfileSetupFlow - Profile data:", profileData);
+
+  // Handle keyboard navigation for better UX
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Allow pressing Enter to proceed to next step
+      if (e.key === 'Enter' && !e.shiftKey && isCurrentStepValid && !isLoading) {
+        if (activeStep < steps.length - 1) {
+          handleNext();
+        } else {
+          handleComplete();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeStep, isCurrentStepValid, isLoading, steps.length, handleNext, handleComplete]);
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg">

@@ -15,12 +15,12 @@ export const useProfileSteps = () => {
   ];
 
   const handleNext = () => {
-    console.log("Moving to next step");
+    console.log("Moving to next step from step", activeStep);
     setActiveStep((prevStep) => prevStep + 1);
   };
 
   const handleBack = () => {
-    console.log("Moving to previous step");
+    console.log("Moving to previous step from step", activeStep);
     setActiveStep((prevStep) => Math.max(0, prevStep - 1));
   };
 

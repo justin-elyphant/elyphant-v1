@@ -26,6 +26,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const isLoading = isDataLoading || isSubmissionLoading || isSubmitLoading;
 
   const handleComplete = () => {
+    console.log("Completing profile setup with data:", profileData);
     // Use our enhanced submit functionality that ensures data flows to settings
     handleSubmit(profileData);
   };

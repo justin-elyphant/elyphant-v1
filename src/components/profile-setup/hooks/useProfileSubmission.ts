@@ -22,6 +22,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
     }
     
     setIsLoading(true);
+    console.log("Starting profile submission...");
     
     try {
       console.log("Saving full profile data:", profileData);
@@ -81,8 +82,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         // Perform an upsert (update or insert) to ensure we have a profile
         const { error } = await supabase
           .from('profiles')
-          .upsert(userData)
-          .select();
+          .upsert(userData);
       
         if (error) {
           console.error("Error saving profile:", error);
@@ -109,6 +109,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
   };
 
   const handleSkip = () => {
+    console.log("Skipping profile setup");
     if (onSkip) {
       onSkip();
     } else {

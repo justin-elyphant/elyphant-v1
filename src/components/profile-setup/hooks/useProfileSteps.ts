@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 export const useProfileSteps = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -14,15 +14,23 @@ export const useProfileSteps = () => {
     "Next Steps"
   ];
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     console.log("Moving to next step from step", activeStep);
-    setActiveStep((prevStep) => prevStep + 1);
-  };
+    setActiveStep((prevStep) => {
+      const nextStep = prevStep + 1;
+      console.log(`Step transition: ${prevStep} -> ${nextStep}`);
+      return nextStep;
+    });
+  }, [activeStep]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     console.log("Moving to previous step from step", activeStep);
-    setActiveStep((prevStep) => Math.max(0, prevStep - 1));
-  };
+    setActiveStep((prevStep) => {
+      const nextStep = Math.max(0, prevStep - 1);
+      console.log(`Step transition: ${prevStep} -> ${nextStep}`);
+      return nextStep;
+    });
+  }, [activeStep]);
 
   return {
     activeStep,

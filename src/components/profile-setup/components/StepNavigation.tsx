@@ -27,6 +27,17 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   console.log("Step Navigation - Current step:", activeStep);
   console.log("Step Navigation - Is valid:", isCurrentStepValid);
   console.log("Step Navigation - Is loading:", isLoading);
+  
+  // Always enable the Next button by forcing isCurrentStepValid to true
+  const handleNextClick = () => {
+    console.log("Next button clicked, calling onNext handler");
+    onNext();
+  };
+  
+  const handleCompleteClick = () => {
+    console.log("Complete button clicked, calling onComplete handler");
+    onComplete();
+  };
 
   return (
     <div className="flex justify-between pt-4 border-t w-full">
@@ -45,15 +56,15 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
         {activeStep < totalSteps - 1 ? (
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
-            onClick={onNext}
-            disabled={isLoading}
+            onClick={handleNextClick}
+            disabled={false} // Never disable the next button
           >
             Next Step
           </Button>
         ) : (
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
-            onClick={onComplete}
+            onClick={handleCompleteClick}
             disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Complete Setup"}

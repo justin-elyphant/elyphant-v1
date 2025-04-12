@@ -1,12 +1,15 @@
 
+// This hook manages validation of profile setup steps
 import { validateStep } from "../utils/stepValidation";
 import { ProfileData } from "./types";
 
 export const useProfileValidation = (activeStep: number, profileData: ProfileData) => {
-  // Always return true for validation to ensure users can progress
-  // We'll still use the validateStep function for feedback purposes
+  // Always make isCurrentStepValid true to ensure users can progress
   const stepIsValid = validateStep(activeStep, profileData);
-  const isCurrentStepValid = true; // Override to allow progression
+  console.log(`Validating step ${activeStep}:`, { stepIsValid, profileData });
   
-  return { isCurrentStepValid };
+  // Force validation to be true to allow progression
+  const isCurrentStepValid = true;
+  
+  return { isCurrentStepValid, stepIsValid };
 };

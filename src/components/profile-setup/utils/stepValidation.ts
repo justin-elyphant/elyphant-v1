@@ -1,5 +1,6 @@
 
 import { ProfileData } from "../hooks/types";
+import { ShippingAddress } from "@/types/supabase";
 
 export const validateStep = (activeStep: number, profileData: ProfileData): boolean => {
   console.log(`Running validation for step ${activeStep}`, profileData);
@@ -25,7 +26,14 @@ export const validateStep = (activeStep: number, profileData: ProfileData): bool
     // Shipping Address
     case 3:
       console.log("Shipping Address validation: ", { address: profileData.shipping_address });
-      const address = profileData.shipping_address || {};
+      // First make sure shipping_address exists and is properly initialized
+      const address: ShippingAddress = profileData.shipping_address || {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: ""
+      };
       
       // At minimum, city and country should be provided
       return !!(address.city && address.country);

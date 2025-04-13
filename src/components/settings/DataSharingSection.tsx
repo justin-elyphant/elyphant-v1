@@ -2,11 +2,12 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Gift } from "lucide-react";
+import { Calendar, MapPin, Gift, Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import { SharingLevel } from "@/types/supabase";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const DataSharingSection = () => {
   const form = useFormContext();
@@ -72,22 +73,27 @@ const DataSharingSection = () => {
                 <div className="w-32">
                   <FormControl>
                     <Select 
-                      value={field.value} 
+                      value="friends" 
+                      disabled={true}
                       onValueChange={(val) => field.onChange(val as SharingLevel)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select" />
+                        <SelectValue placeholder="Friends Only" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="public">Everyone</SelectItem>
                         <SelectItem value="friends">Friends Only</SelectItem>
-                        <SelectItem value="private">Only Me</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
                   <FormMessage />
                 </div>
               </div>
+              <Alert className="bg-blue-50 border-blue-200 mt-2">
+                <Info className="h-4 w-4 text-blue-500" />
+                <AlertDescription className="text-sm text-blue-700">
+                  Your shipping address is only shared with your friends to enable gift giving features.
+                </AlertDescription>
+              </Alert>
             </FormItem>
           )}
         />

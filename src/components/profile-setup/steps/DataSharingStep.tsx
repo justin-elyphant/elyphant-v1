@@ -3,7 +3,8 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataSharingSettings, SharingLevel } from "@/types/supabase";
-import { Shield, Calendar, MapPin, Gift } from "lucide-react";
+import { Shield, Calendar, MapPin, Gift, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DataSharingStepProps {
   values: DataSharingSettings;
@@ -63,20 +64,26 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({ values, onChange }) =
           </div>
           <div className="w-32">
             <Select 
-              value={values.shipping_address} 
+              value="friends" 
+              disabled={true}
               onValueChange={(val) => handleChange('shipping_address', val as SharingLevel)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select" />
+                <SelectValue placeholder="Friends Only" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="public">Everyone</SelectItem>
                 <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="private">Only Me</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
+        
+        <Alert className="bg-blue-50 border-blue-200 mt-2">
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertDescription className="text-sm text-blue-700">
+            Your shipping address is only shared with your friends to enable gift giving features.
+          </AlertDescription>
+        </Alert>
         
         <div className="flex items-center justify-between space-x-4">
           <div className="flex items-center space-x-3">

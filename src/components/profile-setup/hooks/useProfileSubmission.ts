@@ -50,10 +50,10 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         country: profileData.shipping_address?.country || ""
       };
       
-      // Ensure data sharing settings have all required fields
+      // Force shipping address to be shared with friends for gift giving functionality
       const dataSharingSettings = {
         dob: profileData.data_sharing_settings?.dob || "friends",
-        shipping_address: profileData.data_sharing_settings?.shipping_address || "private",
+        shipping_address: "friends", // Always set to friends
         gift_preferences: profileData.data_sharing_settings?.gift_preferences || "public"
       };
       
@@ -91,37 +91,29 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         console.log("Profile saved successfully");
         toast.success("Profile setup complete!");
         
-        // Short delay before completing to allow toast to be seen
-        setTimeout(() => {
-          onComplete();
-          setIsLoading(false); // Ensure loading state is cleared
-        }, 500);
+        // Clear loading state and proceed to next step
+        setIsLoading(false);
+        onComplete();
       } else if (process.env.REACT_APP_DEBUG_MODE) {
         // Debug mode, just proceed
         console.log("Debug mode: Would save profile data:", userData);
         toast.success("Profile setup complete (Debug Mode)");
-        setTimeout(() => {
-          onComplete();
-          setIsLoading(false); // Ensure loading state is cleared
-        }, 500);
+        setIsLoading(false);
+        onComplete();
       } else {
         // Fallback in case no user and not in debug mode
         console.log("No user detected but proceeding anyway");
         toast.success("Profile setup complete!");
-        setTimeout(() => {
-          onComplete();
-          setIsLoading(false); // Ensure loading state is cleared
-        }, 500);
+        setIsLoading(false);
+        onComplete();
       }
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile data");
       
       // Still complete the process even if saving fails
-      setTimeout(() => {
-        onComplete();
-        setIsLoading(false); // Ensure loading state is cleared
-      }, 1000);
+      setIsLoading(false);
+      onComplete();
     }
   };
 

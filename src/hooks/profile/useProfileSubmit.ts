@@ -14,17 +14,20 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (profileData: ProfileData) => {
+    // Add more comprehensive logging
+    console.log("Profile submit initiated", { user, debugMode: process.env.REACT_APP_DEBUG_MODE });
+
     if (!user && !process.env.REACT_APP_DEBUG_MODE) {
       console.error("Cannot submit profile: No user is logged in");
       toast.error("You must be logged in to save your profile");
+      setIsLoading(false);
       return;
     }
     
     setIsLoading(true);
-    console.log("Saving profile data to database:", profileData);
     
     try {
-      // Format the data for saving to the profiles table
+      // Comprehensive data formatting
       const formattedData = {
         id: user?.id,
         name: profileData.name || "User",
@@ -43,7 +46,7 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         gift_preferences: profileData.gift_preferences || [],
         data_sharing_settings: profileData.data_sharing_settings || {
           dob: "friends",
-          shipping_address: "private",
+          shipping_address: "friends", // Explicitly set to friends
           gift_preferences: "public"
         },
         important_dates: profileData.important_dates || [],
@@ -51,43 +54,41 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         updated_at: new Date().toISOString()
       };
       
-      if (user) {
-        // Update the database - use upsert to create if not exists
+      console.log('Formatted profile data:', formattedData);
+      
+      if (user || process.env.REACT_APP_DEBUG_MODE) {
+        // Explicitly handle both user and debug mode scenarios
         const { error } = await supabase
           .from('profiles')
-          .upsert(formattedData);
-          
+          .upsert(formattedData)
+          .select();
+        
         if (error) {
           console.error("Profile save error:", error);
+          toast.error("Failed to save profile. Please try again.");
           throw error;
         }
         
-        console.log("Profile data saved successfully");
+        console.log("Profile saved successfully");
         toast.success("Profile setup complete!");
-        
-        // Wait a moment to show the success message before proceeding
-        setTimeout(() => {
-          onComplete();
-        }, 500);
-      } else if (process.env.REACT_APP_DEBUG_MODE) {
-        // Debug mode, just proceed without saving
-        console.log("Debug mode: Would save profile data:", formattedData);
-        toast.success("Profile setup complete (Debug Mode)");
-        
-        // Add a small delay to simulate saving
-        setTimeout(() => {
-          onComplete();
-        }, 500);
       }
-    } catch (err) {
-      console.error("Error saving profile:", err);
-      toast.error("Failed to save profile data");
-      // Continue to dashboard even if saving fails
+      
+      // Ensure onComplete is called with a small delay to allow toast to show
       setTimeout(() => {
+        setIsLoading(false);
         onComplete();
       }, 500);
-    } finally {
+      
+    } catch (err) {
+      console.error("Unexpected error in profile submission:", err);
+      
+      // Ensure loading state is always resolved
       setIsLoading(false);
+      
+      toast.error("An unexpected error occurred. Please try again.");
+      
+      // Still call onComplete to prevent being stuck
+      onComplete();
     }
   };
 
@@ -96,3 +97,4 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     handleSubmit
   };
 };
+

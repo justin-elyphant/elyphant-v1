@@ -20,6 +20,7 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     return () => {
       if (submitTimeoutRef.current) {
         clearTimeout(submitTimeoutRef.current);
+        submitTimeoutRef.current = null;
       }
     };
   }, []);
@@ -35,7 +36,7 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     console.log("Profile submit initiated", { userId: user?.id });
     setIsLoading(true);
     
-    // Safety timeout to prevent stuck loading state
+    // Safety timeout to prevent stuck loading state - 3 seconds max
     submitTimeoutRef.current = setTimeout(() => {
       console.warn("Safety timeout triggered in useProfileSubmit - forcing completion");
       setIsLoading(false);
@@ -43,6 +44,22 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     }, 3000);
     
     try {
+      // Skip database operation if user is not available
+      if (!user?.id && !process.env.REACT_APP_DEBUG_MODE) {
+        console.log("No user ID available - skipping database save");
+        toast.info("Profile setup completed (without saving)");
+        
+        // Clear timeout and loading state
+        if (submitTimeoutRef.current) {
+          clearTimeout(submitTimeoutRef.current);
+          submitTimeoutRef.current = null;
+        }
+        setIsLoading(false);
+        
+        // Still call onComplete to proceed
+        return;
+      }
+      
       // Comprehensive data formatting
       const formattedData = {
         id: user?.id,
@@ -110,10 +127,14 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       
       // Ensure loading state is cleared
       setIsLoading(false);
-      
-      // Always call onComplete regardless of save result
-      onComplete();
     }
+    
+    // Separate the onComplete call to ensure it always happens
+    // even if an error occurs during state updates
+    setTimeout(() => {
+      onComplete();
+    }, 100);
+    
   }, [user, onComplete]);
 
   return {

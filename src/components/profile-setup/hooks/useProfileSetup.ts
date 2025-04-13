@@ -2,7 +2,7 @@
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useProfileSubmit } from "@/hooks/profile/useProfileSubmit";
 import { toast } from "sonner";
 
@@ -22,8 +22,28 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const [isCompleting, setIsCompleting] = useState(false);
   const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasCompletedRef = useRef(false);
+  const maxCompletionTime = 5000; // 5 seconds max before forcing completion
 
   const isLoading = isDataLoading || isSubmitLoading || isCompleting;
+
+  // Force completion after a timeout
+  useEffect(() => {
+    if (isCompleting && !completionTimeoutRef.current) {
+      console.log("Setting up safety timeout for profile completion");
+      completionTimeoutRef.current = setTimeout(() => {
+        console.warn("Forcing profile setup completion due to timeout");
+        setIsCompleting(false);
+        onComplete();
+      }, maxCompletionTime);
+    }
+    
+    return () => {
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = null;
+      }
+    };
+  }, [isCompleting, onComplete]);
 
   // Safe cleanup function for timeouts
   const cleanupTimeouts = useCallback(() => {
@@ -36,10 +56,11 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   // Handle skip action
   const handleSkip = useCallback(() => {
     console.log("Skipping profile setup");
+    cleanupTimeouts();
     if (onSkip) {
       onSkip();
     }
-  }, [onSkip]);
+  }, [onSkip, cleanupTimeouts]);
 
   // Handle completion with safety timeout
   const handleComplete = useCallback(async () => {
@@ -53,27 +74,22 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     hasCompletedRef.current = true;
     setIsCompleting(true);
     
-    // Set up safety timeout
-    completionTimeoutRef.current = setTimeout(() => {
-      console.warn("Forcing profile setup completion due to timeout");
-      setIsCompleting(false);
-      onComplete();
-    }, 4000);
-    
     try {
       await handleSubmit(profileData);
+      // If we reach here, the submission was successful
+      setIsCompleting(false);
+      cleanupTimeouts();
+      onComplete();
     } catch (error) {
       console.error("Error in handleComplete:", error);
       toast.error("An error occurred, but we'll continue anyway");
       // Still complete on error to prevent being stuck
       setIsCompleting(false);
-      onComplete();
-    } finally {
       cleanupTimeouts();
+      onComplete();
     }
   }, [profileData, handleSubmit, onComplete, isCompleting, cleanupTimeouts]);
 
-  // Clean up on unmount
   return {
     activeStep,
     steps,

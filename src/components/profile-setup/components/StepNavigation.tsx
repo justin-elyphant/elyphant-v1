@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -31,6 +32,10 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   // Handle the complete action - keeps the button handler logic simple
   const handleComplete = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (isLoading) {
+      console.log("Ignoring complete button click - already loading");
+      return;
+    }
     console.log("Complete button clicked in StepNavigation");
     onComplete();
   };
@@ -41,7 +46,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
         <Alert variant="default" className="bg-yellow-50 border-yellow-200">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <AlertDescription>
-            Saving your profile information...
+            Saving your profile information... This may take a moment.
           </AlertDescription>
         </Alert>
       )}

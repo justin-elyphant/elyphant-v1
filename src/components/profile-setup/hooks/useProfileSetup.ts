@@ -25,10 +25,17 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
   const isLoading = isDataLoading || isSubmissionLoading || isSubmitLoading;
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     console.log("Completing profile setup with data:", profileData);
-    // Use our enhanced submit functionality that ensures data flows to settings
-    handleSubmit(profileData);
+    
+    try {
+      // Use our enhanced submit functionality that ensures data flows to settings
+      await handleSubmit(profileData);
+    } catch (error) {
+      console.error("Error in handleComplete:", error);
+      // Even in case of error, we want to proceed to prevent getting stuck
+      onComplete();
+    }
   };
 
   return {

@@ -24,6 +24,15 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       return;
     }
     
+    // Set up a safety timeout to prevent getting stuck in loading state
+    const safetyTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Safety timeout triggered to prevent stuck loading state");
+        setIsLoading(false);
+        onComplete();
+      }
+    }, 8000); // 8 second safety timeout
+    
     setIsLoading(true);
     
     try {
@@ -66,12 +75,18 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         if (error) {
           console.error("Profile save error:", error);
           toast.error("Failed to save profile. Please try again.");
-          throw error;
+          clearTimeout(safetyTimeout);
+          setIsLoading(false);
+          onComplete(); // Still proceed even on error
+          return;
         }
         
         console.log("Profile saved successfully");
         toast.success("Profile setup complete!");
       }
+      
+      // Clear safety timeout as we're proceeding normally
+      clearTimeout(safetyTimeout);
       
       // Ensure onComplete is called with a small delay to allow toast to show
       setTimeout(() => {
@@ -81,6 +96,9 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       
     } catch (err) {
       console.error("Unexpected error in profile submission:", err);
+      
+      // Clear safety timeout as we're handling the error
+      clearTimeout(safetyTimeout);
       
       // Ensure loading state is always resolved
       setIsLoading(false);
@@ -97,4 +115,3 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     handleSubmit
   };
 };
-

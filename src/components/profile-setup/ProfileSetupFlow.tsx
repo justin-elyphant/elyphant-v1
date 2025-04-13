@@ -1,5 +1,4 @@
-
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -36,6 +35,15 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     handleSkip,
     updateProfileData
   } = useProfileSetup({ onComplete, onSkip });
+
+  useEffect(() => {
+    console.log("ProfileSetupFlow: Current state", {
+      activeStep,
+      isLoading,
+      isCurrentStepValid,
+      profileData
+    });
+  }, [activeStep, isLoading, isCurrentStepValid, profileData]);
 
   // Define step rendering as a memoized function
   const renderCurrentStep = useMemo(() => {

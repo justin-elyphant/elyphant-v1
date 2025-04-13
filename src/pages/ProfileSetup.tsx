@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -15,29 +14,33 @@ const ProfileSetup = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isNewSignUp, setIsNewSignUp] = useState(false);
   
-  // Check for new signup flag
   useEffect(() => {
-    console.log("ProfileSetup page loaded");
+    console.log("ProfileSetup: Component mounted");
+    console.log("ProfileSetup: Current auth state", { 
+      user, 
+      isDebugMode, 
+      authLoading 
+    });
+    
     const newSignUpFlag = localStorage.getItem("newSignUp") === "true";
     const userEmail = localStorage.getItem("userEmail");
     
-    console.log("Sign up flags check:", { newSignUpFlag, userEmail });
-    setIsNewSignUp(newSignUpFlag);
+    console.log("ProfileSetup: Signup flags", { 
+      newSignUpFlag, 
+      userEmail 
+    });
     
-    // Always allow access to profile setup regardless of auth state
+    setIsNewSignUp(newSignUpFlag);
     setIsInitializing(false);
-  }, []);
+  }, [user, authLoading]);
 
-  // Handle completion of profile setup - memoize to prevent unnecessary re-renders
   const handleSetupComplete = useCallback(async () => {
     console.log("Profile setup complete, transitioning to dashboard");
     
     try {
-      // Clear the new signup flag since we're done with the flow
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("userEmail");
       
-      // Refresh the profile data from Supabase if we have a user
       if (user) {
         console.log("Refreshing user session after profile setup");
         try {
@@ -48,21 +51,16 @@ const ProfileSetup = () => {
         }
       }
       
-      // Show success notification
       toast.success("Welcome! Your profile is ready.");
       
-      // Navigate to dashboard with replace to prevent back-button issues
-      console.log("Navigating to dashboard");
       navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("Error during profile completion:", error);
-      // Still navigate to dashboard even if there's an error
       navigate("/dashboard", { replace: true });
     }
   }, [user, navigate]);
 
   const handleSkip = useCallback(() => {
-    // Clear the new signup flag
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
     
@@ -71,13 +69,11 @@ const ProfileSetup = () => {
   }, [navigate]);
 
   const handleBackToDashboard = useCallback(() => {
-    // Clear the signup flags
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
     navigate("/dashboard");
   }, [navigate]);
 
-  // Show a loading indicator if still initializing
   if (authLoading && !isNewSignUp && !isDebugMode) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">

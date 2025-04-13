@@ -1,4 +1,3 @@
-
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
@@ -25,6 +24,16 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const maxCompletionTime = 5000; // 5 seconds max before forcing completion
 
   const isLoading = isDataLoading || isSubmitLoading || isCompleting;
+
+  // Enhanced logging for debugging
+  useEffect(() => {
+    console.log("useProfileSetup: Loading states", {
+      isDataLoading,
+      isSubmitLoading,
+      isCompleting,
+      totalLoading: isLoading
+    });
+  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading]);
 
   // Force completion after a timeout
   useEffect(() => {

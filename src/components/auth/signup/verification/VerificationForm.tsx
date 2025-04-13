@@ -17,11 +17,11 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // Simplified, guaranteed-to-execute approach
+  // Guaranteed-to-execute approach for auto-verification
   useEffect(() => {
-    console.log("VERIFICATION FORM: Setting up new signup for", userEmail);
+    console.log("Auto-verification process started for:", userEmail);
     
-    // Set flags BEFORE calling any navigation
+    // Set flags for new signup journey
     localStorage.setItem("newSignUp", "true");
     localStorage.setItem("userEmail", userEmail);
     
@@ -33,7 +33,8 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
       description: "Taking you to complete your profile."
     });
     
-    // Always replace the current location to prevent back button issues
+    // Navigate to profile setup with replace to prevent back-button issues
+    console.log("Navigating to profile setup");
     navigate('/profile-setup', { replace: true });
     
   }, [onVerificationSuccess, userEmail, navigate]);

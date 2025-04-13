@@ -15,20 +15,16 @@ const ProfileSetup = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isNewSignUp, setIsNewSignUp] = useState(false);
   
-  // Check for new signup flag on initial load
+  // Check for new signup flag
   useEffect(() => {
+    console.log("ProfileSetup page loaded");
     const newSignUpFlag = localStorage.getItem("newSignUp") === "true";
+    const userEmail = localStorage.getItem("userEmail");
+    
+    console.log("Sign up flags check:", { newSignUpFlag, userEmail });
     setIsNewSignUp(newSignUpFlag);
     
-    // If we're on profile setup, clear the flag since we've made it here
-    if (newSignUpFlag) {
-      console.log("On profile setup page, new signup flow confirmed");
-    } else {
-      console.log("On profile setup page, standard flow");
-    }
-    
     // Always allow access to profile setup regardless of auth state
-    // This is important for the flow right after signup
     setIsInitializing(false);
   }, []);
 
@@ -63,7 +59,7 @@ const ProfileSetup = () => {
     navigate("/dashboard", { replace: true });
   };
 
-  // Show a loading indicator if still initializing or auth state is loading
+  // Show a loading indicator if still initializing
   if (isLoading && !isNewSignUp && !isDebugMode) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">

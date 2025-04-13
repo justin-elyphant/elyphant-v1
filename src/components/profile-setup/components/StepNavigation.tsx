@@ -23,12 +23,11 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   onComplete,
   onSkip,
 }) => {
-  // Add debug information to help diagnose the issue
-  console.log("Step Navigation - Current step:", activeStep);
-  console.log("Step Navigation - Is valid:", isCurrentStepValid);
-  console.log("Step Navigation - Is loading:", isLoading);
+  // Add enhanced debug information
+  console.log("StepNavigation render - Current step:", activeStep);
+  console.log("StepNavigation render - Is valid:", isCurrentStepValid);
+  console.log("StepNavigation render - Is loading:", isLoading);
   
-  // Always enable the Next button by forcing isCurrentStepValid to true
   const handleNextClick = () => {
     console.log("Next button clicked, calling onNext handler");
     onNext();
@@ -57,7 +56,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
             onClick={handleNextClick}
-            disabled={false} // Never disable the next button
+            disabled={false} // Force button to always be enabled
           >
             Next Step
           </Button>

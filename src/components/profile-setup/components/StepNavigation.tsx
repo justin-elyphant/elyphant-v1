@@ -56,7 +56,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
           <Button 
             className="bg-purple-600 hover:bg-purple-700"
             onClick={handleNextClick}
-            disabled={false} // Force button to always be enabled
+            disabled={!isCurrentStepValid && activeStep < 6} // Enable button if data is valid, but always enable on final step
           >
             Next Step
           </Button>

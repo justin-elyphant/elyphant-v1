@@ -4,43 +4,46 @@ import { ProfileData } from "../hooks/types";
 export const validateStep = (activeStep: number, profileData: ProfileData): boolean => {
   console.log(`Running validation for step ${activeStep}`, profileData);
   
-  // For steps that need validation - but always return true to allow progress
+  // For steps that need validation
   switch (activeStep) {
     // Basic Info step
     case 0:
-      // Log validation check but return true
+      // Name is required
       console.log("Basic Info validation: ", { name: profileData.name });
-      return true;
+      return profileData.name !== undefined && profileData.name.trim() !== '';
     
     // Profile step
     case 1:
       console.log("Profile validation: ", { username: profileData.username });
-      return true;
+      return profileData.username !== undefined && profileData.username.trim() !== '';
     
     // Birthday
     case 2:
       console.log("Birthday validation: ", { dob: profileData.dob });
-      return true;
+      return true; // Make birthday optional
     
     // Shipping Address
     case 3:
       console.log("Shipping Address validation: ", { address: profileData.shipping_address });
-      return true;
+      const address = profileData.shipping_address || {};
+      
+      // At minimum, city and country should be provided
+      return !!(address.city && address.country);
     
     // Gift Preferences
     case 4:
       console.log("Gift Preferences validation: ", { preferences: profileData.gift_preferences });
-      return true;
+      return Array.isArray(profileData.gift_preferences) && profileData.gift_preferences.length > 0;
     
     // Data Sharing
     case 5:
       console.log("Data Sharing validation: ", { settings: profileData.data_sharing_settings });
-      return true;
+      return !!profileData.data_sharing_settings;
     
     // Next Steps
     case 6:
       console.log("Next Steps validation: ", { option: profileData.next_steps_option });
-      return true;
+      return true; // Always valid since any option is acceptable
     
     default:
       return true;

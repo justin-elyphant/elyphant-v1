@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
-  const { user, isDebugMode, isLoading } = useAuth();
+  const { user, isDebugMode, isLoading: authLoading } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
   const [isNewSignUp, setIsNewSignUp] = useState(false);
   
@@ -30,23 +30,33 @@ const ProfileSetup = () => {
 
   // Handle completion of profile setup
   const handleSetupComplete = async () => {
-    console.log("Profile setup complete");
-    toast.success("Profile setup complete!");
+    console.log("Profile setup complete, transitioning to dashboard");
     
     try {
       // Clear the new signup flag since we're done with the flow
       localStorage.removeItem("newSignUp");
+      localStorage.removeItem("userEmail");
       
-      // Refresh the profile data from Supabase
+      // Refresh the profile data from Supabase if we have a user
       if (user) {
         console.log("Refreshing user session after profile setup");
-        await supabase.auth.refreshSession();
+        try {
+          await supabase.auth.refreshSession();
+          console.log("Session refreshed successfully");
+        } catch (refreshError) {
+          console.error("Error refreshing session:", refreshError);
+        }
       }
       
-      // Navigate to dashboard
+      // Show success notification
+      toast.success("Welcome! Your profile is ready.");
+      
+      // Navigate to dashboard with replace to prevent back-button issues
+      console.log("Navigating to dashboard");
       navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("Error during profile completion:", error);
+      // Still navigate to dashboard even if there's an error
       navigate("/dashboard", { replace: true });
     }
   };
@@ -54,13 +64,14 @@ const ProfileSetup = () => {
   const handleSkip = () => {
     // Clear the new signup flag
     localStorage.removeItem("newSignUp");
+    localStorage.removeItem("userEmail");
     
     toast.info("You can complete your profile later in settings");
     navigate("/dashboard", { replace: true });
   };
 
   // Show a loading indicator if still initializing
-  if (isLoading && !isNewSignUp && !isDebugMode) {
+  if (authLoading && !isNewSignUp && !isDebugMode) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>

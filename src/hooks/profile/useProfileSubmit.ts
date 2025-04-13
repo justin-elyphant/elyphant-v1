@@ -46,34 +46,46 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
           shipping_address: "private",
           gift_preferences: "public"
         },
+        important_dates: profileData.important_dates || [],
         onboarding_completed: true,
         updated_at: new Date().toISOString()
       };
       
       if (user) {
         // Update the database - use upsert to create if not exists
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('profiles')
-          .upsert(formattedData)
-          .select();
+          .upsert(formattedData);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Profile save error:", error);
+          throw error;
+        }
         
-        console.log("Profile data saved successfully:", data);
+        console.log("Profile data saved successfully");
         toast.success("Profile setup complete!");
+        
+        // Wait a moment to show the success message before proceeding
+        setTimeout(() => {
+          onComplete();
+        }, 500);
       } else if (process.env.REACT_APP_DEBUG_MODE) {
         // Debug mode, just proceed without saving
         console.log("Debug mode: Would save profile data:", formattedData);
         toast.success("Profile setup complete (Debug Mode)");
+        
+        // Add a small delay to simulate saving
+        setTimeout(() => {
+          onComplete();
+        }, 500);
       }
-      
-      // Wait a moment to show the success message before proceeding
-      setTimeout(() => {
-        onComplete();
-      }, 500);
     } catch (err) {
       console.error("Error saving profile:", err);
       toast.error("Failed to save profile data");
+      // Continue to dashboard even if saving fails
+      setTimeout(() => {
+        onComplete();
+      }, 500);
     } finally {
       setIsLoading(false);
     }

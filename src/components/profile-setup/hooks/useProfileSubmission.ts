@@ -22,11 +22,10 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
     }
     
     setIsLoading(true);
-    console.log("Starting profile submission...");
+    console.log("Starting profile submission for user:", user?.id);
+    console.log("Profile data to save:", profileData);
     
     try {
-      console.log("Saving full profile data:", profileData);
-      
       // Format gift preferences - ensure it's an array
       const giftPreferences = Array.isArray(profileData.gift_preferences) 
         ? profileData.gift_preferences.map(pref => {
@@ -91,18 +90,27 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
         
         console.log("Profile saved successfully");
         toast.success("Profile setup complete!");
-        onComplete();
+        
+        // Short delay before completing to allow toast to be seen
+        setTimeout(() => {
+          onComplete();
+        }, 500);
       } else if (process.env.REACT_APP_DEBUG_MODE) {
         // Debug mode, just proceed
         console.log("Debug mode: Would save profile data:", userData);
         toast.success("Profile setup complete (Debug Mode)");
-        onComplete();
+        setTimeout(() => {
+          onComplete();
+        }, 500);
       }
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile data");
-      // Still allow the user to proceed even if saving fails
-      onComplete();
+      
+      // Still complete the process even if saving fails
+      setTimeout(() => {
+        onComplete();
+      }, 1000);
     } finally {
       setIsLoading(false);
     }

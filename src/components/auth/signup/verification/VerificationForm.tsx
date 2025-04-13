@@ -35,7 +35,9 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
     
     // Navigate to profile setup with replace to prevent back-button issues
     console.log("Navigating to profile setup");
-    navigate('/profile-setup', { replace: true });
+    setTimeout(() => {
+      navigate('/profile-setup', { replace: true });
+    }, 100); // Add a small delay to ensure proper navigation
     
   }, [onVerificationSuccess, userEmail, navigate]);
 

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const submitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const submitAttemptedRef = useRef(false);
 
   // Clear any lingering timeout on unmount
   useEffect(() => {
@@ -23,21 +24,23 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     };
   }, []);
 
-  const handleSubmit = async (profileData: ProfileData) => {
-    // Add more comprehensive logging
+  const handleSubmit = useCallback(async (profileData: ProfileData) => {
+    // Don't allow multiple submit attempts
+    if (submitAttemptedRef.current) {
+      console.log("Submit already attempted, ignoring duplicate call");
+      return;
+    }
+    
+    submitAttemptedRef.current = true;
     console.log("Profile submit initiated", { userId: user?.id });
-
-    // Set loading state first to provide immediate feedback
     setIsLoading(true);
     
     // Safety timeout to prevent stuck loading state
     submitTimeoutRef.current = setTimeout(() => {
-      if (isLoading) {
-        console.warn("Safety timeout triggered in useProfileSubmit - forcing completion");
-        setIsLoading(false);
-        onComplete();
-      }
-    }, 3000); // 3 second safety timeout (shorter than StepNavigation timeout)
+      console.warn("Safety timeout triggered in useProfileSubmit - forcing completion");
+      setIsLoading(false);
+      onComplete();
+    }, 3000);
     
     try {
       // Comprehensive data formatting
@@ -59,7 +62,7 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         gift_preferences: profileData.gift_preferences || [],
         data_sharing_settings: profileData.data_sharing_settings || {
           dob: "friends",
-          shipping_address: "friends", // Explicitly set to friends
+          shipping_address: "friends",
           gift_preferences: "public"
         },
         important_dates: profileData.important_dates || [],
@@ -85,21 +88,21 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
           if (error) {
             console.error("Profile save error:", error);
             toast.error("Failed to save profile. Continuing anyway.");
-            // Still proceed even on error
           } else {
             console.log("Profile saved successfully");
             toast.success("Profile setup complete!");
           }
         } catch (dbError) {
           console.error("Database operation error:", dbError);
-          // Proceed despite DB error
         }
       } else {
         console.log("No user ID available - skipping database save");
         toast.info("Profile setup completed (without saving)");
       }
-      
-      // Clear safety timeout as we're proceeding normally
+    } catch (err) {
+      console.error("Unexpected error in profile submission:", err);
+    } finally {
+      // Always clean up timeout and loading state
       if (submitTimeoutRef.current) {
         clearTimeout(submitTimeoutRef.current);
         submitTimeoutRef.current = null;
@@ -110,24 +113,8 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       
       // Always call onComplete regardless of save result
       onComplete();
-      
-    } catch (err) {
-      console.error("Unexpected error in profile submission:", err);
-      
-      // Clear safety timeout as we're handling the error
-      if (submitTimeoutRef.current) {
-        clearTimeout(submitTimeoutRef.current);
-        submitTimeoutRef.current = null;
-      }
-      
-      // Ensure loading state is resolved
-      setIsLoading(false);
-      
-      // Still call onComplete to prevent being stuck
-      toast.error("An error occurred during setup, but we'll continue anyway.");
-      onComplete();
     }
-  };
+  }, [user, onComplete]);
 
   return {
     isLoading,

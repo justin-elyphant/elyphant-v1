@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,28 +28,10 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   const isFirstStep = activeStep === 0;
   const isLastStep = activeStep === totalSteps - 1;
   
-  // Force completion after a timeout if loading takes too long
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    
-    if (isLoading && isLastStep) {
-      console.log("Setting up safety timeout for completion");
-      timeoutId = setTimeout(() => {
-        console.warn("Loading timeout reached - forcing completion");
-        onComplete();
-      }, 4000); // 4 second timeout (shorter than the profile setup timeout)
-    }
-    
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [isLoading, isLastStep, onComplete]);
-
-  // Handle the complete action
-  const handleComplete = () => {
-    console.log("Complete button clicked - initiating completion");
+  // Handle the complete action - keeps the button handler logic simple
+  const handleComplete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Complete button clicked in StepNavigation");
     onComplete();
   };
 

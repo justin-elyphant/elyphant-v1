@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
@@ -28,8 +28,8 @@ const ProfileSetup = () => {
     setIsInitializing(false);
   }, []);
 
-  // Handle completion of profile setup
-  const handleSetupComplete = async () => {
+  // Handle completion of profile setup - memoize to prevent unnecessary re-renders
+  const handleSetupComplete = useCallback(async () => {
     console.log("Profile setup complete, transitioning to dashboard");
     
     try {
@@ -59,23 +59,23 @@ const ProfileSetup = () => {
       // Still navigate to dashboard even if there's an error
       navigate("/dashboard", { replace: true });
     }
-  };
+  }, [user, navigate]);
 
-  const handleSkip = () => {
+  const handleSkip = useCallback(() => {
     // Clear the new signup flag
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
     
     toast.info("You can complete your profile later in settings");
     navigate("/dashboard", { replace: true });
-  };
+  }, [navigate]);
 
-  const handleBackToDashboard = () => {
+  const handleBackToDashboard = useCallback(() => {
     // Clear the signup flags
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
     navigate("/dashboard");
-  };
+  }, [navigate]);
 
   // Show a loading indicator if still initializing
   if (authLoading && !isNewSignUp && !isDebugMode) {
@@ -97,7 +97,7 @@ const ProfileSetup = () => {
               asChild 
               variant="ghost" 
               size="sm"
-              onClick={handleBackToDashboard} // Add click handler
+              onClick={handleBackToDashboard}
             >
               <span>
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -110,7 +110,10 @@ const ProfileSetup = () => {
 
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-4xl">
-          <ProfileSetupFlow onComplete={handleSetupComplete} onSkip={handleSkip} />
+          <ProfileSetupFlow 
+            onComplete={handleSetupComplete} 
+            onSkip={handleSkip} 
+          />
         </div>
       </main>
     </div>

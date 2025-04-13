@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     updateProfileData
   } = useProfileSetup({ onComplete, onSkip });
 
-  // Memoize step rendering to prevent unnecessary re-renders
+  // Define step rendering as a memoized function
   const renderCurrentStep = useMemo(() => {
     switch (activeStep) {
       case 0:
@@ -98,21 +98,11 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     }
   }, [activeStep, profileData, updateProfileData]);
 
-  // Keyboard navigation effect with consistent dependencies
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey && isCurrentStepValid && !isLoading) {
-        if (activeStep < steps.length - 1) {
-          handleNext();
-        } else {
-          handleComplete();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeStep, isCurrentStepValid, isLoading, steps.length, handleNext, handleComplete]);
+  // Create memoized complete handler
+  const handleCompleteClick = useCallback(() => {
+    console.log("Complete button clicked in ProfileSetupFlow");
+    handleComplete();
+  }, [handleComplete]);
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg">
@@ -122,7 +112,6 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       
       <CardContent>
         <Separator className="mb-6" />
-        
         {renderCurrentStep}
       </CardContent>
       
@@ -134,7 +123,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
           isCurrentStepValid={isCurrentStepValid}
           onBack={handleBack}
           onNext={handleNext}
-          onComplete={handleComplete}
+          onComplete={handleCompleteClick}
           onSkip={handleSkip}
         />
       </CardFooter>
@@ -143,4 +132,3 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
 };
 
 export default ProfileSetupFlow;
-

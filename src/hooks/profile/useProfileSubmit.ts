@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
@@ -12,21 +12,32 @@ interface UseProfileSubmitProps {
 export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const submitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear any lingering timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (profileData: ProfileData) => {
     // Add more comprehensive logging
     console.log("Profile submit initiated", { userId: user?.id });
 
+    // Set loading state first to provide immediate feedback
+    setIsLoading(true);
+    
     // Safety timeout to prevent stuck loading state
-    const safetyTimeout = setTimeout(() => {
+    submitTimeoutRef.current = setTimeout(() => {
       if (isLoading) {
         console.warn("Safety timeout triggered in useProfileSubmit - forcing completion");
         setIsLoading(false);
         onComplete();
       }
-    }, 5000); // 5 second safety timeout
-    
-    setIsLoading(true);
+    }, 3000); // 3 second safety timeout (shorter than StepNavigation timeout)
     
     try {
       // Comprehensive data formatting
@@ -64,18 +75,24 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       // Only try to save if we have a user ID or debug mode
       if (user?.id || process.env.REACT_APP_DEBUG_MODE) {
         console.log("Attempting to save profile data to database");
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(formattedData)
-          .select();
         
-        if (error) {
-          console.error("Profile save error:", error);
-          toast.error("Failed to save profile. Continuing anyway.");
-          // Still proceed even on error
-        } else {
-          console.log("Profile saved successfully");
-          toast.success("Profile setup complete!");
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .upsert(formattedData)
+            .select();
+          
+          if (error) {
+            console.error("Profile save error:", error);
+            toast.error("Failed to save profile. Continuing anyway.");
+            // Still proceed even on error
+          } else {
+            console.log("Profile saved successfully");
+            toast.success("Profile setup complete!");
+          }
+        } catch (dbError) {
+          console.error("Database operation error:", dbError);
+          // Proceed despite DB error
         }
       } else {
         console.log("No user ID available - skipping database save");
@@ -83,7 +100,10 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       }
       
       // Clear safety timeout as we're proceeding normally
-      clearTimeout(safetyTimeout);
+      if (submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+        submitTimeoutRef.current = null;
+      }
       
       // Ensure loading state is cleared
       setIsLoading(false);
@@ -95,7 +115,10 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       console.error("Unexpected error in profile submission:", err);
       
       // Clear safety timeout as we're handling the error
-      clearTimeout(safetyTimeout);
+      if (submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+        submitTimeoutRef.current = null;
+      }
       
       // Ensure loading state is resolved
       setIsLoading(false);

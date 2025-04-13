@@ -38,7 +38,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
       timeoutId = setTimeout(() => {
         console.warn("Loading timeout reached - forcing completion");
         onComplete();
-      }, 6000); // 6 second timeout
+      }, 4000); // 4 second timeout (shorter than the profile setup timeout)
     }
     
     return () => {

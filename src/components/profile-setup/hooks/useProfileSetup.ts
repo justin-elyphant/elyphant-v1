@@ -1,10 +1,9 @@
-
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
 import { useProfileSubmission } from "./useProfileSubmission";
 import { useProfileSubmit } from "@/hooks/profile/useProfileSubmit";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface UseProfileSetupProps {
   onComplete: () => void;
@@ -23,12 +22,11 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     onComplete
   });
   
-  // Add completion tracking state
+  const isCompletingRef = useRef(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
   const isLoading = isDataLoading || isSubmissionLoading || isSubmitLoading || isCompleting;
 
-  // Safety timeout to prevent stuck state
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
     
@@ -37,8 +35,9 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       timeoutId = setTimeout(() => {
         console.warn("Forcing profile setup completion due to timeout");
         setIsCompleting(false);
+        isCompletingRef.current = false;
         onComplete();
-      }, 7000); // 7 second timeout
+      }, 5000); // 5 second timeout
     }
     
     return () => {
@@ -48,37 +47,37 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     };
   }, [isCompleting, onComplete]);
 
-  const handleComplete = async () => {
+  const handleComplete = useCallback(async () => {
+    if (isCompletingRef.current) {
+      console.log("Completion already in progress, ignoring duplicate request");
+      return;
+    }
+
     console.log("Completing profile setup with data:", profileData);
+    isCompletingRef.current = true;
     setIsCompleting(true);
     
     try {
-      // Use our enhanced submit functionality
       await handleSubmit(profileData);
-      // This will automatically call onComplete from within handleSubmit
     } catch (error) {
       console.error("Error in handleComplete:", error);
-      // Even in case of error, we want to proceed to prevent getting stuck
+      isCompletingRef.current = false;
       setIsCompleting(false);
       onComplete();
     }
-  };
+  }, [profileData, handleSubmit, onComplete]);
 
   return {
-    // Step navigation
     activeStep,
     steps,
     handleNext,
     handleBack,
     
-    // Profile data
     profileData,
     updateProfileData,
     
-    // Validation
     isCurrentStepValid,
     
-    // Submission
     isLoading,
     handleComplete,
     handleSkip

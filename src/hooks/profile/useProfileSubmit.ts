@@ -15,23 +15,16 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
 
   const handleSubmit = async (profileData: ProfileData) => {
     // Add more comprehensive logging
-    console.log("Profile submit initiated", { user, debugMode: process.env.REACT_APP_DEBUG_MODE });
+    console.log("Profile submit initiated", { userId: user?.id });
 
-    if (!user && !process.env.REACT_APP_DEBUG_MODE) {
-      console.error("Cannot submit profile: No user is logged in");
-      toast.error("You must be logged in to save your profile");
-      setIsLoading(false);
-      return;
-    }
-    
-    // Set up a safety timeout to prevent getting stuck in loading state
+    // Safety timeout to prevent stuck loading state
     const safetyTimeout = setTimeout(() => {
       if (isLoading) {
-        console.warn("Safety timeout triggered to prevent stuck loading state");
+        console.warn("Safety timeout triggered in useProfileSubmit - forcing completion");
         setIsLoading(false);
         onComplete();
       }
-    }, 8000); // 8 second safety timeout
+    }, 5000); // 5 second safety timeout
     
     setIsLoading(true);
     
@@ -63,10 +56,14 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         updated_at: new Date().toISOString()
       };
       
-      console.log('Formatted profile data:', formattedData);
+      console.log('Profile data being submitted:', { 
+        ...formattedData, 
+        id: formattedData.id ? 'exists' : 'missing' 
+      });
       
-      if (user || process.env.REACT_APP_DEBUG_MODE) {
-        // Explicitly handle both user and debug mode scenarios
+      // Only try to save if we have a user ID or debug mode
+      if (user?.id || process.env.REACT_APP_DEBUG_MODE) {
+        console.log("Attempting to save profile data to database");
         const { error } = await supabase
           .from('profiles')
           .upsert(formattedData)
@@ -74,25 +71,25 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         
         if (error) {
           console.error("Profile save error:", error);
-          toast.error("Failed to save profile. Please try again.");
-          clearTimeout(safetyTimeout);
-          setIsLoading(false);
-          onComplete(); // Still proceed even on error
-          return;
+          toast.error("Failed to save profile. Continuing anyway.");
+          // Still proceed even on error
+        } else {
+          console.log("Profile saved successfully");
+          toast.success("Profile setup complete!");
         }
-        
-        console.log("Profile saved successfully");
-        toast.success("Profile setup complete!");
+      } else {
+        console.log("No user ID available - skipping database save");
+        toast.info("Profile setup completed (without saving)");
       }
       
       // Clear safety timeout as we're proceeding normally
       clearTimeout(safetyTimeout);
       
-      // Ensure onComplete is called with a small delay to allow toast to show
-      setTimeout(() => {
-        setIsLoading(false);
-        onComplete();
-      }, 500);
+      // Ensure loading state is cleared
+      setIsLoading(false);
+      
+      // Always call onComplete regardless of save result
+      onComplete();
       
     } catch (err) {
       console.error("Unexpected error in profile submission:", err);
@@ -100,12 +97,11 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       // Clear safety timeout as we're handling the error
       clearTimeout(safetyTimeout);
       
-      // Ensure loading state is always resolved
+      // Ensure loading state is resolved
       setIsLoading(false);
       
-      toast.error("An unexpected error occurred. Please try again.");
-      
       // Still call onComplete to prevent being stuck
+      toast.error("An error occurred during setup, but we'll continue anyway.");
       onComplete();
     }
   };

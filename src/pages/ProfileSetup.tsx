@@ -70,6 +70,13 @@ const ProfileSetup = () => {
     navigate("/dashboard", { replace: true });
   };
 
+  const handleBackToDashboard = () => {
+    // Clear the signup flags
+    localStorage.removeItem("newSignUp");
+    localStorage.removeItem("userEmail");
+    navigate("/dashboard");
+  };
+
   // Show a loading indicator if still initializing
   if (authLoading && !isNewSignUp && !isDebugMode) {
     return (
@@ -86,8 +93,13 @@ const ProfileSetup = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <Logo />
-            <Button asChild variant="ghost" size="sm">
-              <span onClick={() => navigate("/dashboard")}>
+            <Button 
+              asChild 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToDashboard} // Add click handler
+            >
+              <span>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </span>

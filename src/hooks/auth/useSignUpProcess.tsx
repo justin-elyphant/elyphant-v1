@@ -13,6 +13,7 @@ export function useSignUpProcess() {
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [bypassVerification, setBypassVerification] = useState<boolean>(false);
+  const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
 
   // Check for URL parameters indicating verified status
   useVerificationRedirect(navigate, setUserEmail);
@@ -25,7 +26,7 @@ export function useSignUpProcess() {
       // Store in localStorage for persistence
       localStorage.setItem("newSignUp", "true");
       localStorage.setItem("userEmail", userEmail);
-      localStorage.setItem("userName", userName || "");
+      localStorage.setItem("userName", userName);
       
       // Use navigate with replace to prevent back-button issues
       navigate('/profile-setup', { replace: true });
@@ -82,10 +83,11 @@ export function useSignUpProcess() {
     }
   };
 
-  // Handle resending verification email
+  // Handle resending verification email - pass setTestVerificationCode
   const { resendCount, handleResendVerification } = useResendVerification({
     userEmail,
-    userName
+    userName,
+    setTestVerificationCode
   });
 
   const handleBackToSignUp = () => {
@@ -98,7 +100,7 @@ export function useSignUpProcess() {
     userName,
     emailSent,
     resendCount,
-    testVerificationCode: null,
+    testVerificationCode,
     onSignUpSubmit: handleSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,

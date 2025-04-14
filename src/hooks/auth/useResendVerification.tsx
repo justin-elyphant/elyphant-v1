@@ -7,13 +7,13 @@ import { extractVerificationCode } from "@/hooks/signup/services/email/utils/res
 interface UseResendVerificationProps {
   userEmail: string;
   userName: string;
-  setTestVerificationCode: (code: string | null) => void;
+  setTestVerificationCode?: (code: string | null) => void;
 }
 
 export const useResendVerification = ({
   userEmail,
   userName,
-  setTestVerificationCode
+  setTestVerificationCode = () => {}  // Provide default empty function
 }: UseResendVerificationProps) => {
   const [resendCount, setResendCount] = useState<number>(0);
   const [lastResendTime, setLastResendTime] = useState<number | null>(null);
@@ -37,27 +37,30 @@ export const useResendVerification = ({
     }
     
     try {
-      console.log("Resending verification code to:", userEmail);
-      
+      console.log(`Resending verification to ${userEmail}`);
       const currentOrigin = window.location.origin;
+      
       const result = await sendVerificationEmail(userEmail, userName, currentOrigin);
       
-      console.log("Email resend result:", result);
+      console.log("Resend verification result:", result);
       
       if (!result.success) {
+        if (result.rateLimited) {
+          toast.error("Too many verification attempts", {
+            description: "Please wait a few minutes before trying again."
+          });
+          return { success: false, rateLimited: true };
+        }
+        
         toast.error("Failed to resend verification email", {
-          description: result.error || "Please try again later.",
+          description: "Please try again later."
         });
         return { success: false };
       }
       
-      // Update state
-      setResendCount(prev => prev + 1);
-      setLastResendTime(Date.now());
-      
-      // Check for test verification code in response and update it
+      // Extract and handle the verification code
       const verificationCode = extractVerificationCode(result);
-      if (verificationCode) {
+      if (verificationCode && setTestVerificationCode) {
         console.log("Test code in resend:", verificationCode);
         setTestVerificationCode(verificationCode);
         
@@ -66,6 +69,9 @@ export const useResendVerification = ({
           duration: 10000
         });
       }
+      
+      setResendCount(prev => prev + 1);
+      setLastResendTime(Date.now());
       
       toast.success("Verification email resent", {
         description: "Please check your inbox and spam folder.",

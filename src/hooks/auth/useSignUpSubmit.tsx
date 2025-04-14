@@ -13,6 +13,8 @@ interface UseSignUpSubmitProps {
   setEmailSent: (sent: boolean) => void;
   setStep: (step: "signup" | "verification") => void;
   setTestVerificationCode: (code: string | null) => void;
+  setBypassVerification: (bypass: boolean) => void;
+  setIsSubmitting: (isSubmitting: boolean) => void;
 }
 
 export const useSignUpSubmit = ({
@@ -20,13 +22,17 @@ export const useSignUpSubmit = ({
   setUserName,
   setEmailSent,
   setStep,
-  setTestVerificationCode
+  setTestVerificationCode,
+  setBypassVerification,
+  setIsSubmitting
 }: UseSignUpSubmitProps) => {
   const navigate = useNavigate();
   
   const onSignUpSubmit = async (values: SignUpFormValues) => {
     try {
       console.log("Sign up initiated for", values.email);
+      
+      setIsSubmitting(true);
       
       // Try signup with retry logic
       const { result, error } = await retrySignup({ 
@@ -41,6 +47,8 @@ export const useSignUpSubmit = ({
       } 
       // If we have an error but it's a rate limit, we can still proceed
       else if (error && isRateLimitError(error)) {
+        setBypassVerification(true);
+        
         handleRateLimit({
           email: values.email,
           name: values.name,
@@ -50,6 +58,7 @@ export const useSignUpSubmit = ({
           setEmailSent,
           navigate
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -71,6 +80,8 @@ export const useSignUpSubmit = ({
       if (isRateLimitError(err)) {
         console.log("Rate limit detected:", err);
         
+        setBypassVerification(true);
+        
         handleRateLimit({
           email: values.email,
           name: values.name,
@@ -80,6 +91,7 @@ export const useSignUpSubmit = ({
           setEmailSent,
           navigate
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -96,7 +108,10 @@ export const useSignUpSubmit = ({
           navigate
         });
         
-        if (success) return;
+        if (success) {
+          setIsSubmitting(false);
+          return;
+        }
       } else {
         // Generic error handling
         toast.error("Signup failed", {
@@ -104,8 +119,11 @@ export const useSignUpSubmit = ({
         });
       }
       
+      setIsSubmitting(false);
       throw err;
     }
+    
+    setIsSubmitting(false);
   };
 
   return { onSignUpSubmit };

@@ -12,6 +12,8 @@ export function useSignUpProcess() {
   const [userName, setUserName] = useState<string>("");
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [bypassVerification, setBypassVerification] = useState<boolean>(false);
 
   // Check for URL parameters indicating verified status
   useVerificationRedirect(navigate, setUserEmail);
@@ -37,7 +39,9 @@ export function useSignUpProcess() {
     setUserName,
     setEmailSent,
     setStep,
-    setTestVerificationCode
+    setTestVerificationCode,
+    setBypassVerification,
+    setIsSubmitting
   });
 
   // Handle resending verification email
@@ -61,5 +65,7 @@ export function useSignUpProcess() {
     onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
+    isSubmitting,
+    bypassVerification,
   };
 }

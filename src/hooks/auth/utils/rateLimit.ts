@@ -40,6 +40,7 @@ export const handleRateLimit = ({
   localStorage.setItem("newSignUp", "true");
   localStorage.setItem("userEmail", email);
   localStorage.setItem("userName", name);
+  localStorage.setItem("signupRateLimited", "true");
   
   // Show success toast
   toast.success("Account created successfully!", {

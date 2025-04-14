@@ -23,10 +23,26 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const [isCompleting, setIsCompleting] = useState(false);
   const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 2000; // Reduced from 3000 to 2000 ms to prevent long waits
+  const maxCompletionTime = 5000; // Set a reasonable timeout of 5 seconds
 
   // More reliable loading state checking
   const isLoading = isSubmitLoading || isCompleting || isDataLoading;
+
+  // Clear all loading flags when component mounts
+  useEffect(() => {
+    // Clear any stale loading flags
+    localStorage.removeItem("profileSetupLoading");
+    console.log("useProfileSetup: Initialized and cleared loading flags");
+    
+    // Also clear when component unmounts
+    return () => {
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = null;
+      }
+      localStorage.removeItem("profileSetupLoading");
+    };
+  }, []);
 
   // Enhanced logging for debugging
   useEffect(() => {
@@ -36,7 +52,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       isCompleting,
       totalLoading: isLoading,
       nextStepsOption: profileData.next_steps_option,
-      activeStep
+      activeStep,
+      hasCompletedRef: hasCompletedRef.current
     });
   }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option, activeStep]);
 
@@ -104,8 +121,11 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       localStorage.removeItem("profileSetupLoading");
       setIsCompleting(false);
       cleanupTimeouts();
-      onComplete();
       
+      // Short timeout before completing to ensure state updates
+      setTimeout(() => {
+        onComplete();
+      }, 100);
     } catch (error) {
       console.error("Error in handleComplete:", error);
       toast.error("An error occurred, continuing anyway");
@@ -118,7 +138,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       // Even on error, we still want to complete the flow to prevent users getting stuck
       setTimeout(() => {
         onComplete();
-      }, 500);
+      }, 100);
     }
   }, [profileData, handleSubmit, onComplete, isCompleting, cleanupTimeouts]);
 

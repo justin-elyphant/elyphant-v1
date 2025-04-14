@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -28,6 +28,32 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
 }) => {
   const isFirstStep = activeStep === 0;
   const isLastStep = activeStep === totalSteps - 1;
+  
+  // Force completion if loading state gets stuck for too long
+  useEffect(() => {
+    let safetyTimer: NodeJS.Timeout | null = null;
+    
+    if (isLoading && isLastStep) {
+      console.log("Setting safety timer for loading state");
+      safetyTimer = setTimeout(() => {
+        console.log("Safety timer triggered - loading state was stuck");
+        // Clear loading flag from localStorage
+        localStorage.removeItem("profileSetupLoading");
+        
+        // If we're still on the page, force the completion
+        if (isLoading && isLastStep) {
+          console.log("Forcing completion due to stuck loading state");
+          onComplete();
+        }
+      }, 8000); // 8 second safety timeout
+    }
+    
+    return () => {
+      if (safetyTimer) {
+        clearTimeout(safetyTimer);
+      }
+    };
+  }, [isLoading, isLastStep, onComplete]);
   
   // Add click debugging
   const handleNextClick = (e: React.MouseEvent) => {

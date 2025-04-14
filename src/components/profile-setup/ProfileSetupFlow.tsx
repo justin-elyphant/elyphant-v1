@@ -1,3 +1,4 @@
+
 import React, { useCallback, useMemo, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +24,11 @@ interface ProfileSetupFlowProps {
 }
 
 const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip }) => {
+  // Clear any stale loading flags on component mount
+  useEffect(() => {
+    localStorage.removeItem("profileSetupLoading");
+  }, []);
+
   const {
     activeStep,
     profileData,
@@ -34,7 +40,19 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     handleComplete,
     handleSkip,
     updateProfileData
-  } = useProfileSetup({ onComplete, onSkip });
+  } = useProfileSetup({ 
+    onComplete: useCallback(() => {
+      console.log("ProfileSetupFlow: onComplete triggered");
+      // Ensure loading flags are cleared
+      localStorage.removeItem("profileSetupLoading");
+      
+      // Ensure we invoke the parent's onComplete
+      setTimeout(() => {
+        onComplete();
+      }, 50);
+    }, [onComplete]), 
+    onSkip 
+  });
 
   useEffect(() => {
     console.log("ProfileSetupFlow: Current state", {
@@ -106,11 +124,31 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     }
   }, [activeStep, profileData, updateProfileData]);
 
-  // Create memoized complete handler
+  // Create memoized complete handler with additional safety
   const handleCompleteClick = useCallback(() => {
     console.log("Complete button clicked in ProfileSetupFlow");
-    handleComplete();
-  }, [handleComplete]);
+    
+    // Safety check - if we're on the last step, ensure we complete even if there's an error
+    const safeComplete = () => {
+      try {
+        handleComplete();
+      } catch (error) {
+        console.error("Error during completion:", error);
+        toast.error("Error completing profile setup, continuing anyway");
+        
+        // Force completion even if there's an error
+        setTimeout(() => {
+          // Clean up flags first
+          localStorage.removeItem("profileSetupLoading");
+          
+          // Then complete
+          onComplete();
+        }, 100);
+      }
+    };
+    
+    safeComplete();
+  }, [handleComplete, onComplete]);
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg">

@@ -43,37 +43,17 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
       });
       
       if (signUpError) {
-        console.error("Signup error:", signUpError);
-        
         // Handle rate limit error specifically
         if (signUpError.message.includes("rate limit") || 
             signUpError.message.includes("too many requests") || 
-            signUpError.message.includes("exceeded") || 
-            signUpError.status === 429 || 
-            signUpError.code === "over_email_send_rate_limit") {
+            signUpError.status === 429) {
           
-          console.log("Rate limit detected, bypassing email verification");
-          
-          // Store user data for the next step even with rate limiting
-          localStorage.setItem("newSignUp", "true");
-          localStorage.setItem("userEmail", values.email);
-          localStorage.setItem("userName", values.name);
+          state.setBypassVerification(true);
           localStorage.setItem("signupRateLimited", "true");
           
-          // Set state variables
-          state.setUserEmail(values.email);
-          state.setUserName(values.name);
-          state.setEmailSent(true); // This will trigger auto-redirect
-          state.setTestVerificationCode("123456"); // Set dummy code for development
-          state.setBypassVerification(true);
-          
-          // Show success message with explanation about rate limiting
-          toast.success("Account creation bypassed rate limit", {
-            description: "Continuing to profile setup..."
+          toast.error("Too many signup attempts", {
+            description: "Please try again in a few minutes or contact support."
           });
-          
-          // Force auto-verification and redirect to profile setup
-          state.setStep("verification");
           state.setIsSubmitting(false);
           return;
         }
@@ -118,7 +98,9 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
         }
         
         // Create user profile
-        await createUserProfile(signUpData.user.id, values.email, values.name);
+        if (signUpData.user.id) {
+          await createUserProfile(signUpData.user.id, values.email, values.name);
+        }
         
         // Set application state
         state.setUserEmail(values.email);
@@ -126,10 +108,9 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
         state.setEmailSent(true);
         state.setTestVerificationCode("123456"); // Set dummy code for development
         
-        // Handle potential email sending failures by setting bypass flag
+        // Try to send email
         try {
-          // Try to send verification email
-          const emailResponse = await supabase.functions.invoke('send-verification-email', {
+          const emailResult = await supabase.functions.invoke('send-verification-email', {
             body: {
               email: values.email,
               name: values.name,
@@ -137,26 +118,23 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
             }
           });
           
-          if (emailResponse.error) {
-            console.log("Email sending failed, bypassing verification:", emailResponse.error);
+          if (emailResult.error) {
+            console.error("Error sending verification email:", emailResult.error);
             state.setBypassVerification(true);
             localStorage.setItem("signupRateLimited", "true");
           } else {
-            console.log("Email sent successfully");
+            console.log("Verification email sent successfully");
           }
         } catch (emailError) {
-          console.error("Error sending verification email:", emailError);
-          // If email sending fails, still let the user proceed
+          console.error("Error when sending verification email:", emailError);
           state.setBypassVerification(true);
           localStorage.setItem("signupRateLimited", "true");
         }
         
-        // Show success message
         toast.success("Account created successfully!", {
           description: "Taking you to complete your profile."
         });
         
-        // 3. Force auto-verification and redirect to profile setup
         state.setStep("verification");
       }
     } catch (err: any) {

@@ -23,7 +23,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const [isCompleting, setIsCompleting] = useState(false);
   const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 5000; // Set a reasonable timeout of 5 seconds
+  const maxCompletionTime = 3000; // Reduce timeout to 3 seconds
 
   // More reliable loading state checking
   const isLoading = isSubmitLoading || isCompleting || isDataLoading;
@@ -67,6 +67,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
           setIsCompleting(false);
           // Remove loading flags from localStorage
           localStorage.removeItem("profileSetupLoading");
+          localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
           onComplete();
         }
       }, maxCompletionTime);
@@ -88,6 +89,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     }
     // Remove loading flag
     localStorage.removeItem("profileSetupLoading");
+    localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
   }, []);
 
   // Handle skip action
@@ -119,6 +121,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       // Clear completion flags and redirect
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileSetupLoading");
+      localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
       setIsCompleting(false);
       cleanupTimeouts();
       
@@ -133,6 +136,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       // Clear loading states and force completion
       setIsCompleting(false);
       localStorage.removeItem("profileSetupLoading");
+      localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
       cleanupTimeouts();
       
       // Even on error, we still want to complete the flow to prevent users getting stuck

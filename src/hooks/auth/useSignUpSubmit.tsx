@@ -33,6 +33,7 @@ export const useSignUpSubmit = () => {
         if (isRateLimitError(signUpError)) {
           console.log("Rate limit encountered in signUpSubmit, handling gracefully");
           
+          // Store data in localStorage
           localStorage.setItem("signupRateLimited", "true");
           localStorage.setItem("userEmail", values.email);
           localStorage.setItem("userName", values.name || "");
@@ -42,7 +43,11 @@ export const useSignUpSubmit = () => {
             description: "Taking you to profile setup."
           });
           
-          navigate('/profile-setup', { replace: true });
+          // Use navigate with replace to prevent back navigation
+          setTimeout(() => {
+            navigate('/profile-setup', { replace: true });
+          }, 500);
+          
           return;
         }
         
@@ -79,10 +84,10 @@ export const useSignUpSubmit = () => {
           description: "Taking you to profile setup."
         });
         
-        // Navigate directly to profile setup
+        // Navigate directly to profile setup with a small delay to ensure state is updated
         setTimeout(() => {
           navigate('/profile-setup', { replace: true });
-        }, 1500);
+        }, 500);
       }
     } catch (err: any) {
       console.error("Signup submission error:", err);
@@ -100,7 +105,10 @@ export const useSignUpSubmit = () => {
           description: "Taking you to profile setup."
         });
         
-        navigate('/profile-setup', { replace: true });
+        setTimeout(() => {
+          navigate('/profile-setup', { replace: true });
+        }, 500);
+        
         return;
       }
       

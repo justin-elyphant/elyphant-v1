@@ -24,10 +24,24 @@ interface ProfileSetupFlowProps {
 }
 
 const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip }) => {
-  // Clear any stale loading flags on component mount
+  // Clear any stale loading flags and rate limit flags on component mount
   useEffect(() => {
     localStorage.removeItem("profileSetupLoading");
+    console.log("ProfileSetupFlow: Component mounted, current rate limit flag:", 
+      localStorage.getItem("signupRateLimited"));
   }, []);
+
+  const handleCompleteWrapper = useCallback(() => {
+    console.log("ProfileSetupFlow: onComplete wrapper triggered");
+    // Ensure all loading and rate limit flags are cleared
+    localStorage.removeItem("profileSetupLoading");
+    localStorage.removeItem("signupRateLimited");
+    
+    // Ensure we invoke the parent's onComplete
+    setTimeout(() => {
+      onComplete();
+    }, 50);
+  }, [onComplete]);
 
   const {
     activeStep,
@@ -41,16 +55,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     handleSkip,
     updateProfileData
   } = useProfileSetup({ 
-    onComplete: useCallback(() => {
-      console.log("ProfileSetupFlow: onComplete triggered");
-      // Ensure loading flags are cleared
-      localStorage.removeItem("profileSetupLoading");
-      
-      // Ensure we invoke the parent's onComplete
-      setTimeout(() => {
-        onComplete();
-      }, 50);
-    }, [onComplete]), 
+    onComplete: handleCompleteWrapper,
     onSkip 
   });
 
@@ -59,6 +64,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       activeStep,
       isLoading,
       isCurrentStepValid,
+      rateLimitFlag: localStorage.getItem("signupRateLimited"),
       profileData
     });
   }, [activeStep, isLoading, isCurrentStepValid, profileData]);
@@ -128,6 +134,9 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
   const handleCompleteClick = useCallback(() => {
     console.log("Complete button clicked in ProfileSetupFlow");
     
+    // Safety check - clear rate limit flag before completing
+    localStorage.removeItem("signupRateLimited");
+    
     // Safety check - if we're on the last step, ensure we complete even if there's an error
     const safeComplete = () => {
       try {
@@ -140,6 +149,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
         setTimeout(() => {
           // Clean up flags first
           localStorage.removeItem("profileSetupLoading");
+          localStorage.removeItem("signupRateLimited");
           
           // Then complete
           onComplete();

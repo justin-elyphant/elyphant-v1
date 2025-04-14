@@ -67,5 +67,5 @@ export const handleRateLimit = ({
   setTimeout(() => {
     // Navigate directly to profile setup with replacement (prevents back navigation)
     navigate('/profile-setup', { replace: true });
-  }, 1500);
+  }, 1000);
 };

@@ -39,13 +39,14 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
         console.log("Safety timer triggered - loading state was stuck");
         // Clear loading flag from localStorage
         localStorage.removeItem("profileSetupLoading");
+        localStorage.removeItem("signupRateLimited");
         
         // If we're still on the page, force the completion
         if (isLoading && isLastStep) {
           console.log("Forcing completion due to stuck loading state");
           onComplete();
         }
-      }, 5000); // 5 second safety timeout
+      }, 4000); // 4 second safety timeout
     }
     
     return () => {
@@ -67,14 +68,17 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   const handleComplete = (e: React.MouseEvent) => {
     e.preventDefault();
     console.log("Complete button clicked in StepNavigation, isLoading:", isLoading);
+    
     if (isLoading) {
       console.log("Ignoring complete button click - already loading");
       return;
     }
+    
     console.log("Proceeding with complete action");
     
-    // Clear any existing loading flags
+    // Clear any existing loading flags and rate limit flags
     localStorage.removeItem("profileSetupLoading");
+    localStorage.removeItem("signupRateLimited");
     
     onComplete();
   };

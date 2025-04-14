@@ -9,7 +9,22 @@ export const useAuthFunctions = (user: User | null) => {
 
   const signOut = async (): Promise<void> => {
     try {
-      await supabase.auth.signOut();
+      console.log("Signing out user...");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Clear any local storage items related to authentication
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
+      localStorage.removeItem("redirectAfterSignIn");
+      localStorage.removeItem("newSignUp");
+      localStorage.removeItem("nextStepsOption");
+      
+      console.log("Sign out successful, navigating to home page");
       navigate("/");
       toast.success("You have been signed out");
     } catch (error) {
@@ -32,6 +47,14 @@ export const useAuthFunctions = (user: User | null) => {
       
       // Sign out after deletion
       await supabase.auth.signOut();
+      
+      // Clear any local storage items
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
+      localStorage.removeItem("redirectAfterSignIn");
+      localStorage.removeItem("newSignUp");
+      localStorage.removeItem("nextStepsOption");
       
       // Redirect to home page
       navigate("/");

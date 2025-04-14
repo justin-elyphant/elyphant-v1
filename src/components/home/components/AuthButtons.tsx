@@ -15,17 +15,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const AuthButtons = () => {
+  // Use a try-catch to safely access the auth context
   let user = null;
-  let signOut = async () => {};
+  let signOut = null;
   
   try {
     const auth = useAuth();
-    user = auth.user;
-    signOut = auth.signOut;
+    user = auth?.user;
+    signOut = auth?.signOut;
   } catch (error) {
     console.warn("Auth context not available in AuthButtons");
     // Continue with default values if context is not available
   }
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (signOut) {
+      try {
+        await signOut();
+        console.log("User signed out successfully");
+      } catch (error) {
+        console.error("Error signing out:", error);
+      }
+    } else {
+      console.error("SignOut function is not available");
+    }
+  };
 
   if (user) {
     return (
@@ -63,7 +78,7 @@ const AuthButtons = () => {
               <Link to="/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="text-destructive">
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

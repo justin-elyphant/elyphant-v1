@@ -15,6 +15,7 @@ const SignUp: React.FC = () => {
     onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
+    isSubmitting,
   } = useSignUpProcess();
   
   // Enhanced logging to check testVerificationCode value
@@ -24,10 +25,10 @@ const SignUp: React.FC = () => {
       userEmail,
       userName,
       resendCount,
-      testVerificationCode: testVerificationCode || "none"
+      testVerificationCode: testVerificationCode || "none",
+      isSubmitting
     });
-    console.log("SignUp page testVerificationCode:", testVerificationCode);
-  }, [step, userEmail, userName, resendCount, testVerificationCode]);
+  }, [step, userEmail, userName, resendCount, testVerificationCode, isSubmitting]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -42,6 +43,7 @@ const SignUp: React.FC = () => {
           onSignUpSubmit={onSignUpSubmit}
           handleResendVerification={handleResendVerification}
           handleBackToSignUp={handleBackToSignUp}
+          isSubmitting={isSubmitting}
         />
       </div>
       <Footer />

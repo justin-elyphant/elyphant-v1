@@ -1,208 +1,168 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Mail, Lock, Loader2 } from "lucide-react";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Mail, Lock, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
+
+const signInSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+});
+
+type SignInValues = z.infer<typeof signInSchema>;
 
 interface EmailPasswordFormProps {
   onSuccess: () => void;
 }
 
-export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+  const form = useForm<SignInValues>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
+  const onSubmit = async (values: SignInValues) => {
     try {
-      console.log("Attempting to sign in with:", email);
+      setIsLoading(true);
+      setErrorMessage(null);
       
-      // Try to sign in
+      console.log("Attempting to sign in with email:", values.email);
+      
+      // Try to sign in the user
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: values.email,
+        password: values.password,
       });
-
+      
       if (error) {
         console.error("Sign in error:", error);
         
-        // Try to check if user exists but password is wrong
-        const { count, error: checkError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('email', email);
-        
-        if (!checkError && count && count > 0) {
-          setError("The password you entered is incorrect");
-          toast.error("Sign in failed", {
-            description: "The password you entered is incorrect",
-          });
-        } else {
-          // Check if user exists in auth but profile doesn't exist
-          const { data: userData, error: authError } = await supabase.auth.admin.getUserByEmail(email);
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          // Check if the email exists but password is wrong
+          const { data: userData, error: userError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', values.email)
+            .maybeSingle();
           
-          if (!authError && userData) {
-            // User exists in auth but not in profiles
-            console.log("User exists in auth but not in profiles, creating profile");
-            try {
-              const response = await supabase.functions.invoke('create-profile', {
-                body: {
-                  user_id: userData.id,
-                  profile_data: {
-                    email: userData.email,
-                    name: userData.user_metadata?.name || email.split('@')[0],
-                    updated_at: new Date().toISOString()
-                  }
-                }
-              });
-              
-              if (response.error) {
-                console.error("Error creating profile:", response.error);
-              } else {
-                console.log("Profile created successfully");
-                // Try sign in again
-                const { error: retryError } = await supabase.auth.signInWithPassword({
-                  email,
-                  password,
-                });
-                
-                if (!retryError) {
-                  toast.success("Signed in successfully!");
-                  setIsLoading(false);
-                  onSuccess();
-                  return;
-                }
-              }
-            } catch (profileError) {
-              console.error("Error creating profile:", profileError);
-            }
+          if (!userError && userData) {
+            setErrorMessage("The password you entered is incorrect.");
+          } else {
+            setErrorMessage("Email not found. Please sign up first.");
           }
-          
-          setError("The email or password you entered is incorrect");
-          toast.error("Sign in failed", {
-            description: "The email or password you entered is incorrect",
-          });
+        } else {
+          setErrorMessage(error.message);
         }
-        setIsLoading(false);
         return;
       }
       
-      console.log("Sign in successful:", data);
-      
-      // Store user ID and email in localStorage for reliability
-      if (data.user?.id) {
-        localStorage.setItem("userId", data.user.id);
-        localStorage.setItem("userEmail", data.user.email || '');
-        
-        // Ensure the user has a profile
-        try {
-          const response = await supabase.functions.invoke('create-profile', {
-            body: {
-              user_id: data.user.id,
-              profile_data: {
-                email: data.user.email,
-                name: data.user.user_metadata?.name || email.split('@')[0] || 'User',
-                updated_at: new Date().toISOString()
-              }
-            }
-          });
-          
-          if (response.error) {
-            console.error("Error creating profile via edge function:", response.error);
-          } else {
-            console.log("Profile created/updated successfully via edge function:", response.data);
-          }
-        } catch (profileError) {
-          console.error("Failed to call create-profile function:", profileError);
-        }
+      if (!data.user) {
+        setErrorMessage("No user found. Please sign up first.");
+        return;
       }
       
-      toast.success("Signed in successfully!");
+      console.log("Sign in successful, redirecting...");
       
-      // Set a flag to indicate that we're coming from sign-in
+      // Set localStorage flag for triggering profile creation if needed
       localStorage.setItem("fromSignIn", "true");
       
-      setIsLoading(false);
+      // Notify and redirect
+      toast.success("Signed in successfully!");
       onSuccess();
-      
-    } catch (err) {
-      console.error("Unexpected sign in error:", err);
-      setError("An unexpected error occurred");
-      toast.error("Sign in failed");
+    } catch (err: any) {
+      console.error("Sign in submission error:", err);
+      setErrorMessage(err.message || "An unexpected error occurred");
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-          <Link
-            to="/reset-password"
-            className="text-sm text-primary underline-offset-4 hover:underline"
-          >
-            Forgot?
-          </Link>
-        </div>
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
-      </div>
-      
-      {error && (
-        <div className="text-sm text-destructive">{error}</div>
-      )}
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-purple-600 hover:bg-purple-700"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Signing in...
-          </>
-        ) : (
-          "Sign In"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-2">
+            <Info className="h-4 w-4" />
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         )}
-      </Button>
-    </form>
+        
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <span className="absolute left-3 top-3 text-gray-400">
+                    <Mail className="h-4 w-4" />
+                  </span>
+                  <Input
+                    placeholder="your@email.com"
+                    className="pl-10"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <span className="absolute left-3 top-3 text-gray-400">
+                    <Lock className="h-4 w-4" />
+                  </span>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign in"
+          )}
+        </Button>
+      </form>
+    </Form>
   );
-};
+}

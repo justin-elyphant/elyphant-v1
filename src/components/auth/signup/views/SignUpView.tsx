@@ -13,9 +13,10 @@ import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/forms/Sig
 
 interface SignUpViewProps {
   onSubmit: (values: SignUpFormValues) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
-const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit }) => {
+const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit, isSubmitting = false }) => {
   return (
     <Card>
       <CardHeader className="space-y-1">
@@ -25,7 +26,7 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <SignUpForm onSubmit={onSubmit} />
+        <SignUpForm onSubmit={onSubmit} isSubmitting={isSubmitting} />
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">

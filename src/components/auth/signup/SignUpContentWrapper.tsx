@@ -19,6 +19,7 @@ interface SignUpContentWrapperProps {
   onSignUpSubmit: (values: SignUpFormValues) => Promise<void>;
   handleResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
   handleBackToSignUp: () => void;
+  isSubmitting?: boolean;
 }
 
 const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
@@ -30,6 +31,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   onSignUpSubmit,
   handleResendVerification,
   handleBackToSignUp,
+  isSubmitting = false,
 }) => {
   // Add logging to check testVerificationCode value
   useEffect(() => {
@@ -38,7 +40,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 
   if (step === "signup") {
     return (
-      <SignUpView onSubmit={onSignUpSubmit} />
+      <SignUpView onSubmit={onSignUpSubmit} isSubmitting={isSubmitting} />
     );
   }
 

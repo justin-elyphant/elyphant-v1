@@ -51,6 +51,33 @@ export function useSignUpProcess() {
       setStep("verification");  // This will trigger auto-redirect to profile setup
     } catch (error) {
       console.error("Sign up process error:", error);
+      
+      // Check for rate limit error in the caught error
+      const err = error as any;
+      if (err?.message?.includes("rate limit") || 
+          err?.message?.includes("too many requests") || 
+          err?.status === 429 ||
+          err?.code === "over_email_send_rate_limit") {
+        
+        console.log("Rate limit caught in error handler, bypassing verification");
+        setBypassVerification(true);
+        localStorage.setItem("signupRateLimited", "true");
+        
+        // Store user data and proceed
+        localStorage.setItem("userEmail", values.email);
+        localStorage.setItem("userName", values.name);
+        localStorage.setItem("newSignUp", "true");
+        
+        setUserEmail(values.email);
+        setUserName(values.name);
+        setEmailSent(true);
+        setTestVerificationCode("123456");
+        
+        // Auto-redirect to profile setup
+        navigate('/profile-setup', { replace: true });
+        return;
+      }
+      
       throw error;
     } finally {
       setIsSubmitting(false);

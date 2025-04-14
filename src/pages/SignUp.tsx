@@ -5,7 +5,7 @@ import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper"
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Info } from "lucide-react";
+import { CheckCircle, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,6 +27,9 @@ const SignUp: React.FC = () => {
   // Verify Supabase connection on page load
   const [isSupabaseConnected, setIsSupabaseConnected] = React.useState<boolean | null>(null);
   const [connectionError, setConnectionError] = React.useState<string | null>(null);
+  const [rateLimitReached, setRateLimitReached] = React.useState<boolean>(
+    localStorage.getItem("signupRateLimited") === "true"
+  );
   
   useEffect(() => {
     const checkSupabaseConnection = async () => {
@@ -72,9 +75,10 @@ const SignUp: React.FC = () => {
       testVerificationCode: testVerificationCode || "none",
       isSubmitting,
       bypassVerification,
-      supabaseConnection: isSupabaseConnected
+      supabaseConnection: isSupabaseConnected,
+      rateLimitReached
     });
-  }, [step, userEmail, userName, resendCount, testVerificationCode, isSubmitting, bypassVerification, isSupabaseConnected]);
+  }, [step, userEmail, userName, resendCount, testVerificationCode, isSubmitting, bypassVerification, isSupabaseConnected, rateLimitReached]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -94,6 +98,15 @@ const SignUp: React.FC = () => {
             <Info className="h-4 w-4" />
             <AlertDescription>
               Connection to Supabase failed: {connectionError || "Unknown error"}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {rateLimitReached && (
+          <Alert className="mb-4 bg-yellow-50 border-yellow-200">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-700">
+              Rate limit for signup emails reached. We've simplified your signup experience - you'll be redirected to profile setup after account creation.
             </AlertDescription>
           </Alert>
         )}

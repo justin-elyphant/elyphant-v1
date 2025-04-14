@@ -6,14 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface UseVerificationContainerProps {
   userEmail: string;
-  userName: string;
+  userName?: string; // Make userName optional
   testVerificationCode?: string | null;
   bypassVerification?: boolean;
 }
 
 export const useVerificationContainer = ({
   userEmail,
-  userName,
+  userName = "", // Provide default value
   testVerificationCode,
   bypassVerification = false
 }: UseVerificationContainerProps) => {
@@ -213,7 +213,7 @@ export const useVerificationContainer = ({
     isLoading,
     effectiveVerificationCode,
     handleVerificationSuccess,
-    handleCheckVerification,
+    handleCheckVerification, // This is the function that needs to be returned correctly
     handleResendVerification,
   };
 };

@@ -34,8 +34,13 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
     effectiveVerificationCode,
     handleVerificationSuccess,
     setVerificationCode,
-    checkEmailVerification
-  } = useVerificationContainer({ userEmail, testVerificationCode, bypassVerification });
+    handleCheckVerification // Use the correct function name returned from the hook
+  } = useVerificationContainer({ 
+    userEmail, 
+    userName, // Pass userName to the hook
+    testVerificationCode, 
+    bypassVerification 
+  });
   
   const {
     isResending,
@@ -70,7 +75,7 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
         resendCount={resendCount}
         onVerificationSuccess={handleVerificationSuccess}
         onResendVerification={handleResendVerification}
-        onCheckVerification={checkEmailVerification}
+        onCheckVerification={handleCheckVerification} // Use the correct function
         setVerificationCode={setVerificationCode}
         bypassVerification={bypassVerification}
       />

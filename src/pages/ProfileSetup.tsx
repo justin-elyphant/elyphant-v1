@@ -15,7 +15,11 @@ const ProfileSetup = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isNewSignUp, setIsNewSignUp] = useState(false);
   
+  // Clear any stale loading flags on mount
   useEffect(() => {
+    // Clear any stale loading flags
+    localStorage.removeItem("profileSetupLoading");
+    
     console.log("ProfileSetup: Component mounted");
     console.log("ProfileSetup: Current auth state", { 
       user, 
@@ -39,6 +43,9 @@ const ProfileSetup = () => {
     console.log("Profile setup complete, transitioning to appropriate destination");
     
     try {
+      // Clear any loading flags
+      localStorage.removeItem("profileSetupLoading");
+      
       // Get the next steps option from localStorage
       const nextStepsOption = localStorage.getItem("nextStepsOption") || "dashboard";
       console.log("Next steps option selected:", nextStepsOption);
@@ -91,6 +98,8 @@ const ProfileSetup = () => {
   }, [user, navigate]);
 
   const handleSkip = useCallback(() => {
+    // Clear any loading flags
+    localStorage.removeItem("profileSetupLoading");
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
@@ -100,11 +109,23 @@ const ProfileSetup = () => {
   }, [navigate]);
 
   const handleBackToDashboard = useCallback(() => {
+    // Clear any loading flags
+    localStorage.removeItem("profileSetupLoading");
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
     navigate("/dashboard");
   }, [navigate]);
+
+  // Check for stuck loading state on render
+  useEffect(() => {
+    const isLoading = localStorage.getItem("profileSetupLoading") === "true";
+    if (isLoading) {
+      // If we detect a stale loading state, clear it
+      console.log("Detected stale loading state, clearing it");
+      localStorage.removeItem("profileSetupLoading");
+    }
+  }, []);
 
   if (authLoading && !isNewSignUp && !isDebugMode) {
     return (

@@ -46,6 +46,10 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
       return;
     }
     console.log("Proceeding with complete action");
+    
+    // Clear any existing loading flags
+    localStorage.removeItem("profileSetupLoading");
+    
     onComplete();
   };
 

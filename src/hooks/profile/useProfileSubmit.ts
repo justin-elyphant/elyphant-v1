@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { ProfileData } from "@/components/profile-setup/hooks/types";
-import { useNavigate } from "react-router-dom";
 
 interface UseProfileSubmitProps {
   onComplete: () => void;
@@ -13,7 +12,6 @@ interface UseProfileSubmitProps {
 
 export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubmitProps) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const submitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const submitAttemptedRef = useRef(false);
@@ -25,6 +23,8 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         clearTimeout(submitTimeoutRef.current);
         submitTimeoutRef.current = null;
       }
+      // Also clear the loading flag from localStorage
+      localStorage.removeItem("profileSetupLoading");
     };
   }, []);
 
@@ -87,6 +87,25 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       console.log("Creating/updating profile via Edge Function for user:", userId);
       console.log("Profile data to be saved:", formattedData);
       
+      // Set a timeout to proceed regardless of API response
+      submitTimeoutRef.current = setTimeout(() => {
+        if (isLoading) { // Check if we're still loading
+          console.warn("Profile submission timeout - proceeding anyway");
+          setIsLoading(false);
+          
+          // Store the nextStepsOption in localStorage before completing
+          if (nextStepsOption || (profileData && profileData.next_steps_option)) {
+            localStorage.setItem("nextStepsOption", nextStepsOption || profileData.next_steps_option || "dashboard");
+          }
+          
+          // Set a flag to indicate profile is completed
+          localStorage.setItem("profileCompleted", "true");
+          localStorage.removeItem("profileSetupLoading");
+          
+          onComplete();
+        }
+      }, 3000); // 3 second timeout
+      
       try {
         // Use our Edge Function to create/update the profile
         const response = await supabase.functions.invoke('create-profile', {
@@ -111,7 +130,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
               
             if (directError) {
               console.error("Direct profile update also failed:", directError);
-              toast.error("Failed to save profile. Please try again later.");
+              toast.error("Failed to save profile. Continuing anyway.");
             } else {
               console.log("Profile saved successfully via direct update");
               toast.success("Profile setup complete!");
@@ -125,20 +144,14 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         }
       } catch (err) {
         console.error("Failed to call create-profile function:", err);
-        toast.error("Error saving profile data.");
+        toast.error("Error saving profile data, but continuing anyway");
       }
-    } catch (err) {
-      console.error("Unexpected error in profile submission:", err);
-      toast.error("Failed to save profile");
-    } finally {
-      // Always clean up timeout and loading state
+      
+      // Clear the timeout since we got a response
       if (submitTimeoutRef.current) {
         clearTimeout(submitTimeoutRef.current);
         submitTimeoutRef.current = null;
       }
-      
-      // Ensure loading state is cleared
-      setIsLoading(false);
       
       // Store the nextStepsOption in localStorage before completing
       if (nextStepsOption || (profileData && profileData.next_steps_option)) {
@@ -147,8 +160,23 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       
       // Set a flag to indicate profile is completed
       localStorage.setItem("profileCompleted", "true");
+      localStorage.removeItem("profileSetupLoading");
       
-      // Directly call onComplete after a very short delay to ensure state updates have propagated
+      // Directly call onComplete after ensuring state updates have propagated
+      setIsLoading(false);
+      setTimeout(() => {
+        onComplete();
+      }, 50);
+      
+    } catch (err) {
+      console.error("Unexpected error in profile submission:", err);
+      toast.error("Failed to save profile, continuing anyway");
+      
+      // Clear loading state and continue
+      setIsLoading(false);
+      localStorage.removeItem("profileSetupLoading");
+      
+      // Even on error, let's continue rather than leaving the user stuck
       setTimeout(() => {
         onComplete();
       }, 50);

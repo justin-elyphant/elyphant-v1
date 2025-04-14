@@ -23,30 +23,35 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const [isCompleting, setIsCompleting] = useState(false);
   const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 3000; // Reduced from 5000 to 3000 ms to prevent long waits
+  const maxCompletionTime = 2000; // Reduced from 3000 to 2000 ms to prevent long waits
 
-  // Simplified loading state determination to prevent false positives
-  const isLoading = isSubmitLoading || isCompleting;
+  // More reliable loading state checking
+  const isLoading = isSubmitLoading || isCompleting || isDataLoading;
 
   // Enhanced logging for debugging
   useEffect(() => {
-    console.log("useProfileSetup: Loading states", {
+    console.log("useProfileSetup state:", {
       isDataLoading,
       isSubmitLoading,
       isCompleting,
       totalLoading: isLoading,
-      nextStepsOption: profileData.next_steps_option
+      nextStepsOption: profileData.next_steps_option,
+      activeStep
     });
-  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option]);
+  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option, activeStep]);
 
-  // Force completion after a timeout
+  // Force completion after a timeout - with additional safeguards
   useEffect(() => {
     if (isCompleting && !completionTimeoutRef.current) {
       console.log("Setting up safety timeout for profile completion");
       completionTimeoutRef.current = setTimeout(() => {
         console.warn("Forcing profile setup completion due to timeout");
-        setIsCompleting(false);
-        onComplete();
+        if (isCompleting) { // Double-check we're still completing
+          setIsCompleting(false);
+          // Remove loading flags from localStorage
+          localStorage.removeItem("profileSetupLoading");
+          onComplete();
+        }
       }, maxCompletionTime);
     }
     
@@ -64,6 +69,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       clearTimeout(completionTimeoutRef.current);
       completionTimeoutRef.current = null;
     }
+    // Remove loading flag
+    localStorage.removeItem("profileSetupLoading");
   }, []);
 
   // Handle skip action
@@ -75,7 +82,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     }
   }, [onSkip, cleanupTimeouts]);
 
-  // Handle completion with safety timeout
+  // Handle completion with safety timeout and better error handling
   const handleComplete = useCallback(async () => {
     if (hasCompletedRef.current || isCompleting) {
       console.log("Completion already in progress, ignoring duplicate request");
@@ -86,21 +93,32 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     hasCompletedRef.current = true;
     setIsCompleting(true);
     
+    // Set loading flag in localStorage
+    localStorage.setItem("profileSetupLoading", "true");
+    
     try {
       await handleSubmit(profileData);
       
       // Clear completion flags and redirect
       localStorage.removeItem("newSignUp");
+      localStorage.removeItem("profileSetupLoading");
       setIsCompleting(false);
       cleanupTimeouts();
       onComplete();
       
     } catch (error) {
       console.error("Error in handleComplete:", error);
-      toast.error("An error occurred, but we'll continue anyway");
+      toast.error("An error occurred, continuing anyway");
+      
+      // Clear loading states and force completion
       setIsCompleting(false);
+      localStorage.removeItem("profileSetupLoading");
       cleanupTimeouts();
-      onComplete();
+      
+      // Even on error, we still want to complete the flow to prevent users getting stuck
+      setTimeout(() => {
+        onComplete();
+      }, 500);
     }
   }, [profileData, handleSubmit, onComplete, isCompleting, cleanupTimeouts]);
 

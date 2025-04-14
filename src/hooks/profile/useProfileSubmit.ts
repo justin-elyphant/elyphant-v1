@@ -62,13 +62,13 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         setIsLoading(false);
         
         // Still call onComplete to proceed
+        onComplete();
         return;
       }
       
       // Comprehensive data formatting
       const formattedData: any = {
         name: profileData.name || "User",
-        username: profileData.username || `user_${Date.now().toString(36)}`,
         email: userEmail,
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,

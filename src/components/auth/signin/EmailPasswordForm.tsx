@@ -55,7 +55,7 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       // Check profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id')
         .eq('id', data.user?.id)
         .maybeSingle();
         

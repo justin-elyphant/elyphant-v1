@@ -18,6 +18,7 @@ const SignUp: React.FC = () => {
     handleResendVerification,
     handleBackToSignUp,
     isSubmitting,
+    bypassVerification,
   } = useSignUpProcess();
   
   // Enhanced logging to check testVerificationCode value
@@ -28,15 +29,16 @@ const SignUp: React.FC = () => {
       userName,
       resendCount,
       testVerificationCode: testVerificationCode || "none",
-      isSubmitting
+      isSubmitting,
+      bypassVerification
     });
-  }, [step, userEmail, userName, resendCount, testVerificationCode, isSubmitting]);
+  }, [step, userEmail, userName, resendCount, testVerificationCode, isSubmitting, bypassVerification]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow">
-        {localStorage.getItem("signupRateLimited") === "true" && (
+        {(localStorage.getItem("signupRateLimited") === "true" || bypassVerification) && (
           <Alert variant="warning" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>

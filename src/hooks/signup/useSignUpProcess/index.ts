@@ -58,12 +58,14 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
           localStorage.setItem("newSignUp", "true");
           localStorage.setItem("userEmail", values.email);
           localStorage.setItem("userName", values.name);
+          localStorage.setItem("signupRateLimited", "true");
           
           // Set state variables
           state.setUserEmail(values.email);
           state.setUserName(values.name);
           state.setEmailSent(true); // This will trigger auto-redirect
           state.setTestVerificationCode("123456"); // Set dummy code for development
+          state.setBypassVerification(true);
           
           // Show success message with explanation about rate limiting
           toast.success("Account creation bypassed rate limit", {
@@ -124,6 +126,31 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
         state.setEmailSent(true);
         state.setTestVerificationCode("123456"); // Set dummy code for development
         
+        // Handle potential email sending failures by setting bypass flag
+        try {
+          // Try to send verification email
+          const emailResponse = await supabase.functions.invoke('send-verification-email', {
+            body: {
+              email: values.email,
+              name: values.name,
+              verificationUrl: window.location.origin
+            }
+          });
+          
+          if (emailResponse.error) {
+            console.log("Email sending failed, bypassing verification:", emailResponse.error);
+            state.setBypassVerification(true);
+            localStorage.setItem("signupRateLimited", "true");
+          } else {
+            console.log("Email sent successfully");
+          }
+        } catch (emailError) {
+          console.error("Error sending verification email:", emailError);
+          // If email sending fails, still let the user proceed
+          state.setBypassVerification(true);
+          localStorage.setItem("signupRateLimited", "true");
+        }
+        
         // Show success message
         toast.success("Account created successfully!", {
           description: "Taking you to complete your profile."
@@ -162,5 +189,6 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
     handleResendVerification,
     handleBackToSignUp,
     isSubmitting: state.isSubmitting,
+    bypassVerification: state.bypassVerification,
   };
 }

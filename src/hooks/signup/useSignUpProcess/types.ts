@@ -17,4 +17,5 @@ export interface UseSignUpProcessReturn {
   handleResendVerification: () => Promise<{ success: boolean }>;
   handleBackToSignUp: () => void;
   isSubmitting: boolean;
+  bypassVerification: boolean;
 }

@@ -31,6 +31,14 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   isSubmitting = false 
 }) => {
   const [showRateLimitWarning, setShowRateLimitWarning] = React.useState(false);
+  const [showEmailWarning, setShowEmailWarning] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check if there have been previous rate limit issues
+    if (localStorage.getItem("signupRateLimited") === "true") {
+      setShowRateLimitWarning(true);
+    }
+  }, []);
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -44,8 +52,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const handleSubmit = async (values: SignUpFormValues) => {
     try {
-      // Reset rate limit warning
+      // Reset warnings
       setShowRateLimitWarning(false);
+      setShowEmailWarning(false);
       
       // Validate the captcha - the field component handles the validation internally
       const captchaField = document.querySelector(".CaptchaField") as HTMLElement;
@@ -68,6 +77,13 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         toast.error("Too many signup attempts", {
           description: "We'll bypass verification to let you continue."
         });
+      } else if (error.message?.includes("email") || error.message?.includes("sending")) {
+        // Handle email sending errors
+        setShowEmailWarning(true);
+        
+        toast.error("Email delivery issue", {
+          description: "We'll continue with your signup without email verification."
+        });
       } else {
         // Generic error handling
         toast.error("Signup failed", {
@@ -84,6 +100,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             We've detected too many signup attempts. Don't worry, you can still continue with profile setup.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {showEmailWarning && (
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            We're having trouble sending verification emails. You'll be able to continue without verification.
           </AlertDescription>
         </Alert>
       )}

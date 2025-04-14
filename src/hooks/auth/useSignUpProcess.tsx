@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVerificationRedirect } from "./useVerificationRedirect";
-import { useSignUpSubmit } from "./useSignUpSubmit";
 import { useResendVerification } from "./useResendVerification";
+import { useSignUpSubmit } from "./useSignUpSubmit";
 
 export function useSignUpProcess() {
   const navigate = useNavigate();
@@ -34,15 +34,7 @@ export function useSignUpProcess() {
   }, [emailSent, step, navigate, userEmail, userName]);
   
   // Handle signup form submission
-  const { onSignUpSubmit } = useSignUpSubmit({
-    setUserEmail,
-    setUserName,
-    setEmailSent,
-    setStep,
-    setTestVerificationCode,
-    setBypassVerification,
-    setIsSubmitting
-  });
+  const { onSignUpSubmit } = useSignUpSubmit();
 
   // Handle resending verification email
   const { resendCount, lastResendTime, handleResendVerification } = useResendVerification({

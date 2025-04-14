@@ -3,12 +3,15 @@ import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 export const useSignUpSubmit = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
   const onSignUpSubmit = async (values: SignUpFormValues) => {
     try {
+      setIsSubmitting(true);
       console.log("Sign up initiated for", values.email);
       
       // Create user in Supabase Auth
@@ -65,8 +68,10 @@ export const useSignUpSubmit = () => {
     } catch (err: any) {
       console.error("Signup submission error:", err);
       throw err;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return { onSignUpSubmit };
+  return { onSignUpSubmit, isSubmitting };
 };

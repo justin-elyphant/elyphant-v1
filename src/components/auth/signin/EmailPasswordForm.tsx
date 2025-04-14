@@ -26,24 +26,6 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
     try {
       console.log("Attempting to sign in with:", email);
       
-      // First check if the user exists
-      const { data: userData, error: userError } = await supabase.auth.admin
-        .getUserByEmail(email)
-        .catch(err => {
-          console.log("Could not check if user exists:", err);
-          return { data: null, error: null };
-        });
-        
-      if (userError) {
-        console.log("Error checking if user exists:", userError);
-      }
-      
-      if (userData) {
-        console.log("User exists in auth:", userData);
-      } else {
-        console.log("User does not exist in auth system");
-      }
-      
       // Try to sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,

@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useVerificationCode } from "./useVerificationCode";
-import { useVerificationStatus } from "./useVerificationStatus";
 
 interface UseVerificationContainerProps {
   userEmail: string;
@@ -19,20 +17,17 @@ export const useVerificationContainer = ({
   bypassVerification = false
 }: UseVerificationContainerProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [effectiveVerificationCode, setEffectiveVerificationCode] = useState(testVerificationCode || "");
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationChecking, setVerificationChecking] = useState(false);
   
-  // Use the verification code hook
-  const {
-    verificationCode,
-    setVerificationCode,
-    effectiveVerificationCode
-  } = useVerificationCode(testVerificationCode);
-  
-  // Use verification status hook
-  const {
-    isVerified,
-    verificationChecking,
-    setIsVerified
-  } = useVerificationStatus();
+  // Update effectiveVerificationCode when testVerificationCode changes
+  useEffect(() => {
+    if (testVerificationCode) {
+      setEffectiveVerificationCode(testVerificationCode);
+    }
+  }, [testVerificationCode]);
 
   // Auto-bypass if requested by parent component
   useEffect(() => {
@@ -40,7 +35,7 @@ export const useVerificationContainer = ({
       console.log("Bypass verification is active, auto-verifying...");
       handleVerificationSuccess();
     }
-  }, [bypassVerification]);
+  }, [bypassVerification, isVerified]);
   
   // Handle successful verification
   const handleVerificationSuccess = () => {
@@ -146,7 +141,7 @@ export const useVerificationContainer = ({
             description: "We've simplified the verification process for you."
           });
           
-          return { success: true, rateLimited: true };
+          return { success: true };
         }
         
         toast.error("Failed to resend verification email", {

@@ -14,7 +14,6 @@ interface VerificationContainerProps {
   onBackToSignUp: () => void;
   onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
   resendCount: number;
-  testVerificationCode?: string | null;
   bypassVerification?: boolean;
 }
 
@@ -24,7 +23,6 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
   onBackToSignUp,
   onResendVerification,
   resendCount,
-  testVerificationCode,
   bypassVerification = false
 }: VerificationContainerProps) => {
   const {
@@ -38,7 +36,6 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
   } = useVerificationContainer({ 
     userEmail, 
     userName,
-    testVerificationCode, 
     bypassVerification 
   });
   
@@ -62,7 +59,7 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
         <VerificationHeader userEmail={userEmail} />
         
         <p className="text-base text-muted-foreground">
-          We've sent a verification code to your email. Please check your inbox and enter the code below.
+          We've sent a verification link to your email. Please check your inbox and enter the code below.
         </p>
       </CardHeader>
       

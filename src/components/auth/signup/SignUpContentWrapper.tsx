@@ -51,7 +51,6 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       onBackToSignUp={handleBackToSignUp}
       onResendVerification={handleResendVerification}
       resendCount={resendCount}
-      testVerificationCode={testVerificationCode}
       bypassVerification={bypassVerification}
     />
   );

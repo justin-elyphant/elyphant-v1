@@ -67,7 +67,6 @@ const VerificationContentSection = ({
         <VerificationForm 
           userEmail={userEmail} 
           onVerificationSuccess={onVerificationSuccess}
-          testVerificationCode={effectiveVerificationCode}
         />
       ) : (
         <VerificationCodeSection

@@ -11,7 +11,6 @@ export function useSignUpProcess() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [emailSent, setEmailSent] = useState<boolean>(false);
-  const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [bypassVerification, setBypassVerification] = useState<boolean>(false);
 
@@ -71,7 +70,6 @@ export function useSignUpProcess() {
         setUserEmail(values.email);
         setUserName(values.name);
         setEmailSent(true);
-        setTestVerificationCode("123456");
         
         // Auto-redirect to profile setup
         navigate('/profile-setup', { replace: true });
@@ -85,10 +83,9 @@ export function useSignUpProcess() {
   };
 
   // Handle resending verification email
-  const { resendCount, lastResendTime, handleResendVerification } = useResendVerification({
+  const { resendCount, handleResendVerification } = useResendVerification({
     userEmail,
-    userName,
-    setTestVerificationCode
+    userName
   });
 
   const handleBackToSignUp = () => {
@@ -101,7 +98,7 @@ export function useSignUpProcess() {
     userName,
     emailSent,
     resendCount,
-    testVerificationCode,
+    testVerificationCode: null,
     onSignUpSubmit: handleSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,

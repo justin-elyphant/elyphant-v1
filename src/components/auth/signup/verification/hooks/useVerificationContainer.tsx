@@ -6,28 +6,19 @@ import { toast } from "sonner";
 interface UseVerificationContainerProps {
   userEmail: string;
   userName?: string; 
-  testVerificationCode?: string | null;
   bypassVerification?: boolean;
 }
 
 export const useVerificationContainer = ({
   userEmail,
   userName = "", 
-  testVerificationCode,
   bypassVerification = false
 }: UseVerificationContainerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
-  const [effectiveVerificationCode, setEffectiveVerificationCode] = useState(testVerificationCode || "");
+  const [effectiveVerificationCode, setEffectiveVerificationCode] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
-  
-  // Update effectiveVerificationCode when testVerificationCode changes
-  useEffect(() => {
-    if (testVerificationCode) {
-      setEffectiveVerificationCode(testVerificationCode);
-    }
-  }, [testVerificationCode]);
 
   // Auto-bypass if requested by parent component
   useEffect(() => {
@@ -58,12 +49,6 @@ export const useVerificationContainer = ({
     // If bypass is enabled, always return verified
     if (bypassVerification) {
       console.log("Bypass verification active, returning verified=true");
-      return { verified: true };
-    }
-    
-    // For testing, if we have a test code, auto-verify
-    if (testVerificationCode) {
-      console.log("Test verification code detected, returning verified=true");
       return { verified: true };
     }
     
@@ -113,26 +98,19 @@ export const useVerificationContainer = ({
     try {
       setIsLoading(true);
       
-      // In a real implementation, we would call an API to resend verification
-      // For testing, we'll just simulate success
-      console.log("Simulating resend verification email to:", userEmail);
+      console.log("Resending verification email to:", userEmail);
       
-      // Simulate API call
-      const verificationResult = await supabase.functions.invoke('send-verification-email', {
-        body: {
-          email: userEmail,
-          name: userName,
-          verificationUrl: window.location.origin
-        }
+      // Use native Supabase method to resend verification email
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: userEmail,
       });
       
-      if (verificationResult.error) {
-        console.error("Error resending verification:", verificationResult.error);
+      if (error) {
+        console.error("Error resending verification:", error);
         
         // If we got a rate limit error, we'll bypass verification
-        if (verificationResult.error.message?.includes("rate limit") ||
-            verificationResult.error.status === 429) {
-          
+        if (error.message?.includes("rate limit") || error.status === 429) {
           console.log("Rate limit detected in resend, bypassing verification");
           localStorage.setItem("signupRateLimited", "true");
           handleVerificationSuccess();
@@ -145,14 +123,14 @@ export const useVerificationContainer = ({
         }
         
         toast.error("Failed to resend verification email", {
-          description: verificationResult.error.message || "Please try again later"
+          description: error.message || "Please try again later"
         });
         
         return { success: false };
       }
       
       toast.success("Verification email resent!", {
-        description: "Please check your inbox for the new verification code."
+        description: "Please check your inbox for the email with the confirmation link."
       });
       
       return { success: true };

@@ -73,7 +73,6 @@ const VerificationCodeSection: React.FC<VerificationCodeSectionProps> = ({
       <VerificationForm 
         userEmail={userEmail}
         onVerificationSuccess={onVerificationSuccess}
-        testVerificationCode={effectiveVerificationCode}
       />
     </>
   );

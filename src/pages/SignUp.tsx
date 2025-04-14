@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
@@ -61,6 +62,11 @@ const SignUp: React.FC = () => {
         localStorage.getItem("userEmail") && 
         localStorage.getItem("userName")) {
       console.log("Rate limit detected and user info available, redirecting to profile setup");
+      
+      toast.success("Account created! Email verification has been skipped.", {
+        description: "You can complete your profile now."
+      });
+      
       navigate('/profile-setup', { replace: true });
     }
   }, [navigate]);
@@ -106,7 +112,7 @@ const SignUp: React.FC = () => {
           <Alert className="mb-4 bg-yellow-50 border-yellow-200">
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-700">
-              Rate limit for signup emails reached. We've simplified your signup experience - you'll be redirected to profile setup after account creation.
+              Email rate limit reached. We've simplified your signup experience - you'll be redirected to profile setup after account creation.
             </AlertDescription>
           </Alert>
         )}

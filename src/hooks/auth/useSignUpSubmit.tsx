@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { isRateLimitError } from "./utils/rateLimit";
+import { isRateLimitError, handleRateLimit } from "./utils/rateLimit";
 
 export const useSignUpSubmit = () => {
   const navigate = useNavigate();

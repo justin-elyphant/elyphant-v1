@@ -45,7 +45,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
           console.log("Forcing completion due to stuck loading state");
           onComplete();
         }
-      }, 8000); // 8 second safety timeout
+      }, 5000); // 5 second safety timeout
     }
     
     return () => {

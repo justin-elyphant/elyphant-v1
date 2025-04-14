@@ -73,7 +73,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           name="name"
           label="Name"
           placeholder="Your name"
-          icon={User}
+          Icon={User}
         />
         
         <InputField
@@ -82,7 +82,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           label="Email"
           placeholder="your@email.com"
           type="email"
-          icon={Mail}
+          Icon={Mail}
         />
         
         <InputField
@@ -91,7 +91,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           label="Password"
           placeholder="********"
           type="password"
-          icon={Lock}
+          Icon={Lock}
         />
 
         <div className="CaptchaField pt-2">

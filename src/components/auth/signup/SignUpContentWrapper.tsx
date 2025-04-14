@@ -20,6 +20,7 @@ interface SignUpContentWrapperProps {
   handleResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
   handleBackToSignUp: () => void;
   isSubmitting?: boolean;
+  bypassVerification?: boolean;
 }
 
 const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
@@ -32,6 +33,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   handleResendVerification,
   handleBackToSignUp,
   isSubmitting = false,
+  bypassVerification = false,
 }) => {
   if (step === "signup") {
     return (

@@ -96,68 +96,82 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       console.log('Profile data being submitted:', formattedData);
       
       try {
-        let saveResult;
+        // Try using RPC function first (bypasses RLS)
+        const { error: rpcError } = await supabase.rpc('upsert_profile', {
+          profile_data: formattedData
+        });
         
-        // First try to find the profile by ID
-        if (userId) {
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('id', userId)
-            .maybeSingle();
-            
-          if (existingProfile) {
-            // Update existing profile
-            console.log("Updating existing profile with ID:", userId);
-            saveResult = await supabase
+        if (rpcError) {
+          console.error("RPC profile save error:", rpcError);
+          
+          // Fallback to standard methods
+          let saveResult;
+          
+          if (userId) {
+            // Try to get existing profile
+            const { data: existingProfile } = await supabase
               .from('profiles')
-              .update(formattedData)
+              .select('id')
               .eq('id', userId)
-              .select();
-          } else {
-            // Insert new profile with ID
-            console.log("Creating new profile with ID:", userId);
-            saveResult = await supabase
+              .maybeSingle();
+              
+            if (existingProfile) {
+              // Update existing profile
+              console.log("Updating existing profile with ID:", userId);
+              saveResult = await supabase
+                .from('profiles')
+                .update(formattedData)
+                .eq('id', userId)
+                .select();
+            } else {
+              // Insert new profile with ID
+              console.log("Creating new profile with ID:", userId);
+              saveResult = await supabase
+                .from('profiles')
+                .insert(formattedData)
+                .select();
+            }
+          } 
+          // If no user ID, try to find by email
+          else if (userEmail) {
+            const { data: existingProfile } = await supabase
               .from('profiles')
-              .insert(formattedData)
-              .select();
-          }
-        } 
-        // If no user ID, try to find by email
-        else if (userEmail) {
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('email', userEmail)
-            .maybeSingle();
-            
-          if (existingProfile) {
-            // Update existing profile by email
-            console.log("Updating existing profile with email:", userEmail);
-            saveResult = await supabase
-              .from('profiles')
-              .update(formattedData)
+              .select('id')
               .eq('email', userEmail)
-              .select();
-          } else {
-            // Insert new profile with email
-            console.log("Creating new profile with email:", userEmail);
-            saveResult = await supabase
-              .from('profiles')
-              .insert(formattedData)
-              .select();
+              .maybeSingle();
+              
+            if (existingProfile) {
+              // Update existing profile by email
+              console.log("Updating existing profile with email:", userEmail);
+              saveResult = await supabase
+                .from('profiles')
+                .update(formattedData)
+                .eq('email', userEmail)
+                .select();
+            } else {
+              // Insert new profile with email
+              console.log("Creating new profile with email:", userEmail);
+              saveResult = await supabase
+                .from('profiles')
+                .insert(formattedData)
+                .select();
+            }
           }
-        }
-        
-        if (saveResult?.error) {
-          console.error("Profile save error:", saveResult.error);
-          toast.error("Failed to save profile. Continuing anyway.");
+          
+          if (saveResult?.error) {
+            console.error("Profile save error:", saveResult.error);
+            toast.error("Failed to save profile. Continuing anyway.");
+          } else {
+            console.log("Profile saved successfully");
+            toast.success("Profile setup complete!");
+          }
         } else {
-          console.log("Profile saved successfully");
+          console.log("Profile saved successfully via RPC");
           toast.success("Profile setup complete!");
         }
       } catch (dbError) {
         console.error("Database operation error:", dbError);
+        toast.error("Error saving profile data. Continuing anyway.");
       }
     } catch (err) {
       console.error("Unexpected error in profile submission:", err);

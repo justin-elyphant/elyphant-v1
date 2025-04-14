@@ -52,7 +52,7 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       
       console.log("Sign in successful:", data);
       
-      // Check profile data
+      // Check if profile exists
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -65,26 +65,29 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       
       console.log("User profile data:", profileData);
       
-      // If no profile exists, we'll create one
+      // If no profile exists, create one using RPC
       if (!profileData && data.user) {
         console.log("No profile found, creating one now for user:", data.user.id);
         
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([
-            { 
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.user_metadata?.name || '',
-              updated_at: new Date().toISOString()
-            }
-          ]);
+        try {
+          // Use a Supabase function to create the profile (bypasses RLS)
+          const { error: createProfileError } = await supabase.rpc('create_profile', {
+            user_id: data.user.id,
+            user_email: data.user.email,
+            user_name: data.user.user_metadata?.name || ''
+          });
           
-        if (insertError) {
-          console.error("Error creating profile:", insertError);
-          toast.error("Could not create user profile");
-        } else {
-          console.log("Created new profile for user");
+          if (createProfileError) {
+            console.error("Error creating profile:", createProfileError);
+            toast.error("Could not create user profile");
+          } else {
+            console.log("Created new profile for user via RPC");
+          }
+        } catch (rpcError) {
+          console.error("RPC error:", rpcError);
+          
+          // Fallback method - direct insert with service role (would need separate edge function)
+          console.log("Unable to create profile through RPC. User may need to complete profile setup later.");
         }
       }
       

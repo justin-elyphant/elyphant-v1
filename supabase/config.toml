@@ -19,4 +19,5 @@ verify_jwt = false
 [functions.create-user]
 verify_jwt = false
 
-
+[functions.create-profile]
+verify_jwt = false

@@ -17,6 +17,17 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase URL or service role key");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+    
     // Initialize the Supabase client with the service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
@@ -34,6 +45,7 @@ serve(async (req) => {
     }
     
     console.log("Received profile creation request for user:", user_id);
+    console.log("Profile data:", profile_data);
     
     // First check if profile exists
     const { data: existingProfile, error: checkError } = await supabase
@@ -59,6 +71,7 @@ serve(async (req) => {
     let result;
     
     if (existingProfile) {
+      console.log("Profile exists, updating...");
       // Update existing profile
       const { data, error } = await supabase
         .from('profiles')
@@ -67,11 +80,14 @@ serve(async (req) => {
         .select();
         
       if (error) {
+        console.error("Error updating profile:", error);
         throw error;
       }
       
+      console.log("Profile updated successfully");
       result = { success: true, action: "updated", data };
     } else {
+      console.log("Profile does not exist, creating new profile...");
       // Create new profile
       const { data, error } = await supabase
         .from('profiles')
@@ -79,9 +95,11 @@ serve(async (req) => {
         .select();
         
       if (error) {
+        console.error("Error creating profile:", error);
         throw error;
       }
       
+      console.log("Profile created successfully");
       result = { success: true, action: "created", data };
     }
     

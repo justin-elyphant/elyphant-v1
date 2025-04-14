@@ -26,6 +26,7 @@ export const useSignUpSubmit = ({
     try {
       console.log("Sign up initiated for", values.email);
       
+      // Attempt to create the user
       const result = await signUpUser(values, null, null);
       
       if (!result) {
@@ -37,37 +38,38 @@ export const useSignUpSubmit = ({
       
       console.log("User created successfully:", result);
       
-      // Store user ID in localStorage for reliability
+      // Store user ID and other info in localStorage for reliability
       if (result.user?.id) {
         localStorage.setItem("userId", result.user.id);
         localStorage.setItem("userEmail", values.email);
         localStorage.setItem("userName", values.name || '');
+        localStorage.setItem("newSignUp", "true");
       }
       
+      // Set UI state
       setUserEmail(values.email);
       setUserName(values.name);
       
-      // Create a profile using the edge function
+      // Immediate profile creation via edge function
       if (result.user?.id) {
-        console.log("Creating profile for user:", result.user.id);
-        
         try {
+          console.log("Creating profile for new user:", result.user.id);
+          
+          const profileData = {
+            email: values.email,
+            name: values.name || values.email.split('@')[0],
+            updated_at: new Date().toISOString()
+          };
+          
           const response = await supabase.functions.invoke('create-profile', {
             body: {
               user_id: result.user.id,
-              profile_data: {
-                email: values.email,
-                name: values.name,
-                updated_at: new Date().toISOString()
-              }
+              profile_data: profileData
             }
           });
           
           if (response.error) {
             console.error("Error creating profile via edge function:", response.error);
-            toast.error("Profile creation failed", {
-              description: "Your account was created but we couldn't set up your profile."
-            });
           } else {
             console.log("Profile created successfully via edge function:", response.data);
           }
@@ -78,6 +80,7 @@ export const useSignUpSubmit = ({
         console.warn("No user ID available after signup. This may cause issues with profile creation.");
       }
       
+      // Send verification email
       const currentOrigin = window.location.origin;
       console.log("Using origin for verification:", currentOrigin);
       
@@ -114,17 +117,11 @@ export const useSignUpSubmit = ({
             duration: 8000
           });
         }
-
-        // Log the full emailResult for debugging
-        console.log("Full emailResult:", JSON.stringify(emailResult));
       }
       
-      // Force setting emailSent flag to true
+      // Force setting emailSent flag to true and move to verification step
       setEmailSent(true);
       setStep("verification");
-      
-      // Set new signup flag for redirection handling
-      localStorage.setItem("newSignUp", "true");
       
     } catch (err: any) {
       console.error("Signup failed:", err);

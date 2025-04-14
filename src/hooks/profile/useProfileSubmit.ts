@@ -73,10 +73,12 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
           shipping_address: "friends",
           gift_preferences: "public"
         },
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        username: profileData.username || `user_${Date.now().toString(36)}`
       };
       
       console.log("Creating/updating profile via Edge Function for user:", userId);
+      console.log("Profile data to be saved:", formattedData);
       
       try {
         // Use our Edge Function to create/update the profile

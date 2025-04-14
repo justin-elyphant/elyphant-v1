@@ -59,6 +59,8 @@ const VerificationContentSection = ({
         />
       ) : (
         <VerificationCodeSection
+          userEmail={userEmail}
+          isVerified={isVerified}
           isLoading={isLoading}
           verificationChecking={verificationChecking}
           effectiveVerificationCode={effectiveVerificationCode}

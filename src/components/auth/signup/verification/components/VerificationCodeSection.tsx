@@ -5,17 +5,31 @@ import { Info } from "lucide-react";
 import VerificationForm from "../VerificationForm";
 
 interface VerificationCodeSectionProps {
-  userEmail: string;
-  isVerified: boolean;
-  effectiveVerificationCode: string | null;
+  userEmail?: string;
+  isVerified?: boolean;
+  isLoading: boolean;
+  verificationChecking: boolean;
+  effectiveVerificationCode: string;
+  resendCount: number;
   onVerificationSuccess: () => void;
+  onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
+  onCheckVerification: () => Promise<{ verified: boolean }>;
+  setVerificationCode: (code: string) => void;
+  bypassVerification?: boolean;
 }
 
 const VerificationCodeSection: React.FC<VerificationCodeSectionProps> = ({
   userEmail,
   isVerified,
+  isLoading,
+  verificationChecking,
   effectiveVerificationCode,
-  onVerificationSuccess
+  resendCount,
+  onVerificationSuccess,
+  onResendVerification,
+  onCheckVerification,
+  setVerificationCode,
+  bypassVerification = false
 }) => {
   if (isVerified) {
     return (
@@ -29,12 +43,20 @@ const VerificationCodeSection: React.FC<VerificationCodeSectionProps> = ({
 
   return (
     <>
-      <Alert className="bg-amber-50 border-amber-200 mb-4">
-        <Info className="h-4 w-4 text-amber-500 mr-2" />
-        <AlertDescription className="text-amber-700">
-          <span className="font-semibold">Testing mode active:</span> Email verification will be bypassed automatically.
-        </AlertDescription>
-      </Alert>
+      {bypassVerification ? (
+        <Alert className="bg-green-50 border-green-200 mb-4">
+          <AlertDescription className="text-green-700">
+            <span className="font-semibold">Verification bypass enabled:</span> Redirecting to profile setup...
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert className="bg-amber-50 border-amber-200 mb-4">
+          <Info className="h-4 w-4 text-amber-500 mr-2" />
+          <AlertDescription className="text-amber-700">
+            <span className="font-semibold">Testing mode active:</span> Email verification will be bypassed automatically.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {effectiveVerificationCode && (
         <Alert className="bg-blue-50 border-blue-200 mb-4">

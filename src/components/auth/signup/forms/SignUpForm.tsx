@@ -8,8 +8,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
 import { CaptchaField } from "../fields/CaptchaField";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { toast } from "sonner";
 
 // Schema definition
 const signUpSchema = z.object({
@@ -26,7 +25,10 @@ interface SignUpFormProps {
   isSubmitting?: boolean;
 }
 
-const SignUpForm = ({ onSubmit, isSubmitting = false }: SignUpFormProps) => {
+const SignUpForm: React.FC<SignUpFormProps> = ({ 
+  onSubmit, 
+  isSubmitting = false 
+}) => {
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -38,14 +40,29 @@ const SignUpForm = ({ onSubmit, isSubmitting = false }: SignUpFormProps) => {
   });
 
   const handleSubmit = async (values: SignUpFormValues) => {
-    // Validate the captcha - the field component handles the validation internally
-    const captchaField = document.querySelector(".CaptchaField") as HTMLElement;
-    if (captchaField && captchaField.querySelector(".text-destructive")) {
-      return;
+    try {
+      // Validate the captcha - the field component handles the validation internally
+      const captchaField = document.querySelector(".CaptchaField") as HTMLElement;
+      if (captchaField && captchaField.querySelector(".text-destructive")) {
+        return;
+      }
+      
+      // Call the parent onSubmit with error handling
+      await onSubmit(values);
+    } catch (error: any) {
+      // Specific handling for rate limit errors
+      if (error.message?.includes("rate limit") || 
+          error.message?.includes("too many requests")) {
+        toast.error("Too many signup attempts", {
+          description: "Please wait a few minutes before trying again."
+        });
+      } else {
+        // Generic error handling
+        toast.error("Signup failed", {
+          description: error.message || "An unexpected error occurred"
+        });
+      }
     }
-    
-    // Call the parent onSubmit
-    await onSubmit(values);
   };
 
   return (
@@ -56,8 +73,7 @@ const SignUpForm = ({ onSubmit, isSubmitting = false }: SignUpFormProps) => {
           name="name"
           label="Name"
           placeholder="Your name"
-          Icon={User}
-          disabled={isSubmitting}
+          icon={User}
         />
         
         <InputField
@@ -66,8 +82,7 @@ const SignUpForm = ({ onSubmit, isSubmitting = false }: SignUpFormProps) => {
           label="Email"
           placeholder="your@email.com"
           type="email"
-          Icon={Mail}
-          disabled={isSubmitting}
+          icon={Mail}
         />
         
         <InputField
@@ -76,8 +91,7 @@ const SignUpForm = ({ onSubmit, isSubmitting = false }: SignUpFormProps) => {
           label="Password"
           placeholder="********"
           type="password"
-          Icon={Lock}
-          disabled={isSubmitting}
+          icon={Lock}
         />
 
         <div className="CaptchaField pt-2">

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
 
@@ -33,14 +33,12 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   handleBackToSignUp,
   isSubmitting = false,
 }) => {
-  // Add logging to check testVerificationCode value
-  useEffect(() => {
-    console.log("SignUpContentWrapper testVerificationCode:", testVerificationCode);
-  }, [testVerificationCode]);
-
   if (step === "signup") {
     return (
-      <SignUpView onSubmit={onSignUpSubmit} isSubmitting={isSubmitting} />
+      <SignUpView 
+        onSubmit={onSignUpSubmit} 
+        isSubmitting={isSubmitting} 
+      />
     );
   }
 

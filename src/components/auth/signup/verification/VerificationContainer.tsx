@@ -15,6 +15,7 @@ interface VerificationContainerProps {
   onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
   resendCount: number;
   testVerificationCode?: string | null;
+  bypassVerification?: boolean;
 }
 
 const VerificationContainer: React.FC<VerificationContainerProps> = ({ 
@@ -23,7 +24,8 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
   onBackToSignUp,
   onResendVerification,
   resendCount,
-  testVerificationCode
+  testVerificationCode,
+  bypassVerification = false
 }: VerificationContainerProps) => {
   const {
     isLoading,
@@ -33,7 +35,7 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
     handleVerificationSuccess,
     setVerificationCode,
     checkEmailVerification
-  } = useVerificationContainer({ userEmail, testVerificationCode });
+  } = useVerificationContainer({ userEmail, testVerificationCode, bypassVerification });
   
   const {
     isResending,
@@ -70,6 +72,7 @@ const VerificationContainer: React.FC<VerificationContainerProps> = ({
         onResendVerification={handleResendVerification}
         onCheckVerification={checkEmailVerification}
         setVerificationCode={setVerificationCode}
+        bypassVerification={bypassVerification}
       />
     </Card>
   );

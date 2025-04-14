@@ -1,43 +1,105 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface UseVerificationContainerProps {
   userEmail: string;
   testVerificationCode?: string | null;
+  bypassVerification?: boolean;
 }
 
 export const useVerificationContainer = ({ 
-  userEmail 
+  userEmail, 
+  testVerificationCode,
+  bypassVerification = false
 }: UseVerificationContainerProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  
-  // Simpler success handler - no navigation here to prevent conflicts
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [verificationChecking, setVerificationChecking] = useState<boolean>(false);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [verificationCode, setVerificationCode] = useState<string>("");
+  const [effectiveVerificationCode, setEffectiveVerificationCode] = useState<string>("");
+
+  // When testVerificationCode changes, update our local state
+  useEffect(() => {
+    if (testVerificationCode) {
+      console.log("Setting effective verification code:", testVerificationCode);
+      setEffectiveVerificationCode(testVerificationCode);
+    }
+  }, [testVerificationCode]);
+
+  // Auto-verification if bypass is enabled
+  useEffect(() => {
+    if (bypassVerification) {
+      console.log("Bypass verification enabled, auto-verifying");
+      handleVerificationSuccess();
+    }
+  }, [bypassVerification]);
+
+  // Handle successful verification
   const handleVerificationSuccess = () => {
-    console.log("useVerificationContainer: Verification success for", userEmail);
     setIsVerified(true);
     
-    // Just set the localStorage flags but don't navigate
+    console.log("Verification successful, redirecting to profile setup");
+    
+    // Store user info in localStorage for profile setup
     localStorage.setItem("newSignUp", "true");
     localStorage.setItem("userEmail", userEmail);
     
-    toast.success("Account created successfully!");
+    // Redirect to profile setup
+    setTimeout(() => {
+      navigate("/profile-setup", { replace: true });
+    }, 100);
   };
 
-  // Function for API compatibility
-  const setVerificationCode = (code: string) => {
-    console.log("Code setting ignored in bypass mode:", code);
+  // Check if email is verified via Supabase
+  const checkEmailVerification = async () => {
+    try {
+      setVerificationChecking(true);
+      
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error checking session:", error);
+        toast.error("Error checking verification status");
+        setVerificationChecking(false);
+        return { verified: false };
+      }
+      
+      if (data?.session?.user?.email_confirmed_at) {
+        console.log("Email confirmed at:", data.session.user.email_confirmed_at);
+        setIsVerified(true);
+        toast.success("Email verified successfully!");
+        
+        // Redirect to profile setup
+        setTimeout(() => {
+          navigate("/profile-setup", { replace: true });
+        }, 500);
+        
+        return { verified: true };
+      } else {
+        console.log("Email not yet confirmed");
+        toast.error("Email not yet verified. Please check your inbox or enter the verification code.");
+        return { verified: false };
+      }
+    } catch (error) {
+      console.error("Error in verification check:", error);
+      return { verified: false };
+    } finally {
+      setVerificationChecking(false);
+    }
   };
 
   return {
     isLoading,
-    setIsLoading,
-    verificationChecking: false,
+    verificationChecking,
     isVerified,
-    effectiveVerificationCode: "123456", // Dummy code, not used
+    verificationCode,
+    effectiveVerificationCode,
     handleVerificationSuccess,
     setVerificationCode,
-    checkEmailVerification: () => Promise.resolve({verified: true})
+    checkEmailVerification
   };
 };

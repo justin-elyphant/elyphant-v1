@@ -9,6 +9,7 @@ interface VerificationViewProps {
   onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
   resendCount: number;
   testVerificationCode?: string | null;
+  bypassVerification?: boolean;
 }
 
 const VerificationView: React.FC<VerificationViewProps> = ({
@@ -17,7 +18,8 @@ const VerificationView: React.FC<VerificationViewProps> = ({
   onBackToSignUp,
   onResendVerification,
   resendCount,
-  testVerificationCode
+  testVerificationCode,
+  bypassVerification = false
 }) => {
   // Add logging to check if testVerificationCode is reaching this component
   useEffect(() => {
@@ -32,6 +34,7 @@ const VerificationView: React.FC<VerificationViewProps> = ({
       onResendVerification={onResendVerification}
       resendCount={resendCount}
       testVerificationCode={testVerificationCode}
+      bypassVerification={bypassVerification}
     />
   );
 };

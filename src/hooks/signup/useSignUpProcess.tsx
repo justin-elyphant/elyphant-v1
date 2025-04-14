@@ -196,6 +196,6 @@ export function useSignUpProcess() {
     onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
-    isSubmitting,
+    isSubmitting,  // Make sure to expose the isSubmitting state here
   };
 }

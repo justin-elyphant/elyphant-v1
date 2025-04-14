@@ -7,18 +7,20 @@ interface VerificationCodeInputProps {
   onChange: (value: string) => void;
   error?: string;
   disabled?: boolean;
+  maxLength?: number;
 }
 
 const VerificationCodeInput: React.FC<VerificationCodeInputProps> = ({
   value,
   onChange,
   error,
-  disabled
+  disabled,
+  maxLength = 6
 }) => {
   return (
     <div className="mb-4">
       <InputOTP 
-        maxLength={6} 
+        maxLength={maxLength} 
         value={value} 
         onChange={onChange}
         disabled={disabled}

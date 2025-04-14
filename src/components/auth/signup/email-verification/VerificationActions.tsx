@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 import VerificationCodeInput from "../verification/components/VerificationCodeInput";
@@ -21,7 +21,7 @@ const VerificationActions: React.FC<VerificationActionsProps> = ({
   onVerifyWithCode,
   resendCount = 0
 }) => {
-  const [verificationCode, setVerificationCode] = React.useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
   const handleVerifyWithCode = async () => {
     if (!onVerifyWithCode || !verificationCode || verificationCode.length < 6) {
@@ -38,7 +38,6 @@ const VerificationActions: React.FC<VerificationActionsProps> = ({
           <VerificationCodeInput 
             value={verificationCode} 
             onChange={setVerificationCode} 
-            maxLength={6}
             disabled={isLoading}
           />
           

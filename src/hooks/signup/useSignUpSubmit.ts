@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserProfile } from "./useProfileCreation";
-import { UseSignUpSubmitProps } from "./types";
+import { UseSignUpSubmitProps } from "@/hooks/signup/useSignUpProcess/types";
 
 export const useSignUpSubmit = ({
   setUserEmail,

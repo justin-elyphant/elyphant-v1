@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useVerificationRedirect } from "./useVerificationRedirect";
 import { useSignUpState } from "./useSignUpState";
 import { useAutoRedirect } from "./useAutoRedirect";
-import { createUserProfile } from "./useProfileCreation";
-import { useSignUpSubmit } from "./useSignUpSubmit";
+import { useSignUpSubmit } from "../useSignUpSubmit";
 import type { SignUpFormValues, UseSignUpProcessReturn } from "./types";
 
 export function useSignUpProcess(): UseSignUpProcessReturn {
@@ -47,7 +46,7 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
     userName: state.userName,
     emailSent: state.emailSent,
     resendCount: state.resendCount,
-    testVerificationCode: state.testVerificationCode,
+    testVerificationCode: null,
     onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,

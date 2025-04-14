@@ -8,13 +8,11 @@ import { toast } from "sonner";
 interface VerificationFormProps {
   userEmail: string;
   onVerificationSuccess: () => void;
-  testVerificationCode?: string | null;
 }
 
 const VerificationForm: React.FC<VerificationFormProps> = ({ 
   userEmail, 
-  onVerificationSuccess,
-  testVerificationCode
+  onVerificationSuccess
 }) => {
   const navigate = useNavigate();
 

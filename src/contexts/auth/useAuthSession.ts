@@ -69,6 +69,20 @@ export function useAuthSession(): UseAuthSessionReturn {
         setUser(session?.user ?? null);
         setIsLoading(false);
 
+        // Store user ID and email in localStorage for reliability
+        if (session?.user) {
+          localStorage.setItem("userId", session.user.id);
+          localStorage.setItem("userEmail", session.user.email || '');
+        } else {
+          // Clear localStorage when user logs out
+          if (event === 'SIGNED_OUT') {
+            localStorage.removeItem("userId");
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("userName");
+            localStorage.removeItem("newSignUp");
+          }
+        }
+
         if (event === 'SIGNED_IN') {
           // Check for new signup flow
           const isNewSignUp = localStorage.getItem("newSignUp") === "true";
@@ -88,6 +102,30 @@ export function useAuthSession(): UseAuthSessionReturn {
             toast.success('Signed in successfully!');
             
             try {
+              // Create or update profile for this user
+              if (session?.user?.id) {
+                try {
+                  const response = await supabase.functions.invoke('create-profile', {
+                    body: {
+                      user_id: session.user.id,
+                      profile_data: {
+                        email: session.user.email,
+                        name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                        updated_at: new Date().toISOString()
+                      }
+                    }
+                  });
+                  
+                  if (response.error) {
+                    console.error("Error creating/updating profile in auth state change:", response.error);
+                  } else {
+                    console.log("Profile created/updated in auth state change:", response.data);
+                  }
+                } catch (err) {
+                  console.error("Failed to call create-profile in auth state change:", err);
+                }
+              }
+              
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('username, name')
@@ -116,6 +154,12 @@ export function useAuthSession(): UseAuthSessionReturn {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
+      
+      // Store user ID and email in localStorage for reliability
+      if (session?.user) {
+        localStorage.setItem("userId", session.user.id);
+        localStorage.setItem("userEmail", session.user.email || '');
+      }
     });
 
     return () => subscription.unsubscribe();

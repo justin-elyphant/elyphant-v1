@@ -33,36 +33,24 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     }
     
     submitAttemptedRef.current = true;
-    console.log("Profile submit initiated", { userId: user?.id });
     setIsLoading(true);
     
-    // Safety timeout to prevent stuck loading state - shorter timeout
-    submitTimeoutRef.current = setTimeout(() => {
-      console.warn("Safety timeout triggered in useProfileSubmit - forcing completion");
-      setIsLoading(false);
-      onComplete();
-    }, 2000); // Reduced from 3000 to 2000 ms
-    
     try {
-      // Determine user ID - use auth if available or look at localStorage
+      // Get user ID from multiple sources for reliability
       const userId = user?.id || localStorage.getItem("userId");
       const userEmail = user?.email || localStorage.getItem("userEmail") || profileData.email;
       
-      console.log("Looking for user with ID:", userId, "or email:", userEmail);
+      console.log("Profile submit for user:", userId, "with email:", userEmail);
       
-      if (!userId && !userEmail) {
-        console.log("No user ID or email available - skipping database save");
-        toast.info("Profile setup completed (without saving)");
-        
-        // Clear timeout and loading state
-        if (submitTimeoutRef.current) {
-          clearTimeout(submitTimeoutRef.current);
-          submitTimeoutRef.current = null;
-        }
+      if (!userId) {
+        console.error("No user ID available from any source");
+        toast.error("Cannot save profile: No user ID available");
         setIsLoading(false);
         
-        // Still call onComplete to proceed
-        onComplete();
+        // Still call onComplete to proceed even if saving fails
+        setTimeout(() => {
+          onComplete();
+        }, 50);
         return;
       }
       
@@ -88,35 +76,31 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         updated_at: new Date().toISOString()
       };
       
-      if (userId) {
-        console.log("Creating/updating profile via Edge Function for user:", userId);
-        
-        try {
-          // Use our Edge Function to create/update the profile
-          const response = await supabase.functions.invoke('create-profile', {
-            body: {
-              user_id: userId,
-              profile_data: formattedData
-            }
-          });
-          
-          if (response.error) {
-            console.error("Error with create-profile edge function:", response.error);
-            toast.error("Failed to save profile. Please try again later.");
-          } else {
-            console.log("Profile saved successfully via edge function:", response.data);
-            toast.success("Profile setup complete!");
+      console.log("Creating/updating profile via Edge Function for user:", userId);
+      
+      try {
+        // Use our Edge Function to create/update the profile
+        const response = await supabase.functions.invoke('create-profile', {
+          body: {
+            user_id: userId,
+            profile_data: formattedData
           }
-        } catch (err) {
-          console.error("Failed to call create-profile function:", err);
-          toast.error("Error saving profile data.");
+        });
+        
+        if (response.error) {
+          console.error("Error with create-profile edge function:", response.error);
+          toast.error("Failed to save profile. Please try again later.");
+        } else {
+          console.log("Profile saved successfully via edge function:", response.data);
+          toast.success("Profile setup complete!");
         }
-      } else {
-        console.log("No user ID available, can't save profile");
-        toast.warning("No user ID available, profile not saved");
+      } catch (err) {
+        console.error("Failed to call create-profile function:", err);
+        toast.error("Error saving profile data.");
       }
     } catch (err) {
       console.error("Unexpected error in profile submission:", err);
+      toast.error("Failed to save profile");
     } finally {
       // Always clean up timeout and loading state
       if (submitTimeoutRef.current) {

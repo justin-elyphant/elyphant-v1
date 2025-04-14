@@ -37,6 +37,13 @@ export const useSignUpSubmit = ({
       
       console.log("User created successfully:", result);
       
+      // Store user ID in localStorage for reliability
+      if (result.user?.id) {
+        localStorage.setItem("userId", result.user.id);
+        localStorage.setItem("userEmail", values.email);
+        localStorage.setItem("userName", values.name || '');
+      }
+      
       setUserEmail(values.email);
       setUserName(values.name);
       
@@ -67,6 +74,8 @@ export const useSignUpSubmit = ({
         } catch (err) {
           console.error("Error calling create-profile function:", err);
         }
+      } else {
+        console.warn("No user ID available after signup. This may cause issues with profile creation.");
       }
       
       const currentOrigin = window.location.origin;
@@ -97,14 +106,26 @@ export const useSignUpSubmit = ({
             description: `Your verification code is: ${code}`,
             duration: 10000 // Show for 10 seconds
           });
+        } else {
+          // For better UX in development, set a default test code 
+          setTestVerificationCode("123456");
+          toast.info("Development mode", {
+            description: "Using default verification code: 123456",
+            duration: 8000
+          });
         }
 
         // Log the full emailResult for debugging
         console.log("Full emailResult:", JSON.stringify(emailResult));
       }
       
+      // Force setting emailSent flag to true
       setEmailSent(true);
       setStep("verification");
+      
+      // Set new signup flag for redirection handling
+      localStorage.setItem("newSignUp", "true");
+      
     } catch (err: any) {
       console.error("Signup failed:", err);
       

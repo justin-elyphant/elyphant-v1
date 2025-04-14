@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +53,12 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       
       console.log("Sign in successful:", data);
       
+      // Store user ID in localStorage for reliability
+      if (data.user?.id) {
+        localStorage.setItem("userId", data.user.id);
+        localStorage.setItem("userEmail", data.user.email || '');
+      }
+      
       // Ensure the user has a profile by calling our edge function
       if (data.user?.id) {
         try {
@@ -59,7 +67,7 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
               user_id: data.user.id,
               profile_data: {
                 email: data.user.email,
-                name: data.user.user_metadata?.name || 'User',
+                name: data.user.user_metadata?.name || email.split('@')[0],
                 updated_at: new Date().toISOString()
               }
             }
@@ -67,15 +75,22 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
           
           if (response.error) {
             console.error("Error creating profile via edge function:", response.error);
+            // Still continue the sign-in process even if profile creation fails
           } else {
             console.log("Profile created/updated successfully via edge function:", response.data);
           }
         } catch (profileError) {
           console.error("Failed to call create-profile function:", profileError);
+          // Still continue even if there's an error
         }
       }
       
       toast.success("Signed in successfully!");
+      
+      // Set a flag to indicate that we're coming from sign-in
+      localStorage.setItem("fromSignIn", "true");
+      
+      // Call onSuccess to let the parent component know
       onSuccess();
     } catch (err) {
       console.error("Unexpected sign in error:", err);

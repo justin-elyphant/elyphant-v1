@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -36,15 +36,61 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       if (error) {
         console.error("Sign in error:", error);
         
-        if (error.message.includes("Invalid login credentials")) {
+        // Try to check if user exists but password is wrong
+        const { count, error: checkError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('email', email);
+        
+        if (!checkError && count && count > 0) {
+          setError("The password you entered is incorrect");
+          toast.error("Sign in failed", {
+            description: "The password you entered is incorrect",
+          });
+        } else {
+          // Check if user exists in auth but profile doesn't exist
+          const { data: userData, error: authError } = await supabase.auth.admin.getUserByEmail(email);
+          
+          if (!authError && userData) {
+            // User exists in auth but not in profiles
+            console.log("User exists in auth but not in profiles, creating profile");
+            try {
+              const response = await supabase.functions.invoke('create-profile', {
+                body: {
+                  user_id: userData.id,
+                  profile_data: {
+                    email: userData.email,
+                    name: userData.user_metadata?.name || email.split('@')[0],
+                    updated_at: new Date().toISOString()
+                  }
+                }
+              });
+              
+              if (response.error) {
+                console.error("Error creating profile:", response.error);
+              } else {
+                console.log("Profile created successfully");
+                // Try sign in again
+                const { error: retryError } = await supabase.auth.signInWithPassword({
+                  email,
+                  password,
+                });
+                
+                if (!retryError) {
+                  toast.success("Signed in successfully!");
+                  setIsLoading(false);
+                  onSuccess();
+                  return;
+                }
+              }
+            } catch (profileError) {
+              console.error("Error creating profile:", profileError);
+            }
+          }
+          
           setError("The email or password you entered is incorrect");
           toast.error("Sign in failed", {
             description: "The email or password you entered is incorrect",
-          });
-        } else {
-          setError(error.message);
-          toast.error("Sign in failed", {
-            description: error.message,
           });
         }
         setIsLoading(false);
@@ -57,23 +103,17 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       if (data.user?.id) {
         localStorage.setItem("userId", data.user.id);
         localStorage.setItem("userEmail", data.user.email || '');
-      }
-      
-      // Ensure the user has a profile even if sign-in worked
-      if (data.user?.id) {
+        
+        // Ensure the user has a profile
         try {
-          console.log("Creating/updating profile on sign in for user:", data.user.id);
-          
-          const profileData = {
-            email: data.user.email,
-            name: data.user.user_metadata?.name || email.split('@')[0] || 'User',
-            updated_at: new Date().toISOString()
-          };
-          
           const response = await supabase.functions.invoke('create-profile', {
             body: {
               user_id: data.user.id,
-              profile_data: profileData
+              profile_data: {
+                email: data.user.email,
+                name: data.user.user_metadata?.name || email.split('@')[0] || 'User',
+                updated_at: new Date().toISOString()
+              }
             }
           });
           
@@ -92,16 +132,13 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       // Set a flag to indicate that we're coming from sign-in
       localStorage.setItem("fromSignIn", "true");
       
-      // Force a short delay before navigation to ensure storage is updated
-      setTimeout(() => {
-        onSuccess();
-      }, 100);
+      setIsLoading(false);
+      onSuccess();
       
     } catch (err) {
       console.error("Unexpected sign in error:", err);
       setError("An unexpected error occurred");
       toast.error("Sign in failed");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -157,7 +194,14 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
         className="w-full bg-purple-600 hover:bg-purple-700"
         disabled={isLoading}
       >
-        {isLoading ? "Signing in..." : "Sign In"}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Signing in...
+          </>
+        ) : (
+          "Sign In"
+        )}
       </Button>
     </form>
   );

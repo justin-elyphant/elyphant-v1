@@ -3,13 +3,14 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, User, Loader2, AlertTriangle } from "lucide-react";
+import { Mail, Lock, User, Loader2 } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
 import { CaptchaField } from "../fields/CaptchaField";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
 // Schema definition
@@ -28,10 +29,7 @@ interface SignUpFormProps {
 
 const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [rateLimited, setRateLimited] = useState(false);
-  const [rateLimitRetryAt, setRateLimitRetryAt] = useState<Date | null>(null);
-  const [rateLimitCountdown, setRateLimitCountdown] = useState<number | null>(null);
-  const [bypassMode, setBypassMode] = useState(false);
+  const [directSignup, setDirectSignup] = useState(false);
   
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -43,40 +41,6 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
     },
   });
 
-  // Set up a countdown timer when we hit a rate limit
-  React.useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    
-    if (rateLimited && rateLimitRetryAt) {
-      intervalId = setInterval(() => {
-        const now = new Date();
-        const secondsRemaining = Math.max(0, Math.floor((rateLimitRetryAt.getTime() - now.getTime()) / 1000));
-        
-        setRateLimitCountdown(secondsRemaining);
-        
-        if (secondsRemaining <= 0) {
-          setRateLimited(false);
-          setRateLimitRetryAt(null);
-          setRateLimitCountdown(null);
-          if (intervalId) clearInterval(intervalId);
-        }
-      }, 1000);
-    }
-    
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [rateLimited, rateLimitRetryAt]);
-
-  // Enable bypass mode after multiple rate limit errors
-  React.useEffect(() => {
-    if (rateLimited && !bypassMode) {
-      // After hitting rate limit, enable auto-bypass mode
-      setBypassMode(true);
-      console.log("Enabling full email verification bypass mode due to rate limiting");
-    }
-  }, [rateLimited, bypassMode]);
-
   const handleSubmit = async (values: SignUpFormValues) => {
     // Validate the captcha - the field component handles the validation internally
     const captchaField = document.querySelector(".CaptchaField") as HTMLElement;
@@ -84,68 +48,93 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
       return;
     }
     
-    // Check if we're still rate limited
-    if (rateLimited && rateLimitRetryAt && new Date() < rateLimitRetryAt) {
-      const secondsRemaining = Math.floor((rateLimitRetryAt.getTime() - new Date().getTime()) / 1000);
-      toast.error("Still rate limited", {
-        description: `Please wait ${secondsRemaining} seconds before trying again.`
-      });
-      return;
-    }
-    
-    // Reset rate limit state if trying again
-    if (rateLimited) {
-      setRateLimited(false);
-      setRateLimitRetryAt(null);
-      setRateLimitCountdown(null);
-    }
-    
     try {
       setIsSubmitting(true);
       console.log("Submitting signup form with values:", { ...values, password: "[REDACTED]" });
       
-      if (bypassMode) {
-        toast.info("Rate limit protection active", {
-          description: "Using direct signup mode to bypass email verification"
-        });
+      // DIRECT APPROACH: Try to create user directly first
+      if (!directSignup) {
+        setDirectSignup(true);
+        
+        console.log("Using direct signup approach to avoid email verification issues");
+        
+        try {
+          // Direct signup approach
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: values.email,
+            password: values.password,
+            options: {
+              data: {
+                name: values.name
+              }
+            }
+          });
+          
+          if (signUpError) {
+            console.error("Direct signup error:", signUpError);
+            toast.error("Sign up failed", {
+              description: signUpError.message
+            });
+            throw signUpError;
+          }
+          
+          console.log("Direct signup successful:", signUpData);
+          
+          // Store user data in localStorage for reliability
+          if (signUpData.user?.id) {
+            localStorage.setItem("userId", signUpData.user.id);
+            localStorage.setItem("userEmail", values.email);
+            localStorage.setItem("userName", values.name);
+            localStorage.setItem("newSignUp", "true");
+            
+            // Create profile immediately
+            try {
+              await supabase.functions.invoke('create-profile', {
+                body: {
+                  user_id: signUpData.user.id,
+                  profile_data: {
+                    email: values.email,
+                    name: values.name,
+                    updated_at: new Date().toISOString()
+                  }
+                }
+              });
+              
+              console.log("Profile created successfully via edge function");
+            } catch (profileError) {
+              console.error("Error creating profile:", profileError);
+            }
+            
+            toast.success("Account created successfully!");
+            
+            // Auto sign-in
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email: values.email,
+              password: values.password
+            });
+            
+            if (signInError) {
+              console.error("Auto sign-in error:", signInError);
+            } else {
+              console.log("Auto sign-in successful");
+            }
+          }
+          
+          // Call the parent onSubmit to continue with the flow
+          await onSubmit(values);
+          return;
+        } catch (err) {
+          console.error("Direct signup approach failed:", err);
+          // Fall through to regular flow
+        }
       }
       
+      // Fall back to regular flow if direct approach failed
       await onSubmit(values);
     } catch (error: any) {
       console.error("Form submission error:", error);
       
-      // Enhanced rate limit detection with more comprehensive patterns
-      if (error.message?.toLowerCase().includes("rate limit") || 
-          error.message?.toLowerCase().includes("exceeded") || 
-          error.message?.toLowerCase().includes("too many") || 
-          error.status === 429 || 
-          error.code === "over_email_send_rate_limit" ||
-          error.code === "too_many_requests") {
-        console.log("Rate limit detected, showing rate limit message");
-        
-        // Set a retry time 2 minutes from now
-        const retryAt = new Date();
-        retryAt.setMinutes(retryAt.getMinutes() + 2);
-        
-        setRateLimited(true);
-        setRateLimitRetryAt(retryAt);
-        setRateLimitCountdown(120); // Start with 120 seconds
-        
-        // Show a user-friendly message
-        toast.error("Rate limit exceeded", {
-          description: "Using direct mode for signup instead of email verification."
-        });
-        
-        // Try one more time with special flag
-        try {
-          setBypassMode(true);
-          console.log("Retrying with bypass mode enabled");
-          await onSubmit(values);
-          return;
-        } catch (retryError) {
-          console.error("Retry with bypass mode also failed:", retryError);
-        }
-      } else if (error.message?.includes("already registered") || error.message?.includes("user_exists")) {
+      if (error.message?.includes("already registered") || error.message?.includes("user_exists")) {
         toast.error("Email already registered", {
           description: "Please try a different email address or sign in."
         });
@@ -162,25 +151,11 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        {rateLimited && (
-          <Alert className="bg-amber-50 border-amber-200 mb-4">
-            <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
-            <AlertTitle className="text-amber-700 font-medium">Rate limit detected</AlertTitle>
-            <AlertDescription className="text-amber-700">
-              {rateLimitCountdown !== null 
-                ? `Using direct signup mode instead. Verification cooldown: ${rateLimitCountdown}s.`
-                : `Email rate limit exceeded. Using direct signup mode instead.`
-              }
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {bypassMode && !rateLimited && (
+        {directSignup && (
           <Alert className="bg-blue-50 border-blue-200 mb-4">
             <Info className="h-4 w-4 text-blue-500 mr-2" />
-            <AlertTitle className="text-blue-700 font-medium">Direct signup mode active</AlertTitle>
             <AlertDescription className="text-blue-700">
-              Using direct signup to bypass email verification due to rate limiting.
+              Using direct signup mode for faster account creation.
             </AlertDescription>
           </Alert>
         )}
@@ -218,15 +193,13 @@ const SignUpForm = ({ onSubmit }: SignUpFormProps) => {
         <Button 
           type="submit" 
           className="w-full bg-purple-600 hover:bg-purple-700"
-          disabled={isSubmitting || (rateLimited && rateLimitCountdown !== null && rateLimitCountdown > 0)}
+          disabled={isSubmitting}
         >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Creating account...
             </>
-          ) : rateLimited && rateLimitCountdown !== null && rateLimitCountdown > 0 ? (
-            `Direct mode active (${rateLimitCountdown}s)`
           ) : (
             "Create account"
           )}

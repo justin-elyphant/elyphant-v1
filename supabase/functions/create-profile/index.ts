@@ -47,10 +47,29 @@ serve(async (req) => {
     console.log("Received profile creation request for user:", user_id);
     console.log("Profile data:", profile_data);
     
-    // First check if profile exists
+    // First verify if user exists in auth
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user_id);
+    
+    if (userError || !userData) {
+      console.error("Error verifying user or user not found:", userError);
+      return new Response(
+        JSON.stringify({ 
+          error: "User not found in auth system", 
+          details: userError 
+        }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+    
+    console.log("User verified in auth system");
+    
+    // Check if profile exists
     const { data: existingProfile, error: checkError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, email')
       .eq('id', user_id)
       .maybeSingle();
       
@@ -88,6 +107,7 @@ serve(async (req) => {
       result = { success: true, action: "updated", data };
     } else {
       console.log("Profile does not exist, creating new profile...");
+      
       // Create new profile
       const { data, error } = await supabase
         .from('profiles')
@@ -96,13 +116,39 @@ serve(async (req) => {
         
       if (error) {
         console.error("Error creating profile:", error);
-        throw error;
+        
+        // If insert fails, try one more time with a minimal profile
+        if (error.message.includes("violates not-null constraint")) {
+          console.log("Trying again with minimal required fields");
+          
+          const minimalProfile = {
+            id: user_id,
+            email: profile_data.email || userData.user.email,
+            name: profile_data.name || userData.user.user_metadata?.name || 'User'
+          };
+          
+          const { data: minData, error: minError } = await supabase
+            .from('profiles')
+            .insert([minimalProfile])
+            .select();
+            
+          if (minError) {
+            console.error("Error creating minimal profile:", minError);
+            throw minError;
+          }
+          
+          console.log("Minimal profile created successfully");
+          result = { success: true, action: "created_minimal", data: minData };
+        } else {
+          throw error;
+        }
+      } else {
+        console.log("Profile created successfully");
+        result = { success: true, action: "created", data };
       }
-      
-      console.log("Profile created successfully");
-      result = { success: true, action: "created", data };
     }
     
+    // Return the success response
     return new Response(
       JSON.stringify(result),
       { 

@@ -20,24 +20,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isDebugMode, setIsDebugMode] = useState(false);
   const { signOut, deleteUser } = useAuthFunctions(user);
 
-  // More robust check for new signup flow and ensuring profile exists
+  // Ensure profile exists for authenticated users
   useEffect(() => {
+    if (!user) return;
+  
     const isNewSignUp = localStorage.getItem("newSignUp") === "true";
     const fromSignIn = localStorage.getItem("fromSignIn") === "true";
     
-    // Handle user just logged in or signed up - ensure profile exists
+    // Only run profile creation if flags are set or on initial auth
     if (user && (isNewSignUp || fromSignIn)) {
-      console.log("AuthProvider detected auth flag, ensuring profile exists");
+      console.log("AuthProvider detected auth flag, ensuring profile exists for user:", user.id);
       
       const createOrUpdateProfile = async () => {
         try {
-          console.log("Creating/updating profile for user:", user.id);
-          
+          // Profile data with fallbacks for each field
           const profileData = {
-            email: user.email,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            id: user.id,
+            email: user.email || localStorage.getItem("userEmail") || '',
+            name: user.user_metadata?.name || 
+                  localStorage.getItem("userName") || 
+                  user.email?.split('@')[0] || 
+                  'User',
             updated_at: new Date().toISOString()
           };
+          
+          console.log("Creating/updating profile with data:", profileData);
           
           const response = await supabase.functions.invoke('create-profile', {
             body: {
@@ -48,14 +55,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           
           if (response.error) {
             console.error("Error creating profile in auth provider:", response.error);
+            
+            // Try direct profile creation as fallback
+            const { error: directError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: user.id,
+                email: profileData.email,
+                name: profileData.name,
+                updated_at: profileData.updated_at
+              })
+              .select()
+              .single();
+              
+            if (directError) {
+              console.error("Direct profile creation also failed:", directError);
+              toast.error("Failed to create your profile. Some features may be limited.");
+            } else {
+              console.log("Profile created/updated through direct DB access");
+            }
           } else {
-            console.log("Profile created/updated in auth provider:", response.data);
+            console.log("Profile created/updated successfully in auth provider:", response.data);
             
             // Clear flags after successful profile creation
             localStorage.removeItem("newSignUp");
             localStorage.removeItem("fromSignIn");
             
-            // Navigate to profile setup or dashboard as appropriate
+            // Navigate to profile setup as appropriate if not already there
             if (location.pathname !== '/profile-setup') {
               navigate('/profile-setup', { replace: true });
             }

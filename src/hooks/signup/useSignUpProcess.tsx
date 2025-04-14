@@ -15,6 +15,7 @@ export function useSignUpProcess() {
   const [resendCount, setResendCount] = useState<number>(0);
   const [testVerificationCode, setTestVerificationCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bypassVerification, setBypassVerification] = useState(false);
 
   // Check for URL parameters indicating verified status
   useVerificationRedirect(navigate, setUserEmail);
@@ -61,6 +62,10 @@ export function useSignUpProcess() {
         if (signUpError.message.includes("rate limit") || 
             signUpError.message.includes("too many requests") || 
             signUpError.status === 429) {
+          
+          // Set bypass verification flag
+          setBypassVerification(true);
+          localStorage.setItem("signupRateLimited", "true");
           
           toast.error("Too many signup attempts", {
             description: "Please try again in a few minutes or contact support."
@@ -158,6 +163,31 @@ export function useSignUpProcess() {
         setEmailSent(true);
         setTestVerificationCode("123456"); // Set dummy code for development
         
+        // Try to send email, but bypass if there's an error
+        try {
+          const emailResult = await supabase.functions.invoke('send-verification-email', {
+            body: {
+              email: values.email,
+              name: values.name,
+              verificationUrl: window.location.origin
+            }
+          });
+          
+          if (emailResult.error) {
+            console.error("Error sending verification email:", emailResult.error);
+            // Email sending failed, bypass verification
+            setBypassVerification(true);
+            localStorage.setItem("signupRateLimited", "true");
+          } else {
+            console.log("Verification email sent successfully");
+          }
+        } catch (emailError) {
+          console.error("Error when sending verification email:", emailError);
+          // Email sending failed, bypass verification
+          setBypassVerification(true);
+          localStorage.setItem("signupRateLimited", "true");
+        }
+        
         // Show success message
         toast.success("Account created successfully!", {
           description: "Taking you to complete your profile."
@@ -196,6 +226,7 @@ export function useSignUpProcess() {
     onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
-    isSubmitting,  // Make sure to expose the isSubmitting state here
+    isSubmitting,
+    bypassVerification,  // Make sure to expose the bypassVerification state here
   };
 }

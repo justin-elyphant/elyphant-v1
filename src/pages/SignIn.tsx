@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
@@ -21,6 +20,16 @@ const SignIn = () => {
   const location = useLocation();
   const { user } = useAuth();
   
+  // Enhanced logging for debugging
+  useEffect(() => {
+    console.log("SignIn Page - Current User:", user);
+    console.log("SignIn Page - Local Storage Flags:", {
+      newSignUp: localStorage.getItem("newSignUp"),
+      profileCompleted: localStorage.getItem("profileCompleted"),
+      nextStepsOption: localStorage.getItem("nextStepsOption")
+    });
+  }, [user]);
+  
   // Handle redirects when user is already logged in
   useEffect(() => {
     if (user) {
@@ -28,12 +37,18 @@ const SignIn = () => {
       
       // Check for profile completion
       const checkProfileCompletion = async () => {
+        console.log("Checking profile completion in SignIn");
+        
         // Check if we have a flag in localStorage indicating profile is completed
         const profileCompleted = localStorage.getItem("profileCompleted") === "true";
-        if (profileCompleted) {
-          handleRedirectAfterLogin();
-          return;
-        }
+        const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+        const nextStepsOption = localStorage.getItem("nextStepsOption");
+        
+        console.log("Profile completion check:", {
+          profileCompleted,
+          isNewSignUp,
+          nextStepsOption
+        });
 
         try {
           const { data, error } = await supabase
@@ -44,17 +59,38 @@ const SignIn = () => {
           
           if (error) {
             console.error("Error checking profile completion:", error);
-            // If we can't check, assume profile needs to be completed
             navigate("/profile-setup", { replace: true });
             return;
           }
           
-          if (data?.onboarding_completed) {
-            // Profile is complete, set the flag and redirect
-            localStorage.setItem("profileCompleted", "true");
-            handleRedirectAfterLogin();
+          console.log("Profile data from database:", data);
+          
+          if (data?.onboarding_completed || profileCompleted) {
+            console.log("Profile is complete, redirecting based on next steps");
+            // Use the same redirection logic from previous implementation
+            switch (nextStepsOption) {
+              case "create_wishlist":
+                navigate("/wishlists", { replace: true });
+                break;
+              case "find_friends":
+                navigate("/connections", { replace: true });
+                break;
+              case "shop_gifts":
+                navigate("/gifting", { replace: true });
+                break;
+              case "explore_marketplace":
+                navigate("/marketplace", { replace: true });
+                break;
+              default:
+                navigate("/dashboard", { replace: true });
+                break;
+            }
+            
+            // Clear flags after successful redirection
+            localStorage.removeItem("newSignUp");
+            localStorage.removeItem("nextStepsOption");
           } else {
-            // Profile needs to be completed
+            console.log("Onboarding not completed, redirecting to profile setup");
             navigate("/profile-setup", { replace: true });
           }
         } catch (err) {

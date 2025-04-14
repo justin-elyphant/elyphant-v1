@@ -1,59 +1,37 @@
-
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface ProtectedRouteProps {
-  redirectPath?: string;
-  children: React.ReactNode;
-}
-
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  redirectPath = "/sign-in",
-  children,
+const ProtectedRoute = ({ 
+  redirectPath = "/sign-in", 
+  children 
+}: {
+  redirectPath?: string, 
+  children: React.ReactNode
 }) => {
   const { user, isLoading, isDebugMode } = useAuth();
   const location = useLocation();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [freshUser, setFreshUser] = useState<any>(null);
   
+  // Enhanced logging for debugging navigation
+  useEffect(() => {
+    console.log("ProtectedRoute - Navigation Debug:", {
+      currentPath: location.pathname,
+      user: user?.id,
+      isLoading,
+      isDebugMode,
+      profileCompleted: localStorage.getItem("profileCompleted"),
+      newSignUp: localStorage.getItem("newSignUp")
+    });
+  }, [user, location, isLoading, isDebugMode]);
+
   // Special handling for new signups
   const isNewSignUp = localStorage.getItem("newSignUp") === "true";
   const profileCompleted = localStorage.getItem("profileCompleted") === "true";
 
-  // Check for fresh session - useful right after signup
-  useEffect(() => {
-    const checkFreshSession = async () => {
-      // Only do this extra check if the auth context shows no user
-      if (!user && !isDebugMode) {
-        console.log("No user in auth context, checking for fresh session");
-        const { data } = await supabase.auth.getSession();
-        
-        if (data.session?.user) {
-          console.log("Fresh session found:", data.session.user.email);
-          setFreshUser(data.session.user);
-          // Store user ID in localStorage for reliability
-          localStorage.setItem("userId", data.session.user.id);
-          localStorage.setItem("userEmail", data.session.user.email || '');
-        } else {
-          console.log("No session found during fresh check");
-          
-          // If we're on profile setup but have no session, check if it's a new signup
-          if (location.pathname === '/profile-setup' && isNewSignUp) {
-            toast.warning("Please sign in to complete your profile setup");
-          }
-        }
-      }
-      
-      setIsCheckingSession(false);
-    };
-    
-    checkFreshSession();
-  }, [user, isDebugMode, location.pathname, isNewSignUp]);
-
-  // If in debug mode, bypass authentication
+  // If in debug mode, bypass authentication check
   if (isDebugMode) {
     console.log('Debug mode enabled, bypassing authentication check');
     return <>{children}</>;
@@ -71,26 +49,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Special case for profile-setup page - it's a protected route but we're more lenient
   if (location.pathname === '/profile-setup') {
-    console.log("On profile setup page - new signup:", isNewSignUp, "profile completed:", profileCompleted);
+    console.log("On profile setup page - Enhanced Logging", {
+      newSignUp: isNewSignUp,
+      profileCompleted
+    });
     
     // If profile is already completed and this isn't a new signup, redirect to dashboard
-    if (profileCompleted && !isNewSignUp && (user || freshUser)) {
+    if (profileCompleted && !isNewSignUp && user) {
       console.log("Profile already completed, redirecting to dashboard");
       return <Navigate to="/dashboard" replace />;
     }
     
-    // If we have a user OR this is a new signup, render the page
-    if (user || freshUser || isNewSignUp) {
+    // If we have a user or this is a new signup, render the page
+    if (user || isNewSignUp) {
+      console.log("Allowing access to profile setup");
       return <>{children}</>;
     }
   }
 
-  // Consider both the auth context user and any fresh session user
-  const effectiveUser = user || freshUser;
-
   // If no user and finished loading, redirect to login
-  if (!effectiveUser) {
-    console.log("User not authenticated, redirecting to:", redirectPath, "from:", location.pathname);
+  if (!user) {
+    console.log("User not authenticated, redirecting to:", redirectPath);
     
     // Save the current path to redirect back after login
     localStorage.setItem("redirectAfterSignIn", location.pathname);

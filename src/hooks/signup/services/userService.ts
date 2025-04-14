@@ -1,9 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SignUpValues } from "@/components/auth/signup/SignUpForm";
+import { SignUpFormValues } from "@/components/auth/signup/SignUpForm";
 
-export const signUpUser = async (values: SignUpValues, invitedBy: string | null, senderUserId: string | null) => {
+export const signUpUser = async (values: SignUpFormValues, invitedBy: string | null, senderUserId: string | null) => {
   try {
     console.log("Signing up user with admin API and bypassing email verification");
     

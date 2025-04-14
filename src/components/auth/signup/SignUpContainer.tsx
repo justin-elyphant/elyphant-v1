@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import SignUpForm, { SignUpValues } from "@/components/auth/signup/SignUpForm";
+import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/SignUpForm";
 
 interface SignUpContainerProps {
-  onSubmitSuccess: (values: SignUpValues) => Promise<void>;
+  onSubmitSuccess: (values: SignUpFormValues) => Promise<void>;
 }
 
 const SignUpContainer = ({ onSubmitSuccess }: SignUpContainerProps) => {
@@ -25,7 +25,7 @@ const SignUpContainer = ({ onSubmitSuccess }: SignUpContainerProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <SignUpForm onSubmitSuccess={onSubmitSuccess} />
+        <SignUpForm onSubmit={onSubmitSuccess} />
       </CardContent>
       <CardFooter className="flex flex-col items-center gap-4">
         <div className="text-sm text-muted-foreground">

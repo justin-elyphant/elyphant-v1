@@ -2,13 +2,7 @@
 import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
-
-export interface SignUpFormValues {
-  name: string;
-  email: string;
-  password: string;
-  captcha: string;
-}
+import { SignUpFormValues } from "./SignUpForm";
 
 interface SignUpContentWrapperProps {
   step: "signup" | "verification";

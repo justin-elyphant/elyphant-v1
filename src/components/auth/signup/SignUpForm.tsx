@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Mail, Lock, User, Loader2 } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import InputField from "../fields/InputField";
+import InputField from "@/components/auth/signup/fields/InputField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Simplified schema without captcha
@@ -44,14 +44,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       await onSubmit(values);
     } catch (error: any) {
       console.error("Form submission error:", error);
-      // Don't show an error message for rate limit issues
-      if (error?.message?.includes("rate limit") || 
-          error?.status === 429 || 
-          error?.code === "over_email_send_rate_limit") {
-        console.log("Rate limit error caught, but will be handled by parent component");
-      } else {
-        setErrorMessage(error.message || "An unexpected error occurred");
-      }
+      setErrorMessage(error.message || "An unexpected error occurred");
     }
   };
 

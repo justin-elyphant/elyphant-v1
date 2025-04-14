@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
+import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/SignUpForm";
 
 interface SignUpViewProps {
   onSubmit: (values: SignUpFormValues) => Promise<void>;

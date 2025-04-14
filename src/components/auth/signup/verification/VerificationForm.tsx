@@ -2,13 +2,12 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Info } from "lucide-react";
+import { CheckCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface VerificationFormProps {
   userEmail: string;
   onVerificationSuccess: () => void;
-  testVerificationCode?: string | null;
 }
 
 const VerificationForm: React.FC<VerificationFormProps> = ({ 
@@ -16,49 +15,25 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   onVerificationSuccess 
 }) => {
   const navigate = useNavigate();
-  const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
-  
-  // Guaranteed-to-execute approach for auto-verification
+
   useEffect(() => {
-    console.log("Auto-verification process started for:", userEmail);
-    
     // Set flags for new signup journey
     localStorage.setItem("newSignUp", "true");
     localStorage.setItem("userEmail", userEmail);
-    
-    // Call verification success handler
-    onVerificationSuccess();
-    
-    // Show success notification
-    toast.success("Account created successfully!", {
-      description: "Taking you to complete your profile."
-    });
-    
-    // Navigate to profile setup with replace to prevent back-button issues
-    console.log("Navigating to profile setup");
-    setTimeout(() => {
-      navigate('/profile-setup', { replace: true });
-    }, 100); // Add a small delay to ensure proper navigation
-    
-  }, [onVerificationSuccess, userEmail, navigate]);
+  }, [userEmail]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full">
-      {isRateLimited ? (
-        <Alert variant="success" className="bg-green-50 border-green-200 mb-4 w-full">
-          <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-          <AlertDescription className="text-green-700">
-            <span className="font-semibold">Simplified signup process activated!</span> Redirecting you to profile setup...
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <Alert variant="success" className="bg-green-50 border-green-200 mb-4 w-full">
-          <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-          <AlertDescription className="text-green-700">
-            <span className="font-semibold">Account created successfully!</span> Redirecting you to profile setup...
-          </AlertDescription>
-        </Alert>
-      )}
+    <div className="flex flex-col items-center justify-center w-full space-y-4">
+      <Alert variant="info" className="bg-blue-50 border-blue-200 mb-4 w-full">
+        <Mail className="h-4 w-4 text-blue-600 mr-2" />
+        <AlertDescription className="text-blue-700">
+          Please check your email to confirm your account. Once confirmed, you'll be redirected to complete your profile.
+        </AlertDescription>
+      </Alert>
+
+      <p className="text-sm text-gray-600">
+        We've sent a confirmation link to: <strong>{userEmail}</strong>
+      </p>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -23,7 +22,6 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
     
     setIsLoading(true);
     console.log("Starting profile submission for user:", user?.id);
-    console.log("Profile data to save:", profileData);
     
     try {
       // Format gift preferences - ensure it's an array
@@ -78,20 +76,28 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
       console.log("Final complete profile data to save:", userData);
       
       if (user) {
-        // Perform an upsert (update or insert) to ensure we have a profile
+        // Update the profile with onboarding completion flag
         const { error } = await supabase
           .from('profiles')
-          .upsert(userData);
+          .upsert({
+            ...userData,
+            onboarding_completed: true,
+            updated_at: new Date().toISOString()
+          });
       
         if (error) {
           console.error("Error saving profile:", error);
           throw error;
         }
         
+        // Clear any lingering signup flags
+        localStorage.removeItem("newSignUp");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userName");
+        
         console.log("Profile saved successfully");
         toast.success("Profile setup complete!");
         
-        // Clear loading state and proceed to next step
         setIsLoading(false);
         onComplete();
       } else if (process.env.REACT_APP_DEBUG_MODE) {
@@ -110,8 +116,6 @@ export const useProfileSubmission = ({ onComplete, onSkip }: UseProfileSubmissio
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile data");
-      
-      // Still complete the process even if saving fails
       setIsLoading(false);
       onComplete();
     }

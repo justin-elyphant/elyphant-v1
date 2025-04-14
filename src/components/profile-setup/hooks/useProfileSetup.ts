@@ -1,4 +1,3 @@
-
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
@@ -75,7 +74,6 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
   // Handle completion with safety timeout
   const handleComplete = useCallback(async () => {
-    // Prevent multiple completion attempts
     if (hasCompletedRef.current || isCompleting) {
       console.log("Completion already in progress, ignoring duplicate request");
       return;
@@ -86,27 +84,17 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     setIsCompleting(true);
     
     try {
-      // Start a shorter timeout for safety
-      const safetyTimeout = setTimeout(() => {
-        console.warn("Safety timeout triggered, completing anyway");
-        setIsCompleting(false);
-        cleanupTimeouts();
-        onComplete();
-      }, 2000); // Even shorter timeout for safety
-      
       await handleSubmit(profileData);
       
-      // Clear safety timeout if submission completes successfully
-      clearTimeout(safetyTimeout);
-      
-      // If we reach here, the submission was successful
+      // Clear completion flags and redirect
+      localStorage.removeItem("newSignUp");
       setIsCompleting(false);
       cleanupTimeouts();
       onComplete();
+      
     } catch (error) {
       console.error("Error in handleComplete:", error);
       toast.error("An error occurred, but we'll continue anyway");
-      // Still complete on error to prevent being stuck
       setIsCompleting(false);
       cleanupTimeouts();
       onComplete();

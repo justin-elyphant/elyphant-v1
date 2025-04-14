@@ -5,6 +5,7 @@ import VerificationForm from "@/components/auth/signup/verification/Verification
 import VerificationCodeSection from "./VerificationCodeSection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface VerificationContentSectionProps {
   userEmail: string;
@@ -33,12 +34,23 @@ const VerificationContentSection = ({
   setVerificationCode,
   bypassVerification = false
 }: VerificationContentSectionProps) => {
-  // When bypass is enabled, trigger automatic verification
+  const navigate = useNavigate();
+
+  // Auto-redirect when bypass is enabled
   useEffect(() => {
     if (bypassVerification) {
       console.log("Verification content section: bypassing verification");
+      // Trigger success callback
+      onVerificationSuccess();
+      
+      // Navigate to profile setup with small delay
+      const timer = setTimeout(() => {
+        navigate('/profile-setup', { replace: true });
+      }, 1500);
+      
+      return () => clearTimeout(timer);
     }
-  }, [bypassVerification]);
+  }, [bypassVerification, onVerificationSuccess, navigate]);
 
   return (
     <CardContent>

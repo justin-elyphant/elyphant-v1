@@ -6,8 +6,10 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const SignUp: React.FC = () => {
+  const navigate = useNavigate();
   const {
     step,
     userEmail,
@@ -20,6 +22,16 @@ const SignUp: React.FC = () => {
     isSubmitting,
     bypassVerification,
   } = useSignUpProcess();
+  
+  // Auto-redirect if rate limited
+  useEffect(() => {
+    if (localStorage.getItem("signupRateLimited") === "true" && 
+        localStorage.getItem("userEmail") && 
+        localStorage.getItem("userName")) {
+      console.log("Rate limit detected and user info available, redirecting to profile setup");
+      navigate('/profile-setup', { replace: true });
+    }
+  }, [navigate]);
   
   // Enhanced logging to check testVerificationCode value
   useEffect(() => {

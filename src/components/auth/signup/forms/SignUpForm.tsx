@@ -32,6 +32,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 }) => {
   const [showRateLimitWarning, setShowRateLimitWarning] = React.useState(false);
   const [showEmailWarning, setShowEmailWarning] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     // Check if there have been previous rate limit issues
@@ -52,9 +53,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const handleSubmit = async (values: SignUpFormValues) => {
     try {
-      // Reset warnings
+      // Reset warnings and errors
       setShowRateLimitWarning(false);
       setShowEmailWarning(false);
+      setErrorMessage(null);
       
       // Validate the captcha - the field component handles the validation internally
       const captchaField = document.querySelector(".CaptchaField") as HTMLElement;
@@ -77,6 +79,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         setShowRateLimitWarning(true);
         localStorage.setItem("signupRateLimited", "true");
         
+        // Show a success toast instead of an error
         toast.success("Account created!", {
           description: "We'll bypass verification to let you continue."
         });
@@ -87,8 +90,17 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         toast.success("Account created!", {
           description: "We'll continue with your signup without email verification."
         });
+      } else if (error.message?.includes("already registered")) {
+        // Handle existing email error
+        setErrorMessage("This email is already registered. Please sign in instead or use a different email.");
+        
+        toast.error("Email already registered", {
+          description: "Please try signing in or use a different email address."
+        });
       } else {
         // Generic error handling
+        setErrorMessage(error.message || "An unexpected error occurred");
+        
         toast.error("Signup failed", {
           description: error.message || "An unexpected error occurred"
         });
@@ -112,6 +124,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           <AlertCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-700">
             We're optimizing your signup experience. You'll be able to continue without email verification.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {errorMessage && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {errorMessage}
           </AlertDescription>
         </Alert>
       )}

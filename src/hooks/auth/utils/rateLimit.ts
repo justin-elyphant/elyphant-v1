@@ -17,6 +17,22 @@ interface RateLimitHandlerProps {
 }
 
 /**
+ * Checks if an error is related to rate limiting
+ */
+export const isRateLimitError = (error: any): boolean => {
+  if (!error) return false;
+  
+  return error?.status === 429 || 
+    error?.code === "too_many_requests" ||
+    error?.code === "over_email_send_rate_limit" ||
+    (typeof error.message === 'string' && (
+      error.message.toLowerCase().includes("rate limit") || 
+      error.message.toLowerCase().includes("exceeded") ||
+      error.message.toLowerCase().includes("too many")
+    ));
+};
+
+/**
  * Handles rate limit errors during signup by creating an alternative path
  */
 export const handleRateLimit = ({
@@ -51,21 +67,5 @@ export const handleRateLimit = ({
   setTimeout(() => {
     // Navigate directly to profile setup with replacement (prevents back navigation)
     navigate('/profile-setup', { replace: true });
-    
-    // Fallback direct location change if navigate doesn't work
-    setTimeout(() => {
-      window.location.href = "/profile-setup";
-    }, 100);
-  }, 50);
-};
-
-/**
- * Detects if an error is related to rate limiting
- */
-export const isRateLimitError = (error: any): boolean => {
-  return error?.message?.toLowerCase().includes("rate limit") || 
-    error?.message?.toLowerCase().includes("exceeded") || 
-    error?.status === 429 || 
-    error?.code === "over_email_send_rate_limit" ||
-    error?.code === "too_many_requests";
+  }, 1500);
 };

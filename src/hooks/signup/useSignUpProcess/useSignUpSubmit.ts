@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService";
 import { extractVerificationCode } from "@/hooks/signup/services/email/utils/responseParser";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseSignUpSubmitProps {
   setUserEmail: (email: string) => void;
@@ -37,6 +38,48 @@ export const useSignUpSubmit = ({
       
       setUserEmail(values.email);
       setUserName(values.name);
+      
+      // Ensure the user has a profile in the database
+      if (result.user?.id) {
+        console.log("Checking if user has a profile:", result.user.id);
+        
+        // Check if profile exists
+        const { data: existingProfile, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', result.user.id)
+          .maybeSingle();
+          
+        if (profileCheckError) {
+          console.error("Error checking for profile:", profileCheckError);
+        }
+        
+        if (!existingProfile) {
+          console.log("No profile found, creating one now");
+          
+          // Create profile for the new user
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              { 
+                id: result.user.id,
+                email: values.email,
+                name: values.name 
+              }
+            ]);
+            
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+            toast.error("Profile creation failed", {
+              description: "Your account was created but we couldn't set up your profile."
+            });
+          } else {
+            console.log("Profile created successfully");
+          }
+        } else {
+          console.log("User already has a profile");
+        }
+      }
       
       const currentOrigin = window.location.origin;
       console.log("Using origin for verification:", currentOrigin);

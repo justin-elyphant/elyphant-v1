@@ -44,9 +44,14 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     }, 2000); // Reduced from 3000 to 2000 ms
     
     try {
-      // Skip database operation if user is not available
-      if (!user?.id && !process.env.REACT_APP_DEBUG_MODE) {
-        console.log("No user ID available - skipping database save");
+      // Determine user ID - use auth if available or look at localStorage
+      const userId = user?.id || localStorage.getItem("userId");
+      const userEmail = user?.email || localStorage.getItem("userEmail") || profileData.email;
+      
+      console.log("Looking for user with ID:", userId, "or email:", userEmail);
+      
+      if (!userId && !userEmail) {
+        console.log("No user ID or email available - skipping database save");
         toast.info("Profile setup completed (without saving)");
         
         // Clear timeout and loading state
@@ -61,11 +66,10 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       }
       
       // Comprehensive data formatting
-      const formattedData = {
-        id: user?.id,
+      const formattedData: any = {
         name: profileData.name || "User",
         username: profileData.username || `user_${Date.now().toString(36)}`,
-        email: profileData.email || user?.email || '',
+        email: userEmail,
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,
         bio: profileData.bio || "",
@@ -87,34 +91,76 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         updated_at: new Date().toISOString()
       };
       
-      console.log('Profile data being submitted:', { 
-        ...formattedData, 
-        id: formattedData.id ? 'exists' : 'missing' 
-      });
+      // If we have a user ID, use it
+      if (userId) {
+        formattedData.id = userId;
+      }
       
-      // Only try to save if we have a user ID or debug mode
-      if (user?.id || process.env.REACT_APP_DEBUG_MODE) {
-        console.log("Attempting to save profile data to database");
+      console.log('Profile data being submitted:', formattedData);
+      
+      try {
+        let saveResult;
         
-        try {
-          const { error } = await supabase
+        // First try to find the profile by ID
+        if (userId) {
+          const { data: existingProfile } = await supabase
             .from('profiles')
-            .upsert(formattedData)
-            .select();
-          
-          if (error) {
-            console.error("Profile save error:", error);
-            toast.error("Failed to save profile. Continuing anyway.");
+            .select('id')
+            .eq('id', userId)
+            .maybeSingle();
+            
+          if (existingProfile) {
+            // Update existing profile
+            console.log("Updating existing profile with ID:", userId);
+            saveResult = await supabase
+              .from('profiles')
+              .update(formattedData)
+              .eq('id', userId)
+              .select();
           } else {
-            console.log("Profile saved successfully");
-            toast.success("Profile setup complete!");
+            // Insert new profile with ID
+            console.log("Creating new profile with ID:", userId);
+            saveResult = await supabase
+              .from('profiles')
+              .insert(formattedData)
+              .select();
           }
-        } catch (dbError) {
-          console.error("Database operation error:", dbError);
+        } 
+        // If no user ID, try to find by email
+        else if (userEmail) {
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', userEmail)
+            .maybeSingle();
+            
+          if (existingProfile) {
+            // Update existing profile by email
+            console.log("Updating existing profile with email:", userEmail);
+            saveResult = await supabase
+              .from('profiles')
+              .update(formattedData)
+              .eq('email', userEmail)
+              .select();
+          } else {
+            // Insert new profile with email
+            console.log("Creating new profile with email:", userEmail);
+            saveResult = await supabase
+              .from('profiles')
+              .insert(formattedData)
+              .select();
+          }
         }
-      } else {
-        console.log("No user ID available - skipping database save");
-        toast.info("Profile setup completed (without saving)");
+        
+        if (saveResult?.error) {
+          console.error("Profile save error:", saveResult.error);
+          toast.error("Failed to save profile. Continuing anyway.");
+        } else {
+          console.log("Profile saved successfully");
+          toast.success("Profile setup complete!");
+        }
+      } catch (dbError) {
+        console.error("Database operation error:", dbError);
       }
     } catch (err) {
       console.error("Unexpected error in profile submission:", err);

@@ -45,14 +45,30 @@ export const useSignUpSubmit = ({
         // Handle rate limit error specifically
         if (signUpError.message.includes("rate limit") || 
             signUpError.message.includes("too many requests") || 
-            signUpError.status === 429) {
+            signUpError.status === 429 ||
+            signUpError.code === "over_email_send_rate_limit") {
           
+          console.log("Rate limit detected, bypassing verification");
           setBypassVerification(true);
           localStorage.setItem("signupRateLimited", "true");
           
+          // Store user data in localStorage for signup continuation
+          localStorage.setItem("userEmail", values.email);
+          localStorage.setItem("userName", values.name);
+          localStorage.setItem("newSignUp", "true");
+          
+          // Set state values to proceed
+          setUserEmail(values.email);
+          setUserName(values.name);
+          setEmailSent(true);
+          setTestVerificationCode("123456"); // Set dummy code for development
+          
           toast.error("Too many signup attempts", {
-            description: "Please try again in a few minutes or contact support."
+            description: "We'll bypass verification to let you continue."
           });
+          
+          // Directly move to verification step which will auto-redirect
+          setStep("verification");
           setIsSubmitting(false);
           return;
         }
@@ -138,9 +154,38 @@ export const useSignUpSubmit = ({
       }
     } catch (err: any) {
       console.error("Signup submission error:", err);
-      toast.error("Sign up failed", {
-        description: err.message || "An unexpected error occurred"
-      });
+      
+      // Additional check for rate limit in the caught error
+      if (err.message?.includes("rate limit") || 
+          err.message?.includes("too many requests") || 
+          err.status === 429 ||
+          err.code === "over_email_send_rate_limit") {
+        
+        console.log("Rate limit caught in error handler, bypassing verification");
+        setBypassVerification(true);
+        localStorage.setItem("signupRateLimited", "true");
+        
+        // Store user data and proceed
+        localStorage.setItem("userEmail", values.email);
+        localStorage.setItem("userName", values.name);
+        localStorage.setItem("newSignUp", "true");
+        
+        setUserEmail(values.email);
+        setUserName(values.name);
+        setEmailSent(true);
+        setTestVerificationCode("123456");
+        
+        toast.error("Too many signup attempts", {
+          description: "We'll bypass verification to let you continue."
+        });
+        
+        setStep("verification");
+      } else {
+        toast.error("Sign up failed", {
+          description: err.message || "An unexpected error occurred"
+        });
+      }
+      
       setIsSubmitting(false);
     } finally {
       setIsSubmitting(false);

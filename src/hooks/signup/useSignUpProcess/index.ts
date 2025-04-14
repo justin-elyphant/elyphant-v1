@@ -19,7 +19,8 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
     emailSent: state.emailSent,
     step: state.step,
     userEmail: state.userEmail,
-    userName: state.userName
+    userName: state.userName,
+    bypassVerification: state.bypassVerification
   });
   
   // Handle signup form submission

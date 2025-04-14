@@ -7,20 +7,26 @@ interface UseAutoRedirectProps {
   step: "signup" | "verification";
   userEmail: string;
   userName: string;
+  bypassVerification?: boolean;
 }
 
 export const useAutoRedirect = ({
   emailSent,
   step,
   userEmail,
-  userName
+  userName,
+  bypassVerification = false
 }: UseAutoRedirectProps) => {
   const navigate = useNavigate();
 
-  // AUTO-REDIRECT TO PROFILE SETUP WHEN EMAIL IS SENT
+  // AUTO-REDIRECT TO PROFILE SETUP WHEN EMAIL IS SENT OR VERIFICATION IS BYPASSED
   useEffect(() => {
-    if (emailSent && step === "verification") {
-      console.log("Auto-redirecting to profile setup from useAutoRedirect");
+    if ((emailSent && step === "verification") || bypassVerification) {
+      console.log("Auto-redirecting to profile setup from useAutoRedirect", { 
+        emailSent, 
+        step, 
+        bypassVerification 
+      });
       
       // Store in localStorage for persistence
       localStorage.setItem("newSignUp", "true");
@@ -30,7 +36,7 @@ export const useAutoRedirect = ({
       // Use navigate with replace to prevent back-button issues
       navigate('/profile-setup', { replace: true });
     }
-  }, [emailSent, step, navigate, userEmail, userName]);
+  }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
 
   return null;
 };

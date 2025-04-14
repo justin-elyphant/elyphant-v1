@@ -25,29 +25,42 @@ export const isRateLimitError = (error: any): boolean => {
   // Log the full error for debugging
   console.log("Checking for rate limit in error:", error);
   
-  // Check both error object and its properties for all rate limit indicators
-  const isRateLimit = error?.status === 429 || 
-    error?.code === "too_many_requests" ||
-    error?.code === "over_email_send_rate_limit" ||
-    (typeof error.message === 'string' && (
-      error.message.toLowerCase().includes("rate limit") || 
-      error.message.toLowerCase().includes("exceeded") ||
-      error.message.toLowerCase().includes("too many")
-    )) ||
-    // Check nested error objects that might contain the rate limit info
-    (error.error && (
-      error.error?.status === 429 ||
-      error.error?.code === "too_many_requests" ||
-      error.error?.code === "over_email_send_rate_limit" ||
-      (typeof error.error.message === 'string' && (
-        error.error.message.toLowerCase().includes("rate limit") ||
-        error.error.message.toLowerCase().includes("exceeded") ||
-        error.error.message.toLowerCase().includes("too many")
-      ))
-    ));
-
-  console.log("Rate limit detection result:", isRateLimit);
-  return isRateLimit;
+  // Extract error details from different possible formats
+  const status = error?.status || error?.error?.status;
+  const code = error?.code || error?.error?.code;
+  const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+  const errorMessage = typeof error.error?.message === 'string' ? error.error.message.toLowerCase() : '';
+  
+  // Direct match on common rate limit indicators
+  if (status === 429) return true;
+  if (code === "too_many_requests" || code === "over_email_send_rate_limit") return true;
+  
+  // Check message content for rate limit keywords
+  const rateWords = ['rate limit', 'exceeded', 'too many', 'too frequent', 'too often'];
+  for (const word of rateWords) {
+    if (message.includes(word) || errorMessage.includes(word)) {
+      return true;
+    }
+  }
+  
+  // Extract detailed data from specific Supabase error format
+  try {
+    if (error.error) {
+      // Sometimes the error details are nested in data property
+      const data = error.error.data || error.data;
+      const dataMessage = data?.message?.toLowerCase() || '';
+      
+      if (dataMessage.includes('rate limit') || 
+          dataMessage.includes('exceeded') || 
+          dataMessage.includes('too many')) {
+        return true;
+      }
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+  
+  return false;
 };
 
 /**
@@ -75,6 +88,7 @@ export const handleRateLimit = ({
   localStorage.setItem("userEmail", email);
   localStorage.setItem("userName", name);
   localStorage.setItem("signupRateLimited", "true");
+  localStorage.setItem("bypassVerification", "true"); // Add a new flag
   
   // Show success toast
   toast.success("Account created successfully!", {
@@ -85,5 +99,21 @@ export const handleRateLimit = ({
   setTimeout(() => {
     // Navigate directly to profile setup with replacement (prevents back navigation)
     navigate('/profile-setup', { replace: true });
-  }, 1000);
+  }, 1500); // Increase timeout for reliability
+};
+
+/**
+ * Check if rate limit flags are set in localStorage
+ */
+export const isRateLimitFlagSet = (): boolean => {
+  return localStorage.getItem("signupRateLimited") === "true" || 
+         localStorage.getItem("bypassVerification") === "true";
+};
+
+/**
+ * Clear rate limit flags from localStorage
+ */
+export const clearRateLimitFlags = (): void => {
+  localStorage.removeItem("signupRateLimited");
+  localStorage.removeItem("bypassVerification");
 };

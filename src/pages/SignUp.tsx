@@ -9,6 +9,7 @@ import { CheckCircle, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isRateLimitFlagSet } from "@/hooks/auth/utils/rateLimit";
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
@@ -28,9 +29,7 @@ const SignUp: React.FC = () => {
   // Verify Supabase connection on page load
   const [isSupabaseConnected, setIsSupabaseConnected] = React.useState<boolean | null>(null);
   const [connectionError, setConnectionError] = React.useState<string | null>(null);
-  const [rateLimitReached, setRateLimitReached] = React.useState<boolean>(
-    localStorage.getItem("signupRateLimited") === "true"
-  );
+  const [rateLimitReached, setRateLimitReached] = React.useState<boolean>(isRateLimitFlagSet());
   
   useEffect(() => {
     const checkSupabaseConnection = async () => {
@@ -56,16 +55,31 @@ const SignUp: React.FC = () => {
     checkSupabaseConnection();
     
     // Check for rate limit flag on mount and when localStorage changes
-    const rateLimitFlag = localStorage.getItem("signupRateLimited") === "true";
-    setRateLimitReached(rateLimitFlag);
-    console.log("Rate limit flag on mount:", rateLimitFlag);
+    const checkRateLimit = () => {
+      const limitFlagDetected = isRateLimitFlagSet();
+      console.log("Rate limit flag check:", limitFlagDetected);
+      setRateLimitReached(limitFlagDetected);
+    };
+    
+    // Check immediately and set up window event listener for storage changes
+    checkRateLimit();
+    
+    // Add event listener to detect localStorage changes from other components
+    window.addEventListener('storage', checkRateLimit);
+    
+    return () => {
+      window.removeEventListener('storage', checkRateLimit);
+    };
   }, []);
   
   // Auto-redirect if rate limited - with more reliable timing
   useEffect(() => {
-    const checkRateLimitAndRedirect = () => {
-      const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
+    const redirectTimer = setInterval(() => {
+      // Get latest flags from localStorage
+      const isRateLimited = isRateLimitFlagSet();
       const hasUserInfo = localStorage.getItem("userEmail") && localStorage.getItem("userName");
+      
+      console.log("Rate limit redirect check:", { isRateLimited, hasUserInfo });
       
       if (isRateLimited && hasUserInfo) {
         console.log("Rate limit detected and user info available, redirecting to profile setup");
@@ -74,52 +88,13 @@ const SignUp: React.FC = () => {
           description: "You can complete your profile now."
         });
         
-        // Use a short timeout to ensure the toast is visible
-        setTimeout(() => {
-          navigate('/profile-setup', { replace: true });
-        }, 500);
-        return true;
+        clearInterval(redirectTimer);
+        navigate('/profile-setup', { replace: true });
       }
-      return false;
-    };
+    }, 800); // Check frequently
     
-    // Check immediately
-    const shouldSkipRender = checkRateLimitAndRedirect();
-    
-    // If we're not redirecting immediately, set up an interval to check
-    // This helps with race conditions where flags are set after component mounts
-    let intervalId: number | null = null;
-    if (!shouldSkipRender) {
-      intervalId = window.setInterval(() => {
-        const redirected = checkRateLimitAndRedirect();
-        if (redirected && intervalId !== null) {
-          clearInterval(intervalId);
-        }
-      }, 500) as unknown as number;
-    }
-    
-    return () => {
-      if (intervalId !== null) {
-        clearInterval(intervalId);
-      }
-    };
+    return () => clearInterval(redirectTimer);
   }, [navigate]);
-  
-  // Enhanced logging to check state
-  useEffect(() => {
-    console.log("SignUp page - Full state:", {
-      step,
-      userEmail,
-      userName,
-      resendCount,
-      testVerificationCode: testVerificationCode || "none",
-      isSubmitting,
-      bypassVerification,
-      supabaseConnection: isSupabaseConnected,
-      rateLimitReached,
-      rateLimitFlagInStorage: localStorage.getItem("signupRateLimited")
-    });
-  }, [step, userEmail, userName, resendCount, testVerificationCode, isSubmitting, bypassVerification, isSupabaseConnected, rateLimitReached]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -152,7 +127,7 @@ const SignUp: React.FC = () => {
           </Alert>
         )}
         
-        {(localStorage.getItem("signupRateLimited") === "true" || bypassVerification) && (
+        {(isRateLimitFlagSet() || bypassVerification) && (
           <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-700">
@@ -171,7 +146,7 @@ const SignUp: React.FC = () => {
           handleResendVerification={handleResendVerification}
           handleBackToSignUp={handleBackToSignUp}
           isSubmitting={isSubmitting}
-          bypassVerification={bypassVerification}
+          bypassVerification={bypassVerification || isRateLimitFlagSet()}
         />
       </div>
       <Footer />

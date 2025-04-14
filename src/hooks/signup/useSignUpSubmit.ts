@@ -40,46 +40,32 @@ export const useSignUpSubmit = ({
       setUserEmail(values.email);
       setUserName(values.name);
       
-      // Ensure the user has a profile in the database
+      // Create a profile using the edge function
       if (result.user?.id) {
         console.log("Creating profile for user:", result.user.id);
         
         try {
-          // Use a Supabase function to create the profile (bypasses RLS)
-          const { error: createProfileError } = await supabase.rpc('create_profile', {
-            user_id: result.user.id,
-            user_email: values.email,
-            user_name: values.name
+          const response = await supabase.functions.invoke('create-profile', {
+            body: {
+              user_id: result.user.id,
+              profile_data: {
+                email: values.email,
+                name: values.name,
+                updated_at: new Date().toISOString()
+              }
+            }
           });
           
-          if (createProfileError) {
-            console.error("Error creating profile via RPC:", createProfileError);
-            
-            // Fallback to standard method (might fail due to RLS)
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .upsert([
-                { 
-                  id: result.user.id,
-                  email: values.email,
-                  name: values.name,
-                  updated_at: new Date().toISOString()
-                }
-              ]);
-              
-            if (profileError) {
-              console.error("Error creating profile:", profileError);
-              toast.error("Profile creation failed", {
-                description: "Your account was created but we couldn't set up your profile."
-              });
-            } else {
-              console.log("Profile created successfully");
-            }
+          if (response.error) {
+            console.error("Error creating profile via edge function:", response.error);
+            toast.error("Profile creation failed", {
+              description: "Your account was created but we couldn't set up your profile."
+            });
           } else {
-            console.log("Profile created successfully via RPC");
+            console.log("Profile created successfully via edge function:", response.data);
           }
         } catch (err) {
-          console.error("Error in profile creation:", err);
+          console.error("Error calling create-profile function:", err);
         }
       }
       

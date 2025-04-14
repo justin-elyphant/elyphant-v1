@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -52,42 +51,27 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       
       console.log("Sign in successful:", data);
       
-      // Check if profile exists
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', data.user?.id)
-        .maybeSingle();
-        
-      if (profileError) {
-        console.error("Error fetching profile after sign in:", profileError);
-      }
-      
-      console.log("User profile data:", profileData);
-      
-      // If no profile exists, create one using RPC
-      if (!profileData && data.user) {
-        console.log("No profile found, creating one now for user:", data.user.id);
-        
+      // Ensure the user has a profile by calling our edge function
+      if (data.user?.id) {
         try {
-          // Use a Supabase function to create the profile (bypasses RLS)
-          const { error: createProfileError } = await supabase.rpc('create_profile', {
-            user_id: data.user.id,
-            user_email: data.user.email,
-            user_name: data.user.user_metadata?.name || ''
+          const response = await supabase.functions.invoke('create-profile', {
+            body: {
+              user_id: data.user.id,
+              profile_data: {
+                email: data.user.email,
+                name: data.user.user_metadata?.name || 'User',
+                updated_at: new Date().toISOString()
+              }
+            }
           });
           
-          if (createProfileError) {
-            console.error("Error creating profile:", createProfileError);
-            toast.error("Could not create user profile");
+          if (response.error) {
+            console.error("Error creating profile via edge function:", response.error);
           } else {
-            console.log("Created new profile for user via RPC");
+            console.log("Profile created/updated successfully via edge function:", response.data);
           }
-        } catch (rpcError) {
-          console.error("RPC error:", rpcError);
-          
-          // Fallback method - direct insert with service role (would need separate edge function)
-          console.log("Unable to create profile through RPC. User may need to complete profile setup later.");
+        } catch (profileError) {
+          console.error("Failed to call create-profile function:", profileError);
         }
       }
       

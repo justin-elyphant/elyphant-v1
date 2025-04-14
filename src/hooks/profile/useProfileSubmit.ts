@@ -66,8 +66,8 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         return;
       }
       
-      // Comprehensive data formatting
-      const formattedData: any = {
+      // Prepare profile data
+      const formattedData = {
         name: profileData.name || "User",
         email: userEmail,
         profile_image: profileData.profile_image,
@@ -88,90 +88,32 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         updated_at: new Date().toISOString()
       };
       
-      // If we have a user ID, use it
       if (userId) {
-        formattedData.id = userId;
-      }
-      
-      console.log('Profile data being submitted:', formattedData);
-      
-      try {
-        // Try using RPC function first (bypasses RLS)
-        const { error: rpcError } = await supabase.rpc('upsert_profile', {
-          profile_data: formattedData
-        });
+        console.log("Creating/updating profile via Edge Function for user:", userId);
         
-        if (rpcError) {
-          console.error("RPC profile save error:", rpcError);
-          
-          // Fallback to standard methods
-          let saveResult;
-          
-          if (userId) {
-            // Try to get existing profile
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('id', userId)
-              .maybeSingle();
-              
-            if (existingProfile) {
-              // Update existing profile
-              console.log("Updating existing profile with ID:", userId);
-              saveResult = await supabase
-                .from('profiles')
-                .update(formattedData)
-                .eq('id', userId)
-                .select();
-            } else {
-              // Insert new profile with ID
-              console.log("Creating new profile with ID:", userId);
-              saveResult = await supabase
-                .from('profiles')
-                .insert(formattedData)
-                .select();
+        try {
+          // Use our Edge Function to create/update the profile
+          const response = await supabase.functions.invoke('create-profile', {
+            body: {
+              user_id: userId,
+              profile_data: formattedData
             }
-          } 
-          // If no user ID, try to find by email
-          else if (userEmail) {
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('email', userEmail)
-              .maybeSingle();
-              
-            if (existingProfile) {
-              // Update existing profile by email
-              console.log("Updating existing profile with email:", userEmail);
-              saveResult = await supabase
-                .from('profiles')
-                .update(formattedData)
-                .eq('email', userEmail)
-                .select();
-            } else {
-              // Insert new profile with email
-              console.log("Creating new profile with email:", userEmail);
-              saveResult = await supabase
-                .from('profiles')
-                .insert(formattedData)
-                .select();
-            }
-          }
+          });
           
-          if (saveResult?.error) {
-            console.error("Profile save error:", saveResult.error);
-            toast.error("Failed to save profile. Continuing anyway.");
+          if (response.error) {
+            console.error("Error with create-profile edge function:", response.error);
+            toast.error("Failed to save profile. Please try again later.");
           } else {
-            console.log("Profile saved successfully");
+            console.log("Profile saved successfully via edge function:", response.data);
             toast.success("Profile setup complete!");
           }
-        } else {
-          console.log("Profile saved successfully via RPC");
-          toast.success("Profile setup complete!");
+        } catch (err) {
+          console.error("Failed to call create-profile function:", err);
+          toast.error("Error saving profile data.");
         }
-      } catch (dbError) {
-        console.error("Database operation error:", dbError);
-        toast.error("Error saving profile data. Continuing anyway.");
+      } else {
+        console.log("No user ID available, can't save profile");
+        toast.warning("No user ID available, profile not saved");
       }
     } catch (err) {
       console.error("Unexpected error in profile submission:", err);

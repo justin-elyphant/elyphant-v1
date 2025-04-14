@@ -34,7 +34,28 @@ export function useSignUpProcess() {
   }, [emailSent, step, navigate, userEmail, userName]);
   
   // Handle signup form submission
-  const { onSignUpSubmit } = useSignUpSubmit();
+  const { onSignUpSubmit, isSubmitting: submitIsLoading } = useSignUpSubmit();
+
+  // Wrap the onSignUpSubmit function to handle our local state
+  const handleSignUpSubmit = async (values: any) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Call the original submit function
+      await onSignUpSubmit(values);
+      
+      // Update our local state after successful submission
+      setUserEmail(values.email);
+      setUserName(values.name);
+      setEmailSent(true);
+      setStep("verification");  // This will trigger auto-redirect to profile setup
+    } catch (error) {
+      console.error("Sign up process error:", error);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Handle resending verification email
   const { resendCount, lastResendTime, handleResendVerification } = useResendVerification({
@@ -54,10 +75,10 @@ export function useSignUpProcess() {
     emailSent,
     resendCount,
     testVerificationCode,
-    onSignUpSubmit,
+    onSignUpSubmit: handleSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,
-    isSubmitting,
+    isSubmitting: isSubmitting || submitIsLoading,
     bypassVerification,
   };
 }

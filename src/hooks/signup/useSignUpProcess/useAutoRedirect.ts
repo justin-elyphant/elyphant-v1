@@ -9,12 +9,18 @@ interface UseAutoRedirectProps {
   userName: string;
 }
 
-export function useAutoRedirect({ emailSent, step, userEmail, userName }: UseAutoRedirectProps) {
+export const useAutoRedirect = ({
+  emailSent,
+  step,
+  userEmail,
+  userName
+}: UseAutoRedirectProps) => {
   const navigate = useNavigate();
 
+  // AUTO-REDIRECT TO PROFILE SETUP WHEN EMAIL IS SENT
   useEffect(() => {
     if (emailSent && step === "verification") {
-      console.log("Auto-redirecting to profile setup from useSignUpProcess");
+      console.log("Auto-redirecting to profile setup from useAutoRedirect");
       
       // Store in localStorage for persistence
       localStorage.setItem("newSignUp", "true");
@@ -25,4 +31,6 @@ export function useAutoRedirect({ emailSent, step, userEmail, userName }: UseAut
       navigate('/profile-setup', { replace: true });
     }
   }, [emailSent, step, navigate, userEmail, userName]);
-}
+
+  return null;
+};

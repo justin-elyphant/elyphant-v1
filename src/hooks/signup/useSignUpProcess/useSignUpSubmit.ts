@@ -1,9 +1,8 @@
 
 import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
-import { signUpUser, sendVerificationEmail } from "@/hooks/signup/signupService";
-import { extractVerificationCode } from "@/hooks/signup/services/email/utils/responseParser";
 import { supabase } from "@/integrations/supabase/client";
+import { createUserProfile } from "./useProfileCreation";
 
 interface UseSignUpSubmitProps {
   setUserEmail: (email: string) => void;
@@ -11,6 +10,8 @@ interface UseSignUpSubmitProps {
   setEmailSent: (sent: boolean) => void;
   setStep: (step: "signup" | "verification") => void;
   setTestVerificationCode: (code: string | null) => void;
+  setBypassVerification: (bypass: boolean) => void;
+  setIsSubmitting: (isSubmitting: boolean) => void;
 }
 
 export const useSignUpSubmit = ({
@@ -18,118 +19,131 @@ export const useSignUpSubmit = ({
   setUserName,
   setEmailSent,
   setStep,
-  setTestVerificationCode
+  setTestVerificationCode,
+  setBypassVerification,
+  setIsSubmitting
 }: UseSignUpSubmitProps) => {
   
   const onSignUpSubmit = async (values: SignUpFormValues) => {
     try {
-      console.log("Sign up initiated for", values.email);
+      if (setIsSubmitting) setIsSubmitting(true);
+      console.log("Sign up process initiated for", values.email);
       
-      const result = await signUpUser(values, null, null);
+      // 1. Create user in Supabase Auth using signUp
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            name: values.name,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
       
-      if (!result) {
-        toast.error("Signup failed", {
-          description: "Unable to create account. Please try again.",
-        });
-        return;
-      }
-      
-      console.log("User created successfully:", result);
-      
-      setUserEmail(values.email);
-      setUserName(values.name);
-      
-      // Ensure the user has a profile in the database
-      if (result.user?.id) {
-        console.log("Creating profile for user:", result.user.id);
-        
-        // Check if profile exists
-        const { data: existingProfile, error: profileCheckError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', result.user.id)
-          .maybeSingle();
+      if (signUpError) {
+        // Handle rate limit error specifically
+        if (signUpError.message.includes("rate limit") || 
+            signUpError.message.includes("too many requests") || 
+            signUpError.status === 429) {
           
-        if (profileCheckError) {
-          console.error("Error checking for profile:", profileCheckError);
+          setBypassVerification(true);
+          localStorage.setItem("signupRateLimited", "true");
+          
+          toast.error("Too many signup attempts", {
+            description: "Please try again in a few minutes or contact support."
+          });
+          setIsSubmitting(false);
+          return;
         }
         
-        if (!existingProfile) {
-          console.log("No profile found, creating one now");
-          
-          // Create profile for the new user
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              { 
-                id: result.user.id,
-                email: values.email,
-                name: values.name,
-                updated_at: new Date().toISOString()
-              }
-            ]);
-            
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-            toast.error("Profile creation failed", {
-              description: "Your account was created but we couldn't set up your profile."
-            });
-          } else {
-            console.log("Profile created successfully");
-          }
+        if (signUpError.message.includes("already registered")) {
+          toast.error("Email already registered", {
+            description: "Please use a different email address or try to sign in."
+          });
         } else {
-          console.log("User already has a profile");
-        }
-      }
-      
-      const currentOrigin = window.location.origin;
-      console.log("Using origin for verification:", currentOrigin);
-      
-      const emailResult = await sendVerificationEmail(values.email, values.name, currentOrigin);
-      
-      console.log("Email verification result:", emailResult);
-      
-      if (!emailResult.success) {
-        console.error("Failed to send verification code:", emailResult.error);
-        toast.error("Failed to send verification code", {
-          description: "Please try again or contact support.",
-        });
-        return;
-      } else {
-        console.log("Custom verification email sent successfully");
-        toast.success("Account created! Check your email for verification code.");
-        
-        // If it's a test email, save the verification code
-        const code = extractVerificationCode(emailResult);
-        if (code) {
-          console.log(`Test email detected with code: ${code}`);
-          setTestVerificationCode(code);
-          
-          // Show an immediate toast for the test email code
-          toast.info("Test account detected", {
-            description: `Your verification code is: ${code}`,
-            duration: 10000 // Show for 10 seconds
+          toast.error("Signup failed", {
+            description: signUpError.message
           });
         }
-
-        // Log the full emailResult for debugging
-        console.log("Full emailResult:", JSON.stringify(emailResult));
+        
+        setIsSubmitting(false);
+        return;
       }
       
-      setEmailSent(true);
-      setStep("verification");
+      // User created successfully
+      if (signUpData?.user) {
+        console.log("User created successfully:", signUpData.user.id);
+        
+        // Store user data for reliability
+        localStorage.setItem("userId", signUpData.user.id);
+        localStorage.setItem("userEmail", values.email);
+        localStorage.setItem("userName", values.name);
+        localStorage.setItem("newSignUp", "true");
+        
+        // Auto sign-in after successful signup
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password
+        });
+        
+        if (signInError) {
+          console.error("Auto sign-in error:", signInError);
+          toast.error("Account created but couldn't sign in automatically", {
+            description: "Please try signing in manually."
+          });
+        } else {
+          console.log("Auto sign-in successful");
+        }
+        
+        // Create user profile
+        if (signUpData.user.id) {
+          await createUserProfile(signUpData.user.id, values.email, values.name);
+        }
+        
+        // Set application state
+        setUserEmail(values.email);
+        setUserName(values.name);
+        setEmailSent(true);
+        setTestVerificationCode("123456"); // Set dummy code for development
+        
+        // Try to send email
+        try {
+          const emailResult = await supabase.functions.invoke('send-verification-email', {
+            body: {
+              email: values.email,
+              name: values.name,
+              verificationUrl: window.location.origin
+            }
+          });
+          
+          if (emailResult.error) {
+            console.error("Error sending verification email:", emailResult.error);
+            setBypassVerification(true);
+            localStorage.setItem("signupRateLimited", "true");
+          } else {
+            console.log("Verification email sent successfully");
+          }
+        } catch (emailError) {
+          console.error("Error when sending verification email:", emailError);
+          setBypassVerification(true);
+          localStorage.setItem("signupRateLimited", "true");
+        }
+        
+        toast.success("Account created successfully!", {
+          description: "Taking you to complete your profile."
+        });
+        
+        setStep("verification");
+      }
     } catch (err: any) {
-      console.error("Signup failed:", err);
-      
-      if (err.message?.includes("already registered") || err.message?.includes("user_exists")) {
-        toast.error("Email already registered", {
-          description: "Please use a different email address or try to sign in.",
-        });
-      } else {
-        toast.error("Signup failed", {
-          description: err.message || "An unexpected error occurred",
-        });
-      }
+      console.error("Signup submission error:", err);
+      toast.error("Sign up failed", {
+        description: err.message || "An unexpected error occurred"
+      });
+      setIsSubmitting(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

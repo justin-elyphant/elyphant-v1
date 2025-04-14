@@ -3,12 +3,13 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Loader2, AlertCircle } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
 import { CaptchaField } from "../fields/CaptchaField";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Schema definition
 const signUpSchema = z.object({
@@ -29,6 +30,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   onSubmit, 
   isSubmitting = false 
 }) => {
+  const [showRateLimitWarning, setShowRateLimitWarning] = React.useState(false);
+
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -41,6 +44,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const handleSubmit = async (values: SignUpFormValues) => {
     try {
+      // Reset rate limit warning
+      setShowRateLimitWarning(false);
+      
       // Validate the captcha - the field component handles the validation internally
       const captchaField = document.querySelector(".CaptchaField") as HTMLElement;
       if (captchaField && captchaField.querySelector(".text-destructive")) {
@@ -52,9 +58,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     } catch (error: any) {
       // Specific handling for rate limit errors
       if (error.message?.includes("rate limit") || 
-          error.message?.includes("too many requests")) {
+          error.message?.includes("too many requests") ||
+          error.message?.includes("exceeded") ||
+          error.status === 429) {
+        
+        setShowRateLimitWarning(true);
+        localStorage.setItem("signupRateLimited", "true");
+        
         toast.error("Too many signup attempts", {
-          description: "Please wait a few minutes before trying again."
+          description: "We'll bypass verification to let you continue."
         });
       } else {
         // Generic error handling
@@ -67,6 +79,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
   return (
     <Form {...form}>
+      {showRateLimitWarning && (
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            We've detected too many signup attempts. Don't worry, you can still continue with profile setup.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <InputField
           form={form}

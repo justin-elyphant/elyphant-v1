@@ -29,14 +29,23 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   const isFirstStep = activeStep === 0;
   const isLastStep = activeStep === totalSteps - 1;
   
-  // Handle the complete action - keeps the button handler logic simple
+  // Add click debugging
+  const handleNextClick = (e: React.MouseEvent) => {
+    console.log("Next button clicked, isCurrentStepValid:", isCurrentStepValid);
+    if (isCurrentStepValid) {
+      onNext();
+    }
+  };
+  
+  // Handle the complete action with debugging
   const handleComplete = (e: React.MouseEvent) => {
     e.preventDefault();
+    console.log("Complete button clicked in StepNavigation, isLoading:", isLoading);
     if (isLoading) {
       console.log("Ignoring complete button click - already loading");
       return;
     }
-    console.log("Complete button clicked in StepNavigation");
+    console.log("Proceeding with complete action");
     onComplete();
   };
 
@@ -80,7 +89,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
           {!isLastStep ? (
             <Button
               type="button"
-              onClick={onNext}
+              onClick={handleNextClick}
               disabled={!isCurrentStepValid || isLoading}
             >
               {isLoading ? (

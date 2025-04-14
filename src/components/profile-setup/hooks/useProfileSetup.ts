@@ -1,3 +1,4 @@
+
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
@@ -21,9 +22,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const [isCompleting, setIsCompleting] = useState(false);
   const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 5000; // 5 seconds max before forcing completion
+  const maxCompletionTime = 3000; // Reduced from 5000 to 3000 ms to prevent long waits
 
-  const isLoading = isDataLoading || isSubmitLoading || isCompleting;
+  // Simplified loading state determination to prevent false positives
+  const isLoading = isSubmitLoading || isCompleting;
 
   // Enhanced logging for debugging
   useEffect(() => {
@@ -84,7 +86,19 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     setIsCompleting(true);
     
     try {
+      // Start a shorter timeout for safety
+      const safetyTimeout = setTimeout(() => {
+        console.warn("Safety timeout triggered, completing anyway");
+        setIsCompleting(false);
+        cleanupTimeouts();
+        onComplete();
+      }, 2000); // Even shorter timeout for safety
+      
       await handleSubmit(profileData);
+      
+      // Clear safety timeout if submission completes successfully
+      clearTimeout(safetyTimeout);
+      
       // If we reach here, the submission was successful
       setIsCompleting(false);
       cleanupTimeouts();

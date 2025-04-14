@@ -36,12 +36,12 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
     console.log("Profile submit initiated", { userId: user?.id });
     setIsLoading(true);
     
-    // Safety timeout to prevent stuck loading state - 3 seconds max
+    // Safety timeout to prevent stuck loading state - shorter timeout
     submitTimeoutRef.current = setTimeout(() => {
       console.warn("Safety timeout triggered in useProfileSubmit - forcing completion");
       setIsLoading(false);
       onComplete();
-    }, 3000);
+    }, 2000); // Reduced from 3000 to 2000 ms
     
     try {
       // Skip database operation if user is not available
@@ -127,14 +127,12 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       
       // Ensure loading state is cleared
       setIsLoading(false);
+      
+      // Directly call onComplete after a very short delay to ensure state updates have propagated
+      setTimeout(() => {
+        onComplete();
+      }, 50);
     }
-    
-    // Separate the onComplete call to ensure it always happens
-    // even if an error occurs during state updates
-    setTimeout(() => {
-      onComplete();
-    }, 100);
-    
   }, [user, onComplete]);
 
   return {

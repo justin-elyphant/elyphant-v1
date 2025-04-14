@@ -1,8 +1,7 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 interface BasicInfoStepProps {
   value: string;
@@ -10,6 +9,16 @@ interface BasicInfoStepProps {
 }
 
 const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ value, onChange }) => {
+  // Log when this component renders to trace potential issues
+  useEffect(() => {
+    console.log("BasicInfoStep rendered with value:", value);
+  }, [value]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Name input changed:", e.target.value);
+    onChange(e.target.value);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -27,7 +36,8 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ value, onChange }) => {
             type="text"
             placeholder="Your full name"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={handleInputChange}
+            autoFocus
           />
         </div>
       </div>

@@ -29,8 +29,6 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
     setUserName: state.setUserName,
     setEmailSent: state.setEmailSent,
     setStep: state.setStep,
-    setTestVerificationCode: state.setTestVerificationCode,
-    setBypassVerification: state.setBypassVerification,
     setIsSubmitting: state.setIsSubmitting
   });
 

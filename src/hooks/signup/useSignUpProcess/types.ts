@@ -19,3 +19,11 @@ export interface UseSignUpProcessReturn {
   isSubmitting: boolean;
   bypassVerification: boolean;
 }
+
+export interface UseSignUpSubmitProps {
+  setUserEmail: (email: string) => void;
+  setUserName: (name: string) => void;
+  setEmailSent: (sent: boolean) => void;
+  setStep: (step: "signup" | "verification") => void;
+  setIsSubmitting: (isSubmitting: boolean) => void;
+}

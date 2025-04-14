@@ -39,7 +39,7 @@ const SignUp: React.FC = () => {
       <Header />
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow">
         {(localStorage.getItem("signupRateLimited") === "true" || bypassVerification) && (
-          <Alert variant="info" className="mb-4 bg-blue-50 border-blue-200">
+          <Alert variant="info" className="mb-4">
             <Info className="h-4 w-4 text-blue-500" />
             <AlertDescription className="text-blue-700">
               We've simplified your signup experience! You can proceed directly to profile setup.

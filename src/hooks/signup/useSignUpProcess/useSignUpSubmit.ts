@@ -158,36 +158,6 @@ export const useSignUpSubmit = ({
       }
     } catch (err: any) {
       console.error("Signup submission error:", err);
-      
-      // Additional check for rate limit in the caught error
-      if (err.message?.includes("rate limit") || 
-          err.message?.includes("too many requests") || 
-          err.status === 429 ||
-          err.code === "over_email_send_rate_limit") {
-        
-        console.log("Rate limit caught in error handler, bypassing verification");
-        setBypassVerification(true);
-        localStorage.setItem("signupRateLimited", "true");
-        
-        // Store user data and proceed
-        localStorage.setItem("userEmail", values.email);
-        localStorage.setItem("userName", values.name);
-        localStorage.setItem("newSignUp", "true");
-        
-        setUserEmail(values.email);
-        setUserName(values.name);
-        setEmailSent(true);
-        setTestVerificationCode("123456");
-        
-        toast.success("Account created successfully!", {
-          description: "We've simplified the verification process for you."
-        });
-        
-        setStep("verification");
-        setIsSubmitting(false);
-        return;
-      }
-      
       setIsSubmitting(false);
       throw err; // Propagate the error to be caught by the form
     } finally {

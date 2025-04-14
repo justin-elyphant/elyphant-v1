@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { useVerificationRedirect } from "@/hooks/auth/useVerificationRedirect";
+import { useVerificationRedirect } from "./useVerificationRedirect";
 import { useSignUpState } from "./useSignUpState";
 import { useAutoRedirect } from "./useAutoRedirect";
 import { createUserProfile } from "./useProfileCreation";

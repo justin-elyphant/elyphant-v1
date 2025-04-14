@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,8 +62,8 @@ export const useSignUpSubmit = ({
           setEmailSent(true);
           setTestVerificationCode("123456"); // Set dummy code for development
           
-          toast.error("Too many signup attempts", {
-            description: "We'll bypass verification to let you continue."
+          toast.success("Account created successfully!", {
+            description: "We've simplified the verification process for you."
           });
           
           // Directly move to verification step which will auto-redirect
@@ -175,8 +174,8 @@ export const useSignUpSubmit = ({
         setEmailSent(true);
         setTestVerificationCode("123456");
         
-        toast.error("Too many signup attempts", {
-          description: "We'll bypass verification to let you continue."
+        toast.success("Account created successfully!", {
+          description: "We've simplified the verification process for you."
         });
         
         setStep("verification");

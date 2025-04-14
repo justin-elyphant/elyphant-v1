@@ -1,6 +1,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface UseAutoRedirectProps {
   emailSent: boolean;
@@ -32,6 +33,13 @@ export const useAutoRedirect = ({
       localStorage.setItem("newSignUp", "true");
       localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("userName", userName || "");
+      
+      // Show positive success message
+      if (bypassVerification) {
+        toast.success("Account created successfully!", {
+          description: "We've simplified your signup experience."
+        });
+      }
       
       // Use navigate with replace to prevent back-button issues
       navigate('/profile-setup', { replace: true });

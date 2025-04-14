@@ -41,7 +41,7 @@ export const useSignUpSubmit = ({
       
       // Ensure the user has a profile in the database
       if (result.user?.id) {
-        console.log("Checking if user has a profile:", result.user.id);
+        console.log("Creating profile for user:", result.user.id);
         
         // Check if profile exists
         const { data: existingProfile, error: profileCheckError } = await supabase
@@ -64,7 +64,8 @@ export const useSignUpSubmit = ({
               { 
                 id: result.user.id,
                 email: values.email,
-                name: values.name 
+                name: values.name,
+                updated_at: new Date().toISOString()
               }
             ]);
             

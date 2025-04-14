@@ -72,7 +72,6 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
         email: userEmail,
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,
-        bio: profileData.bio || "",
         shipping_address: profileData.shipping_address || {
           street: "",
           city: "",
@@ -86,8 +85,6 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
           shipping_address: "friends",
           gift_preferences: "public"
         },
-        important_dates: profileData.important_dates || [],
-        onboarding_completed: true,
         updated_at: new Date().toISOString()
       };
       

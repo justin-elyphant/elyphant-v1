@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -66,13 +67,16 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
       
       // If no profile exists, we'll create one
       if (!profileData && data.user) {
+        console.log("No profile found, creating one now for user:", data.user.id);
+        
         const { error: insertError } = await supabase
           .from('profiles')
           .insert([
             { 
               id: data.user.id,
               email: data.user.email,
-              name: data.user.user_metadata?.name || ''
+              name: data.user.user_metadata?.name || '',
+              updated_at: new Date().toISOString()
             }
           ]);
           
@@ -81,7 +85,6 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
           toast.error("Could not create user profile");
         } else {
           console.log("Created new profile for user");
-          toast.success("Created profile for existing user");
         }
       }
       

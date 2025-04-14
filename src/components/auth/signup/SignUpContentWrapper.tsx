@@ -52,6 +52,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       onResendVerification={handleResendVerification}
       resendCount={resendCount}
       testVerificationCode={testVerificationCode}
+      bypassVerification={bypassVerification}
     />
   );
 };

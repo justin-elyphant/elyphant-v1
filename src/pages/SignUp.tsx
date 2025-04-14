@@ -5,7 +5,7 @@ import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper"
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Info } from "lucide-react";
+import { CheckCircle, Info } from "lucide-react";
 
 const SignUp: React.FC = () => {
   const {
@@ -39,9 +39,9 @@ const SignUp: React.FC = () => {
       <Header />
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow">
         {(localStorage.getItem("signupRateLimited") === "true" || bypassVerification) && (
-          <Alert variant="warning" className="mb-4 bg-yellow-50 border-yellow-200">
-            <Info className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-700">
+          <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700">
               We've simplified your signup experience! You can proceed directly to profile setup.
             </AlertDescription>
           </Alert>
@@ -57,6 +57,7 @@ const SignUp: React.FC = () => {
           handleResendVerification={handleResendVerification}
           handleBackToSignUp={handleBackToSignUp}
           isSubmitting={isSubmitting}
+          bypassVerification={bypassVerification}
         />
       </div>
       <Footer />

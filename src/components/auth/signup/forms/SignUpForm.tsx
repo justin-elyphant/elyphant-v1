@@ -65,11 +65,14 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       // Call the parent onSubmit with error handling
       await onSubmit(values);
     } catch (error: any) {
+      console.error("Form submission error:", error);
+      
       // Specific handling for rate limit errors
       if (error.message?.includes("rate limit") || 
           error.message?.includes("too many requests") ||
           error.message?.includes("exceeded") ||
-          error.status === 429) {
+          error.status === 429 ||
+          error.code === "over_email_send_rate_limit") {
         
         setShowRateLimitWarning(true);
         localStorage.setItem("signupRateLimited", "true");

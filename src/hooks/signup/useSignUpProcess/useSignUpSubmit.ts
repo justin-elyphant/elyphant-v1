@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,8 @@ export const useSignUpSubmit = ({
       });
       
       if (signUpError) {
+        console.error("Signup error:", signUpError);
+        
         // Handle rate limit error specifically
         if (signUpError.message.includes("rate limit") || 
             signUpError.message.includes("too many requests") || 
@@ -48,6 +51,8 @@ export const useSignUpSubmit = ({
             signUpError.code === "over_email_send_rate_limit") {
           
           console.log("Rate limit detected, bypassing verification");
+          
+          // Set bypass verification flag
           setBypassVerification(true);
           localStorage.setItem("signupRateLimited", "true");
           
@@ -62,7 +67,7 @@ export const useSignUpSubmit = ({
           setEmailSent(true);
           setTestVerificationCode("123456"); // Set dummy code for development
           
-          toast.success("Account created successfully!", {
+          toast.success("Account created!", {
             description: "We've simplified the verification process for you."
           });
           
@@ -83,7 +88,7 @@ export const useSignUpSubmit = ({
         }
         
         setIsSubmitting(false);
-        return;
+        throw signUpError; // Propagate the error to be caught by the form's error handler
       }
       
       // User created successfully
@@ -179,13 +184,12 @@ export const useSignUpSubmit = ({
         });
         
         setStep("verification");
-      } else {
-        toast.error("Sign up failed", {
-          description: err.message || "An unexpected error occurred"
-        });
+        setIsSubmitting(false);
+        return;
       }
       
       setIsSubmitting(false);
+      throw err; // Propagate the error to be caught by the form
     } finally {
       setIsSubmitting(false);
     }

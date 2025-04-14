@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface VerificationFormProps {
@@ -16,6 +16,7 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
   onVerificationSuccess 
 }) => {
   const navigate = useNavigate();
+  const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
   
   // Guaranteed-to-execute approach for auto-verification
   useEffect(() => {
@@ -43,12 +44,21 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <Alert className="bg-green-50 border-green-200 mb-4 w-full">
-        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-        <AlertDescription className="text-green-700">
-          <span className="font-semibold">Account created successfully!</span> Redirecting you to profile setup...
-        </AlertDescription>
-      </Alert>
+      {isRateLimited ? (
+        <Alert variant="warning" className="bg-yellow-50 border-yellow-200 mb-4 w-full">
+          <AlertCircle className="h-4 w-4 text-yellow-600 mr-2" />
+          <AlertDescription className="text-yellow-700">
+            <span className="font-semibold">Simplified signup process activated!</span> Redirecting you to profile setup...
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert variant="success" className="bg-green-50 border-green-200 mb-4 w-full">
+          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+          <AlertDescription className="text-green-700">
+            <span className="font-semibold">Account created successfully!</span> Redirecting you to profile setup...
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };

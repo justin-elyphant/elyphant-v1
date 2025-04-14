@@ -7,15 +7,15 @@ import VerificationForm from "../VerificationForm";
 interface VerificationCodeSectionProps {
   userEmail?: string;
   isVerified?: boolean;
-  isLoading: boolean; // Added missing props
-  verificationChecking: boolean; // Added missing props
+  isLoading: boolean;
+  verificationChecking: boolean;
   effectiveVerificationCode: string;
-  resendCount: number; // Added missing props
+  resendCount: number;
   onVerificationSuccess: () => void;
-  onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>; // Added missing props
-  onCheckVerification: () => Promise<{ verified: boolean }>; // Added missing props
-  setVerificationCode: (code: string) => void; // Added missing props
-  bypassVerification?: boolean; // Added missing props
+  onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
+  onCheckVerification: () => Promise<{ verified: boolean }>;
+  setVerificationCode: (code: string) => void;
+  bypassVerification?: boolean;
 }
 
 const VerificationCodeSection: React.FC<VerificationCodeSectionProps> = ({

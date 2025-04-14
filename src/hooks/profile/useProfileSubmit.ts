@@ -79,7 +79,9 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         },
         updated_at: new Date().toISOString(),
         username: profileData.username || `user_${Date.now().toString(36)}`,
-        next_steps_option: profileData.next_steps_option || nextStepsOption || "dashboard"
+        next_steps_option: profileData.next_steps_option || nextStepsOption || "dashboard",
+        // Add onboarding_completed flag
+        onboarding_completed: true
       };
       
       console.log("Creating/updating profile via Edge Function for user:", userId);
@@ -96,7 +98,27 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         
         if (response.error) {
           console.error("Error with create-profile edge function:", response.error);
-          toast.error("Failed to save profile. Please try again later.");
+          
+          // Fallback to direct profile update if edge function fails
+          try {
+            const { error: directError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: userId,
+                ...formattedData,
+                onboarding_completed: true
+              });
+              
+            if (directError) {
+              console.error("Direct profile update also failed:", directError);
+              toast.error("Failed to save profile. Please try again later.");
+            } else {
+              console.log("Profile saved successfully via direct update");
+              toast.success("Profile setup complete!");
+            }
+          } catch (directErr) {
+            console.error("Error in direct profile update:", directErr);
+          }
         } else {
           console.log("Profile saved successfully via edge function:", response.data);
           toast.success("Profile setup complete!");
@@ -122,6 +144,9 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       if (nextStepsOption || (profileData && profileData.next_steps_option)) {
         localStorage.setItem("nextStepsOption", nextStepsOption || profileData.next_steps_option || "dashboard");
       }
+      
+      // Set a flag to indicate profile is completed
+      localStorage.setItem("profileCompleted", "true");
       
       // Directly call onComplete after a very short delay to ensure state updates have propagated
       setTimeout(() => {

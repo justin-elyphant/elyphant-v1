@@ -21,6 +21,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   // Special handling for new signups
   const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+  const profileCompleted = localStorage.getItem("profileCompleted") === "true";
 
   // Check for fresh session - useful right after signup
   useEffect(() => {
@@ -70,7 +71,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Special case for profile-setup page - it's a protected route but we're more lenient
   if (location.pathname === '/profile-setup') {
-    console.log("On profile setup page - new signup:", isNewSignUp);
+    console.log("On profile setup page - new signup:", isNewSignUp, "profile completed:", profileCompleted);
+    
+    // If profile is already completed and this isn't a new signup, redirect to dashboard
+    if (profileCompleted && !isNewSignUp && (user || freshUser)) {
+      console.log("Profile already completed, redirecting to dashboard");
+      return <Navigate to="/dashboard" replace />;
+    }
     
     // If we have a user OR this is a new signup, render the page
     if (user || freshUser || isNewSignUp) {

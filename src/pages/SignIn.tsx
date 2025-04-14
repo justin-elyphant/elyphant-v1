@@ -14,6 +14,7 @@ import { EmailPasswordForm } from "@/components/auth/signin/EmailPasswordForm";
 import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
 import MainLayout from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -25,45 +26,105 @@ const SignIn = () => {
     if (user) {
       console.log("User already signed in, checking for redirect path");
       
-      // Check if there's a redirect path saved from the ProtectedRoute
-      const redirectPath = localStorage.getItem("redirectAfterSignIn");
+      // Check for profile completion
+      const checkProfileCompletion = async () => {
+        // Check if we have a flag in localStorage indicating profile is completed
+        const profileCompleted = localStorage.getItem("profileCompleted") === "true";
+        if (profileCompleted) {
+          handleRedirectAfterLogin();
+          return;
+        }
+
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error checking profile completion:", error);
+            // If we can't check, assume profile needs to be completed
+            navigate("/profile-setup", { replace: true });
+            return;
+          }
+          
+          if (data?.onboarding_completed) {
+            // Profile is complete, set the flag and redirect
+            localStorage.setItem("profileCompleted", "true");
+            handleRedirectAfterLogin();
+          } else {
+            // Profile needs to be completed
+            navigate("/profile-setup", { replace: true });
+          }
+        } catch (err) {
+          console.error("Error in profile check:", err);
+          navigate("/profile-setup", { replace: true });
+        }
+      };
       
-      // Check if this is a new signup that needs to complete profile setup
-      const isNewSignUp = localStorage.getItem("newSignUp") === "true";
-      
-      if (isNewSignUp) {
-        console.log("Redirecting to profile setup to continue new signup");
-        navigate("/profile-setup", { replace: true });
-      } else if (redirectPath && redirectPath !== "/sign-in" && redirectPath !== "/sign-up") {
-        console.log("Redirecting to previously attempted path:", redirectPath);
-        localStorage.removeItem("redirectAfterSignIn");
-        navigate(redirectPath, { replace: true });
-      } else {
-        console.log("No specific redirect, going to dashboard");
-        navigate("/dashboard", { replace: true });
-      }
+      checkProfileCompletion();
     }
   }, [user, navigate]);
 
-  const handleSignInSuccess = () => {
-    // Get the intended destination after sign-in
-    const redirectPath = localStorage.getItem("redirectAfterSignIn");
+  const handleRedirectAfterLogin = () => {
+    // Check if this is a new signup that needs to complete profile setup
     const isNewSignUp = localStorage.getItem("newSignUp") === "true";
     
     if (isNewSignUp) {
-      // If this was a new signup, continue to profile setup
-      console.log("Continuing to profile setup after sign in");
+      console.log("Redirecting to profile setup to continue new signup");
       navigate("/profile-setup", { replace: true });
-    } else if (redirectPath && redirectPath !== "/sign-in" && redirectPath !== "/sign-up") {
-      // Clear the stored path
+      return;
+    }
+    
+    // Get the next steps option if available
+    const nextStepsOption = localStorage.getItem("nextStepsOption");
+    if (nextStepsOption) {
+      console.log("Next steps option found:", nextStepsOption);
+      
+      // Navigate based on the selected option
+      switch (nextStepsOption) {
+        case "create_wishlist":
+          navigate("/wishlists", { replace: true });
+          break;
+        case "find_friends":
+          navigate("/connections", { replace: true });
+          break;
+        case "shop_gifts":
+          navigate("/gifting", { replace: true });
+          break;
+        case "explore_marketplace":
+          navigate("/marketplace", { replace: true });
+          break;
+        default:
+          navigate("/dashboard", { replace: true });
+          break;
+      }
+      
+      // Clear this option after using it
+      localStorage.removeItem("nextStepsOption");
+      return;
+    }
+    
+    // Check if there's a redirect path saved from the ProtectedRoute
+    const redirectPath = localStorage.getItem("redirectAfterSignIn");
+    
+    if (redirectPath && redirectPath !== "/sign-in" && redirectPath !== "/sign-up") {
+      console.log("Redirecting to previously attempted path:", redirectPath);
       localStorage.removeItem("redirectAfterSignIn");
-      console.log("Redirecting to:", redirectPath);
       navigate(redirectPath, { replace: true });
     } else {
-      // Default to dashboard
-      console.log("No specific redirect path, going to dashboard");
+      console.log("No specific redirect, going to dashboard");
       navigate("/dashboard", { replace: true });
     }
+  };
+
+  const handleSignInSuccess = () => {
+    // Set a flag to indicate this is coming from signin
+    localStorage.setItem("fromSignIn", "true");
+    
+    // The redirection will be handled by the useEffect when user becomes available
+    console.log("Sign in successful, awaiting user state update for redirect");
   };
 
   return (

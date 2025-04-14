@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -35,11 +36,17 @@ const ProfileSetup = () => {
   }, [user, authLoading]);
 
   const handleSetupComplete = useCallback(async () => {
-    console.log("Profile setup complete, transitioning to dashboard");
+    console.log("Profile setup complete, transitioning to appropriate destination");
     
     try {
+      // Get the next steps option from localStorage
+      const nextStepsOption = localStorage.getItem("nextStepsOption") || "dashboard";
+      console.log("Next steps option selected:", nextStepsOption);
+      
+      // Clear signup-related localStorage values
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
       
       if (user) {
         console.log("Refreshing user session after profile setup");
@@ -53,9 +60,32 @@ const ProfileSetup = () => {
       
       toast.success("Welcome! Your profile is ready.");
       
-      navigate("/dashboard", { replace: true });
+      // Navigate based on the selected option
+      switch (nextStepsOption) {
+        case "create_wishlist":
+          navigate("/wishlists", { replace: true });
+          break;
+        case "find_friends":
+          navigate("/connections", { replace: true });
+          break;
+        case "shop_gifts":
+          navigate("/gifting", { replace: true });
+          break;
+        case "explore_marketplace":
+          navigate("/marketplace", { replace: true });
+          break;
+        case "dashboard":
+        default:
+          navigate("/dashboard", { replace: true });
+          break;
+      }
+      
+      // Clear the nextStepsOption from localStorage after navigating
+      localStorage.removeItem("nextStepsOption");
+      
     } catch (error) {
       console.error("Error during profile completion:", error);
+      // Fallback to dashboard on error
       navigate("/dashboard", { replace: true });
     }
   }, [user, navigate]);
@@ -63,6 +93,7 @@ const ProfileSetup = () => {
   const handleSkip = useCallback(() => {
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
     
     toast.info("You can complete your profile later in settings");
     navigate("/dashboard", { replace: true });
@@ -71,6 +102,7 @@ const ProfileSetup = () => {
   const handleBackToDashboard = useCallback(() => {
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
     navigate("/dashboard");
   }, [navigate]);
 

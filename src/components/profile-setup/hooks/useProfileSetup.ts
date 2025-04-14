@@ -1,3 +1,4 @@
+
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
@@ -15,7 +16,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const { profileData, updateProfileData, isLoading: isDataLoading } = useProfileData();
   const { isCurrentStepValid } = useProfileValidation(activeStep, profileData);
   const { isLoading: isSubmitLoading, handleSubmit } = useProfileSubmit({
-    onComplete
+    onComplete,
+    nextStepsOption: profileData.next_steps_option
   });
   
   const [isCompleting, setIsCompleting] = useState(false);
@@ -32,9 +34,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       isDataLoading,
       isSubmitLoading,
       isCompleting,
-      totalLoading: isLoading
+      totalLoading: isLoading,
+      nextStepsOption: profileData.next_steps_option
     });
-  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading]);
+  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option]);
 
   // Force completion after a timeout
   useEffect(() => {

@@ -1,6 +1,6 @@
 
-import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -13,12 +13,57 @@ import { Separator } from "@/components/ui/separator";
 import { EmailPasswordForm } from "@/components/auth/signin/EmailPasswordForm";
 import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
 import MainLayout from "@/components/layout/MainLayout";
+import { useAuth } from "@/contexts/auth";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Handle redirects when user is already logged in
+  useEffect(() => {
+    if (user) {
+      console.log("User already signed in, checking for redirect path");
+      
+      // Check if there's a redirect path saved from the ProtectedRoute
+      const redirectPath = localStorage.getItem("redirectAfterSignIn");
+      
+      // Check if this is a new signup that needs to complete profile setup
+      const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+      
+      if (isNewSignUp) {
+        console.log("Redirecting to profile setup to continue new signup");
+        navigate("/profile-setup", { replace: true });
+      } else if (redirectPath && redirectPath !== "/sign-in" && redirectPath !== "/sign-up") {
+        console.log("Redirecting to previously attempted path:", redirectPath);
+        localStorage.removeItem("redirectAfterSignIn");
+        navigate(redirectPath, { replace: true });
+      } else {
+        console.log("No specific redirect, going to dashboard");
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   const handleSignInSuccess = () => {
-    navigate("/dashboard");
+    // Get the intended destination after sign-in
+    const redirectPath = localStorage.getItem("redirectAfterSignIn");
+    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    
+    if (isNewSignUp) {
+      // If this was a new signup, continue to profile setup
+      console.log("Continuing to profile setup after sign in");
+      navigate("/profile-setup", { replace: true });
+    } else if (redirectPath && redirectPath !== "/sign-in" && redirectPath !== "/sign-up") {
+      // Clear the stored path
+      localStorage.removeItem("redirectAfterSignIn");
+      console.log("Redirecting to:", redirectPath);
+      navigate(redirectPath, { replace: true });
+    } else {
+      // Default to dashboard
+      console.log("No specific redirect path, going to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
   };
 
   return (

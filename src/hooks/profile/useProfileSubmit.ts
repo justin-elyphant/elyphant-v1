@@ -4,13 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { ProfileData } from "@/components/profile-setup/hooks/types";
+import { useNavigate } from "react-router-dom";
 
 interface UseProfileSubmitProps {
   onComplete: () => void;
+  nextStepsOption?: string;
 }
 
-export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
+export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubmitProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const submitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const submitAttemptedRef = useRef(false);
@@ -41,6 +44,7 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       const userEmail = user?.email || localStorage.getItem("userEmail") || profileData.email;
       
       console.log("Profile submit for user:", userId, "with email:", userEmail);
+      console.log("Next steps option:", nextStepsOption || profileData.next_steps_option || "dashboard");
       
       if (!userId) {
         console.error("No user ID available from any source");
@@ -74,7 +78,8 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
           gift_preferences: "public"
         },
         updated_at: new Date().toISOString(),
-        username: profileData.username || `user_${Date.now().toString(36)}`
+        username: profileData.username || `user_${Date.now().toString(36)}`,
+        next_steps_option: profileData.next_steps_option || nextStepsOption || "dashboard"
       };
       
       console.log("Creating/updating profile via Edge Function for user:", userId);
@@ -113,12 +118,17 @@ export const useProfileSubmit = ({ onComplete }: UseProfileSubmitProps) => {
       // Ensure loading state is cleared
       setIsLoading(false);
       
+      // Store the nextStepsOption in localStorage before completing
+      if (nextStepsOption || (profileData && profileData.next_steps_option)) {
+        localStorage.setItem("nextStepsOption", nextStepsOption || profileData.next_steps_option || "dashboard");
+      }
+      
       // Directly call onComplete after a very short delay to ensure state updates have propagated
       setTimeout(() => {
         onComplete();
       }, 50);
     }
-  }, [user, onComplete]);
+  }, [user, onComplete, nextStepsOption]);
 
   return {
     isLoading,

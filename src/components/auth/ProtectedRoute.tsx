@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   redirectPath?: string;
@@ -32,8 +33,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         if (data.session?.user) {
           console.log("Fresh session found:", data.session.user.email);
           setFreshUser(data.session.user);
+          // Store user ID in localStorage for reliability
+          localStorage.setItem("userId", data.session.user.id);
+          localStorage.setItem("userEmail", data.session.user.email || '');
         } else {
           console.log("No session found during fresh check");
+          
+          // If we're on profile setup but have no session, check if it's a new signup
+          if (location.pathname === '/profile-setup' && isNewSignUp) {
+            toast.warning("Please sign in to complete your profile setup");
+          }
         }
       }
       
@@ -41,7 +50,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     };
     
     checkFreshSession();
-  }, [user, isDebugMode]);
+  }, [user, isDebugMode, location.pathname, isNewSignUp]);
 
   // If in debug mode, bypass authentication
   if (isDebugMode) {
@@ -77,6 +86,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log("User not authenticated, redirecting to:", redirectPath, "from:", location.pathname);
     
     // Save the current path to redirect back after login
+    localStorage.setItem("redirectAfterSignIn", location.pathname);
     return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
   }
 

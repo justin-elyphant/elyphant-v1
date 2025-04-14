@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useVerificationRedirect } from "./useVerificationRedirect";
 import { useResendVerification } from "./useResendVerification";
 import { useSignUpSubmit } from "./useSignUpSubmit";
+import { isRateLimitError } from "./utils/rateLimit";
 
 export function useSignUpProcess() {
   const navigate = useNavigate();
@@ -20,8 +21,8 @@ export function useSignUpProcess() {
   
   // AUTO-REDIRECT TO PROFILE SETUP WHEN EMAIL IS SENT
   useEffect(() => {
-    if (emailSent && step === "verification") {
-      console.log("Auto-redirecting to profile setup from useSignUpProcess");
+    if (emailSent && (step === "verification" || bypassVerification)) {
+      console.log("Auto-redirecting to profile setup from useSignUpProcess, bypass:", bypassVerification);
       
       // Store in localStorage for persistence
       localStorage.setItem("newSignUp", "true");
@@ -31,7 +32,7 @@ export function useSignUpProcess() {
       // Use navigate with replace to prevent back-button issues
       navigate('/profile-setup', { replace: true });
     }
-  }, [emailSent, step, navigate, userEmail, userName]);
+  }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
   
   // Handle signup form submission
   const { onSignUpSubmit, isSubmitting: submitIsLoading } = useSignUpSubmit();
@@ -53,27 +54,20 @@ export function useSignUpProcess() {
       console.error("Sign up process error:", error);
       
       // Check for rate limit error in the caught error
-      const err = error as any;
-      if (err?.message?.includes("rate limit") || 
-          err?.message?.includes("too many requests") || 
-          err?.status === 429 ||
-          err?.code === "over_email_send_rate_limit") {
+      if (isRateLimitError(error)) {
+        console.log("Rate limit caught in useSignUpProcess, bypassing verification");
         
-        console.log("Rate limit caught in error handler, bypassing verification");
+        // Handle the rate limit error by bypassing verification
+        handleRateLimit({
+          email: values.email,
+          name: values.name,
+          setUserEmail,
+          setUserName,
+          setTestVerificationCode,
+          setEmailSent,
+          navigate
+        });
         setBypassVerification(true);
-        localStorage.setItem("signupRateLimited", "true");
-        
-        // Store user data and proceed
-        localStorage.setItem("userEmail", values.email);
-        localStorage.setItem("userName", values.name);
-        localStorage.setItem("newSignUp", "true");
-        
-        setUserEmail(values.email);
-        setUserName(values.name);
-        setEmailSent(true);
-        
-        // Auto-redirect to profile setup
-        navigate('/profile-setup', { replace: true });
         return;
       }
       
@@ -108,3 +102,36 @@ export function useSignUpProcess() {
     bypassVerification,
   };
 }
+
+// Rate limit handler function
+const handleRateLimit = ({
+  email, 
+  name, 
+  setUserEmail, 
+  setUserName,
+  setTestVerificationCode,
+  setEmailSent,
+  navigate
+}: {
+  email: string;
+  name: string;
+  setUserEmail: (email: string) => void;
+  setUserName: (name: string) => void;
+  setTestVerificationCode: (code: string | null) => void;
+  setEmailSent: (sent: boolean) => void;
+  navigate: ReturnType<typeof useNavigate>;
+}): void => {
+  console.log("Rate limit detected, bypassing verification entirely");
+  
+  // Set user state
+  setUserEmail(email);
+  setUserName(name);
+  setTestVerificationCode("123456"); // Set dummy code
+  setEmailSent(true);
+  
+  // Store in localStorage for persistence through redirects
+  localStorage.setItem("newSignUp", "true");
+  localStorage.setItem("userEmail", email);
+  localStorage.setItem("userName", name);
+  localStorage.setItem("signupRateLimited", "true");
+};

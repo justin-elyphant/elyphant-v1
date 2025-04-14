@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
@@ -14,6 +15,7 @@ import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons"
 import MainLayout from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -26,7 +28,8 @@ const SignIn = () => {
     console.log("SignIn Page - Local Storage Flags:", {
       newSignUp: localStorage.getItem("newSignUp"),
       profileCompleted: localStorage.getItem("profileCompleted"),
-      nextStepsOption: localStorage.getItem("nextStepsOption")
+      nextStepsOption: localStorage.getItem("nextStepsOption"),
+      signupRateLimited: localStorage.getItem("signupRateLimited")
     });
   }, [user]);
   
@@ -34,6 +37,14 @@ const SignIn = () => {
   useEffect(() => {
     if (user) {
       console.log("User already signed in, checking for redirect path");
+      
+      // Check for rate limited signup
+      const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
+      if (isRateLimited) {
+        console.log("This was a rate-limited signup, redirecting to profile setup");
+        navigate("/profile-setup", { replace: true });
+        return;
+      }
       
       // Check for profile completion
       const checkProfileCompletion = async () => {
@@ -59,6 +70,7 @@ const SignIn = () => {
           
           if (error) {
             console.error("Error checking profile completion:", error);
+            toast.error("Error checking your profile status");
             navigate("/profile-setup", { replace: true });
             return;
           }
@@ -95,6 +107,7 @@ const SignIn = () => {
           }
         } catch (err) {
           console.error("Error in profile check:", err);
+          toast.error("Error checking your profile status");
           navigate("/profile-setup", { replace: true });
         }
       };
@@ -102,58 +115,6 @@ const SignIn = () => {
       checkProfileCompletion();
     }
   }, [user, navigate]);
-
-  const handleRedirectAfterLogin = () => {
-    // Check if this is a new signup that needs to complete profile setup
-    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
-    
-    if (isNewSignUp) {
-      console.log("Redirecting to profile setup to continue new signup");
-      navigate("/profile-setup", { replace: true });
-      return;
-    }
-    
-    // Get the next steps option if available
-    const nextStepsOption = localStorage.getItem("nextStepsOption");
-    if (nextStepsOption) {
-      console.log("Next steps option found:", nextStepsOption);
-      
-      // Navigate based on the selected option
-      switch (nextStepsOption) {
-        case "create_wishlist":
-          navigate("/wishlists", { replace: true });
-          break;
-        case "find_friends":
-          navigate("/connections", { replace: true });
-          break;
-        case "shop_gifts":
-          navigate("/gifting", { replace: true });
-          break;
-        case "explore_marketplace":
-          navigate("/marketplace", { replace: true });
-          break;
-        default:
-          navigate("/dashboard", { replace: true });
-          break;
-      }
-      
-      // Clear this option after using it
-      localStorage.removeItem("nextStepsOption");
-      return;
-    }
-    
-    // Check if there's a redirect path saved from the ProtectedRoute
-    const redirectPath = localStorage.getItem("redirectAfterSignIn");
-    
-    if (redirectPath && redirectPath !== "/sign-in" && redirectPath !== "/sign-up") {
-      console.log("Redirecting to previously attempted path:", redirectPath);
-      localStorage.removeItem("redirectAfterSignIn");
-      navigate(redirectPath, { replace: true });
-    } else {
-      console.log("No specific redirect, going to dashboard");
-      navigate("/dashboard", { replace: true });
-    }
-  };
 
   const handleSignInSuccess = () => {
     // Set a flag to indicate this is coming from signin

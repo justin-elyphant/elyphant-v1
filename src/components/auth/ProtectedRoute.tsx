@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -23,10 +24,14 @@ const ProtectedRoute = ({
       isLoading,
       isDebugMode,
       profileCompleted: localStorage.getItem("profileCompleted"),
-      newSignUp: localStorage.getItem("newSignUp")
+      newSignUp: localStorage.getItem("newSignUp"),
+      signupRateLimited: localStorage.getItem("signupRateLimited")
     });
   }, [user, location, isLoading, isDebugMode]);
 
+  // Additional check for rate limited signup
+  const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
+  
   // Special handling for new signups
   const isNewSignUp = localStorage.getItem("newSignUp") === "true";
   const profileCompleted = localStorage.getItem("profileCompleted") === "true";
@@ -51,6 +56,7 @@ const ProtectedRoute = ({
   if (location.pathname === '/profile-setup') {
     console.log("On profile setup page - Enhanced Logging", {
       newSignUp: isNewSignUp,
+      rateLimited: isRateLimited,
       profileCompleted
     });
     
@@ -60,8 +66,8 @@ const ProtectedRoute = ({
       return <Navigate to="/dashboard" replace />;
     }
     
-    // If we have a user or this is a new signup, render the page
-    if (user || isNewSignUp) {
+    // If we have a user OR this is a rate limited signup OR this is a new signup, render the page
+    if (user || isRateLimited || isNewSignUp) {
       console.log("Allowing access to profile setup");
       return <>{children}</>;
     }

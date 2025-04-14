@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { isRateLimitError } from "./utils/rateLimit";
 
 export const useSignUpSubmit = () => {
   const navigate = useNavigate();
@@ -29,10 +30,8 @@ export const useSignUpSubmit = () => {
         console.error("Signup error:", signUpError);
         
         // Handle rate limit error specifically
-        if (signUpError.message.includes("rate limit") || 
-            signUpError.message.includes("too many requests") || 
-            signUpError.status === 429 ||
-            signUpError.code === "over_email_send_rate_limit") {
+        if (isRateLimitError(signUpError)) {
+          console.log("Rate limit encountered in signUpSubmit, handling gracefully");
           
           localStorage.setItem("signupRateLimited", "true");
           localStorage.setItem("userEmail", values.email);
@@ -89,10 +88,8 @@ export const useSignUpSubmit = () => {
       console.error("Signup submission error:", err);
       
       // Extra check for rate limit error
-      if (err.message?.includes("rate limit") || 
-          err.message?.includes("too many requests") || 
-          err.status === 429 ||
-          err.code === "over_email_send_rate_limit") {
+      if (isRateLimitError(err)) {
+        console.log("Rate limit caught in error handler, bypassing verification");
         
         localStorage.setItem("signupRateLimited", "true");
         localStorage.setItem("userEmail", values.email);

@@ -26,6 +26,9 @@ export const useSignUpSubmit = () => {
         localStorage.setItem("userName", values.name || "");
         localStorage.setItem("newSignUp", "true");
         
+        // Trigger storage event for other components to detect
+        window.dispatchEvent(new Event('storage'));
+        
         toast.success("Account created successfully!", {
           description: "Taking you to profile setup."
         });
@@ -65,16 +68,25 @@ export const useSignUpSubmit = () => {
           if (isRateLimitError(signUpError)) {
             console.log("Rate limit encountered in signUpSubmit, handling gracefully");
             
-            // Use the standalone handler function
-            handleRateLimit({
-              email: values.email,
-              name: values.name,
-              setUserEmail: () => {}, // Will be set via localStorage instead
-              setUserName: () => {},  // Will be set via localStorage instead
-              setTestVerificationCode: () => {},
-              setEmailSent: () => {},
-              navigate
+            // Set the required localStorage values
+            localStorage.setItem("newSignUp", "true");
+            localStorage.setItem("userEmail", values.email);
+            localStorage.setItem("userName", values.name || "");
+            localStorage.setItem("signupRateLimited", "true");
+            localStorage.setItem("bypassVerification", "true");
+            
+            // Trigger storage event for other components to detect
+            window.dispatchEvent(new Event('storage'));
+            
+            // Show success toast
+            toast.success("Account created successfully!", {
+              description: "Taking you to profile setup."
             });
+            
+            // Navigate with replace to prevent back navigation
+            setTimeout(() => {
+              navigate('/profile-setup', { replace: true });
+            }, 1500);
             
             return;
           }
@@ -134,15 +146,25 @@ export const useSignUpSubmit = () => {
         if (isRateLimitError(supabaseError)) {
           console.log("Rate limit caught in Supabase error handler, handling gracefully");
           
-          handleRateLimit({
-            email: values.email,
-            name: values.name,
-            setUserEmail: () => {}, // Will be set via localStorage instead
-            setUserName: () => {},  // Will be set via localStorage instead
-            setTestVerificationCode: () => {},
-            setEmailSent: () => {},
-            navigate
+          // Set the required localStorage values directly
+          localStorage.setItem("newSignUp", "true");
+          localStorage.setItem("userEmail", values.email);
+          localStorage.setItem("userName", values.name || "");
+          localStorage.setItem("signupRateLimited", "true");
+          localStorage.setItem("bypassVerification", "true");
+          
+          // Trigger storage event
+          window.dispatchEvent(new Event('storage'));
+          
+          // Show success toast
+          toast.success("Account created successfully!", {
+            description: "Taking you to profile setup."
           });
+          
+          // Navigate with replace
+          setTimeout(() => {
+            navigate('/profile-setup', { replace: true });
+          }, 1500);
           
           return;
         }

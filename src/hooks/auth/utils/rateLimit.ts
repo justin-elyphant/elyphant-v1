@@ -25,15 +25,28 @@ export const isRateLimitError = (error: any): boolean => {
   // Log the full error for debugging
   console.log("Checking for rate limit in error:", error);
   
-  // Extract error details from different possible formats
-  const status = error?.status || error?.error?.status;
+  // Direct check on status code
+  if (error?.status === 429) return true;
+  if (error?.error?.status === 429) return true;
+  
+  // Direct check on error code
   const code = error?.code || error?.error?.code;
+  if (code === "too_many_requests" || code === "over_email_send_rate_limit") return true;
+  
+  // Direct check on name
+  const errorName = error?.name || error?.error?.name;
+  if (errorName === "AuthApiError" && 
+      ((error?.message || "").toLowerCase().includes("rate") || 
+       (error?.message || "").toLowerCase().includes("limit"))) {
+    return true;
+  }
+  
+  // Check for Supabase API error format
+  if (error?.name === "AuthApiError" && error.status === 429) return true;
+  
+  // Extract and check message content
   const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
   const errorMessage = typeof error.error?.message === 'string' ? error.error.message.toLowerCase() : '';
-  
-  // Direct match on common rate limit indicators
-  if (status === 429) return true;
-  if (code === "too_many_requests" || code === "over_email_send_rate_limit") return true;
   
   // Check message content for rate limit keywords
   const rateWords = ['rate limit', 'exceeded', 'too many', 'too frequent', 'too often'];
@@ -89,6 +102,9 @@ export const handleRateLimit = ({
   localStorage.setItem("userName", name);
   localStorage.setItem("signupRateLimited", "true");
   localStorage.setItem("bypassVerification", "true"); // Add a new flag
+  
+  // Fire event to notify other components
+  window.dispatchEvent(new Event('storage'));
   
   // Show success toast
   toast.success("Account created successfully!", {

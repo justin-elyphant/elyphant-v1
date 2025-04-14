@@ -59,6 +59,19 @@ const SignUp: React.FC = () => {
       const limitFlagDetected = isRateLimitFlagSet();
       console.log("Rate limit flag check:", limitFlagDetected);
       setRateLimitReached(limitFlagDetected);
+      
+      // If rate limited, redirect to profile setup
+      if (limitFlagDetected) {
+        const userEmail = localStorage.getItem("userEmail");
+        const userName = localStorage.getItem("userName");
+        
+        if (userEmail && userName) {
+          toast.success("Account created! Continuing to profile setup...");
+          setTimeout(() => {
+            navigate('/profile-setup', { replace: true });
+          }, 1000);
+        }
+      }
     };
     
     // Check immediately and set up window event listener for storage changes
@@ -70,7 +83,7 @@ const SignUp: React.FC = () => {
     return () => {
       window.removeEventListener('storage', checkRateLimit);
     };
-  }, []);
+  }, [navigate]);
   
   // Auto-redirect if rate limited - with more reliable timing
   useEffect(() => {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -34,15 +33,6 @@ export const EmailPasswordForm = ({ onSuccess }: EmailPasswordFormProps) => {
 
       if (error) {
         console.error("Sign in error:", error);
-        
-        // Get profile data to check if it exists
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', email)
-          .maybeSingle();
-          
-        console.log("Profile check result:", profileData);
         
         if (error.message.includes("Invalid login credentials")) {
           setError("The email or password you entered is incorrect");

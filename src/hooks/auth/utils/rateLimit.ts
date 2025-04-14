@@ -22,14 +22,32 @@ interface RateLimitHandlerProps {
 export const isRateLimitError = (error: any): boolean => {
   if (!error) return false;
   
-  return error?.status === 429 || 
+  // Log the full error for debugging
+  console.log("Checking for rate limit in error:", error);
+  
+  // Check both error object and its properties for all rate limit indicators
+  const isRateLimit = error?.status === 429 || 
     error?.code === "too_many_requests" ||
     error?.code === "over_email_send_rate_limit" ||
     (typeof error.message === 'string' && (
       error.message.toLowerCase().includes("rate limit") || 
       error.message.toLowerCase().includes("exceeded") ||
       error.message.toLowerCase().includes("too many")
+    )) ||
+    // Check nested error objects that might contain the rate limit info
+    (error.error && (
+      error.error?.status === 429 ||
+      error.error?.code === "too_many_requests" ||
+      error.error?.code === "over_email_send_rate_limit" ||
+      (typeof error.error.message === 'string' && (
+        error.error.message.toLowerCase().includes("rate limit") ||
+        error.error.message.toLowerCase().includes("exceeded") ||
+        error.error.message.toLowerCase().includes("too many")
+      ))
     ));
+
+  console.log("Rate limit detection result:", isRateLimit);
+  return isRateLimit;
 };
 
 /**

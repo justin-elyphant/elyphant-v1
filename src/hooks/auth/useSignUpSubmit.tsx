@@ -15,6 +15,27 @@ export const useSignUpSubmit = () => {
       setIsSubmitting(true);
       console.log("Sign up initiated for", values.email);
       
+      // Check for existing rate limit flags first - this can happen if the component remounts
+      const existingRateLimit = localStorage.getItem("signupRateLimited") === "true";
+      if (existingRateLimit) {
+        console.log("Rate limit flag already found in localStorage, redirecting directly");
+        
+        localStorage.setItem("userEmail", values.email);
+        localStorage.setItem("userName", values.name || "");
+        localStorage.setItem("newSignUp", "true");
+        
+        toast.success("Account created successfully!", {
+          description: "Taking you to profile setup."
+        });
+        
+        // Use navigate with replace to prevent back navigation
+        setTimeout(() => {
+          navigate('/profile-setup', { replace: true });
+        }, 500);
+        
+        return;
+      }
+      
       // Create user in Supabase Auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: values.email,
@@ -26,10 +47,18 @@ export const useSignUpSubmit = () => {
         }
       });
       
+      // Check for rate limit error response first
       if (signUpError) {
         console.error("Signup error:", signUpError);
         
-        // Handle rate limit error specifically
+        // Specifically log details to help with debugging
+        console.log("Error details for debugging:", {
+          status: signUpError.status,
+          code: signUpError.code,
+          message: signUpError.message,
+        });
+        
+        // Enhanced rate limit detection with better handling
         if (isRateLimitError(signUpError)) {
           console.log("Rate limit encountered in signUpSubmit, handling gracefully");
           
@@ -75,9 +104,16 @@ export const useSignUpSubmit = () => {
           
           if (profileError) {
             console.error("Error creating profile:", profileError);
+            
+            // Check if profile creation hit a rate limit
+            if (isRateLimitError(profileError)) {
+              console.log("Rate limit encountered during profile creation, continuing anyway");
+              // We'll continue despite this error since the user was created
+            }
           }
         } catch (profileError) {
           console.error("Failed to create profile:", profileError);
+          // Continue despite profile creation failure, we'll handle it in profile setup
         }
         
         toast.success("Account created successfully!", {

@@ -54,24 +54,58 @@ const SignUp: React.FC = () => {
     };
     
     checkSupabaseConnection();
+    
+    // Check for rate limit flag on mount and when localStorage changes
+    const rateLimitFlag = localStorage.getItem("signupRateLimited") === "true";
+    setRateLimitReached(rateLimitFlag);
+    console.log("Rate limit flag on mount:", rateLimitFlag);
   }, []);
   
-  // Auto-redirect if rate limited
+  // Auto-redirect if rate limited - with more reliable timing
   useEffect(() => {
-    if (localStorage.getItem("signupRateLimited") === "true" && 
-        localStorage.getItem("userEmail") && 
-        localStorage.getItem("userName")) {
-      console.log("Rate limit detected and user info available, redirecting to profile setup");
+    const checkRateLimitAndRedirect = () => {
+      const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
+      const hasUserInfo = localStorage.getItem("userEmail") && localStorage.getItem("userName");
       
-      toast.success("Account created! Email verification has been skipped.", {
-        description: "You can complete your profile now."
-      });
-      
-      navigate('/profile-setup', { replace: true });
+      if (isRateLimited && hasUserInfo) {
+        console.log("Rate limit detected and user info available, redirecting to profile setup");
+        
+        toast.success("Account created! Email verification has been skipped.", {
+          description: "You can complete your profile now."
+        });
+        
+        // Use a short timeout to ensure the toast is visible
+        setTimeout(() => {
+          navigate('/profile-setup', { replace: true });
+        }, 500);
+        return true;
+      }
+      return false;
+    };
+    
+    // Check immediately
+    const shouldSkipRender = checkRateLimitAndRedirect();
+    
+    // If we're not redirecting immediately, set up an interval to check
+    // This helps with race conditions where flags are set after component mounts
+    let intervalId: number | null = null;
+    if (!shouldSkipRender) {
+      intervalId = window.setInterval(() => {
+        const redirected = checkRateLimitAndRedirect();
+        if (redirected && intervalId !== null) {
+          clearInterval(intervalId);
+        }
+      }, 500) as unknown as number;
     }
+    
+    return () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+      }
+    };
   }, [navigate]);
   
-  // Enhanced logging to check testVerificationCode value
+  // Enhanced logging to check state
   useEffect(() => {
     console.log("SignUp page - Full state:", {
       step,
@@ -82,7 +116,8 @@ const SignUp: React.FC = () => {
       isSubmitting,
       bypassVerification,
       supabaseConnection: isSupabaseConnected,
-      rateLimitReached
+      rateLimitReached,
+      rateLimitFlagInStorage: localStorage.getItem("signupRateLimited")
     });
   }, [step, userEmail, userName, resendCount, testVerificationCode, isSubmitting, bypassVerification, isSupabaseConnected, rateLimitReached]);
 

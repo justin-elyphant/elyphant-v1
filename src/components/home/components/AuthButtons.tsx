@@ -19,11 +19,13 @@ const AuthButtons = () => {
   // Use a try-catch to safely access the auth context
   let user = null;
   let signOut = null;
+  let isLoading = false;
   
   try {
     const auth = useAuth();
     user = auth?.user;
     signOut = auth?.signOut;
+    isLoading = auth?.isLoading || false;
   } catch (error) {
     console.warn("Auth context not available in AuthButtons");
     // Continue with default values if context is not available
@@ -40,8 +42,6 @@ const AuthButtons = () => {
         console.log("Executing signOut function...");
         toast.loading("Signing out...");
         await signOut();
-        toast.dismiss();
-        toast.success("You have been signed out");
       } catch (error) {
         console.error("Error signing out:", error);
         toast.dismiss();
@@ -52,6 +52,14 @@ const AuthButtons = () => {
       toast.error("Sign out functionality is not available");
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center space-x-3">
+        <div className="h-9 w-24 bg-gray-200 animate-pulse rounded"></div>
+      </div>
+    );
+  }
 
   if (user) {
     return (

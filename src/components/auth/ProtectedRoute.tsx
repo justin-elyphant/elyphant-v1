@@ -4,6 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ProtectedRoute = ({ 
   redirectPath = "/sign-in", 
@@ -14,7 +15,7 @@ const ProtectedRoute = ({
 }) => {
   const { user, isLoading, isDebugMode } = useAuth();
   const location = useLocation();
-  const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const [showLoadingUI, setShowLoadingUI] = useState(true);
   
   // Enhanced logging for debugging navigation
   useEffect(() => {
@@ -29,6 +30,15 @@ const ProtectedRoute = ({
     });
   }, [user, location, isLoading, isDebugMode]);
 
+  // Set up a timeout to prevent indefinite loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoadingUI(false);
+    }, 2000); // Stop showing loading UI after 2 seconds max
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   // Additional check for rate limited signup
   const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
   
@@ -42,15 +52,14 @@ const ProtectedRoute = ({
     return <>{children}</>;
   }
 
-  // If still loading auth state or checking session, render loading indicator
-  if (isLoading) {
-    console.log("Auth state is still loading...");
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-        <span className="ml-3 text-lg">Loading your account...</span>
-      </div>
-    );
+  // Determine if we should still show loading state - only if actually loading and within timeout period
+  const shouldShowLoading = isLoading && showLoadingUI;
+
+  // If loading has timed out but we're on a protected route and don't have user info
+  if (!shouldShowLoading && !isLoading && !user && location.pathname !== '/profile-setup') {
+    // Save the current path to redirect back after login
+    localStorage.setItem("redirectAfterSignIn", location.pathname);
+    return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
   }
 
   // Special case for profile-setup page - it's a protected route but we're more lenient
@@ -81,16 +90,22 @@ const ProtectedRoute = ({
     }
   }
 
-  // If no user and finished loading, redirect to login
-  if (!user) {
-    console.log("User not authenticated, redirecting to:", redirectPath);
-    
-    // Save the current path to redirect back after login
-    localStorage.setItem("redirectAfterSignIn", location.pathname);
-    return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
+  // If still loading with active timeout, show a nicer loading UI
+  if (shouldShowLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="bg-white rounded-lg shadow-sm p-8 max-w-md w-full flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+          <h2 className="text-xl font-semibold mb-2">Loading your account...</h2>
+          <p className="text-gray-500 text-center">
+            We're retrieving your information. This will only take a moment.
+          </p>
+        </div>
+      </div>
+    );
   }
-
-  // User is authenticated, render children
+  
+  // If loading has timed out but we have user info or special conditions, render children
   return <>{children}</>;
 };
 

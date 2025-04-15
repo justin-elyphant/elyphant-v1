@@ -32,8 +32,9 @@ export const useAuthFunctions = (user: User | null) => {
       
       // Force a complete page reload to clear any cached state
       setTimeout(() => {
+        toast.success("You have been signed out");
         window.location.href = "/";
-      }, 300); // Short delay to allow toast to be shown
+      }, 500); // Short delay to allow toast to be shown
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Failed to sign out");
@@ -48,6 +49,8 @@ export const useAuthFunctions = (user: User | null) => {
     }
 
     try {
+      toast.loading("Deleting your account...");
+      
       // Delete user account
       const { error } = await supabase.rpc('delete_user');
       
@@ -65,11 +68,16 @@ export const useAuthFunctions = (user: User | null) => {
       localStorage.removeItem("nextStepsOption");
       localStorage.removeItem("profileCompleted");
       
-      // Redirect to home page
-      navigate("/");
+      toast.dismiss();
       toast.success("Your account has been deleted");
+      
+      // Redirect to home page
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     } catch (error) {
       console.error("Error deleting user account:", error);
+      toast.dismiss();
       toast.error("Failed to delete your account");
       throw error;
     }

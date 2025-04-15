@@ -1,225 +1,163 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
-import { Loader } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
-
-// Import components
+import { supabase } from "@/integrations/supabase/client";
 import ProfileHeader from "@/components/user-profile/ProfileHeader";
-import ProfileBanner from "@/components/user-profile/ProfileBanner";
-import ProfileInfo from "@/components/user-profile/ProfileInfo";
-import InterestsSection from "@/components/user-profile/InterestsSection";
-import ImportantDatesSection from "@/components/user-profile/ImportantDatesSection";
 import ProfileTabs from "@/components/user-profile/ProfileTabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import Header from "@/components/home/Header";
 
 const UserProfile = () => {
-  const { userId } = useParams();
-  const { user } = useAuth();
+  const { userId } = useParams<{ userId: string }>();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   
   const [profileData, setProfileData] = useState<any>(null);
-  const [isCurrentUser, setIsCurrentUser] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [activeTab, setActiveTab] = useState("wishlists");
+  const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
   
-  // Mock wishlists data - to be replaced with real data from API
-  const mockWishlists = [
-    {
-      id: '1',
-      title: 'Birthday Wishlist',
-      description: 'Things I would love for my upcoming birthday',
-      itemCount: 7,
-      image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176'
-    },
-    {
-      id: '2',
-      title: 'Home Decor',
-      description: 'Items for my new apartment',
-      itemCount: 12,
-      image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7'
-    }
-  ];
+  // Set up a timeout to prevent indefinite loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLocalLoadingTimeout(false);
+    }, 2000); // Stop loading after 2 seconds max
+    
+    return () => clearTimeout(timer);
+  }, []);
   
-  // Fetch profile data from Supabase
+  // Check if viewing own profile
+  const isCurrentUser = user?.id === userId;
+  
+  // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!userId) {
-        toast.error("User ID is missing");
-        navigate("/dashboard");
-        return;
-      }
-      
-      setIsLoading(true);
+      if (!userId) return;
       
       try {
-        // Fetch user profile data
+        console.log("Fetching profile data for:", userId);
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
-          .single();
-        
-        if (error) throw error;
-        
-        if (!data) {
-          toast.error("User not found");
-          navigate("/dashboard");
-          return;
-        }
-        
-        // Check if this is the current user's profile
-        setIsCurrentUser(user?.id === userId);
-        
-        // Format and set profile data
-        setProfileData({
-          id: data.id,
-          name: data.name || "Unnamed User",
-          email: data.email,
-          username: data.username || data.email?.split('@')[0] || "username",
-          bio: data.bio || "",
-          profileImage: data.profile_image,
-          birthday: data.dob,
-          address: data.shipping_address,
-          interests: Array.isArray(data.gift_preferences) 
-            ? data.gift_preferences.map((pref: any) => 
-                typeof pref === 'string' ? pref : pref.category
-              ).filter(Boolean) 
-            : [],
-          importantDates: data.important_dates || [],
-          data_sharing_settings: data.data_sharing_settings || {
-            dob: "private",
-            shipping_address: "private",
-            gift_preferences: "friends"
-          }
-        });
-        
-        // Fetch important dates if available
-        if (data.id) {
-          const { data: datesData, error: datesError } = await supabase
-            .from('user_special_dates')
-            .select('*')
-            .eq('user_id', data.id);
+          .maybeSingle();
           
-          if (!datesError && datesData) {
-            setProfileData(prev => ({
-              ...prev,
-              importantDates: datesData.map((date: any) => ({
-                date: date.date,
-                description: date.date_type
-              }))
-            }));
-          }
+        if (error) {
+          console.error("Error fetching profile:", error);
+          throw error;
         }
         
-        // Check if current user is following this profile
-        if (user && userId !== user.id) {
-          const { data: connectionData } = await supabase
-            .from('user_connections')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('connected_user_id', userId)
-            .eq('status', 'accepted')
-            .single();
-          
-          setIsFollowing(!!connectionData);
-        }
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-        toast.error("Failed to load user profile");
+        console.log("Profile data retrieved:", data);
+        setProfileData(data);
+      } catch (error) {
+        console.error("Error retrieving profile data:", error);
       } finally {
-        setIsLoading(false);
+        setLoadingProfile(false);
       }
     };
     
-    fetchProfile();
-  }, [userId, user, navigate]);
-  
-  const handleFollow = async () => {
-    if (!user) {
-      toast.error("You must be logged in to follow users");
-      navigate("/sign-in");
-      return;
+    if (!isLoading) {
+      fetchProfile();
     }
+  }, [userId, isLoading]);
+  
+  // Handle loading states
+  const isPageLoading = (isLoading && localLoadingTimeout) || loadingProfile;
+  
+  if (!isPageLoading && !user) {
+    navigate("/sign-in", { replace: true });
+    return null;
+  }
+  
+  // Mock wishlists data
+  const mockWishlists = isCurrentUser 
+    ? [
+        { 
+          id: 1, 
+          title: "Birthday Wishlist", 
+          description: "Things I'd like for my birthday", 
+          itemCount: 12,
+          image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmlydGhkYXl8ZW58MHx8MHx8fDA%3D"
+        },
+        { 
+          id: 2, 
+          title: "Home Office Upgrade", 
+          description: "Stuff to improve my workspace", 
+          itemCount: 8,
+          image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fGhvbWUlMjBvZmZpY2V8ZW58MHx8MHx8fDA%3D"
+        }
+      ]
+    : [];
     
-    try {
-      if (isFollowing) {
-        // Unfollow logic
-        const { error } = await supabase
-          .from('user_connections')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('connected_user_id', userId);
-        
-        if (error) throw error;
-        
-        setIsFollowing(false);
-        toast.success("User unfollowed");
-      } else {
-        // Follow logic
-        const { error } = await supabase
-          .from('user_connections')
-          .insert({
-            user_id: user.id,
-            connected_user_id: userId,
-            relationship_type: 'friend',
-            status: 'pending'
-          });
-        
-        if (error) throw error;
-        
-        setIsFollowing(true);
-        toast.success("Follow request sent");
-      }
-    } catch (err) {
-      console.error("Error updating follow status:", err);
-      toast.error("Failed to update follow status");
-    }
-  };
-  
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success("Profile link copied to clipboard");
-  };
-
-  if (isLoading) {
+  // Show skeleton loading state
+  if (isPageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-lg">Loading profile...</span>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container max-w-4xl mx-auto py-8 px-4">
+          <div className="rounded-lg overflow-hidden mb-6">
+            <Skeleton className="h-48 w-full" />
+            <div className="flex flex-col md:flex-row md:items-end mt-4 gap-4">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <div className="flex-1">
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+            </div>
+          </div>
+          
+          <Skeleton className="h-10 w-full mb-6" />
+          
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-48 mb-2" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Skeleton className="h-64 w-full rounded-lg" />
+              <Skeleton className="h-64 w-full rounded-lg" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
-
+  
+  // Handle profile not found
+  if (!profileData && !loadingProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container max-w-4xl mx-auto py-8 px-4 text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Not Found</h2>
+          <p className="text-gray-600 mb-6">The profile you're looking for doesn't exist or has been removed.</p>
+          <button 
+            onClick={() => navigate(-1)}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
-      <ProfileHeader />
-      
-      <ProfileBanner 
-        userData={profileData}
-        isCurrentUser={isCurrentUser}
-        isFollowing={isFollowing}
-        onFollow={handleFollow}
-        onShare={handleShare}
-      />
-      
-      <ProfileInfo userData={profileData} />
-      
-      <InterestsSection interests={profileData?.interests || []} />
-      
-      <ImportantDatesSection importantDates={profileData?.importantDates || []} />
-      
-      <Separator className="my-6" />
-      
-      <ProfileTabs 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isCurrentUser={isCurrentUser}
-        mockWishlists={mockWishlists}
-      />
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <ProfileHeader 
+          profile={profileData} 
+          isCurrentUser={isCurrentUser}
+        />
+        
+        <div className="mt-8">
+          <ProfileTabs 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isCurrentUser={isCurrentUser}
+            mockWishlists={mockWishlists}
+          />
+        </div>
+      </div>
     </div>
   );
 };

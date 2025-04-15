@@ -5,6 +5,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { DataSharingSettings, SharingLevel } from "@/types/supabase";
 
 // Define the valid importance values
 type Importance = "low" | "medium" | "high";
@@ -93,7 +94,12 @@ export const useSettingsForm = () => {
           date: date.date.toISOString(),
           description: date.description
         })),
-        data_sharing_settings: data.data_sharing_settings
+        // Ensure all required properties are defined in data_sharing_settings
+        data_sharing_settings: {
+          dob: data.data_sharing_settings.dob as SharingLevel,
+          shipping_address: data.data_sharing_settings.shipping_address as SharingLevel,
+          gift_preferences: data.data_sharing_settings.gift_preferences as SharingLevel
+        } as DataSharingSettings
       };
 
       await updateProfile(formattedData);

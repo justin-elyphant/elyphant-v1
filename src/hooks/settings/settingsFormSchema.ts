@@ -1,6 +1,12 @@
 
 import * as z from "zod";
 
+// Define important date type
+export interface ImportantDate {
+  date: Date;
+  description: string;
+}
+
 // Define form schema
 export const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),

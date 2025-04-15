@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,11 +8,7 @@ import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NewImportantDateState } from "@/hooks/settings/useGeneralSettingsForm";
-
-export interface ImportantDate {
-  date: Date; // This is required, not optional
-  description: string;
-}
+import { ImportantDate } from "@/hooks/settings/settingsFormSchema";
 
 export interface ImportantDatesFormSectionProps {
   importantDates: ImportantDate[];

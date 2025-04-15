@@ -91,7 +91,7 @@ const GeneralSettings = () => {
                 addInterest={handleAddInterest}
               />
               <ImportantDatesFormSection 
-                importantDates={form.getValues("importantDates") as ImportantDate[] || []}
+                importantDates={form.getValues("importantDates") || []}
                 removeImportantDate={handleRemoveImportantDate}
                 newImportantDate={newImportantDate}
                 setNewImportantDate={setNewImportantDate}

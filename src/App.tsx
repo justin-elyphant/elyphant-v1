@@ -18,6 +18,7 @@ import { ProductProvider } from '@/contexts/ProductContext';
 import { CartProvider } from '@/contexts/CartContext';
 import Cart from '@/pages/Cart';
 import UserProfile from '@/pages/UserProfile';
+import MainLayout from '@/components/layout/MainLayout';
 
 function App() {
   return (
@@ -26,22 +27,24 @@ function App() {
         <ProfileProvider>
           <ProductProvider>
             <CartProvider>
-              <Routes>
-                <Route path="/" element={<SignUp />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/connections" element={<Connections />} />
-                <Route path="/gifting" element={<Gifting />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/wishlists" element={<Wishlists />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/profile/:userId" element={<UserProfile />} />
-              </Routes>
+              <MainLayout>
+                <Routes>
+                  <Route path="/" element={<SignUp />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/update-password" element={<UpdatePassword />} />
+                  <Route path="/profile-setup" element={<ProfileSetup />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/connections" element={<Connections />} />
+                  <Route path="/gifting" element={<Gifting />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/wishlists" element={<Wishlists />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/profile/:userId" element={<UserProfile />} />
+                </Routes>
+              </MainLayout>
             </CartProvider>
           </ProductProvider>
         </ProfileProvider>

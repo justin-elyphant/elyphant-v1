@@ -41,6 +41,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             console.error("Error checking existing profile:", profileCheckError);
           }
           
+          // Get interests from localStorage if available
+          let interests: string[] = [];
+          const storedInterests = localStorage.getItem("userInterests");
+          if (storedInterests) {
+            try {
+              interests = JSON.parse(storedInterests);
+            } catch (e) {
+              console.error("Error parsing interests from localStorage:", e);
+            }
+          }
+          
           // Profile data with fallbacks for each field
           const profileData = {
             id: user.id,
@@ -54,7 +65,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             profile_image: existingProfile?.profile_image || user.user_metadata?.profile_image || null,
             dob: existingProfile?.dob || null,
             shipping_address: existingProfile?.shipping_address || null,
-            gift_preferences: existingProfile?.gift_preferences || [],
+            interests: existingProfile?.interests || interests,
+            gift_preferences: existingProfile?.gift_preferences || interests.map(interest => ({
+              category: interest,
+              importance: "medium"
+            })),
             important_dates: existingProfile?.important_dates || [],
             data_sharing_settings: existingProfile?.data_sharing_settings || {
               dob: "friends",
@@ -82,6 +97,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // Clear flags after successful profile creation
             localStorage.removeItem("newSignUp");
             localStorage.removeItem("fromSignIn");
+            localStorage.removeItem("userInterests");
           }
         } catch (err) {
           console.error("Failed to create/update profile in auth provider:", err);

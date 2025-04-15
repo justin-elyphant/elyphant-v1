@@ -40,6 +40,7 @@ export interface Profile {
   next_steps_option?: string;
   bio?: string;
   important_dates?: ImportantDate[];
+  interests?: string[]; // Add the missing interests property
 }
 
 export type UserConnection = {

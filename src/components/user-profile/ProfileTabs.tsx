@@ -10,9 +10,10 @@ export interface ProfileTabsProps {
   setActiveTab: (tab: string) => void;
   isCurrentUser: boolean;
   mockWishlists: any[];
+  userData?: any; // Add the missing userData prop
 }
 
-const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser, mockWishlists }: ProfileTabsProps) => {
+const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser, mockWishlists, userData }: ProfileTabsProps) => {
   return (
     <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
       <TabsList className="w-full grid grid-cols-3">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -135,7 +134,6 @@ const UserProfile = () => {
     );
   }
 
-  // Use the profile data to generate mock wishlists if needed
   const mockWishlists = [
     {
       id: 1,

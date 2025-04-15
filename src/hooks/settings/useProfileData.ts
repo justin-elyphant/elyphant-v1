@@ -39,14 +39,14 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         });
       }
       
-      // Extract interests from gift preferences if available
+      // Extract interests from gift preferences or interests field if available
       let interests: string[] = [];
-      if (profile.gift_preferences && Array.isArray(profile.gift_preferences)) {
+      if (profile.interests && Array.isArray(profile.interests)) {
+        interests = profile.interests;
+      } else if (profile.gift_preferences && Array.isArray(profile.gift_preferences)) {
         interests = profile.gift_preferences.map((pref: any) => 
           typeof pref === 'string' ? pref : (pref.category || '')
         ).filter(Boolean);
-      } else if (profile.interests && Array.isArray(profile.interests)) {
-        interests = profile.interests;
       }
       
       // Map shipping_address to address, ensuring it has all required fields

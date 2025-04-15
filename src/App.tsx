@@ -19,6 +19,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import Cart from '@/pages/Cart';
 import UserProfile from '@/pages/UserProfile';
 import MainLayout from '@/components/layout/MainLayout';
+import Index from '@/pages/Index';
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
             <CartProvider>
               <MainLayout>
                 <Routes>
-                  <Route path="/" element={<SignUp />} />
+                  <Route path="/" element={<Index />} />
                   <Route path="/signup" element={<SignUp />} />
                   <Route path="/signin" element={<SignIn />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />

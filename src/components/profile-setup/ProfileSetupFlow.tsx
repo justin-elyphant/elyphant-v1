@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -26,9 +25,21 @@ interface ProfileSetupFlowProps {
 const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip }) => {
   // Clear any stale loading flags and rate limit flags on component mount
   useEffect(() => {
+    // Clear any stuck loading states
     localStorage.removeItem("profileSetupLoading");
-    console.log("ProfileSetupFlow: Component mounted, current rate limit flag:", 
-      localStorage.getItem("signupRateLimited"));
+    localStorage.removeItem("signupRateLimited");
+    
+    console.log("ProfileSetupFlow: Component mounted, cleared loading flags");
+    
+    // Check if we have a newSignUp flag in localStorage - debugging info
+    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    const userEmail = localStorage.getItem("userEmail");
+    const userName = localStorage.getItem("userName");
+    console.log("ProfileSetupFlow: User data from localStorage:", { 
+      isNewSignUp, 
+      userEmail, 
+      userName 
+    });
   }, []);
 
   const handleCompleteWrapper = useCallback(() => {
@@ -137,27 +148,20 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     // Safety check - clear rate limit flag before completing
     localStorage.removeItem("signupRateLimited");
     
-    // Safety check - if we're on the last step, ensure we complete even if there's an error
-    const safeComplete = () => {
-      try {
-        handleComplete();
-      } catch (error) {
-        console.error("Error during completion:", error);
-        toast.error("Error completing profile setup, continuing anyway");
-        
-        // Force completion even if there's an error
-        setTimeout(() => {
-          // Clean up flags first
-          localStorage.removeItem("profileSetupLoading");
-          localStorage.removeItem("signupRateLimited");
-          
-          // Then complete
-          onComplete();
-        }, 100);
-      }
-    };
-    
-    safeComplete();
+    // Directly attempt to complete without complex checks
+    try {
+      handleComplete();
+    } catch (error) {
+      console.error("Error during completion:", error);
+      toast.error("Error completing profile setup, continuing anyway");
+      
+      // Force completion even if there's an error
+      localStorage.removeItem("profileSetupLoading");
+      localStorage.removeItem("signupRateLimited");
+      
+      // Then complete
+      onComplete();
+    }
   }, [handleComplete, onComplete]);
 
   return (

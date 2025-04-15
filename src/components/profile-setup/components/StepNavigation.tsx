@@ -80,7 +80,19 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
     localStorage.removeItem("profileSetupLoading");
     localStorage.removeItem("signupRateLimited");
     
+    // Mark profile as completed before navigation
+    localStorage.setItem("profileCompleted", "true");
+    
+    // Complete the process
     onComplete();
+    
+    // Safety fallback navigation if nothing happens after 2 seconds
+    setTimeout(() => {
+      if (window.location.pathname === "/profile-setup") {
+        console.log("Detected navigation failure, forcing direct location change");
+        window.location.href = "/dashboard";
+      }
+    }, 2000);
   };
 
   return (

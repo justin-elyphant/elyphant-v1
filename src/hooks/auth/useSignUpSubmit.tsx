@@ -70,11 +70,17 @@ export const useSignUpSubmit = () => {
           description: "You can now sign in to your account."
         });
         
-        // Store data for profile setup
+        // Store data for profile setup - ensure it's reliable
         localStorage.setItem("userId", signUpData.user.id);
         localStorage.setItem("userEmail", values.email);
         localStorage.setItem("userName", values.name);
         localStorage.setItem("newSignUp", "true");
+        
+        // Force navigation to profile setup after short delay
+        setTimeout(() => {
+          console.log("Forcing navigation to profile setup");
+          window.location.href = "/profile-setup";
+        }, 1000);
       } else {
         console.error("No user data returned from signUp operation");
         throw new Error("Failed to create account. Please try again.");

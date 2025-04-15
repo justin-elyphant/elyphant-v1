@@ -14,11 +14,17 @@ const ProfileSetup = () => {
   const { user, isDebugMode, isLoading: authLoading } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
   const [isNewSignUp, setIsNewSignUp] = useState(false);
+  const [isManuallyLoading, setIsManuallyLoading] = useState(false);
   
   // Clear any stale loading flags on mount
   useEffect(() => {
     // Clear any stale loading flags
     localStorage.removeItem("profileSetupLoading");
+    
+    // Timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      setIsManuallyLoading(false);
+    }, 5000);
     
     console.log("ProfileSetup: Component mounted");
     console.log("ProfileSetup: Current auth state", { 
@@ -37,10 +43,13 @@ const ProfileSetup = () => {
     
     setIsNewSignUp(newSignUpFlag);
     setIsInitializing(false);
+    
+    return () => clearTimeout(loadingTimeout);
   }, [user, authLoading]);
 
   const handleSetupComplete = useCallback(async () => {
     console.log("Profile setup complete, transitioning to appropriate destination");
+    setIsManuallyLoading(true);
     
     try {
       // Clear any loading flags
@@ -67,25 +76,62 @@ const ProfileSetup = () => {
       
       toast.success("Welcome! Your profile is ready.");
       
-      // Navigate based on the selected option
+      // Set a flag to prevent this page from reloading
+      localStorage.setItem("profileCompleted", "true");
+      
+      // Navigate based on the selected option - with retry mechanism
+      const navigateWithRetry = (destination: string, retries = 3) => {
+        try {
+          // Force navigation to handle potential issues with React Router
+          if (retries === 0) {
+            console.log("Falling back to direct location change");
+            window.location.href = destination;
+            return;
+          }
+          
+          navigate(destination, { replace: true });
+          console.log("Navigation successful to:", destination);
+          
+          // Double check with timeout as fallback
+          setTimeout(() => {
+            if (window.location.pathname !== destination) {
+              console.log("Navigation may have failed, retrying...");
+              navigateWithRetry(destination, retries - 1);
+            }
+          }, 300);
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          if (retries > 0) {
+            setTimeout(() => navigateWithRetry(destination, retries - 1), 300);
+          } else {
+            window.location.href = destination;
+          }
+        }
+      };
+      
+      // Determine the destination URL based on selected option
+      let destinationUrl = "/dashboard";
       switch (nextStepsOption) {
         case "create_wishlist":
-          navigate("/wishlists", { replace: true });
+          destinationUrl = "/wishlists";
           break;
         case "find_friends":
-          navigate("/connections", { replace: true });
+          destinationUrl = "/connections";
           break;
         case "shop_gifts":
-          navigate("/gifting", { replace: true });
+          destinationUrl = "/gifting";
           break;
         case "explore_marketplace":
-          navigate("/marketplace", { replace: true });
+          destinationUrl = "/marketplace";
           break;
         case "dashboard":
         default:
-          navigate("/dashboard", { replace: true });
+          destinationUrl = "/dashboard";
           break;
       }
+      
+      console.log("Navigating to:", destinationUrl);
+      navigateWithRetry(destinationUrl);
       
       // Clear the nextStepsOption from localStorage after navigating
       localStorage.removeItem("nextStepsOption");
@@ -104,6 +150,9 @@ const ProfileSetup = () => {
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
     
+    // Set profile as completed
+    localStorage.setItem("profileCompleted", "true");
+    
     toast.info("You can complete your profile later in settings");
     navigate("/dashboard", { replace: true });
   }, [navigate]);
@@ -114,6 +163,10 @@ const ProfileSetup = () => {
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
+    
+    // Set profile as completed
+    localStorage.setItem("profileCompleted", "true");
+    
     navigate("/dashboard");
   }, [navigate]);
 
@@ -127,7 +180,7 @@ const ProfileSetup = () => {
     }
   }, []);
 
-  if (authLoading && !isNewSignUp && !isDebugMode) {
+  if ((authLoading || isManuallyLoading) && !isNewSignUp && !isDebugMode) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>

@@ -1,12 +1,9 @@
-
 import React, { useCallback, useMemo, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-
-// Import our components
-import ProfileStepperHeader from "./components/ProfileStepperHeader";
 import StepNavigation from "./components/StepNavigation";
+import ProfileStepperHeader from "./components/ProfileStepperHeader";
 import { useProfileSetup } from "./hooks/useProfileSetup";
 
 // Import the step components
@@ -160,7 +157,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg">
-      <CardHeader className="text-center">
+      <CardHeader>
         <ProfileStepperHeader activeStep={activeStep} steps={steps} />
       </CardHeader>
       

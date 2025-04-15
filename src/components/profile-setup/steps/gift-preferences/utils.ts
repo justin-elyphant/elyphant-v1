@@ -56,5 +56,6 @@ export const getOtherCategories = () => [
   "Gaming",
   "Jewelry",
   "Coffee & Tea",
-  "Pets"
+  "Pets",
+  "Sports Teams"
 ];

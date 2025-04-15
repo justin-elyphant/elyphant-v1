@@ -48,11 +48,17 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     } catch (error: any) {
       console.error("Form submission error:", error);
       
-      // Handle email already registered
+      // Handle specific error cases
       if (error.message?.includes("already registered")) {
         setErrorMessage("Email already registered. Please use a different email address or sign in.");
+      } else if (error.status === 504 || error.message?.includes("timeout")) {
+        setErrorMessage("Request timed out. The server is taking too long to respond. Please try again later.");
+        toast.error("Signup request timed out", {
+          description: "Our servers are experiencing high load. Please try again in a moment."
+        });
       } else {
-        setErrorMessage(error.message || "An unexpected error occurred");
+        // Fallback for other errors
+        setErrorMessage(error.message || "An unexpected error occurred. Please try again.");
       }
     }
   };

@@ -12,8 +12,13 @@ export const useSignUpSubmit = () => {
       setIsSubmitting(true);
       console.log("Sign up initiated for", values.email);
       
+      // Set a timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("The signup request timed out. Please try again.")), 10000);
+      });
+      
       // Create user in Supabase Auth with magic link
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      const signupPromise = supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -23,6 +28,14 @@ export const useSignUpSubmit = () => {
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
+      
+      // Race the signup against the timeout
+      const { data: signUpData, error: signUpError } = await Promise.race([
+        signupPromise,
+        timeoutPromise.then(() => {
+          throw new Error("Request timed out after 10 seconds. Please try again later.");
+        })
+      ]) as any;
       
       if (signUpError) {
         console.error("Signup error:", signUpError);

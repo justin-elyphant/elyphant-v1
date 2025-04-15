@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 // Simplified schema without captcha
 const signUpSchema = z.object({
@@ -30,7 +29,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   isSubmitting = false 
 }) => {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const navigate = useNavigate();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -44,7 +42,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   const handleSubmit = async (values: SignUpFormValues) => {
     try {
       setErrorMessage(null);
+      console.log("Form submitted with values:", { ...values, password: "******" });
+      
       await onSubmit(values);
+      console.log("Submission completed successfully");
     } catch (error: any) {
       console.error("Form submission error:", error);
       
@@ -56,6 +57,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         toast.error("Signup request timed out", {
           description: "Our servers are experiencing high load. Please try again in a moment."
         });
+      } else if (error.message?.includes("Network error")) {
+        setErrorMessage("Network error. Please check your internet connection and try again.");
       } else {
         // Fallback for other errors
         setErrorMessage(error.message || "An unexpected error occurred. Please try again.");

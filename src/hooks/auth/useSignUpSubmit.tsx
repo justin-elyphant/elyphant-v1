@@ -14,10 +14,13 @@ export const useSignUpSubmit = () => {
       
       // Set a timeout to prevent hanging requests
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("The signup request timed out. Please try again.")), 10000);
+        setTimeout(() => reject(new Error("The signup request timed out. Please try again.")), 15000);
       });
       
-      // Create user in Supabase Auth with magic link
+      // Create user in Supabase Auth
+      console.log("Connecting to Supabase with URL:", supabase.supabaseUrl);
+      console.log("Sending signup request to Supabase...");
+      
       const signupPromise = supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -33,9 +36,11 @@ export const useSignUpSubmit = () => {
       const { data: signUpData, error: signUpError } = await Promise.race([
         signupPromise,
         timeoutPromise.then(() => {
-          throw new Error("Request timed out after 10 seconds. Please try again later.");
+          throw new Error("Request timed out after 15 seconds. Please try again later.");
         })
       ]) as any;
+      
+      console.log("Signup response received:", signUpData ? "Success" : "Failed");
       
       if (signUpError) {
         console.error("Signup error:", signUpError);
@@ -65,6 +70,9 @@ export const useSignUpSubmit = () => {
         localStorage.setItem("userEmail", values.email);
         localStorage.setItem("userName", values.name);
         localStorage.setItem("newSignUp", "true");
+      } else {
+        console.error("No user data returned from signUp operation");
+        throw new Error("Failed to create account. Please try again.");
       }
     } catch (err: any) {
       console.error("Signup submission error:", err);

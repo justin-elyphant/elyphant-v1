@@ -31,7 +31,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header /> {/* Always render the header */}
       <main className="flex-grow">
         {children || <Outlet />}
       </main>

@@ -53,7 +53,7 @@ export const useFormSubmission = () => {
       const updateData = {
         name: data.name,
         email: data.email,
-        bio: data.bio,
+        bio: data.bio || `Hi, I'm ${data.name}`,
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
         shipping_address: shippingAddress,
@@ -63,11 +63,42 @@ export const useFormSubmission = () => {
         updated_at: new Date().toISOString()
       };
       
-      await updateProfile(updateData);
-      toast.success("Profile updated successfully");
+      console.log("Sending profile update with data:", updateData);
+      
+      // Update with retry mechanism
+      let retryCount = 0;
+      const maxRetries = 2;
+      
+      const attemptUpdate = async () => {
+        try {
+          await updateProfile(updateData);
+          toast.success("Profile updated successfully");
+          return true;
+        } catch (error) {
+          console.error(`Profile update attempt ${retryCount + 1} failed:`, error);
+          if (retryCount < maxRetries) {
+            retryCount++;
+            toast.info(`Retrying profile update (${retryCount}/${maxRetries})...`);
+            return false;
+          } else {
+            throw error;
+          }
+        }
+      };
+      
+      let success = await attemptUpdate();
+      while (!success && retryCount < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+        success = await attemptUpdate();
+      }
+      
+      if (!success) {
+        throw new Error("Failed to update profile after multiple attempts");
+      }
+      
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      toast.error("Failed to update profile. Please try again later.");
     } finally {
       setIsSaving(false);
     }

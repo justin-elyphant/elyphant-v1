@@ -5,7 +5,7 @@ import { useProfile } from "@/hooks/profile/useProfile";
 import { SettingsFormValues } from "./settingsFormSchema";
 
 export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
-  const { profile, loading } = useProfile();
+  const { profile, loading, refetchProfile } = useProfile();
 
   // Load profile data when available
   const loadProfileData = () => {
@@ -75,12 +75,15 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         importantDates: importantDates,
         data_sharing_settings: dataSharingSettings
       });
+      
+      console.log("Profile data loaded into form successfully");
     }
   };
 
   return {
     profile,
     loading,
-    loadProfileData
+    loadProfileData,
+    refetchProfile
   };
 };

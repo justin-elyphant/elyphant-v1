@@ -64,6 +64,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         email: userEmail,
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,
+        bio: profileData.bio || `Hi, I'm ${profileData.name || "User"}`,
         shipping_address: profileData.shipping_address || {
           street: "",
           city: "",
@@ -72,6 +73,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
           country: ""
         },
         gift_preferences: profileData.gift_preferences || [],
+        important_dates: profileData.important_dates || [],
         data_sharing_settings: profileData.data_sharing_settings || {
           dob: "friends",
           shipping_address: "friends",
@@ -104,30 +106,59 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
           
           onComplete();
         }
-      }, 5000); // Increase timeout to 5 seconds
+      }, 7000); // Increase timeout to 7 seconds
       
       try {
-        // Direct database update - more reliable than edge function
-        const { error: directError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: userId,
-            ...formattedData,
-            onboarding_completed: true
-          }, {
-            onConflict: 'id'
+        // Try multiple update methods for reliability
+        let updateSuccess = false;
+        
+        // 1. Try edge function first
+        try {
+          const response = await supabase.functions.invoke('create-profile', {
+            body: {
+              user_id: userId,
+              profile_data: formattedData
+            }
           });
-            
-        if (directError) {
-          console.error("Direct profile update failed:", directError);
-          toast.error("Failed to save profile. Continuing anyway.");
-          throw directError;
-        } else {
-          console.log("Profile saved successfully via direct update");
+          
+          if (!response.error) {
+            console.log("Profile saved via edge function:", response.data);
+            updateSuccess = true;
+          } else {
+            console.error("Edge function profile update failed:", response.error);
+          }
+        } catch (edgeFnError) {
+          console.error("Error calling edge function:", edgeFnError);
+        }
+        
+        // 2. If edge function failed, try direct database update
+        if (!updateSuccess) {
+          const { error: directError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: userId,
+              ...formattedData,
+              onboarding_completed: true
+            }, {
+              onConflict: 'id'
+            });
+              
+          if (directError) {
+            console.error("Direct profile update failed:", directError);
+            throw directError;
+          } else {
+            console.log("Profile saved successfully via direct update");
+            updateSuccess = true;
+          }
+        }
+        
+        if (updateSuccess) {
           toast.success("Profile setup complete!");
+        } else {
+          toast.error("Failed to save profile data completely. Some features may be limited.");
         }
       } catch (directErr) {
-        console.error("Error in direct profile update:", directErr);
+        console.error("Error in profile update:", directErr);
         toast.error("Error saving profile data, but continuing anyway");
       }
       
@@ -150,7 +181,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       setIsLoading(false);
       setTimeout(() => {
         onComplete();
-      }, 50);
+      }, 100);
       
     } catch (err) {
       console.error("Unexpected error in profile submission:", err);
@@ -163,7 +194,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       // Even on error, let's continue rather than leaving the user stuck
       setTimeout(() => {
         onComplete();
-      }, 50);
+      }, 100);
     }
   }, [user, onComplete, nextStepsOption]);
 

@@ -1,100 +1,98 @@
 
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Profile, ShippingAddress, GiftPreference, DataSharingSettings } from "@/types/supabase";
-import { useAuth } from "@/contexts/auth";
-import { toast } from "sonner";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
+import { toast } from 'sonner';
 
 export const useProfile = () => {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProfile = useCallback(async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    setError(null);
-    
+  // Fetch the current user's profile
+  const fetchProfile = useCallback(async (userId = user?.id) => {
+    if (!userId) {
+      setLoading(false);
+      return null;
+    }
+
     try {
-      console.log("Fetching profile for user:", user.id);
-      const { data, error } = await supabase
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching profile data for user:', userId);
+      
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
       
-      if (error) throw error;
+      if (fetchError) {
+        console.error('Error fetching profile:', fetchError);
+        setError(fetchError as any);
+        return null;
+      }
       
-      console.log("Fetched profile data:", data);
+      console.log('Profile fetched successfully:', data);
       setProfile(data);
+      return data;
     } catch (err) {
-      console.error("Error fetching profile:", err);
-      setError(err instanceof Error ? err : new Error(String(err)));
+      console.error('Unexpected error fetching profile:', err);
+      setError(err as Error);
+      return null;
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
+  // Fetch profile on component mount
   useEffect(() => {
     fetchProfile();
-  }, [user, fetchProfile]);
+  }, [fetchProfile]);
 
-  const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) {
-      toast.error("You must be logged in to update your profile");
-      return null;
+  // Update the user's profile
+  const updateProfile = async (profileData: any) => {
+    if (!user?.id) {
+      throw new Error('No user ID available');
     }
     
     try {
-      console.log("Updating profile with:", updates);
+      console.log('Updating profile for user:', user.id);
+      console.log('Profile data to update:', profileData);
+      
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(profileData)
         .eq('id', user.id)
-        .select()
-        .single();
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
       
-      console.log("Profile updated successfully:", data);
-      setProfile(prev => prev ? { ...prev, ...updates } : data);
-      toast.success("Profile updated successfully");
-      
+      console.log('Profile updated successfully:', data);
+      setProfile(data[0] || data);
       return data;
     } catch (err) {
-      console.error("Error updating profile:", err);
-      toast.error("Failed to update profile");
+      console.error('Failed to update profile:', err);
       throw err;
     }
   };
 
-  const updateDOB = async (dob: string) => {
-    return updateProfile({ dob });
-  };
-
-  const updateShippingAddress = async (shippingAddress: ShippingAddress) => {
-    return updateProfile({ shipping_address: shippingAddress });
-  };
-
-  const updateGiftPreferences = async (giftPreferences: GiftPreference[]) => {
-    return updateProfile({ gift_preferences: giftPreferences });
-  };
-
-  const updateDataSharingSettings = async (dataSharingSettings: DataSharingSettings) => {
-    return updateProfile({ data_sharing_settings: dataSharingSettings });
-  };
+  // Force refetch profile data - useful for settings pages
+  const refetchProfile = useCallback(async () => {
+    console.log('Force refetching profile data');
+    return fetchProfile();
+  }, [fetchProfile]);
 
   return {
     profile,
     loading,
     error,
-    fetchProfile,
     updateProfile,
-    updateDOB,
-    updateShippingAddress,
-    updateGiftPreferences,
-    updateDataSharingSettings
+    refetchProfile
   };
 };

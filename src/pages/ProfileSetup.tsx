@@ -179,16 +179,11 @@ const ProfileSetup = () => {
     console.log("Rendering profile setup for new signup");
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <header className="w-full bg-white shadow-sm py-4">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center">
-              <Logo />
-            </div>
-          </div>
-        </header>
-
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-4xl">
+            <div className="mb-8 text-center">
+              <Logo />
+            </div>
             <ProfileSetupFlow 
               onComplete={handleSetupComplete} 
               onSkip={handleSkip} 
@@ -212,30 +207,29 @@ const ProfileSetup = () => {
   // Standard render for existing users
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="w-full bg-white shadow-sm py-4">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <Logo />
-            {user && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleBackToDashboard}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            )}
-          </div>
+      <main className="flex-1 flex flex-col p-4">
+        <div className="container mx-auto flex items-center mb-8">
+          <Logo />
+          {user && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToDashboard}
+              className="ml-auto"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          )}
         </div>
-      </header>
-
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl">
-          <ProfileSetupFlow 
-            onComplete={handleSetupComplete} 
-            onSkip={handleSkip} 
-          />
+        
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-4xl">
+            <ProfileSetupFlow 
+              onComplete={handleSetupComplete} 
+              onSkip={handleSkip} 
+            />
+          </div>
         </div>
       </main>
     </div>

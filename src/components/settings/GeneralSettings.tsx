@@ -22,6 +22,7 @@ const GeneralSettings = () => {
     newImportantDate,
     setNewImportantDate,
     loadProfileData,
+    refetchProfile,
     onSubmit,
     handleAddInterest,
     handleRemoveInterest,
@@ -29,9 +30,12 @@ const GeneralSettings = () => {
     handleRemoveImportantDate
   } = useGeneralSettingsForm();
   
-  // Load profile data into form when available
+  // Load profile data into form when component mounts
   useEffect(() => {
-    loadProfileData();
+    // Force a refetch to ensure we have the latest data
+    refetchProfile().then(() => {
+      loadProfileData();
+    });
   }, []);
   
   if (loading) {

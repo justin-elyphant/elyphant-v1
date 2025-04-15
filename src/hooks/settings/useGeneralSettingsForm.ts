@@ -38,14 +38,9 @@ export const useGeneralSettingsForm = () => {
 
   // Use our custom hooks
   const { user, isSaving, onSubmit } = useFormSubmission();
-  const { profile, loading, loadProfileData } = useProfileData(form);
+  const { profile, loading, loadProfileData, refetchProfile } = useProfileData(form);
   const { newInterest, setNewInterest, handleAddInterest, handleRemoveInterest } = useInterests(form);
   const { newImportantDate, setNewImportantDate, handleAddImportantDate, handleRemoveImportantDate } = useImportantDates(form);
-  
-  // Load profile data into form when available
-  useEffect(() => {
-    loadProfileData();
-  }, [profile, loading]);
 
   return {
     user,
@@ -57,6 +52,7 @@ export const useGeneralSettingsForm = () => {
     newImportantDate,
     setNewImportantDate,
     loadProfileData,
+    refetchProfile,
     onSubmit,
     handleAddInterest,
     handleRemoveInterest,

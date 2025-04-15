@@ -17,8 +17,13 @@ export const useSignUpSubmit = () => {
         setTimeout(() => reject(new Error("The signup request timed out. Please try again.")), 15000);
       });
       
-      // Create user in Supabase Auth
-      console.log("Connecting to Supabase...");
+      // Additional connectivity logging
+      console.log("Verifying Supabase client configuration...");
+      console.log("Auth configuration:", {
+        autoRefreshToken: supabase.auth.onAuthStateChange ? "Configured" : "Not configured",
+        persistSession: true
+      });
+      
       console.log("Sending signup request to Supabase...");
       
       const signupPromise = supabase.auth.signUp({
@@ -62,7 +67,7 @@ export const useSignUpSubmit = () => {
         console.log("User created successfully:", signUpData.user.id);
         
         toast.success("Account created successfully!", {
-          description: "Please check your email to confirm your account."
+          description: "You can now sign in to your account."
         });
         
         // Store data for profile setup

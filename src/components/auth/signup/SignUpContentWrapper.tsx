@@ -30,11 +30,14 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
+  // Providing the required props for VerificationView
   return (
     <VerificationView
       userEmail={userEmail}
       userName={userName}
       onBackToSignUp={handleBackToSignUp}
+      onResendVerification={() => Promise.resolve({ success: true })}
+      resendCount={0}
     />
   );
 };

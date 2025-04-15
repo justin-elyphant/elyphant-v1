@@ -5,54 +5,52 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface Tab {
+interface SettingsTab {
   id: string;
   label: string;
 }
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
-  tabs?: Tab[];
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
+  tabs: SettingsTab[];
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
-const SettingsLayout: React.FC<SettingsLayoutProps> = ({ 
-  children, 
-  tabs, 
-  activeTab, 
-  onTabChange 
+const SettingsLayout: React.FC<SettingsLayoutProps> = ({
+  children,
+  tabs,
+  activeTab,
+  onTabChange,
 }) => {
   return (
     <div className="container max-w-5xl mx-auto py-8 px-4">
-      <div className="mb-6">
+      <div className="flex items-center mb-6">
         <Button variant="ghost" asChild className="p-0">
-          <Link to="/dashboard">
+          <Link to="/dashboard" className="flex items-center">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Link>
         </Button>
       </div>
       
-      {tabs && tabs.length > 0 && (
-        <Tabs 
-          value={activeTab} 
-          onValueChange={onTabChange}
-          className="mb-6"
-        >
-          <TabsList>
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      )}
-      
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        {children}
-      </div>
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+        <TabsList className="mb-8 w-full max-w-md">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="flex-1"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          {children}
+        </div>
+      </Tabs>
     </div>
   );
 };

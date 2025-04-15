@@ -1,111 +1,155 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useProfileData } from "./profile/useProfileData";
-import { useProfileImage } from "./profile/useProfileImage";
-import { useInterestsManager } from "./profile/useInterestsManager";
-import { useImportantDatesManager } from "./profile/useImportantDatesManager";
-import { useProfileSave } from "./profile/useProfileSave";
-import { ImportantDateType } from "./types";
-
-export { type ShippingAddress, type DataSharingSettings, type ImportantDateType, type ProfileFormData } from "./types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import { formSchema } from "./settingsFormSchema";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 
 export const useProfileForm = () => {
-  const { initialFormData, isLoading, user } = useProfileData();
-  const { handleProfileImageUpdate: updateImage, handleRemoveImage } = useProfileImage();
-  const { saveProfile } = useProfileSave();
+  const { user } = useAuth();
+  const { profile, loading: profileLoading, updateProfile, refetchProfile } = useProfile();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State for managing form data
-  const [formData, setFormData] = useState(initialFormData);
-  
-  // Initialize the interest and date managers with empty arrays initially
-  // They'll be populated with the actual data once it's loaded
-  const { addInterest, removeInterest } = useInterestsManager(formData.interests);
-  const { addImportantDate, removeImportantDate } = useImportantDatesManager(formData.importantDates);
-
-  // Handle profile image update
-  const handleProfileImageUpdate = (imageUrl: string | null) => {
-    if (imageUrl) {
-      updateImage(imageUrl)
-        .then(() => {
-          setFormData(prev => ({
-            ...prev,
-            profile_image: imageUrl,
-          }));
-        })
-        .catch(() => {
-          toast.error("Failed to update profile image");
-        });
-    } else if (imageUrl === null) {
-      handleRemoveImage()
-        .then(() => {
-          setFormData(prev => ({
-            ...prev,
-            profile_image: null,
-          }));
-        })
-        .catch(() => {
-          toast.error("Failed to remove profile image");
-        });
+  // Set up the form with zod resolver
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      bio: "",
+      profile_image: null,
+      birthday: null,
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: ""
+      },
+      interests: [],
+      importantDates: [],
+      data_sharing_settings: {
+        dob: "private",
+        shipping_address: "private",
+        gift_preferences: "friends"
+      }
     }
-  };
+  });
 
-  // Methods to manage interests
-  const handleAddInterest = (interest: string) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: [...prev.interests, interest]
-    }));
-    addInterest(interest);
-  };
+  // Load profile data when it becomes available
+  useEffect(() => {
+    if (profile && !profileLoading) {
+      console.log("Loading profile data into form:", profile);
+      
+      // Parse date strings into Date objects
+      let birthdayDate = profile.dob ? new Date(profile.dob) : null;
+      
+      // Extract interests from gift preferences
+      const interests = Array.isArray(profile.gift_preferences) 
+        ? profile.gift_preferences.map(pref => 
+            typeof pref === 'string' ? pref : pref.category
+          )
+        : [];
+      
+      // Format important dates
+      const importantDates = Array.isArray(profile.important_dates)
+        ? profile.important_dates.map(date => ({
+            date: new Date(date.date),
+            description: date.description
+          }))
+        : [];
+      
+      // Set form values
+      form.reset({
+        name: profile.name || "",
+        email: profile.email || "",
+        bio: profile.bio || "",
+        profile_image: profile.profile_image,
+        birthday: birthdayDate,
+        address: profile.shipping_address || {
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: ""
+        },
+        interests: interests,
+        importantDates: importantDates,
+        data_sharing_settings: profile.data_sharing_settings || {
+          dob: "private",
+          shipping_address: "private",
+          gift_preferences: "friends"
+        }
+      });
+      
+      console.log("Form reset with profile data");
+    }
+  }, [profile, profileLoading, form]);
 
-  const handleRemoveInterest = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: prev.interests.filter((_, i) => i !== index)
-    }));
-    removeInterest(index);
-  };
-
-  // Methods to manage important dates
-  const handleAddImportantDate = (date: ImportantDateType) => {
-    setFormData(prev => ({
-      ...prev,
-      importantDates: [...prev.importantDates, date]
-    }));
-    addImportantDate(date);
-  };
-
-  const handleRemoveImportantDate = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      importantDates: prev.importantDates.filter((_, i) => i !== index)
-    }));
-    removeImportantDate(index);
-  };
-
-  // Method to save the profile
-  const handleSaveProfile = async (data: any) => {
+  // Handle form submission with better logging
+  const onSubmit = async (data) => {
+    if (!user) {
+      toast.error("You must be logged in to update your profile");
+      return;
+    }
+    
     try {
-      await saveProfile(data);
-      toast.success("Profile information updated successfully");
-      return true;
+      setIsSubmitting(true);
+      console.log("Submitting profile data:", data);
+      
+      // Format the data for storage
+      const formattedData = {
+        name: data.name,
+        email: data.email,
+        bio: data.bio || `Hi, I'm ${data.name}`,
+        profile_image: data.profile_image,
+        dob: data.birthday ? data.birthday.toISOString() : null,
+        shipping_address: data.address,
+        gift_preferences: data.interests.map(interest => ({
+          category: interest,
+          importance: "medium"
+        })),
+        important_dates: data.importantDates.map(date => ({
+          date: date.date.toISOString(),
+          description: date.description
+        })),
+        data_sharing_settings: data.data_sharing_settings,
+        updated_at: new Date().toISOString(),
+        // Set onboarding_completed to true to indicate profile is complete
+        onboarding_completed: true
+      };
+
+      // Directly update the profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update(formattedData)
+        .eq('id', user.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refetch profile data after update
+      await refetchProfile();
+      
+      toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
-      return false;
+      toast.error("Failed to update profile: " + (error.message || "Unknown error"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return {
-    initialFormData,
-    isLoading,
-    handleProfileImageUpdate,
-    addInterest: handleAddInterest,
-    removeInterest: handleRemoveInterest,
-    addImportantDate: handleAddImportantDate,
-    removeImportantDate: handleRemoveImportantDate,
-    saveProfile: handleSaveProfile,
+    form,
+    onSubmit,
+    isLoading: profileLoading || isSubmitting,
     user
   };
 };
+
+export default useProfileForm;

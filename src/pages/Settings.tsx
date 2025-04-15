@@ -78,7 +78,7 @@ const Settings = () => {
   }
   
   return (
-    <MainLayout>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <SettingsLayout 
         tabs={tabs} 
         activeTab={activeTab} 
@@ -88,7 +88,7 @@ const Settings = () => {
         {activeTab === "notification" && <NotificationSettings />}
         {activeTab === "payment" && <PaymentSettings />}
       </SettingsLayout>
-    </MainLayout>
+    </div>
   );
 };
 

@@ -28,14 +28,9 @@ function App() {
         <ProfileProvider>
           <ProductProvider>
             <CartProvider>
-              <MainLayout>
-                <Routes>
+              <Routes>
+                <Route element={<MainLayout />}>
                   <Route path="/" element={<Index />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/update-password" element={<UpdatePassword />} />
-                  <Route path="/profile-setup" element={<ProfileSetup />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/connections" element={<Connections />} />
@@ -44,8 +39,13 @@ function App() {
                   <Route path="/wishlists" element={<Wishlists />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/profile/:userId" element={<UserProfile />} />
-                </Routes>
-              </MainLayout>
+                </Route>
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/update-password" element={<UpdatePassword />} />
+                <Route path="/profile-setup" element={<ProfileSetup />} />
+              </Routes>
             </CartProvider>
           </ProductProvider>
         </ProfileProvider>

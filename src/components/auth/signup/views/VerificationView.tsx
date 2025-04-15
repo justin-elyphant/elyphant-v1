@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import VerificationContainer from "@/components/auth/signup/verification/VerificationContainer";
 
 interface VerificationViewProps {

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { SettingsFormValues } from "./settingsFormSchema";
+import { SettingsFormValues, ImportantDate } from "./settingsFormSchema";
 
 // Define the NewImportantDateState interface
 export interface NewImportantDateState {
@@ -21,7 +21,7 @@ export const useImportantDates = (form: UseFormReturn<SettingsFormValues>) => {
     const currentDates = form.getValues("importantDates");
     
     // Create a properly typed ImportantDate object
-    const newDate = {
+    const newDate: ImportantDate = {
       date: newImportantDate.date, // This is now definitely defined due to the if check above
       description: newImportantDate.description.trim()
     };

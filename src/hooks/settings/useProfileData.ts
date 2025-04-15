@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useProfile } from "@/hooks/profile/useProfile";
-import { SettingsFormValues } from "./settingsFormSchema";
+import { SettingsFormValues, ImportantDate } from "./settingsFormSchema";
 
 export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
   const { profile, loading, refetchProfile } = useProfile();
@@ -23,7 +23,7 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
       }
       
       // Convert important dates if available
-      const importantDates: {date: Date, description: string}[] = [];
+      const importantDates: ImportantDate[] = [];
       if (profile.important_dates && Array.isArray(profile.important_dates)) {
         profile.important_dates.forEach((date: any) => {
           if (date.date && date.description) {

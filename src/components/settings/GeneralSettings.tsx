@@ -66,6 +66,18 @@ const GeneralSettings = () => {
     form.setValue("importantDates", currentDates.filter((_, i) => i !== index));
   };
 
+  // Get important dates and ensure non-nullable values
+  const getImportantDates = (): ImportantDate[] => {
+    const dates = form.getValues("importantDates") || [];
+    // Ensure each date has required properties
+    return dates.filter(
+      (date): date is ImportantDate => 
+        date !== undefined && 
+        date.date !== undefined && 
+        date.description !== undefined
+    );
+  };
+
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold">General Settings</h2>
@@ -91,7 +103,7 @@ const GeneralSettings = () => {
                 addInterest={handleAddInterest}
               />
               <ImportantDatesFormSection 
-                importantDates={form.getValues("importantDates") || []}
+                importantDates={getImportantDates()}
                 removeImportantDate={handleRemoveImportantDate}
                 newImportantDate={newImportantDate}
                 setNewImportantDate={setNewImportantDate}

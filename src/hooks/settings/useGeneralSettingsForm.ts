@@ -6,7 +6,7 @@ import { useImportantDates, NewImportantDateState } from "./useImportantDates";
 import { useInterests } from "./useInterests";
 import { useProfileData } from "./useProfileData";
 import { useFormSubmission } from "./useFormSubmission";
-import { formSchema, SettingsFormValues } from "./settingsFormSchema";
+import { formSchema, SettingsFormValues, ImportantDate } from "./settingsFormSchema";
 
 export { type NewImportantDateState } from "./useImportantDates";
 

@@ -1,3 +1,4 @@
+
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -27,10 +28,12 @@ export const useAuthFunctions = (user: User | null) => {
       localStorage.removeItem("fromSignIn");
       localStorage.removeItem("signupRateLimited");
       
-      console.log("Sign out successful, navigating to home page");
+      console.log("Sign out successful, redirecting to home page");
       
-      // Force a reload to clear any cached state
-      window.location.href = "/";
+      // Force a complete page reload to clear any cached state
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 300); // Short delay to allow toast to be shown
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Failed to sign out");

@@ -38,11 +38,13 @@ const AuthButtons = () => {
     if (signOut) {
       try {
         console.log("Executing signOut function...");
+        toast.loading("Signing out...");
         await signOut();
-        console.log("User signed out successfully");
+        toast.dismiss();
         toast.success("You have been signed out");
       } catch (error) {
         console.error("Error signing out:", error);
+        toast.dismiss();
         toast.error("Failed to sign out");
       }
     } else {
@@ -89,7 +91,7 @@ const AuthButtons = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={handleSignOut} 
-              className="text-destructive cursor-pointer flex items-center"
+              className="text-destructive cursor-pointer flex items-center hover:bg-red-50"
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -125,6 +124,11 @@ const UserProfile = () => {
     );
   }
 
+  // Mock wishlists for the ProfileTabs component
+  const mockWishlists = [
+    // Add some mock data for wishlists if needed
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -163,9 +167,9 @@ const UserProfile = () => {
             
             <ProfileTabs
               activeTab={activeTab}
-              onTabChange={setActiveTab}
-              profile={profileData}
+              setActiveTab={setActiveTab}
               isCurrentUser={isCurrentUser}
+              mockWishlists={mockWishlists}
             />
           </div>
         )}

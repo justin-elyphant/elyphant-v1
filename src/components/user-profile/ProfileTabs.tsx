@@ -5,7 +5,7 @@ import WishlistsTabContent from "./tabs/WishlistsTabContent";
 import FavoritesTabContent from "./tabs/FavoritesTabContent";
 import ActivityTabContent from "./tabs/ActivityTabContent";
 
-interface ProfileTabsProps {
+export interface ProfileTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isCurrentUser: boolean;

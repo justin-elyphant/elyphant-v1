@@ -14,7 +14,7 @@ const ProtectedRoute = ({
 }) => {
   const { user, isLoading, isDebugMode } = useAuth();
   const location = useLocation();
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
   
   // Enhanced logging for debugging navigation
   useEffect(() => {
@@ -43,7 +43,8 @@ const ProtectedRoute = ({
   }
 
   // If still loading auth state or checking session, render loading indicator
-  if (isLoading || isCheckingSession) {
+  if (isLoading) {
+    console.log("Auth state is still loading...");
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
@@ -57,7 +58,8 @@ const ProtectedRoute = ({
     console.log("On profile setup page - Enhanced Logging", {
       newSignUp: isNewSignUp,
       rateLimited: isRateLimited,
-      profileCompleted
+      profileCompleted,
+      userExists: !!user
     });
     
     // If profile is already completed and this isn't a new signup, redirect to dashboard
@@ -66,8 +68,14 @@ const ProtectedRoute = ({
       return <Navigate to="/dashboard" replace />;
     }
     
-    // If we have a user OR this is a rate limited signup OR this is a new signup, render the page
-    if (user || isRateLimited || isNewSignUp) {
+    // CRITICAL FIX: If we have a new signup flag, bypass normal auth checks and render immediately
+    if (isNewSignUp) {
+      console.log("New signup detected, allowing immediate access to profile setup");
+      return <>{children}</>;
+    }
+    
+    // If we have a user OR this is a rate limited signup, render the page
+    if (user || isRateLimited) {
       console.log("Allowing access to profile setup");
       return <>{children}</>;
     }

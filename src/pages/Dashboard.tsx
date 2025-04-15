@@ -15,15 +15,14 @@ const Dashboard = () => {
   // Redirect to sign-in if not logged in
   useEffect(() => {
     if (!user) {
+      console.log("No user in Dashboard, redirecting to sign-in");
       navigate("/sign-in");
     }
   }, [user, navigate]);
 
-  if (!user) {
-    return null; // Don't render anything while redirecting
-  }
-
-  if (loading) {
+  // Show loading indicator while checking auth/profile status
+  if (!user || loading) {
+    console.log("Dashboard loading state:", { userExists: !!user, profileLoading: loading });
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

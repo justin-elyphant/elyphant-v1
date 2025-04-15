@@ -16,7 +16,7 @@ const ProfileSetup = () => {
   const [isNewSignUp, setIsNewSignUp] = useState(false);
   const [isManuallyLoading, setIsManuallyLoading] = useState(false);
   
-  // Clear any stale loading flags on mount
+  // Clear any stale loading flags on mount and check for new signup
   useEffect(() => {
     // Clear any stale loading flags
     localStorage.removeItem("profileSetupLoading");
@@ -24,25 +24,29 @@ const ProfileSetup = () => {
     // Timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
       setIsManuallyLoading(false);
-    }, 5000);
+      setIsInitializing(false);
+    }, 3000); // Max 3 seconds before forcing render
     
-    console.log("ProfileSetup: Component mounted");
-    console.log("ProfileSetup: Current auth state", { 
-      user, 
-      isDebugMode, 
-      authLoading 
+    console.log("ProfileSetup: Component mounted with auth state", { 
+      user: !!user, 
+      authLoading,
+      localStorage: {
+        newSignUp: localStorage.getItem("newSignUp"),
+        userEmail: localStorage.getItem("userEmail"),
+        userName: localStorage.getItem("userName")
+      }
     });
     
     const newSignUpFlag = localStorage.getItem("newSignUp") === "true";
-    const userEmail = localStorage.getItem("userEmail");
-    
-    console.log("ProfileSetup: Signup flags", { 
-      newSignUpFlag, 
-      userEmail 
-    });
     
     setIsNewSignUp(newSignUpFlag);
-    setIsInitializing(false);
+    
+    // If we have newSignUp flag, initialize right away
+    if (newSignUpFlag) {
+      console.log("New signup detected, initializing immediately");
+      setIsInitializing(false);
+      clearTimeout(loadingTimeout);
+    }
     
     return () => clearTimeout(loadingTimeout);
   }, [user, authLoading]);
@@ -170,17 +174,33 @@ const ProfileSetup = () => {
     navigate("/dashboard");
   }, [navigate]);
 
-  // Check for stuck loading state on render
-  useEffect(() => {
-    const isLoading = localStorage.getItem("profileSetupLoading") === "true";
-    if (isLoading) {
-      // If we detect a stale loading state, clear it
-      console.log("Detected stale loading state, clearing it");
-      localStorage.removeItem("profileSetupLoading");
-    }
-  }, []);
+  // CRITICAL FIX: Special rendering for new signups
+  if (isNewSignUp && !isInitializing) {
+    console.log("Rendering profile setup for new signup");
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header className="w-full bg-white shadow-sm py-4">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center">
+              <Logo />
+            </div>
+          </div>
+        </header>
 
-  if ((authLoading || isManuallyLoading) && !isNewSignUp && !isDebugMode) {
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl">
+            <ProfileSetupFlow 
+              onComplete={handleSetupComplete} 
+              onSkip={handleSkip} 
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Normal loading state
+  if (authLoading || isManuallyLoading || isInitializing) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
@@ -189,23 +209,23 @@ const ProfileSetup = () => {
     );
   }
 
+  // Standard render for existing users
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="w-full bg-white shadow-sm py-4">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <Logo />
-            <Button 
-              asChild 
-              variant="ghost" 
-              size="sm"
-              onClick={handleBackToDashboard}
-            >
-              <span>
+            {user && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleBackToDashboard}
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
-              </span>
-            </Button>
+              </Button>
+            )}
           </div>
         </div>
       </header>

@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 const AuthButtons = () => {
   // Use a try-catch to safely access the auth context
@@ -39,11 +40,14 @@ const AuthButtons = () => {
         console.log("Executing signOut function...");
         await signOut();
         console.log("User signed out successfully");
+        toast.success("You have been signed out");
       } catch (error) {
         console.error("Error signing out:", error);
+        toast.error("Failed to sign out");
       }
     } else {
       console.error("SignOut function is not available");
+      toast.error("Sign out functionality is not available");
     }
   };
 
@@ -85,10 +89,10 @@ const AuthButtons = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={handleSignOut} 
-              className="text-destructive cursor-pointer"
+              className="text-destructive cursor-pointer flex items-center"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Log out
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

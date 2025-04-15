@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useSettingsForm } from "@/hooks/settings/useSettingsForm";
@@ -13,9 +13,9 @@ import DeleteAccount from "./DeleteAccount";
 import { useAuth } from "@/contexts/auth";
 import { ImportantDate } from "@/hooks/settings/settingsFormSchema";
 
-// Define a type for the new important date state that makes date required
+// Define a type for the new important date state
 interface NewImportantDateState {
-  date: Date;
+  date: Date | undefined;
   description: string;
 }
 
@@ -27,6 +27,11 @@ const GeneralSettings = () => {
     date: new Date(),
     description: ""
   });
+
+  // Fetch profile data on component mount
+  useEffect(() => {
+    // This is handled by useSettingsForm internally now
+  }, []);
   
   if (isLoading) {
     return (

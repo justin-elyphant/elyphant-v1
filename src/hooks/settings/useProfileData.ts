@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { useProfile } from "@/hooks/profile/useProfile";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SettingsFormValues, ImportantDate } from "./settingsFormSchema";
 
 export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
@@ -45,6 +45,8 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         interests = profile.gift_preferences.map((pref: any) => 
           typeof pref === 'string' ? pref : (pref.category || '')
         ).filter(Boolean);
+      } else if (profile.interests && Array.isArray(profile.interests)) {
+        interests = profile.interests;
       }
       
       // Map shipping_address to address, ensuring it has all required fields
@@ -79,6 +81,13 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
       console.log("Profile data loaded into form successfully");
     }
   };
+
+  // Load profile data when component mounts
+  useEffect(() => {
+    if (profile) {
+      loadProfileData();
+    }
+  }, [profile]);
 
   return {
     profile,

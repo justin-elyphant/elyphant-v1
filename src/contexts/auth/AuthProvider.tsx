@@ -30,6 +30,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       const createOrUpdateProfile = async () => {
         try {
+          // Check if profile already exists
+          const { data: existingProfile, error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle();
+            
+          if (profileCheckError) {
+            console.error("Error checking existing profile:", profileCheckError);
+          }
+          
           // Profile data with fallbacks for each field
           const profileData = {
             id: user.id,
@@ -38,47 +49,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                   localStorage.getItem("userName") || 
                   user.email?.split('@')[0] || 
                   'User',
+            // Preserve existing fields if profile already exists
+            bio: existingProfile?.bio || `Hi, I'm ${user.user_metadata?.name || user.email?.split('@')[0] || 'there'}!`,
+            profile_image: existingProfile?.profile_image || user.user_metadata?.profile_image || null,
+            dob: existingProfile?.dob || null,
+            shipping_address: existingProfile?.shipping_address || null,
+            gift_preferences: existingProfile?.gift_preferences || [],
+            important_dates: existingProfile?.important_dates || [],
+            data_sharing_settings: existingProfile?.data_sharing_settings || {
+              dob: "friends",
+              shipping_address: "private",
+              gift_preferences: "public"
+            },
             updated_at: new Date().toISOString()
           };
           
           console.log("Creating/updating profile with data:", profileData);
           
-          const response = await supabase.functions.invoke('create-profile', {
-            body: {
-              user_id: user.id,
-              profile_data: profileData
-            }
-          });
-          
-          if (response.error) {
-            console.error("Error creating profile in auth provider:", response.error);
-            
-            // Try direct profile creation as fallback
-            const { error: directError } = await supabase
-              .from('profiles')
-              .upsert({
-                id: user.id,
-                email: profileData.email,
-                name: profileData.name,
-                updated_at: profileData.updated_at
-              })
-              .select()
-              .single();
+          // Use direct database call to create/update profile
+          const { error: upsertError } = await supabase
+            .from('profiles')
+            .upsert(profileData)
+            .select()
+            .single();
               
-            if (directError) {
-              console.error("Direct profile creation also failed:", directError);
-              toast.error("Failed to create your profile. Some features may be limited.");
-            } else {
-              console.log("Profile created/updated through direct DB access");
-            }
+          if (upsertError) {
+            console.error("Profile creation/update failed:", upsertError);
+            toast.error("Failed to create your profile. Some features may be limited.");
           } else {
-            console.log("Profile created/updated successfully in auth provider:", response.data);
+            console.log("Profile created/updated successfully");
             
             // Clear flags after successful profile creation
             localStorage.removeItem("newSignUp");
             localStorage.removeItem("fromSignIn");
-            
-            // We'll handle navigation in the components that use this context
           }
         } catch (err) {
           console.error("Failed to create/update profile in auth provider:", err);

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import MainLayout from "@/components/layout/MainLayout";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
@@ -50,40 +51,44 @@ const Settings = () => {
   
   // If loading has timed out or auth check is complete and user is not logged in
   if (!showLoading && !user) {
-    navigate("/sign-in", { replace: true });
+    navigate("/signin", { replace: true });
     return null;
   }
   
   if (showLoading) {
     return (
-      <div className="container max-w-5xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <Skeleton className="h-9 w-40" />
+      <MainLayout>
+        <div className="container max-w-5xl mx-auto py-8 px-4">
+          <div className="mb-6">
+            <Skeleton className="h-9 w-40" />
+          </div>
+          
+          <Skeleton className="h-10 w-full max-w-md mb-6" />
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <Skeleton className="h-8 w-48 mb-6" />
+            <Skeleton className="h-12 w-full mb-4" />
+            <Skeleton className="h-12 w-full mb-4" />
+            <Skeleton className="h-12 w-full mb-4" />
+            <Skeleton className="h-12 w-full mb-4" />
+          </div>
         </div>
-        
-        <Skeleton className="h-10 w-full max-w-md mb-6" />
-        
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <Skeleton className="h-8 w-48 mb-6" />
-          <Skeleton className="h-12 w-full mb-4" />
-          <Skeleton className="h-12 w-full mb-4" />
-          <Skeleton className="h-12 w-full mb-4" />
-          <Skeleton className="h-12 w-full mb-4" />
-        </div>
-      </div>
+      </MainLayout>
     );
   }
   
   return (
-    <SettingsLayout 
-      tabs={tabs} 
-      activeTab={activeTab} 
-      onTabChange={handleTabChange}
-    >
-      {activeTab === "general" && <GeneralSettings />}
-      {activeTab === "notification" && <NotificationSettings />}
-      {activeTab === "payment" && <PaymentSettings />}
-    </SettingsLayout>
+    <MainLayout>
+      <SettingsLayout 
+        tabs={tabs} 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+      >
+        {activeTab === "general" && <GeneralSettings />}
+        {activeTab === "notification" && <NotificationSettings />}
+        {activeTab === "payment" && <PaymentSettings />}
+      </SettingsLayout>
+    </MainLayout>
   );
 };
 

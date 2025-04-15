@@ -18,7 +18,7 @@ export const useSignUpSubmit = () => {
       });
       
       // Create user in Supabase Auth
-      console.log("Connecting to Supabase with URL:", supabase.supabaseUrl);
+      console.log("Connecting to Supabase...");
       console.log("Sending signup request to Supabase...");
       
       const signupPromise = supabase.auth.signUp({

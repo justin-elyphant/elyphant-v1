@@ -102,6 +102,8 @@ export const useProfileForm = () => {
       
       // Format the data for storage
       const formattedData = {
+        // Set ID to ensure proper RLS check 
+        id: user.id,
         name: data.name,
         email: data.email,
         bio: data.bio || `Hi, I'm ${data.name}`,
@@ -122,15 +124,21 @@ export const useProfileForm = () => {
         onboarding_completed: true
       };
 
-      // Directly update the profiles table
+      console.log("Formatted data for profile update:", formattedData);
+
+      // With the new RLS policy allowing users to update their own profile
       const { error } = await supabase
         .from('profiles')
-        .update(formattedData)
-        .eq('id', user.id);
+        .upsert(formattedData, { 
+          onConflict: 'id' 
+        });
       
       if (error) {
+        console.error("Error updating profile:", error);
         throw error;
       }
+      
+      console.log("Profile updated successfully");
       
       // Refetch profile data after update
       await refetchProfile();

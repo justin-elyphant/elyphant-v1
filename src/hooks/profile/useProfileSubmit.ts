@@ -111,33 +111,22 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
           
           onComplete();
         }
-      }, 7000); // Increase timeout to 7 seconds
+      }, 7000); // 7 seconds timeout
       
       try {
-        // Try multiple update methods for reliability
-        let updateSuccess = false;
-        
-        // Directly try database update
-        const { error: directError } = await supabase
+        // With the new RLS policy, we can directly upsert the profile
+        const { error } = await supabase
           .from('profiles')
-          .upsert({
-            ...formattedData
-          }, {
+          .upsert(formattedData, {
             onConflict: 'id'
           });
             
-        if (directError) {
-          console.error("Direct profile update failed:", directError);
-          throw directError;
+        if (error) {
+          console.error("Profile update failed:", error);
+          throw error;
         } else {
           console.log("Profile saved successfully via direct update");
-          updateSuccess = true;
-        }
-        
-        if (updateSuccess) {
           toast.success("Profile setup complete!");
-        } else {
-          toast.error("Failed to save profile data completely. Some features may be limited.");
         }
       } catch (directErr) {
         console.error("Error in profile update:", directErr);

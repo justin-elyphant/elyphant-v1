@@ -104,13 +104,18 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       console.log("Updating profile with data:", updateData);
       
+      // Make sure to set the id for proper RLS policy evaluation
+      const dataWithId = {
+        ...updateData,
+        id: user.id,
+        updated_at: new Date().toISOString()
+      };
+      
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          ...updateData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+        .upsert(dataWithId, {
+          onConflict: 'id'
+        });
 
       if (updateError) {
         console.error("Error updating profile:", updateError);

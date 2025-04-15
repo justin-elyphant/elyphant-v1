@@ -42,32 +42,23 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
         updated_at: new Date().toISOString()
       };
 
-      // Try to update profile with retry mechanism
-      let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (attempts < maxAttempts) {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(formattedData, {
-            onConflict: 'id'
-          });
+      console.log("Formatted profile data for submission:", formattedData);
 
-        if (!error) {
-          console.log("Profile saved successfully");
-          toast.success("Profile setup complete!");
-          break;
-        }
+      // Now that RLS allows users to directly insert their own profile,
+      // we can simplify the insertion/update logic
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(formattedData, {
+          onConflict: 'id'
+        });
 
-        attempts++;
-        if (attempts === maxAttempts) {
-          console.error("Failed to save profile after retries:", error);
-          throw new Error("Failed to save profile data");
-        }
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (error) {
+        console.error("Error saving profile:", error);
+        throw new Error(`Failed to save profile: ${error.message}`);
       }
+      
+      console.log("Profile saved successfully");
+      toast.success("Profile setup complete!");
 
       // Clear signup-related flags
       localStorage.removeItem("newSignUp");
@@ -79,7 +70,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
       
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast.error("Failed to save some profile data, but continuing anyway");
+      toast.error("Failed to save profile data, but continuing anyway");
       setIsLoading(false);
       onComplete(); // Still complete to prevent users getting stuck
     }

@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MainLayout from "@/components/layout/MainLayout";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
@@ -37,21 +36,19 @@ const Dashboard = () => {
   // Show loading skeleton while checking auth/profile status
   if (isPageLoading) {
     return (
-      <MainLayout>
-        <div className="min-h-screen bg-gray-50">
-          <div className="container max-w-6xl mx-auto py-8 px-4">
-            <div className="flex items-center justify-between mb-8">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-64 rounded-lg" />
-              ))}
-            </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container max-w-6xl mx-auto py-8 px-4">
+          <div className="flex items-center justify-between mb-8">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-64 rounded-lg" />
+            ))}
           </div>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
@@ -61,14 +58,12 @@ const Dashboard = () => {
   // The redirect to /profile-setup is handled by the useProfileCompletion hook if profile is incomplete
   
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gray-50">
-        <div className="container max-w-6xl mx-auto py-8 px-4">
-          <DashboardHeader userData={user} onLogout={signOut} />
-          <DashboardGrid />
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container max-w-6xl mx-auto py-8 px-4">
+        <DashboardHeader userData={user} onLogout={signOut} />
+        <DashboardGrid />
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

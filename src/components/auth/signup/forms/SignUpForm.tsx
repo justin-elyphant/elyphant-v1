@@ -30,7 +30,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   isSubmitting = false 
 }) => {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [localIsSubmitting, setLocalIsSubmitting] = React.useState<boolean>(false);
   const navigate = useNavigate();
 
   const form = useForm<SignUpFormValues>({
@@ -45,31 +44,16 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   const handleSubmit = async (values: SignUpFormValues) => {
     try {
       setErrorMessage(null);
-      setLocalIsSubmitting(true);
-      
-      await onSubmit(values).catch(error => {
-        console.error("Error during signup:", error);
-        
-        // Handle email already registered
-        if (error.message?.includes("already registered")) {
-          setErrorMessage("Email already registered. Please use a different email address or sign in.");
-          throw error;
-        }
-        
-        // For other errors, propagate
-        throw error;
-      });
+      await onSubmit(values);
     } catch (error: any) {
       console.error("Form submission error:", error);
       
-      // Set error message based on type
+      // Handle email already registered
       if (error.message?.includes("already registered")) {
         setErrorMessage("Email already registered. Please use a different email address or sign in.");
       } else {
         setErrorMessage(error.message || "An unexpected error occurred");
       }
-    } finally {
-      setLocalIsSubmitting(false);
     }
   };
 
@@ -111,9 +95,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         <Button 
           type="submit" 
           className="w-full bg-purple-600 hover:bg-purple-700"
-          disabled={isSubmitting || localIsSubmitting}
+          disabled={isSubmitting}
         >
-          {(isSubmitting || localIsSubmitting) ? (
+          {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Creating account...
@@ -128,4 +112,3 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 };
 
 export default SignUpForm;
-

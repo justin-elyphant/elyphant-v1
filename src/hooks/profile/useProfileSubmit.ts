@@ -59,7 +59,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         return;
       }
       
-      // Prepare profile data
+      // Prepare profile data - ensure every field matches the database schema exactly
       const formattedData = {
         id: userId,
         name: userName || "User",
@@ -91,8 +91,12 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         onboarding_completed: true
       };
       
-      console.log("Creating/updating profile for user:", userId);
-      console.log("Profile data to be saved:", formattedData);
+      // Log the exact payload being sent to Supabase for debugging
+      console.log("EXACT PROFILE UPSERT PAYLOAD:", JSON.stringify(formattedData, null, 2));
+      console.log("User ID for RLS check:", userId);
+      console.log("Number of gift preferences:", formattedData.gift_preferences.length);
+      console.log("Has shipping address:", !!formattedData.shipping_address);
+      console.log("Has DOB:", !!formattedData.dob);
       
       // Set a timeout to proceed regardless of API response
       submitTimeoutRef.current = setTimeout(() => {
@@ -115,7 +119,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       
       try {
         // With the new RLS policy, we can directly upsert the profile
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .upsert(formattedData, {
             onConflict: 'id'
@@ -125,7 +129,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
           console.error("Profile update failed:", error);
           throw error;
         } else {
-          console.log("Profile saved successfully via direct update");
+          console.log("Profile saved successfully via direct update. Response:", data);
           toast.success("Profile setup complete!");
         }
       } catch (directErr) {

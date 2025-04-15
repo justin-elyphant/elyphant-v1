@@ -47,7 +47,12 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       
       // If we have a profile, update the state
       if (data) {
-        console.log("Profile data loaded:", data);
+        console.log("Profile data loaded:", JSON.stringify(data, null, 2));
+        console.log("Keys in profile:", Object.keys(data));
+        console.log("Has gift_preferences:", !!data.gift_preferences, "Length:", data.gift_preferences?.length || 0);
+        console.log("Has shipping_address:", !!data.shipping_address);
+        console.log("Has dob:", !!data.dob);
+        
         setProfile(data);
       } else {
         console.warn("No profile found for user:", user.id);
@@ -73,11 +78,15 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           
           // Try to persist this profile to the database
           try {
-            await supabase
+            const { error: upsertError } = await supabase
               .from('profiles')
-              .upsert(minimalProfile)
-              .eq('id', user.id);
-            console.log("Created minimal profile in database");
+              .upsert(minimalProfile);
+              
+            if (upsertError) {
+              console.error("Failed to create minimal profile:", upsertError);
+            } else {
+              console.log("Created minimal profile in database");
+            }
           } catch (e) {
             console.error("Failed to create minimal profile:", e);
           }
@@ -110,6 +119,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         id: user.id,
         updated_at: new Date().toISOString()
       };
+      
+      console.log("PROFILE CONTEXT: EXACT UPDATE PAYLOAD:", JSON.stringify(dataWithId, null, 2));
       
       const { error: updateError } = await supabase
         .from('profiles')

@@ -100,7 +100,7 @@ export const useProfileForm = () => {
       setIsSubmitting(true);
       console.log("Submitting profile data:", data);
       
-      // Format the data for storage
+      // Format the data for storage - ensure names match DB schema exactly
       const formattedData = {
         // Set ID to ensure proper RLS check 
         id: user.id,
@@ -124,10 +124,13 @@ export const useProfileForm = () => {
         onboarding_completed: true
       };
 
-      console.log("Formatted data for profile update:", formattedData);
+      // Log the exact payload being sent to Supabase
+      console.log("SETTINGS FORM: EXACT PAYLOAD FOR PROFILE UPDATE:", JSON.stringify(formattedData, null, 2));
+      console.log("SETTINGS FORM: User ID for RLS:", user.id);
+      console.log("SETTINGS FORM: Profile data keys:", Object.keys(formattedData));
 
       // With the new RLS policy allowing users to update their own profile
-      const { error } = await supabase
+      const { data: responseData, error } = await supabase
         .from('profiles')
         .upsert(formattedData, { 
           onConflict: 'id' 
@@ -138,7 +141,7 @@ export const useProfileForm = () => {
         throw error;
       }
       
-      console.log("Profile updated successfully");
+      console.log("Profile updated successfully from settings. Response:", responseData);
       
       // Refetch profile data after update
       await refetchProfile();

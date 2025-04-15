@@ -42,11 +42,14 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
         updated_at: new Date().toISOString()
       };
 
-      console.log("Formatted profile data for submission:", formattedData);
+      // Add detailed logging of the exact payload we're sending to Supabase
+      console.log("EXACT PAYLOAD FOR PROFILE SUBMISSION:", JSON.stringify(formattedData, null, 2));
+      console.log("User ID for RLS:", user.id);
+      console.log("Profile data keys:", Object.keys(formattedData));
 
       // Now that RLS allows users to directly insert their own profile,
       // we can simplify the insertion/update logic
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .upsert(formattedData, {
           onConflict: 'id'
@@ -57,7 +60,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
         throw new Error(`Failed to save profile: ${error.message}`);
       }
       
-      console.log("Profile saved successfully");
+      console.log("Profile saved successfully, response:", data);
       toast.success("Profile setup complete!");
 
       // Clear signup-related flags

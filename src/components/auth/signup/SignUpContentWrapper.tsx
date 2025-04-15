@@ -8,26 +8,18 @@ interface SignUpContentWrapperProps {
   step: "signup" | "verification";
   userEmail: string;
   userName: string;
-  resendCount: number;
-  testVerificationCode: string | null;
   onSignUpSubmit: (values: SignUpFormValues) => Promise<void>;
-  handleResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
   handleBackToSignUp: () => void;
   isSubmitting?: boolean;
-  bypassVerification?: boolean;
 }
 
 const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   step,
   userEmail,
   userName,
-  resendCount,
-  testVerificationCode,
   onSignUpSubmit,
-  handleResendVerification,
   handleBackToSignUp,
   isSubmitting = false,
-  bypassVerification = false,
 }) => {
   if (step === "signup") {
     return (
@@ -43,9 +35,6 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       userEmail={userEmail}
       userName={userName}
       onBackToSignUp={handleBackToSignUp}
-      onResendVerification={handleResendVerification}
-      resendCount={resendCount}
-      bypassVerification={bypassVerification}
     />
   );
 };

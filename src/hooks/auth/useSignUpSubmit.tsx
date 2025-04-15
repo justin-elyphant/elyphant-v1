@@ -1,13 +1,10 @@
 
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { isRateLimitError, handleRateLimit } from "./utils/rateLimit";
+import { toast } from "sonner";
 
 export const useSignUpSubmit = () => {
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
   const onSignUpSubmit = async (values: SignUpFormValues) => {
@@ -15,200 +12,49 @@ export const useSignUpSubmit = () => {
       setIsSubmitting(true);
       console.log("Sign up initiated for", values.email);
       
-      // Check for existing rate limit flags first - this can happen if the component remounts
-      const existingRateLimit = localStorage.getItem("signupRateLimited") === "true" || 
-                               localStorage.getItem("bypassVerification") === "true";
+      // Create user in Supabase Auth with magic link
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            name: values.name,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
       
-      if (existingRateLimit) {
-        console.log("Rate limit flag already found in localStorage, redirecting directly");
+      if (signUpError) {
+        console.error("Signup error:", signUpError);
         
-        localStorage.setItem("userEmail", values.email);
-        localStorage.setItem("userName", values.name || "");
-        localStorage.setItem("newSignUp", "true");
-        
-        // Trigger storage event for other components to detect
-        window.dispatchEvent(new Event('storage'));
-        
-        toast.success("Account created successfully!", {
-          description: "Taking you to profile setup."
-        });
-        
-        // Use navigate with replace to prevent back navigation
-        setTimeout(() => {
-          navigate('/profile-setup', { replace: true });
-        }, 1000);
-        
-        return;
+        if (signUpError.message.includes("already registered")) {
+          toast.error("Email already registered", {
+            description: "Please use a different email address or try signing in."
+          });
+        } else {
+          toast.error("Sign up failed", {
+            description: signUpError.message || "An unexpected error occurred"
+          });
+        }
+        throw signUpError;
       }
       
-      try {
-        // Create user in Supabase Auth
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
-          options: {
-            data: {
-              name: values.name,
-            }
-          }
+      // User created successfully
+      if (signUpData?.user) {
+        console.log("User created successfully:", signUpData.user.id);
+        
+        toast.success("Account created successfully!", {
+          description: "Please check your email to confirm your account."
         });
         
-        // Check for rate limit error response first
-        if (signUpError) {
-          console.error("Signup error:", signUpError);
-          
-          // Specifically log details to help with debugging
-          console.log("Error details for debugging:", {
-            status: signUpError.status,
-            code: signUpError.code,
-            message: signUpError.message,
-          });
-          
-          // Enhanced rate limit detection with better handling
-          if (isRateLimitError(signUpError)) {
-            console.log("Rate limit encountered in signUpSubmit, handling gracefully");
-            
-            // Set the required localStorage values
-            localStorage.setItem("newSignUp", "true");
-            localStorage.setItem("userEmail", values.email);
-            localStorage.setItem("userName", values.name || "");
-            localStorage.setItem("signupRateLimited", "true");
-            localStorage.setItem("bypassVerification", "true");
-            
-            // Trigger storage event for other components to detect
-            window.dispatchEvent(new Event('storage'));
-            
-            // Show success toast
-            toast.success("Account created successfully!", {
-              description: "Taking you to profile setup."
-            });
-            
-            // Navigate with replace to prevent back navigation
-            setTimeout(() => {
-              navigate('/profile-setup', { replace: true });
-            }, 1500);
-            
-            return;
-          }
-          
-          throw signUpError;
-        }
-        
-        // User created successfully
-        if (signUpData?.user) {
-          // Store data for profile setup
-          localStorage.setItem("userId", signUpData.user.id);
-          localStorage.setItem("userEmail", values.email);
-          localStorage.setItem("userName", values.name);
-          localStorage.setItem("newSignUp", "true");
-          
-          // Create user profile
-          try {
-            const { error: profileError } = await supabase.from('profiles').insert([
-              { 
-                id: signUpData.user.id,
-                email: values.email,
-                name: values.name,
-                updated_at: new Date().toISOString()
-              }
-            ]);
-            
-            if (profileError) {
-              console.error("Error creating profile:", profileError);
-              
-              // Check if profile creation hit a rate limit
-              if (isRateLimitError(profileError)) {
-                console.log("Rate limit encountered during profile creation, continuing anyway");
-                // We'll continue despite this error since the user was created
-              }
-            }
-          } catch (profileError) {
-            console.error("Failed to create profile:", profileError);
-            // Continue despite profile creation failure, we'll handle it in profile setup
-          }
-          
-          toast.success("Account created successfully!", {
-            description: "Taking you to profile setup."
-          });
-          
-          // Save signupSuccessful flag to indicate this is a successful path
-          localStorage.setItem("signupSuccessful", "true");
-          
-          // Navigate directly to profile setup with a small delay to ensure state is updated
-          setTimeout(() => {
-            navigate('/profile-setup', { replace: true });
-          }, 1000);
-        }
-      } catch (supabaseError) {
-        console.error("Supabase error during signup:", supabaseError);
-        
-        // Check for rate limit in catch block too
-        if (isRateLimitError(supabaseError)) {
-          console.log("Rate limit caught in Supabase error handler, handling gracefully");
-          
-          // Set the required localStorage values directly
-          localStorage.setItem("newSignUp", "true");
-          localStorage.setItem("userEmail", values.email);
-          localStorage.setItem("userName", values.name || "");
-          localStorage.setItem("signupRateLimited", "true");
-          localStorage.setItem("bypassVerification", "true");
-          
-          // Trigger storage event
-          window.dispatchEvent(new Event('storage'));
-          
-          // Show success toast
-          toast.success("Account created successfully!", {
-            description: "Taking you to profile setup."
-          });
-          
-          // Navigate with replace
-          setTimeout(() => {
-            navigate('/profile-setup', { replace: true });
-          }, 1500);
-          
-          return;
-        }
-        
-        throw supabaseError;
+        // Store data for profile setup
+        localStorage.setItem("userId", signUpData.user.id);
+        localStorage.setItem("userEmail", values.email);
+        localStorage.setItem("userName", values.name);
+        localStorage.setItem("newSignUp", "true");
       }
     } catch (err: any) {
-      console.error("Final error catch - Signup submission error:", err);
-      
-      // Extra check for rate limit error
-      if (isRateLimitError(err)) {
-        console.log("Rate limit caught in error handler, bypassing verification");
-        
-        localStorage.setItem("signupRateLimited", "true");
-        localStorage.setItem("userEmail", values.email);
-        localStorage.setItem("userName", values.name || "");
-        localStorage.setItem("newSignUp", "true");
-        localStorage.setItem("bypassVerification", "true");
-        
-        // Trigger localStorage event for SignUp component to detect
-        window.dispatchEvent(new Event('storage'));
-        
-        toast.success("Account created successfully!", {
-          description: "Taking you to profile setup."
-        });
-        
-        setTimeout(() => {
-          navigate('/profile-setup', { replace: true });
-        }, 1000);
-        
-        return;
-      }
-      
-      // Handle specific errors with user-friendly messages
-      if (err.message?.includes("already registered")) {
-        toast.error("Email already registered", {
-          description: "Please use a different email address or try signing in."
-        });
-      } else {
-        toast.error("Sign up failed", {
-          description: err.message || "An unexpected error occurred"
-        });
-      }
-      
+      console.error("Signup submission error:", err);
       throw err;
     } finally {
       setIsSubmitting(false);

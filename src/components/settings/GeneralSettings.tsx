@@ -11,13 +11,20 @@ import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import DataSharingSection from "./DataSharingSection";
 import DeleteAccount from "./DeleteAccount";
 import { useAuth } from "@/contexts/auth";
+import { ImportantDate } from "@/hooks/settings/settingsFormSchema";
+
+// Define a type for the new important date state that makes date required
+interface NewImportantDateState {
+  date: Date;
+  description: string;
+}
 
 const GeneralSettings = () => {
   const { form, onSubmit, isLoading } = useSettingsForm();
   const { user } = useAuth();
   const [newInterest, setNewInterest] = useState("");
-  const [newImportantDate, setNewImportantDate] = useState<{ date?: Date; description: string }>({
-    date: undefined,
+  const [newImportantDate, setNewImportantDate] = useState<NewImportantDateState>({
+    date: new Date(),
     description: ""
   });
   
@@ -51,7 +58,7 @@ const GeneralSettings = () => {
       description: newImportantDate.description.trim()
     }]);
     
-    setNewImportantDate({ date: undefined, description: "" });
+    setNewImportantDate({ date: new Date(), description: "" });
   };
 
   const handleRemoveImportantDate = (index: number) => {
@@ -84,7 +91,7 @@ const GeneralSettings = () => {
                 addInterest={handleAddInterest}
               />
               <ImportantDatesFormSection 
-                importantDates={form.getValues("importantDates") || []}
+                importantDates={form.getValues("importantDates") as ImportantDate[] || []}
                 removeImportantDate={handleRemoveImportantDate}
                 newImportantDate={newImportantDate}
                 setNewImportantDate={setNewImportantDate}

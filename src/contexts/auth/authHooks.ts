@@ -1,12 +1,9 @@
 
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export const useAuthFunctions = (user: User | null) => {
-  const navigate = useNavigate();
-
   const signOut = async (): Promise<void> => {
     try {
       console.log("Signing out user...");

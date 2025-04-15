@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/auth';
@@ -16,9 +17,9 @@ import { ProfileProvider } from '@/contexts/profile/ProfileContext';
 
 function App() {
   return (
-    <AuthProvider>
-      <ProfileProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <ProfileProvider>
           <Routes>
             <Route path="/" element={<SignUp />} />
             <Route path="/signup" element={<SignUp />} />
@@ -33,9 +34,9 @@ function App() {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/wishlists" element={<Wishlists />} />
           </Routes>
-        </Router>
-      </ProfileProvider>
-    </AuthProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

@@ -57,6 +57,6 @@ export const getOtherCategories = () => [
   "Jewelry",
   "Coffee & Tea",
   "Pets",
-  "Sports Teams",
+  "Sports Teams", // Added Sports Teams here
   "Sports Equipment"
 ];

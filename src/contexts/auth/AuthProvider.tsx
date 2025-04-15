@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthSession } from './useAuthSession';
 import { useAuthFunctions } from './authHooks';
 import { AuthContextProps } from './types';
@@ -15,8 +14,6 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { user, session, isLoading, isProcessingToken } = useAuthSession();
-  const navigate = useNavigate();
-  const location = useLocation();
   const [isDebugMode, setIsDebugMode] = useState(false);
   const { signOut, deleteUser } = useAuthFunctions(user);
 
@@ -81,10 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             localStorage.removeItem("newSignUp");
             localStorage.removeItem("fromSignIn");
             
-            // Navigate to profile setup as appropriate if not already there
-            if (location.pathname !== '/profile-setup') {
-              navigate('/profile-setup', { replace: true });
-            }
+            // We'll handle navigation in the components that use this context
           }
         } catch (err) {
           console.error("Failed to create/update profile in auth provider:", err);
@@ -93,7 +87,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       createOrUpdateProfile();
     }
-  }, [user, location.pathname, navigate]);
+  }, [user]);
 
   const toggleDebugMode = () => {
     setIsDebugMode(!isDebugMode);

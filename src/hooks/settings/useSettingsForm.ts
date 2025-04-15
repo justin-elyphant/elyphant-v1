@@ -6,6 +6,9 @@ import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { toast } from "sonner";
 import { useEffect } from "react";
 
+// Define the valid importance values
+type Importance = "low" | "medium" | "high";
+
 export const useSettingsForm = () => {
   const { profile, loading: profileLoading, updateProfile } = useProfile();
   
@@ -84,7 +87,7 @@ export const useSettingsForm = () => {
         },
         gift_preferences: data.interests.map(interest => ({
           category: interest,
-          importance: "medium"
+          importance: "medium" as Importance // Explicitly type as Importance
         })),
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),

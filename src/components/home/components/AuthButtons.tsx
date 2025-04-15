@@ -15,7 +15,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-const AuthButtons = () => {
+interface AuthButtonsProps {
+  profileImage?: string | null;
+}
+
+const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
   // Use a try-catch to safely access the auth context
   let user = null;
   let signOut = null;
@@ -73,8 +77,8 @@ const AuthButtons = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-9 w-9 cursor-pointer">
-              {user.user_metadata?.profile_image ? (
-                <AvatarImage src={user.user_metadata.profile_image} alt={user.user_metadata?.name || user.email || ''} />
+              {profileImage || user.user_metadata?.profile_image ? (
+                <AvatarImage src={profileImage || user.user_metadata?.profile_image} alt={user.user_metadata?.name || user.email || ''} />
               ) : (
                 <AvatarFallback className="bg-purple-100 text-purple-600 text-sm">
                   {(user.user_metadata?.name || user.email || '').substring(0, 2).toUpperCase()}

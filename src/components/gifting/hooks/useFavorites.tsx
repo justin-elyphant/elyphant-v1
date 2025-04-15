@@ -14,15 +14,19 @@ interface SavedItem {
 
 export const useFavorites = () => {
   const [savedItems, setSavedItems] = useLocalStorage<SavedItem[]>("savedItems", []);
-  const { products } = useProducts();
+  const { products, isLoading } = useProducts();
   const [favoriteItems, setFavoriteItems] = useState<Product[]>([]);
   
   useEffect(() => {
+    if (!products || isLoading) {
+      return; // Don't process if products aren't loaded yet
+    }
+    
     // Find all saved products from the main products list
     const productIds = savedItems.map(item => item.productId);
     const items = products.filter(product => productIds.includes(product.id));
     setFavoriteItems(items);
-  }, [savedItems, products]);
+  }, [savedItems, products, isLoading]);
 
   const handleFavoriteToggle = (productId: number) => {
     setSavedItems(prev => {
@@ -79,6 +83,10 @@ export const useFavorites = () => {
 
   // Get items filtered by save type
   const getItemsBySaveType = (saveType: SavedItemType): Product[] => {
+    if (!products || isLoading) {
+      return []; // Return empty array if products aren't loaded yet
+    }
+    
     const filteredIds = savedItems
       .filter(item => item.saveType === saveType)
       .map(item => item.productId);
@@ -95,6 +103,7 @@ export const useFavorites = () => {
     getSaveType,
     getItemsBySaveType,
     wishlistItems: getItemsBySaveType("wishlist"),
-    laterItems: getItemsBySaveType("later")
+    laterItems: getItemsBySaveType("later"),
+    isLoading // Export loading state for components to use
   };
 };

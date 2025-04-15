@@ -30,11 +30,13 @@ const AuthButtons = () => {
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();  // Stop event propagation to prevent dropdown issues
     
     console.log("Sign out button clicked, signOut function available:", !!signOut);
     
     if (signOut) {
       try {
+        console.log("Executing signOut function...");
         await signOut();
         console.log("User signed out successfully");
       } catch (error) {
@@ -81,7 +83,10 @@ const AuthButtons = () => {
               <Link to="/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+            <DropdownMenuItem 
+              onClick={handleSignOut} 
+              className="text-destructive cursor-pointer"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,12 @@ import SearchBar from "./components/SearchBar";
 import CategoriesDropdown from "./components/CategoriesDropdown";
 import AuthButtons from "./components/AuthButtons";
 import { useCart } from "@/contexts/CartContext";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 const Header = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const { itemCount } = useCart();
+  const { profile } = useProfile();
   
   return (
     <header className="bg-white shadow-sm sticky top-0 z-40">
@@ -40,7 +42,7 @@ const Header = () => {
                 </Badge>
               )}
             </Link>
-            <AuthButtons />
+            <AuthButtons profileImage={profile?.profile_image} />
           </div>
         </div>
       </div>

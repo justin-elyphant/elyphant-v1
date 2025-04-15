@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -181,9 +180,6 @@ const ProfileSetup = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-4xl">
-            <div className="mb-8 text-center">
-              <Logo />
-            </div>
             <ProfileSetupFlow 
               onComplete={handleSetupComplete} 
               onSkip={handleSkip} 

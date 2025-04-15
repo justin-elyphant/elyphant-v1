@@ -37,9 +37,23 @@ const ProfileImageStep: React.FC<ProfileImageStepProps> = ({ value, onChange, na
       
       // Create a preview for immediate feedback
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         if (event.target?.result) {
+          // Update preview immediately
           onChange(event.target.result as string);
+          
+          // Also update the user's profile in Supabase
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              profile_image: event.target.result as string
+            })
+            .eq('id', user.id);
+            
+          if (updateError) {
+            console.error("Error updating profile image:", updateError);
+            toast.error("Failed to save profile image");
+          }
         }
       };
       reader.readAsDataURL(file);

@@ -31,7 +31,7 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit, isSubmitting = false 
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/sign-in" className="text-purple-600 hover:text-purple-700 font-medium">
+          <Link to="/signin" className="text-purple-600 hover:text-purple-700 font-medium">
             Sign in
           </Link>
         </p>

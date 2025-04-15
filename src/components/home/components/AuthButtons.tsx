@@ -122,13 +122,13 @@ const AuthButtons = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuItem asChild>
-            <Link to="/sign-in" className="flex w-full items-center">
+            <Link to="/signin" className="flex w-full items-center">
               <LogIn className="mr-2 h-4 w-4" />
               Sign In
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/sign-up" className="flex w-full items-center">
+            <Link to="/signup" className="flex w-full items-center">
               <User className="mr-2 h-4 w-4" />
               Create Account
             </Link>

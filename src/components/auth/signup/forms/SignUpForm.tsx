@@ -8,7 +8,6 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { isRateLimitError } from "@/hooks/auth/utils/rateLimit";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -51,29 +50,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       await onSubmit(values).catch(error => {
         console.error("Error during signup:", error);
         
-        // Check if it's a rate limit error
-        if (isRateLimitError(error)) {
-          console.log("Rate limit error detected in SignUpForm");
-          
-          // Store data for profile setup
-          localStorage.setItem("newSignUp", "true");
-          localStorage.setItem("userEmail", values.email);
-          localStorage.setItem("userName", values.name);
-          localStorage.setItem("signupRateLimited", "true");
-          localStorage.setItem("bypassVerification", "true");
-          
-          // Show success toast
-          toast.success("Account created successfully!", {
-            description: "Taking you to complete your profile."
-          });
-          
-          // Navigate to profile setup
-          setTimeout(() => {
-            navigate("/profile-setup", { replace: true });
-          }, 1500);
-          
-          // Don't rethrow, we're handling it here
-          return;
+        // Handle email already registered
+        if (error.message?.includes("already registered")) {
+          setErrorMessage("Email already registered. Please use a different email address or sign in.");
+          throw error;
         }
         
         // For other errors, propagate
@@ -85,14 +65,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       // Set error message based on type
       if (error.message?.includes("already registered")) {
         setErrorMessage("Email already registered. Please use a different email address or sign in.");
-      } else if (isRateLimitError(error)) {
-        // This is a backup check - the error should be caught in the try block above
-        setErrorMessage("Email rate limit reached. Redirecting to profile setup...");
-        
-        // Navigate to profile setup after showing message briefly
-        setTimeout(() => {
-          navigate("/profile-setup", { replace: true });
-        }, 2000);
       } else {
         setErrorMessage(error.message || "An unexpected error occurred");
       }
@@ -156,3 +128,4 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 };
 
 export default SignUpForm;
+

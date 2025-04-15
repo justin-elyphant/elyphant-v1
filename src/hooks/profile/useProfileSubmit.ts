@@ -84,7 +84,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         onboarding_completed: true
       };
       
-      console.log("Creating/updating profile via Edge Function for user:", userId);
+      console.log("Creating/updating profile for user:", userId);
       console.log("Profile data to be saved:", formattedData);
       
       // Set a timeout to proceed regardless of API response
@@ -104,46 +104,30 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
           
           onComplete();
         }
-      }, 3000); // 3 second timeout
+      }, 5000); // Increase timeout to 5 seconds
       
       try {
-        // Use our Edge Function to create/update the profile
-        const response = await supabase.functions.invoke('create-profile', {
-          body: {
-            user_id: userId,
-            profile_data: formattedData
-          }
-        });
-        
-        if (response.error) {
-          console.error("Error with create-profile edge function:", response.error);
-          
-          // Fallback to direct profile update if edge function fails
-          try {
-            const { error: directError } = await supabase
-              .from('profiles')
-              .upsert({
-                id: userId,
-                ...formattedData,
-                onboarding_completed: true
-              });
-              
-            if (directError) {
-              console.error("Direct profile update also failed:", directError);
-              toast.error("Failed to save profile. Continuing anyway.");
-            } else {
-              console.log("Profile saved successfully via direct update");
-              toast.success("Profile setup complete!");
-            }
-          } catch (directErr) {
-            console.error("Error in direct profile update:", directErr);
-          }
+        // Direct database update - more reliable than edge function
+        const { error: directError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            ...formattedData,
+            onboarding_completed: true
+          }, {
+            onConflict: 'id'
+          });
+            
+        if (directError) {
+          console.error("Direct profile update failed:", directError);
+          toast.error("Failed to save profile. Continuing anyway.");
+          throw directError;
         } else {
-          console.log("Profile saved successfully via edge function:", response.data);
+          console.log("Profile saved successfully via direct update");
           toast.success("Profile setup complete!");
         }
-      } catch (err) {
-        console.error("Failed to call create-profile function:", err);
+      } catch (directErr) {
+        console.error("Error in direct profile update:", directErr);
         toast.error("Error saving profile data, but continuing anyway");
       }
       

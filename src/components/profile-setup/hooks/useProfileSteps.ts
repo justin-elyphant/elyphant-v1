@@ -5,7 +5,6 @@ export const useProfileSteps = () => {
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
-    "Basic Info",
     "Profile",
     "Birthday",
     "Shipping Address",

@@ -17,12 +17,13 @@ const UserProfile = () => {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [activeTab, setActiveTab] = useState("wishlists");
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Set up a timeout to prevent indefinite loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setLocalLoadingTimeout(false);
-    }, 2000); // Stop loading after 2 seconds max
+    }, 3000); // Increase timeout for slower connections
     
     return () => clearTimeout(timer);
   }, []);
@@ -33,7 +34,11 @@ const UserProfile = () => {
   // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!userId) return;
+      if (!userId) {
+        setError("No user ID provided");
+        setLoadingProfile(false);
+        return;
+      }
       
       try {
         console.log("Fetching profile data for:", userId);
@@ -42,121 +47,128 @@ const UserProfile = () => {
           .select('*')
           .eq('id', userId)
           .maybeSingle();
-          
+        
         if (error) {
           console.error("Error fetching profile:", error);
-          throw error;
+          setError("Failed to load profile data");
+          setLoadingProfile(false);
+          return;
         }
         
-        console.log("Profile data retrieved:", data);
+        if (!data) {
+          console.log("No profile found for user:", userId);
+          setError("Profile not found");
+          setLoadingProfile(false);
+          return;
+        }
+        
+        console.log("Profile data loaded:", data);
         setProfileData(data);
-      } catch (error) {
-        console.error("Error retrieving profile data:", error);
+        setError(null);
+      } catch (err) {
+        console.error("Unexpected error fetching profile:", err);
+        setError("An unexpected error occurred");
       } finally {
         setLoadingProfile(false);
       }
     };
     
-    if (!isLoading) {
+    if (userId) {
       fetchProfile();
     }
-  }, [userId, isLoading]);
+  }, [userId]);
   
-  // Handle loading states
-  const isPageLoading = (isLoading && localLoadingTimeout) || loadingProfile;
+  // Determine if we should show loading state
+  const isPageLoading = (isLoading && localLoadingTimeout) || (loadingProfile && localLoadingTimeout);
   
-  if (!isPageLoading && !user) {
-    navigate("/sign-in", { replace: true });
-    return null;
-  }
-  
-  // Mock wishlists data
-  const mockWishlists = isCurrentUser 
-    ? [
-        { 
-          id: 1, 
-          title: "Birthday Wishlist", 
-          description: "Things I'd like for my birthday", 
-          itemCount: 12,
-          image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmlydGhkYXl8ZW58MHx8MHx8fDA%3D"
-        },
-        { 
-          id: 2, 
-          title: "Home Office Upgrade", 
-          description: "Stuff to improve my workspace", 
-          itemCount: 8,
-          image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fGhvbWUlMjBvZmZpY2V8ZW58MHx8MHx8fDA%3D"
-        }
-      ]
-    : [];
-    
-  // Show skeleton loading state
+  // Show loading UI
   if (isPageLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container max-w-4xl mx-auto py-8 px-4">
-          <div className="rounded-lg overflow-hidden mb-6">
-            <Skeleton className="h-48 w-full" />
-            <div className="flex flex-col md:flex-row md:items-end mt-4 gap-4">
-              <Skeleton className="h-24 w-24 rounded-full" />
-              <div className="flex-1">
-                <Skeleton className="h-8 w-48 mb-2" />
-                <Skeleton className="h-4 w-64" />
+        <div className="container max-w-5xl mx-auto py-8 px-4">
+          <Skeleton className="h-10 w-48 mb-6" />
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              <Skeleton className="h-40 w-40 rounded-full" />
+              <div className="flex-1 space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-6 w-80" />
+                <Skeleton className="h-24 w-full" />
               </div>
             </div>
           </div>
-          
-          <Skeleton className="h-10 w-full mb-6" />
-          
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-48 mb-2" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Skeleton className="h-64 w-full rounded-lg" />
-              <Skeleton className="h-64 w-full rounded-lg" />
-            </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container max-w-5xl mx-auto py-8 px-4">
+          <ProfileHeader profile={null} isCurrentUser={false} />
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <h2 className="text-xl font-medium text-red-600 mb-2">Error Loading Profile</h2>
+            <p className="text-gray-500">{error}</p>
+            <button
+              onClick={() => navigate(-1)}
+              className="mt-4 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Go Back
+            </button>
           </div>
         </div>
       </div>
     );
   }
-  
-  // Handle profile not found
-  if (!profileData && !loadingProfile) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container max-w-4xl mx-auto py-8 px-4 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Not Found</h2>
-          <p className="text-gray-600 mb-6">The profile you're looking for doesn't exist or has been removed.</p>
-          <button 
-            onClick={() => navigate(-1)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="container max-w-4xl mx-auto py-8 px-4">
-        <ProfileHeader 
-          profile={profileData} 
-          isCurrentUser={isCurrentUser}
-        />
+      <div className="container max-w-5xl mx-auto py-8 px-4">
+        <ProfileHeader profile={profileData} isCurrentUser={isCurrentUser} />
         
-        <div className="mt-8">
-          <ProfileTabs 
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            isCurrentUser={isCurrentUser}
-            mockWishlists={mockWishlists}
-          />
-        </div>
+        {profileData && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-6">
+              <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+                <div className="relative">
+                  {profileData.profile_image ? (
+                    <img 
+                      src={profileData.profile_image} 
+                      alt={profileData.name} 
+                      className="h-40 w-40 object-cover rounded-full border-4 border-white shadow-md"
+                    />
+                  ) : (
+                    <div className="h-40 w-40 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-md">
+                      {profileData.name?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex-1 text-center md:text-left">
+                  <h1 className="text-2xl font-bold">{profileData.name || 'Anonymous User'}</h1>
+                  {profileData.username && (
+                    <p className="text-gray-500">@{profileData.username}</p>
+                  )}
+                  <div className="mt-4">
+                    <p className="text-gray-700">{profileData.bio || 'No bio available'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <ProfileTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              profile={profileData}
+              isCurrentUser={isCurrentUser}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

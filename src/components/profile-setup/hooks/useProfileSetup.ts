@@ -21,9 +21,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   });
   
   const [isCompleting, setIsCompleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 3000; // Reduce timeout to 3 seconds
+  const maxCompletionTime = 5000; // Increase timeout to 5 seconds
 
   // More reliable loading state checking
   const isLoading = isSubmitLoading || isCompleting || isDataLoading;
@@ -32,6 +33,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   useEffect(() => {
     // Clear any stale loading flags
     localStorage.removeItem("profileSetupLoading");
+    setError(null);
     console.log("useProfileSetup: Initialized and cleared loading flags");
     
     // Also clear when component unmounts
@@ -53,9 +55,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       totalLoading: isLoading,
       nextStepsOption: profileData.next_steps_option,
       activeStep,
-      hasCompletedRef: hasCompletedRef.current
+      hasCompletedRef: hasCompletedRef.current,
+      error
     });
-  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option, activeStep]);
+  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option, activeStep, error]);
 
   // Force completion after a timeout - with additional safeguards
   useEffect(() => {
@@ -68,6 +71,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
           // Remove loading flags from localStorage
           localStorage.removeItem("profileSetupLoading");
           localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
+          toast.success("Setup complete!");
           onComplete();
         }
       }, maxCompletionTime);
@@ -111,6 +115,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     console.log("Completing profile setup with data:", profileData);
     hasCompletedRef.current = true;
     setIsCompleting(true);
+    setError(null);
     
     // Set loading flag in localStorage
     localStorage.setItem("profileSetupLoading", "true");
@@ -129,9 +134,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       setTimeout(() => {
         onComplete();
       }, 100);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in handleComplete:", error);
-      toast.error("An error occurred, continuing anyway");
+      setError(error.message || "An error occurred, continuing anyway");
+      toast.error("Setup completed with some errors. Your data may be incomplete.");
       
       // Clear loading states and force completion
       setIsCompleting(false);
@@ -158,6 +164,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     isCurrentStepValid,
     
     isLoading,
+    error,
     handleComplete,
     handleSkip
   };

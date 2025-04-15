@@ -1,3 +1,4 @@
+
 import React, { useCallback, useMemo, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -9,7 +10,6 @@ import StepNavigation from "./components/StepNavigation";
 import { useProfileSetup } from "./hooks/useProfileSetup";
 
 // Import the step components
-import BasicInfoStep from "./steps/BasicInfoStep";
 import ProfileCombinedStep from "./steps/ProfileCombinedStep";
 import DateOfBirthStep from "./steps/DateOfBirthStep";
 import ShippingAddressStep from "./steps/ShippingAddressStep";
@@ -85,51 +85,45 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     switch (activeStep) {
       case 0:
         return (
-          <BasicInfoStep 
-            value={profileData.name}
-            onChange={(name) => updateProfileData('name', name)}
-          />
-        );
-      case 1:
-        return (
           <ProfileCombinedStep
             name={profileData.name}
             username={profileData.username}
             email={profileData.email || ''}
             profileImage={profileData.profile_image}
+            onNameChange={(name) => updateProfileData('name', name)}
             onUsernameChange={(username) => updateProfileData('username', username)}
             onProfileImageChange={(image) => updateProfileData('profile_image', image)}
           />
         );
-      case 2:
+      case 1:
         return (
           <DateOfBirthStep
             value={profileData.dob}
             onChange={(dob) => updateProfileData('dob', dob)}
           />
         );
-      case 3:
+      case 2:
         return (
           <ShippingAddressStep
             value={profileData.shipping_address}
             onChange={(address) => updateProfileData('shipping_address', address)}
           />
         );
-      case 4:
+      case 3:
         return (
           <GiftPreferencesStep
             values={profileData.gift_preferences}
             onChange={(preferences) => updateProfileData('gift_preferences', preferences)}
           />
         );
-      case 5:
+      case 4:
         return (
           <DataSharingStep
             values={profileData.data_sharing_settings}
             onChange={(settings) => updateProfileData('data_sharing_settings', settings)}
           />
         );
-      case 6:
+      case 5:
         return (
           <NextStepsStep
             onSelectOption={(option) => updateProfileData('next_steps_option', option)}

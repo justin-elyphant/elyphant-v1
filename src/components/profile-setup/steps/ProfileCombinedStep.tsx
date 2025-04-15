@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,7 @@ interface ProfileCombinedStepProps {
   profileImage: string | null;
   onUsernameChange: (username: string) => void;
   onProfileImageChange: (imageUrl: string | null) => void;
+  onNameChange: (name: string) => void;
 }
 
 const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
@@ -23,7 +23,8 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
   email,
   profileImage,
   onUsernameChange,
-  onProfileImageChange
+  onProfileImageChange,
+  onNameChange
 }) => {
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
@@ -31,7 +32,6 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Generate suggested usernames based on email and name
   useEffect(() => {
     if (email || name) {
       const emailPrefix = email ? email.split('@')[0] : '';
@@ -45,14 +45,17 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
         `${emailPrefix}${Math.floor(Math.random() * 1000)}`
       ].filter(Boolean);
       
-      // Remove duplicates
       setSuggestedUsernames([...new Set(suggestions)]);
     }
   }, [email, name]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUsername = e.target.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
     onUsernameChange(newUsername);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onNameChange(e.target.value);
   };
 
   const selectSuggestion = (username: string) => {
@@ -67,15 +70,12 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
 
     setIsChecking(true);
     try {
-      // First, check if the profiles table exists and has a username column
       const { data: tableInfo, error: tableError } = await supabase
         .from('profiles')
         .select('id')
         .limit(1);
       
-      // If there's no error with the query, proceed to check for username
       if (!tableError) {
-        // Try to check if username column exists and if the username is taken
         try {
           const { data, error } = await supabase
             .from('profiles')
@@ -84,7 +84,6 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
             .maybeSingle();
 
           if (error && error.code === 'PGRST204') {
-            // The username column doesn't exist, so all usernames are "available"
             console.log("Username column doesn't exist yet, all usernames are available");
             setIsAvailable(true);
           } else if (error) {
@@ -94,12 +93,10 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
           }
         } catch (error) {
           console.error("Error checking username:", error);
-          // If there's an error, just assume the username is available
           setIsAvailable(true);
         }
       } else {
         console.log("Couldn't query profiles table:", tableError);
-        // If profiles table doesn't exist or can't be queried, assume username is available
         setIsAvailable(true);
       }
     } catch (error) {
@@ -110,7 +107,6 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
     }
   };
 
-  // Debounced username check
   useEffect(() => {
     const timer = setTimeout(() => {
       if (username) {
@@ -139,7 +135,6 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
     try {
       setIsUploading(true);
       
-      // Create a preview for immediate feedback
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -172,12 +167,11 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
       <div className="text-center mb-6">
         <h3 className="text-lg font-medium">Personalize your profile</h3>
         <p className="text-sm text-muted-foreground">
-          Add a username and profile photo to make your account uniquely yours
+          Add your name, username and profile photo to make your account uniquely yours
         </p>
       </div>
       
       <div className="flex flex-col md:flex-row gap-8 items-center">
-        {/* Profile Photo Section */}
         <div className="flex-shrink-0 flex flex-col items-center gap-4">
           <div className="relative group">
             <Avatar className="h-32 w-32">
@@ -242,8 +236,21 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
           </div>
         </div>
         
-        {/* Username Section */}
         <div className="flex-1 space-y-4 w-full max-w-md">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Your full name"
+              value={name}
+              onChange={handleNameChange}
+            />
+            <p className="text-xs text-muted-foreground">
+              This will be displayed on your profile
+            </p>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <div className="relative">
@@ -251,7 +258,7 @@ const ProfileCombinedStep: React.FC<ProfileCombinedStepProps> = ({
                 id="username"
                 placeholder="Choose a username"
                 value={username}
-                onChange={handleChange}
+                onChange={handleUsernameChange}
                 className={`pr-10 ${isAvailable === true ? 'border-green-500' : isAvailable === false ? 'border-red-500' : ''}`}
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">

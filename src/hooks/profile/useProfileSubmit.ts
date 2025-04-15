@@ -42,6 +42,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       // Get user ID from multiple sources for reliability
       const userId = user?.id || localStorage.getItem("userId");
       const userEmail = user?.email || localStorage.getItem("userEmail") || profileData.email;
+      const userName = profileData.name || localStorage.getItem("userName") || "";
       
       console.log("Profile submit for user:", userId, "with email:", userEmail);
       console.log("Next steps option:", nextStepsOption || profileData.next_steps_option || "dashboard");
@@ -60,11 +61,13 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       
       // Prepare profile data
       const formattedData = {
-        name: profileData.name || "User",
+        id: userId,
+        name: userName || "User",
         email: userEmail,
+        username: profileData.username || userName.toLowerCase().replace(/\s+/g, '_') || `user_${Date.now().toString(36)}`,
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,
-        bio: profileData.bio || `Hi, I'm ${profileData.name || "User"}`,
+        bio: profileData.bio || `Hi, I'm ${userName || "User"}`,
         shipping_address: profileData.shipping_address || {
           street: "",
           city: "",
@@ -79,8 +82,10 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
           shipping_address: "friends",
           gift_preferences: "public"
         },
+        interests: (profileData.gift_preferences || []).map(pref => 
+          typeof pref === 'string' ? pref : pref.category
+        ),
         updated_at: new Date().toISOString(),
-        username: profileData.username || `user_${Date.now().toString(36)}`,
         next_steps_option: profileData.next_steps_option || nextStepsOption || "dashboard",
         // Add onboarding_completed flag
         onboarding_completed: true
@@ -112,44 +117,21 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         // Try multiple update methods for reliability
         let updateSuccess = false;
         
-        // 1. Try edge function first
-        try {
-          const response = await supabase.functions.invoke('create-profile', {
-            body: {
-              user_id: userId,
-              profile_data: formattedData
-            }
+        // Directly try database update
+        const { error: directError } = await supabase
+          .from('profiles')
+          .upsert({
+            ...formattedData
+          }, {
+            onConflict: 'id'
           });
-          
-          if (!response.error) {
-            console.log("Profile saved via edge function:", response.data);
-            updateSuccess = true;
-          } else {
-            console.error("Edge function profile update failed:", response.error);
-          }
-        } catch (edgeFnError) {
-          console.error("Error calling edge function:", edgeFnError);
-        }
-        
-        // 2. If edge function failed, try direct database update
-        if (!updateSuccess) {
-          const { error: directError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: userId,
-              ...formattedData,
-              onboarding_completed: true
-            }, {
-              onConflict: 'id'
-            });
-              
-          if (directError) {
-            console.error("Direct profile update failed:", directError);
-            throw directError;
-          } else {
-            console.log("Profile saved successfully via direct update");
-            updateSuccess = true;
-          }
+            
+        if (directError) {
+          console.error("Direct profile update failed:", directError);
+          throw directError;
+        } else {
+          console.log("Profile saved successfully via direct update");
+          updateSuccess = true;
         }
         
         if (updateSuccess) {

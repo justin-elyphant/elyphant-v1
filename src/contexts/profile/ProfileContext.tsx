@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,20 +32,63 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
+      console.log("Fetching profile for user ID:", user.id);
+      
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
       
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching profile:", fetchError);
+        throw fetchError;
+      }
       
-      setProfile(data);
-      console.log("Profile data loaded:", data);
+      // If we have a profile, update the state
+      if (data) {
+        console.log("Profile data loaded:", data);
+        setProfile(data);
+      } else {
+        console.warn("No profile found for user:", user.id);
+        
+        // Check if we have profile data in localStorage that we can use
+        const userName = localStorage.getItem("userName");
+        const userEmail = localStorage.getItem("userEmail");
+        
+        // If we have stored profile data from signup/onboarding, create a minimal profile
+        if (userName || userEmail) {
+          console.log("Creating minimal profile from localStorage data");
+          const minimalProfile: Profile = {
+            id: user.id,
+            name: userName || user.user_metadata?.name || "",
+            email: userEmail || user.email || "",
+            username: userName ? userName.toLowerCase().replace(/\s+/g, '_') : "",
+            profile_image: null,
+            bio: userName ? `Hi, I'm ${userName}` : "",
+            interests: []
+          };
+          
+          setProfile(minimalProfile);
+          
+          // Try to persist this profile to the database
+          try {
+            await supabase
+              .from('profiles')
+              .upsert(minimalProfile)
+              .eq('id', user.id);
+            console.log("Created minimal profile in database");
+          } catch (e) {
+            console.error("Failed to create minimal profile:", e);
+          }
+        } else {
+          // No profile and no stored data
+          setProfile(null);
+        }
+      }
     } catch (err) {
       console.error("Error fetching profile:", err);
       setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
-      toast.error("Failed to load profile data");
     } finally {
       setLoading(false);
     }
@@ -59,6 +102,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setLoading(true);
+      console.log("Updating profile with data:", updateData);
+      
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -67,7 +112,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         })
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating profile:", updateError);
+        throw updateError;
+      }
       
       await fetchProfile(); // Refresh profile data
       toast.success("Profile updated successfully");
@@ -81,9 +129,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }, [user, fetchProfile]);
 
   // Fetch profile when auth state changes
-  React.useEffect(() => {
+  useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  // Also fetch profile data if we have localStorage flags indicating a new signup
+  useEffect(() => {
+    if (localStorage.getItem("newSignUp") === "true" && user) {
+      console.log("Detected new signup, fetching profile data");
+      fetchProfile();
+    }
+  }, [user, fetchProfile]);
 
   const value = {
     profile,

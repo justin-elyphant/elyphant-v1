@@ -1,12 +1,11 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
 import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
-import Header from "@/components/home/Header";
 import { Skeleton } from "@/components/ui/skeleton";
+// Removed Header import as it's now in MainLayout
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -38,7 +37,6 @@ const Dashboard = () => {
   if (isPageLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div className="container max-w-6xl mx-auto py-8 px-4">
           <div className="flex items-center justify-between mb-8">
             <Skeleton className="h-10 w-64" />
@@ -61,8 +59,6 @@ const Dashboard = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Add homepage header instead of Hero banner */}
-      <Header />
       
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <DashboardHeader userData={user} onLogout={signOut} />

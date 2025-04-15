@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import ProfileHeader from "@/components/user-profile/ProfileHeader";
 import ProfileTabs from "@/components/user-profile/ProfileTabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import Header from "@/components/home/Header";
 
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -18,19 +17,16 @@ const UserProfile = () => {
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Set up a timeout to prevent indefinite loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setLocalLoadingTimeout(false);
-    }, 3000); // Increase timeout for slower connections
+    }, 3000);
     
     return () => clearTimeout(timer);
   }, []);
   
-  // Check if viewing own profile
   const isCurrentUser = user?.id === userId;
   
-  // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
       if (!userId) {
@@ -77,14 +73,11 @@ const UserProfile = () => {
     }
   }, [userId]);
   
-  // Determine if we should show loading state
   const isPageLoading = (isLoading && localLoadingTimeout) || (loadingProfile && localLoadingTimeout);
   
-  // Show loading UI
   if (isPageLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div className="container max-w-5xl mx-auto py-8 px-4">
           <Skeleton className="h-10 w-48 mb-6" />
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -102,11 +95,9 @@ const UserProfile = () => {
     );
   }
   
-  // Show error state
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div className="container max-w-5xl mx-auto py-8 px-4">
           <ProfileHeader profile={null} isCurrentUser={false} />
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
@@ -124,14 +115,12 @@ const UserProfile = () => {
     );
   }
 
-  // Mock wishlists for the ProfileTabs component
   const mockWishlists = [
     // Add some mock data for wishlists if needed
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <div className="container max-w-5xl mx-auto py-8 px-4">
         <ProfileHeader profile={profileData} isCurrentUser={isCurrentUser} />
         

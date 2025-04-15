@@ -8,7 +8,7 @@ import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
 import Header from "@/components/home/Header";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { isComplete, loading } = useProfileCompletion(true); // Set to true to enable redirects
   
@@ -39,7 +39,7 @@ const Dashboard = () => {
       <Header />
       
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <DashboardHeader userData={user} onLogout={() => {}} />
+        <DashboardHeader userData={user} onLogout={signOut} />
         <DashboardGrid />
       </div>
     </div>

@@ -30,6 +30,9 @@ const AuthButtons = () => {
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
+    
+    console.log("Sign out button clicked, signOut function available:", !!signOut);
+    
     if (signOut) {
       try {
         await signOut();

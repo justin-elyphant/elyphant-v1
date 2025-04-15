@@ -23,6 +23,7 @@ export const useAuthFunctions = (user: User | null) => {
       localStorage.removeItem("redirectAfterSignIn");
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("nextStepsOption");
+      localStorage.removeItem("profileCompleted");
       
       console.log("Sign out successful, navigating to home page");
       navigate("/");
@@ -55,6 +56,7 @@ export const useAuthFunctions = (user: User | null) => {
       localStorage.removeItem("redirectAfterSignIn");
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("nextStepsOption");
+      localStorage.removeItem("profileCompleted");
       
       // Redirect to home page
       navigate("/");

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useSettingsForm } from "@/hooks/settings/useSettingsForm";
@@ -10,9 +10,16 @@ import InterestsFormSection from "./InterestsFormSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import DataSharingSection from "./DataSharingSection";
 import DeleteAccount from "./DeleteAccount";
+import { useAuth } from "@/contexts/auth";
 
 const GeneralSettings = () => {
   const { form, onSubmit, isLoading } = useSettingsForm();
+  const { user } = useAuth();
+  const [newInterest, setNewInterest] = useState("");
+  const [newImportantDate, setNewImportantDate] = useState<{ date?: Date; description: string }>({
+    date: undefined,
+    description: ""
+  });
   
   if (isLoading) {
     return (
@@ -21,6 +28,36 @@ const GeneralSettings = () => {
       </div>
     );
   }
+
+  const handleAddInterest = () => {
+    if (!newInterest.trim()) return;
+    
+    const currentInterests = form.getValues("interests") || [];
+    form.setValue("interests", [...currentInterests, newInterest.trim()]);
+    setNewInterest("");
+  };
+
+  const handleRemoveInterest = (index: number) => {
+    const currentInterests = form.getValues("interests") || [];
+    form.setValue("interests", currentInterests.filter((_, i) => i !== index));
+  };
+
+  const handleAddImportantDate = () => {
+    if (!newImportantDate.date || !newImportantDate.description.trim()) return;
+    
+    const currentDates = form.getValues("importantDates") || [];
+    form.setValue("importantDates", [...currentDates, {
+      date: newImportantDate.date,
+      description: newImportantDate.description.trim()
+    }]);
+    
+    setNewImportantDate({ date: undefined, description: "" });
+  };
+
+  const handleRemoveImportantDate = (index: number) => {
+    const currentDates = form.getValues("importantDates") || [];
+    form.setValue("importantDates", currentDates.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="space-y-8">
@@ -38,9 +75,21 @@ const GeneralSettings = () => {
             </div>
             
             <div className="col-span-1 md:col-span-2 space-y-8">
-              <BasicInfoSection />
-              <InterestsFormSection />
-              <ImportantDatesFormSection />
+              <BasicInfoSection user={user} />
+              <InterestsFormSection 
+                interests={form.getValues("interests") || []}
+                removeInterest={handleRemoveInterest}
+                newInterest={newInterest}
+                setNewInterest={setNewInterest}
+                addInterest={handleAddInterest}
+              />
+              <ImportantDatesFormSection 
+                importantDates={form.getValues("importantDates") || []}
+                removeImportantDate={handleRemoveImportantDate}
+                newImportantDate={newImportantDate}
+                setNewImportantDate={setNewImportantDate}
+                addImportantDate={handleAddImportantDate}
+              />
             </div>
           </div>
           

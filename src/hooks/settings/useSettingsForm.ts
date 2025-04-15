@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export const useSettingsForm = () => {
   const { profile, loading: profileLoading, updateProfile } = useProfile();
@@ -34,7 +35,7 @@ export const useSettingsForm = () => {
   });
 
   // Load profile data into form when available
-  React.useEffect(() => {
+  useEffect(() => {
     if (profile && !profileLoading) {
       form.reset({
         name: profile.name || "",
@@ -74,7 +75,13 @@ export const useSettingsForm = () => {
         bio: data.bio || `Hi, I'm ${data.name}`,
         profile_image: data.profile_image,
         dob: data.birthday?.toISOString(),
-        shipping_address: data.address,
+        shipping_address: {
+          street: data.address.street,
+          city: data.address.city,
+          state: data.address.state,
+          zipCode: data.address.zipCode,
+          country: data.address.country
+        },
         gift_preferences: data.interests.map(interest => ({
           category: interest,
           importance: "medium"
@@ -87,6 +94,7 @@ export const useSettingsForm = () => {
       };
 
       await updateProfile(formattedData);
+      toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error in form submission:", error);
       toast.error("Failed to save profile changes");

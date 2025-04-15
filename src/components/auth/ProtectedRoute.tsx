@@ -26,7 +26,8 @@ const ProtectedRoute = ({
       isDebugMode,
       profileCompleted: localStorage.getItem("profileCompleted"),
       newSignUp: localStorage.getItem("newSignUp"),
-      signupRateLimited: localStorage.getItem("signupRateLimited")
+      signupRateLimited: localStorage.getItem("signupRateLimited"),
+      emailVerified: localStorage.getItem("emailVerified")
     });
   }, [user, location, isLoading, isDebugMode]);
 
@@ -39,12 +40,11 @@ const ProtectedRoute = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Additional check for rate limited signup
+  // Check for various auth states
   const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
-  
-  // Special handling for new signups
   const isNewSignUp = localStorage.getItem("newSignUp") === "true";
   const profileCompleted = localStorage.getItem("profileCompleted") === "true";
+  const emailVerified = localStorage.getItem("emailVerified") === "true";
 
   // If in debug mode, bypass authentication check
   if (isDebugMode) {
@@ -52,7 +52,7 @@ const ProtectedRoute = ({
     return <>{children}</>;
   }
 
-  // Determine if we should still show loading state - only if actually loading and within timeout period
+  // Determine if we should still show loading state
   const shouldShowLoading = isLoading && showLoadingUI;
 
   // If loading has timed out but we're on a protected route and don't have user info
@@ -62,35 +62,30 @@ const ProtectedRoute = ({
     return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
   }
 
-  // Special case for profile-setup page - it's a protected route but we're more lenient
+  // Special case for profile-setup page
   if (location.pathname === '/profile-setup') {
     console.log("On profile setup page - Enhanced Logging", {
       newSignUp: isNewSignUp,
       rateLimited: isRateLimited,
       profileCompleted,
+      emailVerified,
       userExists: !!user
     });
     
-    // If profile is already completed and this isn't a new signup, redirect to dashboard
+    // If profile is completed and this isn't a new signup, redirect to dashboard
     if (profileCompleted && !isNewSignUp && user) {
       console.log("Profile already completed, redirecting to dashboard");
       return <Navigate to="/dashboard" replace />;
     }
     
-    // CRITICAL FIX: If we have a new signup flag, bypass normal auth checks and render immediately
-    if (isNewSignUp) {
-      console.log("New signup detected, allowing immediate access to profile setup");
-      return <>{children}</>;
-    }
-    
-    // If we have a user OR this is a rate limited signup, render the page
-    if (user || isRateLimited) {
-      console.log("Allowing access to profile setup");
+    // If we have a new signup flag, bypass normal auth checks
+    if (isNewSignUp || isRateLimited) {
+      console.log("New signup or rate limited signup detected, allowing access");
       return <>{children}</>;
     }
   }
 
-  // If still loading with active timeout, show a nicer loading UI
+  // If still loading with active timeout, show loading UI
   if (shouldShowLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">

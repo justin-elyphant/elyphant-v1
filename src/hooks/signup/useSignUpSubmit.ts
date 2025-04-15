@@ -3,7 +3,14 @@ import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserProfile } from "./useProfileCreation";
-import { UseSignUpSubmitProps } from "@/hooks/signup/useSignUpProcess/types";
+
+interface UseSignUpSubmitProps {
+  setUserEmail: (email: string) => void;
+  setUserName: (name: string) => void;
+  setEmailSent: (sent: boolean) => void;
+  setStep: (step: "signup" | "verification") => void;
+  setIsSubmitting: (isSubmitting: boolean) => void;
+}
 
 export const useSignUpSubmit = ({
   setUserEmail,
@@ -58,7 +65,13 @@ export const useSignUpSubmit = ({
         
         // Create user profile
         if (signUpData.user.id) {
-          await createUserProfile(signUpData.user.id, values.email, values.name);
+          try {
+            await createUserProfile(signUpData.user.id, values.email, values.name);
+            console.log("Profile created successfully");
+          } catch (profileError) {
+            console.error("Error creating profile:", profileError);
+            // Continue with signup process even if profile creation fails
+          }
         }
         
         // Set application state

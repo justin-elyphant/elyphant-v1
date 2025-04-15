@@ -17,7 +17,7 @@ export const useAuthFunctions = (user: User | null) => {
         throw error;
       }
       
-      // Clear any local storage items related to authentication
+      // Clear ALL auth-related localStorage items
       localStorage.removeItem("userId");
       localStorage.removeItem("userEmail");
       localStorage.removeItem("userName");
@@ -27,6 +27,8 @@ export const useAuthFunctions = (user: User | null) => {
       localStorage.removeItem("profileCompleted");
       localStorage.removeItem("fromSignIn");
       localStorage.removeItem("signupRateLimited");
+      localStorage.removeItem("emailVerified");
+      localStorage.removeItem("verifiedEmail");
       
       console.log("Sign out successful, redirecting to home page");
       
@@ -56,17 +58,8 @@ export const useAuthFunctions = (user: User | null) => {
       
       if (error) throw error;
       
-      // Sign out after deletion
-      await supabase.auth.signOut();
-      
-      // Clear any local storage items
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("redirectAfterSignIn");
-      localStorage.removeItem("newSignUp");
-      localStorage.removeItem("nextStepsOption");
-      localStorage.removeItem("profileCompleted");
+      // Sign out and clear data after deletion
+      await signOut();
       
       toast.dismiss();
       toast.success("Your account has been deleted");

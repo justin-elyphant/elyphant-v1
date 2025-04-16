@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -19,24 +18,35 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
     console.log("Starting profile submission with data:", JSON.stringify(profileData, null, 2));
     
     try {
-      // Format the data for storage
+      // Create username from name if not provided
+      const username = profileData.username || 
+        profileData.name?.toLowerCase().replace(/\s+/g, '_') || 
+        `user_${Date.now().toString(36)}`;
+
+      // Format the data for storage - ensuring ALL fields are included
       const formattedData = {
         id: user.id,
-        name: profileData.name,
-        username: profileData.username || profileData.name.toLowerCase().replace(/\s+/g, '_'),
-        email: profileData.email || user.email,
-        profile_image: profileData.profile_image,
-        bio: profileData.bio || `Hi, I'm ${profileData.name}`,
-        dob: profileData.dob,
-        shipping_address: profileData.shipping_address,
-        gift_preferences: profileData.gift_preferences.map(pref => ({
-          category: typeof pref === 'string' ? pref : pref.category,
-          importance: 'medium'
-        })),
-        important_dates: profileData.important_dates || [],
+        name: profileData.name || "",
+        username: username,
+        email: profileData.email || user.email || "",
+        profile_image: profileData.profile_image || null,
+        bio: profileData.bio || `Hi, I'm ${profileData.name || "there"}`,
+        dob: profileData.dob || null,
+        shipping_address: profileData.shipping_address || {},
+        gift_preferences: Array.isArray(profileData.gift_preferences) 
+          ? profileData.gift_preferences.map(pref => ({
+              category: typeof pref === 'string' ? pref : pref.category,
+              importance: 'medium'
+            }))
+          : [],
+        important_dates: Array.isArray(profileData.important_dates) 
+          ? profileData.important_dates 
+          : [],
         data_sharing_settings: {
-          ...profileData.data_sharing_settings,
-          shipping_address: "friends" // Ensure shipping address is shared with friends
+          dob: "friends",
+          shipping_address: "friends",
+          gift_preferences: "public",
+          ...(profileData.data_sharing_settings || {})
         },
         onboarding_completed: true,
         updated_at: new Date().toISOString()
@@ -53,33 +63,50 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
       console.log("Has important_dates:", !!formattedData.important_dates && Array.isArray(formattedData.important_dates));
       console.log("Gift preferences length:", formattedData.gift_preferences?.length || 0);
 
-      // Note: Supabase client handles JSON serialization properly, 
-      // no need to manually stringify JSONB fields
+      // Try up to 3 times to save the profile data
+      let attempts = 0;
+      let success = false;
+      
+      while (attempts < 3 && !success) {
+        attempts++;
+        console.log(`Attempt ${attempts} to save profile data`);
+        
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .upsert(formattedData, {
+              onConflict: 'id'
+            });
 
-      // Now that RLS allows users to directly insert their own profile,
-      // we can simplify the insertion/update logic
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert(formattedData, {
-          onConflict: 'id'
-        });
-
-      if (error) {
-        console.error("Error saving profile:", error);
-        throw new Error(`Failed to save profile: ${error.message}`);
+          if (error) {
+            console.error(`Error saving profile (attempt ${attempts}):`, error);
+            if (attempts === 3) throw error;
+          } else {
+            console.log("Profile saved successfully, response:", data);
+            success = true;
+          }
+        } catch (error) {
+          console.error(`Error in upsert operation (attempt ${attempts}):`, error);
+          // On last attempt, throw to exit the while loop
+          if (attempts === 3) throw error;
+          // Otherwise wait and try again
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
       
-      console.log("Profile saved successfully, response:", data);
-      toast.success("Profile setup complete!");
+      if (success) {
+        toast.success("Profile setup complete!");
 
-      // Clear signup-related flags
-      localStorage.removeItem("newSignUp");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("userName");
-      
-      setIsLoading(false);
-      onComplete();
-      
+        // Clear signup-related flags
+        localStorage.removeItem("newSignUp");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userName");
+        
+        setIsLoading(false);
+        onComplete();
+      } else {
+        throw new Error("Failed to save profile after multiple attempts");
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile data, but continuing anyway");

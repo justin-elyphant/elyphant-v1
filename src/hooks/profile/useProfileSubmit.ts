@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -43,7 +42,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       const userName = profileData.name || localStorage.getItem("userName") || "";
       
       console.log("Profile submit for user:", userId);
-      console.log("Raw profile data:", profileData);
+      console.log("Raw profile data:", JSON.stringify(profileData, null, 2));
       
       if (!userId) {
         console.error("No user ID available");
@@ -52,24 +51,30 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         return;
       }
       
+      // Create username from name if not provided
+      const username = profileData.username || 
+        userName.toLowerCase().replace(/\s+/g, '_') || 
+        `user_${Date.now().toString(36)}`;
+      
       // Format the complete profile data matching Supabase schema exactly
       const formattedData = {
         id: userId,
         name: userName,
         email: userEmail,
-        username: profileData.username || userName.toLowerCase().replace(/\s+/g, '_'),
+        username: username,
         bio: profileData.bio || `Hi, I'm ${userName}`,
-        profile_image: profileData.profile_image,
-        dob: profileData.dob || null, // Store as text (month + date only)
-        shipping_address: profileData.shipping_address || {
-          street: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          country: ""
-        },
-        gift_preferences: profileData.gift_preferences || [],
-        important_dates: profileData.important_dates || [],
+        profile_image: profileData.profile_image || null,
+        dob: profileData.dob || null,
+        shipping_address: profileData.shipping_address || {},
+        gift_preferences: Array.isArray(profileData.gift_preferences) 
+          ? profileData.gift_preferences.map(pref => ({
+              category: typeof pref === 'string' ? pref : pref.category,
+              importance: "medium"
+            }))
+          : [],
+        important_dates: Array.isArray(profileData.important_dates) 
+          ? profileData.important_dates 
+          : [],
         data_sharing_settings: profileData.data_sharing_settings || {
           dob: "friends",
           shipping_address: "private",
@@ -91,34 +96,52 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         hasImportantDates: !!formattedData.important_dates && Array.isArray(formattedData.important_dates)
       });
 
-      // Ensure JSONB fields are properly formatted
-      // Note: Supabase client automatically handles JSON serialization for jsonb columns,
-      // so we don't need to manually stringify these objects
-
-      // Update profile in Supabase
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert(formattedData, {
-          onConflict: 'id'
-        });
+      // Try multiple times to update the profile
+      let attempts = 0;
+      let success = false;
+      
+      while (attempts < 3 && !success) {
+        attempts++;
+        console.log(`Attempt ${attempts} to update profile`);
         
-      if (error) {
-        console.error("Profile update failed:", error);
-        throw error;
+        try {
+          // Update profile in Supabase
+          const { data, error } = await supabase
+            .from('profiles')
+            .upsert(formattedData, {
+              onConflict: 'id'
+            });
+            
+          if (error) {
+            console.error(`Profile update failed (attempt ${attempts}):`, error);
+            if (attempts === 3) throw error;
+          } else {
+            console.log("Profile saved successfully:", data);
+            success = true;
+          }
+        } catch (error) {
+          console.error(`Error in upsert operation (attempt ${attempts}):`, error);
+          // On last attempt, throw to exit the while loop
+          if (attempts === 3) throw error;
+          // Otherwise wait and try again
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
-
-      console.log("Profile saved successfully:", data);
-      toast.success("Profile setup complete!");
       
-      // Clear signup flags
-      localStorage.removeItem("newSignUp");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("profileSetupLoading");
-      
-      setIsLoading(false);
-      onComplete();
-      
+      if (success) {
+        toast.success("Profile setup complete!");
+        
+        // Clear signup flags
+        localStorage.removeItem("newSignUp");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userName");
+        localStorage.removeItem("profileSetupLoading");
+        
+        setIsLoading(false);
+        onComplete();
+      } else {
+        throw new Error("Failed to update profile after multiple attempts");
+      }
     } catch (err) {
       console.error("Error in profile submission:", err);
       toast.error("Failed to save profile");

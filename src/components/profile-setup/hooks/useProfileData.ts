@@ -10,11 +10,13 @@ export const useProfileData = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
+    // Add username to initial state
     username: "",
+    // Add bio to initial state
+    bio: "",
     email: user?.email || "",
     profile_image: null,
     dob: "",
-    bio: "",
     shipping_address: {
       street: "",
       city: "",
@@ -52,31 +54,28 @@ export const useProfileData = () => {
         if (data) {
           console.log("Loaded initial profile data:", data);
           
-          // Extract username from email if not present
-          const username = data.username || (data.email ? data.email.split('@')[0] : '');
-          
-          // Prepare sharing settings with defaults if missing
-          const sharing_settings = data.data_sharing_settings || {
-            dob: "friends",
-            shipping_address: "private",
-            gift_preferences: "public",
-          };
-          
-          // Map gift preferences to expected format
-          const gift_preferences = data.gift_preferences || [];
+          // Ensure username is extracted, with fallback
+          const username = data.username || 
+            (data.email ? data.email.split('@')[0] : '') ||
+            `user_${Date.now().toString(36)}`;
           
           setProfileData(prevData => ({
             ...prevData,
             name: data.name || prevData.name,
             username: username,
+            // Add bio to profile data loading
+            bio: data.bio || prevData.bio,
             email: data.email || user.email || '',
             profile_image: data.profile_image || prevData.profile_image,
-            bio: data.bio || prevData.bio,
             dob: data.dob || prevData.dob,
             shipping_address: data.shipping_address || prevData.shipping_address,
-            gift_preferences: gift_preferences,
+            gift_preferences: data.gift_preferences || [],
             important_dates: data.important_dates || [],
-            data_sharing_settings: sharing_settings
+            data_sharing_settings: data.data_sharing_settings || {
+              dob: "friends",
+              shipping_address: "private",
+              gift_preferences: "public"
+            }
           }));
         }
       } catch (error) {

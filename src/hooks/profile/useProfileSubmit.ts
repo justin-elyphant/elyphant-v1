@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
@@ -64,10 +63,14 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         id: userId,
         name: userName || "User",
         email: userEmail,
-        username: profileData.username || userName.toLowerCase().replace(/\s+/g, '_') || `user_${Date.now().toString(36)}`,
+        // Ensure username is included
+        username: profileData.username || 
+                   userName.toLowerCase().replace(/\s+/g, '_') || 
+                   `user_${Date.now().toString(36)}`,
+        // Ensure bio is included
+        bio: profileData.bio || `Hi, I'm ${userName || "User"}`,
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,
-        bio: profileData.bio || `Hi, I'm ${userName || "User"}`,
         shipping_address: profileData.shipping_address || {
           street: "",
           city: "",

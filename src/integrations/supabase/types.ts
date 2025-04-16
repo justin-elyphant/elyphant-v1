@@ -181,6 +181,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          bio: string | null
           created_at: string | null
           data_sharing_settings: Json | null
           dob: string | null
@@ -192,8 +193,10 @@ export type Database = {
           profile_type: string | null
           shipping_address: Json | null
           updated_at: string | null
+          username: string | null
         }
         Insert: {
+          bio?: string | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
@@ -205,8 +208,10 @@ export type Database = {
           profile_type?: string | null
           shipping_address?: Json | null
           updated_at?: string | null
+          username?: string | null
         }
         Update: {
+          bio?: string | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
@@ -218,6 +223,7 @@ export type Database = {
           profile_type?: string | null
           shipping_address?: Json | null
           updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }

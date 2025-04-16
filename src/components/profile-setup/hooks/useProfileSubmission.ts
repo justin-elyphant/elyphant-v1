@@ -16,14 +16,14 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
     }
     
     setIsLoading(true);
-    console.log("Starting profile submission with data:", profileData);
+    console.log("Starting profile submission with data:", JSON.stringify(profileData, null, 2));
     
     try {
       // Format the data for storage
       const formattedData = {
         id: user.id,
         name: profileData.name,
-        username: profileData.username,
+        username: profileData.username || profileData.name.toLowerCase().replace(/\s+/g, '_'),
         email: profileData.email || user.email,
         profile_image: profileData.profile_image,
         bio: profileData.bio || `Hi, I'm ${profileData.name}`,
@@ -46,6 +46,11 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
       console.log("EXACT PAYLOAD FOR PROFILE SUBMISSION:", JSON.stringify(formattedData, null, 2));
       console.log("User ID for RLS:", user.id);
       console.log("Profile data keys:", Object.keys(formattedData));
+      console.log("Has shipping_address:", !!formattedData.shipping_address);
+      console.log("Has dob:", !!formattedData.dob);
+      console.log("Has username:", !!formattedData.username);
+      console.log("Has bio:", !!formattedData.bio);
+      console.log("Gift preferences length:", formattedData.gift_preferences.length);
 
       // Now that RLS allows users to directly insert their own profile,
       // we can simplify the insertion/update logic

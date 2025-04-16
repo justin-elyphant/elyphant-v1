@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -44,6 +45,7 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       const userName = profileData.name || localStorage.getItem("userName") || "";
       
       console.log("Profile submit for user:", userId, "with email:", userEmail);
+      console.log("Profile data being submitted:", JSON.stringify(profileData, null, 2));
       console.log("Next steps option:", nextStepsOption || profileData.next_steps_option || "dashboard");
       
       if (!userId) {
@@ -63,11 +65,9 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         id: userId,
         name: userName || "User",
         email: userEmail,
-        // Ensure username is included
         username: profileData.username || 
                    userName.toLowerCase().replace(/\s+/g, '_') || 
                    `user_${Date.now().toString(36)}`,
-        // Ensure bio is included
         bio: profileData.bio || `Hi, I'm ${userName || "User"}`,
         profile_image: profileData.profile_image,
         dob: profileData.dob || null,
@@ -90,7 +90,6 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         ),
         updated_at: new Date().toISOString(),
         next_steps_option: profileData.next_steps_option || nextStepsOption || "dashboard",
-        // Add onboarding_completed flag
         onboarding_completed: true
       };
       
@@ -100,6 +99,8 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
       console.log("Number of gift preferences:", formattedData.gift_preferences.length);
       console.log("Has shipping address:", !!formattedData.shipping_address);
       console.log("Has DOB:", !!formattedData.dob);
+      console.log("Has username:", !!formattedData.username);
+      console.log("Has bio:", !!formattedData.bio);
       
       // Set a timeout to proceed regardless of API response
       submitTimeoutRef.current = setTimeout(() => {

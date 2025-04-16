@@ -10,9 +10,7 @@ export const useProfileData = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
-    // Add username to initial state
     username: "",
-    // Add bio to initial state
     bio: "",
     email: user?.email || "",
     profile_image: null,
@@ -63,7 +61,6 @@ export const useProfileData = () => {
             ...prevData,
             name: data.name || prevData.name,
             username: username,
-            // Add bio to profile data loading
             bio: data.bio || prevData.bio,
             email: data.email || user.email || '',
             profile_image: data.profile_image || prevData.profile_image,
@@ -90,6 +87,7 @@ export const useProfileData = () => {
   }, [user]);
 
   const updateProfileData = (field: keyof ProfileData, value: any) => {
+    console.log(`Updating profile field "${field}" with value:`, value);
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
 

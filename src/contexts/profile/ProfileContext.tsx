@@ -52,6 +52,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         console.log("Has gift_preferences:", !!data.gift_preferences, "Length:", data.gift_preferences?.length || 0);
         console.log("Has shipping_address:", !!data.shipping_address);
         console.log("Has dob:", !!data.dob);
+        console.log("Has username:", !!data.username);
+        console.log("Has bio:", !!data.bio);
         
         setProfile(data);
       } else {
@@ -111,7 +113,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setLoading(true);
-      console.log("Updating profile with data:", updateData);
+      console.log("Updating profile with data:", JSON.stringify(updateData, null, 2));
       
       // Make sure to set the id for proper RLS policy evaluation
       const dataWithId = {
@@ -121,6 +123,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       };
       
       console.log("PROFILE CONTEXT: EXACT UPDATE PAYLOAD:", JSON.stringify(dataWithId, null, 2));
+      console.log("User ID for RLS:", user.id);
       
       const { error: updateError } = await supabase
         .from('profiles')

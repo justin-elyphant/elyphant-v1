@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Profile } from "@/types/supabase";
+import { Profile, ShippingAddress } from "@/types/supabase";
 
 interface ProfileContextType {
   profile: Profile | null;
@@ -136,59 +135,52 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setLoading(true);
-      console.log("Updating profile with data:", JSON.stringify(updateData, null, 2));
       
-      // Make sure to set the id for proper RLS policy evaluation
+      // Ensure shipping_address has all required fields
+      const safeShippingAddress: ShippingAddress = {
+        street: updateData.shipping_address?.street || "",
+        city: updateData.shipping_address?.city || "",
+        state: updateData.shipping_address?.state || "",
+        zipCode: updateData.shipping_address?.zipCode || "",
+        country: updateData.shipping_address?.country || ""
+      };
+
+      console.log("PROFILE CONTEXT: Shipping Address Validation", {
+        hasStreet: !!safeShippingAddress.street,
+        hasCity: !!safeShippingAddress.city,
+        hasState: !!safeShippingAddress.state,
+        hasZipCode: !!safeShippingAddress.zipCode,
+        hasCountry: !!safeShippingAddress.country
+      });
+
       const dataWithId = {
         ...updateData,
         id: user.id,
+        shipping_address: safeShippingAddress,
         updated_at: new Date().toISOString()
       };
-      
-      console.log("PROFILE CONTEXT: EXACT UPDATE PAYLOAD:", JSON.stringify(dataWithId, null, 2));
-      console.log("User ID for RLS:", user.id);
-      
-      // Try multiple times to update the profile
-      let attempts = 0;
-      let success = false;
-      
-      while (attempts < 3 && !success) {
-        attempts++;
-        console.log(`PROFILE CONTEXT: Attempt ${attempts} to update profile`);
-        
-        try {
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .upsert(dataWithId, {
-              onConflict: 'id'
-            });
 
-          if (updateError) {
-            console.error(`PROFILE CONTEXT: Error updating profile (attempt ${attempts}):`, updateError);
-            if (attempts === 3) throw updateError;
-          } else {
-            console.log("Profile updated successfully");
-            success = true;
-          }
-        } catch (error) {
-          console.error(`PROFILE CONTEXT: Error in upsert operation (attempt ${attempts}):`, error);
-          // On last attempt, throw to exit the while loop
-          if (attempts === 3) throw error;
-          // Otherwise wait and try again
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      console.log("PROFILE CONTEXT: EXACT UPDATE PAYLOAD:", JSON.stringify(dataWithId, null, 2));
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(dataWithId, {
+          onConflict: 'id'
+        });
+
+      if (error) {
+        console.error("Profile update error:", error);
+        toast.error("Failed to update profile");
+        throw error;
       }
       
-      if (success) {
-        await fetchProfile(); // Refresh profile data
-        toast.success("Profile updated successfully");
-      } else {
-        throw new Error("Failed to update profile after multiple attempts");
-      }
+      // Refetch profile to ensure data is consistent
+      await fetchProfile();
+      
+      toast.success("Profile updated successfully");
     } catch (err) {
       console.error("Error updating profile:", err);
       toast.error("Failed to update profile");
-      throw err;
     } finally {
       setLoading(false);
     }

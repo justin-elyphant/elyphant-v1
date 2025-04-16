@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
@@ -29,7 +28,6 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
   }, []);
 
   const handleSubmit = useCallback(async (profileData: ProfileData) => {
-    // Don't allow multiple submit attempts
     if (submitAttemptedRef.current) {
       console.log("Submit already attempted, ignoring duplicate call");
       return;
@@ -39,38 +37,29 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
     setIsLoading(true);
     
     try {
-      // Get user ID from multiple sources for reliability
       const userId = user?.id || localStorage.getItem("userId");
       const userEmail = user?.email || localStorage.getItem("userEmail") || profileData.email;
       const userName = profileData.name || localStorage.getItem("userName") || "";
       
-      console.log("Profile submit for user:", userId, "with email:", userEmail);
-      console.log("Profile data being submitted:", JSON.stringify(profileData, null, 2));
-      console.log("Next steps option:", nextStepsOption || profileData.next_steps_option || "dashboard");
+      console.log("Profile submit for user:", userId);
+      console.log("Raw profile data:", profileData);
       
       if (!userId) {
-        console.error("No user ID available from any source");
+        console.error("No user ID available");
         toast.error("Cannot save profile: No user ID available");
         setIsLoading(false);
-        
-        // Still call onComplete to proceed even if saving fails
-        setTimeout(() => {
-          onComplete();
-        }, 50);
         return;
       }
       
-      // Prepare profile data - ensure every field matches the database schema exactly
+      // Format the complete profile data matching Supabase schema exactly
       const formattedData = {
         id: userId,
-        name: userName || "User",
+        name: userName,
         email: userEmail,
-        username: profileData.username || 
-                   userName.toLowerCase().replace(/\s+/g, '_') || 
-                   `user_${Date.now().toString(36)}`,
-        bio: profileData.bio || `Hi, I'm ${userName || "User"}`,
+        username: profileData.username || userName.toLowerCase().replace(/\s+/g, '_'),
+        bio: profileData.bio || `Hi, I'm ${userName}`,
         profile_image: profileData.profile_image,
-        dob: profileData.dob || null,
+        dob: profileData.dob || null, // Store as text (month + date only)
         shipping_address: profileData.shipping_address || {
           street: "",
           city: "",
@@ -82,100 +71,55 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         important_dates: profileData.important_dates || [],
         data_sharing_settings: profileData.data_sharing_settings || {
           dob: "friends",
-          shipping_address: "friends",
+          shipping_address: "private",
           gift_preferences: "public"
         },
-        interests: (profileData.gift_preferences || []).map(pref => 
-          typeof pref === 'string' ? pref : pref.category
-        ),
-        updated_at: new Date().toISOString(),
-        next_steps_option: profileData.next_steps_option || nextStepsOption || "dashboard",
-        onboarding_completed: true
+        onboarding_completed: true,
+        updated_at: new Date().toISOString()
       };
-      
-      // Log the exact payload being sent to Supabase for debugging
-      console.log("EXACT PROFILE UPSERT PAYLOAD:", JSON.stringify(formattedData, null, 2));
-      console.log("User ID for RLS check:", userId);
-      console.log("Number of gift preferences:", formattedData.gift_preferences.length);
-      console.log("Has shipping address:", !!formattedData.shipping_address);
-      console.log("Has DOB:", !!formattedData.dob);
-      console.log("Has username:", !!formattedData.username);
-      console.log("Has bio:", !!formattedData.bio);
-      
-      // Set a timeout to proceed regardless of API response
-      submitTimeoutRef.current = setTimeout(() => {
-        if (isLoading) { // Check if we're still loading
-          console.warn("Profile submission timeout - proceeding anyway");
-          setIsLoading(false);
-          
-          // Store the nextStepsOption in localStorage before completing
-          if (nextStepsOption || (profileData && profileData.next_steps_option)) {
-            localStorage.setItem("nextStepsOption", nextStepsOption || profileData.next_steps_option || "dashboard");
-          }
-          
-          // Set a flag to indicate profile is completed
-          localStorage.setItem("profileCompleted", "true");
-          localStorage.removeItem("profileSetupLoading");
-          
-          onComplete();
-        }
-      }, 7000); // 7 seconds timeout
-      
-      try {
-        // With the new RLS policy, we can directly upsert the profile
-        const { data, error } = await supabase
-          .from('profiles')
-          .upsert(formattedData, {
-            onConflict: 'id'
-          });
-            
-        if (error) {
-          console.error("Profile update failed:", error);
-          throw error;
-        } else {
-          console.log("Profile saved successfully via direct update. Response:", data);
-          toast.success("Profile setup complete!");
-        }
-      } catch (directErr) {
-        console.error("Error in profile update:", directErr);
-        toast.error("Error saving profile data, but continuing anyway");
+
+      // Log the exact payload being sent to Supabase
+      console.log("PROFILE SUBMISSION - EXACT PAYLOAD:", JSON.stringify(formattedData, null, 2));
+      console.log("Payload field presence check:", {
+        hasShippingAddress: !!formattedData.shipping_address,
+        hasGiftPreferences: Array.isArray(formattedData.gift_preferences),
+        hasDataSharingSettings: !!formattedData.data_sharing_settings,
+        hasDob: !!formattedData.dob,
+        hasUsername: !!formattedData.username,
+        hasBio: !!formattedData.bio
+      });
+
+      // Update profile in Supabase
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert(formattedData, {
+          onConflict: 'id'
+        });
+        
+      if (error) {
+        console.error("Profile update failed:", error);
+        throw error;
       }
+
+      console.log("Profile saved successfully:", data);
+      toast.success("Profile setup complete!");
       
-      // Clear the timeout since we got a response
-      if (submitTimeoutRef.current) {
-        clearTimeout(submitTimeoutRef.current);
-        submitTimeoutRef.current = null;
-      }
-      
-      // Store the nextStepsOption in localStorage before completing
-      if (nextStepsOption || (profileData && profileData.next_steps_option)) {
-        localStorage.setItem("nextStepsOption", nextStepsOption || profileData.next_steps_option || "dashboard");
-      }
-      
-      // Set a flag to indicate profile is completed
-      localStorage.setItem("profileCompleted", "true");
+      // Clear signup flags
+      localStorage.removeItem("newSignUp");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
       localStorage.removeItem("profileSetupLoading");
       
-      // Directly call onComplete after ensuring state updates have propagated
       setIsLoading(false);
-      setTimeout(() => {
-        onComplete();
-      }, 100);
+      onComplete();
       
     } catch (err) {
-      console.error("Unexpected error in profile submission:", err);
-      toast.error("Failed to save profile, continuing anyway");
-      
-      // Clear loading state and continue
+      console.error("Error in profile submission:", err);
+      toast.error("Failed to save profile");
       setIsLoading(false);
-      localStorage.removeItem("profileSetupLoading");
-      
-      // Even on error, let's continue rather than leaving the user stuck
-      setTimeout(() => {
-        onComplete();
-      }, 100);
+      onComplete(); // Still complete to prevent users getting stuck
     }
-  }, [user, onComplete, nextStepsOption]);
+  }, [user, onComplete]);
 
   return {
     isLoading,

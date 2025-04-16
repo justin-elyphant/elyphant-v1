@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
@@ -59,7 +60,13 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         const safeProfile = {
           ...data,
           gift_preferences: data.gift_preferences || [],
-          shipping_address: data.shipping_address || {},
+          shipping_address: data.shipping_address || {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: ""
+          },
           data_sharing_settings: data.data_sharing_settings || {
             dob: "friends",
             shipping_address: "private",
@@ -80,7 +87,13 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           username: (user.user_metadata?.name || user.email?.split('@')[0] || "").toLowerCase().replace(/\s+/g, '_'),
           profile_image: null,
           bio: user.user_metadata?.name ? `Hi, I'm ${user.user_metadata.name}` : "",
-          shipping_address: {},
+          shipping_address: {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: ""
+          },
           gift_preferences: [],
           important_dates: [],
           data_sharing_settings: {

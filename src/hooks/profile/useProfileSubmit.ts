@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -86,8 +87,13 @@ export const useProfileSubmit = ({ onComplete, nextStepsOption }: UseProfileSubm
         hasDataSharingSettings: !!formattedData.data_sharing_settings,
         hasDob: !!formattedData.dob,
         hasUsername: !!formattedData.username,
-        hasBio: !!formattedData.bio
+        hasBio: !!formattedData.bio,
+        hasImportantDates: !!formattedData.important_dates && Array.isArray(formattedData.important_dates)
       });
+
+      // Ensure JSONB fields are properly formatted
+      // Note: Supabase client automatically handles JSON serialization for jsonb columns,
+      // so we don't need to manually stringify these objects
 
       // Update profile in Supabase
       const { data, error } = await supabase

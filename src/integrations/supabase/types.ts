@@ -188,6 +188,7 @@ export type Database = {
           email: string | null
           gift_preferences: Json | null
           id: string
+          important_dates: Json | null
           name: string | null
           profile_image: string | null
           profile_type: string | null
@@ -203,6 +204,7 @@ export type Database = {
           email?: string | null
           gift_preferences?: Json | null
           id: string
+          important_dates?: Json | null
           name?: string | null
           profile_image?: string | null
           profile_type?: string | null
@@ -218,6 +220,7 @@ export type Database = {
           email?: string | null
           gift_preferences?: Json | null
           id?: string
+          important_dates?: Json | null
           name?: string | null
           profile_image?: string | null
           profile_type?: string | null

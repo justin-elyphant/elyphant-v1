@@ -33,7 +33,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
           category: typeof pref === 'string' ? pref : pref.category,
           importance: 'medium'
         })),
-        important_dates: profileData.important_dates,
+        important_dates: profileData.important_dates || [],
         data_sharing_settings: {
           ...profileData.data_sharing_settings,
           shipping_address: "friends" // Ensure shipping address is shared with friends
@@ -50,7 +50,11 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
       console.log("Has dob:", !!formattedData.dob);
       console.log("Has username:", !!formattedData.username);
       console.log("Has bio:", !!formattedData.bio);
-      console.log("Gift preferences length:", formattedData.gift_preferences.length);
+      console.log("Has important_dates:", !!formattedData.important_dates && Array.isArray(formattedData.important_dates));
+      console.log("Gift preferences length:", formattedData.gift_preferences?.length || 0);
+
+      // Note: Supabase client handles JSON serialization properly, 
+      // no need to manually stringify JSONB fields
 
       // Now that RLS allows users to directly insert their own profile,
       // we can simplify the insertion/update logic

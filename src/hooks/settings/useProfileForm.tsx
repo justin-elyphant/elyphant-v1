@@ -128,6 +128,9 @@ export const useProfileForm = () => {
       console.log("SETTINGS FORM: EXACT PAYLOAD FOR PROFILE UPDATE:", JSON.stringify(formattedData, null, 2));
       console.log("SETTINGS FORM: User ID for RLS:", user.id);
       console.log("SETTINGS FORM: Profile data keys:", Object.keys(formattedData));
+      console.log("SETTINGS FORM: Has shipping_address:", !!formattedData.shipping_address);
+      console.log("SETTINGS FORM: Has important_dates:", !!formattedData.important_dates && Array.isArray(formattedData.important_dates));
+      console.log("SETTINGS FORM: Has gift_preferences:", !!formattedData.gift_preferences && Array.isArray(formattedData.gift_preferences));
 
       // With the new RLS policy allowing users to update their own profile
       const { data: responseData, error } = await supabase

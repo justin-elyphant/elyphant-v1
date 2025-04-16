@@ -11,9 +11,19 @@ import VendorProductsTab from "@/components/vendor/VendorProductsTab";
 import VendorAnalyticsTab from "@/components/vendor/VendorAnalyticsTab";
 import VendorSupportTab from "@/components/vendor/VendorSupportTab";
 import IntegrationAddSheet from "@/components/vendor/IntegrationAddSheet";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Coins, TrendingUp } from "lucide-react";
 
 const VendorManagement = () => {
   const navigate = useNavigate();
+  
+  // Mock credit data - in a real app this would come from an API
+  const creditInfo = {
+    availableCredits: 25,
+    usedListings: 8,
+    freeListingsRemaining: 2,
+    sponsoredAds: 1
+  };
   
   return (
     <ProductProvider>
@@ -37,7 +47,42 @@ const VendorManagement = () => {
           <IntegrationAddSheet />
         </div>
         
-        <Tabs defaultValue="support">
+        {/* Credit summary card */}
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Coins className="h-5 w-5 mr-2 text-primary" />
+              Vendor Account Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Available Credits</p>
+                <p className="text-2xl font-bold">{creditInfo.availableCredits}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Used Listings</p>
+                <p className="text-2xl font-bold">{creditInfo.usedListings}/10 <span className="text-sm font-normal text-muted-foreground">free</span></p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Sponsored Ads</p>
+                <p className="text-2xl font-bold">{creditInfo.sponsoredAds}</p>
+              </div>
+              <div className="flex items-end">
+                <Button variant="outline" size="sm" className="mr-2">
+                  Buy Credits
+                </Button>
+                <Button size="sm" variant="default" className="bg-primary">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  Boost Products
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Tabs defaultValue="products">
           <TabsList className="mb-6">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="support">Support & Returns</TabsTrigger>

@@ -7,7 +7,7 @@ import { ProductProvider } from "@/contexts/ProductContext";
 import { useNavigate } from "react-router-dom";
 import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
 import TrunklineOrdersTab from "@/components/trunkline/TrunklineOrdersTab";
-import TrunklineCustomersTab from "@/components/trunkline/TrunklineCustomersTab";
+import TrunklineShoppersTab from "@/components/trunkline/TrunklineCustomersTab"; // Will keep original file name to avoid breaking changes
 import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
 import TrunklineSupportTab from "@/components/trunkline/TrunklineSupportTab";
 
@@ -42,7 +42,7 @@ const Trunkline = () => {
           <TabsList className="mb-6">
             <TabsTrigger value="support">Support Requests</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="shoppers">Shoppers</TabsTrigger>
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="zinc">Zinc Integration</TabsTrigger>
           </TabsList>
@@ -55,8 +55,8 @@ const Trunkline = () => {
             <TrunklineOrdersTab />
           </TabsContent>
           
-          <TabsContent value="customers">
-            <TrunklineCustomersTab />
+          <TabsContent value="shoppers">
+            <TrunklineShoppersTab />
           </TabsContent>
           
           <TabsContent value="vendors">

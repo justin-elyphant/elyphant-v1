@@ -10,7 +10,7 @@ export const MarketplaceModelCard = () => {
       <CardContent className="p-4">
         <h3 className="font-semibold mb-2">Our Marketplace Model</h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Elyphant handles all customer interactions, payments, and fulfillment coordination:
+          Elyphant handles all shopper interactions, payments, and fulfillment coordination:
         </p>
         <ul className="text-sm text-muted-foreground space-y-2 mb-3">
           <li className="flex items-start">
@@ -19,15 +19,15 @@ export const MarketplaceModelCard = () => {
           </li>
           <li className="flex items-start">
             <span className="mr-2">•</span>
-            <span>Products are listed with a 30% markup as our convenience fee</span>
+            <span>Your first 10 product listings are free, with a credit system for additional listings</span>
           </li>
           <li className="flex items-start">
             <span className="mr-2">•</span>
-            <span>We handle all customer payments through our integrated checkout</span>
+            <span>We handle all shopper payments through our integrated checkout</span>
           </li>
           <li className="flex items-start">
             <span className="mr-2">•</span>
-            <span>You receive orders directly and fulfill them to the customer</span>
+            <span>You receive orders directly and fulfill them to the shopper</span>
           </li>
         </ul>
         
@@ -37,7 +37,7 @@ export const MarketplaceModelCard = () => {
             <ChevronDown className="h-4 w-4" />
           </CollapsibleTrigger>
           <CollapsibleContent className="text-sm text-muted-foreground pt-2">
-            <p>We process the full payment from customers (including our 30% markup). Your share (70% of the original product price) is transferred to you within 3-5 business days of successful delivery.</p>
+            <p>We process the full payment from shoppers. Your product revenue is transferred to you within 3-5 business days of successful delivery.</p>
           </CollapsibleContent>
         </Collapsible>
       </CardContent>

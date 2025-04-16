@@ -1,23 +1,5 @@
 
 project_id = "dmkxtkvlispxeqfzlczr"
 
-[functions.send-verification-email]
-verify_jwt = false
-
-[functions.verify-email-code]
-verify_jwt = false
-
-[functions.send-gift-invitation]
-verify_jwt = false
-
-[functions.create-payment-session]
-verify_jwt = false
-
-[functions.send-deletion-email]
-verify_jwt = false
-
-[functions.create-user]
-verify_jwt = false
-
 [functions.create-profile]
-verify_jwt = false
+verify_jwt = true

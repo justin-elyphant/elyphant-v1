@@ -1,10 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { formSchema } from "./settingsFormSchema";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 
 export const useProfileForm = () => {
@@ -150,7 +150,13 @@ export const useProfileForm = () => {
         bio: data.bio || `Hi, I'm ${data.name}`,
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
-        shipping_address: data.address || {},
+        shipping_address: {
+          street: data.address.street || "",
+          city: data.address.city || "",
+          state: data.address.state || "",
+          zipCode: data.address.zipCode || "",
+          country: data.address.country || ""
+        },
         gift_preferences: data.interests.map(interest => ({
           category: interest,
           importance: "medium"
@@ -172,54 +178,16 @@ export const useProfileForm = () => {
       // Log the exact payload being sent to Supabase
       console.log("SETTINGS FORM: EXACT PAYLOAD FOR PROFILE UPDATE:", JSON.stringify(formattedData, null, 2));
       console.log("SETTINGS FORM: User ID for RLS:", user.id);
-      console.log("SETTINGS FORM: Profile data keys:", Object.keys(formattedData));
-      console.log("SETTINGS FORM: Has shipping_address:", !!formattedData.shipping_address);
-      console.log("SETTINGS FORM: Has important_dates:", !!formattedData.important_dates && Array.isArray(formattedData.important_dates));
-      console.log("SETTINGS FORM: Has gift_preferences:", !!formattedData.gift_preferences && Array.isArray(formattedData.gift_preferences));
-
-      // Try multiple times to update the profile
-      let attempts = 0;
-      let success = false;
       
-      while (attempts < 3 && !success) {
-        attempts++;
-        console.log(`SETTINGS FORM: Attempt ${attempts} to update profile`);
-        
-        try {
-          // Update profile in Supabase
-          const { data: responseData, error } = await supabase
-            .from('profiles')
-            .upsert(formattedData, { 
-              onConflict: 'id' 
-            });
-          
-          if (error) {
-            console.error(`SETTINGS FORM: Error updating profile (attempt ${attempts}):`, error);
-            if (attempts === 3) throw error;
-          } else {
-            console.log("Profile updated successfully from settings. Response:", responseData);
-            success = true;
-          }
-        } catch (error) {
-          console.error(`SETTINGS FORM: Error in upsert operation (attempt ${attempts}):`, error);
-          // On last attempt, throw to exit the while loop
-          if (attempts === 3) throw error;
-          // Otherwise wait and try again
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
+      // Update profile using the context method
+      await updateProfile(formattedData);
+      toast.success("Profile updated successfully");
       
-      if (success) {
-        // Refetch profile data after update
-        await refetchProfile();
-        
-        toast.success("Profile updated successfully");
-      } else {
-        throw new Error("Failed to update profile after multiple attempts");
-      }
+      // Force a refetch to ensure we have the latest data
+      await refetchProfile();
     } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile: " + (error.message || "Unknown error"));
+      console.error("Error in form submission:", error);
+      toast.error("Failed to save profile changes: " + (error.message || "Unknown error"));
     } finally {
       setIsSubmitting(false);
     }

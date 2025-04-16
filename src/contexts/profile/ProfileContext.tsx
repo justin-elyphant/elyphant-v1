@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
@@ -153,31 +154,65 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         hasCountry: !!safeShippingAddress.country
       });
 
+      // Format gift preferences to ensure it's an array of objects
+      const safeGiftPreferences = Array.isArray(updateData.gift_preferences) 
+        ? updateData.gift_preferences.map(pref => {
+            if (typeof pref === 'string') {
+              return { category: pref, importance: 'medium' };
+            }
+            return pref;
+          })
+        : [];
+      
+      console.log("PROFILE CONTEXT: Gift Preferences", safeGiftPreferences);
+
       const dataWithId = {
         ...updateData,
         id: user.id,
         shipping_address: safeShippingAddress,
+        gift_preferences: safeGiftPreferences,
         updated_at: new Date().toISOString()
       };
 
       console.log("PROFILE CONTEXT: EXACT UPDATE PAYLOAD:", JSON.stringify(dataWithId, null, 2));
       
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(dataWithId, {
-          onConflict: 'id'
-        });
+      // Try multiple times to update the profile
+      let attempts = 0;
+      let success = false;
+      
+      while (attempts < 3 && !success) {
+        attempts++;
+        console.log(`PROFILE CONTEXT: Attempt ${attempts} to update profile`);
+        
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .upsert(dataWithId, {
+              onConflict: 'id'
+            });
 
-      if (error) {
-        console.error("Profile update error:", error);
-        toast.error("Failed to update profile");
-        throw error;
+          if (error) {
+            console.error(`PROFILE CONTEXT: Error updating profile (attempt ${attempts}):`, error);
+            if (attempts === 3) throw error;
+          } else {
+            console.log("Profile updated successfully from profile context");
+            success = true;
+          }
+        } catch (error) {
+          console.error(`PROFILE CONTEXT: Error in upsert operation (attempt ${attempts}):`, error);
+          if (attempts === 3) throw error;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
       
-      // Refetch profile to ensure data is consistent
-      await fetchProfile();
-      
-      toast.success("Profile updated successfully");
+      if (success) {
+        // Refetch profile to ensure data is consistent
+        await fetchProfile();
+        
+        toast.success("Profile updated successfully");
+      } else {
+        throw new Error("Failed to update profile after multiple attempts");
+      }
     } catch (err) {
       console.error("Error updating profile:", err);
       toast.error("Failed to update profile");

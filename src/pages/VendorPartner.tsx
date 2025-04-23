@@ -20,7 +20,7 @@ const VendorPartner = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-b from-purple-50 to-white">
+    <div className="bg-gradient-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4 py-16">
         {/* Hero Section */}
         <VendorHero onContactClick={scrollToContactForm} />

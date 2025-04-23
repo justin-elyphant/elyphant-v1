@@ -16,35 +16,35 @@ const Trunkline = () => {
   
   return (
     <ProductProvider>
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-8 max-w-7xl">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="flex items-center gap-1" 
+              className="flex items-center gap-1 text-slate-600 hover:text-slate-800" 
               onClick={() => navigate('/')}
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Site
             </Button>
-            <h1 className="text-4xl font-bold">Trunkline</h1>
-            <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+            <h1 className="text-2xl font-medium text-slate-800">Trunkline</h1>
+            <span className="bg-amber-50 text-amber-700 text-xs font-normal px-2.5 py-1 rounded-full border border-amber-200">
               Internal Only
             </span>
-            <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-              Test Mode (Authentication Bypassed)
+            <span className="bg-slate-100 text-slate-700 text-xs font-normal px-2.5 py-1 rounded-full border border-slate-200">
+              Test Mode
             </span>
           </div>
         </div>
         
-        <Tabs defaultValue="support">
-          <TabsList className="mb-6">
-            <TabsTrigger value="support">Support Requests</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="shoppers">Shoppers</TabsTrigger>
-            <TabsTrigger value="vendors">Vendors</TabsTrigger>
-            <TabsTrigger value="zinc">Zinc Integration</TabsTrigger>
+        <Tabs defaultValue="support" className="space-y-4">
+          <TabsList className="bg-slate-100 p-0.5 border border-slate-200">
+            <TabsTrigger value="support" className="text-sm">Support Requests</TabsTrigger>
+            <TabsTrigger value="orders" className="text-sm">Orders</TabsTrigger>
+            <TabsTrigger value="shoppers" className="text-sm">Shoppers</TabsTrigger>
+            <TabsTrigger value="vendors" className="text-sm">Vendors</TabsTrigger>
+            <TabsTrigger value="zinc" className="text-sm">Zinc Integration</TabsTrigger>
           </TabsList>
           
           <TabsContent value="support">

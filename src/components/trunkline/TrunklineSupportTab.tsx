@@ -7,7 +7,6 @@ import SupportSearch from "./support/SupportSearch";
 import SupportTable from "./support/SupportTable";
 import EmptySupport from "./support/EmptySupport";
 import { mockRequests } from "./support/mockData";
-import { SupportRequest } from "./support/types";
 
 const TrunklineSupportTab = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -32,15 +31,15 @@ const TrunklineSupportTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Support Requests</CardTitle>
-          <Button>
+      <Card className="shadow-subtle border-border/80">
+        <CardHeader className="flex flex-row items-center justify-between border-b pb-4 border-border/60">
+          <CardTitle className="text-lg font-medium text-slate-800">Support Requests</CardTitle>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             <MessageSquare className="h-4 w-4 mr-2" />
             New Support Request
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <SupportSearch 
             requests={mockRequests}
             searchTerm={searchTerm}
@@ -52,7 +51,9 @@ const TrunklineSupportTab = () => {
           />
           
           {filteredRequests.length > 0 ? (
-            <SupportTable requests={filteredRequests} />
+            <div className="rounded-md border mt-4">
+              <SupportTable requests={filteredRequests} />
+            </div>
           ) : (
             <EmptySupport />
           )}

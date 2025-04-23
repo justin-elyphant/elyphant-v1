@@ -36,36 +36,36 @@ const TrunklineVendorsTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Vendor Management</CardTitle>
+      <Card className="shadow-subtle border-border/80">
+        <CardHeader className="border-b pb-4 border-border/60">
+          <CardTitle className="text-lg font-medium text-slate-800">Vendor Management</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <VendorSearch 
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             onSearch={handleSearch}
           />
           
-          <Tabs defaultValue="all" onValueChange={(value) => setActiveTab(value as VendorTabType)}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">All Vendors</TabsTrigger>
-              <TabsTrigger value="marketing">Marketing Tags</TabsTrigger>
-              <TabsTrigger value="payouts">Payouts</TabsTrigger>
+          <Tabs defaultValue="all" className="mt-6" onValueChange={(value) => setActiveTab(value as VendorTabType)}>
+            <TabsList className="bg-slate-100 p-0.5 border border-slate-200">
+              <TabsTrigger value="all" className="text-sm">All Vendors</TabsTrigger>
+              <TabsTrigger value="marketing" className="text-sm">Marketing Tags</TabsTrigger>
+              <TabsTrigger value="payouts" className="text-sm">Payouts</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="all">
+            <TabsContent value="all" className="mt-4">
               <AllVendorsContent 
                 vendors={filteredVendors} 
                 hasSearched={hasSearched} 
               />
             </TabsContent>
             
-            <TabsContent value="marketing">
+            <TabsContent value="marketing" className="mt-4">
               <MarketingTagsContent />
             </TabsContent>
             
-            <TabsContent value="payouts">
+            <TabsContent value="payouts" className="mt-4">
               <PayoutsContent />
             </TabsContent>
           </Tabs>

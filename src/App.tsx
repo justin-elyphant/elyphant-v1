@@ -22,7 +22,9 @@ import MainLayout from '@/components/layout/MainLayout';
 import Index from '@/pages/Index';
 import Messages from '@/pages/Messages'; 
 import Trunkline from '@/pages/Trunkline'; 
-import VendorManagement from '@/pages/VendorManagement'; // Import VendorManagement page
+import VendorManagement from '@/pages/VendorManagement';
+import VendorSignup from '@/pages/VendorSignup';
+import VendorPartner from '@/pages/VendorPartner';
 
 function App() {
   return (
@@ -44,7 +46,9 @@ function App() {
                   <Route path="/profile/:userId" element={<UserProfile />} />
                   <Route path="/messages/:connectionId?" element={<Messages />} /> 
                   <Route path="/trunkline" element={<Trunkline />} />
-                  <Route path="/vendor-management" element={<VendorManagement />} /> {/* Add vendor management route */}
+                  <Route path="/vendor-management" element={<VendorManagement />} />
+                  <Route path="/vendor-signup" element={<VendorSignup />} />
+                  <Route path="/vendor-partner" element={<VendorPartner />} />
                 </Route>
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />

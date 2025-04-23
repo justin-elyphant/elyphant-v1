@@ -15,13 +15,23 @@ const DashboardGrid = () => {
         <UpcomingEventsCard />
       </div>
 
-      {/* Secondary cards - grid layout */}
+      {/* Secondary cards - grid layout with consistent heights */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <GiftsCard />
-        <EventsCard />
-        <OrdersCard />
-        <FriendsCard />
-        <SettingsCard />
+        <div className="flex flex-col h-full">
+          <GiftsCard />
+        </div>
+        <div className="flex flex-col h-full">
+          <EventsCard />
+        </div>
+        <div className="flex flex-col h-full">
+          <OrdersCard />
+        </div>
+        <div className="flex flex-col h-full">
+          <FriendsCard />
+        </div>
+        <div className="flex flex-col h-full">
+          <SettingsCard />
+        </div>
       </div>
     </div>
   );

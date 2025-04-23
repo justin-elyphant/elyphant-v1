@@ -9,11 +9,26 @@ import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 
 const GiftsCard = () => {
   const { laterItems, wishlistItems } = useFavorites();
-  const laterCount = laterItems?.length || 0;
-  const wishlistCount = wishlistItems?.length || 0;
+  
+  // Use actual data if available, otherwise use mock data
+  const wishlistCount = wishlistItems?.length || 5;
+  const laterCount = laterItems?.length || 3;
+
+  // Mock data for the wishlist items
+  const mockWishlistItems = [
+    { name: "Leather Wallet", price: "$45.99" },
+    { name: "Smart Watch", price: "$199.99" },
+    { name: "Wireless Headphones", price: "$89.99" },
+  ];
+
+  // Mock data for later items
+  const mockLaterItems = [
+    { name: "Fitness Tracker", price: "$79.99" },
+    { name: "Summer Hat", price: "$24.99" },
+  ];
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold flex items-center">
           <Heart className="h-5 w-5 mr-2 text-purple-500" />
@@ -26,17 +41,24 @@ const GiftsCard = () => {
       <CardContent>
         <Tabs defaultValue="wishlist" className="w-full">
           <TabsList className="grid grid-cols-2 mb-3">
-            <TabsTrigger value="wishlist" className="text-sm">
-              <Heart className="h-4 w-4 mr-1" /> My Wishlist ({wishlistCount})
+            <TabsTrigger value="wishlist" className="text-xs">
+              <Heart className="h-3 w-3 mr-1" /> Wishlist ({wishlistCount})
             </TabsTrigger>
-            <TabsTrigger value="later" className="text-sm">
-              <Clock className="h-4 w-4 mr-1" /> Save for Later ({laterCount})
+            <TabsTrigger value="later" className="text-xs">
+              <Clock className="h-3 w-3 mr-1" /> Save for Later ({laterCount})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="wishlist" className="space-y-2">
             {wishlistCount > 0 ? (
-              <p className="text-sm">{wishlistCount} items in your wishlist</p>
+              <div className="space-y-2">
+                {(wishlistItems || mockWishlistItems.slice(0, 3)).map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm pb-2 border-b last:border-0 last:pb-0">
+                    <p className="truncate">{item.name}</p>
+                    <p className="font-medium">{item.price}</p>
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">No items in your wishlist yet.</p>
             )}
@@ -44,7 +66,14 @@ const GiftsCard = () => {
 
           <TabsContent value="later" className="space-y-2">
             {laterCount > 0 ? (
-              <p className="text-sm">{laterCount} items saved for later</p>
+              <div className="space-y-2">
+                {(laterItems || mockLaterItems).map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm pb-2 border-b last:border-0 last:pb-0">
+                    <p className="truncate">{item.name}</p>
+                    <p className="font-medium">{item.price}</p>
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">No items saved for later.</p>
             )}

@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const EventsCard = () => {
   // Mock data for upcoming auto-gifts
   const upcomingGifts = [
-    { name: "Sarah's Birthday", date: "Apr 30", budget: "$50" },
-    { name: "Anniversary Gift", date: "May 15", budget: "$100" },
+    { name: "Sarah's Birthday", date: "May 15", budget: "$50" },
+    { name: "Anniversary Gift", date: "May 28", budget: "$100" },
+    { name: "Dad's Birthday", date: "June 10", budget: "$75" },
   ];
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold flex items-center">
           <Calendar className="h-5 w-5 mr-2 text-blue-500" />
@@ -28,10 +29,10 @@ const EventsCard = () => {
           {upcomingGifts.length > 0 ? (
             <div className="space-y-3">
               {upcomingGifts.map((gift, index) => (
-                <div key={index} className="flex justify-between items-center text-sm">
+                <div key={index} className="flex justify-between items-center text-sm pb-2 border-b last:border-0 last:pb-0">
                   <div>
                     <p className="font-medium">{gift.name}</p>
-                    <p className="text-muted-foreground">{gift.date}</p>
+                    <p className="text-muted-foreground text-xs">{gift.date}</p>
                   </div>
                   <span className="text-green-600 font-medium">{gift.budget}</span>
                 </div>

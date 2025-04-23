@@ -27,6 +27,8 @@ import VendorSignup from '@/pages/VendorSignup';
 import VendorPartner from '@/pages/VendorPartner';
 import TrunklineLogin from '@/pages/TrunklineLogin';
 import VendorLogin from '@/pages/VendorLogin';
+import Events from '@/pages/Events';
+import Orders from '@/pages/Orders';
 
 function App() {
   return (
@@ -51,6 +53,8 @@ function App() {
                   <Route path="/vendor-management" element={<VendorManagement />} />
                   <Route path="/vendor-signup" element={<VendorSignup />} />
                   <Route path="/vendor-partner" element={<VendorPartner />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/orders" element={<Orders />} />
                 </Route>
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />

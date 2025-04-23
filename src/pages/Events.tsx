@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
+import { Button } from "@/components/ui/button";
 
 const Events = () => {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);

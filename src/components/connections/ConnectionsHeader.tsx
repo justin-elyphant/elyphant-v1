@@ -1,11 +1,10 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, UserPlus, Search } from "lucide-react";
+import { UserPlus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FilterOptions from "./FilterOptions";
 import { ConnectionFilters } from "@/hooks/useConnections";
-import FacebookContactsButton from "./FacebookContactsButton";
+import BackToDashboard from "@/components/shared/BackToDashboard";
 
 interface ConnectionsHeaderProps {
   searchTerm: string;
@@ -22,14 +21,7 @@ const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({
 }) => {
   return (
     <>
-      <div className="mb-6">
-        <Button variant="ghost" asChild className="p-0">
-          <Link to="/dashboard">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Link>
-        </Button>
-      </div>
+      <BackToDashboard />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>

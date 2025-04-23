@@ -1,9 +1,10 @@
-
 import React, { useState } from "react";
+import { ShoppingBag } from "lucide-react";
+import BackToDashboard from "@/components/shared/BackToDashboard";
 import MyWishlists from "@/components/gifting/MyWishlists";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FavoritesTabContent from "@/components/user-profile/tabs/FavoritesTabContent";
-import { Heart, BookmarkCheck, ShoppingBag } from "lucide-react";
+import { Heart, BookmarkCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -12,6 +13,8 @@ const Wishlists = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <BackToDashboard />
+      
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">My Gifts</h1>
         <Button variant="outline" asChild>

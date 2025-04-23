@@ -20,6 +20,7 @@ import Cart from '@/pages/Cart';
 import UserProfile from '@/pages/UserProfile';
 import MainLayout from '@/components/layout/MainLayout';
 import Index from '@/pages/Index';
+import Messages from '@/pages/Messages'; // Add this import
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
                   <Route path="/wishlists" element={<Wishlists />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/profile/:userId" element={<UserProfile />} />
+                  <Route path="/messages/:connectionId?" element={<Messages />} /> {/* Add this line */}
                 </Route>
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />

@@ -17,11 +17,11 @@ const PopularBrandsSection = () => {
     },
     {
       name: "Made In",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/3/3c/Made_In_Logo.png",
+      logo: "/lovable-uploads/c8d47b72-d4ff-4269-81b0-e53a01164c71.png",
     },
     {
       name: "Stanley",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/8/89/Stanley_Black_%26_Decker_logo.svg",
+      logo: "/lovable-uploads/7e6e1250-c215-402c-836b-e31420624764.png",
     },
   ];
 

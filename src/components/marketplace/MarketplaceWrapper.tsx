@@ -10,8 +10,8 @@ import { useAuth } from "@/contexts/auth";
 const MarketplaceWrapper = () => {
   const [searchParams] = useSearchParams();
   const productId = searchParams.get("productId");
-  const { products } = useProducts();
-  const { user } = useAuth(); // Changed from userData to user
+  const { products, isLoading } = useProducts();
+  const { user } = useAuth();
   
   const [showProductDetails, setShowProductDetails] = useState<number | null>(
     productId ? parseInt(productId) : null
@@ -31,15 +31,20 @@ const MarketplaceWrapper = () => {
     : null;
     
   return (
-    <div className="min-h-screen bg-gray-50">
-      <MarketplaceHeader 
-        title="Marketplace" 
-        subtitle="Discover unique products for everyone on your list"
-      />
-      <MarketplaceContent 
-        products={products}
-        isLoading={false}
-      />
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <div className="bg-gradient-to-b from-purple-50 to-gray-50 pb-8">
+        <MarketplaceHeader 
+          title="Curated Marketplace" 
+          subtitle="Discover unique products perfect for everyone on your list"
+        />
+      </div>
+      
+      <div className="container mx-auto px-4">
+        <MarketplaceContent 
+          products={products}
+          isLoading={isLoading}
+        />
+      </div>
       
       <ProductDetailsDialog 
         product={selectedProduct}

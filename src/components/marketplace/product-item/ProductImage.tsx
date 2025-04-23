@@ -25,17 +25,14 @@ const ProductImage = ({ product, useMock = false }: ProductImageProps) => {
     // Always prioritize the provided image URL if available
     if (product.image && product.image !== "/placeholder.svg") {
       setImageUrl(product.image);
-      console.log(`ProductImage: Using provided image URL for ${product.name}: ${product.image}`);
     } else {
       // Get a fresh image URL directly from Amazon/Zinc
       const directImageUrl = getExactProductImage(product.name, product.category || 'Electronics');
       setImageUrl(directImageUrl);
-      console.log(`ProductImage: Initial image URL for ${product.name}: ${directImageUrl}`);
     }
   }, [product.name, product.category, product.image, useMock]);
   
   const handleImageError = () => {
-    console.log(`Image failed to load for product: ${product.name}`);
     setImageError(true);
     
     // Try one more time with a different category
@@ -45,30 +42,50 @@ const ProductImage = ({ product, useMock = false }: ProductImageProps) => {
   };
 
   const handleFallbackImageError = () => {
-    console.log(`Fallback image also failed for: ${product.name}`);
     setFallbackImageError(true);
+  };
+
+  // Ultimate fallback - lifestyle images
+  const getStyleFallbackImage = () => {
+    const lifestyleImages = [
+      "/lovable-uploads/f0a52aa3-9dcd-4367-9a66-0724e97f2641.png", // Assuming this is one of your lifestyle images
+      "/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png", // Another one
+      "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158", // Unsplash fallback
+      "https://images.unsplash.com/photo-1531297484001-80022131f5a1", // Unsplash fallback
+    ];
+    
+    // Get a consistent but random image for each product based on product name
+    const nameHash = product.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const index = nameHash % lifestyleImages.length;
+    
+    return lifestyleImages[index];
   };
 
   if (imageError && fallbackImageError) {
     return (
-      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-        <ImageOff className="h-8 w-8 text-gray-400" />
+      <div className="w-full h-full aspect-square">
+        <img
+          src={getStyleFallbackImage()}
+          alt={`Lifestyle image for ${product.name}`}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
       </div>
     );
   }
 
   return (
-    <>
+    <div className="aspect-square">
       {imageUrl && (
         <img 
           src={imageUrl}
           alt={product.name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform group-hover:scale-105"
           onError={imageError ? handleFallbackImageError : handleImageError}
           loading="lazy"
         />
       )}
-    </>
+    </div>
   );
 };
 

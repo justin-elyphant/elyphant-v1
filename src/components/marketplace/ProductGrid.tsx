@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
@@ -35,7 +35,6 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   };
   
   const handleProductClick = (productId: number) => {
-    console.log("Product clicked:", productId);
     setShowProductDetails(productId);
   };
   
@@ -55,7 +54,7 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   return (
     <>
       <div className={`${viewMode === 'grid' 
-        ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' 
+        ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
         : 'space-y-4'}`}
       >
         {sortedProducts.map((product) => (

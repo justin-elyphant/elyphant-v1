@@ -1,6 +1,9 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Gift, Truck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Product {
   id: number;
@@ -8,6 +11,7 @@ interface Product {
   price: number;
   image: string;
   description?: string;
+  rating?: number;
 }
 
 interface ZincProductResultsProps {
@@ -23,8 +27,20 @@ export const ZincProductResults = ({
 }: ZincProductResultsProps) => {
   if (isLoading) {
     return (
-      <div className="flex justify-center py-8">
-        <p className="text-muted-foreground">Loading products...</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <Card key={i} className="overflow-hidden">
+            <div className="animate-pulse">
+              <div className="h-40 bg-slate-200"></div>
+              <CardContent className="p-4">
+                <div className="h-4 bg-slate-200 rounded w-3/4 mb-3"></div>
+                <div className="h-3 bg-slate-200 rounded w-1/2 mb-3"></div>
+                <div className="h-6 bg-slate-200 rounded w-1/4 mb-3"></div>
+                <div className="h-8 bg-slate-200 rounded w-full"></div>
+              </CardContent>
+            </div>
+          </Card>
+        ))}
       </div>
     );
   }
@@ -45,28 +61,64 @@ export const ZincProductResults = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {products.map(product => (
-        <Card key={product.id}>
-          <CardContent className="p-4 flex gap-4">
-            <div className="w-20 h-20 rounded overflow-hidden shrink-0">
+        <Card key={product.id} className="overflow-hidden border hover:shadow-md transition-all duration-300">
+          <div className="relative">
+            {/* Product badge */}
+            <Badge className="absolute top-2 left-2 bg-purple-600 text-white">
+              Amazon Product
+            </Badge>
+            
+            <div className="h-40 overflow-hidden">
               <img 
                 src={product.image} 
                 alt={product.name} 
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Replace broken images with placeholder
-                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
                 }}
               />
             </div>
-            <div className="space-y-1">
-              <h3 className="font-medium line-clamp-1">{product.name}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {product.description || "No description available."}
-              </p>
-              <p className="font-medium">${product.price.toFixed(2)}</p>
+          </div>
+          
+          <CardContent className="p-4">
+            <h3 className="font-medium line-clamp-2 mb-1">
+              {product.name.length > 60 
+                ? product.name.substring(0, 57) + "..."
+                : product.name}
+            </h3>
+            
+            <div className="flex items-center mt-1 mb-2">
+              {product.rating && (
+                <div className="flex items-center">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span 
+                      key={i} 
+                      className={`text-xs ${i < Math.round(product.rating) ? "text-amber-500" : "text-gray-300"}`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
+            
+            <p className="font-bold mb-2">${product.price.toFixed(2)}</p>
+            
+            <div className="flex items-center text-xs text-slate-600 mb-3">
+              <Truck className="h-3 w-3 mr-1 text-green-600" />
+              <span>Free shipping</span>
+            </div>
+            
+            <Button 
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              size="sm"
+            >
+              <Gift className="h-4 w-4 mr-1" />
+              Gift This
+            </Button>
           </CardContent>
         </Card>
       ))}

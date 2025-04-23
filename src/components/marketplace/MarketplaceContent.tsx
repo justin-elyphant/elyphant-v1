@@ -1,14 +1,12 @@
 
-import React, { useState, useEffect } from "react";
-import { Product } from "@/contexts/ProductContext";
-import MarketplaceLoading from "./MarketplaceLoading";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGrid from "./ProductGrid";
 import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
-import { useLocation, useSearchParams } from "react-router-dom";
-import { useProducts } from "@/contexts/ProductContext";
+import { Product } from "@/contexts/ProductContext";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -22,17 +20,10 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [searchParams] = useSearchParams();
-  const { products: contextProducts } = useProducts();
-  
-  // Log initial state for debugging
-  useEffect(() => {
-    console.log(`MarketplaceContent mounted: ${products.length} products, isLoading: ${isLoading}`);
-  }, []);
   
   // Set filtered products when products change
   useEffect(() => {
     if (products.length > 0) {
-      console.log(`Setting filtered products: ${products.length} products available`);
       setFilteredProducts(sortProducts(products, sortOption));
     }
   }, [products, sortOption]);
@@ -42,38 +33,31 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     const brandParam = searchParams.get("brand");
     
     if (brandParam) {
-      console.log(`MarketplaceContent: URL contains brand parameter: ${brandParam}, context products: ${contextProducts.length}`);
-      
       // Update active filters with brand
       setActiveFilters(prev => ({
         ...prev,
         brand: brandParam
       }));
     }
-  }, [searchParams, contextProducts]);
+  }, [searchParams]);
   
   // Process filtered products based on active filters
   useEffect(() => {
     if (products.length === 0 && !isLoading) {
-      console.log("No products to filter");
       return;
     }
 
-    console.log(`Applying filters: ${Object.keys(activeFilters).length} active filters`);
     let result = [...products];
     
     // Apply filters
     if (activeFilters.brand && activeFilters.brand !== 'all') {
       const brandName = activeFilters.brand.toLowerCase();
-      console.log(`Filtering for brand: ${brandName}`);
       
       result = result.filter(product => 
         (product.name && product.name.toLowerCase().includes(brandName)) ||
         (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
         (product.description && product.description.toLowerCase().includes(brandName))
       );
-      
-      console.log(`Found ${result.length} products for brand ${activeFilters.brand}`);
     }
     
     // Apply price filter
@@ -94,7 +78,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     
     // Apply sorting
     result = sortProducts(result, sortOption);
-    console.log(`Filter result: ${result.length} products after filtering`);
     
     setFilteredProducts(result);
   }, [products, activeFilters, sortOption, isLoading]);
@@ -107,13 +90,18 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     setSortOption(option);
   };
 
-  // Show loading state if we're loading products
-  if (isLoading) {
-    return <MarketplaceLoading />;
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Page Title Section */}
+      <div className="text-center py-6">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-2">
+          Browse Our Curated Gifts
+        </h1>
+        <p className="text-slate-500 max-w-2xl mx-auto text-base md:text-lg">
+          Handpicked for every occasion — powered by smart gifting
+        </p>
+      </div>
+
       <MarketplaceFilters 
         showFilters={showFilters}
         setShowFilters={setShowFilters}
@@ -147,7 +135,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
         </div>
       </div>
       
-      {/* Show featured products if we have search results */}
       {filteredProducts.length > 0 && (
         <FeaturedProducts />
       )}

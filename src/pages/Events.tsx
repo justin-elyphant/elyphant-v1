@@ -4,6 +4,7 @@ import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
 import { Button } from "@/components/ui/button";
+import BackToDashboard from "@/components/shared/BackToDashboard";
 
 const Events = () => {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
@@ -14,6 +15,8 @@ const Events = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <BackToDashboard />
+      
       <div className="mb-6">
         <h1 className="text-4xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
       </div>

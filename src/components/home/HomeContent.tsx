@@ -10,7 +10,6 @@ import ExperienceGiftingSection from "./sections/ExperienceGifting";
 import HowItWorksSection from "./sections/HowItWorks";
 import CategoriesGrid from "./sections/CategoriesGrid";
 import TrustBar from "./sections/TrustBar";
-import Footer from "./Footer";
 
 const HomeContent = () => {
   const { isDebugMode } = useAuth();
@@ -58,9 +57,6 @@ const HomeContent = () => {
           </Button>
         </div>
       )}
-      
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

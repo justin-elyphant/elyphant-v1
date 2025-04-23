@@ -10,8 +10,8 @@ const HeroSection = () => {
       {/* Hero Background */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="https://images.unsplash.com/photo-1607083206968-13611e3d76db?q=80&w=2215&auto=format&fit=crop"
-          alt="People celebrating with gifts" 
+          src="https://images.unsplash.com/photo-1721322800607-8c38375eef04"
+          alt="A cozy living room with a person receiving a thoughtful gift" 
           className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/70 to-slate-900/30" />

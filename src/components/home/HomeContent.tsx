@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -8,6 +9,7 @@ import FeaturedProductsSection from "./sections/FeaturedProducts";
 import ExperienceGiftingSection from "./sections/ExperienceGifting";
 import HowItWorksSection from "./sections/HowItWorks";
 import CategoriesGrid from "./sections/CategoriesGrid";
+import PopularBrandsSection from "./sections/PopularBrandsSection";
 
 const HomeContent = () => {
   const { isDebugMode } = useAuth();
@@ -21,6 +23,9 @@ const HomeContent = () => {
       
       {/* Featured Products Section */}
       <FeaturedProductsSection />
+      
+      {/* Popular Brands Section */}
+      <PopularBrandsSection />
       
       {/* How It Works Section */}
       <HowItWorksSection />

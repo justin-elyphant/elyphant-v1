@@ -23,15 +23,15 @@ const VendorLogin = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="container max-w-md mx-auto py-10 px-4 bg-gradient-to-br from-[#9b87f5] to-[#6E59A5] flex-grow flex items-center justify-center">
-        <Card className="w-full bg-white/90 backdrop-blur-sm shadow-2xl border-none">
+    <div className="flex flex-col min-h-screen bg-slate-100">
+      <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+        <Card className="w-full bg-white shadow-lg border-slate-200">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
-              <h1 className="text-2xl font-bold text-[#6E59A5]">Vendor Portal</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Vendor Portal</h1>
             </div>
-            <CardTitle className="text-xl text-[#6E59A5]">Welcome Back</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl text-slate-700">Sign In</CardTitle>
+            <CardDescription className="text-slate-500">
               Sign in to manage your product listings
             </CardDescription>
           </CardHeader>
@@ -42,41 +42,32 @@ const VendorLogin = () => {
                 <Input 
                   type="email" 
                   placeholder="Enter your email"
-                  className="w-full"
+                  className="w-full border-slate-300"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Password</label>
                 <Input 
                   type="password" 
-                  placeholder="Enter your password"
-                  className="w-full"
+                  placeholder="Enter your password"  
+                  className="w-full border-slate-300"
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-[#6E59A5] hover:bg-[#9b87f5] text-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Sign In
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex justify-center">
             <Link 
               to="/forgot-password" 
-              className="text-sm text-[#6E59A5] hover:text-[#9b87f5]"
+              className="text-sm text-blue-600 hover:text-blue-700"
             >
               Forgot password?
             </Link>
-            <p className="text-sm text-slate-600">
-              Don't have an account?{" "}
-              <Link 
-                to="/vendor-signup" 
-                className="text-[#6E59A5] hover:text-[#9b87f5] font-medium"
-              >
-                Sign up
-              </Link>
-            </p>
           </CardFooter>
         </Card>
       </div>

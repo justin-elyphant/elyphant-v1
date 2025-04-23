@@ -54,3 +54,4 @@ const PopularBrandsSection = () => {
 };
 
 export default PopularBrandsSection;
+

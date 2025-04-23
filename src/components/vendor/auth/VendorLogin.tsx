@@ -12,14 +12,37 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Separator } from "@/components/ui/separator";
+import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
+import { toast } from "sonner";
 
 const VendorLogin = () => {
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Bypass auth for testing
     navigate("/vendor-management");
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/vendor-management`,
+        }
+      });
+
+      if (error) {
+        console.error('Google sign in error:', error);
+        toast.error('Failed to sign in with Google');
+      }
+    } catch (err) {
+      console.error('Google sign in error:', err);
+      toast.error('Failed to sign in with Google');
+    }
   };
 
   return (
@@ -35,7 +58,26 @@ const VendorLogin = () => {
               Sign in to manage your product listings
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGoogleSignIn}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <GoogleIcon className="h-5 w-5" />
+              Sign in with Google
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-slate-500">Or continue with</span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Email</label>

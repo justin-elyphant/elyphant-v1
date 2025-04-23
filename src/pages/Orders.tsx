@@ -17,7 +17,7 @@ import OrderSkeleton from "@/components/orders/OrderSkeleton";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const Orders = () => {
-  const [userData] = useLocalStorage("userData", null);
+  const [userData] = useLocalStorage("userData", { id: "mock-user-id", email: "user@example.com" }); // Default to mock user data
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,13 +27,6 @@ const Orders = () => {
   
   // Use our custom hook for sorting
   const { sortField, sortDirection, handleSort, getSortIcon, sortedOrders } = useOrderSort(orders);
-
-  // Redirect to sign-up if not logged in
-  React.useEffect(() => {
-    if (!userData) {
-      navigate("/signup");
-    }
-  }, [userData, navigate]);
 
   // Load orders with simulated delay (removes when connected to real API)
   useEffect(() => {
@@ -63,10 +56,6 @@ const Orders = () => {
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  if (!userData) {
-    return null; // Don't render anything while redirecting
-  }
 
   return (
     <div className="container max-w-6xl mx-auto py-8 px-4">

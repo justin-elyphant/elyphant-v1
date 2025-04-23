@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { LogOut, MessageSquare } from "lucide-react";
@@ -15,10 +14,10 @@ const DashboardHeader = ({ userData, onLogout }: DashboardHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-8">
       <div>
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Welcome, {userData.user_metadata?.name || userData.email?.split('@')[0] || "User"}
         </h1>
-        <p className="text-muted-foreground">What would you like to do today?</p>
+        <p className="text-sm text-muted-foreground">What would you like to do today?</p>
       </div>
       <div className="flex gap-2">
         <Button

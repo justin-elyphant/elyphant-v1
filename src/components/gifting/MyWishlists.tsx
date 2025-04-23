@@ -6,7 +6,6 @@ import CreateWishlistCard from "./wishlist/CreateWishlistCard";
 import WishlistCard, { WishlistData } from "./wishlist/WishlistCard";
 import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LightbulbIcon } from "lucide-react";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import {
   AlertDialog,
@@ -110,23 +109,16 @@ const MyWishlists = () => {
 
   return (
     <div>
-      <WishlistHeader title="My Wishlists" onCreateNew={handleCreateWishlist} />
+      <WishlistHeader onCreateNew={() => setDialogOpen(true)} />
       
-      <p className="text-muted-foreground mb-6">
-        Create and manage wishlists to share with friends and family
-      </p>
-      
-      {wishlists.length > 0 && (
-        <Alert className="mb-6 bg-blue-50 border-blue-200">
-          <LightbulbIcon className="h-4 w-4 text-blue-600" />
-          <AlertDescription>
-            Create wishlists for different occasions and share them with friends and family. Browse the marketplace to add items to your wishlists.
-          </AlertDescription>
-        </Alert>
-      )}
-      
+      <Alert className="mb-6">
+        <AlertDescription>
+          Create wishlists for different occasions and share them with friends and family. Browse the marketplace to add items to your wishlists.
+        </AlertDescription>
+      </Alert>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <CreateWishlistCard onCreateNew={handleCreateWishlist} />
+        <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
         
         {wishlists.map((wishlist: WishlistData) => (
           <WishlistCard 

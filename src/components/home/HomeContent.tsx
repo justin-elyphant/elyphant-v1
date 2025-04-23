@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -9,7 +8,6 @@ import FeaturedProductsSection from "./sections/FeaturedProducts";
 import ExperienceGiftingSection from "./sections/ExperienceGifting";
 import HowItWorksSection from "./sections/HowItWorks";
 import CategoriesGrid from "./sections/CategoriesGrid";
-import TrustBar from "./sections/TrustBar";
 
 const HomeContent = () => {
   const { isDebugMode } = useAuth();
@@ -20,9 +18,6 @@ const HomeContent = () => {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <HeroSection />
-      
-      {/* Trust Bar */}
-      <TrustBar />
       
       {/* Featured Products Section */}
       <FeaturedProductsSection />

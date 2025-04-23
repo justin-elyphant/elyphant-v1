@@ -1,38 +1,53 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMockOrders } from "@/components/marketplace/zinc/orderService";
+import { Badge } from "@/components/ui/badge";
 
 const OrdersCard = () => {
-  const orders = getMockOrders();
-  const pendingOrders = orders.filter(order => order.status !== "delivered").length;
-  
+  // Mock recent orders data
+  const recentOrders = [
+    { id: "ORD-123", status: "delivered", date: "Apr 20", total: "$75.99" },
+    { id: "ORD-124", status: "shipped", date: "Apr 22", total: "$45.50" },
+  ];
+
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center">
-          <ShoppingBag className="h-5 w-5 mr-2 text-emerald-500" />
+        <CardTitle className="text-lg font-semibold flex items-center">
+          <Package className="h-5 w-5 mr-2 text-emerald-500" />
           My Orders
         </CardTitle>
-        <CardDescription>
-          Track your purchases
+        <CardDescription className="text-sm">
+          Track your recent gifts and purchases
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            View and manage your order history and delivery status.
-            {pendingOrders > 0 && (
-              <span className="font-medium text-emerald-600 ml-1">
-                You have {pendingOrders} active {pendingOrders === 1 ? 'order' : 'orders'}.
-              </span>
-            )}
-          </p>
-          <Button className="w-full" asChild>
-            <Link to="/orders">View Orders</Link>
+          {recentOrders.length > 0 ? (
+            <div className="space-y-3">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="flex justify-between items-center text-sm">
+                  <div>
+                    <p className="font-medium">{order.id}</p>
+                    <p className="text-muted-foreground">{order.date}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{order.total}</p>
+                    <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="text-xs">
+                      {order.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No recent orders</p>
+          )}
+          <Button className="w-full" size="sm" asChild>
+            <Link to="/orders">View All Orders</Link>
           </Button>
         </div>
       </CardContent>

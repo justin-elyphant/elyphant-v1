@@ -6,24 +6,42 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const EventsCard = () => {
+  // Mock data for upcoming auto-gifts
+  const upcomingGifts = [
+    { name: "Sarah's Birthday", date: "Apr 30", budget: "$50" },
+    { name: "Anniversary Gift", date: "May 15", budget: "$100" },
+  ];
+
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center">
+        <CardTitle className="text-lg font-semibold flex items-center">
           <Calendar className="h-5 w-5 mr-2 text-blue-500" />
           Auto-Gift Hub
         </CardTitle>
-        <CardDescription>
-          Important dates to remember
+        <CardDescription className="text-sm">
+          Upcoming automated gifts
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Track birthdays, holidays, and special occasions to never miss a gift.
-          </p>
-          <Button className="w-full" asChild>
-            <Link to="/events">Manage Events</Link>
+          {upcomingGifts.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingGifts.map((gift, index) => (
+                <div key={index} className="flex justify-between items-center text-sm">
+                  <div>
+                    <p className="font-medium">{gift.name}</p>
+                    <p className="text-muted-foreground">{gift.date}</p>
+                  </div>
+                  <span className="text-green-600 font-medium">{gift.budget}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No upcoming auto-gifts scheduled</p>
+          )}
+          <Button className="w-full" size="sm" asChild>
+            <Link to="/events">Manage Auto-Gifts</Link>
           </Button>
         </div>
       </CardContent>

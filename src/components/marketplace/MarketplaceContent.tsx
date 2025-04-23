@@ -10,9 +10,10 @@ import { Product } from "@/contexts/ProductContext";
 interface MarketplaceContentProps {
   products: Product[];
   isLoading: boolean;
+  searchTerm?: string;
 }
 
-const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) => {
+const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: MarketplaceContentProps) => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState("relevance");
@@ -44,6 +45,15 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
 
     let result = [...products];
     
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      result = result.filter(product => 
+        (product.name && product.name.toLowerCase().includes(searchLower)) ||
+        (product.vendor && product.vendor.toLowerCase().includes(searchLower)) ||
+        (product.description && product.description.toLowerCase().includes(searchLower))
+      );
+    }
+    
     if (activeFilters.brand && activeFilters.brand !== 'all') {
       const brandName = activeFilters.brand.toLowerCase();
       
@@ -71,7 +81,7 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     result = sortProducts(result, sortOption);
     
     setFilteredProducts(result);
-  }, [products, activeFilters, sortOption, isLoading]);
+  }, [products, activeFilters, sortOption, isLoading, searchTerm]);
   
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);

@@ -6,6 +6,7 @@ import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
 import { useAuth } from "@/contexts/auth";
 import FavoritesDropdown from "./FavoritesDropdown";
 import { Button } from "@/components/ui/button";
+import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
 
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,11 +14,15 @@ const MarketplaceWrapper = () => {
   const { products, isLoading } = useProducts();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  
   const [showProductDetails, setShowProductDetails] = useState<number | null>(
     productId ? parseInt(productId) : null
   );
-  
+  const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
+
+  useEffect(() => {
+    setUpcomingOccasions(getUpcomingOccasions());
+  }, []);
+
   useEffect(() => {
     if (productId) {
       setShowProductDetails(parseInt(productId));
@@ -25,7 +30,7 @@ const MarketplaceWrapper = () => {
       setShowProductDetails(null);
     }
   }, [productId]);
-  
+
   const selectedProduct = showProductDetails !== null 
     ? products.find(p => p.id === showProductDetails)
     : null;
@@ -40,17 +45,28 @@ const MarketplaceWrapper = () => {
           </div>
           
           {/* Quick Navigation Links */}
-          <div className="flex gap-6 mt-4 text-sm">
-            <Button variant="link" className="text-muted-foreground hover:text-foreground">
-              Mother's Day Gifts
-            </Button>
-            <Button variant="link" className="text-muted-foreground hover:text-foreground">
+          <div className="flex gap-6 mt-4 text-sm overflow-x-auto pb-2">
+            {upcomingOccasions.map((occasion, index) => (
+              <Button
+                key={occasion.name}
+                variant="link"
+                className="text-muted-foreground hover:text-foreground whitespace-nowrap"
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams);
+                  params.set("search", occasion.searchTerm);
+                  setSearchParams(params);
+                }}
+              >
+                {occasion.name} Gifts
+              </Button>
+            ))}
+            <Button variant="link" className="text-muted-foreground hover:text-foreground whitespace-nowrap">
               Home Favorites
             </Button>
-            <Button variant="link" className="text-muted-foreground hover:text-foreground">
+            <Button variant="link" className="text-muted-foreground hover:text-foreground whitespace-nowrap">
               Fashion Finds
             </Button>
-            <Button variant="link" className="text-muted-foreground hover:text-foreground">
+            <Button variant="link" className="text-muted-foreground hover:text-foreground whitespace-nowrap">
               Gift Cards
             </Button>
           </div>

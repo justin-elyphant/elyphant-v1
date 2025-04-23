@@ -1,11 +1,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceContent from "./MarketplaceContent";
 import { useProducts } from "@/contexts/ProductContext";
 import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
 import { useAuth } from "@/contexts/auth";
+import FavoritesDropdown from "./FavoritesDropdown";
 
 const MarketplaceWrapper = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +17,6 @@ const MarketplaceWrapper = () => {
     productId ? parseInt(productId) : null
   );
   
-  // Handle URL param changes
   useEffect(() => {
     if (productId) {
       setShowProductDetails(parseInt(productId));
@@ -32,14 +31,10 @@ const MarketplaceWrapper = () => {
     
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="bg-gradient-to-b from-purple-50 to-gray-50 pb-8">
-        <MarketplaceHeader 
-          title="Curated Marketplace" 
-          subtitle="Discover unique products perfect for everyone on your list"
-        />
-      </div>
-      
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 pt-8">
+        <div className="flex justify-end mb-6">
+          <FavoritesDropdown />
+        </div>
         <MarketplaceContent 
           products={products}
           isLoading={isLoading}
@@ -51,7 +46,6 @@ const MarketplaceWrapper = () => {
         open={showProductDetails !== null}
         onOpenChange={(open) => {
           if (!open) {
-            // Update URL to remove productId
             const newParams = new URLSearchParams(searchParams);
             newParams.delete("productId");
             window.history.replaceState(

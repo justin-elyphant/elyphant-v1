@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -21,19 +20,16 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [searchParams] = useSearchParams();
   
-  // Set filtered products when products change
   useEffect(() => {
     if (products.length > 0) {
       setFilteredProducts(sortProducts(products, sortOption));
     }
   }, [products, sortOption]);
   
-  // Extract brand from URL for UI feedback
   useEffect(() => {
     const brandParam = searchParams.get("brand");
     
     if (brandParam) {
-      // Update active filters with brand
       setActiveFilters(prev => ({
         ...prev,
         brand: brandParam
@@ -41,7 +37,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
     }
   }, [searchParams]);
   
-  // Process filtered products based on active filters
   useEffect(() => {
     if (products.length === 0 && !isLoading) {
       return;
@@ -49,7 +44,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
 
     let result = [...products];
     
-    // Apply filters
     if (activeFilters.brand && activeFilters.brand !== 'all') {
       const brandName = activeFilters.brand.toLowerCase();
       
@@ -60,7 +54,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       );
     }
     
-    // Apply price filter
     if (activeFilters.price && typeof activeFilters.price === 'object') {
       const { min, max } = activeFilters.price;
       result = result.filter(product => 
@@ -68,7 +61,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       );
     }
     
-    // Apply rating filter
     if (activeFilters.rating && activeFilters.rating !== 'all') {
       const minRating = parseInt(activeFilters.rating.replace('up', ''));
       result = result.filter(product => 
@@ -76,7 +68,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
       );
     }
     
-    // Apply sorting
     result = sortProducts(result, sortOption);
     
     setFilteredProducts(result);
@@ -92,16 +83,6 @@ const MarketplaceContent = ({ products, isLoading }: MarketplaceContentProps) =>
 
   return (
     <div className="space-y-8">
-      {/* Page Title Section */}
-      <div className="text-center py-6">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-2">
-          Browse Our Curated Gifts
-        </h1>
-        <p className="text-slate-500 max-w-2xl mx-auto text-base md:text-lg">
-          Handpicked for every occasion — powered by smart gifting
-        </p>
-      </div>
-
       <MarketplaceFilters 
         showFilters={showFilters}
         setShowFilters={setShowFilters}

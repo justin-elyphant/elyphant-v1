@@ -37,15 +37,7 @@ const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
 
   return (
     <div>
-      <EventHeader title="Upcoming Gift Occasions" onAddEvent={handleAddEvent} />
-      
-      <div className="mb-6">
-        <p className="text-sm text-muted-foreground">
-          Manage important dates and automate gift-giving. Shared events can be verified by connected users for accuracy.
-        </p>
-      </div>
-      
-      <EventsContainer />
+      <EventsContainer onAddEvent={handleAddEvent} />
       <EventEditDrawerContainer />
     </div>
   );

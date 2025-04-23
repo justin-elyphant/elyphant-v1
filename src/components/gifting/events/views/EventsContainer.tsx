@@ -1,3 +1,4 @@
+
 import React from "react";
 import EventViewToggle from "../EventViewToggle";
 import EventTypeFilter from "../EventTypeFilter";
@@ -6,8 +7,14 @@ import EventCalendarView from "./CalendarView";
 import { useEvents } from "../context/EventsContext";
 import { useEventHandlers } from "../hooks/useEventHandlers";
 import { FilterOption } from "../types";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const EventsContainer = () => {
+interface EventsContainerProps {
+  onAddEvent?: () => void;
+}
+
+const EventsContainer = ({ onAddEvent }: EventsContainerProps) => {
   const { 
     events, 
     viewMode, 
@@ -35,15 +42,22 @@ const EventsContainer = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <EventViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        <div className="flex items-center gap-4">
+          <EventViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+          
+          {viewMode === "cards" && (
+            <EventTypeFilter 
+              eventTypes={eventTypes} 
+              selectedType={selectedEventType}
+              onTypeChange={handleEventTypeChange}
+            />
+          )}
+        </div>
         
-        {viewMode === "cards" && (
-          <EventTypeFilter 
-            eventTypes={eventTypes} 
-            selectedType={selectedEventType}
-            onTypeChange={handleEventTypeChange}
-          />
-        )}
+        <Button onClick={onAddEvent} size="sm">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Event
+        </Button>
       </div>
       
       {viewMode === "cards" ? (

@@ -1,12 +1,15 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface VendorHeroProps {
   onContactClick: () => void;
 }
 
 export const VendorHero = ({ onContactClick }: VendorHeroProps) => {
+  const navigate = useNavigate();
+
   return (
     <div className="text-center max-w-4xl mx-auto mb-16">
       <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -22,7 +25,7 @@ export const VendorHero = ({ onContactClick }: VendorHeroProps) => {
       <Button 
         size="lg"
         className="text-lg px-8 py-6" 
-        onClick={onContactClick}
+        onClick={() => navigate('/vendor-signup')}
       >
         Become a Partner Today
       </Button>

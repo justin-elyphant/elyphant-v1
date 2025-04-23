@@ -1,6 +1,5 @@
 
 import React, { useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import { VendorHero } from "@/components/vendor/VendorHero";
 import { BenefitsSection } from "@/components/vendor/BenefitsSection";
 import { BusinessTypesSection } from "@/components/vendor/BusinessTypesSection";
@@ -21,32 +20,30 @@ const VendorPartner = () => {
   }, []);
 
   return (
-    <MainLayout>
-      <div className="bg-gradient-to-b from-purple-50 to-white">
-        <div className="container mx-auto px-4 py-16">
-          {/* Hero Section */}
-          <VendorHero onContactClick={scrollToContactForm} />
+    <div className="bg-gradient-to-b from-purple-50 to-white">
+      <div className="container mx-auto px-4 py-16">
+        {/* Hero Section */}
+        <VendorHero onContactClick={scrollToContactForm} />
 
-          {/* Benefits Section */}
-          <BenefitsSection />
+        {/* Benefits Section */}
+        <BenefitsSection />
 
-          {/* Vendor Portal Features Section */}
-          <VendorPortalFeaturesSection />
+        {/* Vendor Portal Features Section */}
+        <VendorPortalFeaturesSection />
 
-          {/* Vendor Types Section */}
-          <BusinessTypesSection />
+        {/* Vendor Types Section */}
+        <BusinessTypesSection />
 
-          {/* How It Works Section */}
-          <HowItWorksSection />
+        {/* How It Works Section */}
+        <HowItWorksSection />
 
-          {/* Testimonials Section */}
-          <TestimonialsSection />
+        {/* Testimonials Section */}
+        <TestimonialsSection />
 
-          {/* Contact Form */}
-          <VendorContactForm id="contact-form" />
-        </div>
+        {/* Contact Form */}
+        <VendorContactForm id="contact-form" />
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

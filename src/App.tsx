@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/auth';
@@ -25,6 +24,8 @@ import Trunkline from '@/pages/Trunkline';
 import VendorManagement from '@/pages/VendorManagement';
 import VendorSignup from '@/pages/VendorSignup';
 import VendorPartner from '@/pages/VendorPartner';
+import TrunklineLoginPage from '@/pages/TrunklineLoginPage';
+import VendorLoginPage from '@/pages/VendorLoginPage';
 
 function App() {
   return (
@@ -55,6 +56,8 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
+                <Route path="/trunkline-login" element={<TrunklineLoginPage />} />
+                <Route path="/vendor-login" element={<VendorLoginPage />} />
               </Routes>
             </CartProvider>
           </ProductProvider>

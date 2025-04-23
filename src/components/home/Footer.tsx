@@ -25,7 +25,7 @@ const Footer = () => {
               <ul className="space-y-2">
                 <li><Link to="/gifting" className="text-gray-400 hover:text-white text-sm">Gifting</Link></li>
                 <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm">Marketplace</Link></li>
-                <li><Link to="/trunkline" className="text-gray-400 hover:text-white text-sm">Trunkline</Link></li>
+                <li><Link to="/trunkline-login" className="text-gray-400 hover:text-white text-sm">Trunkline</Link></li>
               </ul>
             </div>
             
@@ -40,7 +40,7 @@ const Footer = () => {
               <h4 className="font-medium mb-3">Vendors</h4>
               <ul className="space-y-2">
                 <li><Link to="/vendor-partner" className="text-gray-400 hover:text-white text-sm">Become a Vendor Partner</Link></li>
-                <li><Link to="/vendor-management" className="text-gray-400 hover:text-white text-sm">Vendor Portal Signin</Link></li>
+                <li><Link to="/vendor-login" className="text-gray-400 hover:text-white text-sm">Vendor Portal Signin</Link></li>
               </ul>
             </div>
           </div>

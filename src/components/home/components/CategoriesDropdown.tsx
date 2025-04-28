@@ -49,47 +49,47 @@ const CategoriesDropdown: React.FC<CategoriesDropdownProps> = ({
       id: "category-search",
     });
     
-    try {
-      // Fetch products for this category
-      const results = await searchProducts(searchTerm);
+    // try {
+    //   // Fetch products for this category
+    //   const results = await searchProducts(searchTerm);
       
-      if (results && results.length > 0) {
-        // Convert to Product format
-        const categoryProducts = results.map((product, index) => ({
-          id: 2000 + index,
-          name: product.title,
-          price: product.price,
-          category: product.category || "Electronics",
-          image: product.image || "/placeholder.svg",
-          vendor: "Amazon via Zinc",
-          description: product.description || "",
-          rating: product.rating,
-          reviewCount: product.review_count
-        }));
+    //   if (results && results.length > 0) {
+    //     // Convert to Product format
+    //     const categoryProducts = results.map((product, index) => ({
+    //       id: 2000 + index,
+    //       name: product.title,
+    //       price: product.price,
+    //       category: product.category || "Electronics",
+    //       image: product.image || "/placeholder.svg",
+    //       vendor: "Amazon via Zinc",
+    //       description: product.description || "",
+    //       rating: product.rating,
+    //       reviewCount: product.review_count
+    //     }));
         
-        // Update products in context
-        setProducts(prevProducts => {
-          // Filter out any existing Amazon products
-          const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
-          // Add the new category products
-          return [...nonAmazonProducts, ...categoryProducts];
-        });
+    //     // Update products in context
+    //     setProducts(prevProducts => {
+    //       // Filter out any existing Amazon products
+    //       const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc");
+    //       // Add the new category products
+    //       return [...nonAmazonProducts, ...categoryProducts];
+    //     });
         
-        // Success toast
-        toast.success(`Found ${results.length} ${searchTerm} products`, {
-          id: "category-search",
-        });
-      } else {
-        toast.error(`No products found in ${category}`, {
-          id: "category-search",
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching category products:", error);
-      toast.error("Error loading category products", {
-        id: "category-search",
-      });
-    }
+    //     // Success toast
+    //     toast.success(`Found ${results.length} ${searchTerm} products`, {
+    //       id: "category-search",
+    //     });
+    //   } else {
+    //     toast.error(`No products found in ${category}`, {
+    //       id: "category-search",
+    //     });
+    //   }
+    // } catch (error) {
+    //   console.error("Error fetching category products:", error);
+    //   toast.error("Error loading category products", {
+    //     id: "category-search",
+    //   });
+    // }
     
     // Navigate to marketplace with category parameter
     navigate(`/marketplace?category=${category}&search=${encodeURIComponent(searchTerm)}`);

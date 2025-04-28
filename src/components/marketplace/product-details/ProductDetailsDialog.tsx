@@ -32,15 +32,15 @@ const ProductDetailsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">{product.name}</DialogTitle>
+          <DialogTitle className="text-xl">{product.title}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground line-clamp-2">
-            {product.description || `High-quality ${product.category} from ${product.vendor}`}
+            {/* {product.description || `High-quality ${product.category} from ${product.vendor}`} */}
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="relative overflow-hidden rounded-md">
-            <ProductCarousel images={images} productName={product.name} />
+            <ProductCarousel images={images} productName={product.title} />
           </div>
           
           <div className="flex flex-col space-y-4">

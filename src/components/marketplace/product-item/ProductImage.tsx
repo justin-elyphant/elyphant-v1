@@ -5,7 +5,7 @@ import { getExactProductImage } from "../zinc/utils/images/productImageUtils";
 
 interface ProductImageProps {
   product: {
-    name: string;
+    name?: string;
     category?: string;
     image?: string;
   };

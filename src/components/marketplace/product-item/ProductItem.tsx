@@ -13,7 +13,7 @@ import { CheckCircle2, Truck, Award } from "lucide-react";
 interface ProductItemProps {
   product: Product;
   viewMode: "grid" | "list";
-  onProductClick: (productId: number) => void;
+  onProductClick: (productId: string) => void;
   onWishlistClick: (e: React.MouseEvent) => void;
   isFavorited: boolean;
 }
@@ -28,7 +28,7 @@ const ProductItem = ({
   const { user } = useAuth();
   const { handleSaveOptionSelect } = useFavorites();
 
-  const handleSaveOption = (option: SavedItemType, productId: number) => {
+  const handleSaveOption = (option: SavedItemType, productId: string) => {
     handleSaveOptionSelect(option, productId);
   };
 
@@ -37,7 +37,7 @@ const ProductItem = ({
     const badges = [];
     
     // Check for popularity or bestseller status
-    if (product.rating && product.rating >= 4.5 || product.isBestSeller) {
+    if (product.stars && product.stars >= 4.5) {
       badges.push({
         text: "Popular Pick",
         variant: "default",
@@ -46,8 +46,7 @@ const ProductItem = ({
     }
     
     // Check for fast delivery
-    if (product.name?.toLowerCase().includes('prime') || 
-        product.description?.toLowerCase().includes('fast delivery')) {
+    if (product.prime) {
       badges.push({
         text: "Fast Delivery",
         variant: "secondary",
@@ -56,7 +55,7 @@ const ProductItem = ({
     }
     
     // Check for staff favorites
-    if (product.rating && product.rating >= 4.8) {
+    if (product.stars && product.stars >= 4.8) {
       badges.push({
         text: "Staff Favorite",
         variant: "outline",
@@ -84,8 +83,8 @@ const ProductItem = ({
       className={`group relative rounded-lg overflow-hidden border ${
         viewMode === 'grid' ? 'h-full flex flex-col' : 'flex'
       } bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
-      onClick={() => onProductClick(product.id)}
-      data-testid={`product-item-${product.id}`}
+      onClick={() => onProductClick(product.product_id)}
+      data-testid={`product-item-${product.product_id}`}
     >
       <div className={viewMode === 'grid' ? 'relative' : 'w-1/4'}>
         <ProductImage 
@@ -93,8 +92,8 @@ const ProductItem = ({
         />
         <WishlistButton 
           userData={user}
-          productId={product.id}
-          productName={product.name}
+          productId={product.product_id}
+          productName={product.title}
           onWishlistClick={onWishlistClick}
           onSaveOptionSelect={handleSaveOption}
           isFavorited={isFavorited}
@@ -119,7 +118,7 @@ const ProductItem = ({
         onAddToCart={(e) => {
           e.stopPropagation();
           // We'll handle this in ProductDetails
-          console.log("Gift This:", product.id);
+          console.log("Gift This:", product.product_id);
         }}
       />
       
@@ -136,12 +135,12 @@ const ProductItem = ({
             <span>Verified</span>
           </div>
           
-          {product.rating && product.rating >= 4.5 && (
+          {/* {product.rating && product.rating >= 4.5 && (
             <div className="flex items-center">
               <Award className="h-3 w-3 mr-1 text-amber-500" />
               <span>Top Rated</span>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

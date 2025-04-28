@@ -6,6 +6,7 @@ import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 import { Product } from "@/contexts/ProductContext";
+import { Spinner } from '@/components/ui/spinner';
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -24,6 +25,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   useEffect(() => {
     if (products.length > 0) {
       setFilteredProducts(sortProducts(products, sortOption));
+      // setFilteredProducts(products);
     }
   }, [products, sortOption]);
   
@@ -42,41 +44,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
     if (products.length === 0 && !isLoading) {
       return;
     }
-
     let result = [...products];
-    
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      result = result.filter(product => 
-        (product.name && product.name.toLowerCase().includes(searchLower)) ||
-        (product.vendor && product.vendor.toLowerCase().includes(searchLower)) ||
-        (product.description && product.description.toLowerCase().includes(searchLower))
-      );
-    }
-    
-    if (activeFilters.brand && activeFilters.brand !== 'all') {
-      const brandName = activeFilters.brand.toLowerCase();
-      
-      result = result.filter(product => 
-        (product.name && product.name.toLowerCase().includes(brandName)) ||
-        (product.vendor && product.vendor.toLowerCase().includes(brandName)) ||
-        (product.description && product.description.toLowerCase().includes(brandName))
-      );
-    }
-    
-    if (activeFilters.price && typeof activeFilters.price === 'object') {
-      const { min, max } = activeFilters.price;
-      result = result.filter(product => 
-        product.price >= min && product.price <= max
-      );
-    }
-    
-    if (activeFilters.rating && activeFilters.rating !== 'all') {
-      const minRating = parseInt(activeFilters.rating.replace('up', ''));
-      result = result.filter(product => 
-        (product.rating || 0) >= minRating
-      );
-    }
     
     result = sortProducts(result, sortOption);
     
@@ -111,18 +79,25 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         )}
         
         <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
-          {filteredProducts.length > 0 ? (
-            <ProductGrid 
-              products={filteredProducts} 
-              viewMode={viewMode}
-              sortOption={sortOption}
-            />
-          ) : (
-            <div className="text-center py-12 border rounded-md">
-              <p className="text-lg font-medium">No products found</p>
-              <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
-            </div>
-          )}
+          {
+            isLoading ? (
+              <div>
+                <Spinner />
+              </div>
+          ) : 
+            filteredProducts.length > 0 ? (
+              <ProductGrid 
+                products={filteredProducts} 
+                viewMode={viewMode}
+                sortOption={sortOption}
+              />
+            ) : (
+              <div className="text-center py-12 border rounded-md">
+                <p className="text-lg font-medium">No products found</p>
+                <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
+              </div>
+            )
+          }
         </div>
       </div>
       

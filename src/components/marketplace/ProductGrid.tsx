@@ -16,7 +16,7 @@ interface ProductGridProps {
 
 const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  const [showProductDetails, setShowProductDetails] = useState<number | null>(null);
+  const [showProductDetails, setShowProductDetails] = useState<String | null>(null);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
@@ -25,7 +25,7 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
     setSortedProducts(sortProducts(products, sortOption));
   }, [products, sortOption]);
 
-  const handleWishlistClick = (e: React.MouseEvent, productId: number) => {
+  const handleWishlistClick = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     if (!userData) {
       setShowSignUpDialog(true);
@@ -34,12 +34,12 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
     }
   };
   
-  const handleProductClick = (productId: number) => {
+  const handleProductClick = (productId: string) => {
     setShowProductDetails(productId);
   };
   
   const selectedProduct = showProductDetails !== null 
-    ? products.find(p => p.id === showProductDetails)
+    ? products.find(p => p.product_id === showProductDetails)
     : null;
 
   if (sortedProducts.length === 0) {
@@ -59,12 +59,12 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
       >
         {sortedProducts.map((product) => (
           <ProductItem 
-            key={product.id}
+            key={product.product_id}
             product={product}
             viewMode={viewMode}
             onProductClick={handleProductClick}
-            onWishlistClick={(e) => handleWishlistClick(e, product.id)}
-            isFavorited={userData ? isFavorited(product.id) : false}
+            onWishlistClick={(e) => handleWishlistClick(e, product.product_id)}
+            isFavorited={userData ? isFavorited(product.product_id) : false}
           />
         ))}
       </div>

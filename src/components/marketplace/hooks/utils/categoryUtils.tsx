@@ -1,4 +1,4 @@
-
+import { Product } from "@/contexts/ProductContext";
 /**
  * Helper functions for working with product categories
  */
@@ -205,16 +205,16 @@ export const getSortOptions = () => {
 };
 
 // Sort products based on the selected sort option
-export const sortProducts = (products: any[], sortOption: string) => {
+export const sortProducts = (products: Product[], sortOption: string) => {
   switch (sortOption) {
     case 'price-low':
       return [...products].sort((a, b) => a.price - b.price);
     case 'price-high':
       return [...products].sort((a, b) => b.price - a.price);
     case 'rating':
-      return [...products].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      return [...products].sort((a, b) => (b.stars || 0) - (a.stars || 0));
     case 'reviews':
-      return [...products].sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+      return [...products].sort((a, b) => (b.num_reviews || 0) - (a.num_reviews || 0));
     case 'newest':
       // For demo purposes, we'll just shuffle the products
       return [...products].sort(() => Math.random() - 0.5);

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 export type SavedItemType = "later" | "wishlist";
 
 interface SavedItem {
-  productId: number;
+  productId: string;
   saveType: SavedItemType;
 }
 
@@ -24,11 +24,11 @@ export const useFavorites = () => {
     
     // Find all saved products from the main products list
     const productIds = savedItems.map(item => item.productId);
-    const items = products.filter(product => productIds.includes(product.id));
+    const items = products.filter(product => productIds.includes(product.product_id));
     setFavoriteItems(items);
   }, [savedItems, products, isLoading]);
 
-  const handleFavoriteToggle = (productId: number) => {
+  const handleFavoriteToggle = (productId: string) => {
     setSavedItems(prev => {
       const itemExists = prev.some(item => item.productId === productId);
       
@@ -45,7 +45,7 @@ export const useFavorites = () => {
     });
   };
 
-  const handleSaveOptionSelect = (saveType: SavedItemType, productId: number) => {
+  const handleSaveOptionSelect = (saveType: SavedItemType, productId: string) => {
     setSavedItems(prev => {
       const existingItemIndex = prev.findIndex(item => item.productId === productId);
       
@@ -72,11 +72,11 @@ export const useFavorites = () => {
     });
   };
 
-  const isFavorited = (productId: number): boolean => {
+  const isFavorited = (productId: string): boolean => {
     return savedItems.some(item => item.productId === productId);
   };
 
-  const getSaveType = (productId: number): SavedItemType | null => {
+  const getSaveType = (productId: string): SavedItemType | null => {
     const item = savedItems.find(item => item.productId === productId);
     return item ? item.saveType : null;
   };
@@ -91,7 +91,7 @@ export const useFavorites = () => {
       .filter(item => item.saveType === saveType)
       .map(item => item.productId);
     
-    return products.filter(product => filteredIds.includes(product.id));
+    return products.filter(product => filteredIds.includes(product.product_id));
   };
 
   return {

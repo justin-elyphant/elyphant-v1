@@ -11,12 +11,10 @@ import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const productId = searchParams.get("productId");
-  const { products, isLoading } = useProducts();
+  const { products, isLoading, loadProducts } = useProducts();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [showProductDetails, setShowProductDetails] = useState<number | null>(
-    productId ? parseInt(productId) : null
-  );
+  const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
 
   useEffect(() => {
@@ -24,15 +22,21 @@ const MarketplaceWrapper = () => {
   }, []);
 
   useEffect(() => {
+    const keyword = searchParams.get("search") || "";
+    setSearchTerm(keyword);
+    loadProducts({ keyword: keyword });
+  }, [searchParams])
+
+  useEffect(() => {
     if (productId) {
-      setShowProductDetails(parseInt(productId));
+      setShowProductDetails(productId);
     } else {
       setShowProductDetails(null);
     }
   }, [productId]);
 
   const selectedProduct = showProductDetails !== null 
-    ? products.find(p => p.id === showProductDetails)
+    ? products.find(p => p.product_id === showProductDetails)
     : null;
 
   return (

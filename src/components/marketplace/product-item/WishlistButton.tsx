@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 
 interface WishlistButtonProps {
   userData: any;
-  productId: number;
+  productId: string;
   productName: string;
   onWishlistClick: (e: React.MouseEvent) => void;
-  onSaveOptionSelect?: (option: "wishlist" | "later", productId: number) => void;
+  onSaveOptionSelect?: (option: "wishlist" | "later", productId: string) => void;
   isFavorited: boolean;
 }
 

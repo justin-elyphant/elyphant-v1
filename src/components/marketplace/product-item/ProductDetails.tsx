@@ -7,10 +7,10 @@ import { formatProductPrice } from "./productUtils";
 
 interface ProductDetailsProps {
   product: {
-    name: string;
+    title: string;
     price: number;
-    rating?: number;
-    reviewCount?: number;
+    stars?: number;
+    num_reviews?: number;
     category?: string;
   };
   onAddToCart: (e: React.MouseEvent) => void;
@@ -44,8 +44,8 @@ const ProductDetails = ({ product, onAddToCart }: ProductDetailsProps) => {
 
   return (
     <div className="p-4 w-full">
-      <h3 className="font-medium text-sm line-clamp-2 mb-1">{getCleanTitle(product.name)}</h3>
-      <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
+      <h3 className="font-medium text-sm line-clamp-2 mb-1">{getCleanTitle(product.title)}</h3>
+      <ProductRating rating={product.stars} reviewCount={product.num_reviews} size="sm" />
       <div className="font-bold mt-1">${formatProductPrice(product.price)}</div>
       <div className="mt-3 flex justify-between items-center">
         <Button 

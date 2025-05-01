@@ -40,7 +40,7 @@ serve(async (req) => {
     if(!api_key) {
       return new Response('API key not found', { status: 404 });
     }
-
+    
     const {query, retailer = "amazon", page = 1} = await req.json();
     try {
       const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`, {

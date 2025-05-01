@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ZincIntegration from "@/components/marketplace/zinc/ZincIntegration";
 import PricingControlsCard from "./pricing/PricingControlsCard";
@@ -13,7 +13,7 @@ const TrunklineZincTab = () => {
   const [syncLogs, setSyncLogs] = useState<string[]>([
     "No sync logs available yet. Connect to Zinc API and perform a search or sync to generate logs."
   ]);
-  
+
   return (
     <div className="space-y-6">
       <Card>

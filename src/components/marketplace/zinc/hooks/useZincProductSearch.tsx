@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { findMatchingProducts } from "../utils/findMatchingProducts";
@@ -34,7 +33,7 @@ export const useZincProductSearch = () => {
         const specialCaseProducts = findMatchingProducts(term);
         
         // Convert to Product format and add to state
-        const formattedProducts = specialCaseProducts.map((product, index) => ({
+        const formattedProducts: Product[] = specialCaseProducts.map((product, index) => ({
           id: 2000 + index,
           name: product.title || "San Diego Padres Hat",
           price: product.price || 29.99,
@@ -74,8 +73,8 @@ export const useZincProductSearch = () => {
       const mockProducts = findMatchingProducts(term);
       if (mockProducts.length > 0) {
         // Convert to Product format
-        const formattedMockProducts = mockProducts.map((product, index) => ({
-          id: 3000 + index,
+        const formattedProducts: Product[] = mockProducts.map((product, index) => ({
+          id: `4000${index}`, // Convert to string
           name: product.title || term,
           price: product.price || 19.99,
           category: product.category || "Electronics",
@@ -88,7 +87,7 @@ export const useZincProductSearch = () => {
         
         // Update products
         setProducts(prevProducts => {
-          return [...prevProducts, ...formattedMockProducts];
+          return [...prevProducts, ...formattedProducts];
         });
       }
     } finally {
@@ -104,8 +103,8 @@ export const useZincProductSearch = () => {
     
     if (results.length > 0) {
       // Convert to Product format
-      const formattedProducts = results.map((product, index) => ({
-        id: 4000 + index,
+      const formattedProducts: Product[] = results.map((product, index) => ({
+        id: `4000${index}`, // Convert to string
         name: product.title || term,
         price: product.price || 19.99,
         category: product.category || "Electronics",

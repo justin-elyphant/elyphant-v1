@@ -1,7 +1,5 @@
-
-import { Product } from "@/contexts/ProductContext";
-import { toast } from "sonner";
-import { ShopifyConnection, SyncSettings } from "./types";
+import { ShopifyProduct } from './types';
+import { Product } from "@/types/product";
 
 // Base URL for the Shopify Admin API
 const SHOPIFY_API_VERSION = "2023-10";

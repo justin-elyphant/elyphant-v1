@@ -1,7 +1,7 @@
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { useSearchFilter } from "./useSearchFilter";
 import { useCategoryFilter } from "./useCategoryFilter";
 import { usePriceFilter } from "./usePriceFilter";
@@ -10,10 +10,11 @@ import { useFilteredProducts } from "./useFilteredProducts";
 
 export const useProductFilter = (products: Product[]) => {
   const { searchTerm, setSearchTerm } = useSearchFilter();
-  const { categories, selectedCategory, setSelectedCategory, occasionCategories } = useCategoryFilter(products);
+  const { categories, occasionCategories, matchesOccasionCategory } = useCategoryFilter(products);
   const { priceRange, setPriceRange } = usePriceFilter();
   const { filtersVisible, setFiltersVisible } = useFilterVisibility();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState("all");
   
   // Log the incoming products
   console.log(`useProductFilter: received ${products?.length || 0} products`);
@@ -40,7 +41,7 @@ export const useProductFilter = (products: Product[]) => {
     }
     
     console.log(`URL params - category: ${categoryParam}, search: ${searchParam}, price: ${priceParam}`);
-  }, [searchParams, setSearchTerm, setSelectedCategory, setPriceRange]);
+  }, [searchParams, setSearchTerm, setPriceRange]);
   
   // Update URL when filters change
   useEffect(() => {

@@ -1,13 +1,15 @@
-
 import React from "react";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Heart } from "lucide-react";
+import { getCleanTitle, formatProductPrice } from "./productUtils";
 import ProductImage from "./ProductImage";
 import ProductRating from "./ProductRating";
 import ProductDetails from "./ProductDetails";
 import WishlistButton from "./WishlistButton";
 import { useAuth } from "@/contexts/auth";
 import { useFavorites, SavedItemType } from "@/components/gifting/hooks/useFavorites";
-import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Truck, Award } from "lucide-react";
 
 interface ProductItemProps {

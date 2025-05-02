@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { Product, useProducts } from "@/contexts/ProductContext";
+import { useProducts } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { loadMockProducts, loadSavedProducts } from "../utils/productLoader";
 import { toast } from "sonner";
 

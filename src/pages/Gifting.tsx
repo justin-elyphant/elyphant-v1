@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MyWishlists from "@/components/gifting/MyWishlists";
@@ -8,7 +9,7 @@ import ProductGallery from "@/components/gifting/ProductGallery";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { loadSavedProducts } from "@/components/gifting/utils/productLoader";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { toast } from "sonner";
 import GiftingHeader from "@/components/gifting/GiftingHeader";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";

@@ -1,6 +1,5 @@
-
-import { useState, useEffect } from 'react';
-import { Product } from '@/contexts/ProductContext';
+import { useState, useEffect, useMemo } from 'react';
+import { Product } from '@/types/product';
 import { fetchProductDetails } from '../zinc/services/productDetailsService';
 
 export const useProductImages = (product: Product) => {

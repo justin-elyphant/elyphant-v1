@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from "react";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import ProductItem from "./product-item/ProductItem";

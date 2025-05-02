@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { useProductLoader } from "./hooks/useProductLoader";
 import { useProductFilter } from "./hooks/useProductFilter";
 import { useWishlist } from "./hooks/useWishlist";

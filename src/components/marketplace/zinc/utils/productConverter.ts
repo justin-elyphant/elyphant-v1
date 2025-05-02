@@ -1,5 +1,5 @@
-import { ZincProduct } from "../types";
-import { Product } from "@/contexts/ProductContext";
+import { ZincProduct } from '../types';
+import { Product } from "@/types/product";
 
 /**
  * Parse a product ID string into a number with fallback

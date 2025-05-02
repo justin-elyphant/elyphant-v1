@@ -16,14 +16,27 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       id: "search-products"
     });
 
+    // Track request timeout
+    const timeoutPromise = new Promise<{ data: null, error: { message: string } }>((resolve) => {
+      setTimeout(() => {
+        resolve({ 
+          data: null, 
+          error: { message: 'Request timed out after 15 seconds' } 
+        });
+      }, 15000);
+    });
+
     // Call the Supabase function to search products
-    const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTIONS.SEARCH_PRODUCTS, {
+    const functionPromise = supabase.functions.invoke(SUPABASE_FUNCTIONS.SEARCH_PRODUCTS, {
       body: {
         search_term: searchTerm,
         results_limit: resultsLimit,
         retailer: ZINC_RETAILER
       }
     });
+
+    // Race between the function call and timeout
+    const { data, error } = await Promise.race([functionPromise, timeoutPromise]);
 
     // If we get a network error or other Supabase function error
     if (error) {
@@ -33,7 +46,8 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       const isNetworkError = error.message && (
         error.message.includes('Failed to fetch') || 
         error.message.includes('Failed to send a request') ||
-        error.message.includes('network')
+        error.message.includes('network') ||
+        error.message.includes('timed out')
       );
       
       if (isNetworkError) {

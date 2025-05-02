@@ -78,65 +78,92 @@ serve(async (req) => {
         const zincApiUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(search_term)}&page=1&retailer=${retailer}&max_results=${results_limit}`;
         console.log(`Calling Zinc API at: ${zincApiUrl}`);
         
-        const response = await fetch(zincApiUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Basic ' + btoa(`${api_key}:`)
-          }
-        });
-    
-        // Log detailed info about the response for debugging
-        console.log(`Zinc API response status: ${response.status}`);
+        // Set timeout for the fetch request to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        if (!response.ok) {
-          console.error(`API error: ${response.status} ${response.statusText}`);
-          const errorText = await response.text();
-          console.error('Error response from Zinc API:', errorText);
-          
-          return new Response(JSON.stringify({
-            success: false, 
-            error: `API error: ${response.status}`, 
-            message: errorText,
-            results: generateMockResults(parseInt(results_limit))
-          }), { 
-            status: 200, 
-            headers: { "Content-Type": "application/json", ...corsHeaders }
+        try {
+          const response = await fetch(zincApiUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': 'Basic ' + btoa(`${api_key}:`)
+            },
+            signal: controller.signal
           });
-        }
-        
-        const data = await response.json();
-        const resultCount = data.results?.length || 0;
-        console.log(`Zinc API returned ${resultCount} results`);
-        
-        if (resultCount === 0) {
-          console.log('Zinc API returned 0 results, returning mock data');
+          
+          // Clear the timeout
+          clearTimeout(timeoutId);
+      
+          // Log detailed info about the response for debugging
+          console.log(`Zinc API response status: ${response.status}`);
+          
+          if (!response.ok) {
+            console.error(`API error: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('Error response from Zinc API:', errorText);
+            
+            return new Response(JSON.stringify({
+              success: false, 
+              error: `API error: ${response.status}`, 
+              message: errorText,
+              results: generateMockResults(parseInt(results_limit))
+            }), { 
+              status: 200, 
+              headers: { "Content-Type": "application/json", ...corsHeaders }
+            });
+          }
+          
+          const data = await response.json();
+          const resultCount = data.results?.length || 0;
+          console.log(`Zinc API returned ${resultCount} results`);
+          
+          if (resultCount === 0) {
+            console.log('Zinc API returned 0 results, returning mock data');
+            return new Response(JSON.stringify({
+              success: false,
+              message: 'No results found from Zinc API',
+              results: generateMockResults(parseInt(results_limit))
+            }), {
+              status: 200,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+          }
+          
+          // Log a sample of the first result for debugging
+          if (resultCount > 0) {
+            console.log('Sample first result:', JSON.stringify({
+              title: data.results[0].title,
+              price: data.results[0].price,
+              image: data.results[0].main_image ? 'exists' : 'missing'
+            }));
+          }
+      
           return new Response(JSON.stringify({
-            success: false,
-            message: 'No results found from Zinc API',
-            results: generateMockResults(parseInt(results_limit))
+            success: true,
+            message: `Found ${resultCount} results for "${search_term}"`,
+            results: data.results
           }), {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders },
           });
+        } catch (fetchError) {
+          // Clear the timeout in case of error
+          clearTimeout(timeoutId);
+          
+          if (fetchError.name === 'AbortError') {
+            console.error('Zinc API request timed out after 10 seconds');
+            return new Response(JSON.stringify({
+              success: false, 
+              message: 'Zinc API request timed out', 
+              results: generateMockResults(parseInt(results_limit))
+            }), { 
+              status: 200, 
+              headers: { "Content-Type": "application/json", ...corsHeaders }
+            });
+          }
+          
+          throw fetchError; // Re-throw for the outer catch
         }
-        
-        // Log a sample of the first result for debugging
-        if (resultCount > 0) {
-          console.log('Sample first result:', JSON.stringify({
-            title: data.results[0].title,
-            price: data.results[0].price,
-            image: data.results[0].main_image ? 'exists' : 'missing'
-          }));
-        }
-    
-        return new Response(JSON.stringify({
-          success: true,
-          message: `Found ${resultCount} results for "${search_term}"`,
-          results: data.results
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
       } catch(error) {
         console.error('Error calling Zinc API:', error);
         return new Response(

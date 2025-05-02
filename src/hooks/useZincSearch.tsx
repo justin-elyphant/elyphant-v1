@@ -1,13 +1,17 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '@/contexts/ProductContext';
 import { searchProducts } from '@/components/marketplace/zinc/zincService';
 import { toast } from 'sonner';
+import { ZincProduct } from '@/components/marketplace/zinc/types';
+import { Product } from '@/types/product';
+import { convertZincProductToProduct } from '@/components/marketplace/zinc/utils/productConverter';
 
 export const useZincSearch = (searchTerm: string) => {
   const [loading, setLoading] = useState(false);
-  const [zincResults, setZincResults] = useState<any[]>([]);
+  const [zincResults, setZincResults] = useState<Product[]>([]);
   const { products } = useProducts();
-  const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const toastRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasShownTokenErrorRef = useRef(false);
@@ -40,7 +44,7 @@ export const useZincSearch = (searchTerm: string) => {
         const term = searchTerm.toLowerCase();
         const filtered = products.filter(
           product => 
-            product.name.toLowerCase().includes(term) || 
+            product.name?.toLowerCase().includes(term) || 
             (product.description && product.description.toLowerCase().includes(term)) ||
             (product.brand && product.brand.toLowerCase().includes(term))
         );
@@ -62,29 +66,14 @@ export const useZincSearch = (searchTerm: string) => {
         }
         
         // Get results from Zinc API (through our service)
-        const results = await searchProducts(searchQuery);
+        const zincApiResults = await searchProducts(searchQuery);
         
         // Process results
-        if (results && Array.isArray(results)) {
-          console.log(`Found ${results.length} results from Zinc API for "${searchQuery}"`);
+        if (zincApiResults && Array.isArray(zincApiResults)) {
+          console.log(`Found ${zincApiResults.length} results from Zinc API for "${searchQuery}"`);
           
-          // Map to consistent format with proper types
-          const processedResults = results.map(item => ({
-            id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
-            product_id: item.product_id,
-            title: item.title,
-            price: item.price,
-            image: item.images?.[0] || item.image || "/placeholder.svg",
-            images: item.images || (item.image ? [item.image] : ["/placeholder.svg"]),
-            rating: typeof item.rating === 'number' ? item.rating : 0,
-            stars: typeof item.rating === 'number' ? item.rating : 0, 
-            reviewCount: typeof item.review_count === 'number' ? item.review_count : 0,
-            num_reviews: typeof item.review_count === 'number' ? item.review_count : 0,
-            brand: item.brand || 'Unknown',
-            category: item.category || getSearchCategory(searchTerm),
-            // Keep the original data for reference
-            originalProduct: item
-          }));
+          // Convert zinc products to regular products
+          const processedResults = zincApiResults.map((item: ZincProduct) => convertZincProductToProduct(item));
           
           setZincResults(processedResults);
         } else {
@@ -100,21 +89,6 @@ export const useZincSearch = (searchTerm: string) => {
       } finally {
         setLoading(false);
       }
-    };
-
-    // Helper function to determine category from search term
-    const getSearchCategory = (term: string): string => {
-      const lowercased = term.toLowerCase();
-      if (lowercased.includes('macbook') || lowercased.includes('laptop')) {
-        return 'Computers';
-      }
-      if (lowercased.includes('hat') || lowercased.includes('cap')) {
-        return 'Clothing';
-      }
-      if (lowercased.includes('padres') || lowercased.includes('cowboys')) {
-        return 'Sports Merchandise';
-      }
-      return 'Electronics';
     };
 
     // Debounce function to avoid making too many requests

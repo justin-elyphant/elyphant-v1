@@ -1,7 +1,11 @@
+
 import { useState, useRef } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { findMatchingProducts } from "../utils/findMatchingProducts";
 import { toast } from "sonner";
+import { Product } from "@/types/product";
+import { ZincProduct } from "../types";
+import { convertZincProductToProduct } from "../utils/productConverter";
 
 export const useZincProductSearch = () => {
   const { products, setProducts } = useProducts();
@@ -9,6 +13,7 @@ export const useZincProductSearch = () => {
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [specialCaseProducts, setSpecialCaseProducts] = useState<Product[]>([]);
   const searchInProgressRef = useRef(false);
   
   const marketplaceProducts = products.filter(p => p.vendor === "Elyphant" || p.vendor === "Amazon via Zinc");
@@ -30,11 +35,11 @@ export const useZincProductSearch = () => {
       if (isSpecialCase) {
         console.log('Using special case handling for Padres hat search in ZincProductsTab');
         // Generate mock products for this special case
-        const specialCaseProducts = findMatchingProducts(term);
+        const specialCaseZincProducts = findMatchingProducts(term);
         
         // Convert to Product format and add to state
-        const formattedProducts: Product[] = specialCaseProducts.map((product, index) => ({
-          id: 2000 + index,
+        const formattedProducts: Product[] = specialCaseZincProducts.map((product, index) => ({
+          id: `2000${index}`, // Convert to string
           name: product.title || "San Diego Padres Hat",
           price: product.price || 29.99,
           category: product.category || "Sports Merchandise",
@@ -45,11 +50,13 @@ export const useZincProductSearch = () => {
           reviewCount: product.review_count || 120
         }));
         
+        setSpecialCaseProducts(formattedProducts);
+        
         // Update products
         setProducts(prevProducts => {
           // Remove existing Padres products
           const filtered = prevProducts.filter(p => 
-            !(p.name.toLowerCase().includes('padres') && p.name.toLowerCase().includes('hat'))
+            !(p.name?.toLowerCase().includes('padres') && p.name?.toLowerCase().includes('hat'))
           );
           return [...filtered, ...formattedProducts];
         });
@@ -85,6 +92,8 @@ export const useZincProductSearch = () => {
           reviewCount: product.review_count || 50
         }));
         
+        setSpecialCaseProducts(formattedProducts);
+        
         // Update products
         setProducts(prevProducts => {
           return [...prevProducts, ...formattedProducts];
@@ -114,6 +123,8 @@ export const useZincProductSearch = () => {
         rating: product.rating || 4.0,
         reviewCount: product.review_count || 50
       }));
+      
+      setSpecialCaseProducts(formattedProducts);
       
       // Update products
       setProducts(prevProducts => {
@@ -158,6 +169,7 @@ export const useZincProductSearch = () => {
     syncProducts,
     isLoading,
     marketplaceProducts,
+    specialCaseProducts,
     error
   };
 };

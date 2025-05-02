@@ -16,14 +16,14 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       id: "search-products"
     });
 
-    // Set a reasonable timeout for the API call - 20 seconds should be enough
+    // Set a reasonable timeout for the API call - 25 seconds should be enough
     const timeoutPromise = new Promise<{ data: null, error: { message: string } }>((resolve) => {
       setTimeout(() => {
         resolve({ 
           data: null, 
-          error: { message: 'Request timed out after 20 seconds' } 
+          error: { message: 'Request timed out after 25 seconds' } 
         });
-      }, 20000);
+      }, 25000);
     });
 
     // Call the Supabase function to search products

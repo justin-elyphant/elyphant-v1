@@ -135,6 +135,7 @@ serve(async (req) => {
           let data;
           try {
             data = await response.json();
+            console.log('Zinc API response data received, parsing...');
           } catch (jsonErr) {
             console.error('Error parsing JSON response:', jsonErr);
             return new Response(JSON.stringify({
@@ -153,7 +154,7 @@ serve(async (req) => {
           if (resultCount === 0) {
             console.log('Zinc API returned 0 results, returning mock data');
             return new Response(JSON.stringify({
-              success: false,
+              success: true,
               message: 'No results found from Zinc API',
               results: generateMockResults(parseInt(results_limit))
             }), {

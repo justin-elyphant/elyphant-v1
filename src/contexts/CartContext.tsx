@@ -1,6 +1,5 @@
-
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { Product } from "@/contexts/ProductContext";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { Product } from "@/types/product";
 import { toast } from "sonner";
 
 type CartItem = {

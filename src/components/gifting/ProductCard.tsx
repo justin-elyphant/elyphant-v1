@@ -1,9 +1,10 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingCart } from "lucide-react";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import ProductRating from "@/components/shared/ProductRating";

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 
 import ProductCard from "./ProductCard";
 import ProductFilters from "./ProductFilters";

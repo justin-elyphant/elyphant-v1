@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_FUNCTIONS } from '@/integrations/supabase/types';
+import { SUPABASE_FUNCTIONS } from '@/constants/supabaseFunctions';
 
 export const getProductDetail = async (product_id: string, retailer: string) => {
     try {

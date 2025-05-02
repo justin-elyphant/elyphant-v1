@@ -9,7 +9,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { useProducts } from "@/contexts/ProductContext";
 import ProductRating from "@/components/shared/ProductRating";
 import { searchZincProducts } from "@/components/marketplace/zinc/zincService";

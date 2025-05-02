@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -85,23 +86,25 @@ const MarketplaceWrapper = () => {
         />
       </div>
       
-      {/* <ProductDetailsDialog 
-        productId={selectedProduct}
-        open={showProductDetails !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            const newParams = new URLSearchParams(searchParams);
-            newParams.delete("productId");
-            window.history.replaceState(
-              {}, 
-              '', 
-              `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
-            );
-            setShowProductDetails(null);
-          }
-        }}
-        userData={user}
-      /> */}
+      {selectedProduct && (
+        <ProductDetailsDialog 
+          productId={selectedProduct.product_id || ""}
+          open={showProductDetails !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              const newParams = new URLSearchParams(searchParams);
+              newParams.delete("productId");
+              window.history.replaceState(
+                {}, 
+                '', 
+                `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
+              );
+              setShowProductDetails(null);
+            }
+          }}
+          userData={user}
+        />
+      )}
     </div>
   );
 };

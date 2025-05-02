@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import ProductCarousel from "./product-details/ProductCarousel";
 import ProductInfo from "./product-details/ProductInfo";
 import ProductActions from "./product-details/ProductActions";

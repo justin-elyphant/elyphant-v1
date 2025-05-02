@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { toast } from "sonner";
 

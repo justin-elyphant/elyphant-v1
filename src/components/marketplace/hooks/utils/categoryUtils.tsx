@@ -1,4 +1,5 @@
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
+
 /**
  * Helper functions for working with product categories
  */

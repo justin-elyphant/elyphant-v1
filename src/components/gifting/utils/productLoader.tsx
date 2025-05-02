@@ -1,5 +1,4 @@
-
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 
 export const loadMockProducts = (): Product[] => {
   console.log("Loading mock products data");

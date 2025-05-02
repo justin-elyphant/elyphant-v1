@@ -16,14 +16,14 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       id: "search-products"
     });
 
-    // Track request timeout
+    // Set a reasonable timeout for the API call - 20 seconds should be enough
     const timeoutPromise = new Promise<{ data: null, error: { message: string } }>((resolve) => {
       setTimeout(() => {
         resolve({ 
           data: null, 
-          error: { message: 'Request timed out after 15 seconds' } 
+          error: { message: 'Request timed out after 20 seconds' } 
         });
-      }, 15000);
+      }, 20000);
     });
 
     // Call the Supabase function to search products
@@ -47,7 +47,8 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
         error.message.includes('Failed to fetch') || 
         error.message.includes('Failed to send a request') ||
         error.message.includes('network') ||
-        error.message.includes('timed out')
+        error.message.includes('timed out') ||
+        error.message.includes('aborted')
       );
       
       if (isNetworkError) {
@@ -56,32 +57,29 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
           description: "Error connecting to search API - showing mock results", 
           id: "search-products" 
         });
+        return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
       } else {
         toast.error("Search error", { 
-          description: "Error connecting to product search API", 
+          description: error.message || "Error connecting to product search API", 
           id: "search-products" 
         });
+        return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
       }
-      
-      // For error case, fall back to mock data
-      return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
     }
 
-    if (!data || !data.results) {
-      console.warn("No results or malformed data from Supabase function:", data);
+    // Handle null or malformed data
+    if (!data) {
+      console.warn("No data returned from Supabase function");
       toast.error("No results found", { 
         description: `No products found matching "${searchTerm}"`, 
         id: "search-products" 
       });
-      
-      // For no results, also fall back to mock data
       return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
     }
 
-    console.log(`Received ${data.results.length} results from API:`, data.results.slice(0, 1));
-    
-    if (!Array.isArray(data.results)) {
-      console.error("Results are not an array:", data.results);
+    // If we have results but not in expected format
+    if (!data.results || !Array.isArray(data.results)) {
+      console.warn("Malformed data from Supabase function:", data);
       toast.error("Invalid results format", { 
         description: "Received invalid data format from API", 
         id: "search-products" 
@@ -89,6 +87,18 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
     }
 
+    // Handle empty results array
+    if (data.results.length === 0) {
+      console.log(`No results found for "${searchTerm}"`);
+      toast.success("Search complete", { 
+        description: `No products found matching "${searchTerm}"`,
+        id: "search-products" 
+      });
+      return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
+    }
+
+    console.log(`Received ${data.results.length} results from API:`, data.results.slice(0, 1));
+    
     // Success - show success toast
     toast.success(`Found ${data.results.length} products`, { 
       description: `Results for "${searchTerm}"`,

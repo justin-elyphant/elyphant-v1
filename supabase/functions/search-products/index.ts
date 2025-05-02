@@ -78,9 +78,9 @@ serve(async (req) => {
         const zincApiUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(search_term)}&page=1&retailer=${retailer}&max_results=${results_limit}`;
         console.log(`Calling Zinc API at: ${zincApiUrl}`);
         
-        // Set timeout for the fetch request to prevent hanging
+        // Set timeout for the fetch request to prevent hanging - increased to 15 seconds
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         
         try {
           const response = await fetch(zincApiUrl, {
@@ -98,13 +98,31 @@ serve(async (req) => {
           console.log(`Zinc API response status: ${response.status}`);
           
           if (!response.ok) {
-            console.error(`API error: ${response.status} ${response.statusText}`);
-            const errorText = await response.text();
-            console.error('Error response from Zinc API:', errorText);
+            const statusCode = response.status;
+            console.error(`API error: ${statusCode} ${response.statusText}`);
+            
+            let errorText = '';
+            try {
+              errorText = await response.text();
+              console.error('Error response from Zinc API:', errorText);
+            } catch (textErr) {
+              console.error('Could not read error response text:', textErr);
+              errorText = 'Could not read error response';
+            }
+            
+            // Handle different error status codes
+            let errorMessage = `API error ${statusCode}`;
+            if (statusCode === 401 || statusCode === 403) {
+              errorMessage = 'API authorization error - check your API key';
+            } else if (statusCode === 429) {
+              errorMessage = 'API rate limit exceeded';
+            } else if (statusCode >= 500) {
+              errorMessage = 'API server error';
+            }
             
             return new Response(JSON.stringify({
               success: false, 
-              error: `API error: ${response.status}`, 
+              error: errorMessage, 
               message: errorText,
               results: generateMockResults(parseInt(results_limit))
             }), { 
@@ -113,7 +131,22 @@ serve(async (req) => {
             });
           }
           
-          const data = await response.json();
+          // Parse the response as JSON and handle unexpected formats
+          let data;
+          try {
+            data = await response.json();
+          } catch (jsonErr) {
+            console.error('Error parsing JSON response:', jsonErr);
+            return new Response(JSON.stringify({
+              success: false,
+              message: 'Invalid JSON response from API',
+              results: generateMockResults(parseInt(results_limit))
+            }), {
+              status: 200,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+          }
+          
           const resultCount = data.results?.length || 0;
           console.log(`Zinc API returned ${resultCount} results`);
           
@@ -150,8 +183,10 @@ serve(async (req) => {
           // Clear the timeout in case of error
           clearTimeout(timeoutId);
           
+          console.error('Fetch error details:', fetchError);
+          
           if (fetchError.name === 'AbortError') {
-            console.error('Zinc API request timed out after 10 seconds');
+            console.error('Zinc API request timed out after 15 seconds');
             return new Response(JSON.stringify({
               success: false, 
               message: 'Zinc API request timed out', 
@@ -162,7 +197,18 @@ serve(async (req) => {
             });
           }
           
-          throw fetchError; // Re-throw for the outer catch
+          // Handle other network errors
+          const errorMessage = fetchError.message || 'Network error calling Zinc API';
+          console.error('Network error calling Zinc API:', errorMessage);
+          
+          return new Response(JSON.stringify({
+            success: false, 
+            message: errorMessage,
+            results: generateMockResults(parseInt(results_limit))
+          }), { 
+            status: 200, 
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
         }
       } catch(error) {
         console.error('Error calling Zinc API:', error);

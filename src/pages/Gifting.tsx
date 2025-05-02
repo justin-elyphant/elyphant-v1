@@ -1,5 +1,6 @@
+
 import React from "react";
-import { ProductGallery } from "@/components/gifting/ProductGallery";
+import ProductGallery from "@/components/gifting/ProductGallery";
 import { Product } from "@/types/product";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 

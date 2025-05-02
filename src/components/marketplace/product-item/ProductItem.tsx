@@ -35,7 +35,7 @@ const ProductItem = ({
     handleSaveOptionSelect(option, productId);
   };
 
-  // Ensure product has required properties for badges
+  // Ensure product has required properties for badges with defaults
   const adaptedProduct = {
     title: product.title || product.name || "Unknown Product",
     price: product.price || 0,

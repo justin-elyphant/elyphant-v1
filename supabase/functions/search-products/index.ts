@@ -1,6 +1,6 @@
 
-import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { serve } from "std/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,260 +9,72 @@ const corsHeaders = {
 };
 
 const fetchApiKey = async () => {
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') 
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('Missing environment variables for Supabase connection');
-      throw new Error('Missing environment variables for Supabase connection');
-    }
-    
-    console.log(`Connecting to Supabase at: ${supabaseUrl.substring(0, 20)}...`);
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') 
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing environment variables for Supabase connection')
+  }
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    const { data, error } = await supabase
-      .from('api_keys')
-      .select('key')
-      .limit(1)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching API key: ', error);
-      return null;
-    }
-    
-    // Mask the key for security in logs
-    const maskedKey = data.key ? `${data.key.substring(0, 4)}...${data.key.substring(data.key.length - 4)}` : null;
-    console.log(`API key found: ${maskedKey ? 'yes' : 'no'}, value: ${maskedKey || 'none'}`);
-    return data.key;
-  } catch (err) {
-    console.error('Error in fetchApiKey:', err);
+  const { data, error } = await supabase
+  .from('api_keys')
+  .select('key')
+  .limit(1)
+  .single();
+  
+  if(error) {
+    console.error('Error fetching API key: ', error);
     return null;
   }
-};
+  return data.key;
+}
 
 serve(async (req) => {
-  const {method} = req;
-  
   // Handle CORS preflight requests
-  if (method === 'OPTIONS') {
+  if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
   
-  if (method === 'POST') {
-    try {
-      console.log('Fetching API key from database...');
-      const api_key = await fetchApiKey();
-      console.log('API key found:', api_key ? 'yes' : 'no');
-      
-      if(!api_key) {
-        console.error('API key not found in database, returning mock results');
-        return new Response(JSON.stringify({
-          success: false, 
-          message: 'API key not found', 
-          results: generateMockResults(10)
-        }), { 
-          status: 200, 
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        });
-      }
-      
-      const requestData = await req.json();
-      const {search_term, retailer = "amazon", results_limit = "20"} = requestData;
-      
-      try {
-        console.log(`Searching for "${search_term}" on ${retailer}, limit: ${results_limit}`);
-        
-        // Make the actual API call to Zinc
-        const zincApiUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(search_term)}&page=1&retailer=${retailer}&max_results=${results_limit}`;
-        console.log(`Calling Zinc API at: ${zincApiUrl}`);
-        
-        // Set timeout for the fetch request to prevent hanging - increased to 15 seconds
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        
-        try {
-          const response = await fetch(zincApiUrl, {
-            method: 'GET',
-            headers: {
-              'Authorization': 'Basic ' + btoa(`${api_key}:`)
-            },
-            signal: controller.signal
-          });
-          
-          // Clear the timeout
-          clearTimeout(timeoutId);
-      
-          // Log detailed info about the response for debugging
-          console.log(`Zinc API response status: ${response.status}`);
-          
-          if (!response.ok) {
-            const statusCode = response.status;
-            console.error(`API error: ${statusCode} ${response.statusText}`);
-            
-            let errorText = '';
-            try {
-              errorText = await response.text();
-              console.error('Error response from Zinc API:', errorText);
-            } catch (textErr) {
-              console.error('Could not read error response text:', textErr);
-              errorText = 'Could not read error response';
-            }
-            
-            // Handle different error status codes
-            let errorMessage = `API error ${statusCode}`;
-            if (statusCode === 401 || statusCode === 403) {
-              errorMessage = 'API authorization error - check your API key';
-            } else if (statusCode === 429) {
-              errorMessage = 'API rate limit exceeded';
-            } else if (statusCode >= 500) {
-              errorMessage = 'API server error';
-            }
-            
-            return new Response(JSON.stringify({
-              success: false, 
-              error: errorMessage, 
-              message: errorText,
-              results: generateMockResults(parseInt(results_limit))
-            }), { 
-              status: 200, 
-              headers: { "Content-Type": "application/json", ...corsHeaders }
-            });
-          }
-          
-          // Parse the response as JSON and handle unexpected formats
-          let data;
-          try {
-            data = await response.json();
-            console.log('Zinc API response data received, parsing...');
-          } catch (jsonErr) {
-            console.error('Error parsing JSON response:', jsonErr);
-            return new Response(JSON.stringify({
-              success: false,
-              message: 'Invalid JSON response from API',
-              results: generateMockResults(parseInt(results_limit))
-            }), {
-              status: 200,
-              headers: { "Content-Type": "application/json", ...corsHeaders },
-            });
-          }
-          
-          const resultCount = data.results?.length || 0;
-          console.log(`Zinc API returned ${resultCount} results`);
-          
-          if (resultCount === 0) {
-            console.log('Zinc API returned 0 results, returning mock data');
-            return new Response(JSON.stringify({
-              success: true,
-              message: 'No results found from Zinc API',
-              results: generateMockResults(parseInt(results_limit))
-            }), {
-              status: 200,
-              headers: { "Content-Type": "application/json", ...corsHeaders },
-            });
-          }
-          
-          // Log a sample of the first result for debugging
-          if (resultCount > 0) {
-            console.log('Sample first result:', JSON.stringify({
-              title: data.results[0].title,
-              price: data.results[0].price,
-              image: data.results[0].main_image ? 'exists' : 'missing'
-            }));
-          }
-      
-          return new Response(JSON.stringify({
-            success: true,
-            message: `Found ${resultCount} results for "${search_term}"`,
-            results: data.results
-          }), {
-            status: 200,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          });
-        } catch (fetchError) {
-          // Clear the timeout in case of error
-          clearTimeout(timeoutId);
-          
-          console.error('Fetch error details:', fetchError);
-          
-          if (fetchError.name === 'AbortError') {
-            console.error('Zinc API request timed out after 15 seconds');
-            return new Response(JSON.stringify({
-              success: false, 
-              message: 'Zinc API request timed out', 
-              results: generateMockResults(parseInt(results_limit))
-            }), { 
-              status: 200, 
-              headers: { "Content-Type": "application/json", ...corsHeaders }
-            });
-          }
-          
-          // Handle other network errors
-          const errorMessage = fetchError.message || 'Network error calling Zinc API';
-          console.error('Network error calling Zinc API:', errorMessage);
-          
-          return new Response(JSON.stringify({
-            success: false, 
-            message: errorMessage,
-            results: generateMockResults(parseInt(results_limit))
-          }), { 
-            status: 200, 
-            headers: { "Content-Type": "application/json", ...corsHeaders }
-          });
-        }
-      } catch(error) {
-        console.error('Error calling Zinc API:', error);
-        return new Response(
-          JSON.stringify({
-            success: false, 
-            message: 'Error calling Zinc API: ' + error.message,
-            results: generateMockResults(parseInt(results_limit))
-          }), 
-          { 
-            status: 200, 
-            headers: { "Content-Type": "application/json", ...corsHeaders }
-          }
-        );
-      }
-    } catch(error) {
-      console.error('General error:', error);
-      return new Response(
-        JSON.stringify({
-          success: false, 
-          message: 'Internal server error: ' + error.message,
-          results: generateMockResults(10)
-        }), 
-        { 
-          status: 200, 
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
-      );
+  try {
+    const api_key = await fetchApiKey();
+    if(!api_key) {
+      return new Response(JSON.stringify({ error: 'API key not found' }), { 
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
-  }
-  
-  // Return method not allowed for other HTTP methods
-  return new Response(JSON.stringify({success: false, message: 'Method not allowed'}), { 
-    status: 405, 
-    headers: { "Content-Type": "application/json", ...corsHeaders }
-  });
-});
 
-// Generate mock results for fallback
-function generateMockResults(count: number) {
-  const categories = ['Electronics', 'Clothing', 'Home', 'Books', 'Sports'];
-  const brands = ['Brand X', 'TechPro', 'HomeStyle', 'ActiveGear', 'FashionPlus'];
-  
-  return Array.from({ length: count }, (_, i) => ({
-    product_id: `mock-${i+1}`,
-    title: `Mock Product ${i+1}`,
-    price: Math.floor(Math.random() * 100) + 9.99,
-    main_image: `https://source.unsplash.com/random/300x300?product&sig=${i}`,
-    images: [`https://source.unsplash.com/random/300x300?product&sig=${i}`],
-    rating: (Math.random() * 2) + 3,
-    num_reviews: Math.floor(Math.random() * 1000),
-    category: categories[Math.floor(Math.random() * categories.length)],
-    description: "This is a mock product description for fallback when the API is unavailable.",
-    brand: brands[Math.floor(Math.random() * brands.length)]
-  }));
-}
+    const { search_term, results_limit = "20", retailer = "amazon" } = await req.json();
+    
+    console.log(`Processing search request for term: ${search_term}, limit: ${results_limit}, retailer: ${retailer}`);
+
+    // Request to Zinc API
+    const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(search_term)}&page=1&retailer=${retailer}&max_results=${results_limit}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${api_key}:`),
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    
+    console.log(`Received response from Zinc API with status: ${response.status}`);
+    
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error('Error in search-products function:', error);
+    
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error', 
+      details: error.message 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

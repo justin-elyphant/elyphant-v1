@@ -13,6 +13,7 @@ export const testZincApiKey = async (apiKey: string) => {
       return true;
     } catch(e) {
       console.log('Test Zinc Api Key failed: ', e);
+      return null;
     }
 }
 export const updateZincApiKey = async (id: string | null, key: string) => {

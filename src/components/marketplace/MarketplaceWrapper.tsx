@@ -85,8 +85,8 @@ const MarketplaceWrapper = () => {
         />
       </div>
       
-      <ProductDetailsDialog 
-        product={selectedProduct}
+      {/* <ProductDetailsDialog 
+        productId={selectedProduct}
         open={showProductDetails !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -101,7 +101,7 @@ const MarketplaceWrapper = () => {
           }
         }}
         userData={user}
-      />
+      /> */}
     </div>
   );
 };

@@ -1,42 +1,42 @@
 
 import React from "react";
-import { Product } from "@/contexts/ProductContext";
 import ProductRating from "@/components/shared/ProductRating";
+import { formatProductPrice } from "../product-item/productUtils";
 
 interface ProductInfoProps {
-  product: Product;
+  product: any;
 }
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
   // Generate a description if one doesn't exist
-  let description = product.description;
-  if (!description || description.trim() === "") {
-    const productType = product.name.split(' ').slice(1).join(' ');
-    const brand = product.name.split(' ')[0];
-    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This ${product.category.toLowerCase()} item features premium materials and exceptional craftsmanship for long-lasting use.`;
+  let description = product?.product_description || "";
+  if ((!description || description.trim() === "") && product?.title) {
+    const productType = product.title.split(' ').slice(1).join(' ');
+    const brand = product.title.split(' ')[0];
+    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This item features premium materials and exceptional craftsmanship for long-lasting use.`;
   }
   
-  const features = product.features || [];
-  const specifications = product.specifications || {};
+  const features = product.product_details || [];
+  const specifications = product.variant_specifics || [];
 
   return (
     <div className="flex flex-col space-y-4">
       <div>
-        <h3 className="text-2xl font-bold">${product.price.toFixed(2)}</h3>
-        <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="lg" />
+        <h3 className="text-2xl font-bold">${formatProductPrice(product.price)}</h3>
+        <ProductRating rating={product.stars} reviewCount={product.review_count} size="lg" />
         <span className="text-green-600 text-sm block mt-2">Free shipping</span>
       </div>
       
       <div className="space-y-4">
         <div>
           <h4 className="font-medium mb-2">Description</h4>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm text-muted-foreground overflow-y-auto max-h-52">{description}</p>
         </div>
 
         {features.length > 0 && (
           <div>
             <h4 className="font-medium mb-2">Features</h4>
-            <ul className="list-disc list-inside text-sm text-muted-foreground">
+            <ul className="list-disc list-inside text-sm text-muted-foreground max-h-44 overflow-y-auto">
               {features.map((feature, idx) => (
                 <li key={idx}>{feature}</li>
               ))}
@@ -48,12 +48,19 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           <div>
             <h4 className="font-medium mb-2">Specifications</h4>
             <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-2">
-              {Object.entries(specifications).map(([key, value], idx) => (
-                <React.Fragment key={idx}>
-                  <span className="text-muted-foreground">{key}:</span>
-                  <span>{value}</span>
-                </React.Fragment>
-              ))}
+              {specifications.map((item, idx) => {
+                return (
+                  <div key={idx}>
+                    {
+                      Object.entries(item).map((spec, index) => (
+                        <span key={idx * 2 + index} className="mr-1">{spec[1] as string} 
+                          {index % 2 == 0 ? ":" : ""}
+                        </span>
+                      ))
+                    }
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

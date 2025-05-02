@@ -3,9 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '@/contexts/ProductContext';
 import { searchProducts } from '@/components/marketplace/zinc/zincService';
 import { toast } from 'sonner';
-import { ZincProduct } from '@/components/marketplace/zinc/types';
 import { Product } from '@/types/product';
-import { convertZincProductToProduct } from '@/components/marketplace/zinc/utils/productConverter';
 
 export const useZincSearch = (searchTerm: string) => {
   const [loading, setLoading] = useState(false);
@@ -35,18 +33,13 @@ export const useZincSearch = (searchTerm: string) => {
       abortControllerRef.current = new AbortController();
       
       try {
-        // Show loading toast
-        if (toastRef.current) {
-          toast.dismiss(toastRef.current);
-        }
-        
         // Filter local products first (faster response)
         const term = searchTerm.toLowerCase();
         const filtered = products.filter(
           product => 
-            product.name?.toLowerCase().includes(term) || 
+            (product.name?.toLowerCase().includes(term) || 
             (product.description && product.description.toLowerCase().includes(term)) ||
-            (product.brand && product.brand.toLowerCase().includes(term))
+            (product.brand && product.brand.toLowerCase().includes(term)))
         );
         setFilteredProducts(filtered);
         
@@ -64,6 +57,12 @@ export const useZincSearch = (searchTerm: string) => {
           searchQuery = 'san diego padres baseball hat';
           console.log(`Mapped search term to "${searchQuery}"`);
         }
+        else if (term === 'shoes') {
+          searchQuery = 'athletic shoes';
+        }
+        else if (term === 'nike') {
+          searchQuery = 'nike shoes';
+        }
         
         // Get results from Zinc API (through our service)
         const zincApiResults = await searchProducts(searchQuery);
@@ -71,11 +70,7 @@ export const useZincSearch = (searchTerm: string) => {
         // Process results
         if (zincApiResults && Array.isArray(zincApiResults)) {
           console.log(`Found ${zincApiResults.length} results from Zinc API for "${searchQuery}"`);
-          
-          // Convert zinc products to regular products
-          const processedResults = zincApiResults.map((item: ZincProduct) => convertZincProductToProduct(item));
-          
-          setZincResults(processedResults);
+          setZincResults(zincApiResults);
         } else {
           console.log(`No results found from Zinc API for "${searchTerm}"`);
           setZincResults([]);

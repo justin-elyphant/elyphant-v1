@@ -19,6 +19,7 @@ interface ProductItemProps {
   onProductClick: (productId: string) => void;
   onWishlistClick: (e: React.MouseEvent) => void;
   isFavorited: boolean;
+  key?: string; // Add key prop to interface for React list rendering
 }
 
 const ProductItem = ({ 
@@ -90,13 +91,16 @@ const ProductItem = ({
     return badges.slice(0, 1); // Only return first badge to avoid cluttering
   };
 
+  // Make sure product has an ID for proper React key usage 
+  const productId = product.product_id || product.id || `product-${Math.random().toString(36).substring(7)}`;
+
   return (
     <div 
       className={`group relative rounded-lg overflow-hidden border ${
         viewMode === 'grid' ? 'h-full flex flex-col' : 'flex'
       } bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
-      onClick={() => onProductClick(product.product_id || product.id || '')}
-      data-testid={`product-item-${product.product_id || product.id}`}
+      onClick={() => onProductClick(productId)}
+      data-testid={`product-item-${productId}`}
     >
       <div className={viewMode === 'grid' ? 'relative' : 'w-1/4'}>
         <ProductImage 
@@ -104,7 +108,7 @@ const ProductItem = ({
         />
         <WishlistButton 
           userData={user}
-          productId={product.product_id || product.id || ''}
+          productId={productId}
           productName={product.title || product.name || ''}
           onWishlistClick={onWishlistClick}
           onSaveOptionSelect={handleSaveOption}
@@ -115,7 +119,7 @@ const ProductItem = ({
         <div className="absolute top-2 left-2 z-10">
           {getBadges().map((badge, index) => (
             <Badge 
-              key={index} 
+              key={`${productId}-badge-${index}`}
               variant={badge.variant as any} 
               className={`${badge.className} text-xs text-white`}
             >
@@ -136,7 +140,7 @@ const ProductItem = ({
         onAddToCart={(e) => {
           e.stopPropagation();
           // We'll handle this in ProductDetails
-          console.log("Gift This:", product.product_id || product.id);
+          console.log("Gift This:", productId);
         }}
       />
       

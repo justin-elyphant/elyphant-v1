@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -7,6 +8,7 @@ import { useAuth } from "@/contexts/auth";
 import FavoritesDropdown from "./FavoritesDropdown";
 import { Button } from "@/components/ui/button";
 import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
+import { toast } from "sonner";
 
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -24,8 +26,14 @@ const MarketplaceWrapper = () => {
   useEffect(() => {
     const keyword = searchParams.get("search") || "";
     setSearchTerm(keyword);
-    loadProducts({ keyword: keyword });
-  }, [searchParams])
+    
+    try {
+      loadProducts({ keyword: keyword });
+    } catch (error) {
+      console.error("Error loading products:", error);
+      toast.error("Failed to load products. Please try again later.");
+    }
+  }, [searchParams, loadProducts]);
 
   useEffect(() => {
     if (productId) {
@@ -36,7 +44,7 @@ const MarketplaceWrapper = () => {
   }, [productId]);
 
   const selectedProduct = showProductDetails !== null 
-    ? products.find(p => p.product_id === showProductDetails)
+    ? products?.find(p => p.product_id === showProductDetails)
     : null;
 
   return (
@@ -50,7 +58,7 @@ const MarketplaceWrapper = () => {
           
           {/* Quick Navigation Links */}
           <div className="flex gap-6 mt-4 text-sm overflow-x-auto pb-2">
-            {upcomingOccasions.map((occasion, index) => (
+            {upcomingOccasions.map((occasion) => (
               <Button
                 key={occasion.name}
                 variant="link"
@@ -79,29 +87,31 @@ const MarketplaceWrapper = () => {
 
       <div className="container mx-auto px-4 pt-6">
         <MarketplaceContent 
-          products={products}
+          products={products || []}
           isLoading={isLoading}
           searchTerm={searchTerm}
         />
       </div>
       
-      {/* <ProductDetailsDialog 
-        productId={selectedProduct}
-        open={showProductDetails !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            const newParams = new URLSearchParams(searchParams);
-            newParams.delete("productId");
-            window.history.replaceState(
-              {}, 
-              '', 
-              `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
-            );
-            setShowProductDetails(null);
-          }
-        }}
-        userData={user}
-      /> */}
+      {selectedProduct && (
+        <ProductDetailsDialog 
+          productId={selectedProduct}
+          open={showProductDetails !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              const newParams = new URLSearchParams(searchParams);
+              newParams.delete("productId");
+              window.history.replaceState(
+                {}, 
+                '', 
+                `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
+              );
+              setShowProductDetails(null);
+            }
+          }}
+          userData={user}
+        />
+      )}
     </div>
   );
 };

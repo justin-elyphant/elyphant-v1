@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -7,6 +8,7 @@ import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 import { Product } from "@/contexts/ProductContext";
 import { Spinner } from '@/components/ui/spinner';
+import MarketplaceLoading from "./MarketplaceLoading";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -23,7 +25,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   const [searchParams] = useSearchParams();
   
   useEffect(() => {
-    if (products.length > 0) {
+    if (products?.length > 0) {
       setFilteredProducts(sortProducts(products, sortOption));
     }
   }, [products, sortOption]);
@@ -40,9 +42,10 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   }, [searchParams]);
   
   useEffect(() => {
-    if (products.length === 0 && !isLoading) {
+    if (!products) {
       return;
     }
+    
     let result = [...products];
     
     result = sortProducts(result, sortOption);
@@ -58,6 +61,11 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
     setSortOption(option);
   };
 
+  // Show loading state while products are being fetched
+  if (isLoading) {
+    return <MarketplaceLoading />;
+  }
+
   return (
     <div className="space-y-8">
       <MarketplaceFilters 
@@ -65,7 +73,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         setShowFilters={setShowFilters}
         viewMode={viewMode}
         setViewMode={setViewMode}
-        totalItems={filteredProducts.length}
+        totalItems={filteredProducts?.length || 0}
         sortOption={sortOption}
         onSortChange={handleSortChange}
       />
@@ -78,29 +86,22 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         )}
         
         <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
-          {
-            isLoading ? (
-              <div>
-                <Spinner />
-              </div>
-          ) : 
-            filteredProducts.length > 0 ? (
-              <ProductGrid 
-                products={filteredProducts} 
-                viewMode={viewMode}
-                sortOption={sortOption}
-              />
-            ) : (
-              <div className="text-center py-12 border rounded-md">
-                <p className="text-lg font-medium">No products found</p>
-                <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
-              </div>
-            )
-          }
+          {filteredProducts && filteredProducts.length > 0 ? (
+            <ProductGrid 
+              products={filteredProducts} 
+              viewMode={viewMode}
+              sortOption={sortOption}
+            />
+          ) : (
+            <div className="text-center py-12 border rounded-md">
+              <p className="text-lg font-medium">No products found</p>
+              <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
+            </div>
+          )}
         </div>
       </div>
       
-      {filteredProducts.length > 0 && (
+      {filteredProducts && filteredProducts.length > 0 && (
         <FeaturedProducts />
       )}
     </div>

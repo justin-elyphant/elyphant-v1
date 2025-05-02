@@ -25,12 +25,29 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       }
     });
 
+    // If we get a network error or other Supabase function error
     if (error) {
       console.error("Supabase function error:", error);
-      toast.error("Search error", { 
-        description: "Error connecting to product search API", 
-        id: "search-products" 
-      });
+      
+      // Check if it's a network error
+      const isNetworkError = error.message && (
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('Failed to send a request') ||
+        error.message.includes('network')
+      );
+      
+      if (isNetworkError) {
+        console.warn("Network error detected - falling back to mock data");
+        toast.error("Network error", { 
+          description: "Error connecting to search API - showing mock results", 
+          id: "search-products" 
+        });
+      } else {
+        toast.error("Search error", { 
+          description: "Error connecting to product search API", 
+          id: "search-products" 
+        });
+      }
       
       // For error case, fall back to mock data
       return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));

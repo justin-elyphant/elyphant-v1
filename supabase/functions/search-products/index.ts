@@ -32,9 +32,12 @@ const fetchApiKey = async () => {
 
 serve(async (req) => {
   const {method} = req;
+  
+  // Handle CORS preflight requests
   if (method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+  
   if (method === 'POST') {
     try {
       const api_key = await fetchApiKey();
@@ -52,9 +55,11 @@ serve(async (req) => {
       }
       
       const {search_term, retailer = "amazon", results_limit = "20"} = await req.json();
+      
       try {
         console.log(`Searching for ${search_term} on ${retailer}, limit: ${results_limit}`);
         
+        // Make the actual API call to Zinc
         const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(search_term)}&page=1&retailer=${retailer}&max_results=${results_limit}`, {
           method: 'GET',
           headers: {
@@ -62,6 +67,9 @@ serve(async (req) => {
           }
         });
     
+        // Log detailed info about the response for debugging
+        console.log(`Zinc API response status: ${response.status}`);
+        
         if (!response.ok) {
           console.error(`API error: ${response.status} ${response.statusText}`);
           const errorText = await response.text();
@@ -78,6 +86,7 @@ serve(async (req) => {
         }
         
         const data = await response.json();
+        console.log(`Zinc API returned ${data.results?.length || 0} results`);
     
         return new Response(JSON.stringify(data), {
           status: 200,

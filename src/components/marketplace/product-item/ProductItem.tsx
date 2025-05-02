@@ -126,7 +126,13 @@ const ProductItem = ({
       </div>
       
       <ProductDetails 
-        product={product} 
+        product={{
+          title: adaptedProduct.title,
+          price: adaptedProduct.price,
+          stars: adaptedProduct.stars,
+          num_reviews: adaptedProduct.num_reviews,
+          category: adaptedProduct.category
+        }} 
         onAddToCart={(e) => {
           e.stopPropagation();
           // We'll handle this in ProductDetails

@@ -24,13 +24,13 @@ const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser = false, mockWishl
       
       <TabsContent value="wishlists" className="mt-6">
         <WishlistsTabContent 
-          isCurrentUser={isCurrentUser || false} 
+          isCurrentUser={isCurrentUser} 
           wishlists={mockWishlists} 
         />
       </TabsContent>
       
       <TabsContent value="favorites" className="mt-6">
-        <FavoritesTabContent isCurrentUser={isCurrentUser || false} />
+        <FavoritesTabContent isCurrentUser={isCurrentUser} />
       </TabsContent>
       
       <TabsContent value="activity" className="mt-6">

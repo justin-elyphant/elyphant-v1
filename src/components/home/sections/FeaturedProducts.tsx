@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import {
 import { Product } from "@/types/product";
 import { useProducts } from "@/contexts/ProductContext";
 import ProductRating from "@/components/shared/ProductRating";
-import { searchZincProducts } from "@/components/marketplace/zinc/zincService";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { Badge } from "@/components/ui/badge";
 
 const FeaturedProductsSection = () => {
@@ -47,7 +46,7 @@ const FeaturedProductsSection = () => {
         const randomTerm = popularSearchTerms[Math.floor(Math.random() * popularSearchTerms.length)];
         
         console.log(`Loading featured products with search term: ${randomTerm}`);
-        const newProducts = await searchZincProducts(randomTerm, "12");
+        const newProducts = await searchProducts(randomTerm, "12");
         
         if (newProducts && newProducts.length > 0) {
           // Add these to our global product context

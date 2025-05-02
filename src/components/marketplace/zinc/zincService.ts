@@ -1,3 +1,4 @@
+
 import { SUPABASE_FUNCTIONS } from '@/constants/supabaseFunctions';
 import { Product } from '@/types/product';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,3 +50,6 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
     return [];
   }
 };
+
+// Add this alias for backwards compatibility
+export const searchZincProducts = searchProducts;

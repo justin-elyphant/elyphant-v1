@@ -1,93 +1,129 @@
-import { useState, useRef } from "react";
-import { searchProducts } from "../zincService";
-import { ZincProduct } from "../types";
-import { toast } from "sonner";
 
-export const useZincSearch = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<ZincProduct[]>([]);
-  const toastShownRef = useRef(false);
+import { useState, useEffect, useRef } from 'react';
+import { useProducts } from '@/contexts/ProductContext';
+import { searchProducts } from '@/components/marketplace/zinc/zincService';
+import { toast } from 'sonner';
+import { ZincProduct } from '@/components/marketplace/zinc/types';
+import { Product } from '@/types/product';
+import { convertZincProductToProduct } from '@/components/marketplace/zinc/utils/productConverter';
 
-  // Reset toast shown status after 3 seconds
-  const resetToastStatus = () => {
-    setTimeout(() => {
-      toastShownRef.current = false;
-    }, 3000);
-  };
+export const useZincSearch = (searchTerm: string) => {
+  const [loading, setLoading] = useState(false);
+  const [zincResults, setZincResults] = useState<Product[]>([]);
+  const { products } = useProducts();
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const toastRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const hasShownTokenErrorRef = useRef(false);
 
-  const search = async (term: string): Promise<ZincProduct[]> => {
-    if (!term.trim()) return [];
-    
-    setIsLoading(true);
-    setSearchTerm(term);
-    setError(null);
-    console.log(`useZincSearch: Searching for "${term}"`);
-    
-    try {
-      const searchResults = await searchProducts(term);
-      console.log(`useZincSearch: Found ${searchResults.length} results for "${term}"`);
+  useEffect(() => {
+    const fetchZincResults = async () => {
+      // Reset results if search term is empty
+      if (!searchTerm || searchTerm.trim().length < 2) {
+        setZincResults([]);
+        setFilteredProducts([]);
+        return;
+      }
+
+      setLoading(true);
       
-      // Enhanced logging for image arrays
-      if (searchResults.length > 0) {
-        // Log the first product's image data in detail
-        console.log("Product image data:", {
-          product: searchResults[0].title,
-          mainImage: searchResults[0].image,
-          hasImagesArray: Array.isArray(searchResults[0].images),
-          imagesLength: searchResults[0].images?.length || 0,
-          imagesArray: searchResults[0].images
-        });
+      // Cancel previous request if it exists
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      abortControllerRef.current = new AbortController();
+      
+      try {
+        // Show loading toast
+        if (toastRef.current) {
+          toast.dismiss(toastRef.current);
+        }
         
-        // Ensure each product has an images array
-        searchResults.forEach(product => {
-          if (!product.images || !Array.isArray(product.images) || product.images.length === 0) {
-            product.images = product.image ? [product.image] : ['/placeholder.svg'];
-            console.log(`Added images array to product: ${product.title}`);
-          }
-        });
+        // Filter local products first (faster response)
+        const term = searchTerm.toLowerCase();
+        const filtered = products.filter(
+          product => 
+            product.name?.toLowerCase().includes(term) || 
+            (product.description && product.description.toLowerCase().includes(term)) ||
+            (product.brand && product.brand.toLowerCase().includes(term))
+        );
+        setFilteredProducts(filtered);
+        
+        // Now search Zinc API for real products (or mocks if no token)
+        console.log(`Searching Zinc API for "${searchTerm}"...`);
+
+        // Special case mappings for popular searches
+        let searchQuery = searchTerm;
+        if (term.includes('macbook') || term.includes('mac book')) {
+          searchQuery = 'apple macbook';
+          console.log(`Mapped search term to "${searchQuery}"`);
+        }
+        else if ((term.includes('padres') && (term.includes('hat') || term.includes('cap'))) ||
+                 (term.includes('san diego') && (term.includes('hat') || term.includes('cap')))) {
+          searchQuery = 'san diego padres baseball hat';
+          console.log(`Mapped search term to "${searchQuery}"`);
+        }
+        
+        // Get results from Zinc API (through our service)
+        const zincApiResults = await searchProducts(searchQuery);
+        
+        // Process results
+        if (zincApiResults && Array.isArray(zincApiResults)) {
+          console.log(`Found ${zincApiResults.length} results from Zinc API for "${searchQuery}"`);
+          
+          // Convert zinc products to regular products
+          const processedResults = zincApiResults.map((item: any) => {
+            // Ensure we convert to Product type
+            const product: Product = {
+              id: item.product_id || item.id,
+              name: item.title || item.name,
+              price: item.price,
+              image: item.image || item.main_image,
+              images: item.images,
+              description: item.description || item.product_description,
+              category: item.category,
+              rating: item.rating || item.stars,
+              reviewCount: item.review_count || item.num_reviews,
+              vendor: "Amazon via Zinc",
+              brand: item.brand
+            };
+            return product;
+          });
+          
+          setZincResults(processedResults);
+        } else {
+          console.log(`No results found from Zinc API for "${searchTerm}"`);
+          setZincResults([]);
+        }
+        
+      } catch (error) {
+        // Only log error if not aborted
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          console.error('Error searching Zinc API:', error);
+        }
+      } finally {
+        setLoading(false);
       }
-      
-      setResults(searchResults);
-      
-      // Only show toast for empty results and only once per search session
-      if (searchResults.length === 0 && !toastShownRef.current) {
-        toastShownRef.current = true;
-        toast.error("No results found", {
-          description: `No products found for "${term}"`,
-          id: "no-results" // Use consistent ID to prevent duplicates
-        });
-        resetToastStatus();
+    };
+
+    // Debounce function to avoid making too many requests
+    const timeoutId = setTimeout(() => {
+      fetchZincResults();
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-      
-      return searchResults;
-    } catch (err) {
-      console.error("Error searching products:", err);
-      setError("Failed to search products");
-      
-      // Only show error toast once per search session
-      if (!toastShownRef.current) {
-        toastShownRef.current = true;
-        toast.error("Search Error", {
-          description: "Failed to search products. Please try again.",
-          id: "search-error" // Use consistent ID to prevent duplicates
-        });
-        resetToastStatus();
-      }
-      
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+  }, [searchTerm, products]);
 
   return {
-    search,
-    searchTerm,
-    setSearchTerm,
-    isLoading,
-    error,
-    results
+    loading,
+    zincResults,
+    filteredProducts,
+    hasResults: zincResults.length > 0 || filteredProducts.length > 0
   };
 };

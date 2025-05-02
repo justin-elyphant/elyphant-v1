@@ -38,6 +38,18 @@ const ZincProductsTab = () => {
     }
   };
 
+  // Format products for ZincProductResults component
+  const formatProductsForResults = (products: Product[]) => {
+    return products.map(product => ({
+      id: product.id ? parseInt(product.id) : Math.floor(Math.random() * 10000),
+      name: product.name || product.title || "Unknown Product",
+      price: product.price || 0,
+      image: product.image || "/placeholder.svg",
+      description: product.description || product.product_description || "",
+      rating: product.rating || product.stars || 0
+    }));
+  };
+
   return (
     <div className="space-y-4 py-4">
       <ZincSearchForm
@@ -57,7 +69,7 @@ const ZincProductsTab = () => {
       
       {specialCaseProducts && specialCaseProducts.length > 0 && (
         <ZincProductResults
-          products={specialCaseProducts}
+          products={formatProductsForResults(specialCaseProducts)}
           isLoading={isLoading}
           searchTerm={searchTerm}
         />
@@ -65,7 +77,7 @@ const ZincProductsTab = () => {
       
       {marketplaceProducts && marketplaceProducts.length > 0 && (
         <ZincProductResults
-          products={marketplaceProducts}
+          products={formatProductsForResults(marketplaceProducts)}
           isLoading={isLoading}
           searchTerm={searchTerm}
         />

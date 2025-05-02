@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WishlistsTabContent from "./tabs/WishlistsTabContent";
@@ -8,7 +7,7 @@ import ActivityTabContent from "./tabs/ActivityTabContent";
 export interface ProfileTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  isCurrentUser: boolean;
+  isCurrentUser?: boolean;
   mockWishlists: any[];
   userData?: any; // Add the missing userData prop
 }

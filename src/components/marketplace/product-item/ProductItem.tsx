@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Product } from "@/types/product";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,12 +35,21 @@ const ProductItem = ({
     handleSaveOptionSelect(option, productId);
   };
 
+  // Ensure product has required properties for badges
+  const adaptedProduct = {
+    title: product.title || product.name || "Unknown Product",
+    price: product.price || 0,
+    stars: product.stars || product.rating || 0,
+    num_reviews: product.num_reviews || product.reviewCount || 0,
+    category: product.category || "General"
+  };
+
   // Generate product badges based on product metadata
   const getBadges = () => {
     const badges = [];
     
     // Check for popularity or bestseller status
-    if (product.stars && product.stars >= 4.5) {
+    if (adaptedProduct.stars && adaptedProduct.stars >= 4.5) {
       badges.push({
         text: "Popular Pick",
         variant: "default",
@@ -57,7 +67,7 @@ const ProductItem = ({
     }
     
     // Check for staff favorites
-    if (product.stars && product.stars >= 4.8) {
+    if (adaptedProduct.stars && adaptedProduct.stars >= 4.8) {
       badges.push({
         text: "Staff Favorite",
         variant: "outline",
@@ -85,8 +95,8 @@ const ProductItem = ({
       className={`group relative rounded-lg overflow-hidden border ${
         viewMode === 'grid' ? 'h-full flex flex-col' : 'flex'
       } bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
-      onClick={() => onProductClick(product.product_id)}
-      data-testid={`product-item-${product.product_id}`}
+      onClick={() => onProductClick(product.product_id || product.id || '')}
+      data-testid={`product-item-${product.product_id || product.id}`}
     >
       <div className={viewMode === 'grid' ? 'relative' : 'w-1/4'}>
         <ProductImage 
@@ -94,8 +104,8 @@ const ProductItem = ({
         />
         <WishlistButton 
           userData={user}
-          productId={product.product_id}
-          productName={product.title}
+          productId={product.product_id || product.id || ''}
+          productName={product.title || product.name || ''}
           onWishlistClick={onWishlistClick}
           onSaveOptionSelect={handleSaveOption}
           isFavorited={isFavorited}
@@ -120,7 +130,7 @@ const ProductItem = ({
         onAddToCart={(e) => {
           e.stopPropagation();
           // We'll handle this in ProductDetails
-          console.log("Gift This:", product.product_id);
+          console.log("Gift This:", product.product_id || product.id);
         }}
       />
       
@@ -136,13 +146,6 @@ const ProductItem = ({
             <CheckCircle2 className="h-3 w-3 mr-1 text-blue-600" />
             <span>Verified</span>
           </div>
-          
-          {/* {product.rating && product.rating >= 4.5 && (
-            <div className="flex items-center">
-              <Award className="h-3 w-3 mr-1 text-amber-500" />
-              <span>Top Rated</span>
-            </div>
-          )} */}
         </div>
       </div>
     </div>

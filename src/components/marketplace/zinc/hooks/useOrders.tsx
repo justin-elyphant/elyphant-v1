@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
-import { createTestOrder } from '../zincService';
 
 export const useOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -20,16 +20,23 @@ export const useOrders = () => {
     setLoading(true);
     try {
       // Simulate creating an order
-      const newOrder = await createTestOrder(orderData);
+      const newOrder = {
+        id: `order-${Date.now()}`,
+        ...orderData,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      };
 
       // Update state and local storage
       setOrders(prevOrders => [...prevOrders, newOrder]);
       localStorage.setItem('orders', JSON.stringify([...orders, newOrder]));
 
       toast.success('Order created successfully!');
+      return newOrder;
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Failed to create order.');
+      throw error;
     } finally {
       setLoading(false);
     }

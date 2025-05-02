@@ -1,3 +1,4 @@
+
 import { useLocation } from "react-router-dom";
 import { getCategoryName } from "@/components/marketplace/hooks/utils/categoryUtils";
 import { Product } from "@/types/product";

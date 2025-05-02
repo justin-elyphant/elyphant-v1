@@ -4,7 +4,7 @@ import { Product } from '@/contexts/ProductContext';
 import { fetchProductDetails } from '../zinc/services/productDetailsService';
 
 export const useProductImages = (product: Product) => {
-  const [images, setImages] = useState<string[]>([product.image]);
+  const [images, setImages] = useState<string[]>([product?.image]);
 
   useEffect(() => {
     const fetchImages = async () => {

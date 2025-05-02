@@ -6,6 +6,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 // const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,

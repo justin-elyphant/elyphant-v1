@@ -16,7 +16,8 @@ interface ProductGridProps {
 
 const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  const [showProductDetails, setShowProductDetails] = useState<String | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string | null> (null);
+  const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
@@ -35,12 +36,9 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   };
   
   const handleProductClick = (productId: string) => {
-    setShowProductDetails(productId);
+    setSelectedProduct(productId);
+    setDlgOpen(true);
   };
-  
-  const selectedProduct = showProductDetails !== null 
-    ? products.find(p => p.product_id === showProductDetails)
-    : null;
 
   if (sortedProducts.length === 0) {
     return (
@@ -70,11 +68,9 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
       </div>
 
       <ProductDetailsDialog 
-        product={selectedProduct}
-        open={showProductDetails !== null}
-        onOpenChange={(open) => {
-          if (!open) setShowProductDetails(null);
-        }}
+        productId={selectedProduct}
+        open={dlgOpen}
+        onOpenChange={setDlgOpen}
         userData={userData}
       />
 

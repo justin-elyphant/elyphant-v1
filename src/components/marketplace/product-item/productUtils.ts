@@ -4,5 +4,5 @@
  */
 export const formatProductPrice = (price: number): string => {
   if (price == null) return "No Price";
-  return price.toFixed(2);
+  return (price/100).toFixed(2);
 };

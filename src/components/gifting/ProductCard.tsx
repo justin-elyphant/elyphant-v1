@@ -13,7 +13,7 @@ interface ProductCardProps {
   product: Product;
   isWishlisted: boolean;
   isGifteeView: boolean;
-  onToggleWishlist: (productId: number) => void;
+  onToggleWishlist: (productId: string) => void;
   onClick?: () => void;
 }
 
@@ -28,7 +28,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleWishlist(product.id);
+    if (product.id) {
+      onToggleWishlist(product.id);
+    }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -40,8 +42,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     });
   };
 
-  const formatPrice = (price: number) => {
-    return price.toFixed(2);
+  const formatPrice = (price?: number) => {
+    return price !== undefined ? price.toFixed(2) : "0.00";
   };
 
   return (

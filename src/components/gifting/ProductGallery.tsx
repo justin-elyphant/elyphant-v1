@@ -101,7 +101,7 @@ const ProductGallery = ({
             <ProductCard
               key={product.id}
               product={product}
-              isWishlisted={wishlistedProducts.includes(product.id)}
+              isWishlisted={product.id ? wishlistedProducts.includes(product.id) : false}
               isGifteeView={isGifteeView}
               onToggleWishlist={handleWishlistToggle}
               onClick={() => onProductSelect && onProductSelect(product)}

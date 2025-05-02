@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,8 +75,10 @@ const FeaturedProductsSection = () => {
     loadProducts();
   }, [products, setProducts]);
   
-  const handleProductClick = (productId: number) => {
-    navigate(`/marketplace?productId=${productId}`);
+  const handleProductClick = (productId: string | undefined) => {
+    if (productId) {
+      navigate(`/marketplace?productId=${productId}`);
+    }
   };
   
   if (isLoading) {
@@ -130,7 +133,7 @@ const FeaturedProductsSection = () => {
                     <CardContent className="p-4">
                       <h3 className="font-medium mb-1 line-clamp-1">{product.name}</h3>
                       <p className="text-sm text-muted-foreground mb-1 line-clamp-1">{product.brand || product.vendor}</p>
-                      <p className="font-semibold mb-1">${product.price.toFixed(2)}</p>
+                      <p className="font-semibold mb-1">${product.price?.toFixed(2) || "0.00"}</p>
                       <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
                     </CardContent>
                   </Card>

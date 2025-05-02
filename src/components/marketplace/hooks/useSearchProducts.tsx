@@ -24,7 +24,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       if (results.length > 0) {
         // Convert to Product format
         const amazonProducts = results.map((product, index) => ({
-          id: 1000 + index,
+          id: `amazon-${1000 + index}`, // Use string ID
           name: product.title || "Product",
           price: product.price,
           category: product.category || "Electronics",

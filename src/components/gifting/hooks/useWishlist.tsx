@@ -1,23 +1,21 @@
 
-import { toast } from "sonner";
+import { useState } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 
 export const useWishlist = () => {
-  const [wishlistedProducts, setWishlistedProducts] = useLocalStorage<number[]>('wishlistedProducts', []);
-
-  const handleWishlistToggle = (productId: number) => {
+  const [wishlistedProducts, setWishlistedProducts] = useLocalStorage<string[]>("wishlisted-products", []);
+  
+  const handleWishlistToggle = (productId: string) => {
+    if (!productId) return;
+    
     setWishlistedProducts(prev => {
-      const newWishlisted = prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId];
+      const isWishlisted = prev.includes(productId);
       
-      if (newWishlisted.includes(productId)) {
-        toast.success("Added to wishlist");
+      if (isWishlisted) {
+        return prev.filter(id => id !== productId);
       } else {
-        toast.info("Removed from wishlist");
+        return [...prev, productId];
       }
-      
-      return newWishlisted;
     });
   };
 

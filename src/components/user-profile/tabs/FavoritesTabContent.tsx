@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useFavorites } from '@/components/gifting/hooks/useFavorites';
 import { Product } from '@/types/product';
@@ -8,7 +9,11 @@ import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
-const FavoritesTabContent: React.FC = () => {
+interface FavoritesTabContentProps {
+  isCurrentUser?: boolean;
+}
+
+const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser = false }) => {
   const { favoriteItems, handleFavoriteToggle, isLoading } = useFavorites();
   const { addToCart, removeFromCart } = useCart();
 

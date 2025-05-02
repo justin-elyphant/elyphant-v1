@@ -47,6 +47,17 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
     }
 
+    console.log(`Received ${data.results.length} results from API:`, data.results.slice(0, 1));
+    
+    if (!Array.isArray(data.results)) {
+      console.error("Results are not an array:", data.results);
+      toast.error("Invalid results format", { 
+        description: "Received invalid data format from API", 
+        id: "search-products" 
+      });
+      return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
+    }
+
     // Success - show success toast
     toast.success(`Found ${data.results.length} products`, { 
       description: `Results for "${searchTerm}"`,
@@ -72,6 +83,7 @@ export const searchProducts = async (searchTerm: string, resultsLimit: string = 
       num_reviews: item.num_reviews
     }));
 
+    console.log(`Processed ${products.length} products from API`);
     return products;
   } catch (error) {
     console.error("Error invoking Supabase function:", error);

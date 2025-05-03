@@ -12,6 +12,7 @@ export const useZincProductSearch = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [localSearchTerm, setLocalSearchTerm] = useState(searchParams.get('search') || '');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [marketplaceProducts, setMarketplaceProducts] = useState<Product[]>([]);
   const [specialCaseProducts, setSpecialCaseProducts] = useState<Product[]>([]);
   const searchTimeoutRef = useRef<number | null>(null);
@@ -65,6 +66,7 @@ export const useZincProductSearch = () => {
     }
     
     setIsLoading(true);
+    setError(null);
     
     try {
       console.log(`Searching for products with term: "${term}"`);
@@ -91,12 +93,15 @@ export const useZincProductSearch = () => {
         toast.error(`No products found`, {
           description: `No products found matching "${term}"`
         });
+        setError(`No products found matching "${term}"`);
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error searching for products";
       console.error(`Error searching for products with term "${term}":`, error);
       toast.error(`Search error`, {
         description: "There was a problem processing your search request"
       });
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +119,7 @@ export const useZincProductSearch = () => {
       toast.error("No search term", {
         description: "Please enter a search term to sync products"
       });
+      setError("Please enter a search term to sync products");
     }
   };
 
@@ -125,6 +131,7 @@ export const useZincProductSearch = () => {
     handleSearch,
     syncProducts,
     isLoading,
+    error,
     marketplaceProducts,
     specialCaseProducts
   };

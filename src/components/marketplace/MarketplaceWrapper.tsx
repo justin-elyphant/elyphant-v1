@@ -10,14 +10,16 @@ import { Button } from "@/components/ui/button";
 import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
 
 const MarketplaceWrapper = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const productId = searchParams.get("productId");
-  const { products, isLoading, loadProducts } = useProducts();
+  const { products, isLoading, setProducts } = useProducts();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [localLoading, setLocalLoading] = useState(false);
   const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
   const [showApiAlert, setShowApiAlert] = useState(true);
@@ -31,10 +33,41 @@ const MarketplaceWrapper = () => {
     const keyword = searchParams.get("search") || "";
     setSearchTerm(keyword);
     
-    // This is the key part: Load products using the shared service via loadProducts
-    console.log(`Loading products from URL search param: "${keyword}"`);
-    loadProducts({ keyword });
+    // This is the key part: Load products using the shared zinc service
+    if (keyword && keyword.trim()) {
+      console.log(`Loading products from URL search param: "${keyword}"`);
+      loadProducts(keyword);
+    }
   }, [searchParams]);
+
+  const loadProducts = async (keyword: string) => {
+    if (!keyword || keyword.trim() === '') return;
+    
+    setLocalLoading(true);
+    try {
+      console.log(`Fetching products with search term: "${keyword}" using zinc service`);
+      const results = await searchProducts(keyword);
+      
+      if (results && results.length > 0) {
+        console.log(`Found ${results.length} products for search term "${keyword}"`);
+        // Update products in global context
+        setProducts(prevProducts => {
+          // Remove any existing products from this search to avoid duplicates
+          const filteredProducts = prevProducts.filter(p => 
+            !p.vendor?.includes("Amazon via Zinc") || 
+            !p.id?.toString().includes("mock-")
+          );
+          
+          // Add new products
+          return [...filteredProducts, ...results];
+        });
+      }
+    } catch (error) {
+      console.error(`Error loading products: ${error}`);
+    } finally {
+      setLocalLoading(false);
+    }
+  };
 
   // Handle product details dialog
   useEffect(() => {
@@ -113,7 +146,7 @@ const MarketplaceWrapper = () => {
 
         <MarketplaceContent 
           products={products}
-          isLoading={isLoading}
+          isLoading={isLoading || localLoading}
           searchTerm={searchTerm}
         />
       </div>

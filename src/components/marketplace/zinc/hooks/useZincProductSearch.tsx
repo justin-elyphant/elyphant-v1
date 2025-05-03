@@ -1,175 +1,131 @@
 
-import { useState, useRef } from "react";
-import { useProducts } from "@/contexts/ProductContext";
-import { findMatchingProducts } from "../utils/findMatchingProducts";
-import { toast } from "sonner";
-import { Product } from "@/types/product";
-import { ZincProduct } from "../types";
-import { convertZincProductToProduct } from "../utils/productConverter";
+import { useState, useEffect, useRef } from 'react';
+import { useProducts } from '@/contexts/ProductContext';
+import { toast } from 'sonner';
+import { Product } from '@/types/product';
+import { searchProducts } from '@/components/marketplace/zinc/zincService';
+import { useSearchParams } from 'react-router-dom';
 
 export const useZincProductSearch = () => {
   const { products, setProducts } = useProducts();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [localSearchTerm, setLocalSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchParams.get('search') || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [marketplaceProducts, setMarketplaceProducts] = useState<Product[]>([]);
   const [specialCaseProducts, setSpecialCaseProducts] = useState<Product[]>([]);
-  const searchInProgressRef = useRef(false);
-  
-  const marketplaceProducts = products.filter(p => p.vendor === "Elyphant" || p.vendor === "Amazon via Zinc");
-  
+  const searchTimeoutRef = useRef<number | null>(null);
+
+  // Sync URL search param with state
+  useEffect(() => {
+    const urlSearch = searchParams.get('search');
+    if (urlSearch !== null && urlSearch !== searchTerm) {
+      setSearchTerm(urlSearch);
+      setLocalSearchTerm(urlSearch);
+    }
+  }, [searchParams]);
+
+  // Handle search when searchTerm changes
+  useEffect(() => {
+    if (searchTerm && searchTerm.trim()) {
+      handleSearch(searchTerm);
+    }
+  }, [searchTerm]);
+
+  // Filter products when the global products list changes
+  useEffect(() => {
+    if (products.length > 0) {
+      // Filter out special-case products like Apple
+      const specials = products.filter(p => 
+        p.brand?.toLowerCase() === 'apple' || 
+        (p.name && p.name.toLowerCase().includes('apple '))
+      );
+      
+      const regular = products.filter(p => 
+        !(p.brand?.toLowerCase() === 'apple' || 
+        (p.name && p.name.toLowerCase().includes('apple ')))
+      );
+      
+      setSpecialCaseProducts(specials);
+      setMarketplaceProducts(regular);
+      
+      console.log(`Filtered ${specials.length} special case products and ${regular.length} regular products from context`);
+    } else {
+      setSpecialCaseProducts([]);
+      setMarketplaceProducts([]);
+    }
+  }, [products]);
+
   const handleSearch = async (term: string) => {
-    if (!term.trim() || searchInProgressRef.current) return;
+    if (!term || term.trim() === '') return;
     
-    searchInProgressRef.current = true;
+    // Clear any pending search timeout
+    if (searchTimeoutRef.current !== null) {
+      window.clearTimeout(searchTimeoutRef.current);
+    }
+    
     setIsLoading(true);
-    setError(null); // Reset error state
-    setSearchTerm(term);
-    console.log(`ZincProductsTab: Submitting search for "${term}"`);
     
     try {
-      // Check for special cases first
-      const isSpecialCase = term.toLowerCase().includes('padres') && 
-          (term.toLowerCase().includes('hat') || term.toLowerCase().includes('cap'));
+      console.log(`Searching for products with term: "${term}"`);
       
-      if (isSpecialCase) {
-        console.log('Using special case handling for Padres hat search in ZincProductsTab');
-        // Generate mock products for this special case
-        const specialCaseZincProducts = findMatchingProducts(term);
+      // Get search results using the shared service
+      const results = await searchProducts(term);
+      
+      if (results && results.length > 0) {
+        console.log(`Found ${results.length} products for search term "${term}"`);
         
-        // Convert to Product format and add to state
-        const formattedProducts: Product[] = specialCaseZincProducts.map((product, index) => ({
-          id: `2000${index}`, // Convert to string
-          name: product.title || "San Diego Padres Hat",
-          price: product.price || 29.99,
-          category: product.category || "Sports Merchandise",
-          image: product.image || "https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop",
-          vendor: "Amazon via Zinc",
-          description: product.description || "Official San Diego Padres baseball cap. Show your team spirit with this authentic MLB merchandise.",
-          rating: product.rating || 4.5,
-          reviewCount: product.review_count || 120
-        }));
-        
-        setSpecialCaseProducts(formattedProducts);
-        
-        // Update products
+        // Update products in context to make them available globally
         setProducts(prevProducts => {
-          // Remove existing Padres products
-          const filtered = prevProducts.filter(p => 
-            !(p.name?.toLowerCase().includes('padres') && p.name?.toLowerCase().includes('hat'))
+          // Remove any existing products from this search to avoid duplicates
+          const filteredProducts = prevProducts.filter(p => 
+            !p.vendor?.includes("Amazon via Zinc") || 
+            !p.id?.toString().includes("mock-")
           );
-          return [...filtered, ...formattedProducts];
-        });
-        
-        toast.success("Search Complete", {
-          description: `Found ${formattedProducts.length} products matching "${term}"`
+          
+          // Add new products
+          return [...filteredProducts, ...results];
         });
       } else {
-        // Use the regular search for non-special cases
-        await handleRegularSearch(term);
-      }
-    } catch (err) {
-      console.error("Search error:", err);
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-      setError(errorMessage);
-      toast.error("Search Failed", {
-        description: "There was an error processing your search. Using mock data instead."
-      });
-      
-      // Fall back to mock data
-      const mockProducts = findMatchingProducts(term);
-      if (mockProducts.length > 0) {
-        // Convert to Product format
-        const formattedProducts: Product[] = mockProducts.map((product, index) => ({
-          id: `4000${index}`, // Convert to string
-          name: product.title || term,
-          price: product.price || 19.99,
-          category: product.category || "Electronics",
-          image: product.image || "/placeholder.svg",
-          vendor: "Amazon via Zinc",
-          description: product.description || `Product related to ${term}`,
-          rating: product.rating || 4.0,
-          reviewCount: product.review_count || 50
-        }));
-        
-        setSpecialCaseProducts(formattedProducts);
-        
-        // Update products
-        setProducts(prevProducts => {
-          return [...prevProducts, ...formattedProducts];
+        console.log(`No products found for search term "${term}"`);
+        toast.error(`No products found`, {
+          description: `No products found matching "${term}"`
         });
       }
+    } catch (error) {
+      console.error(`Error searching for products with term "${term}":`, error);
+      toast.error(`Search error`, {
+        description: "There was a problem processing your search request"
+      });
     } finally {
       setIsLoading(false);
-      searchInProgressRef.current = false;
     }
   };
 
-  const handleRegularSearch = async (term: string) => {
-    // This function would handle the regular search flow, calling the API
-    // For simplicity, we'll just use the findMatchingProducts function
-    const results = findMatchingProducts(term);
-    
-    if (results.length > 0) {
-      // Convert to Product format
-      const formattedProducts: Product[] = results.map((product, index) => ({
-        id: `4000${index}`, // Convert to string
-        name: product.title || term,
-        price: product.price || 19.99,
-        category: product.category || "Electronics",
-        image: product.image || "/placeholder.svg",
-        vendor: "Amazon via Zinc",
-        description: product.description || `Product related to ${term}`,
-        rating: product.rating || 4.0,
-        reviewCount: product.review_count || 50
-      }));
-      
-      setSpecialCaseProducts(formattedProducts);
-      
-      // Update products
-      setProducts(prevProducts => {
-        return [...prevProducts, ...formattedProducts];
+  const syncProducts = () => {
+    if (searchTerm) {
+      toast.info("Syncing products", {
+        description: `Refreshing products for "${searchTerm}"`
       });
       
-      toast.success("Search Complete", {
-        description: `Found ${formattedProducts.length} products matching "${term}"`
-      });
+      // Force refresh search results
+      handleSearch(searchTerm);
     } else {
-      setError("No products found");
-      toast.error("No Results", {
-        description: `No products found for "${term}"`
+      toast.error("No search term", {
+        description: "Please enter a search term to sync products"
       });
-    }
-  };
-
-  const syncProducts = async () => {
-    setIsLoading(true);
-    setError(null); // Reset error state
-    try {
-      toast.success("Products Synced", {
-        description: "Your product catalog has been updated."
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-      setError(errorMessage);
-      toast.error("Sync Failed", {
-        description: "There was an error syncing your products."
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return {
     searchTerm,
     setSearchTerm,
-    localSearchTerm,
+    localSearchTerm, 
     setLocalSearchTerm,
     handleSearch,
     syncProducts,
     isLoading,
     marketplaceProducts,
-    specialCaseProducts,
-    error
+    specialCaseProducts
   };
 };

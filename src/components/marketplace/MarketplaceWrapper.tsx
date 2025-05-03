@@ -26,12 +26,17 @@ const MarketplaceWrapper = () => {
     setUpcomingOccasions(getUpcomingOccasions());
   }, []);
 
+  // Handle search term changes from the URL
   useEffect(() => {
     const keyword = searchParams.get("search") || "";
     setSearchTerm(keyword);
-    loadProducts({ keyword: keyword });
+    
+    // This is the key part: Load products using the shared service via loadProducts
+    console.log(`Loading products from URL search param: "${keyword}"`);
+    loadProducts({ keyword });
   }, [searchParams]);
 
+  // Handle product details dialog
   useEffect(() => {
     if (productId) {
       setShowProductDetails(productId);
@@ -41,7 +46,10 @@ const MarketplaceWrapper = () => {
   }, [productId]);
 
   const selectedProduct = showProductDetails !== null 
-    ? products.find(p => p.product_id === showProductDetails)
+    ? products.find(p => 
+        (p.product_id === showProductDetails) || 
+        (p.id === showProductDetails)
+      )
     : null;
     
   const goToTrunkline = () => {
@@ -59,7 +67,7 @@ const MarketplaceWrapper = () => {
           
           {/* Quick Navigation Links */}
           <div className="flex gap-6 mt-4 text-sm overflow-x-auto pb-2">
-            {upcomingOccasions.map((occasion, index) => (
+            {upcomingOccasions.map((occasion) => (
               <Button
                 key={occasion.name}
                 variant="link"
@@ -90,7 +98,7 @@ const MarketplaceWrapper = () => {
         {searchTerm && showApiAlert && (
           <Alert className="mb-4 bg-amber-50 border-amber-200">
             <AlertDescription className="flex justify-between items-center">
-              <span>Using mock search results for demo purposes.</span>
+              <span>Using Zinc API to fetch search results from Amazon.</span>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setShowApiAlert(false)}>
                   Dismiss
@@ -112,7 +120,7 @@ const MarketplaceWrapper = () => {
       
       {selectedProduct && (
         <ProductDetailsDialog 
-          productId={selectedProduct.product_id || ""}
+          productId={selectedProduct.product_id || selectedProduct.id || ""}
           open={showProductDetails !== null}
           onOpenChange={(open) => {
             if (!open) {

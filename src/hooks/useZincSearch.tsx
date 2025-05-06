@@ -1,7 +1,9 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '@/contexts/ProductContext';
 import { searchProducts } from '@/components/marketplace/zinc/zincService';
 import { toast } from 'sonner';
+import { normalizeProduct } from '@/components/marketplace/product-item/productUtils';
 
 export const useZincSearch = (searchTerm: string) => {
   const [loading, setLoading] = useState(false);
@@ -68,11 +70,12 @@ export const useZincSearch = (searchTerm: string) => {
         if (results && Array.isArray(results)) {
           console.log(`Found ${results.length} results from Zinc API for "${searchQuery}"`);
           
-          // Map to consistent format with proper types
-          const processedResults = results.map(item => ({
+          // Map and normalize each product
+          const processedResults = results.map(item => normalizeProduct({
             id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
-            product_id: item.product_id,
+            product_id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
             title: item.title,
+            name: item.title,
             price: item.price,
             image: item.images?.[0] || item.image || "/placeholder.svg",
             images: item.images || (item.image ? [item.image] : ["/placeholder.svg"]),

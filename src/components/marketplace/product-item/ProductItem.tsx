@@ -93,7 +93,7 @@ const ProductItem = ({
         <WishlistButton 
           userData={user}
           productId={product.product_id}
-          productName={product.title}
+          productName={product.title || product.name}
           onWishlistClick={onWishlistClick}
           onSaveOptionSelect={handleSaveOption}
           isFavorited={isFavorited}
@@ -114,7 +114,13 @@ const ProductItem = ({
       </div>
       
       <ProductDetails 
-        product={product} 
+        product={{
+          title: product.title || product.name,
+          price: product.price,
+          stars: product.stars || product.rating,
+          num_reviews: product.num_reviews || product.reviewCount,
+          category: product.category
+        }}
         onAddToCart={(e) => {
           e.stopPropagation();
           // We'll handle this in ProductDetails
@@ -134,13 +140,6 @@ const ProductItem = ({
             <CheckCircle2 className="h-3 w-3 mr-1 text-blue-600" />
             <span>Verified</span>
           </div>
-          
-          {/* {product.rating && product.rating >= 4.5 && (
-            <div className="flex items-center">
-              <Award className="h-3 w-3 mr-1 text-amber-500" />
-              <span>Top Rated</span>
-            </div>
-          )} */}
         </div>
       </div>
     </div>

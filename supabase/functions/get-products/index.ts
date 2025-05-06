@@ -52,7 +52,7 @@ serve(async (req) => {
             success: false, 
             message: 'API key not found',
             // Include some mock results so the UI doesn't break
-            results: generateMockResults(query)
+            results: normalizeProductResults(generateMockResults(query))
           }), 
           { 
             status: 200, 
@@ -75,6 +75,11 @@ serve(async (req) => {
       
       const data = await response.json();
       
+      // Normalize results to ensure all required fields are present
+      if (data.results && Array.isArray(data.results)) {
+        data.results = normalizeProductResults(data.results);
+      }
+      
       return new Response(
         JSON.stringify(data),
         { 
@@ -90,7 +95,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           message: 'Error processing request: ' + error.message,
-          results: generateMockResults(req.json().query || 'gift')
+          results: normalizeProductResults(generateMockResults(req.json().query || 'gift'))
         }), 
         { 
           status: 200, 
@@ -109,6 +114,30 @@ serve(async (req) => {
   );
 });
 
+// Helper function to normalize product results
+function normalizeProductResults(products) {
+  return products.map(product => {
+    // Generate consistent product id
+    const productId = product.product_id || `mock-${Math.random().toString(36).substring(2, 11)}`;
+    
+    // Ensure all required fields exist
+    return {
+      ...product,
+      product_id: productId,
+      id: productId,
+      title: product.title || 'Unnamed Product',
+      name: product.title || 'Unnamed Product',
+      price: typeof product.price === 'number' ? product.price : parseFloat(String(product.price)) || 0,
+      image: product.image || '/placeholder.svg',
+      images: product.images || (product.image ? [product.image] : ['/placeholder.svg']),
+      stars: typeof product.stars === 'number' ? product.stars : 0,
+      rating: typeof product.stars === 'number' ? product.stars : 0,
+      num_reviews: typeof product.num_reviews === 'number' ? product.num_reviews : 0,
+      reviewCount: typeof product.num_reviews === 'number' ? product.num_reviews : 0
+    };
+  });
+}
+
 // Generate mock results for fallback
 function generateMockResults(query = '') {
   const normalizedQuery = query.toLowerCase();
@@ -118,16 +147,21 @@ function generateMockResults(query = '') {
     const category = categories[Math.floor(Math.random() * categories.length)];
     const price = Math.floor(Math.random() * 10000) / 100;
     const stars = (Math.random() * 3 + 2).toFixed(1);
+    const productId = `mock-${normalizedQuery.replace(/\s+/g, '-')}-${i}`;
     
     return {
-      product_id: `mock-${normalizedQuery.replace(/\s+/g, '-')}-${i}`,
+      product_id: productId,
+      id: productId,
       title: `${category} Item - ${normalizedQuery} (${i + 1})`,
+      name: `${category} Item - ${normalizedQuery} (${i + 1})`,
       price: price * 100, // Convert to cents for consistency
       image: `https://picsum.photos/seed/${normalizedQuery}${i}/300/300`,
       images: [`https://picsum.photos/seed/${normalizedQuery}${i}/300/300`],
       brand: 'Brand Name',
       stars: parseFloat(stars),
+      rating: parseFloat(stars),
       num_reviews: Math.floor(Math.random() * 1000),
+      reviewCount: Math.floor(Math.random() * 1000),
       category: category
     };
   });

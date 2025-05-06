@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,12 +8,13 @@ import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import ProductRating from "@/components/shared/ProductRating";
+import { formatProductPrice } from "@/components/marketplace/product-item/productUtils";
 
 interface ProductCardProps {
   product: Product;
   isWishlisted: boolean;
   isGifteeView: boolean;
-  onToggleWishlist: (productId: number) => void;
+  onToggleWishlist: (productId: number | string) => void;
   onClick?: () => void;
 }
 
@@ -37,10 +39,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     toast.success("Added to Cart", {
       description: `${product.name} has been added to your cart`
     });
-  };
-
-  const formatPrice = (price: number) => {
-    return price.toFixed(2);
   };
 
   return (
@@ -92,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </div>
       <CardContent className="p-3">
         <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
-        <p className="font-semibold text-sm">${formatPrice(product.price)}</p>
+        <p className="font-semibold text-sm">${formatProductPrice(product.price)}</p>
         
         <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
         

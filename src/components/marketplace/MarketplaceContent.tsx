@@ -5,7 +5,7 @@ import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGridOptimized from "./ProductGridOptimized";
 import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
-import { sortProducts } from "./hooks/utils/categoryUtils";
+import { sortProducts } from "./hooks/utils/category/productSorting";
 import { Product } from "@/contexts/ProductContext";
 import { Spinner } from '@/components/ui/spinner';
 

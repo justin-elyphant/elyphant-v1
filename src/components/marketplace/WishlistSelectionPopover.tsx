@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -76,6 +75,8 @@ export const WishlistSelectionPopover = ({
     }
   };
   
+  // Ensure user is authenticated - this is now a redundant check since
+  // we're handling auth at the WishlistButton level, but keeping it for safety
   if (!user) {
     return (
       <Popover open={open} onOpenChange={setOpen}>

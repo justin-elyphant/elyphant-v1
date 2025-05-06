@@ -1,9 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingBag } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import BuyNowButton from "./BuyNowButton";
+import SignUpDialog from "../SignUpDialog";
+import { useAuth } from "@/contexts/auth";
 
 interface ProductActionsProps {
   product: any;
@@ -23,10 +25,24 @@ const ProductActions = ({
   userData,
 }: ProductActionsProps) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
 
   const handleAddToCart = () => {
     addToCart(product);
     if (onAddToCart) onAddToCart();
+  };
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      setShowSignUpDialog(true);
+      return;
+    }
+    
+    if (onAddToWishlist) {
+      onAddToWishlist(e);
+    }
   };
 
   return (
@@ -48,7 +64,7 @@ const ProductActions = ({
               ? "bg-rose-500 hover:bg-rose-600 border-none"
               : "border-rose-200 hover:bg-rose-50 hover:border-rose-300"
           }
-          onClick={onAddToWishlist}
+          onClick={handleWishlistClick}
         >
           <Heart
             className={`h-4 w-4 ${
@@ -64,6 +80,11 @@ const ProductActions = ({
         price={product.price}
         productImage={product.image}
         className="w-full"
+      />
+
+      <SignUpDialog 
+        open={showSignUpDialog} 
+        onOpenChange={setShowSignUpDialog} 
       />
     </div>
   );

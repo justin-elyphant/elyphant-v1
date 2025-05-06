@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { toast } from "sonner";
+import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
 
 export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateAction<Product[]>>) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,18 +23,20 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       const results = await searchProducts(searchParam);
       
       if (results.length > 0) {
-        // Convert to Product format
-        const amazonProducts = results.map((product, index) => ({
-          id: 1000 + index,
-          name: product.title || "Product",
-          price: product.price,
-          category: product.category || "Electronics",
-          image: product.image || "/placeholder.svg",
-          vendor: "Amazon via Zinc",
-          description: product.description || "",
-          rating: product.rating,
-          reviewCount: product.review_count
-        }));
+        // Convert to Product format and standardize
+        const amazonProducts = results.map((product, index) => {
+          return standardizeProduct({
+            id: 1000 + index,
+            name: product.title || "Product",
+            price: product.price,
+            category: product.category || "Electronics",
+            image: product.image || "/placeholder.svg",
+            vendor: "Amazon via Zinc",
+            description: product.description || "",
+            rating: product.rating,
+            reviewCount: product.review_count
+          });
+        });
         
         // Update products in context
         setProducts(prevProducts => {

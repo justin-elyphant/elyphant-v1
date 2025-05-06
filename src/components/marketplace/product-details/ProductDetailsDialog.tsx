@@ -9,7 +9,7 @@ import ProductActions from "./ProductActions";
 import { getProductDetail } from "@/api/product";
 import { Spinner } from '@/components/ui/spinner';
 import { normalizeProduct, Product } from "@/contexts/ProductContext";
-import { getProductName } from "../product-item/productUtils";
+import { getProductName, getProductImages } from "../product-item/productUtils";
 
 interface ProductDetailsDialogProps {
   productId: string | null;
@@ -73,7 +73,7 @@ const ProductDetailsDialog = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                 <div className="relative overflow-hidden rounded-md">
                   <ProductCarousel 
-                    images={productDetail.images || [productDetail.image]} 
+                    images={getProductImages(productDetail)} 
                     productName={getProductName(productDetail)} 
                   />
                 </div>

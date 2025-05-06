@@ -1,35 +1,40 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
+import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
 
 import { supabase } from '@/integrations/supabase/client';
 // Product type definition (matches existing type in ProductGallery)
 export type Product = {
-  addon?: boolean;
-  brand?: string;
-  fresh?: boolean;
-  image: string;
-  num_offers_estimate?: null|number;
-  num_reviews?: number;
-  num_sales?: number;
-  pantry?: boolean;
-  price: number;
-  prime?: boolean;
-  product_details?: any[];
+  // Required fields
   product_id: string;
-  stars?: number;
   title: string;
-  category_name?: string;
+  price: number;
+  image: string;
   
-  // Additional fields for compatibility
+  // Fields that may have aliases
   id?: string | number; // Alias for product_id
   name?: string; // Alias for title
   category?: string; // Alias for category_name
-  description?: string;
+  category_name?: string;
   vendor?: string;
-  retailer?: string; 
+  retailer?: string;
   rating?: number; // Alias for stars
+  stars?: number;
   reviewCount?: number; // Alias for num_reviews
+  num_reviews?: number;
+  
+  // Optional fields that might be present in some products
+  description?: string;
+  brand?: string;
+  images?: string[];
+  addon?: boolean;
+  fresh?: boolean;
+  num_offers_estimate?: null|number;
+  num_sales?: number;
+  pantry?: boolean;
+  prime?: boolean;
+  product_details?: any[];
   isBestSeller?: boolean;
   variants?: string[];
 };
@@ -93,39 +98,7 @@ const generateMockSpecifications = (productName: string, category: string): Reco
 
 // Helper function to normalize Product objects to ensure all required fields are present
 export const normalizeProduct = (product: Partial<Product>): Product => {
-  const normalized: Product = {
-    // Ensure required fields exist with fallbacks
-    product_id: product.product_id || String(product.id || ''),
-    title: product.title || product.name || 'Untitled Product',
-    price: typeof product.price === 'number' ? product.price : 0,
-    image: product.image || '',
-    
-    // Set up aliases for compatibility
-    id: product.id || product.product_id,
-    name: product.name || product.title,
-    category: product.category || product.category_name || 'Uncategorized',
-    rating: product.rating || product.stars || 0,
-    reviewCount: product.reviewCount || product.num_reviews || 0,
-    
-    // Copy other fields if present
-    brand: product.brand,
-    description: product.description,
-    vendor: product.vendor || product.retailer || 'Amazon',
-    retailer: product.retailer || product.vendor,
-    addon: product.addon,
-    fresh: product.fresh,
-    num_offers_estimate: product.num_offers_estimate,
-    num_sales: product.num_sales,
-    pantry: product.pantry,
-    prime: product.prime,
-    stars: product.stars || product.rating,
-    num_reviews: product.num_reviews || product.reviewCount,
-    category_name: product.category_name || product.category,
-    product_details: product.product_details || [],
-    isBestSeller: product.isBestSeller || (product.num_sales ? product.num_sales > 1000 : false)
-  };
-  
-  return normalized;
+  return standardizeProduct(product) as Product;
 };
 
 // Helper function to normalize an array of products

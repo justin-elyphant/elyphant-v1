@@ -58,12 +58,54 @@ export const getProductVendor = (product: any): string => {
  * Helper function for accessing rating consistently
  */
 export const getProductRating = (product: any): number => {
-  return product.rating || product.stars || 0;
+  const rating = product.rating || product.stars || 0;
+  return typeof rating === 'string' ? parseFloat(rating) : rating;
 };
 
 /**
  * Helper function for accessing review count consistently
  */
 export const getProductReviewCount = (product: any): number => {
-  return product.reviewCount || product.num_reviews || 0;
+  const count = product.reviewCount || product.num_reviews || 0;
+  return typeof count === 'string' ? parseInt(count, 10) : count;
+};
+
+/**
+ * Helper function to get product images consistently
+ */
+export const getProductImages = (product: any): string[] => {
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    return product.images;
+  }
+  return product.image ? [product.image] : [];
+};
+
+/**
+ * Helper function to convert any product object to our standard Product type
+ */
+export const standardizeProduct = (product: any) => {
+  if (!product) return null;
+  
+  return {
+    product_id: getProductId(product),
+    id: product.id || product.product_id,
+    title: product.title || product.name || 'Unknown Product',
+    name: product.name || product.title || 'Unknown Product',
+    price: normalizePrice(product.price),
+    image: product.image || '',
+    images: getProductImages(product),
+    category: getProductCategory(product),
+    category_name: getProductCategory(product),
+    vendor: getProductVendor(product),
+    retailer: getProductVendor(product),
+    rating: getProductRating(product),
+    stars: getProductRating(product),
+    reviewCount: getProductReviewCount(product),
+    num_reviews: getProductReviewCount(product),
+    description: product.description || '',
+    brand: product.brand || '',
+    // Additional fields that might be present
+    variants: product.variants || undefined,
+    isBestSeller: product.isBestSeller || false,
+  };
 };

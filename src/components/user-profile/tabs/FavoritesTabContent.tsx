@@ -8,7 +8,11 @@ import ProductGallery from "@/components/gifting/ProductGallery";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HeartOff } from "lucide-react";
 
-const FavoritesTabContent: React.FC = () => {
+interface FavoritesTabContentProps {
+  isCurrentUser?: boolean; // Make this optional
+}
+
+const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser = true }) => {
   const { products, isLoading } = useProducts();
   const { favorites, handleFavoriteToggle } = useFavorites();
   

@@ -54,10 +54,38 @@ export const useCategoryFilter = (products: Product[]) => {
     "Get Well": ["health", "recovery", "wellness"]
   };
 
+  // Function to check if a product matches a specific occasion category
+  const matchesOccasionCategory = (product: Product, category: string): boolean => {
+    if (category === "all") return true;
+    
+    // Direct category match
+    if ((product.category_name || product.category || "").toLowerCase() === category.toLowerCase()) {
+      return true;
+    }
+    
+    // Check against occasion categories
+    for (const [occasion, keywords] of Object.entries(occasionCategories)) {
+      if (occasion.toLowerCase() === category.toLowerCase()) {
+        // Check if any of the keywords match in product fields
+        for (const keyword of keywords) {
+          if ((product.title || "").toLowerCase().includes(keyword) ||
+              (product.description || "").toLowerCase().includes(keyword) ||
+              (product.category || "").toLowerCase().includes(keyword) ||
+              (product.category_name || "").toLowerCase().includes(keyword)) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  };
+
   return {
     selectedCategory,
     setSelectedCategory,
     categories,
-    occasionCategories
+    occasionCategories,
+    matchesOccasionCategory
   };
 };

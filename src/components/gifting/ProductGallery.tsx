@@ -68,6 +68,9 @@ const ProductGallery = ({
   
   // Check if we have any Shopify products
   const hasShopifyProducts = filteredProducts.some(product => (product.vendor || product.retailer) === "Shopify");
+
+  // Convert categories from Record to string array for ProductFilters
+  const categoryArray = Object.keys(categories);
   
   return (
     <div className="space-y-4">
@@ -83,7 +86,7 @@ const ProductGallery = ({
         selectedCategory={selectedCategory}
         priceRange={priceRange}
         filtersVisible={filtersVisible}
-        categories={categories}
+        categories={categoryArray}
         setSearchTerm={setSearchTerm}
         setSelectedCategory={setSelectedCategory}
         setPriceRange={setPriceRange}

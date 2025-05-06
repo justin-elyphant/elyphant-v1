@@ -3,6 +3,7 @@ import React from "react";
 import { useSignUpProcess } from "@/hooks/auth";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 import Header from "@/components/home/Header";
+import { AuthProvider } from "@/contexts/auth";
 
 const SignUp: React.FC = () => {
   const {
@@ -16,20 +17,22 @@ const SignUp: React.FC = () => {
   } = useSignUpProcess();
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <SignUpContentWrapper
-          step={step as "signup" | "verification"}
-          userEmail={userEmail}
-          userName={userName}
-          onSignUpSubmit={onSignUpSubmit}
-          handleBackToSignUp={handleBackToSignUp}
-          isSubmitting={isSubmitting}
-          bypassVerification={bypassVerification}
-        />
+    <AuthProvider>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+          <SignUpContentWrapper
+            step={step as "signup" | "verification"}
+            userEmail={userEmail}
+            userName={userName}
+            onSignUpSubmit={onSignUpSubmit}
+            handleBackToSignUp={handleBackToSignUp}
+            isSubmitting={isSubmitting}
+            bypassVerification={bypassVerification}
+          />
+        </div>
       </div>
-    </div>
+    </AuthProvider>
   );
 };
 

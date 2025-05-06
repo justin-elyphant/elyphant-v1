@@ -10,6 +10,9 @@ export function useSignUpProcess() {
   const [userName, setUserName] = useState<string>("");
   const { onSignUpSubmit: originalOnSignUpSubmit, isSubmitting } = useSignUpSubmit();
 
+  // For the hybrid approach, we'll set a default bypass value
+  const [bypassVerification] = useState(true);
+
   const handleSignUpSubmit = async (values: any) => {
     try {
       await originalOnSignUpSubmit(values);
@@ -33,5 +36,6 @@ export function useSignUpProcess() {
     onSignUpSubmit: handleSignUpSubmit,
     handleBackToSignUp,
     isSubmitting,
+    bypassVerification,
   };
 }

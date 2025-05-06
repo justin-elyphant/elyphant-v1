@@ -18,7 +18,10 @@ interface ProductDetailsProps {
 
 const ProductDetails = ({ product, onAddToCart }: ProductDetailsProps) => {
   // Clean up Amazon-style titles
-  const getCleanTitle = (title: string): string => {
+  const getCleanTitle = (title: string | undefined): string => {
+    // Handle undefined or null title
+    if (!title) return "Product";
+    
     // Remove excessive capitalization
     let cleanTitle = title.replace(/\b[A-Z]{2,}\b/g, (match) => 
       match.charAt(0) + match.slice(1).toLowerCase()

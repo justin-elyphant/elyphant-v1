@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          id: number
+          key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          key: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          key?: string
+        }
+        Relationships: []
+      }
       auto_gifting_rules: {
         Row: {
           budget_limit: number | null

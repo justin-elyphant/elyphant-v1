@@ -1,39 +1,55 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, ShoppingBag, Trash2, Loader2 } from "lucide-react";
+import { Edit, Share2, ShoppingBag, Trash2 } from "lucide-react";
 import GiftItemCard from "../GiftItemCard";
 import { toast } from "sonner";
-import { Wishlist, WishlistItem } from "@/types/profile";
-import { useWishlist } from "../hooks/useWishlist";
+
+export interface WishlistItem {
+  id: number;
+  name: string;
+  price: number;
+  brand: string;
+  imageUrl: string;
+}
+
+export interface WishlistData {
+  id: number;
+  title: string;
+  description: string;
+  items: WishlistItem[];
+}
 
 interface WishlistCardProps {
-  wishlist: Wishlist;
-  onEdit: (id: string) => void;
-  onShare: (id: string) => void;
-  onDelete: (id: string) => void;
+  wishlist: WishlistData;
+  onEdit: (id: number) => void;
+  onShare: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps) => {
-  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
-  const { removeFromWishlist } = useWishlist();
-  
-  const handleRemoveItem = async (itemId: string) => {
-    try {
-      setRemovingItemId(itemId);
-      const success = await removeFromWishlist(wishlist.id, itemId);
-      
-      if (success) {
-        toast.success("Item removed from wishlist");
-      }
-    } catch (error) {
-      console.error("Error removing item from wishlist:", error);
-      toast.error("Failed to remove item from wishlist");
-    } finally {
-      setRemovingItemId(null);
-    }
+  const handleRemoveItem = (itemId: number) => {
+    // Create an updated copy of the wishlist with the item removed
+    const updatedWishlist = {
+      ...wishlist,
+      items: wishlist.items.filter(item => item.id !== itemId)
+    };
+    
+    // Update the wishlist in localStorage
+    const storedWishlists = JSON.parse(localStorage.getItem("userWishlists") || "[]");
+    const updatedWishlists = storedWishlists.map((wl: WishlistData) => 
+      wl.id === wishlist.id ? updatedWishlist : wl
+    );
+    
+    localStorage.setItem("userWishlists", JSON.stringify(updatedWishlists));
+    
+    // Force a reload to update the UI
+    window.location.reload();
+    
+    // Show toast notification
+    toast.success("Item removed from wishlist");
   };
 
   return (
@@ -58,24 +74,18 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
             <div key={item.id} className="relative group">
               <GiftItemCard 
                 name={item.name}
-                price={item.price || 0}
-                brand={item.brand || ""}
-                imageUrl={item.image_url || "/placeholder.svg"}
+                price={item.price}
+                brand={item.brand}
+                imageUrl={item.imageUrl}
                 mini
               />
-              {removingItemId === item.id ? (
-                <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
-                  <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleRemoveItem(item.id)}
-                  className="absolute top-1 right-1 bg-white/80 hover:bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label={`Remove ${item.name} from wishlist`}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </button>
-              )}
+              <button
+                onClick={() => handleRemoveItem(item.id)}
+                className="absolute top-1 right-1 bg-white/80 hover:bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label={`Remove ${item.name} from wishlist`}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </button>
             </div>
           ))}
         </div>

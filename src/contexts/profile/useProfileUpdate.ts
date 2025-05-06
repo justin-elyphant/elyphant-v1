@@ -52,8 +52,8 @@ export const useProfileUpdate = () => {
           const { data, error } = await supabase
             .from('profiles')
             .upsert(dataWithId, {
-              onConflict: 'id'
-              // Removed the 'returning: minimal' option as it's not supported
+              onConflict: 'id',
+              returning: 'minimal'
             });
 
           if (error) {

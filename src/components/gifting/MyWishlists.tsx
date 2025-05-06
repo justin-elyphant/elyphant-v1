@@ -1,15 +1,12 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";
-import WishlistCard from "./wishlist/WishlistCard";
+import WishlistCard, { WishlistData } from "./wishlist/WishlistCard";
 import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
-import { Wishlist } from "@/types/profile";
-import { useWishlist } from "./hooks/useWishlist";
-import { Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,32 +18,52 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const initialWishlists = [
+  {
+    id: 1,
+    title: "Birthday Wishlist",
+    description: "Things I'd love to receive for my birthday",
+    items: [
+      { id: 1, name: "Wireless Headphones", price: 199, brand: "Bose", imageUrl: "/placeholder.svg" },
+      { id: 2, name: "Smart Watch", price: 349, brand: "Apple", imageUrl: "/placeholder.svg" },
+      { id: 3, name: "Fitness Tracker", price: 129, brand: "Fitbit", imageUrl: "/placeholder.svg" },
+    ]
+  },
+  {
+    id: 2,
+    title: "Holiday Wishlist",
+    description: "Gift ideas for the holidays",
+    items: [
+      { id: 4, name: "Leather Wallet", price: 89, brand: "Coach", imageUrl: "/placeholder.svg" },
+      { id: 5, name: "Portable Speaker", price: 129, brand: "JBL", imageUrl: "/placeholder.svg" },
+    ]
+  }
+];
+
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [currentWishlist, setCurrentWishlist] = useState<Wishlist | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
-  
-  const { wishlists, createWishlist, deleteWishlist } = useWishlist();
-
-  useEffect(() => {
-    // Set loading to false after a short delay to ensure wishlists have loaded
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, [wishlists]);
+  const [currentWishlist, setCurrentWishlist] = useState<WishlistData | null>(null);
+  const [wishlists, setWishlists] = useLocalStorage<WishlistData[]>("userWishlists", initialWishlists);
 
   const handleCreateWishlist = () => {
     setDialogOpen(true);
   };
 
-  const handleDialogSubmit = async (values: { title: string; description?: string }) => {
-    await createWishlist(values.title, values.description || "");
-    setDialogOpen(false);
+  const handleDialogSubmit = (values: { title: string; description?: string }) => {
+    const newWishlist: WishlistData = {
+      id: Date.now(),
+      title: values.title,
+      description: values.description || "",
+      items: []
+    };
+
+    setWishlists((prev) => [...prev, newWishlist]);
+    toast.success("Wishlist created successfully!");
   };
 
-  const handleEditWishlist = (id: string) => {
+  const handleEditWishlist = (id: number) => {
     console.log(`Edit wishlist ${id}`);
     const wishlistToEdit = wishlists.find(wishlist => wishlist.id === id);
     if (wishlistToEdit) {
@@ -55,15 +72,20 @@ const MyWishlists = () => {
     }
   };
 
-  const handleEditDialogSubmit = async (values: { title: string; description?: string }) => {
-    if (!currentWishlist) return;
-    
-    // For now, we'll just show a toast that this feature is coming soon
-    toast.info("Wishlist editing will be available soon!");
-    setEditDialogOpen(false);
+  const handleEditDialogSubmit = (values: { title: string; description?: string }) => {
+    if (currentWishlist) {
+      const updatedWishlists = wishlists.map(wishlist => 
+        wishlist.id === currentWishlist.id 
+          ? { ...wishlist, title: values.title, description: values.description || "" } 
+          : wishlist
+      );
+      
+      setWishlists(updatedWishlists);
+      toast.success("Wishlist updated successfully!");
+    }
   };
 
-  const handleDeleteWishlist = (id: string) => {
+  const handleDeleteWishlist = (id: number) => {
     const wishlistToDelete = wishlists.find(wishlist => wishlist.id === id);
     if (wishlistToDelete) {
       setCurrentWishlist(wishlistToDelete);
@@ -71,32 +93,19 @@ const MyWishlists = () => {
     }
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (currentWishlist) {
-      try {
-        setDeleting(true);
-        await deleteWishlist(currentWishlist.id);
-        setDeleteDialogOpen(false);
-      } catch (error) {
-        console.error("Error deleting wishlist:", error);
-      } finally {
-        setDeleting(false);
-      }
+      const updatedWishlists = wishlists.filter(wishlist => wishlist.id !== currentWishlist.id);
+      setWishlists(updatedWishlists);
+      toast.success("Wishlist deleted successfully!");
+      setDeleteDialogOpen(false);
     }
   };
 
-  const handleShareWishlist = (id: string) => {
+  const handleShareWishlist = (id: number) => {
     console.log(`Share wishlist ${id}`);
     toast.info("Sharing feature coming soon!");
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-16">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -111,7 +120,7 @@ const MyWishlists = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
         
-        {wishlists && wishlists.map((wishlist) => (
+        {wishlists.map((wishlist: WishlistData) => (
           <WishlistCard 
             key={wishlist.id}
             wishlist={wishlist}
@@ -145,20 +154,9 @@ const MyWishlists = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete} 
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleting}
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

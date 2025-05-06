@@ -21,45 +21,11 @@ export interface DataSharingSettings {
   [key: string]: SharingLevel; // Allow for extension
 }
 
-// Wishlist Item type
-export interface WishlistItem {
-  id: string;
-  name: string;
-  product_id: string;
-  price?: number;
-  image_url?: string;
-  brand?: string;
-  added_at: string;
-  notes?: string;
-}
-
-// WishlistData type for use in components
-export interface WishlistData {
-  id: string;
-  title: string;
-  description?: string;
-  image?: string;
-  itemCount?: number;
-  items: WishlistItem[];
-}
-
-// Wishlist type
-export interface Wishlist {
-  id: string;
-  title: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-  is_public: boolean;
-  items: WishlistItem[];
-}
-
 // Standardized profile data structure
 export interface ProfileData extends Omit<Profile, 'gift_preferences' | 'important_dates' | 'data_sharing_settings'> {
   gift_preferences: GiftPreference[];
   important_dates: ImportantDate[];
   data_sharing_settings: DataSharingSettings;
-  wishlists?: Wishlist[];
 }
 
 // Helper function to convert string preferences to object format
@@ -105,26 +71,6 @@ export const normalizeDataSharingSettings = (settings?: Partial<DataSharingSetti
     shipping_address: settings?.shipping_address || "private",
     gift_preferences: settings?.gift_preferences || "public"
   };
-};
-
-// Helper to convert gift preferences to wishlist items (for backward compatibility)
-export const giftPreferencesToWishlistItems = (preferences: GiftPreference[]): WishlistItem[] => {
-  return preferences
-    .filter(pref => pref.importance === 'high')
-    .map(pref => ({
-      id: crypto.randomUUID(),
-      name: pref.category,
-      product_id: pref.category,
-      added_at: new Date().toISOString(),
-    }));
-};
-
-// Helper to convert wishlist items back to gift preferences (for backward compatibility)
-export const wishlistItemsToGiftPreferences = (items: WishlistItem[]): GiftPreference[] => {
-  return items.map(item => ({
-    category: item.product_id,
-    importance: 'high'
-  }));
 };
 
 // Converter for form data to API format

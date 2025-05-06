@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { WishlistData } from "@/types/profile";
+import { WishlistData } from "./WishlistCard";
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }).max(100),

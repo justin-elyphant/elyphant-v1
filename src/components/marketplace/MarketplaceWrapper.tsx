@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -8,7 +7,6 @@ import { useAuth } from "@/contexts/auth";
 import FavoritesDropdown from "./FavoritesDropdown";
 import { Button } from "@/components/ui/button";
 import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
-import SignUpDialog from "./SignUpDialog";
 
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -18,7 +16,6 @@ const MarketplaceWrapper = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
-  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
 
   useEffect(() => {
     setUpcomingOccasions(getUpcomingOccasions());
@@ -48,7 +45,7 @@ const MarketplaceWrapper = () => {
       <div className="border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <FavoritesDropdown onSignUpRequired={() => setShowSignUpDialog(true)} />
+            <FavoritesDropdown />
           </div>
           
           {/* Quick Navigation Links */}
@@ -87,12 +84,6 @@ const MarketplaceWrapper = () => {
           searchTerm={searchTerm}
         />
       </div>
-      
-      {/* Sign Up Dialog for non-authenticated interactions */}
-      <SignUpDialog 
-        open={showSignUpDialog}
-        onOpenChange={setShowSignUpDialog} 
-      />
       
       {/* <ProductDetailsDialog 
         productId={selectedProduct}

@@ -1,3 +1,4 @@
+
 import React, {useEffect, useState} from "react";
 import { toast } from "sonner";
 
@@ -7,6 +8,8 @@ import ProductInfo from "./ProductInfo";
 import ProductActions from "./ProductActions";
 import { getProductDetail } from "@/api/product";
 import { Spinner } from '@/components/ui/spinner';
+import { normalizeProduct, Product } from "@/contexts/ProductContext";
+import { getProductName } from "../product-item/productUtils";
 
 interface ProductDetailsDialogProps {
   productId: string | null;
@@ -21,35 +24,47 @@ const ProductDetailsDialog = ({
   onOpenChange,
   userData
 }: ProductDetailsDialogProps) => {
-  const [productDetail, setProductDetail] = useState(null);
+  const [productDetail, setProductDetail] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  
   useEffect(() => {
-    fetchProductDetail(productId, 'amazon');
-  }, [productId])
-
-  const fetchProductDetail = async (productId, retailer) => {
-    setLoading(true);
-    const data = await getProductDetail(productId, retailer);
-    if(! data) {
-      toast.error('Fetch product detail failed.', {duration: 5000});
+    if (productId && open) {
+      fetchProductDetail(productId, 'amazon');
     }
-    console.log(data);
-    setProductDetail(data);
-    setLoading(false);
-  }
+  }, [productId, open]);
+
+  const fetchProductDetail = async (productId: string, retailer: string) => {
+    setLoading(true);
+    try {
+      const data = await getProductDetail(productId, retailer);
+      if(!data) {
+        toast.error('Fetch product detail failed.', {duration: 5000});
+      } else {
+        // Ensure the product data is normalized
+        setProductDetail(data);
+      }
+    } catch (error) {
+      console.error('Error fetching product detail:', error);
+      toast.error('Error fetching product details', {duration: 5000});
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">{loading ? "" : (productDetail?.title || "")}</DialogTitle>
+          <DialogTitle className="text-xl">
+            {loading ? "" : (productDetail ? getProductName(productDetail) : "")}
+          </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground line-clamp-2">
-            {/* {product.description || `High-quality ${product.category} from ${product.vendor}`} */}
+            {!loading && productDetail?.description && productDetail.description}
           </DialogDescription>
         </DialogHeader>
         {
           loading ? (
-            <div>
+            <div className="flex justify-center py-12">
               <Spinner />
             </div>
           ) : (
@@ -57,7 +72,10 @@ const ProductDetailsDialog = ({
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                 <div className="relative overflow-hidden rounded-md">
-                  <ProductCarousel images={productDetail.images} productName={productDetail.title} />
+                  <ProductCarousel 
+                    images={productDetail.images || [productDetail.image]} 
+                    productName={getProductName(productDetail)} 
+                  />
                 </div>
                 
                 <div className="flex flex-col space-y-4">
@@ -67,7 +85,7 @@ const ProductDetailsDialog = ({
               </div>
             </>
             :
-            <div>No Product Data</div>
+            <div className="text-center py-8">No Product Data</div>
           )
         }
       </DialogContent>

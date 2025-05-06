@@ -9,6 +9,11 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import ProductRating from "@/components/shared/ProductRating";
 import { formatProductPrice } from "../marketplace/product-item/productUtils";
+import { 
+  getProductId, 
+  getProductName,
+  getProductCategory
+} from "../marketplace/product-item/productUtils";
 
 interface ProductCardProps {
   product: Product;
@@ -29,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleWishlist(product.product_id || product.id);
+    onToggleWishlist(getProductId(product));
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -37,20 +42,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
     addToCart(product);
     
     toast.success("Added to Cart", {
-      description: `${product.name || product.title} has been added to your cart`
+      description: `${getProductName(product)} has been added to your cart`
     });
   };
 
+  // Determine if product should be marked as bestseller
+  const isBestSeller = product.isBestSeller || 
+                       (product.num_sales && product.num_sales > 1000) ||
+                       (product.stars && product.stars >= 4.8);
+
   return (
     <Card 
-      key={product.product_id || product.id} 
+      key={getProductId(product)} 
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
       onClick={onClick}
     >
       <div className="aspect-square relative overflow-hidden">
         <img 
           src={product.image} 
-          alt={product.name || product.title}
+          alt={getProductName(product)}
           className="object-cover w-full h-full transform transition-transform hover:scale-105"
           loading="lazy"
         />
@@ -79,7 +89,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </Button>
         </div>
         
-        {product.isBestSeller && (
+        {isBestSeller && (
           <Badge 
             variant="default" 
             className="absolute top-2 left-2 bg-yellow-500 text-white"
@@ -89,14 +99,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
       </div>
       <CardContent className="p-3">
-        <h3 className="font-medium text-sm line-clamp-1">{product.name || product.title}</h3>
+        <h3 className="font-medium text-sm line-clamp-1">{getProductName(product)}</h3>
         <p className="font-semibold text-sm">${formatProductPrice(product.price)}</p>
         
-        <ProductRating rating={product.rating || 0} reviewCount={product.reviewCount || product.num_reviews || 0} size="sm" />
+        <ProductRating 
+          rating={product.rating || product.stars || 0} 
+          reviewCount={product.reviewCount || product.num_reviews || 0} 
+          size="sm" 
+        />
         
-        {(product.category || product.category_name) && (
+        {getProductCategory(product) && (
           <Badge variant="outline" className="mt-2 text-xs">
-            {product.category || product.category_name}
+            {getProductCategory(product)}
           </Badge>
         )}
       </CardContent>

@@ -25,3 +25,45 @@ export const normalizePrice = (price: any): number => {
   if (typeof price === 'string') return parseFloat(price) || 0;
   return 0;
 };
+
+/**
+ * Helper function for accessing product ID consistently regardless of source
+ */
+export const getProductId = (product: any): string => {
+  return String(product.product_id || product.id || '');
+};
+
+/**
+ * Helper function for accessing product name/title consistently
+ */
+export const getProductName = (product: any): string => {
+  return product.name || product.title || 'Unknown Product';
+};
+
+/**
+ * Helper function for accessing product category consistently
+ */
+export const getProductCategory = (product: any): string => {
+  return product.category || product.category_name || 'Uncategorized';
+};
+
+/**
+ * Helper function for accessing vendor/retailer consistently
+ */
+export const getProductVendor = (product: any): string => {
+  return product.vendor || product.retailer || 'Unknown Vendor';
+};
+
+/**
+ * Helper function for accessing rating consistently
+ */
+export const getProductRating = (product: any): number => {
+  return product.rating || product.stars || 0;
+};
+
+/**
+ * Helper function for accessing review count consistently
+ */
+export const getProductReviewCount = (product: any): number => {
+  return product.reviewCount || product.num_reviews || 0;
+};

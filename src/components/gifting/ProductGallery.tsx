@@ -106,7 +106,7 @@ const ProductGallery = ({
               product={product}
               isWishlisted={wishlistedProducts.includes(String(product.product_id || product.id))}
               isGifteeView={isGifteeView}
-              onToggleWishlist={handleWishlistToggle}
+              onToggleWishlist={() => handleWishlistToggle(String(product.product_id || product.id))}
               onClick={() => onProductSelect && onProductSelect(product)}
             />
           ))}

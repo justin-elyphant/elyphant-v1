@@ -3,8 +3,6 @@ import React from "react";
 import { useSignUpProcess } from "@/hooks/auth";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 import Header from "@/components/home/Header";
-// Import AuthProvider directly from its source to avoid circular dependencies
-import { AuthProvider } from "@/contexts/auth/AuthProvider";
 
 const SignUp: React.FC = () => {
   const {

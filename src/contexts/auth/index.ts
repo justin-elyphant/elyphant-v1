@@ -1,3 +1,3 @@
 
 export { useAuth, AuthProvider } from './AuthProvider';
-export type { AuthContextProps } from './types';
+export type { AuthState, AuthContextProps } from './types';

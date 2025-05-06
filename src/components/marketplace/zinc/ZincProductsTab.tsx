@@ -20,7 +20,7 @@ const ZincProductsTab = () => {
     if (searchTerm && searchTerm !== localSearchTerm) {
       setLocalSearchTerm(searchTerm);
     }
-  }, [searchTerm]);
+  }, [searchTerm, localSearchTerm, setLocalSearchTerm]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

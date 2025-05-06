@@ -30,6 +30,7 @@ export const normalizePrice = (price: any): number => {
  * Helper function for accessing product ID consistently regardless of source
  */
 export const getProductId = (product: any): string => {
+  // Always return product IDs as strings for consistent handling
   return String(product.product_id || product.id || '');
 };
 
@@ -88,7 +89,6 @@ export const standardizeProduct = (product: any) => {
   
   // Get ID as string to ensure consistency
   const id = getProductId(product);
-  const numericId = id ? parseInt(id, 10) : null;
   
   return {
     product_id: id,

@@ -86,8 +86,6 @@ export const useZincSearch = (searchTerm: string) => {
             num_reviews: typeof item.review_count === 'number' ? item.review_count : 0,
             brand: item.brand || 'Unknown',
             category: item.category || getSearchCategory(searchTerm),
-            // Keep the original data for reference
-            originalProduct: item
           }));
           
           setZincResults(processedResults);

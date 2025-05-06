@@ -102,8 +102,6 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     rating: rating,
     reviewCount: reviewCount,
     brand: zincProduct.brand || "Unknown",
-    // Store the original zinc product data too
-    originalZincProduct: zincProduct
   });
 };
 

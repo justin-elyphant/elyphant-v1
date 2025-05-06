@@ -1,15 +1,15 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Filter, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
+import { Filter, SlidersHorizontal, LayoutGrid, List, Grid3x3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSortOptions } from "./hooks/utils/categoryUtils";
 
 interface MarketplaceFiltersProps {
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
-  viewMode: "grid" | "list";
-  setViewMode: (mode: "grid" | "list") => void;
+  viewMode: "grid" | "list" | "modern";
+  setViewMode: (mode: "grid" | "list" | "modern") => void;
   totalItems: number;
   sortOption: string;
   onSortChange: (option: string) => void;
@@ -47,7 +47,7 @@ const MarketplaceFilters = ({
             variant={viewMode === 'grid' ? 'default' : 'ghost'} 
             size="sm"
             onClick={() => setViewMode('grid')}
-            className="rounded-r-none"
+            className="rounded-r-none border-r-0"
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
@@ -55,9 +55,17 @@ const MarketplaceFilters = ({
             variant={viewMode === 'list' ? 'default' : 'ghost'} 
             size="sm"
             onClick={() => setViewMode('list')}
-            className="rounded-l-none"
+            className={viewMode === 'modern' ? 'rounded-none border-r-0' : 'rounded-l-none'}
           >
             <List className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant={viewMode === 'modern' ? 'default' : 'ghost'} 
+            size="sm"
+            onClick={() => setViewMode('modern')}
+            className="rounded-l-none"
+          >
+            <Grid3x3 className="h-4 w-4" />
           </Button>
         </div>
       </div>

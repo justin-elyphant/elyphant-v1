@@ -1,7 +1,6 @@
 
 import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { Toaster } from 'sonner';
 import Header from "../home/Header";
 import Footer from "../home/Footer";
 import { useAuth } from "@/contexts/auth";
@@ -33,7 +32,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header /> {/* Always render the header */}
-      <Toaster />
       <main className="flex-grow">
         {children || <Outlet />}
       </main>

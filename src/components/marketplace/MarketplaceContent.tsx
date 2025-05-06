@@ -25,6 +25,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   useEffect(() => {
     if (products.length > 0) {
       setFilteredProducts(sortProducts(products, sortOption));
+      // setFilteredProducts(products);
     }
   }, [products, sortOption]);
   

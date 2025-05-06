@@ -1,42 +1,24 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
-import { normalizeProduct } from "@/components/marketplace/product-item/productUtils";
 
 import { supabase } from '@/integrations/supabase/client';
-
-// Extended Product type definition with all properties being used across the app
+// Product type definition (matches existing type in ProductGallery)
 export type Product = {
-  // Original properties from ZincProduct
-  id: number | string;
-  product_id: string;
-  title?: string;
-  name: string;
-  price: number;
+  addon: boolean;
+  brand: string;
+  fresh: boolean;
   image: string;
-  images?: string[];
-  description?: string;
-  category?: string;
-  vendor?: string;
-  brand?: string;
-  
-  // Review related properties
-  stars?: number;
-  rating?: number;
-  num_reviews?: number;
-  reviewCount?: number;
-  
-  // UI flags and additional properties
-  isBestSeller?: boolean;
-  variants?: string[];
-  addon?: boolean;
-  fresh?: boolean;
-  num_offers_estimate?: null|number;
-  num_sales?: number;
-  pantry?: boolean;
-  prime?: boolean;
-  product_details?: any[];
+  num_offers_estimate: null|number;
+  num_reviews: number;
+  num_sales: number;
+  pantry: boolean;
+  price: number;
+  prime: boolean;
+  product_details: [];
+  product_id: string;
+  stars: number;
+  title: string;
 };
 
 type ProductContextType = {
@@ -44,7 +26,7 @@ type ProductContextType = {
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  loadProducts: (query: { keyword: string }) => Promise<void>;
+  loadProducts: (query) => Promise<void>;
 };
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -100,35 +82,100 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  const loadProducts = async (query: { keyword: string }) => {
+  // Load products when context is initialized
+  useEffect(() => {
+    // const loadProducts = async () => {
+    //   console.log("ProductContext: Loading products");
+      
+    //   // First try to load shopify products
+    //   const shopifyProducts = localStorage.getItem('shopifyProducts');
+    //   if (shopifyProducts) {
+    //     try {
+    //       const parsed = JSON.parse(shopifyProducts);
+    //       console.log(`ProductContext: Loaded ${parsed.length} Shopify products from localStorage`);
+          
+    //       // Make sure each product has vendor: "Shopify" and enrich with descriptions if missing
+    //       const shopifyProductsWithVendor = parsed.map((product: Product) => ({
+    //         ...product,
+    //         vendor: "Shopify",
+    //         description: product.description || generateDescription(product.name, product.category || "Electronics"),
+    //         images: product.images || [product.image],
+    //         features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
+    //         specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
+    //         isBestSeller: product.isBestSeller || false,
+    //         brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
+    //       }));
+          
+    //       setProducts(shopifyProductsWithVendor);
+    //       setIsLoading(false);
+    //       return;
+    //     } catch (e) {
+    //       console.error("ProductContext: Error parsing Shopify products:", e);
+    //     }
+    //   } else {
+    //     console.log("ProductContext: No Shopify products found in localStorage");
+    //   }
+      
+    //   // If no shopify products, try to load saved products
+    //   const savedProducts = loadSavedProducts();
+    //   if (savedProducts && savedProducts.length > 0) {
+    //     console.log(`ProductContext: Loaded ${savedProducts.length} products from localStorage`);
+        
+    //     // Enrich saved products with descriptions and images if missing
+    //     const enrichedProducts = savedProducts.map(product => ({
+    //       ...product,
+    //       description: product.description || generateDescription(product.name, product.category || "Electronics"),
+    //       images: product.images || [product.image],
+    //       features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
+    //       specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
+    //       isBestSeller: product.isBestSeller || false,
+    //       brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
+    //     }));
+        
+    //     setProducts(enrichedProducts);
+    //     setIsLoading(false);
+    //     return;
+    //   }
+      
+    //   // If no saved products, load mock products
+    //   console.log("ProductContext: Loading mock products");
+    //   const mockProducts = loadMockProducts();
+    //   if (mockProducts && mockProducts.length > 0) {
+    //     console.log(`ProductContext: Loaded ${mockProducts.length} mock products`);
+        
+    //     // Enrich mock products with descriptions and images if missing
+    //     const enrichedMockProducts = mockProducts.map((product, index) => ({
+    //       ...product,
+    //       description: product.description || generateDescription(product.name, product.category || "Electronics"),
+    //       images: product.images || [product.image],
+    //       features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
+    //       specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
+    //       isBestSeller: product.isBestSeller || (index < Math.ceil(mockProducts.length * 0.1)), // Mark top 10% as best sellers
+    //       brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
+    //     }));
+        
+    //     setProducts(enrichedMockProducts);
+    //   } else {
+    //     console.error("ProductContext: Failed to load mock products");
+    //   }
+    //   setIsLoading(false);
+    // };
+    // loadProducts({});
+  }, []);
+  
+  const loadProducts = async (query) => {
     setIsLoading(true);
     const {keyword} = query;
-    try {
-      const { data, error } = await supabase.functions.invoke("get-products", {
-        body: {
-          query: keyword,
-          page: 1
-        }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      // Map and normalize the API results to ensure type consistency
-      const mappedProducts = data.results.map((product: any) => normalizeProduct(product));
-      
-      setProducts(mappedProducts);
-    } catch (error) {
-      console.error("Error loading products:", error);
-      // Load fallback products
-      const mockProducts = loadMockProducts().map(product => normalizeProduct({
-        ...product,
-        product_id: product.id.toString()
-      }));
-      setProducts(mockProducts);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const { data, error } = await supabase.functions.invoke("get-products", {
+      body: {
+        query: keyword,
+        page: 1
+      }
+    });
+    if (error) throw new Error(error.message);
+    setProducts(data.results);
+    setIsLoading(false);
+  }
 
   return (
     <ProductContext.Provider value={{ products, setProducts, loadProducts, isLoading, setIsLoading }}>

@@ -33,6 +33,16 @@ export interface WishlistItem {
   notes?: string;
 }
 
+// WishlistData type for use in components
+export interface WishlistData {
+  id: string;
+  title: string;
+  description?: string;
+  image?: string;
+  itemCount?: number;
+  items: WishlistItem[];
+}
+
 // Wishlist type
 export interface Wishlist {
   id: string;

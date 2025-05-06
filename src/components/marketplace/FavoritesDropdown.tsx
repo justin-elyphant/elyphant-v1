@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Heart } from "lucide-react";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { WishlistData } from "@/components/gifting/wishlist/WishlistCard";
+import { WishlistData } from "@/types/profile";
 import { useNavigate } from "react-router-dom";
 
 const FavoritesDropdown = () => {

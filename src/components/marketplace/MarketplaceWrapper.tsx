@@ -9,6 +9,12 @@ import FavoritesDropdown from "./FavoritesDropdown";
 import { Button } from "@/components/ui/button";
 import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
 import SignUpDialog from "./SignUpDialog";
+import MarketplaceHeader from "./MarketplaceHeader";
+import GiftingCategories from "./GiftingCategories";
+import PopularBrands from "./PopularBrands";
+
+// Default search terms to load if no query is provided
+const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"];
 
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,6 +22,7 @@ const MarketplaceWrapper = () => {
   const { products, isLoading, loadProducts } = useProducts();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
@@ -27,8 +34,17 @@ const MarketplaceWrapper = () => {
   useEffect(() => {
     const keyword = searchParams.get("search") || "";
     setSearchTerm(keyword);
-    loadProducts({ keyword: keyword });
-  }, [searchParams])
+    setLocalSearchTerm(keyword);
+    
+    // Load products with the keyword from URL or use default search if empty
+    if (keyword) {
+      loadProducts({ keyword });
+    } else {
+      // Select a random default search term to load initial products
+      const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
+      loadProducts({ keyword: defaultTerm });
+    }
+  }, [searchParams, loadProducts]);
 
   useEffect(() => {
     if (productId) {
@@ -37,6 +53,14 @@ const MarketplaceWrapper = () => {
       setShowProductDetails(null);
     }
   }, [productId]);
+
+  const handleSearch = (term: string) => {
+    if (term.trim()) {
+      const params = new URLSearchParams(searchParams);
+      params.set("search", term);
+      setSearchParams(params);
+    }
+  };
 
   const selectedProduct = showProductDetails !== null 
     ? products.find(p => p.product_id === showProductDetails)
@@ -53,7 +77,7 @@ const MarketplaceWrapper = () => {
           
           {/* Quick Navigation Links */}
           <div className="flex gap-6 mt-4 text-sm overflow-x-auto pb-2">
-            {upcomingOccasions.map((occasion, index) => (
+            {upcomingOccasions.map((occasion) => (
               <Button
                 key={occasion.name}
                 variant="link"
@@ -80,7 +104,21 @@ const MarketplaceWrapper = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 pt-6">
+      <div className="container mx-auto px-4 pt-6 space-y-8">
+        {/* New Hero Header with Search */}
+        <MarketplaceHeader 
+          searchTerm={localSearchTerm} 
+          setSearchTerm={setLocalSearchTerm} 
+          onSearch={handleSearch} 
+        />
+        
+        {/* Gift Categories Section */}
+        <GiftingCategories />
+        
+        {/* Popular Brands Section */}
+        <PopularBrands />
+        
+        {/* Product Grid with Filters */}
         <MarketplaceContent 
           products={products}
           isLoading={isLoading}
@@ -94,8 +132,9 @@ const MarketplaceWrapper = () => {
         onOpenChange={setShowSignUpDialog} 
       />
       
-      {/* <ProductDetailsDialog 
-        productId={selectedProduct}
+      {/* Product Details Dialog */}
+      <ProductDetailsDialog 
+        productId={selectedProduct?.product_id || null}
         open={showProductDetails !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -110,7 +149,7 @@ const MarketplaceWrapper = () => {
           }
         }}
         userData={user}
-      /> */}
+      />
     </div>
   );
 };

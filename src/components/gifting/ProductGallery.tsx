@@ -67,7 +67,7 @@ const ProductGallery = ({
   }
   
   // Check if we have any Shopify products
-  const hasShopifyProducts = filteredProducts.some(product => product.vendor === "Shopify");
+  const hasShopifyProducts = filteredProducts.some(product => (product.vendor || product.retailer) === "Shopify");
   
   return (
     <div className="space-y-4">
@@ -99,9 +99,9 @@ const ProductGallery = ({
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredProducts.map((product) => (
             <ProductCard
-              key={product.id}
+              key={product.product_id || product.id}
               product={product}
-              isWishlisted={wishlistedProducts.includes(product.id)}
+              isWishlisted={wishlistedProducts.includes(product.product_id || product.id)}
               isGifteeView={isGifteeView}
               onToggleWishlist={handleWishlistToggle}
               onClick={() => onProductSelect && onProductSelect(product)}

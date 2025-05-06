@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,12 +8,13 @@ import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import ProductRating from "@/components/shared/ProductRating";
+import { formatProductPrice } from "../marketplace/product-item/productUtils";
 
 interface ProductCardProps {
   product: Product;
   isWishlisted: boolean;
   isGifteeView: boolean;
-  onToggleWishlist: (productId: number) => void;
+  onToggleWishlist: (productId: string | number) => void;
   onClick?: () => void;
 }
 
@@ -27,7 +29,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleWishlist(product.id);
+    onToggleWishlist(product.product_id || product.id);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -35,24 +37,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
     addToCart(product);
     
     toast.success("Added to Cart", {
-      description: `${product.name} has been added to your cart`
+      description: `${product.name || product.title} has been added to your cart`
     });
-  };
-
-  const formatPrice = (price: number) => {
-    return price.toFixed(2);
   };
 
   return (
     <Card 
-      key={product.id} 
+      key={product.product_id || product.id} 
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
       onClick={onClick}
     >
       <div className="aspect-square relative overflow-hidden">
         <img 
           src={product.image} 
-          alt={product.name}
+          alt={product.name || product.title}
           className="object-cover w-full h-full transform transition-transform hover:scale-105"
           loading="lazy"
         />
@@ -91,14 +89,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
       </div>
       <CardContent className="p-3">
-        <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
-        <p className="font-semibold text-sm">${formatPrice(product.price)}</p>
+        <h3 className="font-medium text-sm line-clamp-1">{product.name || product.title}</h3>
+        <p className="font-semibold text-sm">${formatProductPrice(product.price)}</p>
         
-        <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
+        <ProductRating rating={product.rating || 0} reviewCount={product.reviewCount || product.num_reviews || 0} size="sm" />
         
-        {product.category && (
+        {(product.category || product.category_name) && (
           <Badge variant="outline" className="mt-2 text-xs">
-            {product.category}
+            {product.category || product.category_name}
           </Badge>
         )}
       </CardContent>

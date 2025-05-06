@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -22,10 +23,13 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [searchParams] = useSearchParams();
   
+  // Initialize products when they become available
   useEffect(() => {
-    if (products.length > 0) {
+    // Make sure products is an array before accessing length property
+    if (products && products.length > 0) {
       setFilteredProducts(sortProducts(products, sortOption));
-      // setFilteredProducts(products);
+    } else {
+      setFilteredProducts([]);
     }
   }, [products, sortOption]);
   
@@ -41,10 +45,12 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   }, [searchParams]);
   
   useEffect(() => {
-    if (products.length === 0 && !isLoading) {
+    // Skip processing if products aren't loaded yet or if we're currently loading
+    if (!products || (products.length === 0 && !isLoading)) {
       return;
     }
-    let result = [...products];
+    
+    let result = [...(products || [])];
     
     result = sortProducts(result, sortOption);
     
@@ -66,7 +72,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         setShowFilters={setShowFilters}
         viewMode={viewMode}
         setViewMode={setViewMode}
-        totalItems={filteredProducts.length}
+        totalItems={filteredProducts?.length || 0}
         sortOption={sortOption}
         onSortChange={handleSortChange}
       />
@@ -81,11 +87,11 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
           {
             isLoading ? (
-              <div>
+              <div className="flex justify-center py-20">
                 <Spinner />
               </div>
           ) : 
-            filteredProducts.length > 0 ? (
+            filteredProducts && filteredProducts.length > 0 ? (
               <ProductGrid 
                 products={filteredProducts} 
                 viewMode={viewMode}
@@ -101,7 +107,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         </div>
       </div>
       
-      {filteredProducts.length > 0 && (
+      {filteredProducts && filteredProducts.length > 0 && (
         <FeaturedProducts />
       )}
     </div>

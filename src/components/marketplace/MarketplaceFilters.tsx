@@ -20,7 +20,7 @@ const MarketplaceFilters = ({
   setShowFilters,
   viewMode,
   setViewMode,
-  totalItems,
+  totalItems = 0,
   sortOption,
   onSortChange
 }: MarketplaceFiltersProps) => {
@@ -64,7 +64,7 @@ const MarketplaceFilters = ({
       
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">
-          {totalItems} items
+          {totalItems} {totalItems === 1 ? 'item' : 'items'}
         </span>
         <Select value={sortOption} onValueChange={handleSortChange}>
           <SelectTrigger className="w-[180px]">

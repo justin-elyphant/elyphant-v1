@@ -3,6 +3,9 @@ import { useMemo } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useCategoryFilter } from "./useCategoryFilter";
 
+// Define a cache for expensive category matching operations
+const categoryMatchCache: Record<string, boolean> = {};
+
 export const useFilteredProducts = (
   products: Product[],
   searchTerm: string,
@@ -26,6 +29,13 @@ export const useFilteredProducts = (
       return [];
     }
 
+    // Only apply filters if we have active filters - otherwise return all products
+    // This is a major performance optimization
+    const hasActiveFilters = searchTerm !== "" || selectedCategory !== "all" || priceRange !== "all";
+    if (!hasActiveFilters) {
+      return products;
+    }
+
     // Flag for common categories that should always return some products
     const isCommonCategory = ["birthday", "wedding", "anniversary", "graduation", 
                             "baby_shower", "pets", "office", "summer", "home decor",
@@ -36,9 +46,10 @@ export const useFilteredProducts = (
                             .some(term => searchTerm.toLowerCase().includes(term.toLowerCase()));
 
     // First pass - try to filter according to criteria
+    // Use a more efficient filtering approach
     const filtered = products.filter(product => {
-      // Search term filter
-      const matchesSearch = searchTerm === "" || (() => {
+      // Search term filter - only apply if we have a search term
+      if (searchTerm !== "") {
         const lowerSearchTerm = searchTerm.toLowerCase();
         const productName = (product.name || "").toLowerCase();
         const vendor = (product.vendor || "").toLowerCase();
@@ -46,79 +57,91 @@ export const useFilteredProducts = (
         const category = (product.category || "").toLowerCase();
         const brand = (product.brand || "").toLowerCase();
         
-        // Direct full string match
-        if (productName.includes(lowerSearchTerm) || 
-            vendor.includes(lowerSearchTerm) ||
-            description.includes(lowerSearchTerm) ||
-            brand.includes(lowerSearchTerm) ||
-            category.includes(lowerSearchTerm)) {
-          return true;
-        }
+        // Check most likely fields first for early returns
+        if (productName.includes(lowerSearchTerm)) return true;
+        if (brand.includes(lowerSearchTerm)) return true;
+        if (category.includes(lowerSearchTerm)) return true;
+        if (vendor.includes(lowerSearchTerm)) return true;
+        if (description.includes(lowerSearchTerm)) return true;
         
-        // Word-by-word matching for multi-word search terms
+        // If we've reached here, no simple match was found
+        // Try word-by-word matching for multi-word search terms as a last resort
         const searchWords = lowerSearchTerm.split(" ").filter(word => word.length > 2);
         if (searchWords.length > 0) {
-          // If we find ANY of the words, consider it a match (more permissive)
-          const matchCount = searchWords.filter(word => 
-            productName.includes(word) || 
-            description.includes(word) || 
-            category.includes(word) ||
-            brand.includes(word) ||
-            vendor.includes(word)
-          ).length;
-          
-          // Match if we find at least one word
-          return matchCount > 0;
+          // If we find ANY of the words, consider it a match
+          for (const word of searchWords) {
+            if (productName.includes(word) || 
+                description.includes(word) || 
+                category.includes(word) ||
+                brand.includes(word) ||
+                vendor.includes(word)) {
+              return true;
+            }
+          }
         }
         
+        // If we got here, this product doesn't match the search
         return false;
-      })();
+      }
       
-      // Category filter - Use the matchesOccasionCategory function from useCategoryFilter
-      const matchesCategory = selectedCategory === "all" || matchesOccasionCategory(product, selectedCategory);
+      // Category filter - Use cached results when possible
+      if (selectedCategory !== "all") {
+        const cacheKey = `${product.id}-${selectedCategory}`;
+        if (categoryMatchCache[cacheKey] === undefined) {
+          categoryMatchCache[cacheKey] = matchesOccasionCategory(product, selectedCategory);
+        }
+        if (!categoryMatchCache[cacheKey]) return false;
+      }
       
-      // Price range filter
-      let matchesPrice = true;
-      if (priceRange === "under25") matchesPrice = product.price < 25;
-      else if (priceRange === "25to50") matchesPrice = product.price >= 25 && product.price <= 50;
-      else if (priceRange === "50to100") matchesPrice = product.price > 50 && product.price <= 100;
-      else if (priceRange === "over100") matchesPrice = product.price > 100;
+      // Price range filter - quick to compute so no caching needed
+      if (priceRange !== "all") {
+        const price = product.price;
+        if (priceRange === "under25" && price >= 25) return false;
+        if (priceRange === "25to50" && (price < 25 || price > 50)) return false;
+        if (priceRange === "50to100" && (price <= 50 || price > 100)) return false;
+        if (priceRange === "over100" && price <= 100) return false;
+      }
       
-      return matchesSearch && matchesCategory && matchesPrice;
+      // If we made it through all filters, include this product
+      return true;
     });
     
-    console.log(`Initial filtered products: ${filtered.length} products`);
+    console.log(`Filtered to ${filtered.length} products`);
     
     // If we have results, return them
     if (filtered.length > 0) {
-      return filtered;
+      // Limit to 100 products max for better rendering performance
+      return filtered.length > 100 ? filtered.slice(0, 100) : filtered;
     }
     
     // Second pass - if we have no results but a common category or search term, be more permissive
     if (isCommonCategory || isCommonSearch) {
       console.log("No matches found but trying more permissive search for common category/search");
       
+      // Only filter by price as it's the most restrictive
       const secondPassFiltered = products.filter(product => {
-        // Only filter by price as it's the most restrictive
-        let matchesPrice = true;
-        if (priceRange === "under25") matchesPrice = product.price < 25;
-        else if (priceRange === "25to50") matchesPrice = product.price >= 25 && product.price <= 50;
-        else if (priceRange === "50to100") matchesPrice = product.price > 50 && product.price <= 100;
-        else if (priceRange === "over100") matchesPrice = product.price > 100;
+        if (priceRange === "all") return true;
         
-        return matchesPrice;
+        const price = product.price;
+        if (priceRange === "under25" && price >= 25) return false;
+        if (priceRange === "25to50" && (price < 25 || price > 50)) return false;
+        if (priceRange === "50to100" && (price <= 50 || price > 100)) return false;
+        if (priceRange === "over100" && price <= 100) return false;
+        
+        return true;
       });
       
-      console.log(`Second pass filtered products: ${secondPassFiltered.length} products`);
+      console.log(`Second pass filtered to ${secondPassFiltered.length} products`);
       
       if (secondPassFiltered.length > 0) {
-        return secondPassFiltered.slice(0, Math.min(15, secondPassFiltered.length));
+        // Return a limited number for better performance
+        return secondPassFiltered.slice(0, 15);
       }
     }
     
-    // Last resort - if still no results after permissive filter, show some products anyway
-    console.log("No matches found but using fallback to show some products");
-    return products.slice(0, Math.min(10, products.length));
+    // Last resort - return a small set of products
+    console.log("Showing fallback products");
+    return products.slice(0, 10);
   }, [products, searchTerm, selectedCategory, priceRange, matchesOccasionCategory]);
 
   return filteredProducts;

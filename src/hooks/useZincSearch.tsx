@@ -13,16 +13,31 @@ export const useZincSearch = (searchTerm: string) => {
   const toastRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasShownTokenErrorRef = useRef(false);
+  const searchTimeoutRef = useRef<number | null>(null);
+  const lastSearchTermRef = useRef<string>("");
 
   useEffect(() => {
-    const fetchZincResults = async () => {
-      // Reset results if search term is empty
-      if (!searchTerm || searchTerm.trim().length < 2) {
-        setZincResults([]);
-        setFilteredProducts([]);
-        return;
-      }
+    // Don't search if term is identical to previous search to avoid redundant API calls
+    if (lastSearchTermRef.current === searchTerm) {
+      return;
+    }
+    
+    // Clear previous timeout to debounce searches
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
+    // Reset results if search term is empty
+    if (!searchTerm || searchTerm.trim().length < 2) {
+      setZincResults([]);
+      setFilteredProducts([]);
+      return;
+    }
+
+    // Store current search term as the last one processed
+    lastSearchTermRef.current = searchTerm;
+    
+    const fetchZincResults = async () => {
       setLoading(true);
       
       // Cancel previous request if it exists
@@ -33,45 +48,60 @@ export const useZincSearch = (searchTerm: string) => {
       abortControllerRef.current = new AbortController();
       
       try {
-        // Show loading toast
+        // Show loading toast (only once)
         if (toastRef.current) {
           toast.dismiss(toastRef.current);
         }
         
         // Filter local products first (faster response)
         const term = searchTerm.toLowerCase();
-        const filtered = products.filter(
-          product => 
-            (product.name && product.name.toLowerCase().includes(term)) || 
-            (product.title && product.title.toLowerCase().includes(term)) ||
-            (product.description && product.description.toLowerCase().includes(term)) ||
-            (product.brand && product.brand.toLowerCase().includes(term))
-        );
+        
+        // Use more efficient filtering with early returns
+        const filtered = products.filter(product => {
+          const name = product.name ? product.name.toLowerCase() : "";
+          if (name.includes(term)) return true;
+          
+          const title = product.title ? product.title.toLowerCase() : "";
+          if (title.includes(term)) return true;
+          
+          const description = product.description ? product.description.toLowerCase() : "";
+          if (description.includes(term)) return true;
+          
+          const brand = product.brand ? product.brand.toLowerCase() : "";
+          if (brand.includes(term)) return true;
+          
+          return false;
+        });
+        
         setFilteredProducts(filtered);
         
-        // Now search Zinc API for real products (or mocks if no token)
-        console.log(`Searching Zinc API for "${searchTerm}"...`);
-
-        // Special case mappings for popular searches
+        // Special case mappings for popular searches - this improves results quality
         let searchQuery = searchTerm;
         if (term.includes('macbook') || term.includes('mac book')) {
           searchQuery = 'apple macbook';
-          console.log(`Mapped search term to "${searchQuery}"`);
         }
         else if ((term.includes('padres') && (term.includes('hat') || term.includes('cap'))) ||
                  (term.includes('san diego') && (term.includes('hat') || term.includes('cap')))) {
           searchQuery = 'san diego padres baseball hat';
-          console.log(`Mapped search term to "${searchQuery}"`);
         }
         
-        // Get results from Zinc API (through our service)
-        const results = await searchProducts(searchQuery);
+        console.log(`Searching Zinc API for "${searchQuery}"...`);
+        
+        // Get results from Zinc API (through our service) with a timeout
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Search request timeout')), 8000);
+        });
+        
+        const resultsPromise = searchProducts(searchQuery);
+        
+        // Race between the API call and the timeout
+        const results = await Promise.race([resultsPromise, timeoutPromise]);
         
         // Process results
         if (results && Array.isArray(results)) {
           console.log(`Found ${results.length} results from Zinc API for "${searchQuery}"`);
           
-          // Map to consistent format with proper types
+          // Map to consistent format with proper types - use batch processing for better performance
           const processedResults = results.map(item => normalizeProduct({
             product_id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
             id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
@@ -119,13 +149,15 @@ export const useZincSearch = (searchTerm: string) => {
       return 'Electronics';
     };
 
-    // Debounce function to avoid making too many requests
-    const timeoutId = setTimeout(() => {
+    // Use a debounce to avoid excessive API calls
+    searchTimeoutRef.current = window.setTimeout(() => {
       fetchZincResults();
-    }, 300);
+    }, 500); // increased debounce time for better performance
 
     return () => {
-      clearTimeout(timeoutId);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

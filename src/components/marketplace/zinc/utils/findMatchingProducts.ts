@@ -10,20 +10,46 @@ import { handleSpecialCases, createResultsForMappedTerm } from './specialCaseHan
 import { isProductRelevantToSearch } from './productConverter';
 
 /**
+ * Cache to store recently searched products to improve performance
+ */
+const searchCache: Record<string, { timestamp: number, results: ZincProduct[] }> = {};
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Cleans up old cache entries
+ */
+const cleanupCache = () => {
+  const now = Date.now();
+  Object.keys(searchCache).forEach(key => {
+    if (now - searchCache[key].timestamp > CACHE_EXPIRY) {
+      delete searchCache[key];
+    }
+  });
+};
+
+/**
  * Finds products that match the search query with support for misspelled terms
+ * With caching for performance improvements
  */
 export const findMatchingProducts = (query: string): ZincProduct[] => {
-  const lowercaseQuery = query.toLowerCase();
+  // Clean expired cache entries occasionally
+  if (Math.random() < 0.1) cleanupCache();
   
-  // Normalize query - support both "Nike Shoes" and "nike shoes"
-  const normalizedQuery = lowercaseQuery.trim();
+  const lowercaseQuery = query.toLowerCase().trim();
   
-  console.log(`SearchUtils: Searching for "${normalizedQuery}"`);
+  // Check cache first
+  if (searchCache[lowercaseQuery] && 
+      Date.now() - searchCache[lowercaseQuery].timestamp < CACHE_EXPIRY) {
+    console.log(`Using cached results for "${lowercaseQuery}"`);
+    return searchCache[lowercaseQuery].results;
+  }
+  
+  console.log(`SearchUtils: Searching for "${lowercaseQuery}"`);
   
   // Handle common misspellings
-  const correctedQuery = correctMisspellings(normalizedQuery);
-  if (correctedQuery !== normalizedQuery) {
-    console.log(`SearchUtils: Corrected "${normalizedQuery}" to "${correctedQuery}"`);
+  const correctedQuery = correctMisspellings(lowercaseQuery);
+  if (correctedQuery !== lowercaseQuery) {
+    console.log(`SearchUtils: Corrected "${lowercaseQuery}" to "${correctedQuery}"`);
   }
   
   // Add category hints to improve search relevance
@@ -32,9 +58,9 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     console.log(`SearchUtils: Enhanced query from "${correctedQuery}" to "${enhancedQuery}"`);
   }
   
-  // Special case for San Diego Padres hat searches - explicitly use a very specific query
-  if ((normalizedQuery.includes("padres") || normalizedQuery.includes("san diego")) && 
-      (normalizedQuery.includes("hat") || normalizedQuery.includes("cap"))) {
+  // Special case for San Diego Padres hat searches
+  if ((lowercaseQuery.includes("padres") || lowercaseQuery.includes("san diego")) && 
+      (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
     const specificQuery = "san diego padres baseball hat clothing apparel";
     console.log(`SearchUtils: Using specific query for Padres hat: "${specificQuery}"`);
     
@@ -57,20 +83,37 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     });
     
     console.log(`SearchUtils: Generated ${filteredPadresResults.length} custom Padres hat results`);
+    
+    // Cache the results before returning
+    searchCache[lowercaseQuery] = {
+      timestamp: Date.now(),
+      results: filteredPadresResults
+    };
+    
     return filteredPadresResults;
   }
   
   // Get appropriate image category
   const imageCategory = getImageCategory(enhancedQuery);
-  console.log(`SearchUtils: Using image category "${imageCategory}" for "${enhancedQuery}"`);
   
   // Check for special cases first
   const specialCaseResults = handleSpecialCases(enhancedQuery);
   if (specialCaseResults) {
     console.log(`SearchUtils: Using special case results for "${enhancedQuery}"`);
+    
     // Filter out irrelevant products
-    const filteredResults = specialCaseResults.filter(product => isProductRelevantToSearch(product, enhancedQuery));
+    const filteredResults = specialCaseResults.filter(product => 
+      isProductRelevantToSearch(product, enhancedQuery)
+    );
+    
     console.log(`SearchUtils: Filtered from ${specialCaseResults.length} to ${filteredResults.length} relevant results`);
+    
+    // Cache the results before returning
+    searchCache[lowercaseQuery] = {
+      timestamp: Date.now(),
+      results: filteredResults
+    };
+    
     return filteredResults;
   }
   
@@ -81,19 +124,38 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     
     // If we have specific products for this term, return them
     if (specificProducts[mappedTerm]) {
-      // For Nike, always create a larger set of results with accurate pricing
+      // For Nike, create a larger set of results with accurate pricing
       if (mappedTerm.includes("nike")) {
-        const results = createMockResults("Nike Products", "Nike", 100, 4.0, 5.0, "Nike", true);
-        // Filter out irrelevant products
-        const filteredResults = results.filter(product => isProductRelevantToSearch(product, enhancedQuery));
-        console.log(`SearchUtils: Filtered from ${results.length} to ${filteredResults.length} relevant Nike results`);
+        const results = createMockResults("Nike Products", "Nike", 50, 4.0, 5.0, "Nike", true);
+        
+        // Filter out irrelevant products - limit to 50 max to improve performance
+        const filteredResults = results
+          .filter(product => isProductRelevantToSearch(product, enhancedQuery))
+          .slice(0, 50);
+        
+        console.log(`SearchUtils: Filtered to ${filteredResults.length} relevant Nike results`);
+        
+        // Cache the results before returning
+        searchCache[lowercaseQuery] = {
+          timestamp: Date.now(),
+          results: filteredResults
+        };
+        
         return filteredResults;
       }
       
       const specificResult = specificProducts[mappedTerm];
       // Filter out irrelevant products
-      const filteredSpecificResults = specificResult.filter(product => isProductRelevantToSearch(product, enhancedQuery));
-      console.log(`SearchUtils: Filtered from ${specificResult.length} to ${filteredSpecificResults.length} relevant specific results`);
+      const filteredSpecificResults = specificResult.filter(product => 
+        isProductRelevantToSearch(product, enhancedQuery)
+      );
+      
+      // Cache the results before returning
+      searchCache[lowercaseQuery] = {
+        timestamp: Date.now(),
+        results: filteredSpecificResults
+      };
+      
       return filteredSpecificResults;
     }
     
@@ -111,18 +173,35 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       });
       
       // Filter out irrelevant products
-      const filteredMappedResults = mappedResults.filter(product => isProductRelevantToSearch(product, enhancedQuery));
-      console.log(`SearchUtils: Filtered from ${mappedResults.length} to ${filteredMappedResults.length} relevant mapped results`);
+      const filteredMappedResults = mappedResults.filter(product => 
+        isProductRelevantToSearch(product, enhancedQuery)
+      );
+      
+      // Cache the results before returning
+      searchCache[lowercaseQuery] = {
+        timestamp: Date.now(),
+        results: filteredMappedResults
+      };
+      
       return filteredMappedResults;
     }
   }
   
-  // Generic search - always return products with accurate pricing
-  const genericResults = createMockResults(enhancedQuery, imageCategory, 100, 3.5, 5.0, undefined, true);
+  // Generic search - limit to 50 products max for better performance
+  const genericResults = createMockResults(enhancedQuery, imageCategory, 50, 3.5, 5.0, undefined, true);
   
   // Filter out irrelevant products
-  const filteredGenericResults = genericResults.filter(product => isProductRelevantToSearch(product, enhancedQuery));
-  console.log(`SearchUtils: Filtered from ${genericResults.length} to ${filteredGenericResults.length} relevant generic results`);
+  const filteredGenericResults = genericResults
+    .filter(product => isProductRelevantToSearch(product, enhancedQuery))
+    .slice(0, 50);
+  
+  console.log(`SearchUtils: Generated ${filteredGenericResults.length} relevant generic results`);
+  
+  // Cache the results before returning
+  searchCache[lowercaseQuery] = {
+    timestamp: Date.now(),
+    results: filteredGenericResults
+  };
   
   return filteredGenericResults;
 };

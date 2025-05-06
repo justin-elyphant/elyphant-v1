@@ -23,7 +23,7 @@ const Hero = () => {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="default">
-                <Link to="/wishlists">
+                <Link to="/gifting">
                   <Gift className="mr-2 h-4 w-4" />
                   Create Wishlist
                 </Link>

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
 import { useProducts } from "@/contexts/ProductContext";
@@ -26,9 +26,6 @@ const MarketplaceWrapper = () => {
   const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  
-  // Reference for scrolling to results
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setUpcomingOccasions(getUpcomingOccasions());
@@ -42,12 +39,6 @@ const MarketplaceWrapper = () => {
     // Load products with the keyword from URL or use default search if empty
     if (keyword) {
       loadProducts({ keyword });
-      // Scroll to results with a small delay to ensure content is loaded
-      setTimeout(() => {
-        if (resultsRef.current) {
-          resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
     } else {
       // Select a random default search term to load initial products
       const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
@@ -127,14 +118,12 @@ const MarketplaceWrapper = () => {
         {/* Popular Brands Section */}
         <PopularBrands />
         
-        {/* Product Grid with Filters - add ref for scrolling */}
-        <div ref={resultsRef}>
-          <MarketplaceContent 
-            products={products}
-            isLoading={isLoading}
-            searchTerm={searchTerm}
-          />
-        </div>
+        {/* Product Grid with Filters */}
+        <MarketplaceContent 
+          products={products}
+          isLoading={isLoading}
+          searchTerm={searchTerm}
+        />
       </div>
       
       {/* Sign Up Dialog for non-authenticated interactions */}

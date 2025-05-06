@@ -64,6 +64,7 @@ const SearchBar = () => {
         setShowTokenAlert(true);
       }
       
+      console.log("Navigating to marketplace with search:", value.trim());
       // Always navigate to the marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
     }

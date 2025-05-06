@@ -12,6 +12,7 @@ import SignUpDialog from "./SignUpDialog";
 import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
 import PopularBrands from "./PopularBrands";
+import { searchZincProducts } from "./zinc/zincService";
 
 // Default search terms to load if no query is provided
 const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"];
@@ -19,13 +20,14 @@ const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const productId = searchParams.get("productId");
-  const { products, isLoading, loadProducts } = useProducts();
+  const { products, isLoading, loadProducts, setProducts } = useProducts();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     setUpcomingOccasions(getUpcomingOccasions());
@@ -38,13 +40,42 @@ const MarketplaceWrapper = () => {
     
     // Load products with the keyword from URL or use default search if empty
     if (keyword) {
-      loadProducts({ keyword });
+      setIsSearching(true);
+      // Try to use searchZincProducts if available
+      if (typeof searchZincProducts === 'function') {
+        console.log("Using searchZincProducts for search:", keyword);
+        searchZincProducts(keyword).then((zincProducts) => {
+          if (zincProducts && zincProducts.length > 0) {
+            console.log("Found Zinc products:", zincProducts.length);
+            setProducts(prevProducts => {
+              // Filter out existing Amazon products to avoid duplicates
+              const nonAmazonProducts = prevProducts.filter(p => 
+                p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant"
+              );
+              return [...nonAmazonProducts, ...zincProducts];
+            });
+          } else {
+            console.log("No Zinc products found, falling back to loadProducts");
+            // Fallback to standard loadProducts
+            loadProducts({ keyword });
+          }
+          setIsSearching(false);
+        }).catch(err => {
+          console.error("Error searching Zinc products:", err);
+          loadProducts({ keyword });
+          setIsSearching(false);
+        });
+      } else {
+        console.log("searchZincProducts not available, using loadProducts");
+        loadProducts({ keyword });
+        setIsSearching(false);
+      }
     } else {
       // Select a random default search term to load initial products
       const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
       loadProducts({ keyword: defaultTerm });
     }
-  }, [searchParams, loadProducts]);
+  }, [searchParams, loadProducts, setProducts]);
 
   useEffect(() => {
     if (productId) {
@@ -121,7 +152,7 @@ const MarketplaceWrapper = () => {
         {/* Product Grid with Filters */}
         <MarketplaceContent 
           products={products}
-          isLoading={isLoading}
+          isLoading={isLoading || isSearching}
           searchTerm={searchTerm}
         />
       </div>

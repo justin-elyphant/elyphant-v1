@@ -10,16 +10,14 @@ import { Button } from "@/components/ui/button";
 import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { searchProducts } from "@/components/marketplace/zinc/zincService";
 
 const MarketplaceWrapper = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const productId = searchParams.get("productId");
-  const { products, isLoading, setProducts } = useProducts();
+  const { products, isLoading, loadProducts } = useProducts();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [localLoading, setLocalLoading] = useState(false);
   const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
   const [showApiAlert, setShowApiAlert] = useState(true);
@@ -28,48 +26,12 @@ const MarketplaceWrapper = () => {
     setUpcomingOccasions(getUpcomingOccasions());
   }, []);
 
-  // Handle search term changes from the URL
   useEffect(() => {
     const keyword = searchParams.get("search") || "";
     setSearchTerm(keyword);
-    
-    // This is the key part: Load products using the shared zinc service
-    if (keyword && keyword.trim()) {
-      console.log(`Loading products from URL search param: "${keyword}"`);
-      loadProducts(keyword);
-    }
+    loadProducts({ keyword: keyword });
   }, [searchParams]);
 
-  const loadProducts = async (keyword: string) => {
-    if (!keyword || keyword.trim() === '') return;
-    
-    setLocalLoading(true);
-    try {
-      console.log(`Fetching products with search term: "${keyword}" using zinc service`);
-      const results = await searchProducts(keyword);
-      
-      if (results && results.length > 0) {
-        console.log(`Found ${results.length} products for search term "${keyword}"`);
-        // Update products in global context
-        setProducts(prevProducts => {
-          // Remove any existing products from this search to avoid duplicates
-          const filteredProducts = prevProducts.filter(p => 
-            !p.vendor?.includes("Amazon via Zinc") || 
-            !p.id?.toString().includes("mock-")
-          );
-          
-          // Add new products
-          return [...filteredProducts, ...results];
-        });
-      }
-    } catch (error) {
-      console.error(`Error loading products: ${error}`);
-    } finally {
-      setLocalLoading(false);
-    }
-  };
-
-  // Handle product details dialog
   useEffect(() => {
     if (productId) {
       setShowProductDetails(productId);
@@ -79,10 +41,7 @@ const MarketplaceWrapper = () => {
   }, [productId]);
 
   const selectedProduct = showProductDetails !== null 
-    ? products.find(p => 
-        (p.product_id === showProductDetails) || 
-        (p.id === showProductDetails)
-      )
+    ? products.find(p => p.product_id === showProductDetails)
     : null;
     
   const goToTrunkline = () => {
@@ -100,7 +59,7 @@ const MarketplaceWrapper = () => {
           
           {/* Quick Navigation Links */}
           <div className="flex gap-6 mt-4 text-sm overflow-x-auto pb-2">
-            {upcomingOccasions.map((occasion) => (
+            {upcomingOccasions.map((occasion, index) => (
               <Button
                 key={occasion.name}
                 variant="link"
@@ -131,7 +90,7 @@ const MarketplaceWrapper = () => {
         {searchTerm && showApiAlert && (
           <Alert className="mb-4 bg-amber-50 border-amber-200">
             <AlertDescription className="flex justify-between items-center">
-              <span>Using Zinc API to fetch search results from Amazon.</span>
+              <span>Using mock search results for demo purposes.</span>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setShowApiAlert(false)}>
                   Dismiss
@@ -146,14 +105,14 @@ const MarketplaceWrapper = () => {
 
         <MarketplaceContent 
           products={products}
-          isLoading={isLoading || localLoading}
+          isLoading={isLoading}
           searchTerm={searchTerm}
         />
       </div>
       
       {selectedProduct && (
         <ProductDetailsDialog 
-          productId={selectedProduct.product_id || selectedProduct.id || ""}
+          productId={selectedProduct.product_id || ""}
           open={showProductDetails !== null}
           onOpenChange={(open) => {
             if (!open) {

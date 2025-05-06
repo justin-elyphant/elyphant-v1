@@ -1,6 +1,5 @@
-
-import { serve } from "std/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,55 +37,32 @@ serve(async (req) => {
   if (method === 'POST') {
     const api_key = await fetchApiKey();
     if(!api_key) {
-      return new Response('API key not found', { 
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      return new Response('API key not found', { status: 404 });
     }
     const {product_id, retailer} = await req.json();
     try {
-      console.log(`Fetching product details for ID: ${product_id}, retailer: ${retailer}`);
-      
       const response = await fetch(`https://api.zinc.io/v1/products/${product_id}?retailer=${retailer}`, {
         method: 'GET',
         headers: {
-          'Authorization': 'Basic ' + btoa(`${api_key}:`),
-          'Content-Type': 'application/json'
+          'Authorization': 'Basic ' + btoa(`${api_key}:`)
         }
       });
 
-      console.log(`Received response with status: ${response.status}`);
-      
       const data = await response.json();
-      
-      console.log(`Successfully parsed response for product ID: ${product_id}`);
-      
+
       return new Response(JSON.stringify(data), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       });      
     } catch(error) {
-      console.error('Error in get-product-detail function:', error);
+      console.log('Error', error);
       return new Response(
-        JSON.stringify({
-          success: false, 
-          message: 'Internal server error', 
-          error: error.message
-        }), 
+        JSON.stringify({success: false, message: 'Internal server error.'}), 
         { 
           status: 500, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { "Content-Type": "application/json", ...corsHeaders }
         }
       );
     }
   }
-  
-  // Handle unsupported methods
-  return new Response(
-    JSON.stringify({ error: `Method ${method} not allowed` }),
-    { 
-      status: 405, 
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    }
-  );
 })

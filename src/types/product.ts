@@ -11,7 +11,6 @@ export interface Product {
   stars?: number; // For API compatibility
   reviewCount?: number;
   review_count?: number; // For API compatibility
-  num_reviews?: number; // For API compatibility
   vendor?: string;
   category?: string;
   description?: string;
@@ -21,6 +20,5 @@ export interface Product {
   product_details?: string[]; // For API compatibility
   isBestSeller?: boolean;
   brand?: string;
-  main_image?: string; // For API compatibility
   [key: string]: any; // Fallback for any other fields
 }

@@ -12,13 +12,8 @@ export const useZincProducts = () => {
     setSearchTerm, 
     handleSearch, 
     isLoading: isSearchLoading, 
-    // Add this error state
     error: searchError,
     // Add other properties as needed
-    localSearchTerm,
-    setLocalSearchTerm,
-    marketplaceProducts,
-    specialCaseProducts
   } = useZincProductSearch();
   
   // Use our sync hook
@@ -31,13 +26,9 @@ export const useZincProducts = () => {
   return {
     searchTerm,
     setSearchTerm,
-    localSearchTerm,
-    setLocalSearchTerm,
     syncProducts,
     handleSearch,
     isLoading: isSearchLoading || isSyncLoading,
-    error: searchError || syncError,
-    marketplaceProducts,
-    specialCaseProducts
+    error: searchError || syncError
   };
 };

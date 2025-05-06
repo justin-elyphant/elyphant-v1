@@ -10,11 +10,40 @@ interface ProfileInfoProps {
   userData: any;
 }
 
+// Helper functions for privacy checks
+const isDataVisible = (data: any, privacySetting: string, isConnected: boolean) => {
+  if (!data) return false;
+  if (privacySetting === "public") return true;
+  if (privacySetting === "friends" && isConnected) return true;
+  return false;
+};
+
 const ProfileInfo = ({ userData }: ProfileInfoProps) => {
+  // For demo purposes, assume we are connected
+  const isConnected = true;
+  
+  // Handle possible undefined values safely
+  const name = userData?.name || "User";
+  const username = userData?.username || "username";
+  const bio = userData?.bio;
+  const dataSharingSettings = userData?.data_sharing_settings || {};
+  
+  // Check birthday visibility
+  const birthdayVisible = userData?.birthday && 
+    isDataVisible(userData.birthday, dataSharingSettings.dob || "friends", isConnected);
+  
+  // Check location visibility
+  const locationVisible = userData?.address?.city && userData?.address?.country &&
+    isDataVisible(userData.address, dataSharingSettings.shipping_address || "private", isConnected);
+  
+  // Check email visibility
+  const emailVisible = userData?.email && 
+    isDataVisible(userData.email, dataSharingSettings.email || "private", isConnected);
+
   return (
     <div className="pl-4 sm:pl-8 mb-8 pt-14 sm:pt-4">
-      <h1 className="text-xl sm:text-2xl font-bold">{userData?.name || "User Name"}</h1>
-      <div className="text-sm text-muted-foreground mb-2">@{userData?.username || "username"}</div>
+      <h1 className="text-xl sm:text-2xl font-bold">{name}</h1>
+      <div className="text-sm text-muted-foreground mb-2">@{username}</div>
       <div className="flex items-center gap-3 sm:gap-6 mt-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
         <div className="flex items-center">
           <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
@@ -29,10 +58,10 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
           <span className="font-medium">254</span> Likes
         </div>
       </div>
-      {userData?.bio && (
-        <p className="mt-4 text-muted-foreground">{userData.bio}</p>
-      )}
-      {!userData?.bio && (
+      
+      {bio ? (
+        <p className="mt-4 text-muted-foreground">{bio}</p>
+      ) : (
         <p className="mt-4 text-muted-foreground">
           {userData?.profileType === "gifter" 
             ? "I love finding the perfect gifts for my friends and family!" 
@@ -43,7 +72,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
       )}
       
       {/* Personal Info Card */}
-      {(userData?.birthday || (userData?.address?.city && userData?.address?.country)) && (
+      {(birthdayVisible || locationVisible || emailVisible) && (
         <Card className="mt-4 w-full">
           <CardHeader className="pb-2">
             <CardTitle className="text-md">Personal Information</CardTitle>
@@ -51,7 +80,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
           <CardContent>
             <Table>
               <TableBody>
-                {userData?.birthday && (
+                {birthdayVisible && (
                   <TableRow>
                     <TableCell className="font-medium flex items-center">
                       <CalendarDays className="h-4 w-4 mr-2" />
@@ -62,7 +91,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
                     </TableCell>
                   </TableRow>
                 )}
-                {userData?.address?.city && userData?.address?.country && (
+                {locationVisible && (
                   <TableRow>
                     <TableCell className="font-medium flex items-center">
                       <MapPin className="h-4 w-4 mr-2" />
@@ -73,7 +102,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
                     </TableCell>
                   </TableRow>
                 )}
-                {userData?.email && userData?.data_sharing_settings?.email === "public" && (
+                {emailVisible && (
                   <TableRow>
                     <TableCell className="font-medium flex items-center">
                       <Info className="h-4 w-4 mr-2" />

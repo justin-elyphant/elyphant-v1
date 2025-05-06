@@ -39,43 +39,34 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         });
       }
       
-      // Extract interests from gift preferences or interests field if available
-      let interests: string[] = [];
-      if (profile.interests && Array.isArray(profile.interests)) {
-        interests = profile.interests;
-      } else if (profile.gift_preferences && Array.isArray(profile.gift_preferences)) {
-        interests = profile.gift_preferences.map((pref: any) => 
-          typeof pref === 'string' ? pref : (pref.category || '')
-        ).filter(Boolean);
-      }
+      // Extract interests from gift preferences
+      const interests = Array.isArray(profile.gift_preferences)
+        ? profile.gift_preferences.map((pref: any) => 
+            typeof pref === 'string' ? pref : (pref.category || '')
+          ).filter(Boolean)
+        : [];
       
-      // Map shipping_address to address, ensuring it has all required fields
-      const address = {
-        street: profile.shipping_address?.street || '',
-        city: profile.shipping_address?.city || '',
-        state: profile.shipping_address?.state || '',
-        zipCode: profile.shipping_address?.zipCode || '',
-        country: profile.shipping_address?.country || ''
-      };
-      
-      // Ensure data sharing settings have all required fields
-      const dataSharingSettings = {
-        dob: profile.data_sharing_settings?.dob || "private",
-        shipping_address: profile.data_sharing_settings?.shipping_address || "private",
-        gift_preferences: profile.data_sharing_settings?.gift_preferences || "friends"
-      };
-      
-      // Make sure we're setting all available profile data
+      // Map fields to form values
       form.reset({
         name: profile.name || '',
         email: profile.email || '',
         bio: profile.bio || '',
         profile_image: profile.profile_image || null,
         birthday: birthdayDate,
-        address: address,
+        address: profile.shipping_address || {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: ''
+        },
         interests: interests,
         importantDates: importantDates,
-        data_sharing_settings: dataSharingSettings
+        data_sharing_settings: profile.data_sharing_settings || {
+          dob: "friends",
+          shipping_address: "private", 
+          gift_preferences: "public"
+        }
       });
       
       console.log("Profile data loaded into form successfully");

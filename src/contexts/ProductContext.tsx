@@ -1,24 +1,39 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
 
 import { supabase } from '@/integrations/supabase/client';
-// Product type definition (matches existing type in ProductGallery)
+
+// Extended Product type definition with all properties being used across the app
 export type Product = {
-  addon: boolean;
-  brand: string;
-  fresh: boolean;
+  // Original properties from ZincProduct
+  addon?: boolean;
+  brand?: string;
+  fresh?: boolean;
   image: string;
-  num_offers_estimate: null|number;
-  num_reviews: number;
-  num_sales: number;
-  pantry: boolean;
+  num_offers_estimate?: null|number;
+  num_reviews?: number;
+  num_sales?: number;
+  pantry?: boolean;
   price: number;
-  prime: boolean;
-  product_details: [];
+  prime?: boolean;
+  product_details?: any[];
   product_id: string;
-  stars: number;
-  title: string;
+  stars?: number;
+  title?: string;
+  
+  // Additional properties used in the UI components
+  id: number | string;
+  name: string;
+  description?: string;
+  category?: string;
+  vendor?: string;
+  variants?: string[];
+  rating?: number;
+  reviewCount?: number;
+  isBestSeller?: boolean;
+  images?: string[];
 };
 
 type ProductContextType = {
@@ -96,7 +111,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       }
     });
     if (error) throw new Error(error.message);
-    setProducts(data.results);
+    
+    // Map the API results to include both product_id and id for compatibility
+    const mappedProducts = data.results.map(product => ({
+      ...product,
+      id: product.product_id || `product-${Math.random().toString(36).substring(2, 9)}`,
+      name: product.title || 'Unnamed Product'
+    }));
+    
+    setProducts(mappedProducts);
     setIsLoading(false);
   }
 

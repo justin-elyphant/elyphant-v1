@@ -1,100 +1,109 @@
 
-import React, { useState } from "react";
-import { Heart, Clock } from "lucide-react";
-import { useFavorites, SavedItemType } from "@/components/gifting/hooks/useFavorites";
-import ProductCard from "@/components/gifting/ProductCard";
-import { useNavigate } from "react-router-dom";
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useProducts } from "@/contexts/ProductContext";
+import { useFavorites } from "@/components/gifting/hooks/useFavorites";
+import { Product } from "@/contexts/ProductContext";
+import ProductGallery from "@/components/gifting/ProductGallery";
+import { Skeleton } from "@/components/ui/skeleton";
+import { HeartOff } from "lucide-react";
 
-interface FavoritesTabContentProps {
-  isCurrentUser?: boolean;
-}
-
-const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser = false }) => {
-  const { 
-    handleFavoriteToggle, 
-    handleSaveOptionSelect, 
-    isFavorited,
-    wishlistItems,
-    laterItems
-  } = useFavorites();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<SavedItemType>("wishlist");
-
-  // Handle product click to navigate to the product or marketplace
-  const handleProductClick = (productId: number) => {
-    navigate(`/marketplace?productId=${productId}`);
-  };
-
-  const renderEmptyState = (type: SavedItemType) => {
-    const isLater = type === "later";
+const FavoritesTabContent: React.FC = () => {
+  const { products, isLoading } = useProducts();
+  const { favorites, handleFavoriteToggle } = useFavorites();
+  
+  // Get all favorited products
+  const favoriteProducts = React.useMemo(() => {
+    if (!products || !favorites) return [];
+    
+    return products.filter(product => 
+      favorites.includes(String(product.product_id || product.id))
+    );
+  }, [products, favorites]);
+  
+  // Group favorited products by category
+  const productCategories = React.useMemo(() => {
+    if (!favoriteProducts || favoriteProducts.length === 0) return {};
+    
+    return favoriteProducts.reduce((acc, product) => {
+      const category = product.category_name || product.category || 'Other';
+      
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      
+      acc[category].push(product);
+      return acc;
+    }, {} as Record<string, Product[]>);
+  }, [favoriteProducts]);
+  
+  // Get category names
+  const categories = Object.keys(productCategories);
+  
+  if (isLoading) {
     return (
-      <div className="text-center py-8 border rounded-lg">
-        {isLater ? (
-          <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-        ) : (
-          <Heart className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-        )}
-        <h4 className="font-medium">
-          {isLater ? "No items saved for later" : "No wishlist items yet"}
-        </h4>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isCurrentUser 
-            ? isLater 
-              ? "Items you save for later will appear here." 
-              : "Items you add to your wishlist will appear here."
-            : isLater
-              ? "This user hasn't saved any items for later yet."
-              : "This user hasn't added any items to their wishlist yet."
-          }
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-32" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array(8).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-48 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (!favoriteProducts || favoriteProducts.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="bg-gray-100 rounded-full p-4 inline-flex items-center justify-center mb-4">
+          <HeartOff size={24} className="text-gray-500" />
+        </div>
+        <h3 className="text-lg font-medium">No favorites yet</h3>
+        <p className="text-muted-foreground mt-1 mb-4">
+          Items you favorite will appear here for easy access.
         </p>
       </div>
     );
-  };
-
-  const activeItems = activeTab === "later" ? laterItems : wishlistItems;
+  }
+  
+  // If only a few products, don't use tabs
+  if (favoriteProducts.length < 5 || categories.length === 1) {
+    return (
+      <ProductGallery 
+        initialProducts={favoriteProducts}
+        isGifteeView={true}
+        onProductSelect={(product) => {
+          // Navigate to product detail or wishlist
+          console.log("Selected product:", product);
+        }}
+      />
+    );
+  }
   
   return (
-    <div className="space-y-4">
-      {isCurrentUser && (
-        <Tabs 
-          defaultValue="wishlist" 
-          value={activeTab} 
-          onValueChange={(value) => setActiveTab(value as SavedItemType)}
-          className="w-full"
-        >
-          <TabsList className="grid grid-cols-2 w-72 mb-4">
-            <TabsTrigger value="wishlist">
-              <Heart className="h-4 w-4 mr-2" /> My Wishlist
-            </TabsTrigger>
-            <TabsTrigger value="later">
-              <Clock className="h-4 w-4 mr-2" /> Saved for Later
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
-
-      {activeItems.length === 0 ? (
-        renderEmptyState(activeTab)
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {activeItems.map(product => (
-            <ProductCard 
-              key={product.id}
-              product={product}
-              isWishlisted={activeTab === "wishlist"}
-              isGifteeView={isCurrentUser}
-              onToggleWishlist={() => {
-                if (isCurrentUser) {
-                  handleFavoriteToggle(product.id);
-                }
-              }}
-              onClick={() => handleProductClick(product.id)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <Tabs defaultValue={categories[0]}>
+      <TabsList className="mb-4 overflow-x-auto flex w-full">
+        {categories.map(category => (
+          <TabsTrigger key={category} value={category} className="flex-shrink-0">
+            {category} ({productCategories[category].length})
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      
+      {categories.map(category => (
+        <TabsContent key={category} value={category}>
+          <ProductGallery 
+            initialProducts={productCategories[category]}
+            isGifteeView={true}
+            onProductSelect={(product) => {
+              // Show product detail or add to wishlist
+              console.log("Selected product:", product);
+            }}
+          />
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 };
 

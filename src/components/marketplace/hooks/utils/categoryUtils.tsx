@@ -1,7 +1,8 @@
-import { Product } from "@/contexts/ProductContext";
+
 /**
  * Helper functions for working with product categories
  */
+import { Product } from "@/contexts/ProductContext";
 
 // Maps category URL parameters to display names
 export const getCategoryName = (categoryUrl: string | null) => {

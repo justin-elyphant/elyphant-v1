@@ -86,11 +86,15 @@ export const getProductImages = (product: any): string[] => {
 export const standardizeProduct = (product: any) => {
   if (!product) return null;
   
+  // Get ID as string to ensure consistency
+  const id = getProductId(product);
+  const numericId = id ? parseInt(id, 10) : null;
+  
   return {
-    product_id: getProductId(product),
-    id: product.id || product.product_id,
-    title: product.title || product.name || 'Unknown Product',
-    name: product.name || product.title || 'Unknown Product',
+    product_id: id,
+    id: id,
+    title: getProductName(product),
+    name: getProductName(product),
     price: normalizePrice(product.price),
     image: product.image || '',
     images: getProductImages(product),

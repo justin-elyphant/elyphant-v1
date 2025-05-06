@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { toast } from "sonner";
-import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
+import { normalizeProduct } from "@/contexts/ProductContext";
 
 export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateAction<Product[]>>) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,10 +24,11 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       
       if (results.length > 0) {
         // Convert to Product format and standardize
-        const amazonProducts = results.map((product, index) => {
-          return standardizeProduct({
-            id: 1000 + index,
-            name: product.title || "Product",
+        const amazonProducts = results.map((product) => {
+          return normalizeProduct({
+            id: product.product_id,
+            product_id: product.product_id,
+            title: product.title || "Product",
             price: product.price,
             category: product.category || "Electronics",
             image: product.image || "/placeholder.svg",

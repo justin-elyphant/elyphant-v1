@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
@@ -13,7 +14,7 @@ export type Product = {
   image: string;
   
   // Fields that may have aliases
-  id?: string | number; // Alias for product_id
+  id?: string; // Alias for product_id
   name?: string; // Alias for title
   category?: string; // Alias for category_name
   category_name?: string;
@@ -44,57 +45,10 @@ type ProductContextType = {
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  loadProducts: (query) => Promise<void>;
+  loadProducts: (query: {keyword: string}) => Promise<void>;
 };
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
-
-// Helper function to generate mock features for products
-const generateMockFeatures = (productName: string, category: string): string[] => {
-  const features = [
-    `Premium ${category.toLowerCase()} for everyday use`,
-    `Enhanced durability and reliability`,
-    `Stylish design perfect for any setting`,
-    `Easy to clean and maintain`
-  ];
-  
-  // Add some category-specific features
-  if (category === "Electronics") {
-    features.push("Energy efficient technology");
-    features.push("Smart connectivity options");
-  } else if (category === "Clothing") {
-    features.push("Breathable fabric for all-day comfort");
-    features.push("Machine washable");
-  } else if (category === "Footwear") {
-    features.push("Cushioned insole for maximum comfort");
-    features.push("Non-slip outsole for better traction");
-  }
-  
-  return features;
-};
-
-// Helper function to generate mock specifications
-const generateMockSpecifications = (productName: string, category: string): Record<string, string> => {
-  const specs: Record<string, string> = {
-    "Brand": productName.split(' ')[0],
-    "Material": "Premium quality",
-    "Origin": "Imported"
-  };
-  
-  // Add some category-specific specifications
-  if (category === "Electronics") {
-    specs["Power"] = "110-240V";
-    specs["Warranty"] = "1 year";
-  } else if (category === "Clothing") {
-    specs["Fabric"] = "Cotton blend";
-    specs["Care"] = "Machine wash cold";
-  } else if (category === "Footwear") {
-    specs["Upper"] = "Synthetic leather";
-    specs["Sole"] = "Rubber";
-  }
-  
-  return specs;
-};
 
 // Helper function to normalize Product objects to ensure all required fields are present
 export const normalizeProduct = (product: Partial<Product>): Product => {
@@ -103,7 +57,11 @@ export const normalizeProduct = (product: Partial<Product>): Product => {
 
 // Helper function to normalize an array of products
 export const normalizeProducts = (products: Partial<Product>[]): Product[] => {
-  return products.map(normalizeProduct);
+  if (!products || !Array.isArray(products)) {
+    console.error("Invalid products array provided to normalizeProducts", products);
+    return [];
+  }
+  return products.map(product => normalizeProduct(product));
 };
 
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
@@ -114,7 +72,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
   }, []);
   
-  const loadProducts = async (query) => {
+  const loadProducts = async (query: {keyword: string}) => {
     setIsLoading(true);
     const {keyword} = query;
     try {
@@ -128,7 +86,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw new Error(error.message);
       
       // Normalize the product data to ensure consistent structure
-      const normalizedProducts = normalizeProducts(data.results);
+      const normalizedProducts = normalizeProducts(data?.results || []);
       setProducts(normalizedProducts);
     } catch (err) {
       console.error("Error loading products:", err);

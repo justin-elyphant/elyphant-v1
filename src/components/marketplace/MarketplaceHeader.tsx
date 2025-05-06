@@ -1,9 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Gift, Heart, Star, Search } from "lucide-react";
+import { Gift, Heart, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { useSearchParams } from "react-router-dom";
 
 interface MarketplaceHeaderProps {
@@ -15,15 +14,6 @@ interface MarketplaceHeaderProps {
 const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceHeaderProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(searchTerm);
-  };
-
-  const handleSearchTermChange = (term: string) => {
-    setSearchTerm(term);
-  };
-
   return (
     <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-6 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -33,17 +23,6 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
           <p className="text-gray-700">
             Discover thoughtful gifts for every occasion, interest, and relationship in your life.
           </p>
-          
-          <form onSubmit={handleSubmit} className="relative mt-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search for gifts..."
-              className="pl-10 bg-white border-gray-200"
-              value={searchTerm}
-              onChange={(e) => handleSearchTermChange(e.target.value)}
-            />
-          </form>
         </div>
         
         <div className="grid grid-cols-2 gap-3 md:gap-4">

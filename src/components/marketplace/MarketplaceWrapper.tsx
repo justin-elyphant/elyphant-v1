@@ -105,7 +105,7 @@ const MarketplaceWrapper = () => {
       </div>
 
       <div className="container mx-auto px-4 pt-6 space-y-8">
-        {/* New Hero Header with Search */}
+        {/* New Hero Header without Search */}
         <MarketplaceHeader 
           searchTerm={localSearchTerm} 
           setSearchTerm={setLocalSearchTerm} 

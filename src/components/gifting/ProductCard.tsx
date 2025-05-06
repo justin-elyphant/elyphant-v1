@@ -19,7 +19,7 @@ interface ProductCardProps {
   product: Product;
   isWishlisted: boolean;
   isGifteeView: boolean;
-  onToggleWishlist: (productId: string | number) => void;
+  onToggleWishlist: (productId: string) => void;
   onClick?: () => void;
 }
 
@@ -34,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleWishlist(getProductId(product));
+    onToggleWishlist(String(getProductId(product)));
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {

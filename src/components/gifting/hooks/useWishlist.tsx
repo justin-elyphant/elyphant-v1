@@ -3,9 +3,9 @@ import { toast } from "sonner";
 import { useLocalStorage } from "./useLocalStorage";
 
 export const useWishlist = () => {
-  const [wishlistedProducts, setWishlistedProducts] = useLocalStorage<number[]>('wishlistedProducts', []);
+  const [wishlistedProducts, setWishlistedProducts] = useLocalStorage<string[]>('wishlistedProducts', []);
 
-  const handleWishlistToggle = (productId: number) => {
+  const handleWishlistToggle = (productId: string) => {
     setWishlistedProducts(prev => {
       const newWishlisted = prev.includes(productId) 
         ? prev.filter(id => id !== productId)

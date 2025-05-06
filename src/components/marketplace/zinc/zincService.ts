@@ -1,168 +1,94 @@
 
-import { SUPABASE_FUNCTIONS } from '@/constants/supabaseFunctions';
-import { Product } from '@/types/product';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { searchProducts as searchProductsImpl } from "./services/productSearchService";
+import { convertZincProductToProduct } from "./utils/productConverter";
+import { Product } from "@/contexts/ProductContext";
+import { fetchProductDetails } from "./services/productDetailsService";
+import { ZincOrder, ZincProduct } from "./types";
+import { useProductValidation } from "./hooks/useProductValidation";
 
-const ZINC_RETAILER = "amazon";
-
-export const searchProducts = async (searchTerm: string, resultsLimit: string = "20"): Promise<Product[]> => {
+/**
+ * Search for products and convert them to our Product format
+ * @param query Search query
+ * @param maxResults Maximum results to return (defaults to 8)
+ * @returns Promise with array of products
+ */
+export const searchZincProducts = async (query: string, maxResults: string = "8"): Promise<Product[]> => {
   try {
-    console.log(`Searching for products with term: "${searchTerm}" using database API key`);
-
-    // Show a loading toast for better user feedback
-    const toastId = toast.loading("Searching Amazon products...", {
-      description: `Looking for "${searchTerm}"`,
-      id: "search-products"
-    });
-
-    // Call the Supabase function to search products
-    const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTIONS.SEARCH_PRODUCTS, {
-      body: {
-        search_term: searchTerm,
-        results_limit: resultsLimit,
-        retailer: ZINC_RETAILER
-      }
-    });
-
-    // If we get a network error or other Supabase function error
-    if (error) {
-      console.error("Supabase function error:", error);
-      
-      // Check if it's a network error
-      const isNetworkError = error.message && (
-        error.message.includes('Failed to fetch') || 
-        error.message.includes('Failed to send a request') ||
-        error.message.includes('network')
-      );
-      
-      if (isNetworkError) {
-        console.warn("Network error detected - falling back to mock data");
-        toast.error("Network error", { 
-          description: "Error connecting to search API - showing mock results", 
-          id: "search-products" 
-        });
-      } else {
-        toast.error("Search error", { 
-          description: "Error connecting to product search API", 
-          id: "search-products" 
-        });
-      }
-      
-      // For error case, fall back to mock data
-      return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
-    }
-
-    if (!data || !data.results) {
-      console.warn("No results or malformed data from Supabase function:", data);
-      toast.error("No results found", { 
-        description: `No products found matching "${searchTerm}"`, 
-        id: "search-products" 
-      });
-      
-      // For no results, also fall back to mock data
-      return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
-    }
-
-    console.log(`Received ${data.results.length} results from API:`, data.results.slice(0, 1));
+    const zincResults = await searchProductsImpl(query, maxResults);
     
-    if (!Array.isArray(data.results)) {
-      console.error("Results are not an array:", data.results);
-      toast.error("Invalid results format", { 
-        description: "Received invalid data format from API", 
-        id: "search-products" 
-      });
-      return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
+    if (!zincResults || zincResults.length === 0) {
+      console.log(`No Zinc results found for "${query}"`);
+      return [];
     }
-
-    // Success - show success toast
-    toast.success(`Found ${data.results.length} products`, { 
-      description: `Results for "${searchTerm}"`,
-      id: "search-products" 
-    });
-
-    // Map the results to the Product interface
-    const products: Product[] = data.results.map((item: any, index: number) => ({
-      id: item.product_id || `zinc-${index}`,
-      product_id: item.product_id,
-      title: item.title,
-      name: item.title,
-      price: item.price,
-      image: item.main_image,
-      images: item.images || [item.main_image],
-      rating: item.rating,
-      reviewCount: item.num_reviews,
-      vendor: "Amazon via Zinc",
-      category: item.category,
-      description: item.description,
-      brand: item.brand,
-      stars: item.stars,
-      num_reviews: item.num_reviews
-    }));
-
-    console.log(`Processed ${products.length} products from API`);
+    
+    // Convert to our Product format
+    const products = zincResults.map(zincProduct => convertZincProductToProduct(zincProduct));
+    
+    console.log(`Converted ${products.length} Zinc products to our format for "${query}"`);
     return products;
   } catch (error) {
-    console.error("Error invoking Supabase function:", error);
-    toast.error("Search error", { 
-      description: "Error fetching products. Please try again later.", 
-      id: "search-products" 
-    });
-    
-    // For any error, fall back to mock data
-    return getMockProductsForSearchTerm(searchTerm, parseInt(resultsLimit));
+    console.error(`Error in searchZincProducts: ${error}`);
+    return [];
   }
 };
 
-// Improved mock data generation function for fallback
-const getMockProductsForSearchTerm = (searchTerm: string, limit: number): Product[] => {
-  const term = searchTerm.toLowerCase();
-  const categories = ['Electronics', 'Fashion', 'Home', 'Beauty', 'Sports'];
-  const brands = ['Brand X', 'GoodStuff', 'TechPro', 'EcoStyle', 'LuxLife'];
-  
-  console.log(`Generating mock data for "${searchTerm}" (real API call failed or returned no results)`);
-  
-  // Look for brand name in search term
-  let matchedBrand = "";
-  const knownBrands = ['nike', 'apple', 'samsung', 'adidas', 'sony', 'microsoft'];
-  for (const brand of knownBrands) {
-    if (term.includes(brand)) {
-      matchedBrand = brand.charAt(0).toUpperCase() + brand.slice(1);
-      break;
-    }
-  }
-  
-  return Array.from({ length: Math.min(limit, 20) }, (_, i) => {
-    const productBrand = matchedBrand || brands[Math.floor(Math.random() * brands.length)];
-    const capitalizedTerm = term.split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+/**
+ * Make a test purchase (mock function for development)
+ */
+export const testPurchase = async (productId: string): Promise<ZincOrder | null> => {
+  try {
+    console.log(`Making test purchase for product ID: ${productId}`);
     
-    return {
-      id: `mock-${i+1}`,
-      product_id: `mock-${i+1}`,
-      title: matchedBrand ? 
-        `${matchedBrand} ${capitalizedTerm} Model ${i+1}` : 
-        `${capitalizedTerm} Product ${i+1} by ${productBrand}`,
-      name: matchedBrand ? 
-        `${matchedBrand} ${capitalizedTerm} Model ${i+1}` : 
-        `${capitalizedTerm} Product ${i+1} by ${productBrand}`,
-      price: Math.floor(Math.random() * 500) + 10,
-      category: categories[Math.floor(Math.random() * categories.length)],
-      image: `https://source.unsplash.com/random/300x300?${encodeURIComponent(term)}&sig=${i}`,
-      images: Array(3).fill(0).map((_, idx) => 
-        `https://source.unsplash.com/random/300x300?${encodeURIComponent(term)}&sig=${i}${idx}`
-      ),
-      rating: (Math.random() * 2) + 3,
-      reviewCount: Math.floor(Math.random() * 1000),
-      vendor: "Amazon via Zinc (Mock)",
-      description: `This is a premium ${term} product with amazing features. Perfect for everyday use with high-quality materials and excellent craftsmanship.`,
-      brand: productBrand,
-      stars: (Math.random() * 2) + 3,
-      num_reviews: Math.floor(Math.random() * 1000)
+    // For now, return a mock order
+    const mockOrder: ZincOrder = {
+      id: `ORDER-${Date.now()}`,
+      status: "processing",
+      items: [{
+        name: "Test Product",
+        quantity: 1,
+        price: 99.99
+      }],
+      date: new Date().toISOString(),
+      total_price: 99.99,
+      shipping_address: {
+        first_name: "Test",
+        last_name: "User",
+        address_line1: "123 Test St",
+        zip_code: "12345",
+        city: "Test City",
+        state: "TS",
+        country: "US",
+        phone_number: "555-1234" // Added required phone_number
+      }
     };
-  });
+    
+    return mockOrder;
+  } catch (error) {
+    console.error(`Error in testPurchase: ${error}`);
+    return null;
+  }
 };
 
-// Add this alias for backwards compatibility
-export const searchZincProducts = searchProducts;
+/**
+ * Enhance a product with valid images using our validation hooks
+ * @param product The product to enhance
+ * @returns The enhanced product
+ */
+export const enhanceProductWithImages = (product: ZincProduct): ZincProduct => {
+  // Use the validation logic directly from the utils
+  const { validateProductImages } = require("./services/search/productValidationUtils");
+  return validateProductImages(product, product.title || "");
+};
+
+/**
+ * Search for products directly, using the implementation from productSearchService
+ * @param query Search query
+ * @param maxResults Maximum results to return
+ * @returns Promise with array of ZincProduct results
+ */
+export const searchProducts = async (query: string, maxResults: string = "10"): Promise<ZincProduct[]> => {
+  return searchProductsImpl(query, maxResults);
+};
+
+// Re-export fetchProductDetails for direct access
+export { fetchProductDetails };

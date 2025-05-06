@@ -1,10 +1,9 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingCart } from "lucide-react";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import ProductRating from "@/components/shared/ProductRating";
@@ -13,7 +12,7 @@ interface ProductCardProps {
   product: Product;
   isWishlisted: boolean;
   isGifteeView: boolean;
-  onToggleWishlist: (productId: string) => void;
+  onToggleWishlist: (productId: number) => void;
   onClick?: () => void;
 }
 
@@ -28,9 +27,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (product.id) {
-      onToggleWishlist(product.id);
-    }
+    onToggleWishlist(product.id);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -42,8 +39,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     });
   };
 
-  const formatPrice = (price?: number) => {
-    return price !== undefined ? price.toFixed(2) : "0.00";
+  const formatPrice = (price: number) => {
+    return price.toFixed(2);
   };
 
   return (

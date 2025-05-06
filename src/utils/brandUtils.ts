@@ -1,5 +1,5 @@
 
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 
 /**
  * Generate fallback Apple products to prevent freezing
@@ -7,7 +7,7 @@ import { Product } from "@/types/product";
 export function getAppleFallbackProducts(): Product[] {
   return [
     {
-      id: "1001",
+      id: 1001,
       name: "Apple iPhone 13 Pro",
       price: 999,
       category: "Electronics",
@@ -20,7 +20,7 @@ export function getAppleFallbackProducts(): Product[] {
       isBestSeller: true
     },
     {
-      id: "1002",
+      id: 1002,
       name: "Apple MacBook Pro 14-inch",
       price: 1999,
       category: "Electronics",
@@ -32,7 +32,7 @@ export function getAppleFallbackProducts(): Product[] {
       brand: "Apple"
     },
     {
-      id: "1003",
+      id: 1003,
       name: "Apple iPad Pro 12.9-inch",
       price: 1099,
       category: "Electronics",
@@ -74,7 +74,7 @@ export async function handleBrandProducts(
     const price = Math.floor(Math.random() * 200) + 50;
     
     brandProducts.push({
-      id: `2000${i}`,
+      id: 2000 + i,
       name: `${brandName} ${category} Item ${i+1}`,
       price: price,
       category: category,

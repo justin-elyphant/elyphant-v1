@@ -10,12 +10,18 @@ const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || false; // 
  * Get headers needed for Zinc API requests using Basic Auth
  */
 export const getZincHeaders = () => {
-  // We'll assume API key is always properly configured in the database
-  // and accessed through the Supabase function
+  // Get the token from localStorage if available, otherwise use env var
+  const storedToken = localStorage.getItem('zincApiToken');
+  const token = storedToken || ZINC_API_TOKEN;
+
+  // Using Basic Auth as shown in Zinc documentation
+  // Base64 encode the API token with empty password (token:)
+  const base64Credentials = btoa(`${token}:`); 
   
   return {
     'Content-Type': 'application/json',
-    // CORS headers - though these only work server-side
+    'Authorization': `Basic ${base64Credentials}`,
+    // Add CORS headers - though these only work server-side
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
@@ -39,32 +45,53 @@ export const isTestMode = (): boolean => {
 
 /**
  * Check if we have a valid Zinc API token
- * We'll assume we do since it's stored in the database
+ * In a real implementation, this would validate against the actual API
  */
 export const hasValidZincToken = (): boolean => {
-  return true; // We assume the token in the database is valid
+  const storedToken = localStorage.getItem('zincApiToken');
+  const token = storedToken || ZINC_API_TOKEN;
+  
+  // Consider a token valid if it's at least 10 chars
+  return !!(token && token.trim() !== '' && token.trim().length >= 10);
 };
 
 /**
  * Set the Zinc API token in localStorage
  */
 export const setZincApiToken = (token: string): void => {
-  // This function is no longer needed as we store the token in the database
-  console.log('Zinc API token is now managed through the database');
+  if (token && token.trim() !== '') {
+    // Store the token
+    localStorage.setItem('zincApiToken', token.trim());
+    console.log('Zinc API token saved to localStorage');
+    
+    // Also store connection status
+    const connection = {
+      autoFulfillment: false,
+      lastSync: Date.now()
+    };
+    localStorage.setItem("zincConnection", JSON.stringify(connection));
+    
+    // Log that we have a valid token
+    console.log('Zinc API token set. Token valid:', hasValidZincToken());
+  } else {
+    console.warn('Attempted to save empty Zinc API token. No changes made.');
+  }
 };
 
 /**
  * Get the current Zinc API token
  */
 export const getZincApiToken = (): string => {
-  // We'll return a placeholder since the actual token is used server-side
-  return "API_KEY_STORED_IN_DATABASE";
+  const storedToken = localStorage.getItem('zincApiToken') || '';
+  const envToken = ZINC_API_TOKEN || '';
+  return storedToken || envToken;
 };
 
 /**
  * Clear the Zinc API token from localStorage
  */
 export const clearZincApiToken = (): void => {
-  // This function is no longer needed
-  console.log('Zinc API token is now managed through the database');
+  localStorage.removeItem('zincApiToken');
+  localStorage.removeItem("zincConnection");
+  console.log('Zinc API token removed from localStorage');
 };

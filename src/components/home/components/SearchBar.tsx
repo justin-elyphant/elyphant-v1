@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import SearchResults from "./SearchResults";
+import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -28,8 +29,12 @@ const SearchBar = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // We won't show the token alert since we're using stored API key
-      // Navigate to marketplace with the search term
+      // Check if token is missing when user initiates search
+      if (!hasValidZincToken() && !showTokenAlert) {
+        setShowTokenAlert(true);
+      }
+      
+      // Ensure we navigate to marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
     }
@@ -53,6 +58,11 @@ const SearchBar = () => {
     if (value.trim()) {
       setSearchTerm(value);
       setIsSearchOpen(false);
+      
+      // Check if token is missing when user selects an item
+      if (!hasValidZincToken() && !showTokenAlert) {
+        setShowTokenAlert(true);
+      }
       
       // Always navigate to the marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
@@ -106,6 +116,18 @@ const SearchBar = () => {
             </button>
           )}
         </div>
+        
+        {showTokenAlert && !hasValidZincToken() && (
+          <Alert className="mt-2 bg-amber-50 border-amber-200 text-amber-800">
+            <AlertDescription className="flex justify-between items-center">
+              <span>Using mock search results. Add a Zinc API token for real product search.</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={dismissAlert}>Dismiss</Button>
+                <Button size="sm" variant="default" onClick={goToTrunkline}>Go to Trunkline</Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         
         {isSearchOpen && searchTerm.trim() && (
           <div className="absolute z-50 w-[calc(100vw-2rem)] sm:w-[450px] mt-1 bg-popover rounded-md border shadow-md">

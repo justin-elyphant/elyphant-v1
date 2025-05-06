@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 
 export const useFilterProducts = (products: Product[], resultsLimit: number) => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);

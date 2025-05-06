@@ -1,6 +1,6 @@
 
 import { useMemo } from "react";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 import { useCategoryFilter } from "./useCategoryFilter";
 
 export const useFilteredProducts = (
@@ -40,9 +40,9 @@ export const useFilteredProducts = (
       // Search term filter
       const matchesSearch = searchTerm === "" || (() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
-        const productName = ((product.name || product.title) || "").toLowerCase();
+        const productName = (product.name || "").toLowerCase();
         const vendor = (product.vendor || "").toLowerCase();
-        const description = ((product.description || product.product_description) || "").toLowerCase();
+        const description = (product.description || "").toLowerCase();
         const category = (product.category || "").toLowerCase();
         const brand = (product.brand || "").toLowerCase();
         
@@ -79,10 +79,10 @@ export const useFilteredProducts = (
       
       // Price range filter
       let matchesPrice = true;
-      if (priceRange === "under25") matchesPrice = (product.price || 0) < 25;
-      else if (priceRange === "25to50") matchesPrice = (product.price || 0) >= 25 && (product.price || 0) <= 50;
-      else if (priceRange === "50to100") matchesPrice = (product.price || 0) > 50 && (product.price || 0) <= 100;
-      else if (priceRange === "over100") matchesPrice = (product.price || 0) > 100;
+      if (priceRange === "under25") matchesPrice = product.price < 25;
+      else if (priceRange === "25to50") matchesPrice = product.price >= 25 && product.price <= 50;
+      else if (priceRange === "50to100") matchesPrice = product.price > 50 && product.price <= 100;
+      else if (priceRange === "over100") matchesPrice = product.price > 100;
       
       return matchesSearch && matchesCategory && matchesPrice;
     });
@@ -101,10 +101,10 @@ export const useFilteredProducts = (
       const secondPassFiltered = products.filter(product => {
         // Only filter by price as it's the most restrictive
         let matchesPrice = true;
-        if (priceRange === "under25") matchesPrice = (product.price || 0) < 25;
-        else if (priceRange === "25to50") matchesPrice = (product.price || 0) >= 25 && (product.price || 0) <= 50;
-        else if (priceRange === "50to100") matchesPrice = (product.price || 0) > 50 && (product.price || 0) <= 100;
-        else if (priceRange === "over100") matchesPrice = (product.price || 0) > 100;
+        if (priceRange === "under25") matchesPrice = product.price < 25;
+        else if (priceRange === "25to50") matchesPrice = product.price >= 25 && product.price <= 50;
+        else if (priceRange === "50to100") matchesPrice = product.price > 50 && product.price <= 100;
+        else if (priceRange === "over100") matchesPrice = product.price > 100;
         
         return matchesPrice;
       });

@@ -3,9 +3,6 @@ import { useState, useRef } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { findMatchingProducts } from "../utils/findMatchingProducts";
 import { toast } from "sonner";
-import { Product } from "@/types/product";
-import { ZincProduct } from "../types";
-import { convertZincProductToProduct } from "../utils/productConverter";
 
 export const useZincProductSearch = () => {
   const { products, setProducts } = useProducts();
@@ -13,7 +10,6 @@ export const useZincProductSearch = () => {
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [specialCaseProducts, setSpecialCaseProducts] = useState<Product[]>([]);
   const searchInProgressRef = useRef(false);
   
   const marketplaceProducts = products.filter(p => p.vendor === "Elyphant" || p.vendor === "Amazon via Zinc");
@@ -35,11 +31,11 @@ export const useZincProductSearch = () => {
       if (isSpecialCase) {
         console.log('Using special case handling for Padres hat search in ZincProductsTab');
         // Generate mock products for this special case
-        const specialCaseZincProducts = findMatchingProducts(term);
+        const specialCaseProducts = findMatchingProducts(term);
         
         // Convert to Product format and add to state
-        const formattedProducts: Product[] = specialCaseZincProducts.map((product, index) => ({
-          id: `2000${index}`, // Convert to string
+        const formattedProducts = specialCaseProducts.map((product, index) => ({
+          id: 2000 + index,
           name: product.title || "San Diego Padres Hat",
           price: product.price || 29.99,
           category: product.category || "Sports Merchandise",
@@ -50,13 +46,11 @@ export const useZincProductSearch = () => {
           reviewCount: product.review_count || 120
         }));
         
-        setSpecialCaseProducts(formattedProducts);
-        
         // Update products
         setProducts(prevProducts => {
           // Remove existing Padres products
           const filtered = prevProducts.filter(p => 
-            !(p.name?.toLowerCase().includes('padres') && p.name?.toLowerCase().includes('hat'))
+            !(p.name.toLowerCase().includes('padres') && p.name.toLowerCase().includes('hat'))
           );
           return [...filtered, ...formattedProducts];
         });
@@ -80,8 +74,8 @@ export const useZincProductSearch = () => {
       const mockProducts = findMatchingProducts(term);
       if (mockProducts.length > 0) {
         // Convert to Product format
-        const formattedProducts: Product[] = mockProducts.map((product, index) => ({
-          id: `4000${index}`, // Convert to string
+        const formattedMockProducts = mockProducts.map((product, index) => ({
+          id: 3000 + index,
           name: product.title || term,
           price: product.price || 19.99,
           category: product.category || "Electronics",
@@ -92,11 +86,9 @@ export const useZincProductSearch = () => {
           reviewCount: product.review_count || 50
         }));
         
-        setSpecialCaseProducts(formattedProducts);
-        
         // Update products
         setProducts(prevProducts => {
-          return [...prevProducts, ...formattedProducts];
+          return [...prevProducts, ...formattedMockProducts];
         });
       }
     } finally {
@@ -112,8 +104,8 @@ export const useZincProductSearch = () => {
     
     if (results.length > 0) {
       // Convert to Product format
-      const formattedProducts: Product[] = results.map((product, index) => ({
-        id: `4000${index}`, // Convert to string
+      const formattedProducts = results.map((product, index) => ({
+        id: 4000 + index,
         name: product.title || term,
         price: product.price || 19.99,
         category: product.category || "Electronics",
@@ -123,8 +115,6 @@ export const useZincProductSearch = () => {
         rating: product.rating || 4.0,
         reviewCount: product.review_count || 50
       }));
-      
-      setSpecialCaseProducts(formattedProducts);
       
       // Update products
       setProducts(prevProducts => {
@@ -169,7 +159,6 @@ export const useZincProductSearch = () => {
     syncProducts,
     isLoading,
     marketplaceProducts,
-    specialCaseProducts,
     error
   };
 };

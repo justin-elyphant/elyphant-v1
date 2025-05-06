@@ -1,169 +1,107 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Product } from "@/types/product";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
+import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
 
-interface ProductContextProps {
+import { supabase } from '@/integrations/supabase/client';
+// Product type definition (matches existing type in ProductGallery)
+export type Product = {
+  addon: boolean;
+  brand: string;
+  fresh: boolean;
+  image: string;
+  num_offers_estimate: null|number;
+  num_reviews: number;
+  num_sales: number;
+  pantry: boolean;
+  price: number;
+  prime: boolean;
+  product_details: [];
+  product_id: string;
+  stars: number;
+  title: string;
+};
+
+type ProductContextType = {
   products: Product[];
-  isLoading: boolean;
-  loadProducts: ({ category, keyword }: { category?: string | null; keyword?: string; }) => Promise<void>;
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
-}
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  loadProducts: (query) => Promise<void>;
+};
 
-const ProductContext = createContext<ProductContextProps | undefined>(undefined);
+const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-interface ProductProviderProps {
-  children: ReactNode;
-}
+// Helper function to generate mock features for products
+const generateMockFeatures = (productName: string, category: string): string[] => {
+  const features = [
+    `Premium ${category.toLowerCase()} for everyday use`,
+    `Enhanced durability and reliability`,
+    `Stylish design perfect for any setting`,
+    `Easy to clean and maintain`
+  ];
+  
+  // Add some category-specific features
+  if (category === "Electronics") {
+    features.push("Energy efficient technology");
+    features.push("Smart connectivity options");
+  } else if (category === "Clothing") {
+    features.push("Breathable fabric for all-day comfort");
+    features.push("Machine washable");
+  } else if (category === "Footwear") {
+    features.push("Cushioned insole for maximum comfort");
+    features.push("Non-slip outsole for better traction");
+  }
+  
+  return features;
+};
 
-export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Initial load of products (you can adjust the criteria as needed)
-    loadProducts({});
-  }, []);
-
-  const loadProducts = async ({ category = null, keyword = "" }: { category?: string | null; keyword?: string; }) => {
-    setIsLoading(true);
-    try {
-      // Simulate loading products from an API or database
-      const mockProducts: Product[] = [
-        {
-          id: "1",
-          name: "Cozy Knit Sweater",
-          price: 59.99,
-          image: "/images/products/sweater.jpg",
-          rating: 4.5,
-          reviewCount: 82,
-          vendor: "Fashion Forward",
-          category: "Clothing",
-          description: "Stay warm and stylish in this comfortable knit sweater.",
-          variants: ["Small", "Medium", "Large"],
-          isBestSeller: true,
-        },
-        {
-          id: "2",
-          name: "Wireless Noise Cancelling Headphones",
-          price: 249.00,
-          image: "/images/products/headphones.jpg",
-          rating: 4.8,
-          reviewCount: 155,
-          vendor: "Tech Gadgets",
-          category: "Electronics",
-          description: "Immerse yourself in sound with these high-quality noise cancelling headphones.",
-        },
-        {
-          id: "3",
-          name: "Ceramic Coffee Mug Set",
-          price: 29.99,
-          image: "/images/products/mug.jpg",
-          rating: 4.2,
-          reviewCount: 68,
-          vendor: "Home Essentials",
-          category: "Home & Kitchen",
-          description: "Enjoy your morning coffee in these stylish ceramic mugs.",
-        },
-        {
-          id: "4",
-          name: "Leather Crossbody Bag",
-          price: 79.99,
-          image: "/images/products/bag.jpg",
-          rating: 4.6,
-          reviewCount: 112,
-          vendor: "Luxury Handbags",
-          category: "Fashion",
-          description: "Carry your essentials in this elegant leather crossbody bag.",
-        },
-        {
-          id: "5",
-          name: "Running Shoes",
-          price: 89.99,
-          image: "/images/products/shoes.jpg",
-          rating: 4.4,
-          reviewCount: 95,
-          vendor: "Athletic Gear",
-          category: "Sports & Outdoors",
-          description: "Achieve your fitness goals with these comfortable running shoes.",
-        },
-        {
-          id: "6",
-          name: "Gourmet Chocolate Gift Box",
-          price: 39.99,
-          image: "/images/products/chocolate.jpg",
-          rating: 4.7,
-          reviewCount: 130,
-          vendor: "Sweet Treats",
-          category: "Food & Beverage",
-          description: "Indulge in a selection of gourmet chocolates with this delightful gift box.",
-        },
-        {
-          id: "7",
-          name: "Smart Watch Series 7",
-          price: 349.00,
-          image: "/images/products/watch.jpg",
-          rating: 4.9,
-          reviewCount: 188,
-          vendor: "Tech Gadgets",
-          category: "Electronics",
-          description: "Stay connected and track your fitness with this advanced smartwatch.",
-        },
-        {
-          id: "8",
-          name: "Essential Oil Diffuser",
-          price: 49.99,
-          image: "/images/products/diffuser.jpg",
-          rating: 4.3,
-          reviewCount: 75,
-          vendor: "Wellness Wonders",
-          category: "Health & Wellness",
-          description: "Create a relaxing atmosphere with this essential oil diffuser.",
-        },
-        {
-          id: "9",
-          name: "Graphic T-Shirt",
-          price: 24.99,
-          image: "/images/products/tshirt.jpg",
-          rating: 4.1,
-          reviewCount: 55,
-          vendor: "Trendy Threads",
-          category: "Clothing",
-          description: "Express yourself with this stylish graphic t-shirt.",
-        },
-        {
-          id: "10",
-          name: "Portable Bluetooth Speaker",
-          price: 69.99,
-          image: "/images/products/speaker.jpg",
-          rating: 4.5,
-          reviewCount: 102,
-          vendor: "Audio Zone",
-          category: "Electronics",
-          description: "Enjoy your favorite music on the go with this portable Bluetooth speaker.",
-        },
-      ];
-
-      // Simulate filtering and searching
-      let filteredProducts = mockProducts;
-      if (category) {
-        filteredProducts = filteredProducts.filter((product) => product.category === category);
-      }
-      if (keyword) {
-        filteredProducts = filteredProducts.filter((product) =>
-          product.name.toLowerCase().includes(keyword.toLowerCase()) ||
-          (product.description && product.description.toLowerCase().includes(keyword.toLowerCase()))
-        );
-      }
-
-      setProducts(filteredProducts);
-    } catch (error) {
-      console.error("Failed to load products:", error);
-    } finally {
-      setIsLoading(false);
-    }
+// Helper function to generate mock specifications
+const generateMockSpecifications = (productName: string, category: string): Record<string, string> => {
+  const specs: Record<string, string> = {
+    "Brand": productName.split(' ')[0],
+    "Material": "Premium quality",
+    "Origin": "Imported"
   };
+  
+  // Add some category-specific specifications
+  if (category === "Electronics") {
+    specs["Power"] = "110-240V";
+    specs["Warranty"] = "1 year";
+  } else if (category === "Clothing") {
+    specs["Fabric"] = "Cotton blend";
+    specs["Care"] = "Machine wash cold";
+  } else if (category === "Footwear") {
+    specs["Upper"] = "Synthetic leather";
+    specs["Sole"] = "Rubber";
+  }
+  
+  return specs;
+};
+
+export const ProductProvider = ({ children }: { children: ReactNode }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Load products when context is initialized
+  useEffect(() => {
+  }, []);
+  
+  const loadProducts = async (query) => {
+    setIsLoading(true);
+    const {keyword} = query;
+    const { data, error } = await supabase.functions.invoke("get-products", {
+      body: {
+        query: keyword,
+        page: 1
+      }
+    });
+    if (error) throw new Error(error.message);
+    setProducts(data.results);
+    setIsLoading(false);
+  }
 
   return (
-    <ProductContext.Provider value={{ products, isLoading, loadProducts, setProducts }}>
+    <ProductContext.Provider value={{ products, setProducts, loadProducts, isLoading, setIsLoading }}>
       {children}
     </ProductContext.Provider>
   );
@@ -171,7 +109,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
 
 export const useProducts = () => {
   const context = useContext(ProductContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useProducts must be used within a ProductProvider");
   }
   return context;

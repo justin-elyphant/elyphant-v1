@@ -8,12 +8,12 @@ import ActivityTabContent from "./tabs/ActivityTabContent";
 export interface ProfileTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  isCurrentUser?: boolean;
+  isCurrentUser: boolean;
   mockWishlists: any[];
-  userData?: any; 
+  userData?: any; // Add the missing userData prop
 }
 
-const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser = false, mockWishlists, userData }: ProfileTabsProps) => {
+const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser, mockWishlists, userData }: ProfileTabsProps) => {
   return (
     <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
       <TabsList className="w-full grid grid-cols-3">

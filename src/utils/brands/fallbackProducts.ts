@@ -1,5 +1,5 @@
 
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 
 /**
  * Get fallback products for Apple to prevent showing fruit results
@@ -9,7 +9,7 @@ import { Product } from "@/types/product";
 export const getAppleFallbackProducts = (count: number = 5): Product[] => {
   const appleProducts: Product[] = [
     {
-      id: "10001",
+      id: 10001,
       name: "Apple iPhone 14 Pro",
       price: 999,
       category: "Electronics",
@@ -22,7 +22,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       isBestSeller: true
     },
     {
-      id: "10002",
+      id: 10002,
       name: "Apple MacBook Pro 14-inch",
       price: 1999,
       category: "Electronics",
@@ -34,7 +34,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       brand: "Apple"
     },
     {
-      id: "10003",
+      id: 10003,
       name: "Apple iPad Pro 12.9-inch",
       price: 1099,
       category: "Electronics",
@@ -46,7 +46,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       brand: "Apple"
     },
     {
-      id: "10004",
+      id: 10004,
       name: "Apple Watch Series 8",
       price: 399,
       category: "Electronics",
@@ -58,7 +58,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       brand: "Apple"
     },
     {
-      id: "10005",
+      id: 10005,
       name: "Apple AirPods Pro",
       price: 249,
       category: "Electronics",
@@ -70,7 +70,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       brand: "Apple"
     },
     {
-      id: "10006",
+      id: 10006,
       name: "Apple iMac 24-inch",
       price: 1299,
       category: "Electronics",
@@ -82,7 +82,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       brand: "Apple"
     },
     {
-      id: "10007",
+      id: 10007,
       name: "Apple HomePod mini",
       price: 99,
       category: "Electronics",
@@ -94,7 +94,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       brand: "Apple"
     },
     {
-      id: "10008",
+      id: 10008,
       name: "Apple Magic Keyboard",
       price: 99,
       category: "Electronics",
@@ -119,7 +119,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
 export const getNikeFallbackProducts = (count: number = 5): Product[] => {
   const nikeProducts: Product[] = [
     {
-      id: "20001",
+      id: 20001,
       name: "Nike Air Force 1",
       price: 110,
       category: "Footwear",
@@ -132,7 +132,7 @@ export const getNikeFallbackProducts = (count: number = 5): Product[] => {
       isBestSeller: true
     },
     {
-      id: "20002",
+      id: 20002,
       name: "Nike Dri-FIT Running Shirt",
       price: 35,
       category: "Apparel",
@@ -144,7 +144,7 @@ export const getNikeFallbackProducts = (count: number = 5): Product[] => {
       brand: "Nike"
     },
     {
-      id: "20003",
+      id: 20003,
       name: "Nike Air Zoom Pegasus 38",
       price: 120,
       category: "Footwear",

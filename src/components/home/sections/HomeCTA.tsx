@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Gift, ShoppingBag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/contexts/ProductContext";
-import { Product } from "@/types/product";
 
 const HomeCTA = () => {
   const { products } = useProducts();

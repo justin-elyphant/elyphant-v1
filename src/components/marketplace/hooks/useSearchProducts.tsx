@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       if (results.length > 0) {
         // Convert to Product format
         const amazonProducts = results.map((product, index) => ({
-          id: `amazon-${1000 + index}`, // Use string ID
+          id: 1000 + index,
           name: product.title || "Product",
           price: product.price,
           category: product.category || "Electronics",

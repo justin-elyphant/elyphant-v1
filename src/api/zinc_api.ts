@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_FUNCTIONS } from '@/constants/supabaseFunctions';
-
+import { SUPABASE_FUNCTIONS } from '@/integrations/supabase/types';
 export const testZincApiKey = async (apiKey: string) => {
     try {
       const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTIONS.TEST_ZINC_API_KEY, {
@@ -17,7 +16,6 @@ export const testZincApiKey = async (apiKey: string) => {
       return null;
     }
 }
-
 export const updateZincApiKey = async (id: string | null, key: string) => {
     try {
         if(!id) {
@@ -42,7 +40,6 @@ export const updateZincApiKey = async (id: string | null, key: string) => {
         return null;
     }
 }
-
 export const getZincApiKey = async () => {{
     try {
         const { data, error } = await supabase.from('api_keys')

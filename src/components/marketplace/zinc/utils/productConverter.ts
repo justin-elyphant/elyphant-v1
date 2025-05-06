@@ -1,17 +1,32 @@
-import { ZincProduct } from '../types';
-import { Product } from "@/types/product";
+import { ZincProduct } from "../types";
+import { Product } from "@/contexts/ProductContext";
 
 /**
- * Parse a product ID string into a string with fallback
+ * Parse a product ID string into a number with fallback
  */
-const parseProductId = (productIdString: string | undefined): string => {
-  // If undefined, return a random ID
+const parseProductId = (productIdString: string | undefined): number => {
+  // If undefined, return a random number
   if (!productIdString) {
     console.log("Missing product_id, generating random ID");
-    return Math.floor(Math.random() * 100000).toString();
+    return Math.floor(Math.random() * 100000);
   }
   
-  return String(productIdString);
+  try {
+    // Remove any non-numeric characters and parse
+    const cleaned = String(productIdString).replace(/\D/g, '');
+    const parsed = parseInt(cleaned, 10);
+    
+    // If parsed is NaN or 0, generate random number
+    if (isNaN(parsed) || parsed === 0) {
+      console.log(`Invalid product_id format: "${productIdString}", generating random ID`);
+      return Math.floor(Math.random() * 100000);
+    }
+    
+    return parsed;
+  } catch (e) {
+    console.error(`Error parsing product_id: "${productIdString}"`, e);
+    return Math.floor(Math.random() * 100000);
+  }
 };
 
 /**
@@ -75,8 +90,8 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     ? zincProduct.review_count
     : parseInt(String(zincProduct.review_count || 0), 10) || 0;
   
-  // Get the product ID as a string
-  const productIdStr = parseProductId(zincProduct.product_id);
+  // Convert the string product_id to a number
+  const productIdAsNumber = parseProductId(zincProduct.product_id);
   
   // Log data consistency issues for debugging
   if (!productImage || productImage === '/placeholder.svg') {
@@ -88,7 +103,7 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
   }
   
   return {
-    id: productIdStr,
+    id: productIdAsNumber,
     name: zincProduct.title,
     price: priceValue,
     description: description,
@@ -142,16 +157,16 @@ export const convertProductToZincProduct = (product: Product): ZincProduct => {
   
   return {
     product_id: productId,
-    title: product.name || "",
+    title: product.name,
     price: priceValue,
     description: product.description || "",
-    category: product.category || "",
+    category: product.category,
     retailer: "Amazon via Zinc",
-    image: product.image || "",
-    images: product.images || [product.image || ""],
+    image: product.image,
+    images: product.images || [product.image],
     rating: ratingValue,
     review_count: reviewCountValue,
-    brand: product.brand || (product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor || "")
+    brand: product.brand || (product.vendor === "Amazon via Zinc" ? "Amazon" : product.vendor)
   };
 };
 

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "./useLocalStorage";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 import { useProducts } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ export const useFavorites = () => {
     
     // Find all saved products from the main products list
     const productIds = savedItems.map(item => item.productId);
-    const items = products.filter(product => product.product_id && productIds.includes(product.product_id));
+    const items = products.filter(product => productIds.includes(product.product_id));
     setFavoriteItems(items);
   }, [savedItems, products, isLoading]);
 
@@ -91,7 +91,7 @@ export const useFavorites = () => {
       .filter(item => item.saveType === saveType)
       .map(item => item.productId);
     
-    return products.filter(product => product.product_id && filteredIds.includes(product.product_id));
+    return products.filter(product => filteredIds.includes(product.product_id));
   };
 
   return {

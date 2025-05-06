@@ -1,16 +1,13 @@
 
 import React from "react";
-import { Product } from "@/types/product";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Heart } from "lucide-react";
-import { getCleanTitle, formatProductPrice } from "./productUtils";
+import { Product } from "@/contexts/ProductContext";
 import ProductImage from "./ProductImage";
 import ProductRating from "./ProductRating";
 import ProductDetails from "./ProductDetails";
 import WishlistButton from "./WishlistButton";
 import { useAuth } from "@/contexts/auth";
 import { useFavorites, SavedItemType } from "@/components/gifting/hooks/useFavorites";
+import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Truck, Award } from "lucide-react";
 
 interface ProductItemProps {
@@ -19,7 +16,6 @@ interface ProductItemProps {
   onProductClick: (productId: string) => void;
   onWishlistClick: (e: React.MouseEvent) => void;
   isFavorited: boolean;
-  key?: string; // Add key prop to interface for React list rendering
 }
 
 const ProductItem = ({ 
@@ -36,21 +32,12 @@ const ProductItem = ({
     handleSaveOptionSelect(option, productId);
   };
 
-  // Ensure product has required properties for badges with defaults
-  const adaptedProduct = {
-    title: product.title || product.name || "Unknown Product",
-    price: product.price || 0,
-    stars: product.stars || product.rating || 0,
-    num_reviews: product.num_reviews || product.reviewCount || 0,
-    category: product.category || "General"
-  };
-
   // Generate product badges based on product metadata
   const getBadges = () => {
     const badges = [];
     
     // Check for popularity or bestseller status
-    if (adaptedProduct.stars && adaptedProduct.stars >= 4.5) {
+    if (product.stars && product.stars >= 4.5) {
       badges.push({
         text: "Popular Pick",
         variant: "default",
@@ -68,7 +55,7 @@ const ProductItem = ({
     }
     
     // Check for staff favorites
-    if (adaptedProduct.stars && adaptedProduct.stars >= 4.8) {
+    if (product.stars && product.stars >= 4.8) {
       badges.push({
         text: "Staff Favorite",
         variant: "outline",
@@ -91,16 +78,13 @@ const ProductItem = ({
     return badges.slice(0, 1); // Only return first badge to avoid cluttering
   };
 
-  // Make sure product has an ID for proper React key usage 
-  const productId = product.product_id || product.id || `product-${Math.random().toString(36).substring(7)}`;
-
   return (
     <div 
       className={`group relative rounded-lg overflow-hidden border ${
         viewMode === 'grid' ? 'h-full flex flex-col' : 'flex'
       } bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
-      onClick={() => onProductClick(productId)}
-      data-testid={`product-item-${productId}`}
+      onClick={() => onProductClick(product.product_id)}
+      data-testid={`product-item-${product.product_id}`}
     >
       <div className={viewMode === 'grid' ? 'relative' : 'w-1/4'}>
         <ProductImage 
@@ -108,8 +92,8 @@ const ProductItem = ({
         />
         <WishlistButton 
           userData={user}
-          productId={productId}
-          productName={product.title || product.name || ''}
+          productId={product.product_id}
+          productName={product.title}
           onWishlistClick={onWishlistClick}
           onSaveOptionSelect={handleSaveOption}
           isFavorited={isFavorited}
@@ -119,7 +103,7 @@ const ProductItem = ({
         <div className="absolute top-2 left-2 z-10">
           {getBadges().map((badge, index) => (
             <Badge 
-              key={`${productId}-badge-${index}`}
+              key={index} 
               variant={badge.variant as any} 
               className={`${badge.className} text-xs text-white`}
             >
@@ -130,17 +114,11 @@ const ProductItem = ({
       </div>
       
       <ProductDetails 
-        product={{
-          title: adaptedProduct.title,
-          price: adaptedProduct.price,
-          stars: adaptedProduct.stars,
-          num_reviews: adaptedProduct.num_reviews,
-          category: adaptedProduct.category
-        }} 
+        product={product} 
         onAddToCart={(e) => {
           e.stopPropagation();
           // We'll handle this in ProductDetails
-          console.log("Gift This:", productId);
+          console.log("Gift This:", product.product_id);
         }}
       />
       
@@ -156,6 +134,13 @@ const ProductItem = ({
             <CheckCircle2 className="h-3 w-3 mr-1 text-blue-600" />
             <span>Verified</span>
           </div>
+          
+          {/* {product.rating && product.rating >= 4.5 && (
+            <div className="flex items-center">
+              <Award className="h-3 w-3 mr-1 text-amber-500" />
+              <span>Top Rated</span>
+            </div>
+          )} */}
         </div>
       </div>
     </div>

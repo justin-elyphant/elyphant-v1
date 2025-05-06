@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -8,11 +7,8 @@ import { useAuth } from "@/contexts/auth";
 import FavoritesDropdown from "./FavoritesDropdown";
 import { Button } from "@/components/ui/button";
 import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
-import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const MarketplaceWrapper = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const productId = searchParams.get("productId");
   const { products, isLoading, loadProducts } = useProducts();
@@ -20,7 +16,6 @@ const MarketplaceWrapper = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
-  const [showApiAlert, setShowApiAlert] = useState(true);
 
   useEffect(() => {
     setUpcomingOccasions(getUpcomingOccasions());
@@ -30,7 +25,7 @@ const MarketplaceWrapper = () => {
     const keyword = searchParams.get("search") || "";
     setSearchTerm(keyword);
     loadProducts({ keyword: keyword });
-  }, [searchParams]);
+  }, [searchParams])
 
   useEffect(() => {
     if (productId) {
@@ -43,10 +38,6 @@ const MarketplaceWrapper = () => {
   const selectedProduct = showProductDetails !== null 
     ? products.find(p => p.product_id === showProductDetails)
     : null;
-    
-  const goToTrunkline = () => {
-    navigate("/trunkline");
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
@@ -87,22 +78,6 @@ const MarketplaceWrapper = () => {
       </div>
 
       <div className="container mx-auto px-4 pt-6">
-        {searchTerm && showApiAlert && (
-          <Alert className="mb-4 bg-amber-50 border-amber-200">
-            <AlertDescription className="flex justify-between items-center">
-              <span>Using mock search results for demo purposes.</span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setShowApiAlert(false)}>
-                  Dismiss
-                </Button>
-                <Button size="sm" variant="default" onClick={goToTrunkline}>
-                  Go to Trunkline
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
         <MarketplaceContent 
           products={products}
           isLoading={isLoading}
@@ -110,25 +85,23 @@ const MarketplaceWrapper = () => {
         />
       </div>
       
-      {selectedProduct && (
-        <ProductDetailsDialog 
-          productId={selectedProduct.product_id || ""}
-          open={showProductDetails !== null}
-          onOpenChange={(open) => {
-            if (!open) {
-              const newParams = new URLSearchParams(searchParams);
-              newParams.delete("productId");
-              window.history.replaceState(
-                {}, 
-                '', 
-                `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
-              );
-              setShowProductDetails(null);
-            }
-          }}
-          userData={user}
-        />
-      )}
+      {/* <ProductDetailsDialog 
+        productId={selectedProduct}
+        open={showProductDetails !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete("productId");
+            window.history.replaceState(
+              {}, 
+              '', 
+              `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
+            );
+            setShowProductDetails(null);
+          }
+        }}
+        userData={user}
+      /> */}
     </div>
   );
 };

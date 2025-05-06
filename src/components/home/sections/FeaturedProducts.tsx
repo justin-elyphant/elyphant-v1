@@ -9,10 +9,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 import { useProducts } from "@/contexts/ProductContext";
 import ProductRating from "@/components/shared/ProductRating";
-import { searchProducts } from "@/components/marketplace/zinc/zincService";
+import { searchZincProducts } from "@/components/marketplace/zinc/zincService";
 import { Badge } from "@/components/ui/badge";
 
 const FeaturedProductsSection = () => {
@@ -47,7 +47,7 @@ const FeaturedProductsSection = () => {
         const randomTerm = popularSearchTerms[Math.floor(Math.random() * popularSearchTerms.length)];
         
         console.log(`Loading featured products with search term: ${randomTerm}`);
-        const newProducts = await searchProducts(randomTerm, "12");
+        const newProducts = await searchZincProducts(randomTerm, "12");
         
         if (newProducts && newProducts.length > 0) {
           // Add these to our global product context
@@ -75,10 +75,8 @@ const FeaturedProductsSection = () => {
     loadProducts();
   }, [products, setProducts]);
   
-  const handleProductClick = (productId: string | undefined) => {
-    if (productId) {
-      navigate(`/marketplace?productId=${productId}`);
-    }
+  const handleProductClick = (productId: number) => {
+    navigate(`/marketplace?productId=${productId}`);
   };
   
   if (isLoading) {
@@ -133,7 +131,7 @@ const FeaturedProductsSection = () => {
                     <CardContent className="p-4">
                       <h3 className="font-medium mb-1 line-clamp-1">{product.name}</h3>
                       <p className="text-sm text-muted-foreground mb-1 line-clamp-1">{product.brand || product.vendor}</p>
-                      <p className="font-semibold mb-1">${product.price?.toFixed(2) || "0.00"}</p>
+                      <p className="font-semibold mb-1">${product.price.toFixed(2)}</p>
                       <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
                     </CardContent>
                   </Card>

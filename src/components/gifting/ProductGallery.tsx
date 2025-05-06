@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 
 import ProductCard from "./ProductCard";
 import ProductFilters from "./ProductFilters";
@@ -101,7 +101,7 @@ const ProductGallery = ({
             <ProductCard
               key={product.id}
               product={product}
-              isWishlisted={product.id ? wishlistedProducts.includes(product.id) : false}
+              isWishlisted={wishlistedProducts.includes(product.id)}
               isGifteeView={isGifteeView}
               onToggleWishlist={handleWishlistToggle}
               onClick={() => onProductSelect && onProductSelect(product)}

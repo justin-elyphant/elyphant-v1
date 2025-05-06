@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -6,7 +5,7 @@ import ProductGrid from "./ProductGrid";
 import FeaturedProducts from "./FeaturedProducts";
 import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/categoryUtils";
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 import { Spinner } from '@/components/ui/spinner';
 
 interface MarketplaceContentProps {

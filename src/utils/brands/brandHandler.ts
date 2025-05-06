@@ -1,5 +1,4 @@
-
-import { Product } from "@/types/product";
+import { Product } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
 import { ZincProduct } from "@/components/marketplace/zinc/types";

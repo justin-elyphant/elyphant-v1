@@ -2,6 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { ShoppingBag } from "lucide-react";
 
 const Footer = () => {
   const { user } = useAuth();
@@ -24,7 +25,17 @@ const Footer = () => {
               <h4 className="font-medium mb-3">Platform</h4>
               <ul className="space-y-2">
                 <li><Link to="/gifting" className="text-gray-400 hover:text-white text-sm">Gifting</Link></li>
-                <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm">Marketplace</Link></li>
+                <li>
+                  <Link 
+                    to="/marketplace" 
+                    className="flex items-center gap-1.5 text-sm bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent font-medium hover:from-indigo-500 hover:to-purple-600 transition-all group"
+                  >
+                    <ShoppingBag className="w-4 h-4 text-indigo-400 group-hover:text-indigo-500 transition-colors" />
+                    <span className="border-b border-dashed border-indigo-400/40 group-hover:border-indigo-500/60 pb-px">
+                      Marketplace
+                    </span>
+                  </Link>
+                </li>
                 <li><Link to="/trunkline-login" className="text-gray-400 hover:text-white text-sm">Trunkline</Link></li>
               </ul>
             </div>

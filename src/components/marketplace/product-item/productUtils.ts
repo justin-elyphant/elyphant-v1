@@ -2,114 +2,76 @@
 /**
  * Format price to always show 2 decimal places
  */
-export const formatProductPrice = (price: number | null | undefined): string => {
+export const formatProductPrice = (price: number | string): string => {
   if (price == null) return "No Price";
   
-  // Handle edge cases where price might be in cents (common for e-commerce systems)
-  if (price > 1000000) {
-    // Very large number, likely needs special formatting
-    return (price/100).toFixed(2);
-  } else if (price > 0 && price < 0.1) {
-    // Very small price, likely in incorrect format
-    return (price * 100).toFixed(2);
-  }
+  // Convert string to number if it's a string
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
   
-  return price.toFixed(2);
-};
-
-/**
- * Convert price to a consistent format if needed
- */
-export const normalizePrice = (price: any): number => {
-  if (typeof price === 'number') return price;
-  if (typeof price === 'string') return parseFloat(price) || 0;
-  return 0;
-};
-
-/**
- * Helper function for accessing product ID consistently regardless of source
- */
-export const getProductId = (product: any): string => {
-  // Always return product IDs as strings for consistent handling
-  return String(product.product_id || product.id || '');
-};
-
-/**
- * Helper function for accessing product name/title consistently
- */
-export const getProductName = (product: any): string => {
-  return product.name || product.title || 'Unknown Product';
-};
-
-/**
- * Helper function for accessing product category consistently
- */
-export const getProductCategory = (product: any): string => {
-  return product.category || product.category_name || 'Uncategorized';
-};
-
-/**
- * Helper function for accessing vendor/retailer consistently
- */
-export const getProductVendor = (product: any): string => {
-  return product.vendor || product.retailer || 'Unknown Vendor';
-};
-
-/**
- * Helper function for accessing rating consistently
- */
-export const getProductRating = (product: any): number => {
-  const rating = product.rating || product.stars || 0;
-  return typeof rating === 'string' ? parseFloat(rating) : rating;
-};
-
-/**
- * Helper function for accessing review count consistently
- */
-export const getProductReviewCount = (product: any): number => {
-  const count = product.reviewCount || product.num_reviews || 0;
-  return typeof count === 'string' ? parseInt(count, 10) : count;
-};
-
-/**
- * Helper function to get product images consistently
- */
-export const getProductImages = (product: any): string[] => {
-  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    return product.images;
+  // Check if price is already in dollars or in cents
+  if (numericPrice > 1000) {
+    // Assume price is in cents, convert to dollars
+    return (numericPrice/100).toFixed(2);
+  } else {
+    // Assume price is already in dollars
+    return numericPrice.toFixed(2);
   }
-  return product.image ? [product.image] : [];
 };
 
 /**
- * Helper function to convert any product object to our standard Product type
+ * Helper utility to ensure product has both id and product_id fields
  */
-export const standardizeProduct = (product: any) => {
-  if (!product) return null;
-  
-  // Get ID as string to ensure consistency
-  const id = getProductId(product);
+export const normalizeProductId = (product: any): any => {
+  // Generate a consistent product ID if missing
+  const productId = product.product_id || product.id || `product-${Math.random().toString(36).substring(2, 9)}`;
   
   return {
-    product_id: id,
-    id: id,
-    title: getProductName(product),
-    name: getProductName(product),
-    price: normalizePrice(product.price),
-    image: product.image || '',
-    images: getProductImages(product),
-    category: getProductCategory(product),
-    category_name: getProductCategory(product),
-    vendor: getProductVendor(product),
-    retailer: getProductVendor(product),
-    rating: getProductRating(product),
-    stars: getProductRating(product),
-    reviewCount: getProductReviewCount(product),
-    num_reviews: getProductReviewCount(product),
-    description: product.description || '',
-    brand: product.brand || '',
-    // Additional fields that might be present
-    variants: product.variants || undefined,
-    isBestSeller: product.isBestSeller || false,
+    ...product,
+    id: productId,
+    product_id: productId
   };
+};
+
+/**
+ * Helper utility to normalize product title and name
+ */
+export const normalizeProductName = (product: any): any => {
+  const productName = product.name || product.title || 'Unnamed Product';
+  
+  return {
+    ...product,
+    name: productName,
+    title: productName
+  };
+};
+
+/**
+ * Complete product normalization that ensures a product has all required fields
+ */
+export const normalizeProduct = (product: any): any => {
+  // First normalize the ID and name
+  let normalized = normalizeProductId(normalizeProductName(product));
+  
+  // Ensure consistent price format (always a number)
+  if (normalized.price !== undefined && typeof normalized.price !== 'number') {
+    normalized.price = parseFloat(String(normalized.price)) || 0;
+  }
+  
+  // Ensure other required properties exist
+  normalized = {
+    ...normalized,
+    // Default values for missing properties
+    image: normalized.image || normalized.images?.[0] || '/placeholder.svg',
+    images: normalized.images || (normalized.image ? [normalized.image] : ['/placeholder.svg']),
+    category: normalized.category || 'Uncategorized',
+    vendor: normalized.vendor || 'Unknown',
+    description: normalized.description || `${normalized.name} - no description available`,
+    // Normalize ratings
+    rating: normalized.rating || normalized.stars || 0,
+    stars: normalized.stars || normalized.rating || 0,
+    reviewCount: normalized.reviewCount || normalized.num_reviews || 0,
+    num_reviews: normalized.num_reviews || normalized.reviewCount || 0
+  };
+  
+  return normalized;
 };

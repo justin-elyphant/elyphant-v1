@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ interface ProductFiltersProps {
   selectedCategory: string;
   priceRange: string;
   filtersVisible: boolean;
-  categories: string[];  // This accepts string array (categoryArray)
+  categories: string[];
   setSearchTerm: (value: string) => void;
   setSelectedCategory: (value: string) => void;
   setPriceRange: (value: string) => void;

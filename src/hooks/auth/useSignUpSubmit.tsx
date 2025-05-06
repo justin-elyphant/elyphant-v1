@@ -10,12 +10,23 @@ export const useSignUpSubmit = () => {
   const onSignUpSubmit = async (values: SignUpFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("Hybrid sign up initiated for", values.email);
+      console.log("Sign up initiated for", values.email);
+      
+      // Set a timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("The signup request timed out. Please try again.")), 15000);
+      });
       
       // Additional connectivity logging
       console.log("Verifying Supabase client configuration...");
+      console.log("Auth configuration:", {
+        autoRefreshToken: supabase.auth.onAuthStateChange ? "Configured" : "Not configured",
+        persistSession: true
+      });
       
-      const signupResponse = await supabase.auth.signUp({
+      console.log("Sending signup request to Supabase...");
+      
+      const signupPromise = supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -26,7 +37,13 @@ export const useSignUpSubmit = () => {
         }
       });
       
-      const { data: signUpData, error: signUpError } = signupResponse;
+      // Race the signup against the timeout
+      const { data: signUpData, error: signUpError } = await Promise.race([
+        signupPromise,
+        timeoutPromise.then(() => {
+          throw new Error("Request timed out after 15 seconds. Please try again later.");
+        })
+      ]) as any;
       
       console.log("Signup response received:", signUpData ? "Success" : "Failed");
       
@@ -45,12 +62,12 @@ export const useSignUpSubmit = () => {
         throw signUpError;
       }
       
-      // User created successfully - immediately sign the user in
+      // User created successfully
       if (signUpData?.user) {
         console.log("User created successfully:", signUpData.user.id);
         
         toast.success("Account created successfully!", {
-          description: "We've sent a verification email (you can check it later)"
+          description: "You can now sign in to your account."
         });
         
         // Store data for profile setup - ensure it's reliable
@@ -59,27 +76,9 @@ export const useSignUpSubmit = () => {
         localStorage.setItem("userName", values.name);
         localStorage.setItem("newSignUp", "true");
         
-        // Try to sign the user in immediately after signup
-        try {
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: values.email,
-            password: values.password
-          });
-          
-          if (signInError) {
-            console.error("Auto sign-in after signup failed:", signInError);
-            // Continue with redirect anyway even if sign-in fails
-          } else {
-            console.log("Auto sign-in successful after signup");
-          }
-        } catch (signInErr) {
-          console.error("Error during auto sign-in after signup:", signInErr);
-          // Continue anyway, as user can log in later
-        }
-        
         // Force navigation to profile setup after short delay
         setTimeout(() => {
-          console.log("Redirecting to profile setup");
+          console.log("Forcing navigation to profile setup");
           window.location.href = "/profile-setup";
         }, 1000);
       } else {

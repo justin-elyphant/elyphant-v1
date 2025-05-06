@@ -16,8 +16,6 @@ export const useFavorites = () => {
   const [savedItems, setSavedItems] = useLocalStorage<SavedItem[]>("savedItems", []);
   const { products, isLoading } = useProducts();
   const [favoriteItems, setFavoriteItems] = useState<Product[]>([]);
-  // Create a favorites array for legacy support
-  const [favorites, setFavorites] = useState<string[]>([]);
   
   useEffect(() => {
     if (!products || isLoading) {
@@ -28,9 +26,6 @@ export const useFavorites = () => {
     const productIds = savedItems.map(item => item.productId);
     const items = products.filter(product => productIds.includes(product.product_id));
     setFavoriteItems(items);
-    
-    // Update favorites array for legacy support
-    setFavorites(productIds);
   }, [savedItems, products, isLoading]);
 
   const handleFavoriteToggle = (productId: string) => {
@@ -102,7 +97,6 @@ export const useFavorites = () => {
   return {
     favoriteItems,
     savedItems,
-    favorites, // Add this for legacy support
     handleFavoriteToggle,
     handleSaveOptionSelect,
     isFavorited,

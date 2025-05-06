@@ -67,10 +67,7 @@ const ProductGallery = ({
   }
   
   // Check if we have any Shopify products
-  const hasShopifyProducts = filteredProducts.some(product => (product.vendor || product.retailer) === "Shopify");
-
-  // Convert categories from Record to string array for ProductFilters
-  const categoryArray = Object.keys(categories);
+  const hasShopifyProducts = filteredProducts.some(product => product.vendor === "Shopify");
   
   return (
     <div className="space-y-4">
@@ -86,7 +83,7 @@ const ProductGallery = ({
         selectedCategory={selectedCategory}
         priceRange={priceRange}
         filtersVisible={filtersVisible}
-        categories={categoryArray}
+        categories={categories}
         setSearchTerm={setSearchTerm}
         setSelectedCategory={setSelectedCategory}
         setPriceRange={setPriceRange}
@@ -102,11 +99,11 @@ const ProductGallery = ({
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredProducts.map((product) => (
             <ProductCard
-              key={product.product_id || product.id}
+              key={product.id.toString()}
               product={product}
-              isWishlisted={wishlistedProducts.includes(String(product.product_id || product.id))}
+              isWishlisted={wishlistedProducts.includes(product.id)}
               isGifteeView={isGifteeView}
-              onToggleWishlist={() => handleWishlistToggle(String(product.product_id || product.id))}
+              onToggleWishlist={handleWishlistToggle}
               onClick={() => onProductSelect && onProductSelect(product)}
             />
           ))}

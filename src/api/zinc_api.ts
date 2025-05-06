@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_FUNCTIONS } from '@/integrations/supabase/function-types';
+import { SUPABASE_FUNCTIONS } from '@/integrations/supabase/constants';
 
 export const testZincApiKey = async (apiKey: string) => {
     try {

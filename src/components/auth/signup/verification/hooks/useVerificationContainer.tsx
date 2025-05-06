@@ -20,19 +20,11 @@ export const useVerificationContainer = ({
   const [isVerified, setIsVerified] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
 
-  // Auto-bypass if requested by parent component - this enables the hybrid approach
+  // Auto-bypass if requested by parent component
   useEffect(() => {
     if (bypassVerification && !isVerified) {
-      console.log("Hybrid verification mode active, auto-verifying...");
+      console.log("Bypass verification is active, auto-verifying...");
       handleVerificationSuccess();
-      
-      // Set a timeout to auto-redirect to profile setup
-      const redirectTimer = setTimeout(() => {
-        console.log("Auto-redirecting to profile setup");
-        window.location.href = "/profile-setup";
-      }, 2000);
-      
-      return () => clearTimeout(redirectTimer);
     }
   }, [bypassVerification, isVerified]);
   
@@ -45,7 +37,7 @@ export const useVerificationContainer = ({
     localStorage.setItem("verifiedEmail", userEmail);
     
     // Show success toast
-    toast.success("Account created successfully!", {
+    toast.success("Email verified successfully!", {
       description: "Taking you to complete your profile."
     });
     
@@ -56,7 +48,7 @@ export const useVerificationContainer = ({
   const handleCheckVerification = async (): Promise<{ verified: boolean }> => {
     // If bypass is enabled, always return verified
     if (bypassVerification) {
-      console.log("Hybrid verification mode active, returning verified=true");
+      console.log("Bypass verification active, returning verified=true");
       return { verified: true };
     }
     
@@ -119,12 +111,12 @@ export const useVerificationContainer = ({
         
         // If we got a rate limit error, we'll bypass verification
         if (error.message?.includes("rate limit") || error.status === 429) {
-          console.log("Rate limit detected in resend, continuing with hybrid flow");
+          console.log("Rate limit detected in resend, bypassing verification");
           localStorage.setItem("signupRateLimited", "true");
           handleVerificationSuccess();
           
-          toast.success("Verification email will be sent!", {
-            description: "You can continue without waiting for verification."
+          toast.success("Verification email resent!", {
+            description: "We've simplified the verification process for you."
           });
           
           return { success: true };
@@ -138,13 +130,8 @@ export const useVerificationContainer = ({
       }
       
       toast.success("Verification email resent!", {
-        description: "You can check it later - continue setting up your profile now."
+        description: "Please check your inbox for the email with the confirmation link."
       });
-      
-      // For hybrid flow - just mark as successful anyway
-      if (bypassVerification) {
-        handleVerificationSuccess();
-      }
       
       return { success: true };
     } catch (error) {

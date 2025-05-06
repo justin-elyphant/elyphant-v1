@@ -75,7 +75,7 @@ const FeaturedProductsSection = () => {
     loadProducts();
   }, [products, setProducts]);
   
-  const handleProductClick = (productId: string) => {
+  const handleProductClick = (productId: number) => {
     navigate(`/marketplace?productId=${productId}`);
   };
   

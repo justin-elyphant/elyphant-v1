@@ -10,9 +10,6 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
   const navigate = useNavigate();
   const state = useSignUpState();
   
-  // Enable hybrid verification by default for better user experience
-  state.setBypassVerification(true);
-  
   // Check for URL parameters indicating verified status
   useVerificationRedirect(navigate, state.setUserEmail);
   
@@ -49,7 +46,7 @@ export function useSignUpProcess(): UseSignUpProcessReturn {
     userName: state.userName,
     emailSent: state.emailSent,
     resendCount: state.resendCount,
-    testVerificationCode: state.testVerificationCode,
+    testVerificationCode: null,
     onSignUpSubmit,
     handleResendVerification,
     handleBackToSignUp,

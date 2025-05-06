@@ -1,4 +1,5 @@
-import { Product, normalizeProduct } from "@/contexts/ProductContext";
+
+import { Product } from "@/contexts/ProductContext";
 
 /**
  * Get fallback products for Apple to prevent showing fruit results
@@ -7,10 +8,8 @@ import { Product, normalizeProduct } from "@/contexts/ProductContext";
  */
 export const getAppleFallbackProducts = (count: number = 5): Product[] => {
   const appleProducts: Product[] = [
-    normalizeProduct({
-      product_id: "10001",
-      id: "10001",
-      title: "Apple iPhone 14 Pro",
+    {
+      id: 10001,
       name: "Apple iPhone 14 Pro",
       price: 999,
       category: "Electronics",
@@ -21,11 +20,9 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       reviewCount: 1245,
       brand: "Apple",
       isBestSeller: true
-    }),
-    normalizeProduct({
-      product_id: "10002",
-      id: "10002",
-      title: "Apple MacBook Pro 14-inch",
+    },
+    {
+      id: 10002,
       name: "Apple MacBook Pro 14-inch",
       price: 1999,
       category: "Electronics",
@@ -35,11 +32,9 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.9,
       reviewCount: 856,
       brand: "Apple"
-    }),
-    normalizeProduct({
-      product_id: "10003",
-      id: "10003",
-      title: "Apple iPad Pro 12.9-inch",
+    },
+    {
+      id: 10003,
       name: "Apple iPad Pro 12.9-inch",
       price: 1099,
       category: "Electronics",
@@ -49,11 +44,9 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.7,
       reviewCount: 623,
       brand: "Apple"
-    }),
-    normalizeProduct({
-      product_id: "10004",
-      id: "10004",
-      title: "Apple Watch Series 8",
+    },
+    {
+      id: 10004,
       name: "Apple Watch Series 8",
       price: 399,
       category: "Electronics",
@@ -63,11 +56,9 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.6,
       reviewCount: 742,
       brand: "Apple"
-    }),
-    normalizeProduct({
-      product_id: "10005",
-      id: "10005",
-      title: "Apple AirPods Pro",
+    },
+    {
+      id: 10005,
       name: "Apple AirPods Pro",
       price: 249,
       category: "Electronics",
@@ -77,11 +68,9 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.7,
       reviewCount: 1567,
       brand: "Apple"
-    }),
-    normalizeProduct({
-      product_id: "10006",
-      id: "10006",
-      title: "Apple iMac 24-inch",
+    },
+    {
+      id: 10006,
       name: "Apple iMac 24-inch",
       price: 1299,
       category: "Electronics",
@@ -91,11 +80,9 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.8,
       reviewCount: 432,
       brand: "Apple"
-    }),
-    normalizeProduct({
-      product_id: "10007",
-      id: "10007",
-      title: "Apple HomePod mini",
+    },
+    {
+      id: 10007,
       name: "Apple HomePod mini",
       price: 99,
       category: "Electronics",
@@ -105,11 +92,9 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.5,
       reviewCount: 867,
       brand: "Apple"
-    }),
-    normalizeProduct({
-      product_id: "10008",
-      id: "10008",
-      title: "Apple Magic Keyboard",
+    },
+    {
+      id: 10008,
       name: "Apple Magic Keyboard",
       price: 99,
       category: "Electronics",
@@ -119,7 +104,7 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.6,
       reviewCount: 345,
       brand: "Apple"
-    })
+    }
   ];
 
   // Return requested number of products or all if count is greater than available
@@ -133,10 +118,8 @@ export const getAppleFallbackProducts = (count: number = 5): Product[] => {
  */
 export const getNikeFallbackProducts = (count: number = 5): Product[] => {
   const nikeProducts: Product[] = [
-    normalizeProduct({
-      product_id: "20001",
-      id: "20001",
-      title: "Nike Air Force 1",
+    {
+      id: 20001,
       name: "Nike Air Force 1",
       price: 110,
       category: "Footwear",
@@ -147,11 +130,9 @@ export const getNikeFallbackProducts = (count: number = 5): Product[] => {
       reviewCount: 2345,
       brand: "Nike",
       isBestSeller: true
-    }),
-    normalizeProduct({
-      product_id: "20002",
-      id: "20002",
-      title: "Nike Dri-FIT Running Shirt",
+    },
+    {
+      id: 20002,
       name: "Nike Dri-FIT Running Shirt",
       price: 35,
       category: "Apparel",
@@ -161,11 +142,9 @@ export const getNikeFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.6,
       reviewCount: 876,
       brand: "Nike"
-    }),
-    normalizeProduct({
-      product_id: "20003",
-      id: "20003",
-      title: "Nike Air Zoom Pegasus 38",
+    },
+    {
+      id: 20003,
       name: "Nike Air Zoom Pegasus 38",
       price: 120,
       category: "Footwear",
@@ -175,7 +154,7 @@ export const getNikeFallbackProducts = (count: number = 5): Product[] => {
       rating: 4.7,
       reviewCount: 1123,
       brand: "Nike"
-    })
+    }
   ];
 
   // Return requested number of products or all if count is greater than available

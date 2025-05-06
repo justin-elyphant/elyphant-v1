@@ -15,10 +15,11 @@ export const useZincSearch = (searchTerm: string) => {
   const hasShownTokenErrorRef = useRef(false);
   const searchTimeoutRef = useRef<number | null>(null);
   const lastSearchTermRef = useRef<string>("");
+  const isSearchingRef = useRef(false);
 
   useEffect(() => {
     // Don't search if term is identical to previous search to avoid redundant API calls
-    if (lastSearchTermRef.current === searchTerm) {
+    if (lastSearchTermRef.current === searchTerm || isSearchingRef.current) {
       return;
     }
     
@@ -38,6 +39,8 @@ export const useZincSearch = (searchTerm: string) => {
     lastSearchTermRef.current = searchTerm;
     
     const fetchZincResults = async () => {
+      if (isSearchingRef.current) return;
+      isSearchingRef.current = true;
       setLoading(true);
       
       // Cancel previous request if it exists
@@ -56,8 +59,10 @@ export const useZincSearch = (searchTerm: string) => {
         // Filter local products first (faster response)
         const term = searchTerm.toLowerCase();
         
-        // Use more efficient filtering with early returns
-        const filtered = products.filter(product => {
+        // Use more efficient filtering with early returns and limit to 50 products max
+        const filtered = products.filter((product, index) => {
+          if (index >= 50) return false; // Limit to first 50 products for performance
+          
           const name = product.name ? product.name.toLowerCase() : "";
           if (name.includes(term)) return true;
           
@@ -92,7 +97,8 @@ export const useZincSearch = (searchTerm: string) => {
           setTimeout(() => reject(new Error('Search request timeout')), 8000);
         });
         
-        const resultsPromise = searchProducts(searchQuery);
+        // Limit number of results to improve performance
+        const resultsPromise = searchProducts(searchQuery, "25");
         
         // Race between the API call and the timeout
         const results = await Promise.race([resultsPromise, timeoutPromise]);
@@ -118,7 +124,9 @@ export const useZincSearch = (searchTerm: string) => {
             category: item.category || getSearchCategory(searchTerm),
           }));
           
-          setZincResults(processedResults);
+          // Limit max results to avoid performance issues
+          const limitedResults = processedResults.slice(0, 50);
+          setZincResults(limitedResults);
         } else {
           console.log(`No results found from Zinc API for "${searchTerm}"`);
           setZincResults([]);
@@ -131,6 +139,10 @@ export const useZincSearch = (searchTerm: string) => {
         }
       } finally {
         setLoading(false);
+        // Add a slight delay before allowing new searches to prevent thrashing
+        setTimeout(() => {
+          isSearchingRef.current = false;
+        }, 500);
       }
     };
 
@@ -152,7 +164,7 @@ export const useZincSearch = (searchTerm: string) => {
     // Use a debounce to avoid excessive API calls
     searchTimeoutRef.current = window.setTimeout(() => {
       fetchZincResults();
-    }, 500); // increased debounce time for better performance
+    }, 800); // increased debounce time for better performance
 
     return () => {
       if (searchTimeoutRef.current) {

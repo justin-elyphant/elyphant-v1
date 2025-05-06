@@ -77,6 +77,11 @@ const ProductItem = ({
     
     return badges.slice(0, 1); // Only return first badge to avoid cluttering
   };
+  
+  // Skip rendering if this is "modern" view - it will be handled by ModernProductCard
+  if (viewMode === 'modern') {
+    return null;
+  }
 
   return (
     <div 

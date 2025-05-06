@@ -1,67 +1,63 @@
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from "react-router-dom";
 
-interface Category {
+// Category data structure
+type CategoryItem = {
   id: string;
   name: string;
-  image: string;
+  icon: string;
   searchTerm: string;
-}
+  description?: string;
+};
 
 const GiftingCategories = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  const categories: Category[] = [
+
+  // Sample categories
+  const categories: CategoryItem[] = [
     {
-      id: "travelers",
-      name: "For Travelers",
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-      searchTerm: "travel gift"
+      id: "birthday",
+      name: "Birthday Gifts",
+      icon: "🎁",
+      searchTerm: "birthday gift ideas",
+      description: "Special gifts for birthdays"
     },
     {
-      id: "pet-lovers",
-      name: "For Pet Lovers",
-      image: "https://images.unsplash.com/photo-1543852786-1cf6624b9987",
-      searchTerm: "pet gift"
+      id: "anniversary",
+      name: "Anniversary",
+      icon: "💑",
+      searchTerm: "anniversary gift ideas",
+      description: "Celebrate special moments"
     },
     {
-      id: "foodies",
-      name: "For Foodies",
-      image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
-      searchTerm: "cooking gift"
+      id: "wedding",
+      name: "Wedding",
+      icon: "💍",
+      searchTerm: "wedding gift ideas",
+      description: "Perfect wedding presents"
     },
     {
-      id: "tech-enthusiasts",
-      name: "For Tech Enthusiasts",
-      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
-      searchTerm: "tech gift"
+      id: "housewarming",
+      name: "Housewarming",
+      icon: "🏠",
+      searchTerm: "housewarming gift ideas",
+      description: "Welcome to new homes"
     },
     {
-      id: "fitness-fans",
-      name: "For Fitness Fans",
-      image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
-      searchTerm: "fitness gift"
+      id: "graduation",
+      name: "Graduation",
+      icon: "🎓",
+      searchTerm: "graduation gift ideas",
+      description: "Celebrate achievements"
     },
     {
-      id: "self-care",
-      name: "Self-Care Gifts",
-      image: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881",
-      searchTerm: "self care gift"
-    },
-    {
-      id: "sustainable",
-      name: "Sustainable Gifts",
-      image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09",
-      searchTerm: "eco friendly gift"
-    },
-    {
-      id: "budget-friendly",
-      name: "Under $50",
-      image: "https://images.unsplash.com/photo-1607082350899-7e105aa886ae",
-      searchTerm: "affordable gift"
-    },
+      id: "holiday",
+      name: "Holiday",
+      icon: "🎄",
+      searchTerm: "holiday gift ideas",
+      description: "Seasonal gifting"
+    }
   ];
 
   const handleCategoryClick = (searchTerm: string) => {
@@ -71,29 +67,24 @@ const GiftingCategories = () => {
   };
 
   return (
-    <div className="space-y-6 mb-12">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Browse Gift Categories</h2>
-      </div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold tracking-tight">Gift Categories</h2>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
         {categories.map((category) => (
-          <Card 
+          <div 
             key={category.id}
-            className="overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300"
             onClick={() => handleCategoryClick(category.searchTerm)}
+            className="bg-white rounded-lg overflow-hidden border shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col items-center text-center p-4"
           >
-            <div className="aspect-video relative">
-              <img 
-                src={category.image} 
-                alt={category.name} 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-25 flex items-end p-3">
-                <h3 className="font-medium text-white">{category.name}</h3>
-              </div>
-            </div>
-          </Card>
+            <div className="text-3xl mb-2">{category.icon}</div>
+            <h3 className="text-sm font-medium">{category.name}</h3>
+            {category.description && (
+              <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
+                {category.description}
+              </p>
+            )}
+          </div>
         ))}
       </div>
     </div>

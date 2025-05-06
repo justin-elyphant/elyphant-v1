@@ -12,6 +12,7 @@ const SignUp: React.FC = () => {
     onSignUpSubmit,
     handleBackToSignUp,
     isSubmitting,
+    bypassVerification = true, // Enable hybrid verification by default
   } = useSignUpProcess();
   
   return (
@@ -25,6 +26,7 @@ const SignUp: React.FC = () => {
           onSignUpSubmit={onSignUpSubmit}
           handleBackToSignUp={handleBackToSignUp}
           isSubmitting={isSubmitting}
+          bypassVerification={bypassVerification}
         />
       </div>
     </div>

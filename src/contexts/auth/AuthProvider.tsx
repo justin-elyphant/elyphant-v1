@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuthSession } from './useAuthSession';
 import { useAuthFunctions } from './authHooks';
@@ -16,7 +17,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isDebugMode, setIsDebugMode] = useState(false);
   const { signOut, deleteUser } = useAuthFunctions(user);
 
-  // Ensure profile exists for authenticated users
+  // Ensure profile exists for authenticated users - with improved data continuity
   useEffect(() => {
     if (!user) return;
   
@@ -39,29 +40,88 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.error("Error checking existing profile:", profileCheckError);
         }
 
-        // If profile exists and has all required fields, no need to continue
-        if (existingProfile && 
-            existingProfile.name && 
-            existingProfile.email && 
-            existingProfile.bio) {
-          console.log("Profile already exists with required fields:", existingProfile.id);
-          return;
+        // Load local storage items that might contain user data
+        let storedUserName = localStorage.getItem("userName");
+        let storedUserEmail = localStorage.getItem("userEmail");
+        let storedWishlistedProducts: string[] = [];
+        
+        try {
+          const wishlistItems = localStorage.getItem("wishlistedProducts");
+          if (wishlistItems) {
+            storedWishlistedProducts = JSON.parse(wishlistItems);
+            console.log("Loaded wishlisted products from localStorage:", storedWishlistedProducts);
+          }
+        } catch (e) {
+          console.error("Error parsing wishlistedProducts from localStorage:", e);
         }
         
         // Get interests from localStorage if available
-        let interests = [];
+        let interests: string[] = [];
         const storedInterests = localStorage.getItem("userInterests");
         if (storedInterests) {
           try {
             interests = JSON.parse(storedInterests);
+            console.log("Loaded interests from localStorage:", interests);
           } catch (e) {
             console.error("Error parsing interests from localStorage:", e);
           }
         }
         
+        // If profile exists and has all required fields, no need to update
+        if (existingProfile && 
+            existingProfile.name && 
+            existingProfile.email && 
+            existingProfile.bio) {
+          console.log("Profile already exists with required fields:", existingProfile.id);
+          
+          // Just sync the wishlisted products if we have new ones from localStorage
+          if (storedWishlistedProducts.length > 0) {
+            console.log("Syncing wishlisted products to existing profile");
+            
+            // Get existing gift preferences
+            const existingPreferences = existingProfile.gift_preferences || [];
+            
+            // Convert wishlisted items to gift preferences format
+            const wishlistPreferences = storedWishlistedProducts.map(productId => ({
+              category: productId,
+              importance: "high" as const
+            }));
+            
+            // Combine without duplicates
+            const existingIds = existingPreferences.map(p => p.category);
+            const newPreferences = [
+              ...existingPreferences,
+              ...wishlistPreferences.filter(p => !existingIds.includes(p.category))
+            ];
+            
+            if (newPreferences.length > existingPreferences.length) {
+              console.log("Adding new wishlisted items to profile");
+              
+              // Update just the gift_preferences field
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ 
+                  gift_preferences: newPreferences,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', user.id);
+                
+              if (updateError) {
+                console.error("Error updating profile with wishlisted items:", updateError);
+              } else {
+                console.log("Successfully updated profile with wishlisted items");
+                // Clear localStorage since we've synced the data
+                localStorage.removeItem("wishlistedProducts");
+              }
+            }
+          }
+          
+          return;
+        }
+        
         // Create username from name if needed
-        const name = user.user_metadata?.name || 
-                  localStorage.getItem("userName") || 
+        const name = storedUserName || 
+                  user.user_metadata?.name || 
                   user.email?.split('@')[0] || 
                   'User';
                   
@@ -69,10 +129,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                       name.toLowerCase().replace(/\s+/g, '_') || 
                       `user_${Date.now().toString(36)}`;
         
+        // Convert wishlist items to gift preference format if needed
+        const giftPreferences = existingProfile?.gift_preferences || [];
+        
+        // Add wishlisted products as gift preferences
+        if (storedWishlistedProducts.length > 0) {
+          const existingIds = giftPreferences.map(p => p.category);
+          
+          storedWishlistedProducts.forEach(productId => {
+            if (!existingIds.includes(productId)) {
+              giftPreferences.push({
+                category: productId,
+                importance: "high"
+              });
+            }
+          });
+        }
+        
+        // Add interests as gift preferences if provided
+        if (interests.length > 0) {
+          const existingCategories = giftPreferences.map(p => p.category);
+          
+          interests.forEach(interest => {
+            if (!existingCategories.includes(interest)) {
+              giftPreferences.push({
+                category: interest,
+                importance: "medium"
+              });
+            }
+          });
+        }
+        
         // Profile data with fallbacks for each field
         const profileData = {
           id: user.id,
-          email: user.email || localStorage.getItem("userEmail") || '',
+          email: storedUserEmail || user.email || existingProfile?.email || '',
           name: name,
           username: username,
           // Preserve existing fields if profile already exists
@@ -80,10 +171,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           profile_image: existingProfile?.profile_image || user.user_metadata?.profile_image || null,
           dob: existingProfile?.dob || null,
           shipping_address: existingProfile?.shipping_address || {},
-          gift_preferences: existingProfile?.gift_preferences || interests.map(interest => ({
-            category: interest,
-            importance: "medium"
-          })),
+          gift_preferences: giftPreferences,
           important_dates: existingProfile?.important_dates || [],
           data_sharing_settings: existingProfile?.data_sharing_settings || {
             dob: "friends",
@@ -117,10 +205,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               console.log("Profile created/updated successfully:", data);
               success = true;
               
-              // Clear flags after successful profile creation
+              // Clear flags and localStorage data after successful profile creation
               localStorage.removeItem("newSignUp");
               localStorage.removeItem("fromSignIn");
               localStorage.removeItem("userInterests");
+              localStorage.removeItem("wishlistedProducts");
+              localStorage.removeItem("savedItems");
             }
           } catch (error) {
             console.error(`Error in upsert operation (attempt ${attempts}):`, error);

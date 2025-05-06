@@ -1,59 +1,51 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Heart } from "lucide-react";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { WishlistData } from "@/types/profile";
-import { useNavigate } from "react-router-dom";
+import { 
+  Popover,
+  PopoverTrigger,
+  PopoverContent
+} from "@/components/ui/popover";
+import { useAuth } from "@/contexts/auth";
 
-const FavoritesDropdown = () => {
-  const [wishlists] = useLocalStorage<WishlistData[]>("userWishlists", []);
-  const navigate = useNavigate();
-  
-  // Get all favorited items across all wishlists
-  const favoriteItems = wishlists.flatMap(wishlist => wishlist.items);
-  const uniqueFavorites = Array.from(new Set(favoriteItems.map(item => item.id)))
-    .map(id => favoriteItems.find(item => item.id === id))
-    .filter(item => item !== undefined)
-    .slice(0, 5); // Show only the first 5 items
+interface FavoritesDropdownProps {
+  onSignUpRequired?: () => void;
+}
+
+const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
+  const { user } = useAuth();
+
+  const handleClick = () => {
+    if (!user && onSignUpRequired) {
+      onSignUpRequired();
+    }
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Heart className="h-4 w-4" />
-          My Favorites
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 border-none"
+          onClick={handleClick}
+        >
+          <Heart className="h-4 w-4 mr-1.5" />
+          Favorites
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>Recent Favorites</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {uniqueFavorites.length > 0 ? (
-          <>
-            {uniqueFavorites.map((item) => (
-              <DropdownMenuItem key={item.id} className="flex flex-col items-start">
-                <span className="font-medium">{item.name}</span>
-                <span className="text-sm text-muted-foreground">${item.price}</span>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/wishlists")}>
-              View all favorites
-            </DropdownMenuItem>
-          </>
-        ) : (
-          <DropdownMenuItem disabled>No favorites yet</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      {user && (
+        <PopoverContent className="w-80">
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Your Favorites</h4>
+            <div className="text-sm text-muted-foreground">
+              You haven't added any favorites yet.
+            </div>
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
   );
 };
 

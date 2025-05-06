@@ -18,11 +18,9 @@ interface ProductDetailsProps {
 
 const ProductDetails = ({ product, onAddToCart }: ProductDetailsProps) => {
   // Clean up Amazon-style titles
-  const getCleanTitle = (title: string | undefined): string => {
-    // Handle undefined or null title
-    if (!title) return "Product";
-    
+  const getCleanTitle = (title: string): string => {
     // Remove excessive capitalization
+    if(title == undefined) return "";
     let cleanTitle = title.replace(/\b[A-Z]{2,}\b/g, (match) => 
       match.charAt(0) + match.slice(1).toLowerCase()
     );
@@ -47,7 +45,7 @@ const ProductDetails = ({ product, onAddToCart }: ProductDetailsProps) => {
 
   return (
     <div className="p-4 w-full">
-      <h3 className="font-medium text-sm line-clamp-2 mb-1">{getCleanTitle(product.title)}</h3>
+      <h3 className="font-medium text-sm line-clamp-2 mb-1">{getCleanTitle(product?.title || "")}</h3>
       <ProductRating rating={product.stars} reviewCount={product.num_reviews} size="sm" />
       <div className="font-bold mt-1">${formatProductPrice(product.price)}</div>
       <div className="mt-3 flex justify-between items-center">

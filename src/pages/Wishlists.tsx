@@ -32,7 +32,7 @@ const Wishlists = () => {
         </TabsContent>
         
         <TabsContent value="favorites">
-          <FavoritesTabContent isCurrentUser={true} />
+          <FavoritesTabContent /> 
         </TabsContent>
       </Tabs>
     </div>

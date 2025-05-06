@@ -5,7 +5,9 @@ export const loadMockProducts = (): Product[] => {
   console.log("Loading mock products data");
   const mockProducts = [
     {
-      id: 1,
+      product_id: "1",
+      id: "1",
+      title: "Wireless Headphones",
       name: "Wireless Headphones",
       price: 129.99,
       category: "Electronics",
@@ -15,7 +17,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Premium wireless headphones with noise cancellation"
     },
     {
-      id: 2,
+      product_id: "2",
+      id: "2",
+      title: "Smart Watch",
       name: "Smart Watch",
       price: 249.99,
       category: "Electronics",
@@ -25,7 +29,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Smart watch with health tracking features"
     },
     {
-      id: 3,
+      product_id: "3",
+      id: "3",
+      title: "Scented Candle Set",
       name: "Scented Candle Set",
       price: 39.99,
       category: "Home",
@@ -35,7 +41,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Set of 3 premium scented candles"
     },
     {
-      id: 4,
+      product_id: "4",
+      id: "4",
+      title: "Coffee Mug",
       name: "Coffee Mug",
       price: 19.99,
       category: "Home",
@@ -45,7 +53,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Ceramic coffee mug with unique design"
     },
     {
-      id: 5,
+      product_id: "5",
+      id: "5",
+      title: "Designer Wallet",
       name: "Designer Wallet",
       price: 89.99,
       category: "Accessories",
@@ -55,7 +65,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Premium leather wallet with multiple card slots"
     },
     {
-      id: 6,
+      product_id: "6",
+      id: "6",
+      title: "Plant Pot",
       name: "Plant Pot",
       price: 24.99,
       category: "Home",
@@ -65,7 +77,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Ceramic plant pot with drainage hole"
     },
     {
-      id: 7,
+      product_id: "7",
+      id: "7",
+      title: "Leather Notebook",
       name: "Leather Notebook",
       price: 34.99,
       category: "Stationery",
@@ -74,7 +88,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Premium leather-bound notebook with 200 pages"
     },
     {
-      id: 8,
+      product_id: "8",
+      id: "8",
+      title: "Essential Oil Diffuser",
       name: "Essential Oil Diffuser",
       price: 49.99,
       category: "Home",
@@ -84,7 +100,9 @@ export const loadMockProducts = (): Product[] => {
     },
     // Add some additional products with variations
     {
-      id: 9,
+      product_id: "9",
+      id: "9",
+      title: "Allbirds Wool Runners",
       name: "Allbirds Wool Runners",
       price: 95.00,
       category: "Footwear",
@@ -94,7 +112,9 @@ export const loadMockProducts = (): Product[] => {
       description: "Comfortable and sustainable wool runners"
     },
     {
-      id: 10,
+      product_id: "10",
+      id: "10",
+      title: "Lululemon Yoga Mat",
       name: "Lululemon Yoga Mat",
       price: 78.00,
       category: "Fitness",

@@ -1,24 +1,43 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
+import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
 
 import { supabase } from '@/integrations/supabase/client';
 // Product type definition (matches existing type in ProductGallery)
 export type Product = {
-  addon: boolean;
-  brand: string;
-  fresh: boolean;
-  image: string;
-  num_offers_estimate: null|number;
-  num_reviews: number;
-  num_sales: number;
-  pantry: boolean;
-  price: number;
-  prime: boolean;
-  product_details: [];
+  // Required fields
   product_id: string;
-  stars: number;
   title: string;
+  price: number;
+  image: string;
+  
+  // Fields that may have aliases
+  id?: string; // Alias for product_id
+  name?: string; // Alias for title
+  category?: string; // Alias for category_name
+  category_name?: string;
+  vendor?: string;
+  retailer?: string;
+  rating?: number; // Alias for stars
+  stars?: number;
+  reviewCount?: number; // Alias for num_reviews
+  num_reviews?: number;
+  
+  // Optional fields that might be present in some products
+  description?: string;
+  brand?: string;
+  images?: string[];
+  addon?: boolean;
+  fresh?: boolean;
+  num_offers_estimate?: null|number;
+  num_sales?: number;
+  pantry?: boolean;
+  prime?: boolean;
+  product_details?: any[];
+  isBestSeller?: boolean;
+  variants?: string[];
 };
 
 type ProductContextType = {
@@ -26,56 +45,23 @@ type ProductContextType = {
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  loadProducts: (query) => Promise<void>;
+  loadProducts: (query: {keyword: string}) => Promise<void>;
 };
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-// Helper function to generate mock features for products
-const generateMockFeatures = (productName: string, category: string): string[] => {
-  const features = [
-    `Premium ${category.toLowerCase()} for everyday use`,
-    `Enhanced durability and reliability`,
-    `Stylish design perfect for any setting`,
-    `Easy to clean and maintain`
-  ];
-  
-  // Add some category-specific features
-  if (category === "Electronics") {
-    features.push("Energy efficient technology");
-    features.push("Smart connectivity options");
-  } else if (category === "Clothing") {
-    features.push("Breathable fabric for all-day comfort");
-    features.push("Machine washable");
-  } else if (category === "Footwear") {
-    features.push("Cushioned insole for maximum comfort");
-    features.push("Non-slip outsole for better traction");
-  }
-  
-  return features;
+// Helper function to normalize Product objects to ensure all required fields are present
+export const normalizeProduct = (product: Partial<Product>): Product => {
+  return standardizeProduct(product) as Product;
 };
 
-// Helper function to generate mock specifications
-const generateMockSpecifications = (productName: string, category: string): Record<string, string> => {
-  const specs: Record<string, string> = {
-    "Brand": productName.split(' ')[0],
-    "Material": "Premium quality",
-    "Origin": "Imported"
-  };
-  
-  // Add some category-specific specifications
-  if (category === "Electronics") {
-    specs["Power"] = "110-240V";
-    specs["Warranty"] = "1 year";
-  } else if (category === "Clothing") {
-    specs["Fabric"] = "Cotton blend";
-    specs["Care"] = "Machine wash cold";
-  } else if (category === "Footwear") {
-    specs["Upper"] = "Synthetic leather";
-    specs["Sole"] = "Rubber";
+// Helper function to normalize an array of products
+export const normalizeProducts = (products: Partial<Product>[]): Product[] => {
+  if (!products || !Array.isArray(products)) {
+    console.error("Invalid products array provided to normalizeProducts", products);
+    return [];
   }
-  
-  return specs;
+  return products.map(product => normalizeProduct(product));
 };
 
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
@@ -84,97 +70,30 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   
   // Load products when context is initialized
   useEffect(() => {
-    // const loadProducts = async () => {
-    //   console.log("ProductContext: Loading products");
-      
-    //   // First try to load shopify products
-    //   const shopifyProducts = localStorage.getItem('shopifyProducts');
-    //   if (shopifyProducts) {
-    //     try {
-    //       const parsed = JSON.parse(shopifyProducts);
-    //       console.log(`ProductContext: Loaded ${parsed.length} Shopify products from localStorage`);
-          
-    //       // Make sure each product has vendor: "Shopify" and enrich with descriptions if missing
-    //       const shopifyProductsWithVendor = parsed.map((product: Product) => ({
-    //         ...product,
-    //         vendor: "Shopify",
-    //         description: product.description || generateDescription(product.name, product.category || "Electronics"),
-    //         images: product.images || [product.image],
-    //         features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
-    //         specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
-    //         isBestSeller: product.isBestSeller || false,
-    //         brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
-    //       }));
-          
-    //       setProducts(shopifyProductsWithVendor);
-    //       setIsLoading(false);
-    //       return;
-    //     } catch (e) {
-    //       console.error("ProductContext: Error parsing Shopify products:", e);
-    //     }
-    //   } else {
-    //     console.log("ProductContext: No Shopify products found in localStorage");
-    //   }
-      
-    //   // If no shopify products, try to load saved products
-    //   const savedProducts = loadSavedProducts();
-    //   if (savedProducts && savedProducts.length > 0) {
-    //     console.log(`ProductContext: Loaded ${savedProducts.length} products from localStorage`);
-        
-    //     // Enrich saved products with descriptions and images if missing
-    //     const enrichedProducts = savedProducts.map(product => ({
-    //       ...product,
-    //       description: product.description || generateDescription(product.name, product.category || "Electronics"),
-    //       images: product.images || [product.image],
-    //       features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
-    //       specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
-    //       isBestSeller: product.isBestSeller || false,
-    //       brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
-    //     }));
-        
-    //     setProducts(enrichedProducts);
-    //     setIsLoading(false);
-    //     return;
-    //   }
-      
-    //   // If no saved products, load mock products
-    //   console.log("ProductContext: Loading mock products");
-    //   const mockProducts = loadMockProducts();
-    //   if (mockProducts && mockProducts.length > 0) {
-    //     console.log(`ProductContext: Loaded ${mockProducts.length} mock products`);
-        
-    //     // Enrich mock products with descriptions and images if missing
-    //     const enrichedMockProducts = mockProducts.map((product, index) => ({
-    //       ...product,
-    //       description: product.description || generateDescription(product.name, product.category || "Electronics"),
-    //       images: product.images || [product.image],
-    //       features: product.features || generateMockFeatures(product.name, product.category || "Electronics"),
-    //       specifications: product.specifications || generateMockSpecifications(product.name, product.category || "Electronics"),
-    //       isBestSeller: product.isBestSeller || (index < Math.ceil(mockProducts.length * 0.1)), // Mark top 10% as best sellers
-    //       brand: product.brand || product.name.split(' ')[0] // Ensure brand exists
-    //     }));
-        
-    //     setProducts(enrichedMockProducts);
-    //   } else {
-    //     console.error("ProductContext: Failed to load mock products");
-    //   }
-    //   setIsLoading(false);
-    // };
-    // loadProducts({});
   }, []);
   
-  const loadProducts = async (query) => {
+  const loadProducts = async (query: {keyword: string}) => {
     setIsLoading(true);
     const {keyword} = query;
-    const { data, error } = await supabase.functions.invoke("get-products", {
-      body: {
-        query: keyword,
-        page: 1
-      }
-    });
-    if (error) throw new Error(error.message);
-    setProducts(data.results);
-    setIsLoading(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("get-products", {
+        body: {
+          query: keyword,
+          page: 1
+        }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      // Normalize the product data to ensure consistent structure
+      const normalizedProducts = normalizeProducts(data?.results || []);
+      setProducts(normalizedProducts);
+    } catch (err) {
+      console.error("Error loading products:", err);
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

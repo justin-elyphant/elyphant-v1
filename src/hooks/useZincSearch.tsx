@@ -1,7 +1,9 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '@/contexts/ProductContext';
 import { searchProducts } from '@/components/marketplace/zinc/zincService';
 import { toast } from 'sonner';
+import { normalizeProduct } from '@/contexts/ProductContext';
 
 export const useZincSearch = (searchTerm: string) => {
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,8 @@ export const useZincSearch = (searchTerm: string) => {
         const term = searchTerm.toLowerCase();
         const filtered = products.filter(
           product => 
-            product.name.toLowerCase().includes(term) || 
+            (product.name && product.name.toLowerCase().includes(term)) || 
+            (product.title && product.title.toLowerCase().includes(term)) ||
             (product.description && product.description.toLowerCase().includes(term)) ||
             (product.brand && product.brand.toLowerCase().includes(term))
         );
@@ -69,11 +72,12 @@ export const useZincSearch = (searchTerm: string) => {
           console.log(`Found ${results.length} results from Zinc API for "${searchQuery}"`);
           
           // Map to consistent format with proper types
-          const processedResults = results.map(item => ({
+          const processedResults = results.map(item => normalizeProduct({
+            product_id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
             id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
-            product_id: item.product_id,
-            title: item.title,
-            price: item.price,
+            title: item.title || "Unknown Product",
+            name: item.title || "Unknown Product",
+            price: item.price || 0,
             image: item.images?.[0] || item.image || "/placeholder.svg",
             images: item.images || (item.image ? [item.image] : ["/placeholder.svg"]),
             rating: typeof item.rating === 'number' ? item.rating : 0,
@@ -82,8 +86,6 @@ export const useZincSearch = (searchTerm: string) => {
             num_reviews: typeof item.review_count === 'number' ? item.review_count : 0,
             brand: item.brand || 'Unknown',
             category: item.category || getSearchCategory(searchTerm),
-            // Keep the original data for reference
-            originalProduct: item
           }));
           
           setZincResults(processedResults);

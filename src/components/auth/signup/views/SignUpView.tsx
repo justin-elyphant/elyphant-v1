@@ -20,7 +20,7 @@ interface SignUpViewProps {
 
 const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit, isSubmitting = false }) => {
   return (
-    <Card className="w-full bg-white/90 backdrop-blur-sm shadow-2xl border-none">
+    <Card className="w-full bg-white shadow-lg border">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-[#6E59A5]">Create an account</CardTitle>
         <CardDescription>

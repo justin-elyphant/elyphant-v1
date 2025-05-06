@@ -1,13 +1,15 @@
 
-import { Product } from "@/contexts/ProductContext";
+import { Product, normalizeProduct } from "@/contexts/ProductContext";
 
 /**
  * Generate fallback Apple products to prevent freezing
  */
 export function getAppleFallbackProducts(): Product[] {
   return [
-    {
-      id: 1001,
+    normalizeProduct({
+      product_id: "1001",
+      id: "1001",
+      title: "Apple iPhone 13 Pro",
       name: "Apple iPhone 13 Pro",
       price: 999,
       category: "Electronics",
@@ -18,9 +20,11 @@ export function getAppleFallbackProducts(): Product[] {
       reviewCount: 1245,
       brand: "Apple",
       isBestSeller: true
-    },
-    {
-      id: 1002,
+    }),
+    normalizeProduct({
+      product_id: "1002",
+      id: "1002",
+      title: "Apple MacBook Pro 14-inch",
       name: "Apple MacBook Pro 14-inch",
       price: 1999,
       category: "Electronics",
@@ -30,9 +34,11 @@ export function getAppleFallbackProducts(): Product[] {
       rating: 4.9,
       reviewCount: 856,
       brand: "Apple"
-    },
-    {
-      id: 1003,
+    }),
+    normalizeProduct({
+      product_id: "1003",
+      id: "1003",
+      title: "Apple iPad Pro 12.9-inch",
       name: "Apple iPad Pro 12.9-inch",
       price: 1099,
       category: "Electronics",
@@ -42,7 +48,7 @@ export function getAppleFallbackProducts(): Product[] {
       rating: 4.7,
       reviewCount: 623,
       brand: "Apple"
-    }
+    })
   ];
 }
 
@@ -73,8 +79,12 @@ export async function handleBrandProducts(
     const category = categories[Math.floor(Math.random() * categories.length)];
     const price = Math.floor(Math.random() * 200) + 50;
     
-    brandProducts.push({
-      id: 2000 + i,
+    const productId = `brand-${brandName.toLowerCase()}-${i + 1}`;
+    
+    brandProducts.push(normalizeProduct({
+      product_id: productId,
+      id: productId,
+      title: `${brandName} ${category} Item ${i+1}`,
       name: `${brandName} ${category} Item ${i+1}`,
       price: price,
       category: category,
@@ -85,7 +95,7 @@ export async function handleBrandProducts(
       reviewCount: Math.floor(Math.random() * 500) + 10,
       brand: brandName,
       isBestSeller: i < 2 // Make the first couple items best sellers
-    });
+    }));
   }
 
   // Update products context

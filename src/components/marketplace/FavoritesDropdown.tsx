@@ -1,59 +1,76 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Heart } from "lucide-react";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { WishlistData } from "@/components/gifting/wishlist/WishlistCard";
-import { useNavigate } from "react-router-dom";
+import { 
+  Popover,
+  PopoverTrigger,
+  PopoverContent
+} from "@/components/ui/popover";
+import { useAuth } from "@/contexts/auth";
+import { useFavorites } from "@/components/gifting/hooks/useFavorites";
+import { Badge } from "@/components/ui/badge";
 
-const FavoritesDropdown = () => {
-  const [wishlists] = useLocalStorage<WishlistData[]>("userWishlists", []);
-  const navigate = useNavigate();
-  
-  // Get all favorited items across all wishlists
-  const favoriteItems = wishlists.flatMap(wishlist => wishlist.items);
-  const uniqueFavorites = Array.from(new Set(favoriteItems.map(item => item.id)))
-    .map(id => favoriteItems.find(item => item.id === id))
-    .filter(item => item !== undefined)
-    .slice(0, 5); // Show only the first 5 items
+interface FavoritesDropdownProps {
+  onSignUpRequired?: () => void;
+}
+
+const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
+  const { user } = useAuth();
+  const { favorites = [] } = useFavorites();
+
+  const handleClick = () => {
+    if (!user && onSignUpRequired) {
+      onSignUpRequired();
+    }
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Heart className="h-4 w-4" />
-          My Favorites
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 border-none relative"
+          onClick={handleClick}
+        >
+          <Heart className="h-4 w-4 mr-1.5" />
+          Favorites
+          {user && favorites.length > 0 && (
+            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-purple-600 text-white text-xs rounded-full">
+              {favorites.length}
+            </Badge>
+          )}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>Recent Favorites</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {uniqueFavorites.length > 0 ? (
-          <>
-            {uniqueFavorites.map((item) => (
-              <DropdownMenuItem key={item.id} className="flex flex-col items-start">
-                <span className="font-medium">{item.name}</span>
-                <span className="text-sm text-muted-foreground">${item.price}</span>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/wishlists")}>
-              View all favorites
-            </DropdownMenuItem>
-          </>
-        ) : (
-          <DropdownMenuItem disabled>No favorites yet</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      {user && (
+        <PopoverContent className="w-80" align="start">
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Your Favorites</h4>
+            {favorites.length > 0 ? (
+              <div className="max-h-60 overflow-y-auto">
+                {favorites.map((favorite) => (
+                  <div key={favorite} className="text-sm flex items-center gap-2 py-2 border-b last:border-0">
+                    <Heart className="h-3 w-3 text-rose-500 fill-rose-500" />
+                    <span className="text-sm text-muted-foreground">{favorite}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Heart className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                <div className="text-sm text-muted-foreground">
+                  You haven't added any favorites yet.
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Click the heart icon on any product to add it to your favorites.
+                </p>
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
   );
 };
 

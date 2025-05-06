@@ -2,15 +2,17 @@
 import { useState, useEffect } from 'react';
 import { Product } from '@/contexts/ProductContext';
 import { fetchProductDetails } from '../zinc/services/productDetailsService';
+import { getProductImages } from '../product-item/productUtils';
 
 export const useProductImages = (product: Product) => {
-  const [images, setImages] = useState<string[]>([product.image]);
+  const [images, setImages] = useState<string[]>([product?.image]);
 
   useEffect(() => {
     const fetchImages = async () => {
       // If the product already has multiple images, use those
-      if (product.images && product.images.length > 0) {
-        setImages(product.images);
+      const existingImages = getProductImages(product);
+      if (existingImages.length > 0) {
+        setImages(existingImages);
         return;
       }
 
@@ -34,7 +36,7 @@ export const useProductImages = (product: Product) => {
     };
 
     fetchImages();
-  }, [product.id, product.image, product.images, product.vendor]);
+  }, [product.id, product.image, product.vendor]);
 
   return images;
 };

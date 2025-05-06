@@ -1,65 +1,106 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Heart, Plus } from "lucide-react";
-import { WishlistData } from "@/components/gifting/wishlist/WishlistCard";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { Heart, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth";
+import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 
 interface WishlistSelectionPopoverProps {
-  productId: number;
+  productId: string;
   productName: string;
+  productImage?: string;
+  productPrice?: number;
+  productBrand?: string;
   trigger: React.ReactNode;
 }
 
 export const WishlistSelectionPopover = ({ 
   productId, 
   productName,
+  productImage,
+  productPrice,
+  productBrand,
   trigger 
 }: WishlistSelectionPopoverProps) => {
-  const [wishlists, setWishlists] = useLocalStorage<WishlistData[]>("userWishlists", []);
-  const [open, setOpen] = React.useState(false);
-
-  const handleAddToWishlist = (wishlistId: number) => {
-    setWishlists(prev => {
-      return prev.map(wishlist => {
-        if (wishlist.id === wishlistId) {
-          // Check if item is already in the wishlist
-          const itemExists = wishlist.items.some(item => item.id === productId);
-          
-          if (itemExists) {
-            toast.info(`"${productName}" is already in this wishlist`);
-            return wishlist;
-          }
-          
-          // Add item to wishlist
-          const newItems = [
-            ...wishlist.items,
-            {
-              id: productId,
-              name: productName,
-              price: 99.99, // This would ideally come from the product
-              brand: "Brand", // This would ideally come from the product
-              imageUrl: "/placeholder.svg" // This would ideally come from the product
-            }
-          ];
-          
-          toast.success(`Added "${productName}" to ${wishlist.title}`);
-          
-          return {
-            ...wishlist,
-            items: newItems
-          };
-        }
-        return wishlist;
-      });
-    });
-    
-    setOpen(false);
+  const { user } = useAuth();
+  const { wishlists, createWishlist, addToWishlist } = useWishlist();
+  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
+  
+  const handleAddToWishlist = async (wishlistId: string) => {
+    try {
+      setAdding(wishlistId);
+      
+      // Format item data
+      const itemData = {
+        name: productName,
+        product_id: productId,
+        price: productPrice,
+        image_url: productImage,
+        brand: productBrand,
+        notes: ""
+      };
+      
+      // Add to wishlist
+      const success = await addToWishlist(wishlistId, itemData);
+      
+      if (success) {
+        toast.success(`Added "${productName}" to wishlist`);
+        setOpen(false);
+      }
+    } catch (error) {
+      console.error("Error adding item to wishlist:", error);
+      toast.error("Failed to add item to wishlist");
+    } finally {
+      setAdding(null);
+    }
   };
-
-  if (wishlists.length === 0) {
+  
+  const handleCreateQuickWishlist = async () => {
+    try {
+      setCreating(true);
+      const newWishlist = await createWishlist("My Wishlist", "Items I'd like to receive");
+      
+      if (newWishlist) {
+        // Add item to the new wishlist
+        await handleAddToWishlist(newWishlist.id);
+      }
+    } catch (error) {
+      console.error("Error creating wishlist:", error);
+      toast.error("Failed to create wishlist");
+    } finally {
+      setCreating(false);
+    }
+  };
+  
+  // Ensure user is authenticated - this is now a redundant check since
+  // we're handling auth at the WishlistButton level, but keeping it for safety
+  if (!user) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          {trigger}
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-4">
+          <div className="text-center space-y-3">
+            <p className="font-medium">Sign in to save items to your wishlist</p>
+            <p className="text-sm text-muted-foreground">
+              Create an account or sign in to save items
+            </p>
+            <Button asChild className="mt-2 w-full">
+              <a href="/auth/signin">
+                Sign In
+              </a>
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+  
+  if (!wishlists || wishlists.length === 0) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -71,11 +112,22 @@ export const WishlistSelectionPopover = ({
             <p className="text-sm text-muted-foreground">
               Create a wishlist to save items you love
             </p>
-            <Button asChild className="mt-2 w-full">
-              <a href="/wishlists">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Wishlist
-              </a>
+            <Button 
+              onClick={handleCreateQuickWishlist} 
+              className="mt-2 w-full"
+              disabled={creating}
+            >
+              {creating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Wishlist
+                </>
+              )}
             </Button>
           </div>
         </PopoverContent>
@@ -106,18 +158,31 @@ export const WishlistSelectionPopover = ({
                   {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Plus className="h-4 w-4" />
-              </Button>
+              {adding === wishlist.id ? (
+                <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           ))}
         </div>
         <div className="p-3 border-t">
-          <Button asChild variant="outline" size="sm" className="w-full">
-            <a href="/wishlists">
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Wishlist
-            </a>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full"
+            onClick={() => {
+              setOpen(false);
+              // Navigate to wishlists page
+              window.location.href = "/wishlists"; 
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create New Wishlist
           </Button>
         </div>
       </PopoverContent>

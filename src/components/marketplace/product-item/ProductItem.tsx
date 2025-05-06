@@ -12,7 +12,7 @@ import { CheckCircle2, Truck, Award } from "lucide-react";
 
 interface ProductItemProps {
   product: Product;
-  viewMode: "grid" | "list";
+  viewMode: "grid" | "list" | "modern";
   onProductClick: (productId: string) => void;
   onWishlistClick: (e: React.MouseEvent) => void;
   isFavorited: boolean;

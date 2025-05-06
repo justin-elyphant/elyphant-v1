@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGridOptimized from "./ProductGridOptimized";
@@ -22,41 +22,13 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [searchParams] = useSearchParams();
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  // Memoize filtered and sorted products to prevent unnecessary recalculations
-  const processedProducts = useMemo(() => {
-    if (products.length === 0 || isLoading) {
-      return [];
-    }
-    
-    // Apply active filters
-    let result = [...products];
-    
-    // Brand filter
-    const brandParam = activeFilters.brand || searchParams.get("brand");
-    if (brandParam) {
-      result = result.filter(p => 
-        (p.brand && p.brand.toLowerCase().includes(brandParam.toLowerCase())) ||
-        (p.vendor && p.vendor.toLowerCase().includes(brandParam.toLowerCase()))
-      );
-    }
-    
-    // Sort the results
-    return sortProducts(result, sortOption);
-  }, [products, activeFilters, sortOption, searchParams]);
-  
-  // Update filteredProducts when processedProducts changes
   useEffect(() => {
-    setFilteredProducts(processedProducts);
-    
-    // After initial data is loaded and processed, mark initial load as complete
-    if (processedProducts.length > 0 && isInitialLoad) {
-      setIsInitialLoad(false);
+    if (products.length > 0) {
+      setFilteredProducts(sortProducts(products, sortOption));
     }
-  }, [processedProducts, isInitialLoad]);
+  }, [products, sortOption]);
   
-  // Handle brand parameter from URL
   useEffect(() => {
     const brandParam = searchParams.get("brand");
     
@@ -68,6 +40,17 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
     }
   }, [searchParams]);
   
+  useEffect(() => {
+    if (products.length === 0 && !isLoading) {
+      return;
+    }
+    let result = [...products];
+    
+    result = sortProducts(result, sortOption);
+    
+    setFilteredProducts(result);
+  }, [products, activeFilters, sortOption, isLoading, searchTerm]);
+  
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);
   };
@@ -75,9 +58,6 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   const handleSortChange = (option: string) => {
     setSortOption(option);
   };
-
-  // Show loading only on initial load, not on subsequent filter/sort changes
-  const showLoading = isLoading && isInitialLoad;
 
   return (
     <div className="space-y-8">
@@ -100,7 +80,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         
         <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
           {
-            showLoading ? (
+            isLoading ? (
               <div className="flex justify-center items-center py-12">
                 <Spinner className="h-10 w-10 text-purple-600" />
                 <span className="ml-3 text-muted-foreground">Loading products...</span>
@@ -111,7 +91,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
                 products={filteredProducts} 
                 viewMode={viewMode}
                 sortOption={sortOption}
-                isLoading={false} // Always pass false here to prevent flickering
+                isLoading={isLoading}
               />
             ) : (
               <div className="text-center py-12 border rounded-md bg-white">
@@ -123,7 +103,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         </div>
       </div>
       
-      {filteredProducts.length > 0 && !showLoading && (
+      {filteredProducts.length > 0 && !isLoading && (
         <FeaturedProducts />
       )}
     </div>

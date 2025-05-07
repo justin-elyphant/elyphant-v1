@@ -116,3 +116,11 @@ export const loadMockProducts = (): Product[] => {
   // If no saved products are found, generate new ones
   return getMockProducts();
 };
+
+// Export a getZincMockProducts function that is compatible with the current usage
+export const getZincMockProducts = (searchTerm: string, count = 12): Product[] => {
+  console.log(`getZincMockProducts: Creating mock products for search: "${searchTerm}"`);
+  
+  // Use our existing searchMockProducts function 
+  return searchMockProducts(searchTerm, count);
+};

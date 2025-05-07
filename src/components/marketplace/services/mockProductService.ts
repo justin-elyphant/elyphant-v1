@@ -1,6 +1,6 @@
-
 import { Product } from "@/contexts/ProductContext";
 import { normalizeProduct } from "@/contexts/ProductContext";
+import { ZincProduct } from "@/components/marketplace/zinc/types";
 
 // Sample image URLs for products
 const productImages = [
@@ -117,10 +117,31 @@ export const loadMockProducts = (): Product[] => {
   return getMockProducts();
 };
 
+// Create a Zinc-compatible product from a regular product
+const convertToZincProduct = (product: Product): ZincProduct => {
+  return {
+    product_id: product.product_id,
+    title: product.title || product.name || "",
+    price: product.price,
+    image: product.image,
+    images: product.images || [],
+    description: product.description || "",
+    brand: product.brand || "",
+    category: product.category || "",
+    retailer: product.vendor || product.retailer || "Amazon via Zinc", // Ensure retailer is always populated
+    rating: product.rating || 0,
+    review_count: product.reviewCount || product.num_reviews || 0,
+    isBestSeller: product.isBestSeller || false
+  };
+};
+
 // Export a getZincMockProducts function that is compatible with the current usage
-export const getZincMockProducts = (searchTerm: string, count = 12): Product[] => {
+export const getZincMockProducts = (searchTerm: string, count = 12): ZincProduct[] => {
   console.log(`getZincMockProducts: Creating mock products for search: "${searchTerm}"`);
   
-  // Use our existing searchMockProducts function 
-  return searchMockProducts(searchTerm, count);
+  // Use our existing searchMockProducts function to get products
+  const products = searchMockProducts(searchTerm, count);
+  
+  // Convert the products to ZincProduct type
+  return products.map(product => convertToZincProduct(product));
 };

@@ -24,8 +24,10 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   const [searchParams] = useSearchParams();
   
   useEffect(() => {
-    if (products.length > 0) {
+    if (products && products.length > 0) {
       setFilteredProducts(sortProducts(products, sortOption));
+    } else {
+      setFilteredProducts([]);
     }
   }, [products, sortOption]);
   
@@ -41,15 +43,14 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   }, [searchParams]);
   
   useEffect(() => {
-    if (products.length === 0 && !isLoading) {
+    if (!products || products.length === 0) {
       return;
     }
+    
     let result = [...products];
-    
     result = sortProducts(result, sortOption);
-    
     setFilteredProducts(result);
-  }, [products, activeFilters, sortOption, isLoading, searchTerm]);
+  }, [products, activeFilters, sortOption, searchTerm]);
   
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);
@@ -86,7 +87,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
                 <span className="ml-3 text-muted-foreground">Loading products...</span>
               </div>
             ) : 
-            filteredProducts.length > 0 ? (
+            filteredProducts && filteredProducts.length > 0 ? (
               <ProductGridOptimized 
                 products={filteredProducts} 
                 viewMode={viewMode}
@@ -103,7 +104,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         </div>
       </div>
       
-      {filteredProducts.length > 0 && !isLoading && (
+      {filteredProducts && filteredProducts.length > 0 && !isLoading && (
         <FeaturedProducts />
       )}
     </div>

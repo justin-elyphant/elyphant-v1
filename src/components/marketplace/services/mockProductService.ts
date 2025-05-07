@@ -1,4 +1,3 @@
-
 import { Product } from "@/contexts/ProductContext";
 import { ZincProduct } from "../zinc/types";
 
@@ -238,35 +237,55 @@ const baseMockProducts: Product[] = [
  * @param count Number of products to return
  */
 export const getMockProducts = (count?: number): Product[] => {
+  console.log("getMockProducts: Getting mock products");
   if (count && count > 0 && count < baseMockProducts.length) {
+    console.log(`getMockProducts: Returning ${count} products`);
     return baseMockProducts.slice(0, count);
   }
+  console.log(`getMockProducts: Returning all ${baseMockProducts.length} products`);
   return baseMockProducts;
 };
 
 /**
- * Search within mock products
+ * Search within mock products - improved to always return results
  * @param query Search term
  * @param maxResults Maximum number of results to return
  */
 export const searchMockProducts = (query: string, maxResults: number = 20): Product[] => {
+  console.log(`searchMockProducts: Searching for "${query}"`);
+  
   if (!query || typeof query !== 'string' || query.trim() === '') {
+    console.log(`searchMockProducts: Empty query, returning default products`);
     return baseMockProducts.slice(0, maxResults);
   }
 
   const lowerQuery = query.toLowerCase().trim();
   
-  return baseMockProducts
+  const results = baseMockProducts
     .filter(product => {
       // Search in name, description, category, and brand
-      return (
-        (product.name && product.name.toLowerCase().includes(lowerQuery)) ||
-        (product.description && product.description.toLowerCase().includes(lowerQuery)) ||
-        (product.category && product.category.toLowerCase().includes(lowerQuery)) ||
-        (product.brand && product.brand.toLowerCase().includes(lowerQuery))
-      );
+      try {
+        return (
+          (product.name && product.name.toLowerCase().includes(lowerQuery)) ||
+          (product.description && product.description.toLowerCase().includes(lowerQuery)) ||
+          (product.category && product.category.toLowerCase().includes(lowerQuery)) ||
+          (product.brand && product.brand.toLowerCase().includes(lowerQuery))
+        );
+      } catch (e) {
+        console.error("Error filtering product:", e);
+        return false;
+      }
     })
     .slice(0, maxResults);
+  
+  // Always return at least some products
+  if (results.length === 0) {
+    console.log(`searchMockProducts: No matches for "${query}", returning default products`);
+    return baseMockProducts.slice(0, Math.min(5, maxResults));
+  }
+  
+  console.log(`searchMockProducts: Found ${results.length} results for "${query}"`);
+  return results;
 };
 
 /**

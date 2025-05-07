@@ -14,6 +14,7 @@ import GiftingCategories from "./GiftingCategories";
 import PopularBrands from "./PopularBrands";
 import { getMockProducts, searchMockProducts } from "./services/mockProductService";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import MarketplaceLoading from "./MarketplaceLoading";
 
 // Default search terms to load if no query is provided
 const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"];
@@ -30,6 +31,7 @@ const MarketplaceWrapper = () => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [userData] = useLocalStorage("userData", null);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     setUpcomingOccasions(getUpcomingOccasions());
@@ -45,16 +47,24 @@ const MarketplaceWrapper = () => {
     
     if (keyword) {
       // Use mock products with search
+      console.log("MarketplaceWrapper: Loading products for search term:", keyword);
       const mockResults = searchMockProducts(keyword);
+      console.log(`MarketplaceWrapper: Found ${mockResults.length} products for "${keyword}"`);
       setProducts(mockResults);
     } else {
       // Select a random default search term to load initial products
       const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
+      console.log("MarketplaceWrapper: Loading default products for:", defaultTerm);
       const mockResults = getMockProducts();
+      console.log(`MarketplaceWrapper: Found ${mockResults.length} default products`);
       setProducts(mockResults);
     }
     
-    setIsSearching(false);
+    // Use a short timeout to ensure the UI has time to update
+    setTimeout(() => {
+      setIsSearching(false);
+      setInitialLoadComplete(true);
+    }, 500);
   }, [searchParams, setProducts]);
 
   useEffect(() => {
@@ -67,15 +77,26 @@ const MarketplaceWrapper = () => {
 
   const handleSearch = (term: string) => {
     if (term.trim()) {
+      setIsSearching(true);
       const params = new URLSearchParams(searchParams);
       params.set("search", term);
       setSearchParams(params);
+      
+      // Simulate search delay for a more realistic experience
+      setTimeout(() => {
+        setIsSearching(false);
+      }, 500);
     }
   };
 
   const selectedProduct = showProductDetails !== null 
     ? products.find(p => p.product_id === showProductDetails)
     : null;
+
+  // Show loading state during initial load
+  if (!initialLoadComplete) {
+    return <MarketplaceLoading />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">

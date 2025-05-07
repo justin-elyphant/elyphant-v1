@@ -13,6 +13,7 @@ import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
 import PopularBrands from "./PopularBrands";
 import { getMockProducts, searchMockProducts } from "./services/mockProductService";
+import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 
 // Default search terms to load if no query is provided
 const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"];
@@ -28,6 +29,7 @@ const MarketplaceWrapper = () => {
   const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [userData] = useLocalStorage("userData", null);
 
   useEffect(() => {
     setUpcomingOccasions(getUpcomingOccasions());
@@ -152,6 +154,7 @@ const MarketplaceWrapper = () => {
             setSearchParams(newParams);
           }
         }}
+        userData={userData}
       />
     </div>
   );

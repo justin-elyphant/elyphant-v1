@@ -16,6 +16,20 @@ import {
 } from './search/productRelevance';
 
 /**
+ * Maximum number of results to return for better performance
+ */
+const MAX_RESULTS = 25;
+
+/**
+ * Safely processes a search query by handling null/undefined values
+ * and trimming excess whitespace
+ */
+const safeProcessQuery = (query: string | null | undefined): string => {
+  if (!query) return '';
+  return query.trim().toLowerCase();
+};
+
+/**
  * Finds products that match the search query with support for misspelled terms
  * With caching for performance improvements
  * 
@@ -24,7 +38,7 @@ import {
  */
 export const findMatchingProducts = (query: string): ZincProduct[] => {
   try {
-    if (!query || query.trim() === '') {
+    if (!query || typeof query !== 'string' || query.trim() === '') {
       console.log("FindMatchingProducts: Empty query, returning empty results");
       return [];
     }
@@ -32,15 +46,16 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     console.log(`FindMatchingProducts: Starting search for "${query}"`);
     
     // Clean expired cache entries occasionally
-    if (Math.random() < 0.1) cleanupCache();
+    if (Math.random() < 0.05) cleanupCache();
     
-    const lowercaseQuery = query.toLowerCase().trim();
+    const lowercaseQuery = safeProcessQuery(query);
+    if (!lowercaseQuery) return [];
     
     // Check cache first
     const cachedResults = getFromCache(lowercaseQuery);
-    if (cachedResults) {
+    if (cachedResults && Array.isArray(cachedResults) && cachedResults.length > 0) {
       console.log(`FindMatchingProducts: Using ${cachedResults.length} cached results for "${lowercaseQuery}"`);
-      return cachedResults;
+      return cachedResults.slice(0, MAX_RESULTS);
     }
     
     console.log(`FindMatchingProducts: No cache found, generating results for "${lowercaseQuery}"`);
@@ -51,48 +66,95 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       const specificQuery = "san diego padres baseball hat clothing apparel";
       console.log(`FindMatchingProducts: Detected Padres hat search, using specific query "${specificQuery}"`);
       
-      // Create custom results for Padres hats
-      const padresHatResults = createMockResults(
-        specificQuery, 
-        "Baseball Team Merchandise", 
-        20, 
-        4.0, 
-        5.0, 
-        "San Diego Padres", 
-        true
-      );
-      
-      // Filter out irrelevant products
-      const filteredPadresResults = padresHatResults.filter(product => {
-        // Ensure explicit clothing category for hat searches
-        product.category = "Baseball Team Apparel";
-        return isProductRelevantToSearch(product, specificQuery);
-      });
-      
-      console.log(`FindMatchingProducts: Generated ${filteredPadresResults.length} custom Padres hat results`);
-      
-      // Cache the results before returning
-      saveToCache(lowercaseQuery, filteredPadresResults);
-      
-      return filteredPadresResults;
+      try {
+        // Create custom results for Padres hats
+        const padresHatResults = createMockResults(
+          specificQuery, 
+          "Baseball Team Merchandise", 
+          MAX_RESULTS, 
+          4.0, 
+          5.0, 
+          "San Diego Padres", 
+          true
+        );
+        
+        // Filter out irrelevant products
+        const filteredPadresResults = padresHatResults
+          .filter(product => {
+            try {
+              // Ensure explicit clothing category for hat searches
+              if (product) {
+                product.category = "Baseball Team Apparel";
+                return isProductRelevantToSearch(product, specificQuery);
+              }
+              return false;
+            } catch (err) {
+              console.error("Error filtering Padres product:", err);
+              return false;
+            }
+          })
+          .slice(0, MAX_RESULTS);
+        
+        console.log(`FindMatchingProducts: Generated ${filteredPadresResults.length} custom Padres hat results`);
+        
+        // Cache the results before returning
+        if (filteredPadresResults.length > 0) {
+          saveToCache(lowercaseQuery, filteredPadresResults);
+        }
+        
+        return filteredPadresResults;
+      } catch (specialCaseError) {
+        console.error("Error in special case handling:", specialCaseError);
+        // Fall through to generic search on error
+      }
     }
     
     // Get appropriate image category
-    const imageCategory = getImageCategory(lowercaseQuery);
+    let imageCategory;
+    try {
+      imageCategory = getImageCategory(lowercaseQuery);
+    } catch (categoryError) {
+      console.error("Error getting image category:", categoryError);
+      imageCategory = "General";
+    }
+    
     console.log(`FindMatchingProducts: Using category "${imageCategory}" for query "${lowercaseQuery}"`);
     
-    // Generic search - limit to 25 products for better performance (was 50)
-    const genericResults = createMockResults(lowercaseQuery, imageCategory, 25, 3.5, 5.0, undefined, true);
+    // Generic search - limit to MAX_RESULTS products for better performance
+    let genericResults: ZincProduct[] = [];
+    try {
+      genericResults = createMockResults(
+        lowercaseQuery, 
+        imageCategory, 
+        MAX_RESULTS, 
+        3.5, 
+        5.0, 
+        undefined, 
+        true
+      );
+    } catch (mockError) {
+      console.error("Error creating mock results:", mockError);
+      genericResults = [];
+    }
     
-    // Filter out irrelevant products
+    // Filter out irrelevant products with safeguards
     const filteredGenericResults = genericResults
-      .filter(product => isProductRelevantToSearch(product, lowercaseQuery))
-      .slice(0, 25); // Further limit results for better performance
+      .filter(product => {
+        try {
+          return product && isProductRelevantToSearch(product, lowercaseQuery);
+        } catch (filterError) {
+          console.error("Error filtering product:", filterError);
+          return false;
+        }
+      })
+      .slice(0, MAX_RESULTS);
     
     console.log(`FindMatchingProducts: Generated ${genericResults.length} raw results, filtered to ${filteredGenericResults.length} relevant results`);
     
     // Cache the results before returning
-    saveToCache(lowercaseQuery, filteredGenericResults);
+    if (filteredGenericResults.length > 0) {
+      saveToCache(lowercaseQuery, filteredGenericResults);
+    }
     
     return filteredGenericResults;
   } catch (error) {

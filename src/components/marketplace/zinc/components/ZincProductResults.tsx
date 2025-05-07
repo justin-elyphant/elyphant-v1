@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Gift, Truck } from "lucide-react";
+import { Gift, Truck, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getMockProducts } from "@/components/marketplace/services/mockProductService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Product {
   id: number;
@@ -26,14 +27,36 @@ export const ZincProductResults = ({
   isLoading,
   searchTerm
 }: ZincProductResultsProps) => {
-  // If no products are provided, use mock products
-  const displayProducts = products && products.length > 0 
-    ? products 
-    : getMockProducts(4);
+  const [showLoading, setShowLoading] = useState(isLoading);
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  
+  // Force loading state to resolve after 1.5 seconds max
+  useEffect(() => {
+    let timer: number;
     
-  if (isLoading) {
+    // If loading, reset display products and start timer
+    if (isLoading) {
+      setShowLoading(true);
+      // Always resolve loading state after 1.5 seconds max
+      timer = window.setTimeout(() => {
+        console.log("Forcing loading state to resolve");
+        setShowLoading(false);
+      }, 1500);
+    } else {
+      setShowLoading(false);
+    }
+    
+    // Use the provided products or fallback to mock products
+    setDisplayProducts(products && products.length > 0 ? products : getMockProducts(6));
+    
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [isLoading, products]);
+    
+  if (showLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {[1, 2, 3, 4].map(i => (
           <Card key={i} className="overflow-hidden">
             <div className="animate-pulse">
@@ -51,7 +74,6 @@ export const ZincProductResults = ({
     );
   }
 
-  // Even if products are empty, we'll now show mock products
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {displayProducts.map((product, index) => (

@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { useZincProductSearch } from "./hooks/useZincProductSearch";
 import { ZincSearchForm } from "./components/ZincSearchForm";
 import { ZincProductResults } from "./components/ZincProductResults";
-import { Product } from "@/types/product"; // Use your specific Product type for this component
+import { Product } from "@/types/product"; 
 
 const ZincProductsTab = () => {
   const { 

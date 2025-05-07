@@ -1,75 +1,58 @@
 
 /**
- * Maps search queries to appropriate image categories for better visual results
+ * Map search queries to appropriate image categories 
+ * for better search result presentation
  */
-export const getImageCategory = (query: string): string => {
-  const lowercaseQuery = query.toLowerCase();
+export const getImageCategory = (searchQuery: string): string => {
+  const query = searchQuery.toLowerCase();
   
-  // Garden and planter category detection
-  if (lowercaseQuery.includes('planter') || 
-      lowercaseQuery.includes('pot') || 
-      lowercaseQuery.includes('garden') || 
-      lowercaseQuery.includes('plant')) {
-    return 'Garden';
+  if (query.includes("electronics") || query.includes("gadget") || 
+      query.includes("laptop") || query.includes("phone") || 
+      query.includes("camera") || query.includes("computer") ||
+      query.includes("earbuds") || query.includes("headphones") ||
+      query.includes("apple") || query.includes("samsung")) {
+    return "Electronics";
   }
   
-  // Electronics category detection
-  if (lowercaseQuery.includes('headphone') || 
-      lowercaseQuery.includes('speaker') || 
-      lowercaseQuery.includes('tv') || 
-      lowercaseQuery.includes('monitor') || 
-      lowercaseQuery.includes('laptop') || 
-      lowercaseQuery.includes('computer') || 
-      lowercaseQuery.includes('tablet') || 
-      lowercaseQuery.includes('phone')) {
-    return 'Electronics';
+  if (query.includes("clothing") || query.includes("shirt") || 
+      query.includes("pants") || query.includes("dress") || 
+      query.includes("jacket") || query.includes("hat") ||
+      query.includes("shoes") || query.includes("nike") ||
+      query.includes("adidas") || query.includes("outfit") ||
+      query.includes("fashion")) {
+    return "Clothing";
   }
   
-  // Apparel category detection
-  if (lowercaseQuery.includes('hat') || 
-      lowercaseQuery.includes('cap') || 
-      lowercaseQuery.includes('shirt') || 
-      lowercaseQuery.includes('jersey') || 
-      lowercaseQuery.includes('clothing') ||
-      lowercaseQuery.includes('shoes') ||
-      lowercaseQuery.includes('sneakers')) {
-    return 'Clothing';
+  if (query.includes("furniture") || query.includes("chair") || 
+      query.includes("table") || query.includes("sofa") || 
+      query.includes("desk") || query.includes("couch") ||
+      query.includes("bed") || query.includes("mattress") ||
+      query.includes("bookshelf") || query.includes("cabinet")) {
+    return "Furniture";
   }
   
-  // Sports merchandise
-  if (lowercaseQuery.includes('padres') || 
-      lowercaseQuery.includes('baseball') || 
-      lowercaseQuery.includes('nfl') || 
-      lowercaseQuery.includes('nba') || 
-      lowercaseQuery.includes('sport')) {
-    return 'Sports Merchandise';
+  if (query.includes("book") || query.includes("novel") || 
+      query.includes("reading") || query.includes("textbook") || 
+      query.includes("author") || query.includes("fiction") ||
+      query.includes("bestseller")) {
+    return "Books";
   }
   
-  // Office supplies
-  if (lowercaseQuery.includes('office') || 
-      lowercaseQuery.includes('desk') || 
-      lowercaseQuery.includes('chair') || 
-      lowercaseQuery.includes('stationery')) {
-    return 'Office';
+  if (query.includes("kitchen") || query.includes("cookware") || 
+      query.includes("appliance") || query.includes("utensil") || 
+      query.includes("cooking") || query.includes("baking")) {
+    return "Kitchen";
   }
   
-  // Default to a generic category if no matches
-  return 'Home & Garden';
-};
-
-/**
- * Get more precise category for product filtering
- */
-export const getPreciseCategory = (query: string): string => {
-  const lowercaseQuery = query.toLowerCase();
-  
-  // Garden and planter specific categorization
-  if (lowercaseQuery.includes('planter') || 
-      lowercaseQuery.includes('garden pot') || 
-      lowercaseQuery.includes('flower pot')) {
-    return 'Garden Planters';
+  if (query.includes("gift") || query.includes("present")) {
+    return "Gifts";
   }
   
-  // Use the more general category mapping as a fallback
-  return getImageCategory(query);
+  if (query.includes("toy") || query.includes("game") || 
+      query.includes("kids") || query.includes("children")) {
+    return "Toys";
+  }
+  
+  // Default to Electronics as a common category
+  return "Electronics";
 };

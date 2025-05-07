@@ -4,6 +4,7 @@ import { useProducts } from '@/contexts/ProductContext';
 import { searchProducts } from '@/components/marketplace/zinc/zincService';
 import { toast } from 'sonner';
 import { normalizeProduct } from '@/contexts/ProductContext';
+import { findMatchingProducts } from '@/components/marketplace/zinc/utils/findMatchingProducts';
 
 export const useZincSearch = (searchTerm: string) => {
   const [loading, setLoading] = useState(false);
@@ -97,11 +98,20 @@ export const useZincSearch = (searchTerm: string) => {
           setTimeout(() => reject(new Error('Search request timeout')), 8000);
         });
         
-        // Limit number of results to improve performance
-        const resultsPromise = searchProducts(searchQuery, "25");
+        let results;
         
-        // Race between the API call and the timeout
-        const results = await Promise.race([resultsPromise, timeoutPromise]);
+        try {
+          // Try using searchProducts from zincService first
+          // Limit number of results to improve performance
+          const resultsPromise = searchProducts(searchQuery, "25");
+          
+          // Race between the API call and the timeout
+          results = await Promise.race([resultsPromise, timeoutPromise]);
+        } catch (err) {
+          console.log('Error with primary search method, falling back to findMatchingProducts', err);
+          // Fallback to findMatchingProducts if searchProducts fails
+          results = findMatchingProducts(searchQuery);
+        }
         
         // Process results
         if (results && Array.isArray(results)) {

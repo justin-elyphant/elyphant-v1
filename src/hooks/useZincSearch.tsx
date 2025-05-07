@@ -17,18 +17,9 @@ export const useZincSearch = (searchTerm: string) => {
   const searchTimeoutRef = useRef<number | null>(null);
   const lastSearchTermRef = useRef<string>("");
   const isSearchingRef = useRef(false);
+  const errorCountRef = useRef(0);
 
   useEffect(() => {
-    // Don't search if term is identical to previous search to avoid redundant API calls
-    if (lastSearchTermRef.current === searchTerm || isSearchingRef.current) {
-      return;
-    }
-    
-    // Clear previous timeout to debounce searches
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
     // Reset results if search term is empty
     if (!searchTerm || searchTerm.trim().length < 2) {
       console.log('useZincSearch: Search term empty or too short, resetting results');
@@ -37,25 +28,36 @@ export const useZincSearch = (searchTerm: string) => {
       return;
     }
 
+    // Don't search if term is identical to previous search to avoid redundant API calls
+    if (lastSearchTermRef.current === searchTerm || isSearchingRef.current) {
+      return;
+    }
+    
+    // Clear previous timeout to debounce searches
+    if (searchTimeoutRef.current !== null) {
+      window.clearTimeout(searchTimeoutRef.current);
+    }
+
     // Store current search term as the last one processed
     lastSearchTermRef.current = searchTerm;
     console.log(`useZincSearch: Processing new search term: "${searchTerm}"`);
     
     const fetchZincResults = async () => {
       if (isSearchingRef.current) return;
-      isSearchingRef.current = true;
-      setLoading(true);
-      console.log(`useZincSearch: Starting search for "${searchTerm}"`);
-      
-      // Cancel previous request if it exists
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        console.log('useZincSearch: Aborted previous search request');
-      }
-      
-      abortControllerRef.current = new AbortController();
       
       try {
+        isSearchingRef.current = true;
+        setLoading(true);
+        console.log(`useZincSearch: Starting search for "${searchTerm}"`);
+        
+        // Cancel previous request if it exists
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          console.log('useZincSearch: Aborted previous search request');
+        }
+        
+        abortControllerRef.current = new AbortController();
+        
         // Show loading toast (only once)
         if (toastRef.current) {
           toast.dismiss(toastRef.current);
@@ -68,6 +70,8 @@ export const useZincSearch = (searchTerm: string) => {
         // Use more efficient filtering with early returns and limit to 50 products max
         const filtered = products.filter((product, index) => {
           if (index >= 50) return false; // Limit to first 50 products for performance
+          
+          if (!product) return false; // Skip null/undefined products
           
           const name = product.name ? product.name.toLowerCase() : "";
           if (name.includes(term)) return true;
@@ -94,7 +98,7 @@ export const useZincSearch = (searchTerm: string) => {
           console.log(`useZincSearch: Detected MacBook search, using query "${searchQuery}"`);
         }
         else if ((term.includes('padres') && (term.includes('hat') || term.includes('cap'))) ||
-                 (term.includes('san diego') && (term.includes('hat') || term.includes('cap')))) {
+                (term.includes('san diego') && (term.includes('hat') || term.includes('cap')))) {
           searchQuery = 'san diego padres baseball hat';
           console.log(`useZincSearch: Detected Padres hat search, using query "${searchQuery}"`);
         }
@@ -120,8 +124,13 @@ export const useZincSearch = (searchTerm: string) => {
         } catch (err) {
           console.log('useZincSearch: Error with primary search method, falling back to findMatchingProducts', err);
           // Fallback to findMatchingProducts if searchProducts fails
-          results = findMatchingProducts(searchQuery);
-          console.log(`useZincSearch: Fallback search returned ${results?.length || 0} results`);
+          try {
+            results = findMatchingProducts(searchQuery);
+            console.log(`useZincSearch: Fallback search returned ${results?.length || 0} results`);
+          } catch (fallbackErr) {
+            console.error('useZincSearch: Both primary and fallback search methods failed', fallbackErr);
+            results = []; // Ensure results is always defined as an array
+          }
         }
         
         // Process results
@@ -129,26 +138,50 @@ export const useZincSearch = (searchTerm: string) => {
           console.log(`useZincSearch: Found ${results.length} results from Zinc API for "${searchQuery}"`);
           
           // Map to consistent format with proper types - use batch processing for better performance
-          const processedResults = results.map(item => normalizeProduct({
-            product_id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
-            id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
-            title: item.title || "Unknown Product",
-            name: item.title || "Unknown Product",
-            price: item.price || 0,
-            image: item.images?.[0] || item.image || "/placeholder.svg",
-            images: item.images || (item.image ? [item.image] : ["/placeholder.svg"]),
-            rating: typeof item.rating === 'number' ? item.rating : 0,
-            stars: typeof item.rating === 'number' ? item.rating : 0, 
-            reviewCount: typeof item.review_count === 'number' ? item.review_count : 0,
-            num_reviews: typeof item.review_count === 'number' ? item.review_count : 0,
-            brand: item.brand || 'Unknown',
-            category: item.category || getSearchCategory(searchTerm),
-          }));
+          const processedResults = results.map(item => {
+            try {
+              return normalizeProduct({
+                product_id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
+                id: item.product_id || `zinc-${Math.random().toString(36).substring(2, 11)}`,
+                title: item.title || "Unknown Product",
+                name: item.title || "Unknown Product",
+                price: typeof item.price === 'number' ? item.price : 0,
+                image: item.images?.[0] || item.image || "/placeholder.svg",
+                images: item.images || (item.image ? [item.image] : ["/placeholder.svg"]),
+                rating: typeof item.rating === 'number' ? item.rating : 0,
+                stars: typeof item.rating === 'number' ? item.rating : 0, 
+                reviewCount: typeof item.review_count === 'number' ? item.review_count : 0,
+                num_reviews: typeof item.review_count === 'number' ? item.review_count : 0,
+                brand: item.brand || 'Unknown',
+                category: item.category || getSearchCategory(searchTerm),
+              });
+            } catch (err) {
+              console.error('useZincSearch: Error processing result item', err);
+              // Return a minimal valid product to avoid crashing
+              return {
+                id: `error-${Math.random().toString(36).substring(2, 11)}`,
+                product_id: `error-${Math.random().toString(36).substring(2, 11)}`,
+                name: "Product (Error Loading)",
+                title: "Product (Error Loading)",
+                price: 0,
+                image: "/placeholder.svg",
+                images: ["/placeholder.svg"],
+                rating: 0,
+                stars: 0,
+                reviewCount: 0,
+                num_reviews: 0,
+                brand: 'Unknown',
+                category: 'Unknown',
+              };
+            }
+          }).filter(item => item !== null); // Filter out any null items
           
           // Limit max results to avoid performance issues
-          const limitedResults = processedResults.slice(0, 50);
+          const limitedResults = processedResults.slice(0, 25); // Reduced from 50 to 25
           console.log(`useZincSearch: Processed ${processedResults.length} results, limited to ${limitedResults.length}`);
           setZincResults(limitedResults);
+          // Reset error counter on success
+          errorCountRef.current = 0;
         } else {
           console.log(`useZincSearch: No results found from Zinc API for "${searchTerm}"`);
           setZincResults([]);
@@ -158,6 +191,14 @@ export const useZincSearch = (searchTerm: string) => {
         // Only log error if not aborted
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           console.error('useZincSearch: Error searching Zinc API:', error);
+          errorCountRef.current += 1;
+          
+          // If we've had multiple errors in a row, show an error toast
+          if (errorCountRef.current >= 3) {
+            toast.error("Search is experiencing issues", {
+              description: "We're having trouble with the search feature. Please try again later."
+            });
+          }
         }
       } finally {
         setLoading(false);
@@ -165,7 +206,7 @@ export const useZincSearch = (searchTerm: string) => {
         // Add a slight delay before allowing new searches to prevent thrashing
         setTimeout(() => {
           isSearchingRef.current = false;
-        }, 500);
+        }, 300);
       }
     };
 
@@ -187,12 +228,16 @@ export const useZincSearch = (searchTerm: string) => {
     // Use a debounce to avoid excessive API calls
     console.log(`useZincSearch: Setting up debounced search for "${searchTerm}" (800ms)`);
     searchTimeoutRef.current = window.setTimeout(() => {
-      fetchZincResults();
+      fetchZincResults().catch(err => {
+        console.error('useZincSearch: Unhandled error in search', err);
+        setLoading(false);
+        isSearchingRef.current = false;
+      });
     }, 800); // increased debounce time for better performance
 
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
+      if (searchTimeoutRef.current !== null) {
+        window.clearTimeout(searchTimeoutRef.current);
       }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();

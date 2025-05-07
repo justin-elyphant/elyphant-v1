@@ -6,15 +6,7 @@ import { Gift, Truck, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getMockProducts } from "@/components/marketplace/services/mockProductService";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  description?: string;
-  rating?: number;
-}
+import { Product } from "@/types/product";
 
 interface ZincProductResultsProps {
   products: Product[];
@@ -77,7 +69,7 @@ export const ZincProductResults = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {displayProducts.map((product, index) => (
-        <Card key={product.id || index} className="overflow-hidden border hover:shadow-md transition-all duration-300">
+        <Card key={product.product_id || index} className="overflow-hidden border hover:shadow-md transition-all duration-300">
           <div className="relative">
             {/* Product badge */}
             <Badge className="absolute top-2 left-2 bg-purple-600 text-white">
@@ -87,7 +79,7 @@ export const ZincProductResults = ({
             <div className="h-40 overflow-hidden">
               <img 
                 src={product.image} 
-                alt={product.name} 
+                alt={product.title || product.name || ""} 
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Replace broken images with placeholder
@@ -99,9 +91,9 @@ export const ZincProductResults = ({
           
           <CardContent className="p-4">
             <h3 className="font-medium line-clamp-2 mb-1">
-              {product.name.length > 60 
-                ? product.name.substring(0, 57) + "..."
-                : product.name}
+              {(product.title || product.name || "").length > 60 
+                ? (product.title || product.name || "").substring(0, 57) + "..."
+                : (product.title || product.name || "")}
             </h3>
             
             <div className="flex items-center mt-1 mb-2">

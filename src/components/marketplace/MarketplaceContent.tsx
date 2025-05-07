@@ -23,8 +23,11 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [searchParams] = useSearchParams();
   
+  // Ensure we update filtered products when products change or loading finishes
   useEffect(() => {
+    // Only process products if we have them and they're not empty
     if (products && products.length > 0) {
+      console.log(`MarketplaceContent: Processing ${products.length} products with sort option ${sortOption}`);
       setFilteredProducts(sortProducts(products, sortOption));
     } else {
       setFilteredProducts([]);
@@ -42,6 +45,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
     }
   }, [searchParams]);
   
+  // Apply filters when they change
   useEffect(() => {
     if (!products || products.length === 0) {
       return;
@@ -60,6 +64,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
     setSortOption(option);
   };
 
+  // Rendering logic that properly handles loading states
   return (
     <div className="space-y-8">
       <MarketplaceFilters 
@@ -80,27 +85,24 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
         )}
         
         <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
-          {
-            isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <Spinner className="h-10 w-10 text-purple-600" />
-                <span className="ml-3 text-muted-foreground">Loading products...</span>
-              </div>
-            ) : 
-            filteredProducts && filteredProducts.length > 0 ? (
-              <ProductGridOptimized 
-                products={filteredProducts} 
-                viewMode={viewMode}
-                sortOption={sortOption}
-                isLoading={isLoading}
-              />
-            ) : (
-              <div className="text-center py-12 border rounded-md bg-white">
-                <p className="text-lg font-medium">No products found</p>
-                <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
-              </div>
-            )
-          }
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Spinner className="h-10 w-10 text-purple-600" />
+              <span className="ml-3 text-muted-foreground">Loading products...</span>
+            </div>
+          ) : filteredProducts && filteredProducts.length > 0 ? (
+            <ProductGridOptimized 
+              products={filteredProducts} 
+              viewMode={viewMode}
+              sortOption={sortOption}
+              isLoading={false} // We're handling the loading state here, so pass false to the grid
+            />
+          ) : (
+            <div className="text-center py-12 border rounded-md bg-white">
+              <p className="text-lg font-medium">No products found</p>
+              <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
+            </div>
+          )}
         </div>
       </div>
       

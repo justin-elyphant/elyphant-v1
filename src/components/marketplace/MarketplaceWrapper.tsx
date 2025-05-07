@@ -37,6 +37,7 @@ const MarketplaceWrapper = () => {
     setUpcomingOccasions(getUpcomingOccasions());
   }, []);
 
+  // Ensure we always load products on initial render and when search changes
   useEffect(() => {
     const keyword = searchParams.get("search") || "";
     setSearchTerm(keyword);
@@ -45,26 +46,36 @@ const MarketplaceWrapper = () => {
     // Load products with the keyword from URL or use default search if empty
     setIsSearching(true);
     
-    if (keyword) {
-      // Use mock products with search
-      console.log("MarketplaceWrapper: Loading products for search term:", keyword);
-      const mockResults = searchMockProducts(keyword);
-      console.log(`MarketplaceWrapper: Found ${mockResults.length} products for "${keyword}"`);
-      setProducts(mockResults);
-    } else {
-      // Select a random default search term to load initial products
-      const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
-      console.log("MarketplaceWrapper: Loading default products for:", defaultTerm);
-      const mockResults = getMockProducts();
-      console.log(`MarketplaceWrapper: Found ${mockResults.length} default products`);
-      setProducts(mockResults);
-    }
-    
-    // Use a short timeout to ensure the UI has time to update
+    // Force a small delay to allow the UI to show the loading state
     setTimeout(() => {
-      setIsSearching(false);
-      setInitialLoadComplete(true);
-    }, 500);
+      if (keyword) {
+        // Use mock products with search
+        console.log("MarketplaceWrapper: Loading products for search term:", keyword);
+        const mockResults = searchMockProducts(keyword);
+        console.log(`MarketplaceWrapper: Found ${mockResults.length} products for "${keyword}"`);
+        
+        // Always ensure we have some products
+        if (mockResults.length === 0) {
+          console.log("MarketplaceWrapper: No search results, using default products");
+          setProducts(getMockProducts());
+        } else {
+          setProducts(mockResults);
+        }
+      } else {
+        // Select a random default search term to load initial products
+        const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
+        console.log("MarketplaceWrapper: Loading default products for:", defaultTerm);
+        const mockResults = getMockProducts();
+        console.log(`MarketplaceWrapper: Found ${mockResults.length} default products`);
+        setProducts(mockResults);
+      }
+      
+      // Always complete loading after a short delay
+      setTimeout(() => {
+        setIsSearching(false);
+        setInitialLoadComplete(true);
+      }, 500);
+    }, 100);
   }, [searchParams, setProducts]);
 
   useEffect(() => {
@@ -84,6 +95,15 @@ const MarketplaceWrapper = () => {
       
       // Simulate search delay for a more realistic experience
       setTimeout(() => {
+        const results = searchMockProducts(term);
+        
+        // Always ensure we have at least some products
+        if (results.length === 0) {
+          setProducts(getMockProducts(5));
+        } else {
+          setProducts(results);
+        }
+        
         setIsSearching(false);
       }, 500);
     }

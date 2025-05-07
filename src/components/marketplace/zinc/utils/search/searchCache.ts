@@ -22,6 +22,7 @@ export const cleanupCache = (): void => {
   const now = Date.now();
   Object.keys(searchCache).forEach(key => {
     if (now - searchCache[key].timestamp > CACHE_EXPIRY) {
+      console.log(`Cache: Removing expired entry for "${key}"`);
       delete searchCache[key];
     }
   });
@@ -37,10 +38,11 @@ export const getFromCache = (query: string): ZincProduct[] | null => {
   
   if (searchCache[lowercaseQuery] && 
       Date.now() - searchCache[lowercaseQuery].timestamp < CACHE_EXPIRY) {
-    console.log(`Using cached results for "${lowercaseQuery}"`);
+    console.log(`Cache: Using cached results for "${lowercaseQuery}" (${searchCache[lowercaseQuery].results.length} items)`);
     return searchCache[lowercaseQuery].results;
   }
   
+  console.log(`Cache: No valid cache found for "${lowercaseQuery}"`);
   return null;
 };
 
@@ -52,6 +54,7 @@ export const getFromCache = (query: string): ZincProduct[] | null => {
 export const saveToCache = (query: string, results: ZincProduct[]): void => {
   const lowercaseQuery = query.toLowerCase().trim();
   
+  console.log(`Cache: Saving ${results.length} results for "${lowercaseQuery}"`);
   searchCache[lowercaseQuery] = {
     timestamp: Date.now(),
     results

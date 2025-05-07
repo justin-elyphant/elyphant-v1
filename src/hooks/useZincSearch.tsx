@@ -31,6 +31,7 @@ export const useZincSearch = (searchTerm: string) => {
 
     // Reset results if search term is empty
     if (!searchTerm || searchTerm.trim().length < 2) {
+      console.log('useZincSearch: Search term empty or too short, resetting results');
       setZincResults([]);
       setFilteredProducts([]);
       return;
@@ -38,15 +39,18 @@ export const useZincSearch = (searchTerm: string) => {
 
     // Store current search term as the last one processed
     lastSearchTermRef.current = searchTerm;
+    console.log(`useZincSearch: Processing new search term: "${searchTerm}"`);
     
     const fetchZincResults = async () => {
       if (isSearchingRef.current) return;
       isSearchingRef.current = true;
       setLoading(true);
+      console.log(`useZincSearch: Starting search for "${searchTerm}"`);
       
       // Cancel previous request if it exists
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+        console.log('useZincSearch: Aborted previous search request');
       }
       
       abortControllerRef.current = new AbortController();
@@ -59,6 +63,7 @@ export const useZincSearch = (searchTerm: string) => {
         
         // Filter local products first (faster response)
         const term = searchTerm.toLowerCase();
+        console.log(`useZincSearch: Filtering local products for "${term}"`);
         
         // Use more efficient filtering with early returns and limit to 50 products max
         const filtered = products.filter((product, index) => {
@@ -79,19 +84,22 @@ export const useZincSearch = (searchTerm: string) => {
           return false;
         });
         
+        console.log(`useZincSearch: Found ${filtered.length} matching local products`);
         setFilteredProducts(filtered);
         
         // Special case mappings for popular searches - this improves results quality
         let searchQuery = searchTerm;
         if (term.includes('macbook') || term.includes('mac book')) {
           searchQuery = 'apple macbook';
+          console.log(`useZincSearch: Detected MacBook search, using query "${searchQuery}"`);
         }
         else if ((term.includes('padres') && (term.includes('hat') || term.includes('cap'))) ||
                  (term.includes('san diego') && (term.includes('hat') || term.includes('cap')))) {
           searchQuery = 'san diego padres baseball hat';
+          console.log(`useZincSearch: Detected Padres hat search, using query "${searchQuery}"`);
         }
         
-        console.log(`Searching Zinc API for "${searchQuery}"...`);
+        console.log(`useZincSearch: Searching Zinc API for "${searchQuery}"...`);
         
         // Get results from Zinc API (through our service) with a timeout
         const timeoutPromise = new Promise<never>((_, reject) => {
@@ -103,19 +111,22 @@ export const useZincSearch = (searchTerm: string) => {
         try {
           // Try using searchProducts from zincService first
           // Limit number of results to improve performance
+          console.log(`useZincSearch: Attempting primary search method with searchProducts()`);
           const resultsPromise = searchProducts(searchQuery, "25");
           
           // Race between the API call and the timeout
           results = await Promise.race([resultsPromise, timeoutPromise]);
+          console.log(`useZincSearch: Primary search method succeeded with ${results?.length || 0} results`);
         } catch (err) {
-          console.log('Error with primary search method, falling back to findMatchingProducts', err);
+          console.log('useZincSearch: Error with primary search method, falling back to findMatchingProducts', err);
           // Fallback to findMatchingProducts if searchProducts fails
           results = findMatchingProducts(searchQuery);
+          console.log(`useZincSearch: Fallback search returned ${results?.length || 0} results`);
         }
         
         // Process results
         if (results && Array.isArray(results)) {
-          console.log(`Found ${results.length} results from Zinc API for "${searchQuery}"`);
+          console.log(`useZincSearch: Found ${results.length} results from Zinc API for "${searchQuery}"`);
           
           // Map to consistent format with proper types - use batch processing for better performance
           const processedResults = results.map(item => normalizeProduct({
@@ -136,19 +147,21 @@ export const useZincSearch = (searchTerm: string) => {
           
           // Limit max results to avoid performance issues
           const limitedResults = processedResults.slice(0, 50);
+          console.log(`useZincSearch: Processed ${processedResults.length} results, limited to ${limitedResults.length}`);
           setZincResults(limitedResults);
         } else {
-          console.log(`No results found from Zinc API for "${searchTerm}"`);
+          console.log(`useZincSearch: No results found from Zinc API for "${searchTerm}"`);
           setZincResults([]);
         }
         
       } catch (error) {
         // Only log error if not aborted
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
-          console.error('Error searching Zinc API:', error);
+          console.error('useZincSearch: Error searching Zinc API:', error);
         }
       } finally {
         setLoading(false);
+        console.log(`useZincSearch: Search completed for "${searchTerm}"`);
         // Add a slight delay before allowing new searches to prevent thrashing
         setTimeout(() => {
           isSearchingRef.current = false;
@@ -172,6 +185,7 @@ export const useZincSearch = (searchTerm: string) => {
     };
 
     // Use a debounce to avoid excessive API calls
+    console.log(`useZincSearch: Setting up debounced search for "${searchTerm}" (800ms)`);
     searchTimeoutRef.current = window.setTimeout(() => {
       fetchZincResults();
     }, 800); // increased debounce time for better performance

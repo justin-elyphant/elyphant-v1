@@ -23,6 +23,8 @@ import {
  * @returns Array of matching products
  */
 export const findMatchingProducts = (query: string): ZincProduct[] => {
+  console.log(`FindMatchingProducts: Starting search for "${query}"`);
+  
   // Clean expired cache entries occasionally
   if (Math.random() < 0.1) cleanupCache();
   
@@ -31,16 +33,17 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
   // Check cache first
   const cachedResults = getFromCache(lowercaseQuery);
   if (cachedResults) {
+    console.log(`FindMatchingProducts: Using ${cachedResults.length} cached results for "${lowercaseQuery}"`);
     return cachedResults;
   }
   
-  console.log(`SearchUtils: Searching for "${lowercaseQuery}"`);
+  console.log(`FindMatchingProducts: No cache found, generating results for "${lowercaseQuery}"`);
   
   // Special case for San Diego Padres hat searches
   if ((lowercaseQuery.includes("padres") || lowercaseQuery.includes("san diego")) && 
       (lowercaseQuery.includes("hat") || lowercaseQuery.includes("cap"))) {
     const specificQuery = "san diego padres baseball hat clothing apparel";
-    console.log(`SearchUtils: Using specific query for Padres hat: "${specificQuery}"`);
+    console.log(`FindMatchingProducts: Detected Padres hat search, using specific query "${specificQuery}"`);
     
     // Create custom results for Padres hats
     const padresHatResults = createMockResults(
@@ -60,7 +63,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       return isProductRelevantToSearch(product, specificQuery);
     });
     
-    console.log(`SearchUtils: Generated ${filteredPadresResults.length} custom Padres hat results`);
+    console.log(`FindMatchingProducts: Generated ${filteredPadresResults.length} custom Padres hat results`);
     
     // Cache the results before returning
     saveToCache(lowercaseQuery, filteredPadresResults);
@@ -70,6 +73,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
   
   // Get appropriate image category
   const imageCategory = getImageCategory(lowercaseQuery);
+  console.log(`FindMatchingProducts: Using category "${imageCategory}" for query "${lowercaseQuery}"`);
   
   // Generic search - limit to 50 products max for better performance
   const genericResults = createMockResults(lowercaseQuery, imageCategory, 50, 3.5, 5.0, undefined, true);
@@ -79,7 +83,7 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     .filter(product => isProductRelevantToSearch(product, lowercaseQuery))
     .slice(0, 50);
   
-  console.log(`SearchUtils: Generated ${filteredGenericResults.length} relevant generic results`);
+  console.log(`FindMatchingProducts: Generated ${genericResults.length} raw results, filtered to ${filteredGenericResults.length} relevant results`);
   
   // Cache the results before returning
   saveToCache(lowercaseQuery, filteredGenericResults);

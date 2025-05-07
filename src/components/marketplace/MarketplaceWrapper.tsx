@@ -74,7 +74,7 @@ const MarketplaceWrapper = () => {
       setTimeout(() => {
         setIsSearching(false);
         setInitialLoadComplete(true);
-      }, 500);
+      }, 200); // Shorter delay for faster loading perception
     }, 100);
   }, [searchParams, setProducts]);
 
@@ -105,7 +105,7 @@ const MarketplaceWrapper = () => {
         }
         
         setIsSearching(false);
-      }, 500);
+      }, 300); // Shorter delay for better UX
     }
   };
 

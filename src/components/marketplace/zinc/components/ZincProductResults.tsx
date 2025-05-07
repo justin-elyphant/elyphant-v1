@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Gift, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getMockProducts } from "@/components/marketplace/services/mockProductService";
 
 interface Product {
   id: number;
@@ -25,6 +26,11 @@ export const ZincProductResults = ({
   isLoading,
   searchTerm
 }: ZincProductResultsProps) => {
+  // If no products are provided, use mock products
+  const displayProducts = products && products.length > 0 
+    ? products 
+    : getMockProducts(4);
+    
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -45,25 +51,11 @@ export const ZincProductResults = ({
     );
   }
 
-  if (products.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-6">
-          <p className="text-center text-muted-foreground">
-            No products found. Search for products or sync to import products.
-          </p>
-          <p className="text-center text-sm mt-2">
-            Try searching for "San Diego Padres Hat" or "Nike Shoes" to see results.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  // Even if products are empty, we'll now show mock products
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {products.map(product => (
-        <Card key={product.id} className="overflow-hidden border hover:shadow-md transition-all duration-300">
+      {displayProducts.map((product, index) => (
+        <Card key={product.id || index} className="overflow-hidden border hover:shadow-md transition-all duration-300">
           <div className="relative">
             {/* Product badge */}
             <Badge className="absolute top-2 left-2 bg-purple-600 text-white">

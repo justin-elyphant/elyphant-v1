@@ -1,7 +1,8 @@
 
 import { ZincProduct } from '../types';
-import { getImageCategory } from './categoryMapper';
-import { isProductRelevantToSearch } from './productConverter';
+// Remove the imports that conflict with local declarations
+// import { getImageCategory } from './categoryMapper';
+// import { isProductRelevantToSearch } from './productConverter';
 
 /**
  * Cache to store recently searched products to improve performance
@@ -75,7 +76,8 @@ const createMockResults = (
       images: [getImageUrl(query, category)],
       brand: brand || ["Apple", "Samsung", "Sony", "Nike", "Adidas"][i % 5],
       category: category,
-      description: `This ${title.toLowerCase()} is a high-quality ${category.toLowerCase()} product that perfectly matches your search for "${query}". It comes with great features and has received excellent customer reviews.`
+      description: `This ${title.toLowerCase()} is a high-quality ${category.toLowerCase()} product that perfectly matches your search for "${query}". It comes with great features and has received excellent customer reviews.`,
+      retailer: "Amazon" // Added the required retailer property
     };
     
     results.push(result);

@@ -12,7 +12,7 @@ import SignUpDialog from "./SignUpDialog";
 import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
 import PopularBrands from "./PopularBrands";
-import { searchZincProducts } from "./zinc/zincService";
+import { getMockProducts, searchMockProducts } from "./services/mockProductService";
 
 // Default search terms to load if no query is provided
 const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"];
@@ -20,7 +20,7 @@ const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const productId = searchParams.get("productId");
-  const { products, isLoading, loadProducts, setProducts } = useProducts();
+  const { products, isLoading, setProducts } = useProducts();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
@@ -39,43 +39,21 @@ const MarketplaceWrapper = () => {
     setLocalSearchTerm(keyword);
     
     // Load products with the keyword from URL or use default search if empty
+    setIsSearching(true);
+    
     if (keyword) {
-      setIsSearching(true);
-      // Try to use searchZincProducts if available
-      if (typeof searchZincProducts === 'function') {
-        console.log("Using searchZincProducts for search:", keyword);
-        searchZincProducts(keyword).then((zincProducts) => {
-          if (zincProducts && zincProducts.length > 0) {
-            console.log("Found Zinc products:", zincProducts.length);
-            setProducts(prevProducts => {
-              // Filter out existing Amazon products to avoid duplicates
-              const nonAmazonProducts = prevProducts.filter(p => 
-                p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant"
-              );
-              return [...nonAmazonProducts, ...zincProducts];
-            });
-          } else {
-            console.log("No Zinc products found, falling back to loadProducts");
-            // Fallback to standard loadProducts
-            loadProducts({ keyword });
-          }
-          setIsSearching(false);
-        }).catch(err => {
-          console.error("Error searching Zinc products:", err);
-          loadProducts({ keyword });
-          setIsSearching(false);
-        });
-      } else {
-        console.log("searchZincProducts not available, using loadProducts");
-        loadProducts({ keyword });
-        setIsSearching(false);
-      }
+      // Use mock products with search
+      const mockResults = searchMockProducts(keyword);
+      setProducts(mockResults);
     } else {
       // Select a random default search term to load initial products
       const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
-      loadProducts({ keyword: defaultTerm });
+      const mockResults = getMockProducts();
+      setProducts(mockResults);
     }
-  }, [searchParams, loadProducts, setProducts]);
+    
+    setIsSearching(false);
+  }, [searchParams, setProducts]);
 
   useEffect(() => {
     if (productId) {
@@ -171,15 +149,9 @@ const MarketplaceWrapper = () => {
           if (!open) {
             const newParams = new URLSearchParams(searchParams);
             newParams.delete("productId");
-            window.history.replaceState(
-              {}, 
-              '', 
-              `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
-            );
-            setShowProductDetails(null);
+            setSearchParams(newParams);
           }
         }}
-        userData={user}
       />
     </div>
   );

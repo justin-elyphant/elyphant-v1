@@ -11,29 +11,27 @@ interface GiftSourceSelectorProps {
 
 const GiftSourceSelector = ({ giftSource, setGiftSource }: GiftSourceSelectorProps) => {
   return (
-    <div className="space-y-1">
-      <Label htmlFor="gift-source" className="text-xs text-muted-foreground">Gift Source</Label>
+    <div className="space-y-2">
+      <Label>Gift Selection Source</Label>
       <RadioGroup 
-        id="gift-source" 
         value={giftSource} 
-        onValueChange={(value) => setGiftSource(value as GiftSource)}
-        className="flex gap-4"
+        onValueChange={(value: GiftSource) => setGiftSource(value)}
       >
-        <div className="flex items-center space-x-1">
-          <RadioGroupItem value="wishlist" id="gift-source-wishlist" />
-          <Label htmlFor="gift-source-wishlist" className="text-xs cursor-pointer">Wishlist</Label>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="wishlist" id="wishlist" />
+          <Label htmlFor="wishlist">From wishlist</Label>
         </div>
-        <div className="flex items-center space-x-1">
-          <RadioGroupItem value="ai" id="gift-source-ai" />
-          <Label htmlFor="gift-source-ai" className="text-xs cursor-pointer">AI Suggest</Label>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="ai" id="ai" />
+          <Label htmlFor="ai">AI selected</Label>
         </div>
-        <div className="flex items-center space-x-1">
-          <RadioGroupItem value="both" id="gift-source-both" />
-          <Label htmlFor="gift-source-both" className="text-xs cursor-pointer">Both</Label>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="both" id="both" />
+          <Label htmlFor="both">Wishlist + AI</Label>
         </div>
-        <div className="flex items-center space-x-1">
-          <RadioGroupItem value="specific" id="gift-source-specific" />
-          <Label htmlFor="gift-source-specific" className="text-xs cursor-pointer">Specific Product</Label>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="specific" id="specific" />
+          <Label htmlFor="specific">Specific product</Label>
         </div>
       </RadioGroup>
     </div>

@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X } from "lucide-react";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
 
 import EventFormSection from "./EventFormSection";
 import AutoGiftSection from "./AutoGiftSection";
@@ -20,9 +19,6 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
   const [autoGiftAmount, setAutoGiftAmount] = useState(0);
   const [giftSource, setGiftSource] = useState<GiftSource>("wishlist");
   const [privacyLevel, setPrivacyLevel] = useState<PrivacyLevel>("private");
-  const [paymentMethodId, setPaymentMethodId] = useState<string>("");
-  const [selectedProductId, setSelectedProductId] = useState<string>("");
-  const [isSaving, setIsSaving] = useState(false);
 
   // Initialize form when event changes
   useEffect(() => {
@@ -30,22 +26,16 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
       setType(event.type);
       setPerson(event.person);
       setDate(event.date);
-      setAutoGiftEnabled(event.autoGiftEnabled || false);
-      // Make sure autoGiftAmount is initialized properly
-      setAutoGiftAmount(event.autoGiftAmount || 50); // Default to 50 if not set
-      setGiftSource(event.giftSource || "wishlist");
+      setAutoGiftEnabled(event.autoGiftEnabled);
+      setAutoGiftAmount(event.autoGiftAmount || 0);
+      setGiftSource((event.giftSource || "wishlist") as GiftSource);
       // Make sure we cast the string to the correct type
       setPrivacyLevel((event.privacyLevel || "private") as PrivacyLevel);
-      // Initialize payment method ID if available
-      setPaymentMethodId(event.paymentMethodId || "");
-      // Initialize selected product ID if available
-      setSelectedProductId(event.selectedProductId || "");
     }
   }, [event]);
 
   const handleSave = () => {
     if (event) {
-      setIsSaving(true);
       onSave(event.id, {
         type,
         person,
@@ -53,13 +43,9 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
         autoGiftEnabled,
         autoGiftAmount: autoGiftEnabled ? autoGiftAmount : undefined,
         giftSource: autoGiftEnabled ? giftSource : undefined,
-        paymentMethodId: autoGiftEnabled ? paymentMethodId : undefined,
-        selectedProductId: autoGiftEnabled && giftSource === "specific" ? selectedProductId : undefined,
         privacyLevel,
       });
-      toast.success("Gift occasion updated successfully");
       onOpenChange(false);
-      setIsSaving(false);
     }
   };
 
@@ -67,15 +53,15 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] overflow-y-auto max-w-md mx-auto rounded-t-xl">
-        <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl py-2">
-          <DrawerTitle className="text-primary text-lg">Edit Gift Occasion</DrawerTitle>
-          <DrawerDescription className="text-muted-foreground text-sm">
-            Update details for {person}'s {type}
+      <DrawerContent className="max-h-[90vh] overflow-y-auto">
+        <DrawerHeader className="text-left">
+          <DrawerTitle>Edit Gift Occasion</DrawerTitle>
+          <DrawerDescription>
+            Update the details for {person}'s {type}
           </DrawerDescription>
         </DrawerHeader>
         
-        <div className="px-4 py-2 space-y-2 overflow-y-auto">
+        <div className="px-4 py-2 space-y-6">
           <EventFormSection 
             type={type}
             person={person}
@@ -85,22 +71,18 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setDate={setDate}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />
+          <Separator />
           
           <AutoGiftSection 
             autoGiftEnabled={autoGiftEnabled}
             autoGiftAmount={autoGiftAmount}
             giftSource={giftSource}
-            paymentMethodId={paymentMethodId}
-            selectedProductId={selectedProductId}
             setAutoGiftEnabled={setAutoGiftEnabled}
             setAutoGiftAmount={setAutoGiftAmount}
             setGiftSource={setGiftSource}
-            setPaymentMethodId={setPaymentMethodId}
-            setSelectedProductId={setSelectedProductId}
           />
           
-          <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />
+          <Separator />
           
           <PrivacySection 
             privacyLevel={privacyLevel}
@@ -108,23 +90,14 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
           />
         </div>
         
-        <DrawerFooter className="pt-1 pb-2 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-          <div className="flex items-center justify-between w-full gap-3">
-            <Button 
-              onClick={handleSave} 
-              className="flex-1 bg-primary hover:bg-primary/90"
-              disabled={isSaving}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
+        <DrawerFooter className="pt-2">
+          <Button onClick={handleSave}>Save Changes</Button>
+          <DrawerClose asChild>
+            <Button variant="outline">
+              <X className="h-4 w-4 mr-2" />
+              Cancel
             </Button>
-            <DrawerClose asChild>
-              <Button variant="outline" className="border-primary/20 hover:bg-primary/10">
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-            </DrawerClose>
-          </div>
+          </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

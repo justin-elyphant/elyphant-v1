@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ interface ProductDetailsProps {
     num_reviews?: number;
     category?: string;
   };
-  onClick?: () => void;
+  onClick?: () => void; // Make this prop optional
   basePrice?: number;
   viewMode?: "grid" | "list";
   onAddToCart?: (e: React.MouseEvent) => void;

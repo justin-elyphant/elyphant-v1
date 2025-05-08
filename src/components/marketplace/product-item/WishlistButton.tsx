@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,7 +9,7 @@ import { useAuth } from "@/contexts/auth";
 
 interface WishlistButtonProps {
   onWishlistClick?: (e: React.MouseEvent) => void;
-  onClick?: (e: React.MouseEvent) => void; // Add this to make it compatible
+  onClick?: (e: React.MouseEvent) => void; // Make this prop optional
   isFavorited?: boolean;
   userData?: any;
   productId?: string;

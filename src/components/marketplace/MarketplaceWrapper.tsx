@@ -1,76 +1,100 @@
 
 import React, { useEffect, useState } from "react";
-import { getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import MarketplaceLoading from "./MarketplaceLoading";
+import { useSearchParams } from "react-router-dom";
+import { useProducts } from "@/contexts/ProductContext";
+import { searchMockProducts } from "./services/mockProductService";
+
 import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
-import PopularBrands from "./PopularBrands";
 import MarketplaceContent from "./MarketplaceContent";
-import { useMarketplaceProducts } from "./hooks/useMarketplaceProducts";
-import MarketplaceNavLinks from "./components/MarketplaceNavLinks";
-import MarketplaceTopNav from "./components/MarketplaceTopNav";
-import ProductDetailsManager from "./components/ProductDetailsManager";
+import { Product } from "@/types/product";
+import { normalizeProduct } from "@/contexts/ProductContext";
+import { toast } from "sonner";
 
 const MarketplaceWrapper = () => {
-  const [upcomingOccasions, setUpcomingOccasions] = useState<GiftOccasion[]>([]);
-  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  const [userData] = useLocalStorage("userData", null);
-  const { 
-    searchTerm,
-    localSearchTerm,
-    setLocalSearchTerm,
-    handleSearch,
-    isLoading,
-    initialLoadComplete,
-    products
-  } = useMarketplaceProducts();
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  
+  // Initial load based on URL search parameter
   useEffect(() => {
-    setUpcomingOccasions(getUpcomingOccasions());
+    const searchParam = searchParams.get("search");
+    if (searchParam) {
+      setSearchTerm(searchParam);
+      handleSearch(searchParam);
+    } else {
+      // Load some default products
+      const defaultMockProducts = searchMockProducts("gift ideas", 8);
+      setProducts(defaultMockProducts);
+    }
   }, []);
-
-  // Show loading state during initial load
-  if (!initialLoadComplete) {
-    return <MarketplaceLoading />;
-  }
+  
+  // Watch for search parameter changes
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam && searchParam !== searchTerm) {
+      setSearchTerm(searchParam);
+      handleSearch(searchParam);
+    }
+  }, [searchParams]);
+  
+  // Handle search function
+  const handleSearch = (term: string) => {
+    setIsLoading(true);
+    console.log(`MarketplaceWrapper: Searching for "${term}"`);
+    
+    try {
+      // Generate mock search results
+      const mockResults = searchMockProducts(term, 16);
+      
+      // Update products state
+      setProducts(mockResults);
+      
+      console.log(`MarketplaceWrapper: Found ${mockResults.length} results for "${term}"`);
+      
+      // Show success toast only for significant searches
+      if (term.length > 3) {
+        toast.success(`Found ${mockResults.length} products for "${term}"`);
+      }
+    } catch (error) {
+      console.error('Error searching for products:', error);
+      toast.error('Error searching for products');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handle search submission
+  const onSearch = (term: string) => {
+    if (!term.trim()) return;
+    
+    // Update URL parameter
+    const params = new URLSearchParams(searchParams);
+    params.set("search", term);
+    setSearchParams(params);
+    
+    // Directly handle search
+    handleSearch(term);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Header Section */}
-      <div className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <MarketplaceTopNav onSignUpRequired={() => setShowSignUpDialog(true)} />
-          
-          {/* Quick Navigation Links */}
-          <MarketplaceNavLinks upcomingOccasions={upcomingOccasions} />
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 pt-6 space-y-8">
-        {/* New Hero Header without Search */}
-        <MarketplaceHeader 
-          searchTerm={localSearchTerm} 
-          setSearchTerm={setLocalSearchTerm} 
-          onSearch={handleSearch} 
-        />
-        
-        {/* Gift Categories Section */}
-        <GiftingCategories />
-        
-        {/* Popular Brands Section */}
-        <PopularBrands />
-        
-        {/* Product Grid with Filters */}
-        <MarketplaceContent 
-          products={products}
-          isLoading={isLoading}
-          searchTerm={searchTerm}
-        />
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <MarketplaceHeader 
+        searchTerm={searchTerm} 
+        setSearchTerm={setSearchTerm} 
+        onSearch={onSearch} 
+      />
       
-      {/* Product Details and Sign Up Dialog Manager */}
-      <ProductDetailsManager products={products} userData={userData} />
+      {!searchTerm && (
+        <GiftingCategories />
+      )}
+      
+      <MarketplaceContent 
+        products={products}
+        isLoading={isLoading}
+        searchTerm={searchTerm}
+      />
     </div>
   );
 };

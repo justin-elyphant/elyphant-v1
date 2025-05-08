@@ -59,7 +59,7 @@ const MarketplaceContent = ({
           products={products} 
           viewMode="grid" 
           isLoading={false}
-          useMock={true} // This now properly matches the interface
+          useMock={true}
         />
       </div>
     );

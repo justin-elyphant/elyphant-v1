@@ -1,129 +1,58 @@
+
+import { Product } from "@/contexts/ProductContext";
+
 /**
- * Format price to always show 2 decimal places
+ * Format a product price to display as currency
  */
-export const formatProductPrice = (price: number | null | undefined): string => {
-  if (price == null) return "No Price";
-  
-  // Handle edge cases where price might be in cents (common for e-commerce systems)
-  if (price > 1000000) {
-    // Very large number, likely needs special formatting
-    return (price/100).toFixed(2);
-  } else if (price > 0 && price < 0.1) {
-    // Very small price, likely in incorrect format
-    return (price * 100).toFixed(2);
-  }
-  
+export const formatProductPrice = (price: number): string => {
+  if (isNaN(price)) return "0.00";
   return price.toFixed(2);
 };
 
 /**
- * Get the base price for a product (before any discounts)
+ * Get the base price for a product
  */
-export const getBasePrice = (product: any): number => {
+export const getBasePrice = (product: Product): number => {
   if (!product) return 0;
   
-  // If a specific base_price field exists, use that
-  if (product.base_price && typeof product.base_price === 'number') {
-    return product.base_price;
+  // Return the price directly if available
+  if (product.price) {
+    return product.price;
   }
   
-  // Otherwise, just return the regular price
-  return normalizePrice(product.price);
-};
-
-/**
- * Convert price to a consistent format if needed
- */
-export const normalizePrice = (price: any): number => {
-  if (typeof price === 'number') return price;
-  if (typeof price === 'string') return parseFloat(price) || 0;
+  // Fallback to 0 if no price is found
   return 0;
 };
 
 /**
- * Helper function for accessing product ID consistently regardless of source
+ * Standardize a product object to ensure consistent structure
  */
-export const getProductId = (product: any): string => {
-  // Always return product IDs as strings for consistent handling
-  return String(product.product_id || product.id || '');
-};
-
-/**
- * Helper function for accessing product name/title consistently
- */
-export const getProductName = (product: any): string => {
-  return product.name || product.title || 'Unknown Product';
-};
-
-/**
- * Helper function for accessing product category consistently
- */
-export const getProductCategory = (product: any): string => {
-  return product.category || product.category_name || 'Uncategorized';
-};
-
-/**
- * Helper function for accessing vendor/retailer consistently
- */
-export const getProductVendor = (product: any): string => {
-  return product.vendor || product.retailer || 'Unknown Vendor';
-};
-
-/**
- * Helper function for accessing rating consistently
- */
-export const getProductRating = (product: any): number => {
-  const rating = product.rating || product.stars || 0;
-  return typeof rating === 'string' ? parseFloat(rating) : rating;
-};
-
-/**
- * Helper function for accessing review count consistently
- */
-export const getProductReviewCount = (product: any): number => {
-  const count = product.reviewCount || product.num_reviews || 0;
-  return typeof count === 'string' ? parseInt(count, 10) : count;
-};
-
-/**
- * Helper function to get product images consistently
- */
-export const getProductImages = (product: any): string[] => {
-  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    return product.images;
-  }
-  return product.image ? [product.image] : [];
-};
-
-/**
- * Helper function to convert any product object to our standard Product type
- */
-export const standardizeProduct = (product: any) => {
-  if (!product) return null;
-  
-  // Get ID as string to ensure consistency
-  const id = getProductId(product);
+export const standardizeProduct = (product: any): any => {
+  if (!product) return {};
   
   return {
-    product_id: id,
-    id: id,
-    title: getProductName(product),
-    name: getProductName(product),
-    price: normalizePrice(product.price),
-    image: product.image || '',
-    images: getProductImages(product),
-    category: getProductCategory(product),
-    category_name: getProductCategory(product),
-    vendor: getProductVendor(product),
-    retailer: getProductVendor(product),
-    rating: getProductRating(product),
-    stars: getProductRating(product),
-    reviewCount: getProductReviewCount(product),
-    num_reviews: getProductReviewCount(product),
-    description: product.description || '',
-    brand: product.brand || '',
-    // Additional fields that might be present
-    variants: product.variants || undefined,
-    isBestSeller: product.isBestSeller || false,
+    // Required fields with fallbacks
+    product_id: product.product_id || product.id || `product-${Math.random().toString(36).substr(2, 9)}`,
+    id: product.id || product.product_id || `product-${Math.random().toString(36).substr(2, 9)}`,
+    title: product.title || product.name || "Unnamed Product",
+    name: product.name || product.title || "Unnamed Product",
+    price: parseFloat(product.price) || 19.99,
+    image: product.image || "/placeholder.svg",
+    
+    // Optional fields
+    description: product.description || "",
+    category: product.category || product.category_name || "General",
+    category_name: product.category_name || product.category || "General",
+    vendor: product.vendor || product.retailer || "Amazon",
+    retailer: product.retailer || product.vendor || "Amazon",
+    rating: product.rating || product.stars || 4.5,
+    stars: product.stars || product.rating || 4.5,
+    reviewCount: product.reviewCount || product.num_reviews || 10,
+    num_reviews: product.num_reviews || product.reviewCount || 10,
+    
+    // Additional fields
+    brand: product.brand || "",
+    images: Array.isArray(product.images) ? product.images : [product.image || "/placeholder.svg"],
+    ...product
   };
 };

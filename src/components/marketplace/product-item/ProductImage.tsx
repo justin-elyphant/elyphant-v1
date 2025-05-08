@@ -1,78 +1,76 @@
 
 import React from "react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
-import { Product } from "@/contexts/ProductContext";
-import { getProductFallbackImage, isValidImageUrl } from "./productImageUtils";
 
 interface ProductImageProps {
-  src?: string;
-  alt?: string;
-  className?: string;
-  aspectRatio?: "square" | "video" | "wide";
-  product?: Product | {
-    name: string;
-    title?: string; // Added title as optional property
-    category?: string;
-    image?: string | null;
+  product: {
+    image?: string;
+    images?: string[];
+    title?: string;
+    name?: string;
   };
+  aspectRatio?: "square" | "portrait" | "wide";
+  className?: string;
   useMock?: boolean;
 }
 
 const ProductImage = ({ 
-  src, 
-  alt,
-  product,
-  className, 
-  aspectRatio = "square",
-  useMock = true // Changed default to true to always use mockup fallbacks
+  product, 
+  aspectRatio = "square", 
+  className,
+  useMock = false
 }: ProductImageProps) => {
-  const [imgError, setImgError] = React.useState(false);
-  
-  const aspectRatioClasses = {
-    square: "aspect-square",
-    video: "aspect-video",
-    wide: "aspect-[16/9]",
+  // Determine the appropriate aspect ratio value
+  const getAspectRatioValue = (ratio: string): number => {
+    switch (ratio) {
+      case "portrait": return 3/4;
+      case "wide": return 16/9;
+      case "square":
+      default: return 1/1;
+    }
   };
 
-  // Handle product prop if provided
-  let imageSource = src || "";
-  let imageAlt = alt || "";
+  // Get primary image with fallbacks
+  const getPrimaryImage = (): string => {
+    // If useMock is true, return a consistent mock image
+    if (useMock) {
+      return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
+    }
+    
+    // Check if product has an images array with valid items
+    if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
+      const validImage = product.images.find(img => img && typeof img === 'string');
+      if (validImage) return validImage;
+    }
+    
+    // Check for single image property
+    if (product?.image && typeof product.image === 'string') {
+      return product.image;
+    }
+    
+    // Default fallback
+    return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
+  };
 
-  if (product) {
-    // If product is provided, use its properties
-    imageSource = product.image || "";
-    // Use name or title, ensuring we handle the possibility that title might not exist
-    imageAlt = product.name || (product as any).title || "Product";
-  }
-  
-  // Pre-check if image source is valid
-  const hasValidImage = isValidImageUrl(imageSource);
-  
-  // Generate a placeholder image based on the product name
-  const productName = product ? (product.name || (product as any).title || "Product") : (alt || "Product");
-  const productCategory = product?.category || "";
-  const placeholderImage = getProductFallbackImage(productName, productCategory);
-  
-  // Use placeholder if image is null, empty, has an error, or is not valid
-  const finalImageSource = imgError || !hasValidImage ? placeholderImage : imageSource;
-  
-  // For debugging purposes
-  console.log(`ProductImage: ${imageAlt} - Using image: ${finalImageSource} (original: ${imageSource}, valid: ${hasValidImage}, error: ${imgError})`);
-  
+  const imageUrl = getPrimaryImage();
+  const productName = product?.title || product?.name || "Product";
+
   return (
-    <div className={cn(
-      "overflow-hidden bg-gray-100", 
-      aspectRatioClasses[aspectRatio], 
-      className
-    )}>
-      <img 
-        src={finalImageSource} 
-        alt={imageAlt} 
-        onError={() => setImgError(true)}
-        className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
-        loading="lazy"
+    <AspectRatio 
+      ratio={getAspectRatioValue(aspectRatio)} 
+      className={cn("bg-slate-100 overflow-hidden rounded-md", className)}
+    >
+      <img
+        src={imageUrl}
+        alt={productName}
+        className="h-full w-full object-cover transition-all hover:scale-105"
+        onError={(e) => {
+          // If image fails to load, set a reliable fallback
+          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
+        }}
       />
-    </div>
+    </AspectRatio>
   );
 };
 

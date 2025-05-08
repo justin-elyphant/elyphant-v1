@@ -4,6 +4,8 @@ import ProductGridOptimized from "./ProductGridOptimized";
 import { CircleSlash } from "lucide-react";
 import ProductSkeleton from "./ui/ProductSkeleton";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
+import { differenceInDays } from "date-fns";
 
 interface MarketplaceContentProps {
   products: any[];
@@ -17,6 +19,7 @@ const MarketplaceContent = ({
   searchTerm 
 }: MarketplaceContentProps) => {
   const { profile } = useProfile();
+  const { friendOccasions } = useConnectedFriendsSpecialDates();
   const hasProfile = !!profile;
   
   // For debugging - log what we're trying to render
@@ -27,6 +30,13 @@ const MarketplaceContent = ({
     hasProfile,
     productsData: products?.slice(0, 2) // Log first two products for debugging
   });
+
+  // Check if we have any upcoming friend occasions
+  const hasUpcomingFriendOccasion = friendOccasions.length > 0;
+  const closestFriendOccasion = friendOccasions.length > 0 ? friendOccasions[0] : null;
+  const daysToClosestOccasion = closestFriendOccasion 
+    ? differenceInDays(closestFriendOccasion.date, new Date()) 
+    : null;
 
   // Function to render the appropriate content based on loading state and products
   const renderContent = () => {
@@ -88,6 +98,23 @@ const MarketplaceContent = ({
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
             Products shown are personalized based on your interests and preferences
+          </span>
+        </div>
+      )}
+      
+      {/* Special upcoming occasions reminder */}
+      {hasUpcomingFriendOccasion && closestFriendOccasion && daysToClosestOccasion !== null && daysToClosestOccasion <= 14 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-2 text-sm flex items-center mb-4">
+          <span className="text-amber-700">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            {daysToClosestOccasion === 0 
+              ? `${closestFriendOccasion.name} is today!` 
+              : daysToClosestOccasion === 1 
+                ? `${closestFriendOccasion.name} is tomorrow!`
+                : `${closestFriendOccasion.name} is in ${daysToClosestOccasion} days!`
+            }
           </span>
         </div>
       )}

@@ -1,7 +1,8 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useMarketplaceProducts } from "./hooks/useMarketplaceProducts";
 import { useProductTracking } from "./hooks/useProductTracking";
+import { useSearchParams } from "react-router-dom";
 
 import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
@@ -18,7 +19,17 @@ const MarketplaceWrapper = () => {
   } = useMarketplaceProducts();
   
   // Initialize product tracking
-  useProductTracking(products);
+  const { trackProductView } = useProductTracking(products);
+  const [searchParams] = useSearchParams();
+  
+  // Track product view when component mounts or URL parameters change
+  useEffect(() => {
+    const productId = searchParams.get("productId");
+    if (productId) {
+      console.log("MarketplaceWrapper: Tracking product view for ID:", productId);
+      trackProductView(productId);
+    }
+  }, [searchParams, trackProductView, products]);
 
   return (
     <div className="container mx-auto px-4 py-8">

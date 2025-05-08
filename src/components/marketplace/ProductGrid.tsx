@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
@@ -24,7 +24,8 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   const { handleFavoriteToggle, isFavorited } = useFavorites();
   const { addToRecentlyViewed } = useRecentlyViewed();
 
-  React.useEffect(() => {
+  // Update sorted products when products or sort option changes
+  useEffect(() => {
     setSortedProducts(sortProducts(products, sortOption));
   }, [products, sortOption]);
 

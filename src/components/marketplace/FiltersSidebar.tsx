@@ -25,19 +25,24 @@ const FiltersSidebar = ({ onFilterChange, activeFilters }: FiltersSidebarProps) 
 
   return (
     <div className="space-y-6">
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion type="single" collapsible defaultValue="price" className="w-full">
         <AccordionItem value="price">
-          <AccordionTrigger>Price</AccordionTrigger>
+          <AccordionTrigger className="font-medium">Budget</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-2">
-              {["Under $25", "$25 to $50", "$50 to $100", "Over $100"].map((range) => (
-                <div key={range} className="flex items-center space-x-2">
+              {[
+                { id: "under25", label: "Under $25" },
+                { id: "25to50", label: "$25 to $50" },
+                { id: "50to100", label: "$50 to $100" },
+                { id: "over100", label: "Over $100" }
+              ].map((range) => (
+                <div key={range.id} className="flex items-center space-x-2">
                   <Checkbox
-                    id={range}
-                    checked={activeFilters.price === range}
-                    onCheckedChange={() => handleFilterChange("price", range)}
+                    id={range.id}
+                    checked={activeFilters.price === range.id}
+                    onCheckedChange={() => handleFilterChange("price", range.id)}
                   />
-                  <Label htmlFor={range}>{range}</Label>
+                  <Label htmlFor={range.id}>{range.label}</Label>
                 </div>
               ))}
             </div>

@@ -9,6 +9,7 @@ interface ProductImageProps {
     images?: string[];
     title?: string;
     name?: string;
+    category?: string; // Add category property to interface to fix type error
   };
   aspectRatio?: "square" | "portrait" | "wide";
   className?: string;

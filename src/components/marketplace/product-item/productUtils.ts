@@ -25,6 +25,50 @@ export const getBasePrice = (product: Product): number => {
 };
 
 /**
+ * Get the product ID, handling different ID field names
+ */
+export const getProductId = (product: Product): string => {
+  if (!product) return "";
+  return product.product_id || product.id || "";
+};
+
+/**
+ * Get the product name, handling different name field names
+ */
+export const getProductName = (product: Product): string => {
+  if (!product) return "";
+  return product.title || product.name || "";
+};
+
+/**
+ * Get the product category, handling different category field names
+ */
+export const getProductCategory = (product: Product): string => {
+  if (!product) return "";
+  return product.category || product.category_name || "";
+};
+
+/**
+ * Get all product images as an array
+ */
+export const getProductImages = (product: Product): string[] => {
+  if (!product) return [];
+  
+  // If product has an images array, return it
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    return product.images.filter(img => img && typeof img === 'string');
+  }
+  
+  // If product has a single image, return it as an array
+  if (product.image && typeof product.image === 'string') {
+    return [product.image];
+  }
+  
+  // Fallback to empty array
+  return [];
+};
+
+/**
  * Standardize a product object to ensure consistent structure
  */
 export const standardizeProduct = (product: any): any => {

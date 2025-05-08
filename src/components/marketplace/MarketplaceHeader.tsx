@@ -70,9 +70,9 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
           <Badge className="bg-purple-600 text-white px-3 py-1">New Gift Ideas Daily</Badge>
           <h1 className="text-3xl font-bold text-gray-900">Find the Perfect Gift</h1>
           
-          {/* Dynamic holiday reminder with animation */}
+          {/* Dynamic holiday reminder with animation - updated text color to gray-700 */}
           {currentOccasion && (
-            <p className={`text-purple-800 font-medium transition-opacity duration-500 ${animationState === "in" ? "opacity-100" : "opacity-0"}`}>
+            <p className={`text-gray-700 font-medium transition-opacity duration-500 ${animationState === "in" ? "opacity-100" : "opacity-0"}`}>
               {formatOccasionMessage(currentOccasion)}
             </p>
           )}

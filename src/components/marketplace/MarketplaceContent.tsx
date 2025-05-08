@@ -34,10 +34,10 @@ const MarketplaceContent = ({ products, isLoading, searchTerm }: MarketplaceCont
     }
     
     // Free shipping filter
-    if (activeFilters.freeShipping && !product.free_shipping) return false;
+    if (activeFilters.freeShipping && !(product as any).free_shipping) return false;
     
     // Color filter (if we have color data)
-    if (activeFilters.color && product.color && product.color !== activeFilters.color) return false;
+    if (activeFilters.color && (product as any).color && (product as any).color !== activeFilters.color) return false;
     
     return true;
   });
@@ -52,7 +52,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm }: MarketplaceCont
         showFilters={showFilters}
         setShowFilters={setShowFilters}
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        setViewMode={(mode: "grid" | "list") => setViewMode(mode)}
         totalItems={filteredProducts.length}
         sortOption={sortOption}
         onSortChange={setSortOption}

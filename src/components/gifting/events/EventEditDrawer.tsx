@@ -20,6 +20,8 @@ interface EventEditDrawerProps {
 const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EventEditDrawerProps) => {
   // Define privacy level type explicitly
   type PrivacyLevel = "private" | "shared" | "public";
+  // Update the type to include "specific"
+  type GiftSource = "wishlist" | "ai" | "both" | "specific";
 
   // State for form fields
   const [type, setType] = useState("");
@@ -27,7 +29,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EventEditDrawerP
   const [date, setDate] = useState("");
   const [autoGiftEnabled, setAutoGiftEnabled] = useState(false);
   const [autoGiftAmount, setAutoGiftAmount] = useState(0);
-  const [giftSource, setGiftSource] = useState<"wishlist" | "ai" | "both">("wishlist");
+  const [giftSource, setGiftSource] = useState<GiftSource>("wishlist");
   // Fix: Explicitly type privacyLevel as PrivacyLevel
   const [privacyLevel, setPrivacyLevel] = useState<PrivacyLevel>("private");
 
@@ -39,7 +41,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EventEditDrawerP
       setDate(event.date);
       setAutoGiftEnabled(event.autoGiftEnabled);
       setAutoGiftAmount(event.autoGiftAmount || 0);
-      setGiftSource(event.giftSource || "wishlist");
+      setGiftSource((event.giftSource || "wishlist") as GiftSource);
       // Make sure we cast the string to the correct type
       setPrivacyLevel((event.privacyLevel || "private") as PrivacyLevel);
     }
@@ -153,7 +155,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EventEditDrawerP
                   <Label>Gift Selection Source</Label>
                   <RadioGroup 
                     value={giftSource} 
-                    onValueChange={(value: "wishlist" | "ai" | "both") => setGiftSource(value)}
+                    onValueChange={(value: GiftSource) => setGiftSource(value)}
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="wishlist" id="wishlist" />
@@ -166,6 +168,10 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EventEditDrawerP
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="both" id="both" />
                       <Label htmlFor="both">Wishlist + AI</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="specific" id="specific" />
+                      <Label htmlFor="specific">Specific product</Label>
                     </div>
                   </RadioGroup>
                 </div>

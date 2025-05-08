@@ -12,10 +12,10 @@ interface ShoppingCartButtonProps {
 }
 
 const ShoppingCartButton: React.FC<ShoppingCartButtonProps> = ({ className }) => {
-  const { items } = useCart();
+  const { cartItems } = useCart();
   const navigate = useNavigate();
   
-  const itemCount = items.length;
+  const itemCount = cartItems.length;
   
   const handleCartClick = () => {
     navigate("/cart");

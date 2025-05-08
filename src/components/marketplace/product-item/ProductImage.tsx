@@ -2,7 +2,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Product } from "@/contexts/ProductContext";
-import { getProductFallbackImage } from "./productImageUtils";
+import { getProductFallbackImage, isValidImageUrl } from "./productImageUtils";
 
 interface ProductImageProps {
   src?: string;
@@ -24,7 +24,7 @@ const ProductImage = ({
   product,
   className, 
   aspectRatio = "square",
-  useMock = false
+  useMock = true // Changed default to true to always use mockup fallbacks
 }: ProductImageProps) => {
   const [imgError, setImgError] = React.useState(false);
   
@@ -45,13 +45,19 @@ const ProductImage = ({
     imageAlt = product.name || (product as any).title || "Product";
   }
   
-  // Generate a placeholder image based on the product name
-  const placeholderImage = useMock && product 
-    ? getProductFallbackImage(product.name || (product as any).title || "Product", product.category)
-    : `https://placehold.co/600x600?text=${encodeURIComponent(imageAlt || "Product")}`;
+  // Pre-check if image source is valid
+  const hasValidImage = isValidImageUrl(imageSource);
   
-  // Use placeholder if image is null, empty, or has an error
-  const finalImageSource = imgError || !imageSource ? placeholderImage : imageSource;
+  // Generate a placeholder image based on the product name
+  const productName = product ? (product.name || (product as any).title || "Product") : (alt || "Product");
+  const productCategory = product?.category || "";
+  const placeholderImage = getProductFallbackImage(productName, productCategory);
+  
+  // Use placeholder if image is null, empty, has an error, or is not valid
+  const finalImageSource = imgError || !hasValidImage ? placeholderImage : imageSource;
+  
+  // For debugging purposes
+  console.log(`ProductImage: ${imageAlt} - Using image: ${finalImageSource} (original: ${imageSource}, valid: ${hasValidImage}, error: ${imgError})`);
   
   return (
     <div className={cn(

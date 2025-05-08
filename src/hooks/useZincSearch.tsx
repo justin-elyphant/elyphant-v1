@@ -120,23 +120,7 @@ export const useZincSearch = (searchTerm: string) => {
           
           // Ensure each product has valid images
           const validatedResults = mockResults.map(product => {
-            if (!product.image || product.image === "/placeholder.svg") {
-              // Find a better image based on category or name
-              const category = product.category?.toLowerCase() || "";
-              const name = (product.name || product.title || "").toLowerCase();
-              
-              if (name.includes("nike") || category.includes("shoe") || category.includes("footwear")) {
-                product.image = "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/7fbc5e94-8d49-4730-a280-f19d3cfad0b0/air-max-90-mens-shoes-6n3vKB.png";
-              } else if (category.includes("electronics")) {
-                product.image = "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&h=500&fit=crop";
-              }
-            }
-            
-            // Ensure images array exists
-            if (!product.images || !Array.isArray(product.images) || product.images.length === 0) {
-              product.images = product.image ? [product.image] : ['/placeholder.svg'];
-            }
-            
+            // We'll let the ProductImage component handle fallback images
             return product;
           });
           

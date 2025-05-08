@@ -59,6 +59,7 @@ const MarketplaceContent = ({
           products={products} 
           viewMode="grid" 
           isLoading={false}
+          useMock={true} // Added to ensure mock images are used
         />
       </div>
     );

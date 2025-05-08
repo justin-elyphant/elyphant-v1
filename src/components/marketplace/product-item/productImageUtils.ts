@@ -27,7 +27,7 @@ export const getProductFallbackImage = (productName: string, category?: string):
   const lowerName = productName.toLowerCase();
   
   if (lowerName.includes('nike')) {
-    return 'https://images.unsplash.com/photo-1600269452121-4f2416e55c28?w=500&h=500&fit=crop';
+    return 'https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/7fbc5e94-8d49-4730-a280-f19d3cfad0b0/air-max-90-mens-shoes-6n3vKB.png';
   }
   
   if (lowerName.includes('apple')) {
@@ -43,4 +43,30 @@ export const getProductFallbackImage = (productName: string, category?: string):
 
   // Default fallback image if no matches
   return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop';
+};
+
+/**
+ * Check if an image URL is valid/usable
+ * @param url The image URL to check
+ * @returns boolean indicating if the URL is likely valid
+ */
+export const isValidImageUrl = (url?: string): boolean => {
+  if (!url) return false;
+  
+  // Check for common placeholder or empty URLs
+  if (url === '/placeholder.svg' || 
+      url === 'null' || 
+      url === 'undefined' || 
+      url.trim() === '') {
+    return false;
+  }
+  
+  // Check for common image extensions
+  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+  const hasValidExtension = validExtensions.some(ext => 
+    url.toLowerCase().includes(ext)
+  );
+  
+  // Return true if URL has a valid extension or starts with http(s)
+  return hasValidExtension || url.startsWith('http');
 };

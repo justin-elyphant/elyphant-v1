@@ -18,6 +18,7 @@ interface ProductGridOptimizedProps {
   viewMode: "grid" | "list" | "modern";
   sortOption?: string;
   isLoading?: boolean;
+  useMock?: boolean; // Add the missing prop to fix the type error
 }
 
 // Memoized individual product component
@@ -28,7 +29,8 @@ const ProductGridOptimized = ({
   products, 
   viewMode, 
   sortOption = "relevance",
-  isLoading = false
+  isLoading = false,
+  useMock = false // Add default value
 }: ProductGridOptimizedProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<string | null>(null);
@@ -117,6 +119,7 @@ const ProductGridOptimized = ({
               onProductClick={handleProductClick}
               onWishlistClick={(e) => handleWishlistClick(e, product.product_id)}
               isFavorited={userData ? isFavorited(product.product_id) : false}
+              useMock={useMock} // Pass the prop to ProductItem if needed
             />
           )
         ))}

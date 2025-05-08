@@ -1,139 +1,82 @@
+
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
-import ProductImage from "./ProductImage";
-import ProductRating from "./ProductRating";
+import { cn } from "@/lib/utils";
 import ProductDetails from "./ProductDetails";
+import ProductImage from "./ProductImage";
 import WishlistButton from "./WishlistButton";
-import { useAuth } from "@/contexts/auth";
-import { useFavorites, SavedItemType } from "@/components/gifting/hooks/useFavorites";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Truck, Award } from "lucide-react";
+import { getBasePrice } from "./productUtils";
 
 interface ProductItemProps {
   product: Product;
   viewMode: "grid" | "list";
-  onProductClick: (productId: string) => void;
-  onWishlistClick: (e: React.MouseEvent) => void;
-  isFavorited: boolean;
+  onProductClick?: (productId: string) => void;
+  onWishlistClick?: (e: React.MouseEvent) => void; 
+  isFavorited?: boolean;
+  useMock?: boolean; // Add the useMock prop
 }
 
 const ProductItem = ({ 
   product, 
   viewMode, 
-  onProductClick,
+  onProductClick, 
   onWishlistClick,
-  isFavorited 
+  isFavorited = false,
+  useMock = false // Default to false
 }: ProductItemProps) => {
-  const { user } = useAuth();
-  const { handleSaveOptionSelect } = useFavorites();
-
-  const handleSaveOption = (option: SavedItemType, productId: string) => {
-    handleSaveOptionSelect(option, productId);
+  const handleClick = () => {
+    if (onProductClick) {
+      onProductClick(product.product_id);
+    }
   };
 
-  // Generate product badges based on product metadata
-  const getBadges = () => {
-    const badges = [];
-    
-    // Check for popularity or bestseller status
-    if (product.stars && product.stars >= 4.5) {
-      badges.push({
-        text: "Popular Pick",
-        variant: "default",
-        className: "bg-purple-600"
-      });
-    }
-    
-    // Check for fast delivery
-    if (product.prime) {
-      badges.push({
-        text: "Fast Delivery",
-        variant: "secondary",
-        className: "bg-green-600"
-      });
-    }
-    
-    // Check for staff favorites
-    if (product.stars && product.stars >= 4.8) {
-      badges.push({
-        text: "Staff Favorite",
-        variant: "outline",
-        className: "border-amber-500 text-amber-600"
-      });
-    }
-    
-    // Ensure we always show at least one badge
-    if (badges.length === 0) {
-      const categories = ['Birthdays', 'Holidays', 'Anniversaries', 'Celebrations'];
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      
-      badges.push({
-        text: `Great for ${randomCategory}`,
-        variant: "outline",
-        className: "border-blue-300 text-blue-600"
-      });
-    }
-    
-    return badges.slice(0, 1); // Only return first badge to avoid cluttering
-  };
-
+  // Base price display logic
+  const basePrice = getBasePrice(product);
+  
   return (
     <div 
-      className={`group relative rounded-lg overflow-hidden border ${
-        viewMode === 'grid' ? 'h-full flex flex-col' : 'flex'
-      } bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
-      onClick={() => onProductClick(product.product_id)}
-      data-testid={`product-item-${product.product_id}`}
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:shadow-md",
+        viewMode === "list" ? "flex-row" : ""
+      )}
     >
-      <div className={viewMode === 'grid' ? 'relative' : 'w-1/4'}>
+      <div
+        className={cn(
+          "cursor-pointer",
+          viewMode === "list" ? "w-1/3" : "w-full"
+        )}
+        onClick={handleClick}
+        data-testid="product-item"
+      >
         <ProductImage 
-          product={product} 
+          product={product}
+          aspectRatio="square" 
+          className="h-full w-full object-cover transition-all"
+          useMock={useMock} // Pass the useMock prop to ProductImage
         />
-        <WishlistButton 
-          userData={user}
-          productId={product.product_id}
-          productName={product.title}
-          onWishlistClick={onWishlistClick}
-          onSaveOptionSelect={handleSaveOption}
-          isFavorited={isFavorited}
-        />
-        
-        {/* Product Badge */}
-        <div className="absolute top-2 left-2 z-10">
-          {getBadges().map((badge, index) => (
-            <Badge 
-              key={index} 
-              variant={badge.variant as any} 
-              className={`${badge.className} text-xs text-white`}
-            >
-              {badge.text}
-            </Badge>
-          ))}
-        </div>
       </div>
       
-      <ProductDetails 
-        product={product} 
-        onAddToCart={(e) => {
-          e.stopPropagation();
-          // We'll handle this in ProductDetails
-          console.log("Gift This:", product.product_id);
-        }}
-      />
+      {/* Wishlist button */}
+      <div className="absolute right-2 top-2 z-10">
+        <WishlistButton 
+          onClick={onWishlistClick}
+          isFavorited={isFavorited}
+        />
+      </div>
       
-      {/* Trust elements */}
-      <div className="absolute bottom-0 left-0 w-full px-4 py-2 bg-gradient-to-t from-white to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="flex items-center gap-4 text-xs text-slate-700">
-          <div className="flex items-center">
-            <Truck className="h-3 w-3 mr-1 text-green-600" />
-            <span>Free Shipping</span>
-          </div>
-          
-          <div className="flex items-center">
-            <CheckCircle2 className="h-3 w-3 mr-1 text-blue-600" />
-            <span>Verified</span>
-          </div>
-        </div>
+      {/* Product details section */}
+      <div 
+        className={cn(
+          "flex flex-col p-3",
+          viewMode === "list" ? "w-2/3" : "w-full"
+        )}
+      >
+        <ProductDetails
+          product={product}
+          onClick={handleClick}
+          basePrice={basePrice}
+          viewMode={viewMode}
+        />
       </div>
     </div>
   );

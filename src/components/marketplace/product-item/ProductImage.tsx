@@ -2,6 +2,7 @@
 import React from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
+import { getProductFallbackImage } from "./productImageUtils";
 
 interface ProductImageProps {
   product: {
@@ -9,7 +10,7 @@ interface ProductImageProps {
     images?: string[];
     title?: string;
     name?: string;
-    category?: string; // Add category property to interface to fix type error
+    category?: string; 
   };
   aspectRatio?: "square" | "portrait" | "wide";
   className?: string;
@@ -41,17 +42,19 @@ const ProductImage = ({
     
     // Check if product has an images array with valid items
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
-      const validImage = product.images.find(img => img && typeof img === 'string');
+      const validImage = product.images.find(img => img && typeof img === 'string' && img !== "/placeholder.svg");
       if (validImage) return validImage;
     }
     
     // Check for single image property
-    if (product?.image && typeof product.image === 'string') {
+    if (product?.image && typeof product.image === 'string' && product.image !== "/placeholder.svg") {
       return product.image;
     }
     
-    // Default fallback
-    return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
+    // Use a specific fallback based on product category and title
+    const productName = product?.title || product?.name || "Product";
+    const productCategory = product?.category || "Product";
+    return getProductFallbackImage(productName, productCategory);
   };
 
   const imageUrl = getPrimaryImage();
@@ -67,8 +70,9 @@ const ProductImage = ({
         alt={productName}
         className="h-full w-full object-cover transition-all hover:scale-105"
         onError={(e) => {
-          // If image fails to load, set a reliable fallback
-          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
+          // If image fails to load, use category-specific fallback
+          const fallback = getProductFallbackImage(productName, product?.category || "");
+          (e.target as HTMLImageElement).src = fallback;
         }}
       />
     </AspectRatio>

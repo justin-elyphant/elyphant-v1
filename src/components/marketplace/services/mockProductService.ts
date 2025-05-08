@@ -1,7 +1,7 @@
-
 import { Product } from "@/contexts/ProductContext";
 import { generateMockProductResults, createMockResults } from "../zinc/utils/mockResultsGenerator";
 import { normalizeProduct } from "@/contexts/ProductContext";
+import { getProductFallbackImage } from "../product-item/productImageUtils";
 
 /**
  * Get a set of mock products for testing and fallback scenarios
@@ -17,14 +17,14 @@ export const getMockProducts = (count: number = 10): Product[] => {
     title: result.title || "Mock Product",
     name: result.title || "Mock Product",
     price: result.price || (19.99 + index),
-    image: result.image || "/placeholder.svg",
+    image: result.image || getReliablePlaceholderImage(index, "Electronics"),
     description: result.description || "This is a mock product for testing purposes.",
     category: result.category || "Electronics",
     vendor: "Mock Vendor",
     brand: result.brand || "Mock Brand",
     rating: result.rating || 4.5,
     reviewCount: result.review_count || 42,
-    images: [result.image || "/placeholder.svg"]
+    images: [result.image || getReliablePlaceholderImage(index, "Electronics")]
   }));
 };
 
@@ -66,12 +66,13 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
       product_id: `personalized-${interest}-${index}-${Date.now()}`,
       title: result.title || `${interest.charAt(0).toUpperCase() + interest.slice(1)} Gift`,
       price: result.price || (29.99 + index * 5),
-      image: result.image || "/placeholder.svg",
+      image: result.image || getReliablePlaceholderImage(index, interest),
       category: result.category || interest.charAt(0).toUpperCase() + interest.slice(1),
       vendor: brandToVendor(interestToBrand(interest)),
       description: result.description || `Perfect gift for ${interest} enthusiasts`,
       rating: result.rating || 4.5,
-      reviewCount: result.review_count || 30 + Math.floor(Math.random() * 50)
+      reviewCount: result.review_count || 30 + Math.floor(Math.random() * 50),
+      images: [result.image || getReliablePlaceholderImage(index, interest)]
     }));
   }
   
@@ -96,12 +97,13 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
       product_id: `search-${index}-${Date.now()}`,
       title: result.title || `${query} Gift`,
       price: result.price || (29.99 + index * 10),
-      image: result.image || "/placeholder.svg",
+      image: result.image || getReliablePlaceholderImage(index, "Gifts"),
       category: result.category,
       vendor: "Amazon via Zinc",
       description: result.description || `Perfect ${query} gift option`,
       rating: result.rating,
-      reviewCount: result.review_count
+      reviewCount: result.review_count,
+      images: [result.image || getReliablePlaceholderImage(index, "Gifts")]
     }));
   }
   
@@ -112,13 +114,42 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
     product_id: `search-${index}-${Date.now()}`,
     title: result.title || `${query} Product`,
     price: result.price || (19.99 + index * 5),
-    image: result.image || "/placeholder.svg", 
+    image: result.image || getReliablePlaceholderImage(index, "Products"),
     category: result.category || "Electronics",
     vendor: "Amazon via Zinc",
     description: result.description || `Product matching your search for ${query}`,
     rating: result.rating || 4.0,
-    reviewCount: result.review_count || 28
+    reviewCount: result.review_count || 28,
+    images: [result.image || getReliablePlaceholderImage(index, "Products")]
   }));
+};
+
+/**
+ * Generate a reliable placeholder image that's visually appealing
+ * @param index The index of the product
+ * @param category The category to use for image selection
+ * @returns A URL string to a reliable placeholder image 
+ */
+const getReliablePlaceholderImage = (index: number, category: string): string => {
+  // Use Unsplash images for reliable, high-quality placeholders
+  const placeholderImages = [
+    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop", // Headphones
+    "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=500&h=500&fit=crop", // Headphones
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop", // Shoes
+    "https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=500&h=500&fit=crop", // Shoes
+    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop", // Watch
+    "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&h=500&fit=crop", // Watch
+    "https://images.unsplash.com/photo-1585565804112-f201f68c48b4?w=500&h=500&fit=crop", // Apple Products
+    "https://images.unsplash.com/photo-1592434134753-a70baf7979d5?w=500&h=500&fit=crop", // Skincare
+    "https://images.unsplash.com/photo-1531525645387-7f14be1bdbbd?w=500&h=500&fit=crop", // Gaming
+    "https://images.unsplash.com/photo-1596521884071-39833e7ba6a6?w=500&h=500&fit=crop", // Plants
+  ];
+  
+  // Get a deterministic but varied index based on the product index and category
+  const categoryHash = category.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const imageIndex = (index + categoryHash) % placeholderImages.length;
+  
+  return placeholderImages[imageIndex];
 };
 
 /**

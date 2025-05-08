@@ -28,30 +28,46 @@ export const useMarketplaceProducts = () => {
       setIsSearching(true);
       
       try {
+        let mockResults;
+        
         // Load products based on search term or default
         if (keyword) {
           console.log("Loading products for search term:", keyword);
-          const mockResults = searchMockProducts(keyword);
+          mockResults = searchMockProducts(keyword);
           console.log(`Found ${mockResults.length} products for "${keyword}"`);
-          
-          if (mockResults.length === 0) {
-            console.log("No search results, using default products");
-            setProducts(getMockProducts(12));
-          } else {
-            setProducts(mockResults);
-          }
         } else {
           // Select a random default search term
           const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
           console.log("Loading default products for:", defaultTerm);
-          const mockResults = getMockProducts(12);
+          mockResults = searchMockProducts(defaultTerm);
+          if (!mockResults || mockResults.length === 0) {
+            console.log("No search results for default term, using general mock products");
+            mockResults = getMockProducts(12);
+          }
           console.log(`Found ${mockResults.length} default products`);
-          setProducts(mockResults);
         }
+        
+        // Ensure we have images for each product
+        const productsWithImages = mockResults.map(product => {
+          if (!product.image || product.image === "/placeholder.svg") {
+            return {
+              ...product,
+              image: `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
+              images: [
+                `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
+                `https://placehold.co/600x400?text=${encodeURIComponent("Alt View")}`
+              ]
+            };
+          }
+          return product;
+        });
+        
+        setProducts(productsWithImages);
       } catch (error) {
         console.error("Error loading products:", error);
         // Ensure we have some products even if there's an error
-        setProducts(getMockProducts(6));
+        const fallbackProducts = getMockProducts(6);
+        setProducts(fallbackProducts);
         toast.error("Error loading products");
       } finally {
         // Complete loading after a short delay for a smoother UX
@@ -82,7 +98,22 @@ export const useMarketplaceProducts = () => {
           if (results.length === 0) {
             setProducts(getMockProducts(5));
           } else {
-            setProducts(results);
+            // Ensure all products have images
+            const resultsWithImages = results.map(product => {
+              if (!product.image || product.image === "/placeholder.svg") {
+                return {
+                  ...product,
+                  image: `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
+                  images: [
+                    `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
+                    `https://placehold.co/600x400?text=${encodeURIComponent("Alt View")}`
+                  ]
+                };
+              }
+              return product;
+            });
+            
+            setProducts(resultsWithImages);
           }
           
           setIsSearching(false);
@@ -100,19 +131,40 @@ export const useMarketplaceProducts = () => {
       
       // Simulate search delay for a more realistic experience
       setTimeout(() => {
-        const results = searchMockProducts(term);
+        let results = searchMockProducts(term);
         
         // Always ensure we have at least some products
         if (results.length === 0) {
-          setProducts(getMockProducts(5));
-        } else {
-          setProducts(results);
+          results = getMockProducts(5);
         }
         
+        // Ensure all products have images
+        const resultsWithImages = results.map(product => {
+          if (!product.image || product.image === "/placeholder.svg") {
+            return {
+              ...product,
+              image: `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
+              images: [
+                `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
+                `https://placehold.co/600x400?text=${encodeURIComponent("Alt View")}`
+              ]
+            };
+          }
+          return product;
+        });
+        
+        setProducts(resultsWithImages);
         setIsSearching(false);
       }, 300);
     }
   };
+
+  console.log("useMarketplaceProducts state:", {
+    productsCount: products?.length || 0,
+    isLoading: contextLoading || isSearching,
+    initialLoadComplete,
+    searchTerm
+  });
 
   return {
     searchTerm,

@@ -1,104 +1,117 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import ProductRating from "@/components/shared/ProductRating";
-import { formatProductPrice } from "../product-item/productUtils";
+import { Product } from "@/contexts/ProductContext";
 
 interface ModernProductCardProps {
-  product: any;
+  product: Product;
   isFavorited: boolean;
   onToggleFavorite: (e: React.MouseEvent) => void;
   onAddToCart: (e: React.MouseEvent) => void;
   onClick: () => void;
 }
 
-const ModernProductCard = ({
+const ModernProductCard: React.FC<ModernProductCardProps> = ({
   product,
   isFavorited,
   onToggleFavorite,
   onAddToCart,
-  onClick
-}: ModernProductCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+  onClick,
+}) => {
+  // Ensure we have fallback values
+  const title = product.title || product.name || "Product";
+  const price = typeof product.price === 'number' ? product.price : 0;
+  const productId = product.product_id || product.id || `product-${Math.random()}`;
   
-  // Extract necessary product details
-  const productName = product.title || product.name || "";
-  const productPrice = product.price || 0;
-  const productImage = product.image || "/placeholder.svg";
-  const rating = product.rating || product.stars || 0;
-  const reviewCount = product.reviewCount || product.num_reviews || 0;
+  // Ensure image has a fallback
+  const productImage = product.image || "https://placehold.co/400x400?text=Product";
   
+  // Format price
+  const formattedPrice = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(price);
+  
+  // Determine if product is a bestseller
+  const isBestSeller = product.isBestSeller || 
+                     (product.stars && product.stars >= 4.7) ||
+                     (product.rating && product.rating >= 4.7);
+
   return (
     <Card 
-      className="overflow-hidden transition-all duration-300 hover:shadow-lg relative group cursor-pointer"
+      className="group overflow-hidden border hover:shadow-md transition-all duration-300 h-full"
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image with zoom effect */}
-      <div className="aspect-square overflow-hidden relative">
-        <img
-          src={productImage}
-          alt={productName}
-          className={`w-full h-full object-cover transition-transform duration-500 ${
-            isHovered ? "scale-110" : "scale-100"
-          }`}
+      <div className="relative overflow-hidden aspect-square">
+        <img 
+          src={productImage} 
+          alt={title}
+          className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = "/placeholder.svg";
+            // Fallback for broken images
+            (e.target as HTMLImageElement).src = "https://placehold.co/400x400?text=Product";
           }}
         />
         
-        {/* Quick action buttons */}
-        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-8 w-8 rounded-full shadow-md bg-white hover:bg-white/90"
-            onClick={onToggleFavorite}
-            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-          >
-            <Heart className={`h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
-          </Button>
-          
-          <Button
-            size="icon"
-            variant="secondary" 
-            className="h-8 w-8 rounded-full shadow-md bg-white hover:bg-white/90"
-            onClick={onAddToCart}
-            aria-label="Add to cart"
-          >
-            <ShoppingCart className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* Badges */}
-        {product.isBestSeller && (
-          <Badge className="absolute top-2 left-2 bg-yellow-500 text-white">
-            Best Seller
+        {isBestSeller && (
+          <Badge variant="secondary" className="absolute top-2 left-2 bg-yellow-500 text-white">
+            Bestseller
           </Badge>
         )}
-      </div>
-      
-      <CardContent className="p-4 relative z-10">
-        {/* Product info */}
-        <h3 className="font-medium text-sm line-clamp-1">{productName}</h3>
         
-        <ProductRating rating={rating} reviewCount={reviewCount} size="sm" />
-        
-        <div className="flex justify-between items-center mt-2">
-          <p className="font-semibold">${formatProductPrice(productPrice)}</p>
-          
-          {/* View details link */}
-          <span className={`text-xs text-primary underline transform transition-transform duration-300 ${
-            isHovered ? "translate-x-1" : ""
-          }`}>
-            View details
-          </span>
+        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full bg-white hover:bg-white/90 text-black"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart(e);
+            }}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Add to Cart
+          </Button>
         </div>
+        
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-2 right-2 bg-white/80 hover:bg-white/90 rounded-full h-8 w-8"
+          onClick={(e) => onToggleFavorite(e)}
+        >
+          <Heart 
+            className={`h-4 w-4 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} 
+          />
+        </Button>
+      </div>
+      <CardContent className="p-3">
+        <h3 className="font-medium text-sm line-clamp-2 mt-1 mb-1">{title}</h3>
+        <p className="font-bold text-base">{formattedPrice}</p>
+        
+        {(product.stars || product.rating) && (
+          <div className="flex items-center mt-1">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span 
+                  key={star}
+                  className={star <= Math.round(product.stars || product.rating || 0) 
+                    ? "text-yellow-400" 
+                    : "text-gray-300"}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <span className="text-xs text-gray-500 ml-1">
+              {product.reviewCount || product.num_reviews || 0}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

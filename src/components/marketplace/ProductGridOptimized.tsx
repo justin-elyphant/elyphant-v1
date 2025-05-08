@@ -79,7 +79,10 @@ const ProductGridOptimized = ({
     return <ProductSkeleton count={12} />;
   }
 
-  if (sortedProducts.length === 0) {
+  // For debugging - log what we're trying to render
+  console.log("ProductGridOptimized rendering products:", sortedProducts?.length || 0);
+
+  if (!sortedProducts || sortedProducts.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-lg font-medium">No products found</p>

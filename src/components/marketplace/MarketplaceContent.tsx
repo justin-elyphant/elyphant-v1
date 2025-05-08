@@ -1,8 +1,7 @@
 
 import React from "react";
 import ProductGridOptimized from "./ProductGridOptimized";
-import { Spinner } from "@/components/ui/spinner";
-import { CircleSlash, Search } from "lucide-react";
+import { CircleSlash } from "lucide-react";
 import ProductSkeleton from "./ui/ProductSkeleton";
 
 interface MarketplaceContentProps {
@@ -16,6 +15,13 @@ const MarketplaceContent = ({
   isLoading, 
   searchTerm 
 }: MarketplaceContentProps) => {
+  // For debugging - log what we're trying to render
+  console.log("MarketplaceContent rendering:", { 
+    productsCount: products?.length || 0, 
+    isLoading, 
+    searchTerm 
+  });
+
   // Function to render the appropriate content based on loading state and products
   const renderContent = () => {
     if (isLoading) {
@@ -51,7 +57,7 @@ const MarketplaceContent = ({
         <ProductGridOptimized 
           products={products} 
           viewMode="grid" 
-          isLoading={isLoading}
+          isLoading={false}
         />
       </div>
     );

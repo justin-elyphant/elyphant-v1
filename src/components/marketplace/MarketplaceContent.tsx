@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGridOptimized from "./ProductGridOptimized";
 import MarketplaceLoading from "./MarketplaceLoading";
@@ -10,9 +10,10 @@ interface MarketplaceContentProps {
   products: Product[];
   isLoading: boolean;
   searchTerm?: string;
+  onProductView?: (productId: string) => void;
 }
 
-const MarketplaceContent = ({ products, isLoading, searchTerm }: MarketplaceContentProps) => {
+const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: MarketplaceContentProps) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
@@ -73,6 +74,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm }: MarketplaceCont
             products={filteredProducts} 
             viewMode={viewMode}
             sortOption={sortOption}
+            onProductView={onProductView}
           />
         </div>
       </div>

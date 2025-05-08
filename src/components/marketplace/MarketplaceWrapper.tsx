@@ -29,7 +29,7 @@ const MarketplaceWrapper = () => {
       console.log("MarketplaceWrapper: Tracking product view for ID:", productId);
       trackProductView(productId);
     }
-  }, [searchParams, trackProductView, products]);
+  }, [searchParams, products]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -46,6 +46,7 @@ const MarketplaceWrapper = () => {
         products={products}
         isLoading={isLoading}
         searchTerm={searchTerm}
+        onProductView={trackProductView}
       />
       
       {/* Recently viewed products section */}

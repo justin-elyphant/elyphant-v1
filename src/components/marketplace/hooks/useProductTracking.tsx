@@ -7,11 +7,12 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { RecentlyViewedProduct } from "@/types/supabase";
+import { toast } from "sonner";
 
 export const useProductTracking = (products: Product[]) => {
   const { addToRecentlyViewed } = useRecentlyViewed();
   const [searchParams] = useSearchParams();
-  const { profile } = useProfile();
+  const { profile, refreshProfile } = useProfile();
   const { user } = useAuth();
   
   // Track product view when opened via URL parameter
@@ -23,9 +24,13 @@ export const useProductTracking = (products: Product[]) => {
   }, [searchParams]);
   
   const trackProductView = (productId: string) => {
+    console.log("Tracking product view:", productId);
+    
     // Find the product in the current products list
     const product = products.find(p => (p.product_id || p.id) === productId);
     if (product) {
+      console.log("Found product to track:", product.title || product.name);
+      
       // Add to recently viewed in local storage
       addToRecentlyViewed({
         id: product.product_id || product.id || "",
@@ -35,7 +40,13 @@ export const useProductTracking = (products: Product[]) => {
       });
       
       // If user is logged in, sync with profile
-      syncWithProfile(product);
+      if (user && profile) {
+        syncWithProfile(product);
+      } else {
+        console.log("User not logged in or profile not loaded, skipping profile sync");
+      }
+    } else {
+      console.warn(`Product with ID ${productId} not found in current products list`);
     }
   };
   
@@ -82,6 +93,10 @@ export const useProductTracking = (products: Product[]) => {
         
       if (error) {
         console.error("Error updating recently viewed products in profile:", error);
+      } else {
+        console.log("Successfully updated recently viewed products in profile");
+        // Refresh profile to ensure updated data is available throughout the app
+        refreshProfile();
       }
     } catch (err) {
       console.error("Error syncing product view with profile:", err);

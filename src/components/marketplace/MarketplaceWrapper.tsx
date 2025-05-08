@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { searchMockProducts } from "./services/mockProductService";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
@@ -16,6 +17,7 @@ const MarketplaceWrapper = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const { profile } = useProfile();
   
   // Initial load based on URL search parameter
   useEffect(() => {
@@ -24,9 +26,8 @@ const MarketplaceWrapper = () => {
       setSearchTerm(searchParam);
       handleSearch(searchParam);
     } else {
-      // Load some default products
-      const defaultMockProducts = searchMockProducts("gift ideas", 8);
-      setProducts(defaultMockProducts);
+      // Load some default products with personalization
+      loadPersonalizedProducts();
     }
   }, []);
   
@@ -38,6 +39,44 @@ const MarketplaceWrapper = () => {
       handleSearch(searchParam);
     }
   }, [searchParams]);
+
+  // Load personalized products based on user profile
+  const loadPersonalizedProducts = () => {
+    setIsLoading(true);
+    
+    // Extract user interests from profile
+    const userInterests = profile?.gift_preferences || [];
+    const interests = Array.isArray(userInterests) 
+      ? userInterests.map(pref => typeof pref === 'string' ? pref : pref.category)
+      : [];
+
+    console.log("User interests for personalization:", interests);
+
+    let personalizedProducts: Product[] = [];
+    
+    // If we have interests, use them for personalized results
+    if (interests.length > 0) {
+      // Use up to 3 interests to create a personalized mix of products
+      const personalizedQuery = interests.slice(0, 3).join(" ");
+      personalizedProducts = searchMockProducts(personalizedQuery, 10);
+      
+      // Mix in some general products
+      const generalProducts = searchMockProducts("gift ideas", 6);
+      
+      // Combine and shuffle to create a diverse but personalized selection
+      personalizedProducts = [...personalizedProducts.slice(0, 10), ...generalProducts.slice(0, 6)]
+        .sort(() => Math.random() - 0.5); // Simple shuffle
+      
+      console.log(`Generated ${personalizedProducts.length} personalized products based on interests`);
+    } else {
+      // Fallback to default products if no interests
+      personalizedProducts = searchMockProducts("gift ideas", 16);
+      console.log("No interests found, using default products");
+    }
+    
+    setProducts(personalizedProducts);
+    setIsLoading(false);
+  };
   
   // Handle search function
   const handleSearch = (term: string) => {

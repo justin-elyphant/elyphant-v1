@@ -3,6 +3,7 @@ import React from "react";
 import ProductGridOptimized from "./ProductGridOptimized";
 import { CircleSlash } from "lucide-react";
 import ProductSkeleton from "./ui/ProductSkeleton";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 interface MarketplaceContentProps {
   products: any[];
@@ -15,11 +16,15 @@ const MarketplaceContent = ({
   isLoading, 
   searchTerm 
 }: MarketplaceContentProps) => {
+  const { profile } = useProfile();
+  const hasProfile = !!profile;
+  
   // For debugging - log what we're trying to render
   console.log("MarketplaceContent rendering:", { 
     productsCount: products?.length || 0, 
     isLoading, 
     searchTerm,
+    hasProfile,
     productsData: products?.slice(0, 2) // Log first two products for debugging
   });
 
@@ -68,8 +73,25 @@ const MarketplaceContent = ({
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
       <h2 className="text-xl font-semibold mb-4">
-        {searchTerm ? `Search Results: "${searchTerm}"` : "Recommended Products"}
+        {searchTerm 
+          ? `Search Results: "${searchTerm}"` 
+          : hasProfile 
+            ? "Personalized Recommendations" 
+            : "Recommended Products"}
       </h2>
+      
+      {/* Show personalization badge if viewing recommendations with a profile */}
+      {!searchTerm && hasProfile && (
+        <div className="bg-purple-50 border border-purple-200 rounded-md p-2 text-sm flex items-center mb-4">
+          <span className="text-purple-700">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Products shown are personalized based on your interests and preferences
+          </span>
+        </div>
+      )}
+      
       {renderContent()}
     </div>
   );

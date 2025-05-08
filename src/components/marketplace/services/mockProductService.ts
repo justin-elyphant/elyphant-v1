@@ -38,6 +38,43 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
   // Check if it's a special case search
   const lowerQuery = query.toLowerCase();
   
+  // Handle interest-based personalization
+  const interestTerms = [
+    "photography", "hiking", "cooking", "reading", "gaming", 
+    "gardening", "fitness", "music", "technology", "travel",
+    "art", "sports", "fashion", "beauty", "home"
+  ];
+  
+  // Check if the query contains any known interests
+  const matchedInterests = interestTerms.filter(interest => 
+    lowerQuery.includes(interest)
+  );
+  
+  if (matchedInterests.length > 0) {
+    // Create personalized results based on matched interests
+    const interest = matchedInterests[0]; // Use the first matched interest
+    const mockResults = createMockResults(
+      query,
+      `${interest.charAt(0).toUpperCase() + interest.slice(1)} Products`,
+      count,
+      4.0,
+      5.0,
+      interestToBrand(interest)
+    );
+    
+    return mockResults.map((result, index) => normalizeProduct({
+      product_id: `personalized-${interest}-${index}-${Date.now()}`,
+      title: result.title || `${interest.charAt(0).toUpperCase() + interest.slice(1)} Gift`,
+      price: result.price || (29.99 + index * 5),
+      image: result.image || "/placeholder.svg",
+      category: result.category || interest.charAt(0).toUpperCase() + interest.slice(1),
+      vendor: brandToVendor(interestToBrand(interest)),
+      description: result.description || `Perfect gift for ${interest} enthusiasts`,
+      rating: result.rating || 4.5,
+      reviewCount: result.review_count || 30 + Math.floor(Math.random() * 50)
+    }));
+  }
+  
   // Handle category-specific searches
   if (lowerQuery.includes("gift") || 
       lowerQuery.includes("birthday") || 
@@ -83,3 +120,53 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
     reviewCount: result.review_count || 28
   }));
 };
+
+/**
+ * Map an interest to a relevant brand
+ */
+function interestToBrand(interest: string): string {
+  const brandMap: Record<string, string> = {
+    'photography': 'Canon',
+    'hiking': 'North Face',
+    'cooking': 'KitchenAid',
+    'reading': 'Kindle',
+    'gaming': 'Nintendo',
+    'gardening': 'Miracle-Gro',
+    'fitness': 'Nike',
+    'music': 'Bose',
+    'technology': 'Apple',
+    'travel': 'Samsonite',
+    'art': 'Prismacolor',
+    'sports': 'Adidas',
+    'fashion': 'Zara',
+    'beauty': 'Sephora',
+    'home': 'IKEA'
+  };
+  
+  return brandMap[interest] || 'TopBrand';
+}
+
+/**
+ * Map a brand to a vendor
+ */
+function brandToVendor(brand: string): string {
+  const vendorMap: Record<string, string> = {
+    'Canon': 'BestBuy via Zinc',
+    'North Face': 'REI via Zinc',
+    'KitchenAid': 'Williams-Sonoma via Zinc',
+    'Kindle': 'Amazon via Zinc',
+    'Nintendo': 'GameStop via Zinc',
+    'Miracle-Gro': 'Home Depot via Zinc',
+    'Nike': 'Nike Store via Zinc',
+    'Bose': 'Bose Store via Zinc',
+    'Apple': 'Apple Store via Zinc',
+    'Samsonite': 'Macy\'s via Zinc',
+    'Prismacolor': 'Michaels via Zinc',
+    'Adidas': 'Adidas Store via Zinc',
+    'Zara': 'Zara via Zinc',
+    'Sephora': 'Sephora via Zinc',
+    'IKEA': 'IKEA via Zinc'
+  };
+  
+  return vendorMap[brand] || 'Amazon via Zinc';
+}

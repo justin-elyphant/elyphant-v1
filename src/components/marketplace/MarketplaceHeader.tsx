@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { format, differenceInDays } from "date-fns";
 import { getUpcomingOccasions } from "./utils/upcomingOccasions";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 interface MarketplaceHeaderProps {
   searchTerm: string;
@@ -17,6 +18,13 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentOccasion, setCurrentOccasion] = useState<{ name: string; date: Date } | null>(null);
   const [animationState, setAnimationState] = useState<"in" | "out">("in");
+  const { profile } = useProfile();
+  
+  // Extract user interests from profile
+  const userInterests = profile?.gift_preferences || [];
+  const formattedInterests = Array.isArray(userInterests) 
+    ? userInterests.map(pref => typeof pref === 'string' ? pref : pref.category)
+    : [];
 
   useEffect(() => {
     // Get the closest upcoming occasion
@@ -63,6 +71,13 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
     }
   };
 
+  // Handle click on a personalized interest button
+  const handleInterestClick = (interest: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("search", `${interest} gift`);
+    setSearchParams(params);
+  };
+
   return (
     <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-6 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -81,6 +96,25 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
             <p className="text-gray-700">
               Discover thoughtful gifts for every occasion, interest, and relationship in your life.
             </p>
+          )}
+
+          {/* User interests section */}
+          {formattedInterests.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formattedInterests.slice(0, 3).map((interest, index) => (
+                <Badge 
+                  key={index}
+                  variant="outline" 
+                  className="bg-white hover:bg-purple-50 cursor-pointer"
+                  onClick={() => handleInterestClick(interest)}
+                >
+                  {interest}
+                </Badge>
+              ))}
+              {formattedInterests.length > 3 && (
+                <Badge variant="outline" className="bg-white">+{formattedInterests.length - 3} more</Badge>
+              )}
+            </div>
           )}
         </div>
         

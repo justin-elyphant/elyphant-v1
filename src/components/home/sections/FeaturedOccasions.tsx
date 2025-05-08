@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
 import { toast } from "sonner";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
+import { useNavigate } from "react-router-dom";
 
 const occasions = [
   {
@@ -79,6 +80,7 @@ const occasions = [
 ];
 
 const FeaturedOccasions = () => {
+  const navigate = useNavigate();
   const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
   const [fetchStatus, setFetchStatus] = useState<Record<number, string>>({});
   
@@ -116,8 +118,8 @@ const FeaturedOccasions = () => {
       console.error(`Error pre-fetching products for ${occasionName}:`, error);
       setFetchStatus(prev => ({...prev, [occasionId]: "error fetching"}));
     } finally {
-      // Route to marketplace with appropriate search term
-      window.location.href = `/marketplace?search=${encodeURIComponent(searchTerm)}`;
+      // Route to marketplace with appropriate search term - using navigate instead of direct URL change
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
       
       setLoadingOccasion(null);
       setFetchStatus(prev => ({...prev, [occasionId]: "navigation complete"}));

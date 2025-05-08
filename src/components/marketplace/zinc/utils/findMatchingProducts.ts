@@ -1,7 +1,8 @@
 
 import { ZincProduct } from '../types';
 import { getImageCategory } from './categoryMapper';
-import { getZincMockProducts } from '../../services/mockProductService';
+import { getMockProducts, searchMockProducts } from '../../services/mockProductService';
+import { convertMockToZincProduct } from './productConverter';
 
 /**
  * Maximum number of results to return for better performance
@@ -45,9 +46,11 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
       console.log(`FindMatchingProducts: Detected Padres hat search, using specific query "${specificQuery}"`);
       
       // Get mock results with the specific query
-      const padresResults = getZincMockProducts(specificQuery);
+      const padresResults = searchMockProducts(specificQuery);
       console.log(`FindMatchingProducts: Generated ${padresResults.length} Padres hat results`);
-      return padresResults;
+      
+      // Convert to ZincProduct format if needed
+      return padresResults.map(p => convertMockToZincProduct(p));
     }
     
     // Get appropriate image category
@@ -61,8 +64,10 @@ export const findMatchingProducts = (query: string): ZincProduct[] => {
     
     console.log(`FindMatchingProducts: Using category "${imageCategory}" for query "${lowercaseQuery}"`);
     
-    // Get results from mock data
-    const results = getZincMockProducts(lowercaseQuery, MAX_RESULTS);
+    // Get results from mock data and convert to ZincProduct format
+    const mockResults = searchMockProducts(lowercaseQuery, MAX_RESULTS);
+    const results = mockResults.map(p => convertMockToZincProduct(p));
+    
     console.log(`FindMatchingProducts: Generated ${results.length} results for "${lowercaseQuery}"`);
     
     return results;

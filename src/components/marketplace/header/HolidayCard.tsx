@@ -34,7 +34,7 @@ export const HolidayCard: React.FC<HolidayCardProps> = ({
       ) : (
         <Gift className="h-8 w-8 text-emerald-500 mb-2" />
       )}
-      <span className="font-medium text-sm">
+      <span className="font-medium text-sm text-gray-800 group-hover:text-gray-900">
         {holiday 
           ? `Shop ${holiday.name}` 
           : (type === "holiday" ? "Holiday" : "Thank You")}

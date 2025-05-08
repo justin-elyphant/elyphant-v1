@@ -63,7 +63,7 @@ export const FriendEventCard: React.FC<FriendEventCardProps> = ({
           </div>
         )}
       </div>
-      <span className="font-medium text-sm text-center">
+      <span className="font-medium text-sm text-center text-gray-800 group-hover:text-gray-900">
         {event 
           ? `${event.personName}'s ${event.type}` 
           : (fallbackEvent 

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
 import ProductImage from "./ProductImage";
@@ -134,13 +133,6 @@ const ProductItem = ({
             <CheckCircle2 className="h-3 w-3 mr-1 text-blue-600" />
             <span>Verified</span>
           </div>
-          
-          {/* {product.rating && product.rating >= 4.5 && (
-            <div className="flex items-center">
-              <Award className="h-3 w-3 mr-1 text-amber-500" />
-              <span>Top Rated</span>
-            </div>
-          )} */}
         </div>
       </div>
     </div>

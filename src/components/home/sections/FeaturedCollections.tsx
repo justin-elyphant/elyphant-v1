@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -120,11 +121,11 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                 <div className="w-full h-full">
                   <ProductImage 
                     product={{
-                      name: `${collection.name}`,
+                      name: collection.name,
                       category: collection.category || collection.name,
-                      image: null // Force it to use the mock image
-                    }}
-                    useMock={true} // Use mock images for these thumbnails
+                      image: null
+                    }} 
+                    useMock={true}
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">

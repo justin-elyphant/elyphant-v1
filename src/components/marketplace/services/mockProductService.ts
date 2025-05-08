@@ -1,147 +1,249 @@
+
 import { Product } from "@/contexts/ProductContext";
-import { normalizeProduct } from "@/contexts/ProductContext";
-import { ZincProduct } from "@/components/marketplace/zinc/types";
 
-// Sample image URLs for products
-const productImages = [
-  "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-  "https://images.unsplash.com/photo-1523275335684-37898b6baf30",
-  "https://images.unsplash.com/photo-1546868871-7041f2a55e12",
-  "https://images.unsplash.com/photo-1560343090-f0409e92791a",
-  "https://images.unsplash.com/photo-1550009158-9ebf69173e03",
-  "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08"
-];
-
-// Generate a random product image URL
-const getRandomImage = () => {
-  const randomIndex = Math.floor(Math.random() * productImages.length);
-  const sizeSuffix = "?w=400&h=400&fit=crop&auto=format";
-  return `${productImages[randomIndex]}${sizeSuffix}`;
-};
-
-// Create a product with sample data
-const createSampleProduct = (index: number, prefix = ""): Product => {
-  const productId = `mock-${Date.now()}-${index}`;
-  const brands = ["Nike", "Apple", "Samsung", "Sony", "Adidas", "Lego"];
-  const categories = ["Electronics", "Clothing", "Home", "Books", "Toys", "Sports"];
-  
-  const brand = brands[Math.floor(Math.random() * brands.length)];
-  const category = categories[Math.floor(Math.random() * categories.length)];
-  const price = Math.floor(Math.random() * 200) + 10;
-  const rating = (Math.random() * 2) + 3; // Rating between 3-5
-  
-  return normalizeProduct({
-    product_id: productId,
-    id: productId,
-    name: `${prefix}${brand} ${category} Product ${index}`,
-    title: `${prefix}${brand} ${category} Product ${index}`,
-    description: `This is a sample description for ${brand} ${category} Product ${index}. It's a great product with many features.`,
-    price: price,
-    image: getRandomImage(),
-    images: [getRandomImage(), getRandomImage(), getRandomImage()],
-    category: category,
-    brand: brand,
-    vendor: "Mock Vendor",
-    rating: rating,
-    reviewCount: Math.floor(Math.random() * 500) + 10,
-    isBestSeller: Math.random() > 0.8 // 20% chance of being a bestseller
-  });
-};
-
-// Generate a list of mock products
-export const getMockProducts = (count = 12): Product[] => {
+/**
+ * Get mock products for development
+ * @param count Number of products to return (default: 12)
+ * @returns Array of product objects
+ */
+export const getMockProducts = (count: number = 12): Product[] => {
   console.log("getMockProducts: Getting mock products");
   
-  // Always return at least 4 products
-  const productCount = Math.max(count, 4);
-  
-  const mockProducts = Array.from({ length: productCount }).map((_, index) => 
-    createSampleProduct(index + 1)
-  );
-  
-  console.log(`getMockProducts: Returning all ${mockProducts.length} products`);
-  return mockProducts;
-};
-
-// Search for products with a search term
-export const searchMockProducts = (searchTerm: string, count = 12): Product[] => {
-  console.log(`Searching for mock products with term: "${searchTerm}"`);
-  
-  // Always return at least 4 products
-  const productCount = Math.max(count, 4);
-  
-  // Create products that match the search term
-  const mockProducts = Array.from({ length: productCount }).map((_, index) => 
-    createSampleProduct(index + 1, `${searchTerm} `)
-  );
-  
-  console.log(`searchMockProducts: Found ${mockProducts.length} products for "${searchTerm}"`);
-  return mockProducts;
-};
-
-// Find a specific product by ID
-export const findMockProductById = (productId: string): Product | null => {
-  // If we don't have a real product, create one with the ID
-  if (!productId) return null;
-  
-  const mockProduct = createSampleProduct(1);
-  mockProduct.product_id = productId;
-  mockProduct.id = productId;
-  
-  return mockProduct;
-};
-
-// Save products to local storage
-export const saveMockProducts = (products: Product[]) => {
-  try {
-    localStorage.setItem('mockProducts', JSON.stringify(products));
-    return true;
-  } catch (e) {
-    console.error('Error saving mock products to localStorage:', e);
-    return false;
-  }
-};
-
-// Load products from local storage
-export const loadMockProducts = (): Product[] => {
-  try {
-    const savedProducts = localStorage.getItem('mockProducts');
-    if (savedProducts) {
-      return JSON.parse(savedProducts);
+  const products: Product[] = [
+    {
+      product_id: "mock-1",
+      id: "mock-1",
+      title: "Premium Wireless Headphones",
+      name: "Premium Wireless Headphones",
+      price: 129.99,
+      image: "https://m.media-amazon.com/images/I/71+3+8VcGFL._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/71+3+8VcGFL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/71NTi82uBEL._AC_SL1500_.jpg"
+      ],
+      description: "High-quality wireless headphones with noise cancellation",
+      category: "Electronics",
+      vendor: "Amazon via Zinc",
+      rating: 4.7,
+      reviewCount: 2453
+    },
+    {
+      product_id: "mock-2",
+      id: "mock-2",
+      title: "Fitness Tracker Pro",
+      name: "Fitness Tracker Pro",
+      price: 89.99,
+      image: "https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/61vjUCzQCaL._SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/61a2y1FCAJL._AC_SL1500_.jpg"
+      ],
+      description: "Advanced fitness tracker with heart rate monitoring",
+      category: "Electronics",
+      vendor: "Amazon via Zinc",
+      rating: 4.5,
+      reviewCount: 1872
+    },
+    {
+      product_id: "mock-3",
+      id: "mock-3",
+      title: "Organic Cotton T-Shirt",
+      name: "Organic Cotton T-Shirt",
+      price: 24.99,
+      image: "https://m.media-amazon.com/images/I/81YpuRoACeL._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/81YpuRoACeL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/716QOWr4QFL._AC_SL1500_.jpg"
+      ],
+      description: "Soft, comfortable organic cotton t-shirt",
+      category: "Clothing",
+      vendor: "Amazon via Zinc",
+      rating: 4.3,
+      reviewCount: 954
+    },
+    {
+      product_id: "mock-4",
+      id: "mock-4",
+      title: "Smart Home Speaker",
+      name: "Smart Home Speaker",
+      price: 79.99,
+      image: "https://m.media-amazon.com/images/I/71Q9d6N7xkL._AC_SL1000_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/71Q9d6N7xkL._AC_SL1000_.jpg",
+        "https://m.media-amazon.com/images/I/61XRmPxpxjL._AC_SL1000_.jpg"
+      ],
+      description: "Voice-controlled smart speaker with premium sound",
+      category: "Electronics",
+      vendor: "Amazon via Zinc",
+      rating: 4.6,
+      reviewCount: 3241
+    },
+    {
+      product_id: "mock-5",
+      id: "mock-5",
+      title: "Stainless Steel Water Bottle",
+      name: "Stainless Steel Water Bottle",
+      price: 34.99,
+      image: "https://m.media-amazon.com/images/I/61gT5GAwO5L._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/61gT5GAwO5L._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/71ge7D9YO9L._AC_SL1500_.jpg"
+      ],
+      description: "Double-walled insulated water bottle keeps drinks cold for 24 hours",
+      category: "Kitchen",
+      vendor: "Amazon via Zinc",
+      rating: 4.8,
+      reviewCount: 1567
+    },
+    {
+      product_id: "mock-6",
+      id: "mock-6",
+      title: "Bluetooth Portable Speaker",
+      name: "Bluetooth Portable Speaker",
+      price: 59.99,
+      image: "https://m.media-amazon.com/images/I/71JB6hM6Z6L._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/71JB6hM6Z6L._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/71rriOb64jL._AC_SL1500_.jpg"
+      ],
+      description: "Waterproof portable speaker with 20-hour battery life",
+      category: "Electronics",
+      vendor: "Amazon via Zinc",
+      rating: 4.4,
+      reviewCount: 2109
+    },
+    {
+      product_id: "mock-7",
+      id: "mock-7",
+      title: "Yoga Mat",
+      name: "Yoga Mat",
+      price: 29.99,
+      image: "https://m.media-amazon.com/images/I/61-mM1QLU7L._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/61-mM1QLU7L._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/71Vhg+TlnYL._AC_SL1500_.jpg"
+      ],
+      description: "Non-slip yoga mat with carrying strap",
+      category: "Sports",
+      vendor: "Amazon via Zinc",
+      rating: 4.5,
+      reviewCount: 876
+    },
+    {
+      product_id: "mock-8",
+      id: "mock-8",
+      title: "Cast Iron Skillet",
+      name: "Cast Iron Skillet",
+      price: 39.99,
+      image: "https://m.media-amazon.com/images/I/71+Y+DrpVpL._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/71+Y+DrpVpL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/81bKAcdc1GL._AC_SL1500_.jpg"
+      ],
+      description: "Pre-seasoned cast iron skillet for cooking and baking",
+      category: "Kitchen",
+      vendor: "Amazon via Zinc",
+      rating: 4.7,
+      reviewCount: 3452
+    },
+    {
+      product_id: "mock-9",
+      id: "mock-9",
+      title: "LED Desk Lamp",
+      name: "LED Desk Lamp",
+      price: 49.99,
+      image: "https://m.media-amazon.com/images/I/61cJJMt2EWL._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/61cJJMt2EWL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/71PNArM-0UL._AC_SL1500_.jpg"
+      ],
+      description: "Adjustable LED desk lamp with multiple brightness levels",
+      category: "Home",
+      vendor: "Amazon via Zinc",
+      rating: 4.6,
+      reviewCount: 1243
+    },
+    {
+      product_id: "mock-10",
+      id: "mock-10",
+      title: "Wireless Gaming Mouse",
+      name: "Wireless Gaming Mouse",
+      price: 69.99,
+      image: "https://m.media-amazon.com/images/I/61mpMH5TzkL._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/61mpMH5TzkL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/71c8eaWD8uL._AC_SL1500_.jpg"
+      ],
+      description: "High-precision wireless gaming mouse with programmable buttons",
+      category: "Electronics",
+      vendor: "Amazon via Zinc",
+      rating: 4.8,
+      reviewCount: 2876
+    },
+    {
+      product_id: "mock-11",
+      id: "mock-11",
+      title: "Reusable Shopping Bags",
+      name: "Reusable Shopping Bags",
+      price: 19.99,
+      image: "https://m.media-amazon.com/images/I/91XlgALBjdL._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/91XlgALBjdL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/91g3VhM53xL._AC_SL1500_.jpg"
+      ],
+      description: "Set of 5 foldable reusable grocery bags",
+      category: "Home",
+      vendor: "Amazon via Zinc",
+      rating: 4.4,
+      reviewCount: 932
+    },
+    {
+      product_id: "mock-12",
+      id: "mock-12",
+      title: "Bluetooth Earbuds",
+      name: "Bluetooth Earbuds",
+      price: 99.99,
+      image: "https://m.media-amazon.com/images/I/61jBba1K-FL._AC_SL1500_.jpg",
+      images: [
+        "https://m.media-amazon.com/images/I/61jBba1K-FL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/71zny7BTRlL._AC_SL1500_.jpg"
+      ],
+      description: "True wireless earbuds with noise cancellation",
+      category: "Electronics",
+      vendor: "Amazon via Zinc",
+      rating: 4.5,
+      reviewCount: 5243
     }
-  } catch (e) {
-    console.error('Error loading mock products from localStorage:', e);
-  }
+  ];
   
-  // If no saved products are found, generate new ones
-  return getMockProducts();
+  console.log(`getMockProducts: Returning all ${products.length} products`);
+  return products.slice(0, count);
 };
 
-// Create a Zinc-compatible product from a regular product
-const convertToZincProduct = (product: Product): ZincProduct => {
-  return {
-    product_id: product.product_id,
-    title: product.title || product.name || "",
-    price: product.price,
-    image: product.image,
-    images: product.images || [],
-    description: product.description || "",
-    brand: product.brand || "",
-    category: product.category || "",
-    retailer: product.vendor || product.retailer || "Amazon via Zinc", // Ensure retailer is always populated
-    rating: product.rating || 0,
-    review_count: product.reviewCount || product.num_reviews || 0,
-    isBestSeller: product.isBestSeller || false
-  };
-};
-
-// Export a getZincMockProducts function that is compatible with the current usage
-export const getZincMockProducts = (searchTerm: string, count = 12): ZincProduct[] => {
-  console.log(`getZincMockProducts: Creating mock products for search: "${searchTerm}"`);
+/**
+ * Search mock products by keyword
+ * @param query Search query
+ * @param count Maximum number of results to return (default: 12)
+ * @returns Filtered array of product objects
+ */
+export const searchMockProducts = (query: string, count: number = 12): Product[] => {
+  if (!query) return getMockProducts(count);
   
-  // Use our existing searchMockProducts function to get products
-  const products = searchMockProducts(searchTerm, count);
+  const normalizedQuery = query.toLowerCase().trim();
+  console.log(`searchMockProducts: Searching for "${normalizedQuery}"`);
   
-  // Convert the products to ZincProduct type
-  return products.map(product => convertToZincProduct(product));
+  const allProducts = getMockProducts(24); // Get a larger set to search from
+  
+  const filteredProducts = allProducts.filter(product => {
+    const title = (product.title || product.name || "").toLowerCase();
+    const description = (product.description || "").toLowerCase();
+    const category = (product.category || "").toLowerCase();
+    
+    return title.includes(normalizedQuery) || 
+           description.includes(normalizedQuery) || 
+           category.includes(normalizedQuery);
+  });
+  
+  console.log(`searchMockProducts: Found ${filteredProducts.length} matching products`);
+  return filteredProducts.slice(0, count);
 };

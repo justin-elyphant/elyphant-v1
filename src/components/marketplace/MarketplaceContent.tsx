@@ -1,171 +1,70 @@
 
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import MarketplaceFilters from "./MarketplaceFilters";
+import React from "react";
 import ProductGridOptimized from "./ProductGridOptimized";
-import FeaturedProducts from "./FeaturedProducts";
-import FiltersSidebar from "./FiltersSidebar";
-import { sortProducts } from "./hooks/utils/category/productSorting";
-import { Product } from "@/contexts/ProductContext";
-import { Spinner } from '@/components/ui/spinner';
-import ProductGridPagination from "./ProductGridPagination";
-
-// Number of products to show per page
-const PRODUCTS_PER_PAGE = 12;
+import { Spinner } from "@/components/ui/spinner";
+import { CircleSlash, Search } from "lucide-react";
 
 interface MarketplaceContentProps {
-  products: Product[];
+  products: any[];
   isLoading: boolean;
-  searchTerm?: string;
+  searchTerm: string;
 }
 
-const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: MarketplaceContentProps) => {
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("modern");
-  const [sortOption, setSortOption] = useState("relevance");
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [paginatedProducts, setPaginatedProducts] = useState<Product[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  
-  // Ensure we update filtered products when products change or loading finishes
-  useEffect(() => {
-    // Only process products if we have them and they're not empty
-    if (products && products.length > 0) {
-      console.log(`MarketplaceContent: Processing ${products.length} products with sort option ${sortOption}`);
-      setFilteredProducts(sortProducts(products, sortOption));
-    } else {
-      setFilteredProducts([]);
+const MarketplaceContent = ({ 
+  products, 
+  isLoading, 
+  searchTerm 
+}: MarketplaceContentProps) => {
+  // Function to render the appropriate content based on loading state and products
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Spinner />
+          <p className="text-lg font-medium mt-4">Loading products...</p>
+          <p className="text-sm text-muted-foreground">Please wait while we find the best gifts for you</p>
+        </div>
+      );
     }
-  }, [products, sortOption]);
-  
-  useEffect(() => {
-    const brandParam = searchParams.get("brand");
-    const pageParam = searchParams.get("page");
-    
-    if (brandParam) {
-      setActiveFilters(prev => ({
-        ...prev,
-        brand: brandParam
-      }));
-    }
-    
-    // Get page from URL or default to 1
-    if (pageParam) {
-      const page = parseInt(pageParam, 10);
-      if (!isNaN(page) && page > 0) {
-        setCurrentPage(page);
-      }
-    } else {
-      setCurrentPage(1);
-    }
-  }, [searchParams]);
-  
-  // Apply filters when they change
-  useEffect(() => {
+
     if (!products || products.length === 0) {
-      return;
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="bg-gray-100 p-4 rounded-full">
+            <CircleSlash className="h-12 w-12 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium mt-4">No products found</h3>
+          <p className="text-sm text-muted-foreground max-w-md text-center mt-2">
+            {searchTerm 
+              ? `We couldn't find any products matching "${searchTerm}". Try a different search term.`
+              : "No products are available at the moment. Please check back later."}
+          </p>
+        </div>
+      );
     }
-    
-    let result = [...products];
-    result = sortProducts(result, sortOption);
-    setFilteredProducts(result);
-  }, [products, activeFilters, sortOption, searchTerm]);
-  
-  // Update pagination when filtered products change
-  useEffect(() => {
-    // Calculate total pages
-    const total = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-    setTotalPages(total || 1);
-    
-    // Ensure currentPage is not greater than totalPages
-    if (currentPage > total && total > 0) {
-      setCurrentPage(total);
-    }
-    
-    // Get products for current page
-    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    const endIndex = startIndex + PRODUCTS_PER_PAGE;
-    setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
-  }, [filteredProducts, currentPage]);
-  
-  const handleFilterChange = (filters: Record<string, any>) => {
-    setActiveFilters(filters);
-  };
-  
-  const handleSortChange = (option: string) => {
-    setSortOption(option);
-  };
-  
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    
-    // Update URL with new page
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("page", page.toString());
-    setSearchParams(newParams, { replace: true });
-    
-    // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {searchTerm 
+              ? `Showing ${products.length} results for "${searchTerm}"` 
+              : `Showing ${products.length} products`}
+          </p>
+        </div>
+        
+        <ProductGridOptimized 
+          products={products} 
+          viewMode="grid" 
+          isLoading={isLoading}
+        />
+      </div>
+    );
   };
 
-  // Rendering logic that properly handles loading states
   return (
-    <div className="space-y-8">
-      <MarketplaceFilters 
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        totalItems={filteredProducts.length}
-        sortOption={sortOption}
-        onSortChange={handleSortChange}
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {showFilters && (
-          <div className="md:col-span-1">
-            <FiltersSidebar onFilterChange={handleFilterChange} activeFilters={activeFilters} />
-          </div>
-        )}
-        
-        <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Spinner className="h-10 w-10 text-purple-600" />
-              <span className="ml-3 text-muted-foreground">Loading products...</span>
-            </div>
-          ) : filteredProducts && filteredProducts.length > 0 ? (
-            <>
-              <ProductGridOptimized 
-                products={paginatedProducts} 
-                viewMode={viewMode}
-                sortOption={sortOption}
-                isLoading={false}
-              />
-              
-              <ProductGridPagination 
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </>
-          ) : (
-            <div className="text-center py-12 border rounded-md bg-white">
-              <p className="text-lg font-medium">No products found</p>
-              <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {filteredProducts && filteredProducts.length > 0 && !isLoading && (
-        <FeaturedProducts />
-      )}
+    <div className="bg-white p-6 rounded-lg shadow-sm">
+      {renderContent()}
     </div>
   );
 };

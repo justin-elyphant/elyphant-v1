@@ -35,4 +35,9 @@ export type Product = {
   product_details?: any[];
   isBestSeller?: boolean;
   variants?: string[];
+  
+  // New fields for wishlist and preference tracking
+  tags?: string[];
+  fromWishlist?: boolean;
+  fromPreferences?: boolean;
 };

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
 import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
@@ -38,6 +37,11 @@ export type Product = {
   product_details?: any[];
   isBestSeller?: boolean;
   variants?: string[];
+  
+  // New fields for wishlist and preference tracking
+  tags?: string[];
+  fromWishlist?: boolean;
+  fromPreferences?: boolean;
 };
 
 type ProductContextType = {

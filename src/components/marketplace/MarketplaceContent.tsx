@@ -1,8 +1,9 @@
 
+// Update import in MarketplaceContent.tsx
 import React, { useState } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
-import ProductGridOptimized from "./ProductGridOptimized";
+import ProductGrid from "./product-grid/ProductGrid";  // <-- Updated import
 import MarketplaceLoading from "./MarketplaceLoading";
 import FiltersSidebar from "./FiltersSidebar";
 
@@ -70,7 +71,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
         )}
         
         <div className="flex-1">
-          <ProductGridOptimized 
+          <ProductGrid 
             products={filteredProducts} 
             viewMode={viewMode}
             sortOption={sortOption}

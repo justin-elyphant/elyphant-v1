@@ -66,7 +66,10 @@ const MarketplaceContent = ({
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
+    <div className="bg-white p-6 rounded-lg shadow-sm mt-8">
+      <h2 className="text-xl font-semibold mb-4">
+        {searchTerm ? `Search Results: "${searchTerm}"` : "Recommended Products"}
+      </h2>
       {renderContent()}
     </div>
   );

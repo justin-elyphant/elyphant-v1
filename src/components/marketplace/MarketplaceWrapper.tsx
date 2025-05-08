@@ -86,9 +86,8 @@ const MarketplaceWrapper = () => {
         onSearch={onSearch} 
       />
       
-      {!searchTerm && (
-        <GiftingCategories />
-      )}
+      {/* Always display GiftingCategories, regardless of search term */}
+      <GiftingCategories />
       
       <MarketplaceContent 
         products={products}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
@@ -117,11 +118,8 @@ const FeaturedOccasions = () => {
       console.error(`Error pre-fetching products for ${occasionName}:`, error);
       setFetchStatus(prev => ({...prev, [occasionId]: "error fetching"}));
     } finally {
-      if (category === "all") {
-        window.location.href = `/gifting?tab=products&pageTitle=${encodeURIComponent(pageTitle)}&search=${encodeURIComponent(searchTerm)}`;
-      } else {
-        window.location.href = `/gifting?tab=products&category=${category}&pageTitle=${encodeURIComponent(pageTitle)}&search=${encodeURIComponent(searchTerm)}`;
-      }
+      // Changed navigation to point to marketplace page instead of gifting
+      window.location.href = `/marketplace?search=${encodeURIComponent(searchTerm)}`;
       
       setLoadingOccasion(null);
       setFetchStatus(prev => ({...prev, [occasionId]: "navigation complete"}));
@@ -133,7 +131,7 @@ const FeaturedOccasions = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Featured Occasions</h2>
         <a 
-          href="/gifting?tab=products" 
+          href="/marketplace" 
           className="text-purple-600 hover:text-purple-800 text-sm font-medium"
         >
           View all categories

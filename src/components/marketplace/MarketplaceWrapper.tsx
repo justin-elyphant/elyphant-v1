@@ -86,7 +86,7 @@ const MarketplaceWrapper = () => {
         onSearch={onSearch} 
       />
       
-      {/* Always display GiftingCategories, regardless of search term */}
+      {/* Compact categories section always visible */}
       <GiftingCategories />
       
       <MarketplaceContent 

@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from "react-router-dom";
 
 interface Category {
@@ -71,29 +70,27 @@ const GiftingCategories = () => {
   };
 
   return (
-    <div className="space-y-6 mb-12">
+    <div className="space-y-4 mb-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold tracking-tight">Browse Gift Categories</h2>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="flex flex-wrap gap-3">
         {categories.map((category) => (
-          <Card 
+          <button
             key={category.id}
-            className="overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300"
             onClick={() => handleCategoryClick(category.searchTerm)}
+            className="flex items-center gap-2 bg-white border border-gray-200 rounded-full pl-1 pr-4 py-1 hover:shadow-md transition-all cursor-pointer"
           >
-            <div className="aspect-video relative">
+            <div className="w-8 h-8 rounded-full overflow-hidden">
               <img 
                 src={category.image} 
                 alt={category.name} 
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-25 flex items-end p-3">
-                <h3 className="font-medium text-white">{category.name}</h3>
-              </div>
             </div>
-          </Card>
+            <span className="text-sm font-medium">{category.name}</span>
+          </button>
         ))}
       </div>
     </div>

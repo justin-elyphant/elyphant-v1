@@ -49,3 +49,25 @@ export const isProductRelevantToSearch = (product: ZincProduct, query: string): 
   
   return hasTermMatch;
 };
+
+/**
+ * Convert a mock product to the ZincProduct format
+ * This allows us to use our mock product data with Zinc-specific code
+ */
+export const convertMockToZincProduct = (mockProduct: any): ZincProduct => {
+  return {
+    product_id: mockProduct.id || mockProduct.product_id || `mock-${Math.random().toString(36).substring(2, 11)}`,
+    title: mockProduct.title || mockProduct.name || "Unknown Product",
+    price: typeof mockProduct.price === 'number' ? mockProduct.price : 0,
+    image: mockProduct.image || "/placeholder.svg",
+    images: mockProduct.images || [mockProduct.image || "/placeholder.svg"],
+    description: mockProduct.description || `${mockProduct.title || mockProduct.name} - A quality product`,
+    brand: mockProduct.brand || "Unknown",
+    category: mockProduct.category || mockProduct.category_name || "General",
+    retailer: mockProduct.vendor || mockProduct.retailer || "Amazon via Zinc",
+    rating: mockProduct.rating || mockProduct.stars || 0,
+    review_count: mockProduct.reviewCount || mockProduct.num_reviews || 0,
+    features: mockProduct.features || [],
+    isBestSeller: !!mockProduct.isBestSeller
+  };
+};

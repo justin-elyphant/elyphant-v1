@@ -4,10 +4,12 @@ import { useSearchParams } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { searchMockProducts } from "./services/mockProductService";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
 import MarketplaceContent from "./MarketplaceContent";
+import RecentlyViewedProducts from "./RecentlyViewedProducts";
 import { Product } from "@/types/product";
 import { normalizeProduct } from "@/contexts/ProductContext";
 import { toast } from "sonner";
@@ -18,6 +20,7 @@ const MarketplaceWrapper = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
   const { profile } = useProfile();
+  const { addToRecentlyViewed } = useRecentlyViewed();
   
   // Initial load based on URL search parameter
   useEffect(() => {
@@ -29,8 +32,28 @@ const MarketplaceWrapper = () => {
       // Load some default products with personalization
       loadPersonalizedProducts();
     }
-  }, []);
+    
+    // Check for product ID parameter to track as recently viewed
+    const productId = searchParams.get("productId");
+    if (productId) {
+      trackProductView(productId);
+    }
+  }, [searchParams]);
   
+  // Track product view when opened
+  const trackProductView = (productId: string) => {
+    // Find the product in the current products list
+    const product = products.find(p => (p.product_id || p.id) === productId);
+    if (product) {
+      addToRecentlyViewed({
+        id: product.product_id || product.id || "",
+        name: product.title || product.name || "",
+        image: product.image || "",
+        price: product.price
+      });
+    }
+  };
+
   // Watch for search parameter changes
   useEffect(() => {
     const searchParam = searchParams.get("search");
@@ -173,6 +196,9 @@ const MarketplaceWrapper = () => {
         isLoading={isLoading}
         searchTerm={searchTerm}
       />
+      
+      {/* Recently viewed products section */}
+      <RecentlyViewedProducts />
     </div>
   );
 };

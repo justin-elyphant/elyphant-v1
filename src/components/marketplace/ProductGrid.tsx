@@ -3,6 +3,7 @@ import React, { useState, useMemo } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
@@ -21,6 +22,7 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
+  const { addToRecentlyViewed } = useRecentlyViewed();
 
   React.useEffect(() => {
     setSortedProducts(sortProducts(products, sortOption));
@@ -38,6 +40,17 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
   const handleProductClick = (productId: string) => {
     setSelectedProduct(productId);
     setDlgOpen(true);
+    
+    // Find the product and add to recently viewed
+    const product = products.find(p => p.product_id === productId);
+    if (product) {
+      addToRecentlyViewed({
+        id: product.product_id,
+        name: product.title || product.name || "",
+        image: product.image,
+        price: product.price
+      });
+    }
   };
 
   if (sortedProducts.length === 0) {

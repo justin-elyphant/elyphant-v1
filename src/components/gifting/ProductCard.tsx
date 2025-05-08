@@ -1,136 +1,110 @@
-
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart } from "lucide-react";
-import { Product } from "@/contexts/ProductContext";
-import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
-import ProductRating from "@/components/shared/ProductRating";
-import { formatProductPrice } from "../marketplace/product-item/productUtils";
-import { 
-  getProductId, 
-  getProductName,
-  getProductCategory
-} from "../marketplace/product-item/productUtils";
-import SignUpDialog from "../marketplace/SignUpDialog";
-import { useAuth } from "@/contexts/auth";
+import React from "react";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Heart } from "lucide-react";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 interface ProductCardProps {
-  product: Product;
-  isWishlisted: boolean;
-  isGifteeView: boolean;
-  onToggleWishlist: (productId: string) => void;
+  product: any;
+  isWishlisted?: boolean;
+  isGifteeView?: boolean;
+  onToggleWishlist?: () => void;
   onClick?: () => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
   product,
-  isWishlisted,
-  isGifteeView,
+  isWishlisted = false,
+  isGifteeView = true, 
   onToggleWishlist,
-  onClick,
+  onClick
 }) => {
-  const { addToCart } = useCart();
-  const { user } = useAuth();
-  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+  const { addToRecentlyViewed } = useRecentlyViewed();
   
-  const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleClick = () => {
+    if (onClick) onClick();
     
-    if (!user) {
-      setShowSignUpDialog(true);
-      return;
-    }
-    
-    onToggleWishlist(String(getProductId(product)));
-  };
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart(product);
-    
-    toast.success("Added to Cart", {
-      description: `${getProductName(product)} has been added to your cart`
+    // Track this product as recently viewed
+    addToRecentlyViewed({
+      id: product.product_id || product.id || "",
+      name: product.title || product.name || "",
+      image: product.image || "",
+      price: product.price
     });
   };
 
-  // Determine if product should be marked as bestseller
-  const isBestSeller = product.isBestSeller || 
-                       (product.num_sales && product.num_sales > 1000) ||
-                       (product.stars && product.stars >= 4.8);
-
   return (
-    <>
-      <Card 
-        key={getProductId(product)} 
-        className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-        onClick={onClick}
-      >
-        <div className="aspect-square relative overflow-hidden">
-          <img 
-            src={product.image} 
-            alt={getProductName(product)}
-            className="object-cover w-full h-full transform transition-transform hover:scale-105"
-            loading="lazy"
-          />
-          
-          <div className="absolute top-2 right-2 flex flex-col gap-2">
-            {isGifteeView && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="bg-white/80 hover:bg-white rounded-full h-8 w-8"
-                onClick={handleWishlistToggle}
-              >
-                <Heart 
-                  className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} 
-                />
-              </Button>
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all relative group hover:shadow-md cursor-pointer border-2",
+        isWishlisted && "border-pink-200 hover:border-pink-300",
+        !isWishlisted && "hover:border-gray-300"
+      )}
+      onClick={handleClick}
+    >
+      <div className="aspect-square relative overflow-hidden">
+        <img 
+          src={product.image || "/placeholder.svg"} 
+          alt={product.name || product.title || "Product"} 
+          className="object-cover w-full h-full transition-transform group-hover:scale-105"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/placeholder.svg";
+          }}
+        />
+        
+        {isGifteeView && (
+          <button 
+            className={cn(
+              "absolute top-2 right-2 p-1 rounded-full transition-colors",
+              isWishlisted 
+                ? "bg-pink-100 text-pink-500 hover:bg-pink-200" 
+                : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
             )}
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="bg-white/80 hover:bg-white rounded-full h-8 w-8"
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart className="h-4 w-4" />
-            </Button>
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onToggleWishlist) onToggleWishlist();
+            }}
+          >
+            <Heart className={cn("h-5 w-5", isWishlisted && "fill-pink-500")} />
+          </button>
+        )}
+      </div>
+      
+      <div className="p-3">
+        <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
+          {product.name || product.title}
+        </h3>
+        
+        <div className="mt-2 flex justify-between items-center">
+          <div className="font-semibold">
+            ${product.price?.toFixed(2)}
           </div>
           
-          {isBestSeller && (
-            <Badge 
-              variant="default" 
-              className="absolute top-2 left-2 bg-yellow-500 text-white"
-            >
-              Best Seller
-            </Badge>
+          {product.rating && (
+            <div className="flex items-center text-xs text-amber-500">
+              <span className="mr-1">★</span>
+              <span>{product.rating}</span>
+              {product.reviewCount && (
+                <span className="text-gray-400 ml-1">({product.reviewCount})</span>
+              )}
+            </div>
           )}
         </div>
-        <CardContent className="p-3">
-          <h3 className="font-medium text-sm line-clamp-1">{getProductName(product)}</h3>
-          <p className="font-semibold text-sm">${formatProductPrice(product.price)}</p>
-          
-          <ProductRating 
-            rating={product.rating || product.stars || 0} 
-            reviewCount={product.reviewCount || product.num_reviews || 0} 
-            size="sm" 
-          />
-          
-          {getProductCategory(product) && (
-            <Badge variant="outline" className="mt-2 text-xs">
-              {getProductCategory(product)}
-            </Badge>
-          )}
-        </CardContent>
-      </Card>
-      <SignUpDialog 
-        open={showSignUpDialog} 
-        onOpenChange={setShowSignUpDialog} 
-      />
-    </>
+        
+        {product.tags && product.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {product.tags.slice(0, 1).map((tag: string, i: number) => (
+              <span 
+                key={i} 
+                className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-sm"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 };
 

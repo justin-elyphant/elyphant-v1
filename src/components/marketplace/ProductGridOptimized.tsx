@@ -19,6 +19,7 @@ interface ProductGridOptimizedProps {
   sortOption?: string;
   isLoading?: boolean;
   useMock?: boolean;
+  onProductView?: (productId: string) => void;  // Added this prop
 }
 
 // Memoized individual product component
@@ -30,7 +31,8 @@ const ProductGridOptimized = ({
   viewMode, 
   sortOption = "relevance",
   isLoading = false,
-  useMock = false
+  useMock = false,
+  onProductView  // Added this prop
 }: ProductGridOptimizedProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<string | null>(null);
@@ -82,8 +84,13 @@ const ProductGridOptimized = ({
         image: product.image,
         price: product.price
       });
+      
+      // Call the onProductView prop if provided
+      if (onProductView) {
+        onProductView(productId);
+      }
     }
-  }, [products, addToRecentlyViewed]);
+  }, [products, addToRecentlyViewed, onProductView]);
   
   const handleAddToCart = useCallback((e: React.MouseEvent, product: Product) => {
     e.stopPropagation();

@@ -10,6 +10,7 @@ interface ProfileContextType {
   error: Error | null;
   updateProfile: (data: Partial<Profile>) => Promise<any>;
   refetchProfile: () => Promise<Profile | null>;
+  refreshProfile: () => Promise<Profile | null>; // Added this method
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -70,13 +71,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
     return profileData;
   };
+  
+  // Add refreshProfile as an alias of refetchProfile for backward compatibility
+  const refreshProfile = refetchProfile;
 
   const value = {
     profile,
     loading,
     error,
     updateProfile: handleUpdateProfile,
-    refetchProfile
+    refetchProfile,
+    refreshProfile // Add the new method to the context value
   };
 
   return (

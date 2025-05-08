@@ -11,6 +11,7 @@ interface ProductImageProps {
   aspectRatio?: "square" | "video" | "wide";
   product?: Product | {
     name: string;
+    title?: string;
     category?: string;
     image?: string | null;
   };
@@ -40,12 +41,12 @@ const ProductImage = ({
   if (product) {
     // If product is provided, use its properties
     imageSource = product.image || "";
-    imageAlt = product.name || product.title || "Product";
+    imageAlt = product.name || (product as any).title || "Product";
   }
   
   // Generate a placeholder image based on the product name
   const placeholderImage = useMock && product 
-    ? getProductFallbackImage(product.name || product.title || "Product", product.category)
+    ? getProductFallbackImage(product.name || (product as any).title || "Product", product.category)
     : `https://placehold.co/600x600?text=${encodeURIComponent(imageAlt || "Product")}`;
   
   // Use placeholder if image is null, empty, or has an error

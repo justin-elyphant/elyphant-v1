@@ -1,4 +1,3 @@
-
 import { addDays, isAfter, isBefore, setYear } from "date-fns";
 
 export interface GiftOccasion {
@@ -13,61 +12,130 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
   
   // Define all gift-giving occasions with their dates
   const occasions = [
+    // 2025 Occasions
+    { 
+      name: "Valentine's Day",
+      searchTerm: "valentines day gifts",
+      date: new Date(2025, 1, 14) // February 14, 2025
+    },
+    { 
+      name: "Easter",
+      searchTerm: "easter gifts",
+      date: new Date(2025, 3, 20) // April 20, 2025
+    },
     { 
       name: "Mother's Day",
       searchTerm: "mothers day gifts",
-      date: setYear(new Date(currentYear, 4, 12), currentYear) // May 12th
+      date: new Date(2025, 4, 11) // May 11, 2025
     },
     {
       name: "Father's Day",
       searchTerm: "fathers day gifts",
-      date: setYear(new Date(currentYear, 5, 16), currentYear) // June 16th
-    },
-    {
-      name: "Valentine's Day",
-      searchTerm: "valentines day gifts",
-      date: setYear(new Date(currentYear, 1, 14), currentYear) // February 14th
-    },
-    {
-      name: "Christmas",
-      searchTerm: "christmas gifts",
-      date: setYear(new Date(currentYear, 11, 25), currentYear) // December 25th
-    },
-    {
-      name: "Halloween",
-      searchTerm: "halloween gifts",
-      date: setYear(new Date(currentYear, 9, 31), currentYear) // October 31st
+      date: new Date(2025, 5, 15) // June 15, 2025
     },
     {
       name: "Graduation Season",
       searchTerm: "graduation gifts",
-      date: setYear(new Date(currentYear, 4, 20), currentYear) // Mid-May
+      date: new Date(2025, 4, 15) // Mid-May 2025
     },
     {
       name: "Back to School",
       searchTerm: "school gifts",
-      date: setYear(new Date(currentYear, 7, 15), currentYear) // Mid-August
+      date: new Date(2025, 7, 15) // August 15, 2025
     },
     {
-      name: "Teacher Appreciation Day",
-      searchTerm: "teacher gifts",
-      date: setYear(new Date(currentYear, 4, 7), currentYear) // First Tuesday in May
+      name: "Labor Day",
+      searchTerm: "labor day deals",
+      date: new Date(2025, 8, 1) // September 1, 2025
+    },
+    {
+      name: "Halloween",
+      searchTerm: "halloween gifts",
+      date: new Date(2025, 9, 31) // October 31, 2025
+    },
+    {
+      name: "Thanksgiving",
+      searchTerm: "thanksgiving gifts",
+      date: new Date(2025, 10, 27) // November 27, 2025
+    },
+    {
+      name: "Black Friday",
+      searchTerm: "black friday deals",
+      date: new Date(2025, 10, 28) // November 28, 2025
+    },
+    {
+      name: "Small Business Saturday",
+      searchTerm: "small business gifts",
+      date: new Date(2025, 10, 29) // November 29, 2025
+    },
+    {
+      name: "Cyber Monday",
+      searchTerm: "cyber monday deals",
+      date: new Date(2025, 11, 1) // December 1, 2025
+    },
+    {
+      name: "Green Monday",
+      searchTerm: "holiday deals",
+      date: new Date(2025, 11, 8) // December 8, 2025
+    },
+    {
+      name: "Hanukkah Begins",
+      searchTerm: "hanukkah gifts",
+      date: new Date(2025, 11, 21) // December 21, 2025
+    },
+    {
+      name: "Christmas",
+      searchTerm: "christmas gifts",
+      date: new Date(2025, 11, 25) // December 25, 2025
+    },
+    
+    // 2026 Occasions
+    { 
+      name: "Valentine's Day",
+      searchTerm: "valentines day gifts",
+      date: new Date(2026, 1, 14) // February 14, 2026
+    },
+    { 
+      name: "Easter",
+      searchTerm: "easter gifts",
+      date: new Date(2026, 3, 5) // April 5, 2026
+    },
+    { 
+      name: "Mother's Day",
+      searchTerm: "mothers day gifts",
+      date: new Date(2026, 4, 10) // May 10, 2026
+    },
+    {
+      name: "Father's Day",
+      searchTerm: "fathers day gifts",
+      date: new Date(2026, 5, 21) // June 21, 2026
+    },
+    {
+      name: "Labor Day",
+      searchTerm: "labor day deals",
+      date: new Date(2026, 8, 7) // September 7, 2026
+    },
+    {
+      name: "Halloween",
+      searchTerm: "halloween gifts",
+      date: new Date(2026, 9, 31) // October 31, 2026
+    },
+    {
+      name: "Thanksgiving",
+      searchTerm: "thanksgiving gifts",
+      date: new Date(2026, 10, 26) // November 26, 2026
     }
   ];
 
   // Filter and sort upcoming occasions
   return occasions
     .map(occasion => {
-      let occasionDate = occasion.date;
-      // If the date has passed this year, set it to next year
-      if (isBefore(occasionDate, today)) {
-        occasionDate = setYear(occasionDate, currentYear + 1);
-      }
-      return { ...occasion, date: occasionDate };
+      // Keep the dates as they are since we've already specified years
+      return { ...occasion };
     })
     .filter(occasion => {
       // Show occasions within the next 90 days
-      return isBefore(occasion.date, addDays(today, 90));
+      return isAfter(occasion.date, today) && isBefore(occasion.date, addDays(today, 90));
     })
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 };

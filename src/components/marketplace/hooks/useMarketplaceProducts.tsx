@@ -1,178 +1,221 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { searchMockProducts } from "../services/mockProductService";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProducts } from "@/contexts/ProductContext";
-import { getMockProducts, searchMockProducts } from "../services/mockProductService";
 import { toast } from "sonner";
+import { Product } from "@/types/product";
 
-// Default search terms to load if no query is provided
-const DEFAULT_SEARCH_TERMS = ["gift ideas", "popular gifts", "trending products"];
+// Track search operations to prevent duplicate toast notifications
+const searchOperations = new Map();
 
 export const useMarketplaceProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { products, isLoading: contextLoading, setProducts } = useProducts();
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [isSearching, setIsSearching] = useState(false);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-
-  // Ensure we always load products on initial render
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const { profile } = useProfile();
+  const searchIdRef = useRef<string>("");
+  
+  // Initial load based on URL search parameter
   useEffect(() => {
-    console.log("useMarketplaceProducts: Initial load effect running");
-    const loadInitialProducts = async () => {
-      const keyword = searchParams.get("search") || "";
-      setSearchTerm(keyword);
-      setLocalSearchTerm(keyword);
+    const searchParam = searchParams.get("search");
+    if (searchParam) {
+      setSearchTerm(searchParam);
+      const personId = searchParams.get("personId");
+      const occasionType = searchParams.get("occasionType");
       
-      // Set initial loading state
-      setIsSearching(true);
+      // Generate unique ID for this search to prevent duplicate toasts
+      const searchId = `search-${searchParam}-${Date.now()}`;
+      searchIdRef.current = searchId;
       
-      try {
-        let mockResults;
-        
-        // Load products based on search term or default
-        if (keyword) {
-          console.log("Loading products for search term:", keyword);
-          mockResults = searchMockProducts(keyword);
-          console.log(`Found ${mockResults.length} products for "${keyword}"`);
-        } else {
-          // Select a random default search term
-          const defaultTerm = DEFAULT_SEARCH_TERMS[Math.floor(Math.random() * DEFAULT_SEARCH_TERMS.length)];
-          console.log("Loading default products for:", defaultTerm);
-          mockResults = searchMockProducts(defaultTerm);
-          if (!mockResults || mockResults.length === 0) {
-            console.log("No search results for default term, using general mock products");
-            mockResults = getMockProducts(12);
-          }
-          console.log(`Found ${mockResults.length} default products`);
-        }
-        
-        // Ensure we have images for each product
-        const productsWithImages = mockResults.map(product => {
-          if (!product.image || product.image === "/placeholder.svg") {
-            return {
-              ...product,
-              image: `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
-              images: [
-                `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
-                `https://placehold.co/600x400?text=${encodeURIComponent("Alt View")}`
-              ]
-            };
-          }
-          return product;
-        });
-        
-        setProducts(productsWithImages);
-      } catch (error) {
-        console.error("Error loading products:", error);
-        // Ensure we have some products even if there's an error
-        const fallbackProducts = getMockProducts(6);
-        setProducts(fallbackProducts);
-        toast.error("Error loading products");
-      } finally {
-        // Complete loading after a short delay for a smoother UX
-        setTimeout(() => {
-          setIsSearching(false);
-          setInitialLoadComplete(true);
-        }, 300);
-      }
-    };
-
-    loadInitialProducts();
-  }, []); // Only run once on component mount
-
-  // Handle search term changes from URL
-  useEffect(() => {
-    const urlSearchTerm = searchParams.get("search") || "";
-    if (urlSearchTerm !== searchTerm) {
-      setSearchTerm(urlSearchTerm);
-      setLocalSearchTerm(urlSearchTerm);
-      
-      // Only trigger a new search if the term actually changed
-      if (urlSearchTerm) {
-        setIsSearching(true);
-        
-        setTimeout(() => {
-          const results = searchMockProducts(urlSearchTerm);
-          
-          if (results.length === 0) {
-            setProducts(getMockProducts(5));
-          } else {
-            // Ensure all products have images
-            const resultsWithImages = results.map(product => {
-              if (!product.image || product.image === "/placeholder.svg") {
-                return {
-                  ...product,
-                  image: `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
-                  images: [
-                    `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
-                    `https://placehold.co/600x400?text=${encodeURIComponent("Alt View")}`
-                  ]
-                };
-              }
-              return product;
-            });
-            
-            setProducts(resultsWithImages);
-          }
-          
-          setIsSearching(false);
-        }, 300);
-      }
+      handleSearch(searchParam, personId, occasionType);
+    } else {
+      // Load some default products with personalization
+      loadPersonalizedProducts();
     }
-  }, [searchParams, setProducts]);
+    
+    // Cleanup function to clear search operations when component unmounts
+    return () => {
+      searchOperations.clear();
+    };
+  }, []);
 
-  const handleSearch = (term: string) => {
-    if (term.trim()) {
-      setIsSearching(true);
-      const params = new URLSearchParams(searchParams);
-      params.set("search", term);
-      setSearchParams(params);
+  // Watch for search parameter changes - using useEffect with searchParams dependency
+  // This is optimized to prevent duplicate searches
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam && searchParam !== searchTerm) {
+      setSearchTerm(searchParam);
       
-      // Simulate search delay for a more realistic experience
-      setTimeout(() => {
-        let results = searchMockProducts(term);
+      // Generate unique ID for this search to prevent duplicate toasts
+      const searchId = `search-${searchParam}-${Date.now()}`;
+      searchIdRef.current = searchId;
+      
+      handleSearch(searchParam, searchParams.get("personId"), searchParams.get("occasionType"));
+    }
+  }, [searchParams]);
+
+  // Load personalized products based on user profile
+  const loadPersonalizedProducts = () => {
+    // Only show loading if we don't already have products
+    if (products.length === 0) {
+      setIsLoading(true);
+    }
+    
+    // Extract user interests from profile
+    const userInterests = profile?.gift_preferences || [];
+    const interests = Array.isArray(userInterests) 
+      ? userInterests.map(pref => typeof pref === 'string' ? pref : pref.category)
+      : [];
+
+    console.log("User interests for personalization:", interests);
+
+    let personalizedProducts: Product[] = [];
+    
+    // If we have interests, use them for personalized results
+    if (interests.length > 0) {
+      // Use up to 3 interests to create a personalized mix of products
+      const personalizedQuery = interests.slice(0, 3).join(" ");
+      personalizedProducts = searchMockProducts(personalizedQuery, 10);
+      
+      // Tag these products as preference-based
+      personalizedProducts.forEach(product => {
+        product.tags = product.tags || [];
+        product.tags.push("Based on your preferences");
+        product.fromPreferences = true;
+      });
+      
+      // Mix in some general products
+      const generalProducts = searchMockProducts("gift ideas", 6);
+      
+      // Combine and shuffle to create a diverse but personalized selection
+      personalizedProducts = [...personalizedProducts.slice(0, 10), ...generalProducts.slice(0, 6)]
+        .sort(() => Math.random() - 0.5); // Simple shuffle
+      
+      console.log(`Generated ${personalizedProducts.length} personalized products based on interests`);
+    } else {
+      // Fallback to default products if no interests
+      personalizedProducts = searchMockProducts("gift ideas", 16);
+      console.log("No interests found, using default products");
+    }
+    
+    setProducts(personalizedProducts);
+    setIsLoading(false);
+  };
+  
+  // Enhanced search function with friend preferences
+  const handleSearch = (term: string, personId?: string | null, occasionType?: string | null) => {
+    // Check if this exact search is already in progress and avoid duplicates
+    const searchKey = `${term}-${personId || ''}-${occasionType || ''}`;
+    if (searchOperations.has(searchKey) && Date.now() - searchOperations.get(searchKey) < 2000) {
+      console.log(`Skipping duplicate search for "${term}"`);
+      return;
+    }
+    
+    // Record this search operation with timestamp
+    searchOperations.set(searchKey, Date.now());
+    
+    // Clear previous toasts to avoid stacking
+    toast.dismiss();
+    
+    setIsLoading(true);
+    console.log(`MarketplaceWrapper: Searching for "${term}" with personId: ${personId}, occasionType: ${occasionType}`);
+    
+    try {
+      let mockResults: Product[] = [];
+      
+      // Check if we have a personId (meaning this is a friend's event)
+      if (personId) {
+        // Simulate getting friend's wishlist and preferences
+        // In a real implementation, you would fetch actual wishlist items and preferences
+        const friendWishlistItems = searchMockProducts(`wishlist ${term}`, 4);
+        const friendPreferenceItems = searchMockProducts(`preferences ${term}`, 6);
         
-        // Always ensure we have at least some products
-        if (results.length === 0) {
-          results = getMockProducts(5);
-        }
-        
-        // Ensure all products have images
-        const resultsWithImages = results.map(product => {
-          if (!product.image || product.image === "/placeholder.svg") {
-            return {
-              ...product,
-              image: `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
-              images: [
-                `https://placehold.co/600x400?text=${encodeURIComponent(product.title || "Product")}`,
-                `https://placehold.co/600x400?text=${encodeURIComponent("Alt View")}`
-              ]
-            };
-          }
-          return product;
+        // Tag the wishlist items
+        friendWishlistItems.forEach(item => {
+          // Extract the person's name from the search term
+          const nameMatch = term.match(/^([^\s]+)/);
+          const friendName = nameMatch ? nameMatch[1] : "Friend's";
+          
+          item.tags = item.tags || [];
+          item.tags.push(`From ${friendName} Wishlist`);
+          item.fromWishlist = true;
         });
         
-        setProducts(resultsWithImages);
-        setIsSearching(false);
-      }, 300);
+        // Tag the preference based items
+        friendPreferenceItems.forEach(item => {
+          item.tags = item.tags || [];
+          item.tags.push("Based on preferences");
+          item.fromPreferences = true;
+        });
+        
+        // Combine wishlist and preference items
+        mockResults = [...friendWishlistItems, ...friendPreferenceItems];
+        
+        // Add some generic recommendations for this occasion type
+        if (occasionType) {
+          const genericItems = searchMockProducts(`${occasionType} gift ideas`, 6);
+          mockResults = [...mockResults, ...genericItems];
+        }
+      } else {
+        // Regular search without personalization
+        mockResults = searchMockProducts(term, 16);
+      }
+      
+      // Update products state
+      setProducts(mockResults);
+      
+      console.log(`MarketplaceWrapper: Found ${mockResults.length} results for "${term}"`);
+      
+      // Show success toast only for significant searches and only once
+      if (term.length > 3) {
+        // Use a short timeout to ensure the UI has settled
+        setTimeout(() => {
+          // Check if this is still the current search
+          if (searchIdRef.current === `search-${term}-${Date.now()}`) {
+            toast.success(`Found ${mockResults.length} products for "${term}"`, {
+              id: `search-success-${term}`, // Use consistent ID to prevent duplicates
+            });
+          }
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Error searching for products:', error);
+      toast.error('Error searching for products', {
+        id: `search-error-${term}`, // Use consistent ID to prevent duplicates
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
+  
+  // Handle search submission
+  const onSearch = (term: string) => {
+    if (!term.trim()) return;
+    
+    // Update URL parameter
+    const params = new URLSearchParams(searchParams);
+    params.set("search", term);
+    // Clear personId and occasionType since this is a direct search
+    params.delete("personId");
+    params.delete("occasionType");
+    setSearchParams(params);
+    
+    // Generate unique ID for this search
+    const searchId = `search-${term}-${Date.now()}`;
+    searchIdRef.current = searchId;
+    
+    // Directly handle search
+    handleSearch(term);
+  };
 
-  console.log("useMarketplaceProducts state:", {
-    productsCount: products?.length || 0,
-    isLoading: contextLoading || isSearching,
-    initialLoadComplete,
-    searchTerm
-  });
-
-  return {
-    searchTerm,
-    localSearchTerm,
-    setLocalSearchTerm,
-    handleSearch,
-    isLoading: contextLoading || isSearching,
-    initialLoadComplete,
-    products
+  return { 
+    searchTerm, 
+    setSearchTerm, 
+    isLoading, 
+    products,
+    onSearch
   };
 };

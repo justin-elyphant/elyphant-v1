@@ -91,10 +91,12 @@ export const useZincSearch = (searchTerm: string) => {
               const words = term.split(" ");
               if (words.length > 1) {
                 return words.some(word => 
-                  name.includes(word) || 
-                  title.includes(word) || 
-                  description.includes(word) || 
-                  brand.includes(word)
+                  word.length > 2 && (
+                    name.includes(word) || 
+                    title.includes(word) || 
+                    description.includes(word) || 
+                    brand.includes(word)
+                  )
                 );
               }
               
@@ -115,12 +117,35 @@ export const useZincSearch = (searchTerm: string) => {
         // Process results
         if (mockResults && mockResults.length > 0) {
           console.log(`useZincSearch: Found ${mockResults.length} mock results`);
-          setZincResults(mockResults);
+          
+          // Ensure each product has valid images
+          const validatedResults = mockResults.map(product => {
+            if (!product.image || product.image === "/placeholder.svg") {
+              // Find a better image based on category or name
+              const category = product.category?.toLowerCase() || "";
+              const name = (product.name || product.title || "").toLowerCase();
+              
+              if (name.includes("nike") || category.includes("shoe") || category.includes("footwear")) {
+                product.image = "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/7fbc5e94-8d49-4730-a280-f19d3cfad0b0/air-max-90-mens-shoes-6n3vKB.png";
+              } else if (category.includes("electronics")) {
+                product.image = "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&h=500&fit=crop";
+              }
+            }
+            
+            // Ensure images array exists
+            if (!product.images || !Array.isArray(product.images) || product.images.length === 0) {
+              product.images = product.image ? [product.image] : ['/placeholder.svg'];
+            }
+            
+            return product;
+          });
+          
+          setZincResults(validatedResults);
           
           // If we have mock results but no filtered results, use mock results as filtered
           if (filtered.length === 0) {
             console.log("useZincSearch: No local matches, using mock search results as filtered products");
-            setFilteredProducts(mockResults);
+            setFilteredProducts(validatedResults);
           } else {
             setFilteredProducts(filtered);
           }
@@ -156,6 +181,6 @@ export const useZincSearch = (searchTerm: string) => {
     loading,
     zincResults,
     filteredProducts,
-    hasResults: zincResults.length > 0 || filteredProducts.length > 0 // Update to properly check for results
+    hasResults: (zincResults && zincResults.length > 0) || (filteredProducts && filteredProducts.length > 0)
   };
 };

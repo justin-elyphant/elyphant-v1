@@ -293,10 +293,29 @@ export const searchMockProducts = (query: string, count: number = 12): Product[]
   if (normalizedQuery.includes("nike") && normalizedQuery.includes("shoe")) {
     console.log("searchMockProducts: Special handling for Nike shoes");
     const nikeProducts = getMockProducts(24).filter(product => 
-      product.id?.includes("nike") && 
-      (product.category?.toLowerCase()?.includes("footwear") || 
-       product.name?.toLowerCase()?.includes("shoe"))
+      (product.id?.includes("nike") || 
+       (product.name?.toLowerCase() || "").includes("nike")) && 
+      ((product.category?.toLowerCase() || "").includes("footwear") || 
+       (product.name?.toLowerCase() || "").includes("shoe"))
     );
+    
+    // Add a special Nike shoe product if none found to ensure results
+    if (nikeProducts.length === 0) {
+      nikeProducts.push({
+        product_id: "nike-shoes-1",
+        id: "nike-shoes-1",
+        title: "Nike Air Zoom Running Shoes",
+        name: "Nike Air Zoom Running Shoes",
+        price: 119.99,
+        image: "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/i1-23d9eee4-96cc-4be8-943e-3c6a4fd401e0/air-zoom-pegasus-39-road-running-shoes-kmZSD6.png",
+        images: ["https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/i1-23d9eee4-96cc-4be8-943e-3c6a4fd401e0/air-zoom-pegasus-39-road-running-shoes-kmZSD6.png"],
+        description: "Latest Nike running shoes with advanced cushioning",
+        category: "Footwear",
+        vendor: "Amazon via Zinc",
+        rating: 4.7,
+        reviewCount: 856
+      });
+    }
     
     console.log(`searchMockProducts: Found ${nikeProducts.length} Nike shoe products`);
     return nikeProducts.slice(0, count);
@@ -305,24 +324,36 @@ export const searchMockProducts = (query: string, count: number = 12): Product[]
   const allProducts = getMockProducts(24); // Get a larger set to search from
   
   const filteredProducts = allProducts.filter(product => {
-    const title = (product.title || product.name || "").toLowerCase();
+    if (!product) return false;
+    
+    const title = ((product.title || product.name || "") || "").toLowerCase();
     const description = (product.description || "").toLowerCase();
     const category = (product.category || "").toLowerCase();
+    const brand = (product.brand || "").toLowerCase();
     
     // Check if any words in the query match
     const queryWords = normalizedQuery.split(" ");
     const matchesAnyWord = queryWords.some(word => 
       title.includes(word) || 
       description.includes(word) || 
-      category.includes(word)
+      category.includes(word) ||
+      brand.includes(word)
     );
     
     return title.includes(normalizedQuery) || 
            description.includes(normalizedQuery) || 
            category.includes(normalizedQuery) ||
+           brand.includes(normalizedQuery) ||
            matchesAnyWord;
   });
   
   console.log(`searchMockProducts: Found ${filteredProducts.length} matching products`);
+  
+  // If no products found, provide some default ones
+  if (filteredProducts.length === 0) {
+    console.log("No matching products found, returning default mock products");
+    return getMockProducts(count);
+  }
+  
   return filteredProducts.slice(0, count);
 };

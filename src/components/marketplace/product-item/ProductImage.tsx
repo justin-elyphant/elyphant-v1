@@ -11,7 +11,7 @@ interface ProductImageProps {
   aspectRatio?: "square" | "video" | "wide";
   product?: Product | {
     name: string;
-    title?: string;
+    title?: string; // Added title as optional property
     category?: string;
     image?: string | null;
   };
@@ -41,6 +41,7 @@ const ProductImage = ({
   if (product) {
     // If product is provided, use its properties
     imageSource = product.image || "";
+    // Use name or title, ensuring we handle the possibility that title might not exist
     imageAlt = product.name || (product as any).title || "Product";
   }
   

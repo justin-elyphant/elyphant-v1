@@ -19,7 +19,8 @@ const MarketplaceContent = ({
   console.log("MarketplaceContent rendering:", { 
     productsCount: products?.length || 0, 
     isLoading, 
-    searchTerm 
+    searchTerm,
+    productsData: products?.slice(0, 2) // Log first two products for debugging
   });
 
   // Function to render the appropriate content based on loading state and products

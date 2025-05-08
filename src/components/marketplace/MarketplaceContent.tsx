@@ -8,6 +8,10 @@ import FiltersSidebar from "./FiltersSidebar";
 import { sortProducts } from "./hooks/utils/category/productSorting";
 import { Product } from "@/contexts/ProductContext";
 import { Spinner } from '@/components/ui/spinner';
+import ProductGridPagination from "./ProductGridPagination";
+
+// Number of products to show per page
+const PRODUCTS_PER_PAGE = 12;
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -21,7 +25,12 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   const [sortOption, setSortOption] = useState("relevance");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginatedProducts, setPaginatedProducts] = useState<Product[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
   
   // Ensure we update filtered products when products change or loading finishes
   useEffect(() => {
@@ -36,12 +45,23 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
   
   useEffect(() => {
     const brandParam = searchParams.get("brand");
+    const pageParam = searchParams.get("page");
     
     if (brandParam) {
       setActiveFilters(prev => ({
         ...prev,
         brand: brandParam
       }));
+    }
+    
+    // Get page from URL or default to 1
+    if (pageParam) {
+      const page = parseInt(pageParam, 10);
+      if (!isNaN(page) && page > 0) {
+        setCurrentPage(page);
+      }
+    } else {
+      setCurrentPage(1);
     }
   }, [searchParams]);
   
@@ -56,12 +76,41 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
     setFilteredProducts(result);
   }, [products, activeFilters, sortOption, searchTerm]);
   
+  // Update pagination when filtered products change
+  useEffect(() => {
+    // Calculate total pages
+    const total = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+    setTotalPages(total || 1);
+    
+    // Ensure currentPage is not greater than totalPages
+    if (currentPage > total && total > 0) {
+      setCurrentPage(total);
+    }
+    
+    // Get products for current page
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+    setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
+  }, [filteredProducts, currentPage]);
+  
   const handleFilterChange = (filters: Record<string, any>) => {
     setActiveFilters(filters);
   };
   
   const handleSortChange = (option: string) => {
     setSortOption(option);
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    
+    // Update URL with new page
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", page.toString());
+    setSearchParams(newParams, { replace: true });
+    
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Rendering logic that properly handles loading states
@@ -91,12 +140,20 @@ const MarketplaceContent = ({ products, isLoading, searchTerm = "" }: Marketplac
               <span className="ml-3 text-muted-foreground">Loading products...</span>
             </div>
           ) : filteredProducts && filteredProducts.length > 0 ? (
-            <ProductGridOptimized 
-              products={filteredProducts} 
-              viewMode={viewMode}
-              sortOption={sortOption}
-              isLoading={false} // We're handling the loading state here, so pass false to the grid
-            />
+            <>
+              <ProductGridOptimized 
+                products={paginatedProducts} 
+                viewMode={viewMode}
+                sortOption={sortOption}
+                isLoading={false}
+              />
+              
+              <ProductGridPagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </>
           ) : (
             <div className="text-center py-12 border rounded-md bg-white">
               <p className="text-lg font-medium">No products found</p>

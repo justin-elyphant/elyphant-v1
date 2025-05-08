@@ -2,7 +2,7 @@
 import { ExtendedEventData } from "../types";
 
 export type PrivacyLevel = "private" | "shared" | "public";
-export type GiftSource = "wishlist" | "ai" | "both";
+export type GiftSource = "wishlist" | "ai" | "both" | "specific";
 
 export interface EventFormValues {
   type: string;
@@ -12,6 +12,7 @@ export interface EventFormValues {
   autoGiftAmount: number;
   giftSource: GiftSource;
   privacyLevel: PrivacyLevel;
+  selectedProductId?: string;
 }
 
 export interface EditDrawerProps {

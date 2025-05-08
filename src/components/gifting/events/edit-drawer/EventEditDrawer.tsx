@@ -21,6 +21,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
   const [giftSource, setGiftSource] = useState<GiftSource>("wishlist");
   const [privacyLevel, setPrivacyLevel] = useState<PrivacyLevel>("private");
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize form when event changes
@@ -37,6 +38,8 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
       setPrivacyLevel((event.privacyLevel || "private") as PrivacyLevel);
       // Initialize payment method ID if available
       setPaymentMethodId(event.paymentMethodId || "");
+      // Initialize selected product ID if available
+      setSelectedProductId(event.selectedProductId || "");
     }
   }, [event]);
 
@@ -51,6 +54,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
         autoGiftAmount: autoGiftEnabled ? autoGiftAmount : undefined,
         giftSource: autoGiftEnabled ? giftSource : undefined,
         paymentMethodId: autoGiftEnabled ? paymentMethodId : undefined,
+        selectedProductId: autoGiftEnabled && giftSource === "specific" ? selectedProductId : undefined,
         privacyLevel,
       });
       toast.success("Gift occasion updated successfully");
@@ -63,7 +67,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[350px] overflow-y-auto max-w-md mx-auto rounded-t-xl top-[25vh]">
+      <DrawerContent className="max-h-[90vh] overflow-y-auto max-w-md mx-auto rounded-t-xl">
         <DrawerHeader className="text-left bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-t-xl py-2">
           <DrawerTitle className="text-primary text-lg">Edit Gift Occasion</DrawerTitle>
           <DrawerDescription className="text-muted-foreground text-sm">
@@ -88,10 +92,12 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             autoGiftAmount={autoGiftAmount}
             giftSource={giftSource}
             paymentMethodId={paymentMethodId}
+            selectedProductId={selectedProductId}
             setAutoGiftEnabled={setAutoGiftEnabled}
             setAutoGiftAmount={setAutoGiftAmount}
             setGiftSource={setGiftSource}
             setPaymentMethodId={setPaymentMethodId}
+            setSelectedProductId={setSelectedProductId}
           />
           
           <Separator className="bg-purple-100 dark:bg-purple-900/20 my-1" />

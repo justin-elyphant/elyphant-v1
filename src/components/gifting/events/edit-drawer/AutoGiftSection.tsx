@@ -6,16 +6,19 @@ import AutoGiftToggle from "./gift-settings/AutoGiftToggle";
 import GiftAmountInput from "./gift-settings/GiftAmountInput";
 import GiftSourceSelector from "./gift-settings/GiftSourceSelector";
 import PaymentMethodSelector from "./gift-settings/PaymentMethodSelector";
+import AutoGiftProductSelector from "./gift-settings/AutoGiftProductSelector";
 
 interface AutoGiftSectionProps {
   autoGiftEnabled: boolean;
   autoGiftAmount: number;
   giftSource: GiftSource;
   paymentMethodId?: string;
+  selectedProductId?: string;
   setAutoGiftEnabled: (value: boolean) => void;
   setAutoGiftAmount: (value: number) => void;
   setGiftSource: (value: GiftSource) => void;
   setPaymentMethodId: (value: string) => void;
+  setSelectedProductId?: (value: string) => void;
 }
 
 const AutoGiftSection = ({
@@ -23,10 +26,12 @@ const AutoGiftSection = ({
   autoGiftAmount,
   giftSource,
   paymentMethodId,
+  selectedProductId,
   setAutoGiftEnabled,
   setAutoGiftAmount,
   setGiftSource,
   setPaymentMethodId,
+  setSelectedProductId,
 }: AutoGiftSectionProps) => {
   return (
     <div className="space-y-1">
@@ -51,6 +56,13 @@ const AutoGiftSection = ({
             giftSource={giftSource} 
             setGiftSource={setGiftSource} 
           />
+
+          {giftSource === "specific" && setSelectedProductId && (
+            <AutoGiftProductSelector
+              selectedProductId={selectedProductId}
+              onSelectProduct={setSelectedProductId}
+            />
+          )}
 
           <PaymentMethodSelector
             selectedPaymentMethodId={paymentMethodId}

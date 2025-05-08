@@ -37,6 +37,21 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
       name: "Halloween",
       searchTerm: "halloween gifts",
       date: setYear(new Date(currentYear, 9, 31), currentYear) // October 31st
+    },
+    {
+      name: "Graduation Season",
+      searchTerm: "graduation gifts",
+      date: setYear(new Date(currentYear, 4, 20), currentYear) // Mid-May
+    },
+    {
+      name: "Back to School",
+      searchTerm: "school gifts",
+      date: setYear(new Date(currentYear, 7, 15), currentYear) // Mid-August
+    },
+    {
+      name: "Teacher Appreciation Day",
+      searchTerm: "teacher gifts",
+      date: setYear(new Date(currentYear, 4, 7), currentYear) // First Tuesday in May
     }
   ];
 
@@ -56,4 +71,3 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
     })
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 };
-

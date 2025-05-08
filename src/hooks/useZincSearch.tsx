@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '@/contexts/ProductContext';
-import { toast } from 'sonner';
 import { normalizeProduct } from '@/contexts/ProductContext';
 import { searchMockProducts, getMockProducts } from '@/components/marketplace/services/mockProductService';
 

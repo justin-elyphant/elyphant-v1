@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
@@ -13,6 +14,9 @@ import { Product } from "@/types/product";
 import { normalizeProduct } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 
+// Track search operations to prevent duplicate toast notifications
+const searchOperations = new Map();
+
 const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -20,13 +24,21 @@ const MarketplaceWrapper = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const { profile } = useProfile();
   const { addToRecentlyViewed } = useRecentlyViewed();
+  const searchIdRef = useRef<string>("");
   
   // Initial load based on URL search parameter
   useEffect(() => {
     const searchParam = searchParams.get("search");
     if (searchParam) {
       setSearchTerm(searchParam);
-      handleSearch(searchParam, searchParams.get("personId"), searchParams.get("occasionType"));
+      const personId = searchParams.get("personId");
+      const occasionType = searchParams.get("occasionType");
+      
+      // Generate unique ID for this search to prevent duplicate toasts
+      const searchId = `search-${searchParam}-${Date.now()}`;
+      searchIdRef.current = searchId;
+      
+      handleSearch(searchParam, personId, occasionType);
     } else {
       // Load some default products with personalization
       loadPersonalizedProducts();
@@ -37,7 +49,12 @@ const MarketplaceWrapper = () => {
     if (productId) {
       trackProductView(productId);
     }
-  }, [searchParams]);
+    
+    // Cleanup function to clear search operations when component unmounts
+    return () => {
+      searchOperations.clear();
+    };
+  }, []);
   
   // Track product view when opened
   const trackProductView = (productId: string) => {
@@ -53,18 +70,27 @@ const MarketplaceWrapper = () => {
     }
   };
 
-  // Watch for search parameter changes
+  // Watch for search parameter changes - using useEffect with searchParams dependency
+  // This is optimized to prevent duplicate searches
   useEffect(() => {
     const searchParam = searchParams.get("search");
     if (searchParam && searchParam !== searchTerm) {
       setSearchTerm(searchParam);
+      
+      // Generate unique ID for this search to prevent duplicate toasts
+      const searchId = `search-${searchParam}-${Date.now()}`;
+      searchIdRef.current = searchId;
+      
       handleSearch(searchParam, searchParams.get("personId"), searchParams.get("occasionType"));
     }
   }, [searchParams]);
 
   // Load personalized products based on user profile
   const loadPersonalizedProducts = () => {
-    setIsLoading(true);
+    // Only show loading if we don't already have products
+    if (products.length === 0) {
+      setIsLoading(true);
+    }
     
     // Extract user interests from profile
     const userInterests = profile?.gift_preferences || [];
@@ -107,8 +133,21 @@ const MarketplaceWrapper = () => {
     setIsLoading(false);
   };
   
-  // Enhanced search function with friend preferences
+  // Enhanced search function with friend preferences - optimized to prevent duplicate toasts
   const handleSearch = (term: string, personId?: string | null, occasionType?: string | null) => {
+    // Check if this exact search is already in progress and avoid duplicates
+    const searchKey = `${term}-${personId || ''}-${occasionType || ''}`;
+    if (searchOperations.has(searchKey) && Date.now() - searchOperations.get(searchKey) < 2000) {
+      console.log(`Skipping duplicate search for "${term}"`);
+      return;
+    }
+    
+    // Record this search operation with timestamp
+    searchOperations.set(searchKey, Date.now());
+    
+    // Clear previous toasts to avoid stacking
+    toast.dismiss();
+    
     setIsLoading(true);
     console.log(`MarketplaceWrapper: Searching for "${term}" with personId: ${personId}, occasionType: ${occasionType}`);
     
@@ -158,13 +197,23 @@ const MarketplaceWrapper = () => {
       
       console.log(`MarketplaceWrapper: Found ${mockResults.length} results for "${term}"`);
       
-      // Show success toast only for significant searches
+      // Show success toast only for significant searches and only once
       if (term.length > 3) {
-        toast.success(`Found ${mockResults.length} products for "${term}"`);
+        // Use a short timeout to ensure the UI has settled
+        setTimeout(() => {
+          // Check if this is still the current search
+          if (searchIdRef.current === `search-${term}-${Date.now()}`) {
+            toast.success(`Found ${mockResults.length} products for "${term}"`, {
+              id: `search-success-${term}`, // Use consistent ID to prevent duplicates
+            });
+          }
+        }, 300);
       }
     } catch (error) {
       console.error('Error searching for products:', error);
-      toast.error('Error searching for products');
+      toast.error('Error searching for products', {
+        id: `search-error-${term}`, // Use consistent ID to prevent duplicates
+      });
     } finally {
       setIsLoading(false);
     }
@@ -181,6 +230,10 @@ const MarketplaceWrapper = () => {
     params.delete("personId");
     params.delete("occasionType");
     setSearchParams(params);
+    
+    // Generate unique ID for this search
+    const searchId = `search-${term}-${Date.now()}`;
+    searchIdRef.current = searchId;
     
     // Directly handle search
     handleSearch(term);

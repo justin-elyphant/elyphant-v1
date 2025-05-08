@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
 import { getProductFallbackImage } from "./productImageUtils";
@@ -23,6 +23,8 @@ const ProductImage = ({
   className,
   useMock = false
 }: ProductImageProps) => {
+  const [imageError, setImageError] = useState(false);
+
   // Determine the appropriate aspect ratio value
   const getAspectRatioValue = (ratio: string): number => {
     switch (ratio) {
@@ -33,22 +35,29 @@ const ProductImage = ({
     }
   };
 
-  // Get primary image with fallbacks
+  // Get primary image with fallbacks - optimized for performance
   const getPrimaryImage = (): string => {
+    // If we already had an error loading the image, go directly to fallback
+    if (imageError) {
+      const productName = product?.title || product?.name || "Product";
+      const productCategory = product?.category || "Product";
+      return getProductFallbackImage(productName, productCategory);
+    }
+    
     // If useMock is true, return a consistent mock image
     if (useMock) {
       return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
+    }
+    
+    // Fast path: Check for single image property first (most common case)
+    if (product?.image && typeof product.image === 'string' && product.image !== "/placeholder.svg") {
+      return product.image;
     }
     
     // Check if product has an images array with valid items
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
       const validImage = product.images.find(img => img && typeof img === 'string' && img !== "/placeholder.svg");
       if (validImage) return validImage;
-    }
-    
-    // Check for single image property
-    if (product?.image && typeof product.image === 'string' && product.image !== "/placeholder.svg") {
-      return product.image;
     }
     
     // Use a specific fallback based on product category and title
@@ -60,6 +69,13 @@ const ProductImage = ({
   const imageUrl = getPrimaryImage();
   const productName = product?.title || product?.name || "Product";
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    setImageError(true);
+    // If image fails to load, use category-specific fallback
+    const fallback = getProductFallbackImage(productName, product?.category || "");
+    (e.target as HTMLImageElement).src = fallback;
+  };
+
   return (
     <AspectRatio 
       ratio={getAspectRatioValue(aspectRatio)} 
@@ -69,11 +85,8 @@ const ProductImage = ({
         src={imageUrl}
         alt={productName}
         className="h-full w-full object-cover transition-all hover:scale-105"
-        onError={(e) => {
-          // If image fails to load, use category-specific fallback
-          const fallback = getProductFallbackImage(productName, product?.category || "");
-          (e.target as HTMLImageElement).src = fallback;
-        }}
+        onError={handleImageError}
+        loading="lazy" // Add lazy loading for performance
       />
     </AspectRatio>
   );

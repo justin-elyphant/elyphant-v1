@@ -15,6 +15,7 @@ const SearchBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchInProgressRef = useRef(false);
   
   // Get search term from URL on initial load
   useEffect(() => {
@@ -25,10 +26,16 @@ const SearchBar = () => {
     }
   }, [location.search]);
   
-  // Handle form submission
+  // Handle form submission with debouncing
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple rapid searches
+    if (searchInProgressRef.current) return;
+    
     if (searchTerm.trim()) {
+      searchInProgressRef.current = true;
+      
       // Check if token is missing when user initiates search
       if (!hasValidZincToken() && !showTokenAlert) {
         setShowTokenAlert(true);
@@ -37,10 +44,15 @@ const SearchBar = () => {
       // Ensure we navigate to marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
+      
+      // Reset search in progress after a short delay
+      setTimeout(() => {
+        searchInProgressRef.current = false;
+      }, 500);
     }
   };
 
-  // Simple input change handler
+  // Simple input change handler with debounce for search popover
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -55,7 +67,12 @@ const SearchBar = () => {
 
   // Handle selecting an item from search results
   const handleSearchItemSelect = (value: string) => {
+    // Prevent multiple rapid searches
+    if (searchInProgressRef.current) return;
+    
     if (value.trim()) {
+      searchInProgressRef.current = true;
+      
       setSearchTerm(value);
       setIsSearchOpen(false);
       
@@ -67,6 +84,11 @@ const SearchBar = () => {
       console.log("Navigating to marketplace with search:", value.trim());
       // Always navigate to the marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
+      
+      // Reset search in progress after a short delay
+      setTimeout(() => {
+        searchInProgressRef.current = false;
+      }, 500);
     }
   };
 

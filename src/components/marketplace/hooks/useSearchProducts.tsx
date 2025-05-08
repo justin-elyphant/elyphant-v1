@@ -10,14 +10,26 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
   const toastShownRef = useRef(false);
   const searchIdRef = useRef<string | null>(null);
   const RESULTS_LIMIT = 100;
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const searchZincProducts = async (searchParam: string, searchChanged: boolean) => {
+    // Clear any pending search timeouts to prevent race conditions
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Clear existing toasts to prevent accumulation
+    toast.dismiss();
+    
     setIsLoading(true);
     
     try {
       console.log(`Searching for products with term: "${searchParam}"`);
+      
+      // Show a single loading toast with unique ID to prevent duplicates
       toast.loading("Searching...", {
-        description: `Looking for products matching "${searchParam}"`
+        description: `Looking for products matching "${searchParam}"`,
+        id: `search-loading-${searchParam}`, // Use consistent ID to prevent duplicates
       });
       
       const results = await searchProducts(searchParam);
@@ -49,29 +61,44 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
         
         // Show only ONE toast notification with a summary if it's a new search
         if (!toastShownRef.current && searchChanged) {
-          // Wait a bit to prevent flashing
-          setTimeout(() => {
-            if (!toastShownRef.current) {
-              toastShownRef.current = true;
-              toast.success("Search Complete", {
-                description: `Found ${Math.min(amazonProducts.length, RESULTS_LIMIT)} products matching "${searchParam}"`
-              });
-            }
-          }, 500);
+          // Dismiss any existing toasts first
+          toast.dismiss(`search-loading-${searchParam}`);
+          
+          // Use a ref to avoid multiple toasts within the same search session
+          toastShownRef.current = true;
+          
+          // Show a single success toast with a slight delay
+          searchTimeoutRef.current = setTimeout(() => {
+            toast.success("Search Complete", {
+              description: `Found ${Math.min(amazonProducts.length, RESULTS_LIMIT)} products matching "${searchParam}"`,
+              id: `search-success-${searchParam}`, // Use consistent ID to prevent duplicates
+            });
+            
+            // Reset toast flag after a few seconds
+            setTimeout(() => {
+              toastShownRef.current = false;
+            }, 3000);
+          }, 300);
         }
         
         return amazonProducts;
       } else {
         // Show toast for no results
         if (!toastShownRef.current && searchChanged) {
+          // Dismiss loading toast
+          toast.dismiss(`search-loading-${searchParam}`);
+          
+          // Show no results toast
+          toastShownRef.current = true;
+          toast.error("No Results", {
+            description: `No products found matching "${searchParam}"`,
+            id: `search-no-results-${searchParam}`, // Use consistent ID to prevent duplicates
+          });
+          
+          // Reset toast flag after a few seconds
           setTimeout(() => {
-            if (!toastShownRef.current) {
-              toastShownRef.current = true;
-              toast.error("No Results", {
-                description: `No products found matching "${searchParam}"`
-              });
-            }
-          }, 500);
+            toastShownRef.current = false;
+          }, 3000);
         }
         
         return [];
@@ -82,14 +109,20 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       
       // Only show error toast once per search
       if (!toastShownRef.current && searchChanged) {
+        // Dismiss loading toast
+        toast.dismiss(`search-loading-${searchParam}`);
+        
+        // Show error toast
+        toastShownRef.current = true;
+        toast.error("Search Error", {
+          description: "Error connecting to Amazon. Please try again later.",
+          id: `search-error-${searchParam}`, // Use consistent ID to prevent duplicates
+        });
+        
+        // Reset toast flag after a few seconds
         setTimeout(() => {
-          if (!toastShownRef.current) {
-            toastShownRef.current = true;
-            toast.error("Search Error", {
-              description: "Error connecting to Amazon. Please try again later."
-            });
-          }
-        }, 500);
+          toastShownRef.current = false;
+        }, 3000);
       }
       
       return [];

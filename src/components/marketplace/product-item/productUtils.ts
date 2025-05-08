@@ -1,4 +1,3 @@
-
 /**
  * Format price to always show 2 decimal places
  */
@@ -15,6 +14,21 @@ export const formatProductPrice = (price: number | null | undefined): string => 
   }
   
   return price.toFixed(2);
+};
+
+/**
+ * Get the base price for a product (before any discounts)
+ */
+export const getBasePrice = (product: any): number => {
+  if (!product) return 0;
+  
+  // If a specific base_price field exists, use that
+  if (product.base_price && typeof product.base_price === 'number') {
+    return product.base_price;
+  }
+  
+  // Otherwise, just return the regular price
+  return normalizePrice(product.price);
 };
 
 /**

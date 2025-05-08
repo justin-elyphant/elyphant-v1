@@ -9,27 +9,29 @@ import SignUpDialog from "../SignUpDialog";
 import { useAuth } from "@/contexts/auth";
 
 interface WishlistButtonProps {
-  userData: any;
-  productId: string;
-  productName: string;
+  onWishlistClick?: (e: React.MouseEvent) => void;
+  onClick?: (e: React.MouseEvent) => void; // Add this to make it compatible
+  isFavorited?: boolean;
+  userData?: any;
+  productId?: string;
+  productName?: string;
   productImage?: string;
   productPrice?: number;
   productBrand?: string;
-  onWishlistClick: (e: React.MouseEvent) => void;
   onSaveOptionSelect?: (option: "wishlist" | "later", productId: string) => void;
-  isFavorited: boolean;
 }
 
 const WishlistButton = ({
+  onWishlistClick,
+  onClick,
+  isFavorited = false,
   userData,
-  productId,
-  productName,
+  productId = "",
+  productName = "",
   productImage,
   productPrice,
   productBrand,
-  onWishlistClick,
   onSaveOptionSelect,
-  isFavorited
 }: WishlistButtonProps) => {
   const { user } = useAuth();
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
@@ -40,7 +42,12 @@ const WishlistButton = ({
     if (!user) {
       setShowSignUpDialog(true);
     } else {
-      onWishlistClick(e);
+      // Use onWishlistClick first, fall back to onClick if needed
+      if (onWishlistClick) {
+        onWishlistClick(e);
+      } else if (onClick) {
+        onClick(e);
+      }
     }
   };
   
@@ -69,26 +76,37 @@ const WishlistButton = ({
     </button>
   );
 
+  // Simplified logic for demo purposes
+  if (!user || !userData) {
+    return (
+      <>
+        {trigger}
+        <SignUpDialog 
+          open={showSignUpDialog} 
+          onOpenChange={setShowSignUpDialog} 
+        />
+      </>
+    );
+  }
+
+  // If we have user data and proper product info
+  if (productId && productName) {
+    return (
+      <WishlistSelectionPopover
+        productId={productId}
+        productName={productName}
+        productImage={productImage}
+        productPrice={productPrice}
+        productBrand={productBrand}
+        trigger={trigger}
+      />
+    );
+  }
+
+  // Fallback if we're missing product info
   return (
     <>
-      {user ? (
-        <WishlistSelectionPopover
-          productId={productId}
-          productName={productName}
-          productImage={productImage}
-          productPrice={productPrice}
-          productBrand={productBrand}
-          trigger={trigger}
-        />
-      ) : (
-        <>
-          {trigger}
-          <SignUpDialog 
-            open={showSignUpDialog} 
-            onOpenChange={setShowSignUpDialog} 
-          />
-        </>
-      )}
+      {trigger}
     </>
   );
 };

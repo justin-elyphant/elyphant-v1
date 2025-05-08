@@ -13,10 +13,19 @@ interface ProductDetailsProps {
     num_reviews?: number;
     category?: string;
   };
-  onAddToCart: (e: React.MouseEvent) => void;
+  onClick?: () => void;
+  basePrice?: number;
+  viewMode?: "grid" | "list";
+  onAddToCart?: (e: React.MouseEvent) => void;
 }
 
-const ProductDetails = ({ product, onAddToCart }: ProductDetailsProps) => {
+const ProductDetails = ({ 
+  product, 
+  onClick, 
+  basePrice,
+  viewMode = "grid",
+  onAddToCart 
+}: ProductDetailsProps) => {
   // Clean up Amazon-style titles
   const getCleanTitle = (title: string): string => {
     // Remove excessive capitalization
@@ -43,16 +52,28 @@ const ProductDetails = ({ product, onAddToCart }: ProductDetailsProps) => {
     return cleanTitle;
   };
 
+  const handleClick = onClick ? onClick : () => {};
+  const handleAddToCart = onAddToCart ? onAddToCart : (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Default implementation if none provided
+    console.log("Add to cart clicked for", product.title);
+  };
+
   return (
     <div className="p-4 w-full">
-      <h3 className="font-medium text-sm line-clamp-2 mb-1">{getCleanTitle(product?.title || "")}</h3>
+      <h3 
+        className="font-medium text-sm line-clamp-2 mb-1"
+        onClick={handleClick}
+      >
+        {getCleanTitle(product?.title || "")}
+      </h3>
       <ProductRating rating={product.stars} reviewCount={product.num_reviews} size="sm" />
       <div className="font-bold mt-1">${formatProductPrice(product.price)}</div>
       <div className="mt-3 flex justify-between items-center">
         <Button 
           size="sm" 
           className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-          onClick={onAddToCart}
+          onClick={handleAddToCart}
         >
           <Gift className="h-4 w-4 mr-1" />
           Gift This

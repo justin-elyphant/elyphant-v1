@@ -59,8 +59,13 @@ const ProductItem = ({
       {/* Wishlist button */}
       <div className="absolute right-2 top-2 z-10">
         <WishlistButton 
-          onClick={onWishlistClick}
+          onWishlistClick={onWishlistClick}
           isFavorited={isFavorited}
+          productId={product.product_id}
+          productName={product.title || ""}
+          productImage={product.image}
+          productPrice={product.price}
+          productBrand={product.brand}
         />
       </div>
       

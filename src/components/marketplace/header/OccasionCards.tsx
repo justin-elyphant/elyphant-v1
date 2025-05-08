@@ -8,7 +8,7 @@ interface OccasionCardsProps {
   friendOccasions: GiftOccasion[];
   nextHoliday: GiftOccasion | null;
   secondHoliday: GiftOccasion | null;
-  onCardClick: (searchQuery: string) => void;
+  onCardClick: (searchQuery: string, personId?: string, occasionType?: string) => void;
 }
 
 export const OccasionCards: React.FC<OccasionCardsProps> = ({
@@ -28,7 +28,7 @@ export const OccasionCards: React.FC<OccasionCardsProps> = ({
       <FriendEventCard 
         event={firstEvent} 
         index={0}
-        onCardClick={onCardClick}
+        onCardClick={(searchQuery, personId, occasionType) => onCardClick(searchQuery, personId, occasionType)}
       />
       
       {/* Second Friend Event Card */}
@@ -36,7 +36,7 @@ export const OccasionCards: React.FC<OccasionCardsProps> = ({
         event={secondEvent} 
         index={1}
         fallbackEvent={firstEvent}
-        onCardClick={onCardClick}
+        onCardClick={(searchQuery, personId, occasionType) => onCardClick(searchQuery, personId, occasionType)}
       />
       
       {/* Holiday Card */}

@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback, memo } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -12,13 +11,14 @@ import ModernProductCard from "./ui/ModernProductCard";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductGridOptimizedProps {
   products: Product[];
   viewMode: "grid" | "list" | "modern";
   sortOption?: string;
   isLoading?: boolean;
-  useMock?: boolean; // Add the missing prop to fix the type error
+  useMock?: boolean;
 }
 
 // Memoized individual product component
@@ -30,7 +30,7 @@ const ProductGridOptimized = ({
   viewMode, 
   sortOption = "relevance",
   isLoading = false,
-  useMock = false // Add default value
+  useMock = false
 }: ProductGridOptimizedProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<string | null>(null);
@@ -44,6 +44,20 @@ const ProductGridOptimized = ({
   const sortedProducts = useMemo(() => {
     return sortProducts(products, sortOption);
   }, [products, sortOption]);
+  
+  // Group products by source for better display
+  const groupedProducts = useMemo(() => {
+    const wishlistItems = sortedProducts.filter(p => p.fromWishlist);
+    const preferenceItems = sortedProducts.filter(p => p.fromPreferences && !p.fromWishlist);
+    const regularItems = sortedProducts.filter(p => !p.fromWishlist && !p.fromPreferences);
+    
+    return {
+      wishlistItems,
+      preferenceItems,
+      regularItems,
+      hasGrouping: wishlistItems.length > 0 || preferenceItems.length > 0
+    };
+  }, [sortedProducts]);
 
   // Memoize event handlers
   const handleWishlistClick = useCallback((e: React.MouseEvent, productId: string) => {
@@ -77,6 +91,46 @@ const ProductGridOptimized = ({
     toast.success(`Added ${product.title || 'Product'} to cart`);
   }, [addToCart]);
 
+  // Render product card with potential tag
+  const renderProductCard = useCallback((product: Product) => {
+    if (viewMode === 'modern') {
+      return (
+        <div key={product.product_id} className="relative">
+          {product.tags && product.tags.length > 0 && (
+            <Badge className="absolute top-0 left-0 z-10 m-2 bg-purple-600">
+              {product.tags[0]}
+            </Badge>
+          )}
+          <MemoizedModernProductCard
+            product={product}
+            isFavorited={userData ? isFavorited(product.product_id) : false}
+            onToggleFavorite={(e) => handleWishlistClick(e, product.product_id)}
+            onAddToCart={(e) => handleAddToCart(e, product)}
+            onClick={() => handleProductClick(product.product_id)}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div key={product.product_id} className="relative">
+          {product.tags && product.tags.length > 0 && (
+            <Badge className="absolute top-0 left-0 z-10 m-2 bg-purple-600">
+              {product.tags[0]}
+            </Badge>
+          )}
+          <MemoizedProductItem
+            product={product}
+            viewMode={viewMode}
+            onProductClick={handleProductClick}
+            onWishlistClick={(e) => handleWishlistClick(e, product.product_id)}
+            isFavorited={userData ? isFavorited(product.product_id) : false}
+            useMock={useMock}
+          />
+        </div>
+      );
+    }
+  }, [viewMode, userData, isFavorited, handleWishlistClick, handleProductClick, handleAddToCart, useMock]);
+
   if (isLoading) {
     return <ProductSkeleton count={12} />;
   }
@@ -93,6 +147,71 @@ const ProductGridOptimized = ({
     );
   }
 
+  // If we have grouped products (wishlist + preferences), show them separately
+  if (groupedProducts.hasGrouping) {
+    return (
+      <>
+        {/* Wishlist items section */}
+        {groupedProducts.wishlistItems.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">From Wishlist</h3>
+            <div className={viewMode === 'modern' 
+              ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' 
+              : viewMode === 'grid' 
+                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
+                : 'space-y-4'}
+            >
+              {groupedProducts.wishlistItems.map(renderProductCard)}
+            </div>
+          </div>
+        )}
+        
+        {/* Preference-based items section */}
+        {groupedProducts.preferenceItems.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Based on Preferences</h3>
+            <div className={viewMode === 'modern' 
+              ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' 
+              : viewMode === 'grid' 
+                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
+                : 'space-y-4'}
+            >
+              {groupedProducts.preferenceItems.map(renderProductCard)}
+            </div>
+          </div>
+        )}
+        
+        {/* Other recommended items section */}
+        {groupedProducts.regularItems.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">More Recommendations</h3>
+            <div className={viewMode === 'modern' 
+              ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' 
+              : viewMode === 'grid' 
+                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
+                : 'space-y-4'}
+            >
+              {groupedProducts.regularItems.map(renderProductCard)}
+            </div>
+          </div>
+        )}
+        
+        <ProductDetailsDialog 
+          productId={selectedProduct}
+          open={dlgOpen}
+          onOpenChange={setDlgOpen}
+          userData={userData}
+        />
+
+        <SignUpDialog 
+          open={showSignUpDialog} 
+          onOpenChange={setShowSignUpDialog} 
+        />
+      </>
+    );
+  }
+
+  // Standard product grid for non-grouped products
   return (
     <>
       <div className={viewMode === 'modern' 
@@ -101,28 +220,7 @@ const ProductGridOptimized = ({
           ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
           : 'space-y-4'}
       >
-        {sortedProducts.map((product) => (
-          viewMode === 'modern' ? (
-            <MemoizedModernProductCard
-              key={product.product_id}
-              product={product}
-              isFavorited={userData ? isFavorited(product.product_id) : false}
-              onToggleFavorite={(e) => handleWishlistClick(e, product.product_id)}
-              onAddToCart={(e) => handleAddToCart(e, product)}
-              onClick={() => handleProductClick(product.product_id)}
-            />
-          ) : (
-            <MemoizedProductItem 
-              key={product.product_id}
-              product={product}
-              viewMode={viewMode}
-              onProductClick={handleProductClick}
-              onWishlistClick={(e) => handleWishlistClick(e, product.product_id)}
-              isFavorited={userData ? isFavorited(product.product_id) : false}
-              useMock={useMock} // Pass the prop to ProductItem if needed
-            />
-          )
-        ))}
+        {sortedProducts.map(renderProductCard)}
       </div>
 
       <ProductDetailsDialog 

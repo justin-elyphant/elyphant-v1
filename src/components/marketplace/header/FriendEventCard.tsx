@@ -9,7 +9,7 @@ interface FriendEventCardProps {
   event: GiftOccasion | null;
   index: number;
   fallbackEvent?: GiftOccasion | null;
-  onCardClick: (searchQuery: string) => void;
+  onCardClick: (searchQuery: string, personId?: string, occasionType?: string) => void;
 }
 
 export const FriendEventCard: React.FC<FriendEventCardProps> = ({
@@ -20,7 +20,11 @@ export const FriendEventCard: React.FC<FriendEventCardProps> = ({
 }) => {
   const handleClick = () => {
     if (event) {
-      onCardClick(`${event.personName} ${event.type} gift`);
+      onCardClick(
+        `${event.personName} ${event.type} gift`, 
+        event.personId, 
+        event.type
+      );
     } else if (fallbackEvent) {
       // If we have at least one event but not two, use a generic search for the event type
       onCardClick(`${fallbackEvent.type} gift`);

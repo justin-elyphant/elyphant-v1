@@ -71,10 +71,27 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
     setSearchParams(params);
   };
 
-  // Handle click on occasion card
-  const handleCardClick = (searchQuery: string) => {
+  // Handle click on occasion card with enhanced personalization
+  const handleCardClick = (searchQuery: string, personId?: string, occasionType?: string) => {
     const params = new URLSearchParams(searchParams);
+    
+    // Set the basic search query
     params.set("search", searchQuery);
+    
+    // Add person ID as a parameter if available
+    if (personId) {
+      params.set("personId", personId);
+    } else {
+      params.delete("personId");
+    }
+    
+    // Add occasion type as a parameter if available
+    if (occasionType) {
+      params.set("occasionType", occasionType);
+    } else {
+      params.delete("occasionType");
+    }
+    
     setSearchParams(params);
   };
 

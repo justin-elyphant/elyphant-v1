@@ -24,7 +24,7 @@ const MarketplaceWrapper = () => {
     const searchParam = searchParams.get("search");
     if (searchParam) {
       setSearchTerm(searchParam);
-      handleSearch(searchParam);
+      handleSearch(searchParam, searchParams.get("personId"), searchParams.get("occasionType"));
     } else {
       // Load some default products with personalization
       loadPersonalizedProducts();
@@ -36,7 +36,7 @@ const MarketplaceWrapper = () => {
     const searchParam = searchParams.get("search");
     if (searchParam && searchParam !== searchTerm) {
       setSearchTerm(searchParam);
-      handleSearch(searchParam);
+      handleSearch(searchParam, searchParams.get("personId"), searchParams.get("occasionType"));
     }
   }, [searchParams]);
 
@@ -78,14 +78,51 @@ const MarketplaceWrapper = () => {
     setIsLoading(false);
   };
   
-  // Handle search function
-  const handleSearch = (term: string) => {
+  // Enhanced search function with friend preferences
+  const handleSearch = (term: string, personId?: string | null, occasionType?: string | null) => {
     setIsLoading(true);
-    console.log(`MarketplaceWrapper: Searching for "${term}"`);
+    console.log(`MarketplaceWrapper: Searching for "${term}" with personId: ${personId}, occasionType: ${occasionType}`);
     
     try {
-      // Generate mock search results
-      const mockResults = searchMockProducts(term, 16);
+      let mockResults: Product[] = [];
+      
+      // Check if we have a personId (meaning this is a friend's event)
+      if (personId) {
+        // Simulate getting friend's wishlist and preferences
+        // In a real implementation, you would fetch actual wishlist items and preferences
+        const friendWishlistItems = searchMockProducts(`wishlist ${term}`, 4);
+        const friendPreferenceItems = searchMockProducts(`preferences ${term}`, 6);
+        
+        // Tag the wishlist items
+        friendWishlistItems.forEach(item => {
+          // Extract the person's name from the search term
+          const nameMatch = term.match(/^([^\s]+)/);
+          const friendName = nameMatch ? nameMatch[1] : "Friend's";
+          
+          item.tags = item.tags || [];
+          item.tags.push(`From ${friendName} Wishlist`);
+          item.fromWishlist = true;
+        });
+        
+        // Tag the preference based items
+        friendPreferenceItems.forEach(item => {
+          item.tags = item.tags || [];
+          item.tags.push("Based on preferences");
+          item.fromPreferences = true;
+        });
+        
+        // Combine wishlist and preference items
+        mockResults = [...friendWishlistItems, ...friendPreferenceItems];
+        
+        // Add some generic recommendations for this occasion type
+        if (occasionType) {
+          const genericItems = searchMockProducts(`${occasionType} gift ideas`, 6);
+          mockResults = [...mockResults, ...genericItems];
+        }
+      } else {
+        // Regular search without personalization
+        mockResults = searchMockProducts(term, 16);
+      }
       
       // Update products state
       setProducts(mockResults);
@@ -111,6 +148,9 @@ const MarketplaceWrapper = () => {
     // Update URL parameter
     const params = new URLSearchParams(searchParams);
     params.set("search", term);
+    // Clear personId and occasionType since this is a direct search
+    params.delete("personId");
+    params.delete("occasionType");
     setSearchParams(params);
     
     // Directly handle search

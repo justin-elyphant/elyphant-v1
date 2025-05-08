@@ -40,7 +40,7 @@ export const useConnectedFriendsSpecialDates = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [friendOccasions, setFriendOccasions] = useState<GiftOccasion[]>([]);
-  const { connections, isLoading: connectionsLoading } = useConnections();
+  const { connections } = useConnections();
 
   useEffect(() => {
     const loadFriendOccasions = async () => {
@@ -94,10 +94,10 @@ export const useConnectedFriendsSpecialDates = () => {
     };
     
     // Only load if we have a user
-    if (user && !connectionsLoading) {
+    if (user) {
       loadFriendOccasions();
     }
-  }, [user, connections, connectionsLoading]);
+  }, [user, connections]);
   
   return {
     friendOccasions,

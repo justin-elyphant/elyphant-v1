@@ -3,6 +3,7 @@ import React from "react";
 import ProductGridOptimized from "./ProductGridOptimized";
 import { Spinner } from "@/components/ui/spinner";
 import { CircleSlash, Search } from "lucide-react";
+import ProductSkeleton from "./ui/ProductSkeleton";
 
 interface MarketplaceContentProps {
   products: any[];
@@ -18,13 +19,7 @@ const MarketplaceContent = ({
   // Function to render the appropriate content based on loading state and products
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <div className="flex flex-col items-center justify-center py-20">
-          <Spinner />
-          <p className="text-lg font-medium mt-4">Loading products...</p>
-          <p className="text-sm text-muted-foreground">Please wait while we find the best gifts for you</p>
-        </div>
-      );
+      return <ProductSkeleton count={8} />;
     }
 
     if (!products || products.length === 0) {

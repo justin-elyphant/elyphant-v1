@@ -19,7 +19,7 @@ export const useMarketplaceProducts = () => {
   // Ensure we always load products on initial render
   useEffect(() => {
     console.log("useMarketplaceProducts: Initial load effect running");
-    const loadInitialProducts = () => {
+    const loadInitialProducts = async () => {
       const keyword = searchParams.get("search") || "";
       setSearchTerm(keyword);
       setLocalSearchTerm(keyword);

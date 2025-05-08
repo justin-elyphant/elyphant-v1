@@ -24,6 +24,14 @@ export interface ImportantDate {
   description: string;
 }
 
+export interface RecentlyViewedProduct {
+  id: string;
+  name: string;
+  image: string;
+  price?: number;
+  viewed_at: string;
+}
+
 export interface Profile {
   id: string;
   created_at?: string;
@@ -41,6 +49,7 @@ export interface Profile {
   bio?: string;
   important_dates?: ImportantDate[];
   interests?: string[];
+  recently_viewed?: RecentlyViewedProduct[];
 }
 
 export type UserConnection = {

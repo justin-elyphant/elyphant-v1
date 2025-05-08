@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
+import { RecentlyViewedProduct } from "@/types/supabase";
 
 export const useProductTracking = (products: Product[]) => {
   const { addToRecentlyViewed } = useRecentlyViewed();
@@ -51,7 +52,7 @@ export const useProductTracking = (products: Product[]) => {
         : [];
         
       // Add current product to the front of the array (most recent first)
-      const productData = {
+      const productData: RecentlyViewedProduct = {
         id: product.product_id || product.id || "",
         name: product.title || product.name || "",
         image: product.image || "",

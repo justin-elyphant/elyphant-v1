@@ -1,7 +1,9 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const PopularBrandsSection = () => {
+  const navigate = useNavigate();
   const brands = [
     {
       name: "Nike",
@@ -25,6 +27,10 @@ const PopularBrandsSection = () => {
     },
   ];
 
+  const handleBrandClick = (brandName: string) => {
+    navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
+  };
+
   return (
     <div className="py-16 bg-white">
       <div className="container px-4">
@@ -37,7 +43,8 @@ const PopularBrandsSection = () => {
           {brands.map((brand) => (
             <div 
               key={brand.name}
-              className="flex items-center justify-center p-6 rounded-lg hover:shadow-md transition-shadow"
+              className="flex items-center justify-center p-6 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleBrandClick(brand.name)}
             >
               <img
                 src={brand.logo}
@@ -54,4 +61,3 @@ const PopularBrandsSection = () => {
 };
 
 export default PopularBrandsSection;
-

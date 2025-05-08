@@ -1,41 +1,47 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface Category {
   id: string;
   name: string;
   image: string;
-  url: string;
+  searchTerm: string;
 }
 
 const CategoriesGrid = () => {
+  const navigate = useNavigate();
+  
   const categories: Category[] = [
     {
       id: "birthdays",
       name: "Birthdays",
       image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop&q=80",
-      url: "/gifting?category=birthday"
+      searchTerm: "birthday gifts"
     },
     {
       id: "anniversaries",
       name: "Anniversaries",
       image: "https://images.unsplash.com/photo-1522057384400-681b421cfebc?w=800&auto=format&fit=crop&q=80",
-      url: "/gifting?category=anniversary"
+      searchTerm: "anniversary gifts"
     },
     {
       id: "holidays",
       name: "Holidays",
       image: "https://images.unsplash.com/photo-1513297887119-d46091b24bfa?w=800&auto=format&fit=crop&q=80",
-      url: "/gifting?category=holiday"
+      searchTerm: "holiday gifts"
     },
     {
       id: "corporate",
       name: "Corporate",
       image: "https://images.unsplash.com/photo-1513530534585-c7b1394c6d51?w=800&auto=format&fit=crop&q=80",
-      url: "/gifting?category=corporate"
+      searchTerm: "corporate gifts"
     }
   ];
+  
+  const handleCategoryClick = (searchTerm: string) => {
+    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+  };
   
   return (
     <div className="py-16 bg-gray-50">
@@ -47,10 +53,10 @@ const CategoriesGrid = () => {
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {categories.map((category) => (
-            <Link 
+            <div 
               key={category.id}
-              to={category.url}
-              className="group relative overflow-hidden rounded-lg aspect-square"
+              onClick={() => handleCategoryClick(category.searchTerm)}
+              className="group relative overflow-hidden rounded-lg aspect-square cursor-pointer"
             >
               <img 
                 src={category.image}
@@ -60,7 +66,7 @@ const CategoriesGrid = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
                 <h3 className="text-white font-semibold text-xl">{category.name}</h3>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>

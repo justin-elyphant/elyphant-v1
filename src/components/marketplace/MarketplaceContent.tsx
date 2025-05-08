@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Product } from "@/contexts/ProductContext";
 import MarketplaceFilters from "./MarketplaceFilters";
-import ProductGrid from "./ProductGrid";
+import ProductGridOptimized from "./ProductGridOptimized";
 import MarketplaceLoading from "./MarketplaceLoading";
 import FiltersSidebar from "./FiltersSidebar";
 
@@ -69,7 +69,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm }: MarketplaceCont
         )}
         
         <div className="flex-1">
-          <ProductGrid 
+          <ProductGridOptimized 
             products={filteredProducts} 
             viewMode={viewMode}
             sortOption={sortOption}

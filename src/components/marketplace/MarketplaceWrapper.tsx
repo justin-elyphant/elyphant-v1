@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
@@ -82,6 +81,13 @@ const MarketplaceWrapper = () => {
       // Use up to 3 interests to create a personalized mix of products
       const personalizedQuery = interests.slice(0, 3).join(" ");
       personalizedProducts = searchMockProducts(personalizedQuery, 10);
+      
+      // Tag these products as preference-based
+      personalizedProducts.forEach(product => {
+        product.tags = product.tags || [];
+        product.tags.push("Based on your preferences");
+        product.fromPreferences = true;
+      });
       
       // Mix in some general products
       const generalProducts = searchMockProducts("gift ideas", 6);

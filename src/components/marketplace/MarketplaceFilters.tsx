@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Filter, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
@@ -8,8 +7,8 @@ import { getSortOptions } from "./hooks/utils/categoryUtils";
 interface MarketplaceFiltersProps {
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
-  viewMode: "grid" | "list";
-  setViewMode: (mode: "grid" | "list") => void;
+  viewMode: "grid" | "list" | "modern";
+  setViewMode: (mode: "grid" | "list" | "modern") => void;
   totalItems: number;
   sortOption: string;
   onSortChange: (option: string) => void;

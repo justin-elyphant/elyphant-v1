@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Gift, Heart, Star, Cake } from "lucide-react";
@@ -102,9 +101,10 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
     // Get next holiday (non-personal occasion)
     const nextHoliday = getNextHoliday();
     
-    // Get first birthday and first anniversary from friendOccasions
-    const nextBirthday = friendOccasions.find(o => o.type === "birthday");
-    const nextAnniversary = friendOccasions.find(o => o.type === "anniversary");
+    // Get the two closest upcoming friend occasions (regardless of type)
+    const upcomingFriendEvents = [...friendOccasions].sort((a, b) => a.date.getTime() - b.date.getTime());
+    const firstEvent = upcomingFriendEvents.length > 0 ? upcomingFriendEvents[0] : null;
+    const secondEvent = upcomingFriendEvents.length > 1 ? upcomingFriendEvents[1] : null;
     
     // Get the holiday after the next one for "Thank You" card
     const nextHolidays = getUpcomingOccasions().filter(o => o.type === "holiday");
@@ -112,65 +112,85 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
     
     return (
       <div className="grid grid-cols-2 gap-3 md:gap-4">
-        {/* Anniversary Card - Show either friend's anniversary or generic */}
+        {/* First Friend Event Card */}
         <Button 
           variant="outline" 
           className="flex flex-col items-center justify-center h-24 border-2 bg-white hover:bg-purple-50 hover:border-purple-300 transition-colors"
           onClick={() => {
             const params = new URLSearchParams(searchParams);
-            if (nextAnniversary) {
-              params.set("search", `${nextAnniversary.personName} anniversary gift`);
+            if (firstEvent) {
+              params.set("search", `${firstEvent.personName} ${firstEvent.type} gift`);
             } else {
+              params.set("search", "birthday gift"); // Default fallback
+            }
+            setSearchParams(params);
+          }}
+        >
+          <div className="flex items-center mb-2 relative">
+            {firstEvent ? (
+              firstEvent.type === "birthday" ? (
+                <Cake className="h-8 w-8 text-indigo-500" />
+              ) : (
+                <Heart className="h-8 w-8 text-rose-500" />
+              )
+            ) : (
+              <Cake className="h-8 w-8 text-indigo-500" />
+            )}
+            {firstEvent?.personImage && (
+              <div className="absolute -right-4 -top-2">
+                <Avatar className="h-6 w-6 border border-white">
+                  <img src={firstEvent.personImage} alt={firstEvent.personName} />
+                </Avatar>
+              </div>
+            )}
+          </div>
+          <span className="font-medium text-sm text-center">
+            {firstEvent 
+              ? `${firstEvent.personName}'s ${firstEvent.type}` 
+              : "Birthday"}
+          </span>
+        </Button>
+        
+        {/* Second Friend Event Card */}
+        <Button 
+          variant="outline" 
+          className="flex flex-col items-center justify-center h-24 border-2 bg-white hover:bg-purple-50 hover:border-purple-300 transition-colors"
+          onClick={() => {
+            const params = new URLSearchParams(searchParams);
+            if (secondEvent) {
+              params.set("search", `${secondEvent.personName} ${secondEvent.type} gift`);
+            } else if (firstEvent) {
+              // If we have at least one event but not two, use a generic search for the event type
+              params.set("search", `${firstEvent.type} gift`);
+            } else {
+              // Fallback
               params.set("search", "anniversary gift");
             }
             setSearchParams(params);
           }}
         >
           <div className="flex items-center mb-2 relative">
-            <Heart className="h-8 w-8 text-rose-500" />
-            {nextAnniversary?.personImage && (
+            {secondEvent ? (
+              secondEvent.type === "birthday" ? (
+                <Cake className="h-8 w-8 text-indigo-500" />
+              ) : (
+                <Heart className="h-8 w-8 text-rose-500" />
+              )
+            ) : (
+              <Heart className="h-8 w-8 text-rose-500" />
+            )}
+            {secondEvent?.personImage && (
               <div className="absolute -right-4 -top-2">
                 <Avatar className="h-6 w-6 border border-white">
-                  <img src={nextAnniversary.personImage} alt={nextAnniversary.personName} />
+                  <img src={secondEvent.personImage} alt={secondEvent.personName} />
                 </Avatar>
               </div>
             )}
           </div>
           <span className="font-medium text-sm text-center">
-            {nextAnniversary 
-              ? `${nextAnniversary.personName}'s Anniversary` 
-              : "Anniversary"}
-          </span>
-        </Button>
-        
-        {/* Birthday Card - Show either friend's birthday or generic */}
-        <Button 
-          variant="outline" 
-          className="flex flex-col items-center justify-center h-24 border-2 bg-white hover:bg-purple-50 hover:border-purple-300 transition-colors"
-          onClick={() => {
-            const params = new URLSearchParams(searchParams);
-            if (nextBirthday) {
-              params.set("search", `${nextBirthday.personName} birthday gift`);
-            } else {
-              params.set("search", "birthday gift");
-            }
-            setSearchParams(params);
-          }}
-        >
-          <div className="flex items-center mb-2 relative">
-            <Cake className="h-8 w-8 text-indigo-500" />
-            {nextBirthday?.personImage && (
-              <div className="absolute -right-4 -top-2">
-                <Avatar className="h-6 w-6 border border-white">
-                  <img src={nextBirthday.personImage} alt={nextBirthday.personName} />
-                </Avatar>
-              </div>
-            )}
-          </div>
-          <span className="font-medium text-sm text-center">
-            {nextBirthday 
-              ? `${nextBirthday.personName}'s Birthday` 
-              : "Birthday"}
+            {secondEvent 
+              ? `${secondEvent.personName}'s ${secondEvent.type}` 
+              : (firstEvent ? `${firstEvent.type === "birthday" ? "Anniversary" : "Birthday"}` : "Anniversary")}
           </span>
         </Button>
         

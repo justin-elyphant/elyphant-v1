@@ -216,8 +216,65 @@ export const getMockProducts = (count: number = 12): Product[] => {
     }
   ];
   
-  console.log(`getMockProducts: Returning all ${products.length} products`);
-  return products.slice(0, count);
+  // Add popular search products to improve search results
+  const popularSearchProducts: Product[] = [
+    {
+      product_id: "nike-1",
+      id: "nike-1",
+      title: "Nike Air Max Running Shoes",
+      name: "Nike Air Max Running Shoes",
+      price: 129.99,
+      image: "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/7fbc5e94-8d49-4730-a280-f19d3cfad0b0/air-max-90-mens-shoes-6n3vKB.png",
+      images: [
+        "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/7fbc5e94-8d49-4730-a280-f19d3cfad0b0/air-max-90-mens-shoes-6n3vKB.png",
+        "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/32e70dd0-2334-4591-a9ac-97e5e31100a9/air-max-90-mens-shoes-6n3vKB.png"
+      ],
+      description: "Iconic Nike Air Max running shoes with maximum comfort and style",
+      category: "Footwear",
+      vendor: "Amazon via Zinc",
+      rating: 4.8,
+      reviewCount: 3252
+    },
+    {
+      product_id: "nike-2",
+      id: "nike-2",
+      title: "Nike Dri-FIT Training T-Shirt",
+      name: "Nike Dri-FIT Training T-Shirt",
+      price: 34.99,
+      image: "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/a8860607-6861-4343-bf57-6a09519cc207/dri-fit-mens-training-t-shirt-MPCN3k.png",
+      images: [
+        "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/a8860607-6861-4343-bf57-6a09519cc207/dri-fit-mens-training-t-shirt-MPCN3k.png",
+        "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/e04aefd6-9489-44b6-b495-121d5cfb33a6/dri-fit-mens-training-t-shirt-MPCN3k.png"
+      ],
+      description: "Moisture-wicking Nike Dri-FIT technology keeps you cool during workouts",
+      category: "Clothing",
+      vendor: "Amazon via Zinc",
+      rating: 4.6,
+      reviewCount: 1873
+    },
+    {
+      product_id: "nike-3",
+      id: "nike-3",
+      title: "Nike Revolution 6 Running Shoes",
+      name: "Nike Revolution 6 Running Shoes",
+      price: 89.99,
+      image: "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/a3e7dead-1ad2-4c40-996d-93ebc9df0fca/revolution-6-road-running-shoes-8Vskf3.png",
+      images: [
+        "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/a3e7dead-1ad2-4c40-996d-93ebc9df0fca/revolution-6-road-running-shoes-8Vskf3.png",
+        "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/83d4d3a8-148f-4780-8b2d-467fe5d33e3f/revolution-6-road-running-shoes-8Vskf3.png"
+      ],
+      description: "Lightweight Nike Revolution 6 running shoes with responsive cushioning",
+      category: "Footwear",
+      vendor: "Amazon via Zinc",
+      rating: 4.7,
+      reviewCount: 2145
+    }
+  ];
+  
+  // Return requested number of products, combining both arrays
+  const allProducts = [...products, ...popularSearchProducts];
+  console.log(`getMockProducts: Returning all ${allProducts.length} products`);
+  return allProducts.slice(0, count);
 };
 
 /**
@@ -232,6 +289,19 @@ export const searchMockProducts = (query: string, count: number = 12): Product[]
   const normalizedQuery = query.toLowerCase().trim();
   console.log(`searchMockProducts: Searching for "${normalizedQuery}"`);
   
+  // Special handling for popular searches
+  if (normalizedQuery.includes("nike") && normalizedQuery.includes("shoe")) {
+    console.log("searchMockProducts: Special handling for Nike shoes");
+    const nikeProducts = getMockProducts(24).filter(product => 
+      product.id?.includes("nike") && 
+      (product.category?.toLowerCase()?.includes("footwear") || 
+       product.name?.toLowerCase()?.includes("shoe"))
+    );
+    
+    console.log(`searchMockProducts: Found ${nikeProducts.length} Nike shoe products`);
+    return nikeProducts.slice(0, count);
+  }
+  
   const allProducts = getMockProducts(24); // Get a larger set to search from
   
   const filteredProducts = allProducts.filter(product => {
@@ -239,9 +309,18 @@ export const searchMockProducts = (query: string, count: number = 12): Product[]
     const description = (product.description || "").toLowerCase();
     const category = (product.category || "").toLowerCase();
     
+    // Check if any words in the query match
+    const queryWords = normalizedQuery.split(" ");
+    const matchesAnyWord = queryWords.some(word => 
+      title.includes(word) || 
+      description.includes(word) || 
+      category.includes(word)
+    );
+    
     return title.includes(normalizedQuery) || 
            description.includes(normalizedQuery) || 
-           category.includes(normalizedQuery);
+           category.includes(normalizedQuery) ||
+           matchesAnyWord;
   });
   
   console.log(`searchMockProducts: Found ${filteredProducts.length} matching products`);

@@ -87,6 +87,17 @@ export const useZincSearch = (searchTerm: string) => {
               const brand = product.brand ? product.brand.toLowerCase() : "";
               if (brand.includes(term)) return true;
               
+              // Also check for individual word matches
+              const words = term.split(" ");
+              if (words.length > 1) {
+                return words.some(word => 
+                  name.includes(word) || 
+                  title.includes(word) || 
+                  description.includes(word) || 
+                  brand.includes(word)
+                );
+              }
+              
               return false;
             } catch (err) {
               console.error("Error filtering product:", err);
@@ -97,15 +108,7 @@ export const useZincSearch = (searchTerm: string) => {
         
         console.log(`useZincSearch: Found ${filtered.length} matching local products`);
         
-        // Ensure we always have some results
-        if (filtered.length === 0) {
-          filtered = getMockProducts(3);
-          console.log(`useZincSearch: No local matches, using ${filtered.length} default products`);
-        }
-        
-        setFilteredProducts(filtered);
-
-        // Get mock search results
+        // Get mock search results - this is the key part for searching
         console.log(`useZincSearch: Getting mock search results for "${searchTerm}"`);
         const mockResults = searchMockProducts(searchTerm, MAX_RESULTS);
         
@@ -113,11 +116,25 @@ export const useZincSearch = (searchTerm: string) => {
         if (mockResults && mockResults.length > 0) {
           console.log(`useZincSearch: Found ${mockResults.length} mock results`);
           setZincResults(mockResults);
+          
+          // If we have mock results but no filtered results, use mock results as filtered
+          if (filtered.length === 0) {
+            console.log("useZincSearch: No local matches, using mock search results as filtered products");
+            setFilteredProducts(mockResults);
+          } else {
+            setFilteredProducts(filtered);
+          }
         } else {
           console.log(`useZincSearch: No mock results found, using fallback`);
           // Fallback to some default products
           const fallbackProducts = getMockProducts(5);
           setZincResults(fallbackProducts);
+          
+          if (filtered.length === 0) {
+            setFilteredProducts(fallbackProducts);
+          } else {
+            setFilteredProducts(filtered);
+          }
         }
         
       } catch (error) {
@@ -139,6 +156,6 @@ export const useZincSearch = (searchTerm: string) => {
     loading,
     zincResults,
     filteredProducts,
-    hasResults: true // Always return true so UI can render properly
+    hasResults: zincResults.length > 0 || filteredProducts.length > 0 // Update to properly check for results
   };
 };

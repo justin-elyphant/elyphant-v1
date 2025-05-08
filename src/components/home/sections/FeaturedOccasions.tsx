@@ -98,8 +98,6 @@ const FeaturedOccasions = () => {
     
     toast.success(`Exploring ${occasionName.toLowerCase()} gift ideas...`);
     
-    const pageTitle = `Gifts for ${occasionName}`;
-    
     try {
       if (searchTerm) {
         console.log(`Pre-fetching products for search term: ${searchTerm}`);
@@ -118,7 +116,7 @@ const FeaturedOccasions = () => {
       console.error(`Error pre-fetching products for ${occasionName}:`, error);
       setFetchStatus(prev => ({...prev, [occasionId]: "error fetching"}));
     } finally {
-      // Changed navigation to point to marketplace page instead of gifting
+      // Route to marketplace with appropriate search term
       window.location.href = `/marketplace?search=${encodeURIComponent(searchTerm)}`;
       
       setLoadingOccasion(null);

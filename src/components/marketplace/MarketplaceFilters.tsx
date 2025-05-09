@@ -14,6 +14,7 @@ interface MarketplaceFiltersProps {
   totalItems: number;
   sortOption: string;
   onSortChange: (option: string) => void;
+  isMobile?: boolean;
 }
 
 const MarketplaceFilters = ({
@@ -23,10 +24,13 @@ const MarketplaceFilters = ({
   setViewMode,
   totalItems,
   sortOption,
-  onSortChange
+  onSortChange,
+  isMobile: propIsMobile
 }: MarketplaceFiltersProps) => {
   const sortOptions = getSortOptions();
-  const isMobile = useIsMobile();
+  const hookIsMobile = useIsMobile();
+  // Use the prop if provided, otherwise use the hook
+  const isMobile = propIsMobile !== undefined ? propIsMobile : hookIsMobile;
   
   const handleSortChange = (value: string) => {
     onSortChange(value);
@@ -45,24 +49,27 @@ const MarketplaceFilters = ({
           <span>{showFilters ? 'Hide Filters' : 'Filters'}</span>
         </Button>
         
-        <div className="flex border rounded-md">
-          <Button 
-            variant={viewMode === 'grid' ? 'default' : 'ghost'} 
-            size="sm"
-            onClick={() => setViewMode('grid')}
-            className="rounded-r-none min-h-9 px-2.5"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant={viewMode === 'list' ? 'default' : 'ghost'} 
-            size="sm"
-            onClick={() => setViewMode('list')}
-            className="rounded-l-none min-h-9 px-2.5"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Only show view mode toggle on desktop */}
+        {!isMobile && (
+          <div className="flex border rounded-md">
+            <Button 
+              variant={viewMode === 'grid' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="rounded-r-none min-h-9 px-2.5"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={viewMode === 'list' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="rounded-l-none min-h-9 px-2.5"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
       
       <div className="flex items-center gap-2">

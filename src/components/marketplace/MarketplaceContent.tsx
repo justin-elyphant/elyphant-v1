@@ -1,8 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
-import ProductGrid from "./ProductGrid";  // Make sure this points to the correct component
+import ProductGrid from "./ProductGrid";
 import MarketplaceLoading from "./MarketplaceLoading";
 import FiltersSidebar from "./FiltersSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,11 +15,20 @@ interface MarketplaceContentProps {
 }
 
 const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: MarketplaceContentProps) => {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const isMobile = useIsMobile();
   const [sortOption, setSortOption] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
-  const isMobile = useIsMobile();
+  
+  // Set the default view mode based on device type
+  const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "list" : "grid");
+  
+  // Force list view on mobile devices when screen size changes
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode("list");
+    }
+  }, [isMobile]);
   
   const handleFilterChange = (newFilters: Record<string, any>) => {
     setActiveFilters(newFilters);
@@ -55,10 +64,16 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
         showFilters={showFilters}
         setShowFilters={setShowFilters}
         viewMode={viewMode}
-        setViewMode={(mode: "grid" | "list") => setViewMode(mode)}
+        setViewMode={(mode: "grid" | "list") => {
+          // Only allow changing view mode on desktop
+          if (!isMobile) {
+            setViewMode(mode);
+          }
+        }}
         totalItems={filteredProducts.length}
         sortOption={sortOption}
         onSortChange={setSortOption}
+        isMobile={isMobile}
       />
       
       <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6 mt-4`}>

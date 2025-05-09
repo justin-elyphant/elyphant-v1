@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
 
@@ -6,24 +5,57 @@ interface StandardProductGridProps {
   products: Product[];
   viewMode: "grid" | "list" | "modern";
   renderProductCard: (product: Product) => React.ReactNode;
+  onProductView?: (productId: string) => void; // Add this prop
 }
 
 const StandardProductGrid: React.FC<StandardProductGridProps> = ({
   products,
   viewMode,
-  renderProductCard
+  renderProductCard,
+  onProductView // Add this parameter
 }) => {
-  const getGridClassNames = () => {
-    return viewMode === 'modern' 
-      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' 
-      : viewMode === 'grid' 
-        ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
-        : 'space-y-4';
+  // Optional click handler to track product views
+  const handleProductClick = (productId: string) => {
+    if (onProductView) {
+      onProductView(productId);
+    }
   };
 
   return (
-    <div className={getGridClassNames()}>
-      {products.map(renderProductCard)}
+    <div
+      className={`${
+        viewMode === "grid"
+          ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+          : "space-y-4"
+      }`}
+    >
+      {products.map((product) => {
+        const productId = product.product_id || product.id;
+        if (!productId) {
+          console.warn("Product missing ID:", product);
+          return null;
+        }
+        
+        // If onProductView exists, wrap the product card in a div with onClick handler
+        if (onProductView) {
+          return (
+            <div 
+              key={productId} 
+              onClick={() => handleProductClick(productId)}
+              className="cursor-pointer"
+            >
+              {renderProductCard(product)}
+            </div>
+          );
+        }
+        
+        // Otherwise just render the product card
+        return (
+          <div key={productId}>
+            {renderProductCard(product)}
+          </div>
+        );
+      })}
     </div>
   );
 };

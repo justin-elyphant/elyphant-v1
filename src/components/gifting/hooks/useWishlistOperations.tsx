@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { WishlistItem, Wishlist } from "@/types/profile";
@@ -13,7 +12,8 @@ export function useWishlistOperations() {
     wishlistedProducts, 
     setWishlistedProducts,
     wishlists, 
-    setWishlists 
+    setWishlists,
+    isInitialized // Add this property to fix the first error
   } = useWishlistState();
   
   const { syncWishlistToProfile } = useWishlistSync();
@@ -323,6 +323,7 @@ export function useWishlistOperations() {
   return {
     wishlistedProducts,
     wishlists,
+    isInitialized, // Include this in the returned object
     handleWishlistToggle,
     createWishlist,
     addToWishlist,

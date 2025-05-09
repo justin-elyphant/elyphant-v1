@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
 import StandardProductGrid from "./components/StandardProductGrid";
@@ -10,6 +11,7 @@ interface ProductGridProps {
   viewMode?: "grid" | "list" | "modern";
   renderProductCard?: (product: Product) => React.ReactNode;
   showGroupedSections?: boolean;
+  onProductView?: (productId: string) => void; // Add this missing prop
 }
 
 const ProductGrid: React.FC<ProductGridProps> = ({
@@ -17,7 +19,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   sortOption = "default",
   viewMode = "grid",
   renderProductCard,
-  showGroupedSections = true
+  showGroupedSections = true,
+  onProductView // Add this to the function parameters
 }) => {
   const { sortedProducts, groupedProducts } = useProductDisplay(products, sortOption);
   
@@ -38,6 +41,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
         groupedProducts={groupedProducts}
         viewMode={viewMode}
         renderProductCard={productCardRenderer}
+        onProductView={onProductView} // Pass this prop to the component
       />
     );
   }
@@ -48,6 +52,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       products={sortedProducts}
       viewMode={viewMode}
       renderProductCard={productCardRenderer}
+      onProductView={onProductView} // Pass this prop to the component
     />
   );
 };

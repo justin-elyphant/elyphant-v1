@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { WishlistItem, Wishlist } from "@/types/profile";
@@ -109,6 +108,7 @@ export function useWishlistState() {
             items: profileWishlistedProducts.map(productId => ({
               id: crypto.randomUUID(),
               product_id: productId,
+              name: `Item ${productId}`, // Add name property to fix the type error
               added_at: new Date().toISOString()
             }))
           };

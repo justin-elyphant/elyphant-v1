@@ -14,12 +14,14 @@ interface GroupedProductSectionProps {
   groupedProducts: GroupedProductsType;
   viewMode: "grid" | "list" | "modern";
   renderProductCard: (product: Product) => React.ReactNode;
+  onProductView?: (productId: string) => void; // Add this prop
 }
 
 const GroupedProductSection: React.FC<GroupedProductSectionProps> = ({
   groupedProducts,
   viewMode,
-  renderProductCard
+  renderProductCard,
+  onProductView // Add this parameter
 }) => {
   const { wishlistItems, preferenceItems, regularItems } = groupedProducts;
   
@@ -33,6 +35,7 @@ const GroupedProductSection: React.FC<GroupedProductSectionProps> = ({
             products={wishlistItems}
             viewMode={viewMode}
             renderProductCard={renderProductCard}
+            onProductView={onProductView} // Pass this prop
           />
         </div>
       )}
@@ -45,6 +48,7 @@ const GroupedProductSection: React.FC<GroupedProductSectionProps> = ({
             products={preferenceItems}
             viewMode={viewMode}
             renderProductCard={renderProductCard}
+            onProductView={onProductView} // Pass this prop
           />
         </div>
       )}
@@ -59,6 +63,7 @@ const GroupedProductSection: React.FC<GroupedProductSectionProps> = ({
             products={regularItems}
             viewMode={viewMode}
             renderProductCard={renderProductCard}
+            onProductView={onProductView} // Pass this prop
           />
         </div>
       )}

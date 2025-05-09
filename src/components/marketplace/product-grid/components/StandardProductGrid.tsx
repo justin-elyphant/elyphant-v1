@@ -1,20 +1,23 @@
 
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StandardProductGridProps {
   products: Product[];
   viewMode: "grid" | "list" | "modern";
   renderProductCard: (product: Product) => React.ReactNode;
-  onProductView?: (productId: string) => void; // Add this prop
+  onProductView?: (productId: string) => void;
 }
 
 const StandardProductGrid: React.FC<StandardProductGridProps> = ({
   products,
   viewMode,
   renderProductCard,
-  onProductView // Add this parameter
+  onProductView
 }) => {
+  const isMobile = useIsMobile();
+
   // Optional click handler to track product views
   const handleProductClick = (productId: string) => {
     if (onProductView) {
@@ -22,14 +25,15 @@ const StandardProductGrid: React.FC<StandardProductGridProps> = ({
     }
   };
 
+  // Adjust grid classes for better mobile responsiveness
+  const getGridClasses = () => {
+    if (viewMode !== "grid") return "space-y-4";
+    
+    return "grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4";
+  };
+
   return (
-    <div
-      className={`${
-        viewMode === "grid"
-          ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-          : "space-y-4"
-      }`}
-    >
+    <div className={getGridClasses()}>
       {products.map((product) => {
         const productId = product.product_id || product.id;
         if (!productId) {

@@ -4,6 +4,7 @@ import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
@@ -29,6 +30,7 @@ const ProductGrid = ({
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
   const { addToRecentlyViewed } = useRecentlyViewed();
+  const isMobile = useIsMobile();
 
   // Update sorted products when products or sort option changes
   useEffect(() => {
@@ -77,7 +79,7 @@ const ProductGrid = ({
   return (
     <>
       <div className={`${viewMode === 'grid' 
-        ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
+        ? 'grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
         : 'space-y-4'}`}
       >
         {sortedProducts.map((product) => (

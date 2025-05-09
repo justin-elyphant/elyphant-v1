@@ -1,4 +1,3 @@
-
 import { SharingLevel } from "@/types/supabase";
 
 export interface DataSharingSettings {
@@ -16,7 +15,7 @@ export function getDefaultDataSharingSettings(): DataSharingSettings {
     dob: "friends",
     shipping_address: "private",
     gift_preferences: "friends",
-    email: "private" // Default to private for email
+    email: "private" // Always default to private for email
   };
 }
 
@@ -48,6 +47,19 @@ export function completeDataSharingSettings(settings?: Partial<DataSharingSettin
     gift_preferences: settings.gift_preferences || defaults.gift_preferences,
     email: settings.email || defaults.email
   };
+}
+
+/**
+ * Ensures a user's profile has complete data sharing settings
+ * @param profileData User profile data
+ * @returns Updated data sharing settings
+ */
+export function ensureCompleteUserPrivacySettings(profileData: any): DataSharingSettings {
+  // Get current settings or empty object if none exist
+  const currentSettings = profileData?.data_sharing_settings || {};
+  
+  // Return complete settings with defaults for missing fields
+  return completeDataSharingSettings(currentSettings);
 }
 
 /**

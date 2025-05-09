@@ -1,14 +1,25 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { DataSharingSettings, getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
-export async function createUserProfile(userId: string, email: string, name: string) {
+export async function createUserProfile(
+  userId: string, 
+  email: string, 
+  name: string,
+  dataSharingSettings?: DataSharingSettings
+) {
   try {
+    // Ensure we have complete data sharing settings
+    const completeSettings = dataSharingSettings || getDefaultDataSharingSettings();
+    console.log("Creating profile with data sharing settings:", completeSettings);
+    
     const response = await supabase.functions.invoke('create-profile', {
       body: {
         user_id: userId,
         profile_data: {
           email: email,
           name: name,
+          data_sharing_settings: completeSettings,
           updated_at: new Date().toISOString()
         }
       }
@@ -26,6 +37,7 @@ export async function createUserProfile(userId: string, email: string, name: str
               id: userId,
               email: email,
               name: name,
+              data_sharing_settings: completeSettings,
               updated_at: new Date().toISOString()
             }
           ]);

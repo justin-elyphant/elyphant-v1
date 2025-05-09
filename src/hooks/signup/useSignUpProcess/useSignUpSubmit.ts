@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { SignUpFormValues } from "@/components/auth/signup/forms/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserProfile } from "./useProfileCreation";
+import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 interface UseSignUpSubmitProps {
   setUserEmail: (email: string) => void;
@@ -63,9 +64,15 @@ export const useSignUpSubmit = ({
         localStorage.setItem("userName", values.name);
         localStorage.setItem("newSignUp", "true");
         
-        // Create user profile
+        // Create user profile with complete privacy settings
         if (signUpData.user.id) {
-          await createUserProfile(signUpData.user.id, values.email, values.name);
+          // Create profile with complete data sharing settings
+          await createUserProfile(
+            signUpData.user.id, 
+            values.email, 
+            values.name,
+            getDefaultDataSharingSettings()
+          );
         }
         
         // Set application state

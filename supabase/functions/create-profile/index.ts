@@ -11,9 +11,9 @@ const corsHeaders = {
 const getDefaultDataSharingSettings = () => {
   return {
     dob: "friends",
-    shipping_address: "friends",
+    shipping_address: "private",
     gift_preferences: "public",
-    email: "private"
+    email: "private" // Always private by default for email
   };
 };
 
@@ -44,6 +44,13 @@ serve(async (req) => {
     console.log(`Creating/updating profile for user: ${user_id}`)
     
     // Ensure we have all required fields with proper defaults
+    const dataSharingSettings = profile_data.data_sharing_settings || getDefaultDataSharingSettings();
+    
+    // Make sure email sharing setting is explicitly set
+    if (!dataSharingSettings.email) {
+      dataSharingSettings.email = "private";
+    }
+    
     const safeProfileData = {
       id: user_id,
       ...profile_data,
@@ -55,7 +62,7 @@ serve(async (req) => {
         country: ""
       },
       gift_preferences: Array.isArray(profile_data.gift_preferences) ? profile_data.gift_preferences : [],
-      data_sharing_settings: profile_data.data_sharing_settings || getDefaultDataSharingSettings(),
+      data_sharing_settings: dataSharingSettings,
       important_dates: Array.isArray(profile_data.important_dates) ? profile_data.important_dates : [],
       updated_at: new Date().toISOString()
     }

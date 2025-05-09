@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Heart, Plus, Loader2 } from "lucide-react";
+import { Heart, Plus, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
@@ -24,10 +25,26 @@ export const WishlistSelectionPopover = ({
   trigger 
 }: WishlistSelectionPopoverProps) => {
   const { user } = useAuth();
-  const { wishlists, createWishlist, addToWishlist } = useWishlist();
+  const { 
+    wishlists, 
+    createWishlist, 
+    addToWishlist, 
+    isLoading, 
+    initError,
+    reloadWishlists 
+  } = useWishlist();
+  
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Reset adding state if popover closes
+  useEffect(() => {
+    if (!open) {
+      setAdding(null);
+    }
+  }, [open]);
   
   const handleAddToWishlist = async (wishlistId: string) => {
     try {
@@ -75,8 +92,20 @@ export const WishlistSelectionPopover = ({
     }
   };
   
-  // Ensure user is authenticated - this is now a redundant check since
-  // we're handling auth at the WishlistButton level, but keeping it for safety
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await reloadWishlists();
+      toast.success("Wishlists refreshed");
+    } catch (error) {
+      console.error("Error refreshing wishlists:", error);
+      toast.error("Failed to refresh wishlists");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  
+  // Ensure user is authenticated
   if (!user) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
@@ -90,9 +119,64 @@ export const WishlistSelectionPopover = ({
               Create an account or sign in to save items
             </p>
             <Button asChild className="mt-2 w-full">
-              <a href="/auth/signin">
+              <a href="/login">
                 Sign In
               </a>
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          {trigger}
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-4">
+          <div className="flex flex-col items-center justify-center py-4">
+            <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+            <p className="text-sm text-muted-foreground">Loading your wishlists...</p>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  // Show error state with retry
+  if (initError) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          {trigger}
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-4">
+          <div className="text-center space-y-3">
+            <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto" />
+            <p className="font-medium">Failed to load wishlists</p>
+            <p className="text-sm text-muted-foreground">
+              We couldn't load your wishlists. Please try again.
+            </p>
+            <Button 
+              onClick={handleRefresh} 
+              className="mt-2 w-full"
+              variant="outline"
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Try Again
+                </>
+              )}
             </Button>
           </div>
         </PopoverContent>

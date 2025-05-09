@@ -6,23 +6,29 @@ export function useWishlist() {
     wishlistedProducts,
     wishlists,
     isInitialized,
+    isLoading,
+    initError,
     handleWishlistToggle,
     createWishlist,
     addToWishlist,
     removeFromWishlist,
     deleteWishlist,
-    updateWishlistSharing
+    updateWishlistSharing,
+    reloadWishlists
   } = useWishlistOperations();
 
   return {
     wishlistedProducts,
     wishlists,
     isInitialized,
+    isLoading,
+    initError,
     handleWishlistToggle,
     createWishlist,
     addToWishlist,
     removeFromWishlist,
     deleteWishlist,
-    updateWishlistSharing
+    updateWishlistSharing,
+    reloadWishlists
   };
 }

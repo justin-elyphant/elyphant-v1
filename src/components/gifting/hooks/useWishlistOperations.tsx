@@ -11,7 +11,10 @@ export function useWishlistOperations() {
     setWishlistedProducts,
     wishlists, 
     setWishlists,
-    isInitialized
+    isInitialized,
+    isLoading,
+    initError,
+    reloadWishlists
   } = useWishlistState();
   
   const { syncWishlistToProfile, updateWishlistSharingSettings } = useWishlistSync();
@@ -35,11 +38,14 @@ export function useWishlistOperations() {
     wishlistedProducts,
     wishlists,
     isInitialized,
+    isLoading,
+    initError,
     handleWishlistToggle,
     createWishlist,
     addToWishlist,
     removeFromWishlist,
     deleteWishlist,
-    updateWishlistSharing
+    updateWishlistSharing,
+    reloadWishlists
   };
 }

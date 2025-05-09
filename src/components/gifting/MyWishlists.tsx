@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";
@@ -9,8 +9,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
 import { useWishlist } from "./hooks/useWishlist";
-import { Loader2, Share2 } from "lucide-react";
+import { Loader2, Share2, AlertTriangle, RefreshCw } from "lucide-react";
 import ShareWishlistDialog from "./wishlist/ShareWishlistDialog";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/contexts/auth";
 
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -28,26 +30,20 @@ const MyWishlists = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [currentWishlist, setCurrentWishlist] = useState<Wishlist | null>(null);
-  const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
   
   const { 
     wishlists, 
     createWishlist, 
     deleteWishlist, 
     isInitialized, 
-    updateWishlistSharing 
+    isLoading,
+    initError,
+    updateWishlistSharing,
+    reloadWishlists
   } = useWishlist();
-
-  useEffect(() => {
-    // Set loading to false after initialization or a timeout
-    if (isInitialized) {
-      setLoading(false);
-    } else {
-      const timer = setTimeout(() => setLoading(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [wishlists, isInitialized]);
 
   const handleCreateWishlist = () => {
     setDialogOpen(true);
@@ -105,14 +101,80 @@ const MyWishlists = () => {
     }
   };
 
-  if (loading) {
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await reloadWishlists();
+      toast.success("Wishlists refreshed");
+    } catch (error) {
+      console.error("Error refreshing wishlists:", error);
+      toast.error("Failed to refresh wishlists");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // If not authenticated, show a sign-in prompt
+  if (!user && !isLoading) {
     return (
-      <div className="flex justify-center items-center py-16">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Sign In Required</h2>
+          <p className="text-gray-600 mb-6">
+            Please sign in to create and manage your wishlists.
+          </p>
+          <div className="flex gap-4">
+            <Button asChild variant="default">
+              <a href="/login">Sign In</a>
+            </Button>
+            <Button asChild variant="outline">
+              <a href="/register">Create Account</a>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center py-16">
+        <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+        <p className="text-muted-foreground">Loading your wishlists...</p>
+      </div>
+    );
+  }
+
+  // Show error state with retry option
+  if (initError) {
+    return (
+      <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Failed to Load Wishlists</h2>
+          <p className="text-gray-600 mb-6">
+            We couldn't load your wishlists. Please try again.
+          </p>
+          <Button 
+            onClick={handleRefresh} 
+            disabled={refreshing}
+            className="flex items-center gap-2"
+          >
+            {refreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Main content
   return (
     <div>
       <WishlistHeader onCreateNew={() => setDialogOpen(true)} />

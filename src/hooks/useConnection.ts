@@ -1,23 +1,27 @@
 
 import { useState, useEffect } from "react";
 import useConnectionById from "@/hooks/useConnectionById";
+import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 
 export const useConnection = (connectionId: string) => {
-  const { connection, loading, error, updateRelationship } = useConnectionById(connectionId);
+  const { connection, loading: connectionLoading, error, updateRelationship } = useConnectionById(connectionId);
   const [isMessagingEnabled, setIsMessagingEnabled] = useState(false);
+  
+  const { status: connectionStatus, loading: statusLoading } = 
+    useConnectionStatus(connection?.id);
   
   // Check if messaging is enabled for this connection
   useEffect(() => {
     if (connection) {
-      // In a real app, we might check connection status or relationship
-      // For now, all connections can message each other
-      setIsMessagingEnabled(true);
+      // Enable messaging for accepted connections
+      setIsMessagingEnabled(connectionStatus === 'accepted');
     }
-  }, [connection]);
+  }, [connection, connectionStatus]);
 
   return {
     connection,
-    loading,
+    connectionStatus,
+    loading: connectionLoading || statusLoading,
     error,
     isMessagingEnabled,
     updateRelationship

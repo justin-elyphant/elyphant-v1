@@ -1,5 +1,6 @@
 
 import { SharingLevel } from "@/types/supabase";
+import { ConnectionStatus } from "@/hooks/useConnectionStatus";
 
 /**
  * Determines whether specific user data should be visible based on privacy settings
@@ -7,13 +8,13 @@ import { SharingLevel } from "@/types/supabase";
  * 
  * @param data The data to check visibility for
  * @param privacySetting The privacy setting for this data type ('public', 'friends', 'private')
- * @param isConnected Whether the viewer is connected to the data owner
+ * @param connectionStatus The connection status between viewer and data owner
  * @returns Boolean indicating if the data should be visible
  */
 export const isDataVisible = (
   data: any, 
   privacySetting: SharingLevel = 'private',
-  isConnected: boolean = false
+  connectionStatus: ConnectionStatus = 'none'
 ): boolean => {
   // If data doesn't exist, it's not visible regardless of settings
   if (data === null || data === undefined) return false;
@@ -21,8 +22,8 @@ export const isDataVisible = (
   // Public data is always visible
   if (privacySetting === 'public') return true;
   
-  // Friends-only data is visible only to connected users
-  if (privacySetting === 'friends' && isConnected) return true;
+  // Friends-only data is visible only to connected users with 'accepted' status
+  if (privacySetting === 'friends' && connectionStatus === 'accepted') return true;
   
   // Private data is never visible to others
   return false;
@@ -71,7 +72,7 @@ export const getDefaultDataSharingSettings = () => {
  * @param ownerUserId The ID of the user who owns the data
  * @param dataSharingSettings The owner's data sharing settings
  * @param dataType The type of data being accessed
- * @param connections Optional list of established connections
+ * @param connectionStatus The connection status between viewer and owner
  * @returns Boolean indicating if the data should be visible
  */
 export const shouldSeeUserData = (
@@ -79,7 +80,7 @@ export const shouldSeeUserData = (
   ownerUserId: string | undefined,
   dataSharingSettings: any,
   dataType: string,
-  connections?: any[]
+  connectionStatus: ConnectionStatus = 'none'
 ): boolean => {
   // Users can always see their own data
   if (viewerUserId && ownerUserId && viewerUserId === ownerUserId) {
@@ -97,20 +98,9 @@ export const shouldSeeUserData = (
     return true;
   }
   
-  // For friends-only data, check if users are connected
+  // For friends-only data, check if users are connected with 'accepted' status
   if (privacySetting === 'friends') {
-    // If connections array is provided, check if users are connected
-    if (connections) {
-      const isConnected = connections.some(
-        connection => 
-          (connection.user_id === ownerUserId && connection.connected_user_id === viewerUserId) ||
-          (connection.user_id === viewerUserId && connection.connected_user_id === ownerUserId)
-      );
-      return isConnected;
-    }
-    
-    // Default to not connected if we can't verify
-    return false;
+    return connectionStatus === 'accepted';
   }
   
   // Private data is never visible to others

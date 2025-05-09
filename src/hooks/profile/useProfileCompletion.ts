@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/auth";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
-export const useProfileCompletion = (user: any) => {
+export const useProfileCompletion = (user: User | null) => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -17,15 +18,10 @@ export const useProfileCompletion = (user: any) => {
       return;
     }
 
-    // Check if signup is rate limited
-    const signupRateLimited = localStorage.getItem("signupRateLimited") === "true";
-    if (signupRateLimited) {
-      console.warn("Signup is rate limited, please try again later.");
-      toast.error("Signup is rate limited, please try again later.");
-      return;
-    }
-
-    // Check if profile setup is already loading
+    // Clear any stale flags
+    localStorage.removeItem("signupRateLimited");
+    
+    // Set loading flag to prevent duplicate submissions
     const profileSetupLoading = localStorage.getItem("profileSetupLoading") === "true";
     if (profileSetupLoading) {
       console.warn("Profile setup is already in progress, please wait.");
@@ -36,10 +32,14 @@ export const useProfileCompletion = (user: any) => {
     localStorage.setItem("profileSetupLoading", "true");
 
     try {
+      // Get next steps option if available
+      const nextStepsOption = localStorage.getItem("nextStepsOption") || "dashboard";
+      
       // Make sure we update or create the profile with proper data sharing settings
       const profileUpdate = {
         id: user.id,
         email: user.email,
+        onboarding_completed: true,
         data_sharing_settings: {
           dob: "friends",
           shipping_address: "private",
@@ -60,9 +60,47 @@ export const useProfileCompletion = (user: any) => {
       }
 
       console.log("Profile updated successfully:", data);
-      toast.success("Profile setup complete!");
+      
+      // Clear all signup & setup related flags
       localStorage.removeItem("profileSetupLoading");
-      navigate('/dashboard');
+      localStorage.removeItem("newSignUp");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
+      
+      // Set completion flag
+      localStorage.setItem("profileCompleted", "true");
+      
+      // Refresh auth session
+      try {
+        await supabase.auth.refreshSession();
+        console.log("Session refreshed successfully");
+      } catch (refreshError) {
+        console.error("Error refreshing session:", refreshError);
+      }
+
+      // Show success message
+      toast.success("Profile setup complete!");
+      
+      // Determine destination based on next steps option
+      let destinationUrl = "/dashboard";
+      switch (nextStepsOption) {
+        case "create_wishlist":
+          destinationUrl = "/wishlists";
+          break;
+        case "find_friends":
+          destinationUrl = "/connections";
+          break;
+        case "shop_gifts":
+          destinationUrl = "/gifting";
+          break;
+        case "explore_marketplace":
+          destinationUrl = "/marketplace";
+          break;
+      }
+      
+      // Navigate to destination
+      navigate(destinationUrl, { replace: true });
+      localStorage.removeItem("nextStepsOption");
 
     } catch (error) {
       console.error("Error during profile setup:", error);
@@ -72,11 +110,26 @@ export const useProfileCompletion = (user: any) => {
   }, [user, navigate, signOut]);
   
   const handleSkip = useCallback(() => {
-    console.log("Skipping profile setup");
-    navigate('/dashboard');
+    // Clear flags
+    localStorage.removeItem("profileSetupLoading");
+    localStorage.removeItem("newSignUp");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
+    localStorage.setItem("profileCompleted", "true");
+    
+    // Notify and navigate
+    toast.info("You can complete your profile later in settings");
+    navigate('/dashboard', { replace: true });
   }, [navigate]);
 
   const handleBackToDashboard = useCallback(() => {
+    // Clear flags
+    localStorage.removeItem("profileSetupLoading");
+    localStorage.removeItem("newSignUp");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
+    
+    // Navigate to dashboard
     navigate('/dashboard');
   }, [navigate]);
 

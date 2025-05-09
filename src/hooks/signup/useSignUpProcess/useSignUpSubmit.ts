@@ -64,15 +64,17 @@ export const useSignUpSubmit = ({
         localStorage.setItem("userName", values.name);
         localStorage.setItem("newSignUp", "true");
         
-        // Create user profile with complete privacy settings
+        // Create user profile with privacy settings
         if (signUpData.user.id) {
-          // Create profile with complete data sharing settings
-          await createUserProfile(
-            signUpData.user.id, 
-            values.email, 
-            values.name,
-            getDefaultDataSharingSettings()
-          );
+          try {
+            // Fix: Use only 3 arguments as expected by the createUserProfile function
+            // The default data sharing settings will be handled inside createUserProfile
+            await createUserProfile(signUpData.user.id, values.email, values.name);
+            console.log("Profile created successfully");
+          } catch (profileError) {
+            console.error("Error creating profile:", profileError);
+            // Continue with signup process even if profile creation fails
+          }
         }
         
         // Set application state

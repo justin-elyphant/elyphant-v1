@@ -5,6 +5,7 @@ import { useAuthFunctions } from './authHooks';
 import { AuthContextProps } from './types';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getDefaultDataSharingSettings } from '@/utils/privacyUtils';
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
@@ -67,11 +68,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
         }
         
+        // Ensure data_sharing_settings is complete
+        const completeDataSharingSettings = {
+          ...getDefaultDataSharingSettings(),
+          ...(existingProfile?.data_sharing_settings || {})
+        };
+        
         // If profile exists and has all required fields, no need to update
         if (existingProfile && 
             existingProfile.name && 
             existingProfile.email && 
-            existingProfile.bio) {
+            existingProfile.bio &&
+            existingProfile.data_sharing_settings?.email) {
           console.log("Profile already exists with required fields:", existingProfile.id);
           
           // Just sync the wishlisted products if we have new ones from localStorage
@@ -160,7 +168,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
         }
         
-        // Profile data with fallbacks for each field
+        // Profile data with fallbacks for each field and ensuring all sharing settings are present
         const profileData = {
           id: user.id,
           email: storedUserEmail || user.email || existingProfile?.email || '',
@@ -173,11 +181,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           shipping_address: existingProfile?.shipping_address || {},
           gift_preferences: giftPreferences,
           important_dates: existingProfile?.important_dates || [],
-          data_sharing_settings: existingProfile?.data_sharing_settings || {
-            dob: "friends",
-            shipping_address: "private",
-            gift_preferences: "public"
-          },
+          data_sharing_settings: completeDataSharingSettings,
+          onboarding_completed: true,
           updated_at: new Date().toISOString()
         };
         
@@ -211,6 +216,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               localStorage.removeItem("userInterests");
               localStorage.removeItem("wishlistedProducts");
               localStorage.removeItem("savedItems");
+              localStorage.setItem("profileCompleted", "true");
             }
           } catch (error) {
             console.error(`Error in upsert operation (attempt ${attempts}):`, error);

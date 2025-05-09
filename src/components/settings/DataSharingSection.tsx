@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Gift, Info } from "lucide-react";
+import { Calendar, MapPin, Gift, Info, Mail } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
@@ -122,6 +122,41 @@ const DataSharingSection = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="public">Everyone</SelectItem>
+                        <SelectItem value="friends">Friends Only</SelectItem>
+                        <SelectItem value="private">Only Me</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="data_sharing_settings.email"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="flex items-center space-x-3">
+                  <Mail className="h-5 w-5 text-blue-700" />
+                  <div>
+                    <Label className="text-base">Email Address</Label>
+                    <p className="text-sm text-muted-foreground">Who can see your email</p>
+                  </div>
+                </div>
+                <div className="w-32">
+                  <FormControl>
+                    <Select 
+                      value={field.value || "private"} 
+                      onValueChange={(val) => field.onChange(val as SharingLevel)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="friends">Friends Only</SelectItem>
                         <SelectItem value="private">Only Me</SelectItem>
                       </SelectContent>

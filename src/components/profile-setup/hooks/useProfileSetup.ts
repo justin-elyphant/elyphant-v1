@@ -5,6 +5,7 @@ import { useProfileValidation } from "./useProfileValidation";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useProfileSubmit } from "@/hooks/profile/useProfileSubmit";
 import { toast } from "sonner";
+import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 interface UseProfileSetupProps {
   onComplete: () => void;
@@ -28,6 +29,23 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
   // More reliable loading state checking
   const isLoading = isSubmitLoading || isCompleting || isDataLoading;
+
+  // Ensure data_sharing_settings has all required fields
+  useEffect(() => {
+    if (profileData && (!profileData.data_sharing_settings || 
+        !profileData.data_sharing_settings.email)) {
+      // Get default settings and ensure they're complete
+      const defaultSettings = getDefaultDataSharingSettings();
+      
+      // Update profile data with complete settings
+      updateProfileData('data_sharing_settings', {
+        ...defaultSettings,
+        ...(profileData.data_sharing_settings || {})
+      });
+      
+      console.log("Initialized complete data sharing settings:", defaultSettings);
+    }
+  }, [profileData, updateProfileData]);
 
   // Clear all loading flags when component mounts
   useEffect(() => {
@@ -56,9 +74,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       nextStepsOption: profileData.next_steps_option,
       activeStep,
       hasCompletedRef: hasCompletedRef.current,
-      error
+      error,
+      data_sharing_settings: profileData.data_sharing_settings
     });
-  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option, activeStep, error]);
+  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option, activeStep, error, profileData.data_sharing_settings]);
 
   // Force completion after a timeout - with additional safeguards
   useEffect(() => {
@@ -113,6 +132,19 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     }
 
     console.log("Completing profile setup with data:", profileData);
+    
+    // Ensure data_sharing_settings is complete before submission
+    if (!profileData.data_sharing_settings || !profileData.data_sharing_settings.email) {
+      const completeSettings = {
+        ...getDefaultDataSharingSettings(),
+        ...(profileData.data_sharing_settings || {})
+      };
+      
+      // Update with complete settings
+      updateProfileData('data_sharing_settings', completeSettings);
+      console.log("Updated data sharing settings before completion:", completeSettings);
+    }
+    
     hasCompletedRef.current = true;
     setIsCompleting(true);
     setError(null);
@@ -121,7 +153,13 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     localStorage.setItem("profileSetupLoading", "true");
     
     try {
-      await handleSubmit(profileData);
+      // Ensure we have the latest data with all sharing settings
+      const finalProfileData = {
+        ...profileData,
+        data_sharing_settings: profileData.data_sharing_settings || getDefaultDataSharingSettings()
+      };
+      
+      await handleSubmit(finalProfileData);
       
       // Clear completion flags and redirect
       localStorage.removeItem("newSignUp");
@@ -150,7 +188,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         onComplete();
       }, 100);
     }
-  }, [profileData, handleSubmit, onComplete, isCompleting, cleanupTimeouts]);
+  }, [profileData, handleSubmit, onComplete, isCompleting, cleanupTimeouts, updateProfileData]);
 
   return {
     activeStep,

@@ -44,12 +44,13 @@ serve(async (req) => {
     console.log(`Creating/updating profile for user: ${user_id}`)
     
     // Ensure we have all required fields with proper defaults
-    const dataSharingSettings = profile_data.data_sharing_settings || getDefaultDataSharingSettings();
+    const dataSharingSettings = {
+      ...getDefaultDataSharingSettings(),
+      ...(profile_data.data_sharing_settings || {})
+    };
     
-    // Make sure email sharing setting is explicitly set
-    if (!dataSharingSettings.email) {
-      dataSharingSettings.email = "private";
-    }
+    // Always ensure email sharing setting is explicitly set to private
+    dataSharingSettings.email = "private";
     
     const safeProfileData = {
       id: user_id,

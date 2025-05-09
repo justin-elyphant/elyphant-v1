@@ -47,7 +47,7 @@ const ZipCountryFields: React.FC<ZipCountryFieldsProps> = ({
       <div className="space-y-2">
         <Label htmlFor="country">Country</Label>
         <Select 
-          value={countryValue || ""} 
+          value={countryValue || "United States"} 
           onValueChange={onCountryChange}
         >
           <SelectTrigger id="country">

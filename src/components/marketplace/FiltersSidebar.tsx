@@ -52,14 +52,14 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
               <div>
                 <h4 className="font-medium mb-3">Category</h4>
                 <Select 
-                  value={activeFilters.category || ""} 
+                  value={activeFilters.category || "all"} 
                   onValueChange={handleCategoryChange}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}

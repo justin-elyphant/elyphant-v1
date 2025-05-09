@@ -59,13 +59,14 @@ const ReturnItemsTable = ({
             <TableCell>
               <Select
                 disabled={!selectedItems[index.toString()]}
-                value={returnReasons[index.toString()]}
+                value={returnReasons[index.toString()] || "select-reason"}
                 onValueChange={(value) => handleReasonChange(index.toString(), value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="select-reason">Select reason</SelectItem>
                   <SelectItem value="defective">Defective product</SelectItem>
                   <SelectItem value="damaged">Damaged during shipping</SelectItem>
                   <SelectItem value="wrong">Wrong item received</SelectItem>

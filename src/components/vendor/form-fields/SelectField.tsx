@@ -33,7 +33,7 @@ export const SelectField = ({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Select onValueChange={field.onChange} defaultValue={field.value || (options.length > 0 ? options[0].value : "default-value")}>
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder={placeholder} />

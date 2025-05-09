@@ -11,6 +11,8 @@ interface SignUpContentWrapperProps {
   onSignUpSubmit: (values: SignUpFormValues) => Promise<void>;
   handleBackToSignUp: () => void;
   isSubmitting?: boolean;
+  onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
+  resendCount: number;
   bypassVerification?: boolean;
 }
 
@@ -21,6 +23,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   onSignUpSubmit,
   handleBackToSignUp,
   isSubmitting = false,
+  onResendVerification = () => Promise.resolve({ success: true }),
+  resendCount = 0,
   bypassVerification = true, // Default to bypassing verification for better UX
 }) => {
   if (step === "signup") {
@@ -38,8 +42,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       userEmail={userEmail}
       userName={userName}
       onBackToSignUp={handleBackToSignUp}
-      onResendVerification={() => Promise.resolve({ success: true })}
-      resendCount={0}
+      onResendVerification={onResendVerification}
+      resendCount={resendCount}
       bypassVerification={bypassVerification}
     />
   );

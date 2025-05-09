@@ -3,8 +3,6 @@ import React from "react";
 import { useSignUpProcess } from "@/hooks/auth";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 import Header from "@/components/home/Header";
-// Import AuthProvider directly from its source to avoid circular dependencies
-import { AuthProvider } from "@/contexts/auth/AuthProvider";
 
 const SignUp: React.FC = () => {
   const {
@@ -14,8 +12,15 @@ const SignUp: React.FC = () => {
     onSignUpSubmit,
     handleBackToSignUp,
     isSubmitting,
+    handleResendVerification,
+    resendCount,
     bypassVerification = true, // Enable hybrid verification by default
   } = useSignUpProcess();
+  
+  // Store verification bypass preference in localStorage for consistent experience
+  React.useEffect(() => {
+    localStorage.setItem("bypassVerification", bypassVerification ? "true" : "false");
+  }, [bypassVerification]);
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -28,6 +33,8 @@ const SignUp: React.FC = () => {
           onSignUpSubmit={onSignUpSubmit}
           handleBackToSignUp={handleBackToSignUp}
           isSubmitting={isSubmitting}
+          onResendVerification={handleResendVerification}
+          resendCount={resendCount}
           bypassVerification={bypassVerification}
         />
       </div>

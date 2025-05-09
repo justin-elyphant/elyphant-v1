@@ -6,6 +6,7 @@ import VerificationCodeSection from "./VerificationCodeSection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
 
 interface VerificationContentSectionProps {
   userEmail: string;
@@ -35,39 +36,69 @@ const VerificationContentSection = ({
   bypassVerification = false
 }: VerificationContentSectionProps) => {
   const navigate = useNavigate();
+  const [progress, setProgress] = React.useState(0);
 
   // Auto-redirect when bypass is enabled
   useEffect(() => {
     if (bypassVerification) {
       console.log("Verification content section: bypassing verification");
-      // Trigger success callback
-      onVerificationSuccess();
+      let currentProgress = 0;
       
-      // Navigate to profile setup with small delay
-      const timer = setTimeout(() => {
-        navigate('/profile-setup', { replace: true });
-      }, 1500);
+      // Show progress bar to indicate auto-verification
+      const progressInterval = setInterval(() => {
+        currentProgress += 5;
+        setProgress(Math.min(currentProgress, 100));
+        
+        if (currentProgress >= 100) {
+          clearInterval(progressInterval);
+          
+          // Trigger success callback
+          onVerificationSuccess();
+          
+          // Navigate to profile setup with small delay
+          setTimeout(() => {
+            navigate('/profile-setup', { replace: true });
+          }, 500);
+        }
+      }, 100);
       
-      return () => clearTimeout(timer);
+      return () => clearInterval(progressInterval);
     }
   }, [bypassVerification, onVerificationSuccess, navigate]);
 
   return (
     <CardContent>
       {bypassVerification && (
-        <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700">
-            <span className="font-semibold">Simplified signup process activated!</span> Redirecting you to profile setup...
-          </AlertDescription>
-        </Alert>
+        <>
+          <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700">
+              <span className="font-semibold">Simplified signup process activated!</span> Redirecting you to profile setup...
+            </AlertDescription>
+          </Alert>
+          
+          <div className="my-6">
+            <Progress value={progress} className="h-2" />
+            <p className="text-sm text-center mt-2 text-muted-foreground">
+              Setting up your account...
+            </p>
+          </div>
+        </>
       )}
       
       {isVerified ? (
-        <VerificationForm 
-          userEmail={userEmail} 
-          onVerificationSuccess={onVerificationSuccess}
-        />
+        <>
+          <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700">
+              <span className="font-semibold">Account created successfully!</span> Taking you to profile setup...
+            </AlertDescription>
+          </Alert>
+          
+          <div className="my-6">
+            <Progress value={100} className="h-2" />
+          </div>
+        </>
       ) : (
         <VerificationCodeSection
           userEmail={userEmail}

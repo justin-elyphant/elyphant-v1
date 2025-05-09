@@ -8,28 +8,41 @@ interface UseResendVerificationProps {
 
 export const useResendVerification = ({ onResendVerification }: UseResendVerificationProps) => {
   const [isResending, setIsResending] = useState(false);
+  const [resendCount, setResendCount] = useState(0);
   
   const handleResendVerification = async () => {
     try {
       setIsResending(true);
+      
+      // Track resend attempts for rate limiting UX
+      setResendCount(prev => prev + 1);
+      
       const result = await onResendVerification();
       
-      if (!result.success) {
+      if (result.success) {
         if (result.rateLimited) {
-          toast.error("Please wait before requesting another code", {
-            description: "Too many attempts. Try again in a minute."
+          toast.info("You'll receive an email soon", {
+            description: "We're processing your verification request"
           });
         } else {
-          toast.error("Failed to resend verification code", {
-            description: "Please try again later."
+          toast.success("Verification email sent!", {
+            description: "Please check your inbox and spam folder"
           });
         }
+      } else {
+        toast.error("Failed to send verification email", {
+          description: "Please try again in a few minutes"
+        });
       }
       
-      return result; // Return the result object from the function
+      // Store resend count in localStorage for persistence
+      localStorage.setItem("verificationResendCount", String(resendCount + 1));
+      
+      return result;
     } catch (error) {
       console.error("Error in handleResendVerification:", error);
-      return { success: false }; // Return a default error object
+      toast.error("Failed to resend verification email");
+      return { success: false };
     } finally {
       setIsResending(false);
     }
@@ -37,6 +50,7 @@ export const useResendVerification = ({ onResendVerification }: UseResendVerific
   
   return {
     isResending,
+    resendCount,
     handleResendVerification
   };
 };

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface UseVerificationContainerProps {
   userEmail: string;
@@ -14,6 +15,7 @@ export const useVerificationContainer = ({
   userName = "", 
   bypassVerification = false
 }: UseVerificationContainerProps) => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [effectiveVerificationCode, setEffectiveVerificationCode] = useState("");
@@ -29,12 +31,19 @@ export const useVerificationContainer = ({
       // Set a timeout to auto-redirect to profile setup
       const redirectTimer = setTimeout(() => {
         console.log("Auto-redirecting to profile setup");
-        window.location.href = "/profile-setup";
+        
+        // Store verification state and data for reliability
+        localStorage.setItem("emailVerified", "true");
+        localStorage.setItem("verifiedEmail", userEmail);
+        localStorage.setItem("userName", userName);
+        
+        // Navigate to profile setup
+        navigate("/profile-setup", { replace: true });
       }, 2000);
       
       return () => clearTimeout(redirectTimer);
     }
-  }, [bypassVerification, isVerified]);
+  }, [bypassVerification, isVerified, navigate, userEmail, userName]);
   
   // Handle successful verification
   const handleVerificationSuccess = () => {
@@ -43,6 +52,9 @@ export const useVerificationContainer = ({
     // Store the verification state in localStorage
     localStorage.setItem("emailVerified", "true");
     localStorage.setItem("verifiedEmail", userEmail);
+    localStorage.setItem("userName", userName);
+    localStorage.removeItem("pendingVerificationEmail");
+    localStorage.removeItem("pendingVerificationName");
     
     // Show success toast
     toast.success("Account created successfully!", {
@@ -57,6 +69,12 @@ export const useVerificationContainer = ({
     // If bypass is enabled, always return verified
     if (bypassVerification) {
       console.log("Hybrid verification mode active, returning verified=true");
+      
+      // Store bypass data for reliability
+      localStorage.setItem("bypassVerification", "true");
+      localStorage.setItem("emailVerified", "true");
+      localStorage.setItem("verifiedEmail", userEmail);
+      
       return { verified: true };
     }
     
@@ -90,6 +108,13 @@ export const useVerificationContainer = ({
           handleVerificationSuccess();
           return { verified: true };
         }
+      }
+      
+      // If hybrid verification is enabled, auto-verify even if not confirmed in Supabase
+      if (localStorage.getItem("bypassVerification") === "true") {
+        console.log("Hybrid verification enabled, auto-verifying user");
+        handleVerificationSuccess();
+        return { verified: true };
       }
       
       return { verified: false };

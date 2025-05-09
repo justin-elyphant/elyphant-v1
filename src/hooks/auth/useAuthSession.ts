@@ -1,126 +1,114 @@
 
-import { useState, useEffect } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-interface UseAuthSessionReturn {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  isProcessingToken: boolean;
-}
-
-export function useAuthSession(): UseAuthSessionReturn {
-  const [user, setUser] = useState<User | null>(null);
+export const useAuthSession = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  // Check URL for access_token
   useEffect(() => {
-    const handleAccessToken = async () => {
-      const params = new URLSearchParams(location.hash.substring(1) || location.search);
-      const accessToken = params.get('access_token') || null;
-      const errorDescription = params.get('error_description') || null;
-      const type = params.get('type') || null;
-      const confirmToken = params.get('token') || null;
+    // Check for URL parameters indicating an auth action (like email verification)
+    const processAuthRedirect = async () => {
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
       
-      if (errorDescription) {
-        console.error("Auth error:", errorDescription);
-        toast.error("Authentication error", { description: errorDescription });
-        return;
-      }
-      
-      if ((accessToken && !isProcessingToken) || 
-          (type === 'signup' || type === 'recovery') || 
-          confirmToken) {
-        setIsProcessingToken(true);
-        console.log("Intercepted auth redirect - redirecting to profile setup");
-        
-        // Clear URL parameters
-        const cleanPath = location.pathname;
-        window.history.replaceState(null, '', cleanPath);
-        
-        // Set flag for new signup
-        localStorage.setItem("newSignUp", "true");
-        
-        // Navigate to profile setup
-        navigate('/profile-setup', { replace: true });
-        
-        setTimeout(() => {
-          setIsProcessingToken(false);
-        }, 500);
-      }
-    };
-    
-    handleAccessToken();
-  }, [location, navigate, isProcessingToken]);
-
-  // Set up auth state change listener
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state change event:", event, "on path:", location.pathname);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-
-        if (event === 'SIGNED_IN') {
-          // Check if this is from the signup flow
-          const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+      if (accessToken && refreshToken) {
+        try {
+          setIsProcessingToken(true);
           
-          if (isNewSignUp || 
-              location.pathname === '/sign-up' || 
-              location.pathname.includes('/sign-up')) {
-            console.log("Detected sign up flow, directing to profile setup");
-            navigate('/profile-setup', { replace: true });
-            return;
-          }
+          console.log("Processing auth redirect with tokens");
           
-          // Standard sign-in handling
-          if (!isProcessingToken && 
-              location.pathname !== '/profile-setup') {
+          // Set session with tokens from URL
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error("Error setting session from URL parameters:", error);
+          } else if (data.session) {
+            console.log("Successfully set session from URL parameters");
             
-            toast.success('Signed in successfully!');
+            // Update auth state
+            setSession(data.session);
+            setUser(data.session.user);
             
-            // Check if profile is complete or needs setup
-            try {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('username, name')
-                .eq('id', session?.user?.id)
-                .single();
-              
-              if (!profile || !profile.username) {
-                console.log("Incomplete profile, redirecting to profile setup");
-                navigate('/profile-setup', { replace: true });
-              } else {
-                navigate('/dashboard', { replace: true });
-              }
-            } catch (error) {
-              console.error("Error checking profile:", error);
-              navigate('/profile-setup', { replace: true });
+            // Store verification state if this is an email verification
+            if (type === 'recovery' || type === 'signup') {
+              localStorage.setItem("emailVerified", "true");
+              localStorage.setItem("verifiedEmail", data.session.user.email || "");
             }
           }
-        } else if (event === 'SIGNED_OUT') {
-          toast.info('Signed out');
+        } catch (e) {
+          console.error("Error processing auth redirect:", e);
+        } finally {
+          // Clean up URL after processing
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+          setIsProcessingToken(false);
         }
       }
+    };
+
+    processAuthRedirect();
+  }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // First set up the auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        console.log("Auth state changed:", event);
+        
+        // Use setTimeout to avoid potential deadlocks with Supabase client
+        setTimeout(() => {
+          setSession(currentSession);
+          setUser(currentSession?.user || null);
+          
+          if (event === 'SIGNED_IN') {
+            // Store user info in localStorage for reliability
+            if (currentSession?.user) {
+              localStorage.setItem("userId", currentSession.user.id);
+              localStorage.setItem("userEmail", currentSession.user.email || "");
+              localStorage.setItem("userName", currentSession.user.user_metadata?.name || "");
+            }
+          } else if (event === 'SIGNED_OUT') {
+            // Clear auth-related localStorage on signout
+            localStorage.removeItem("userId");
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("userName");
+            localStorage.removeItem("emailVerified");
+            localStorage.removeItem("verifiedEmail");
+          }
+        }, 0);
+      }
     );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    
+    // Then get the current session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user || null);
       setIsLoading(false);
+      
+      // Store current user data if available
+      if (currentSession?.user) {
+        localStorage.setItem("userId", currentSession.user.id);
+        localStorage.setItem("userEmail", currentSession.user.email || "");
+        localStorage.setItem("userName", currentSession.user.user_metadata?.name || "");
+      }
     });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
-    return () => subscription.unsubscribe();
-  }, [navigate, location, isProcessingToken]);
-
-  return { user, session, isLoading, isProcessingToken };
-}
+  return { session, user, isLoading, isProcessingToken };
+};

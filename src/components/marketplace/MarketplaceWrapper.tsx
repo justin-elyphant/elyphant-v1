@@ -1,5 +1,5 @@
 
-import React, { useEffect, FormEvent } from "react";
+import React, { useEffect } from "react";
 import { useMarketplaceProducts } from "./hooks/useMarketplaceProducts";
 import { useProductTracking } from "./hooks/useProductTracking";
 import { useSearchParams } from "react-router-dom";
@@ -31,18 +31,12 @@ const MarketplaceWrapper = () => {
     }
   }, [searchParams, products]);
 
-  // Create a form event handler that calls the onSearch function
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault();
-    onSearch(searchTerm);
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <MarketplaceHeader 
         searchTerm={searchTerm} 
         setSearchTerm={setSearchTerm} 
-        onSearch={handleSearch} 
+        onSearch={onSearch} 
       />
       
       {/* Compact categories section always visible */}

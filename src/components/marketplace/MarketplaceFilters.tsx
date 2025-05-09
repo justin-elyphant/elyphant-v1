@@ -1,10 +1,8 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Filter, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSortOptions } from "./hooks/utils/categoryUtils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MarketplaceFiltersProps {
   showFilters: boolean;
@@ -26,31 +24,29 @@ const MarketplaceFilters = ({
   onSortChange
 }: MarketplaceFiltersProps) => {
   const sortOptions = getSortOptions();
-  const isMobile = useIsMobile();
   
   const handleSortChange = (value: string) => {
     onSortChange(value);
   };
   
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-6">
+    <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
       <div className="flex items-center gap-2">
         <Button 
           variant="outline" 
-          size={isMobile ? "sm" : "default"}
+          size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className="flex-grow sm:flex-grow-0"
         >
           <SlidersHorizontal className="h-4 w-4 mr-2" />
-          {showFilters ? 'Hide Filters' : 'Filters'}
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
         </Button>
         
-        <div className="flex border rounded-md ml-auto sm:ml-0">
+        <div className="flex border rounded-md">
           <Button 
             variant={viewMode === 'grid' ? 'default' : 'ghost'} 
             size="sm"
             onClick={() => setViewMode('grid')}
-            className="rounded-r-none px-2 sm:px-3"
+            className="rounded-r-none"
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
@@ -58,19 +54,19 @@ const MarketplaceFilters = ({
             variant={viewMode === 'list' ? 'default' : 'ghost'} 
             size="sm"
             onClick={() => setViewMode('list')}
-            className="rounded-l-none px-2 sm:px-3"
+            className="rounded-l-none"
           >
             <List className="h-4 w-4" />
           </Button>
         </div>
       </div>
       
-      <div className="flex items-center gap-2 mt-2 sm:mt-0">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">
           {totalItems} items
         </span>
         <Select value={sortOption} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>

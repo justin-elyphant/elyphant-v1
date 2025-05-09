@@ -12,7 +12,8 @@ const getDefaultDataSharingSettings = () => {
   return {
     dob: "friends",
     shipping_address: "friends",
-    gift_preferences: "public"
+    gift_preferences: "public",
+    email: "private"
   };
 };
 

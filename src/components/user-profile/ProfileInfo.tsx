@@ -82,7 +82,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
           <CardContent>
             <Table>
               <TableBody>
-                {birthdayVisible && (
+                {birthdayVisible && userData?.birthday && (
                   <TableRow>
                     <TableCell className="font-medium flex items-center">
                       <CalendarDays className="h-4 w-4 mr-2" />
@@ -108,7 +108,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
                     </TableCell>
                   </TableRow>
                 )}
-                {emailVisible && (
+                {emailVisible && userData?.email && (
                   <TableRow>
                     <TableCell className="font-medium flex items-center">
                       <Info className="h-4 w-4 mr-2" />

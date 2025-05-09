@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from "react";
-import { Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SlidersHorizontal, Grid, List } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
+import AdvancedSearch from "./AdvancedSearch";
 
 interface StickyFiltersBarProps {
   searchTerm: string;
@@ -21,91 +20,53 @@ const StickyFiltersBar = ({
   onSearch,
   showFilters,
   setShowFilters,
-  totalItems
+  totalItems = 0,
 }: StickyFiltersBarProps) => {
   const isMobile = useIsMobile();
-  const [isSticky, setIsSticky] = useState(false);
-
+  const [isScrolled, setIsScrolled] = useState(false);
+  
+  // Track scroll position to apply sticky styling
   useEffect(() => {
     const handleScroll = () => {
-      // Start showing sticky bar after scrolling down 200px
-      setIsSticky(window.scrollY > 200);
+      setIsScrolled(window.scrollY > 180);
     };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(searchTerm);
-  };
-
-  if (!isSticky) return null;
-
+  
   return (
-    <div className={cn(
-      "fixed top-0 left-0 right-0 z-30 bg-white border-b shadow-sm transition-all duration-300 py-2 px-4",
-      isSticky ? "translate-y-0" : "-translate-y-full",
-      "animate-slide-in-right"
-    )}>
-      <div className="container mx-auto flex items-center gap-3">
-        {isMobile ? (
-          <div className="flex w-full gap-2">
+    <div 
+      className={`sticky top-0 z-30 bg-white border-b py-4 transition-shadow mb-6 ${
+        isScrolled ? 'shadow-md' : ''
+      }`}
+    >
+      <div className="container mx-auto flex flex-col gap-4">
+        <AdvancedSearch
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          onSearch={onSearch}
+        />
+        
+        <div className="flex justify-between items-center">
+          <div className="flex space-x-2">
             <Button
+              variant={showFilters ? "default" : "outline"}
               size="sm"
-              variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className="flex-shrink-0"
+              className="flex items-center"
             >
-              <Filter className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              Filters
             </Button>
             
-            <form onSubmit={handleSearchSubmit} className="flex-1 flex">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search gifts..."
-                  className="pl-8 h-9 w-full"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </form>
-          </div>
-        ) : (
-          <>
-            <form onSubmit={handleSearchSubmit} className="flex-1 flex max-w-sm">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search gifts..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="ml-2">Find Gifts</Button>
-            </form>
-            
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="ml-auto"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
-            </Button>
-            
-            {totalItems !== undefined && (
-              <div className="text-sm text-gray-500 ml-4">
-                {totalItems} {totalItems === 1 ? 'item' : 'items'} found
-              </div>
+            {totalItems > 0 && (
+              <p className="flex items-center text-sm text-muted-foreground">
+                {totalItems} item{totalItems !== 1 ? 's' : ''}
+              </p>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

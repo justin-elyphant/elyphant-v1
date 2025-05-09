@@ -12,9 +12,17 @@ import RecentlyViewedProducts from "./RecentlyViewedProducts";
 import OccasionMessage from "./header/OccasionMessage";
 import OccasionCards from "./header/OccasionCards";
 import StickyFiltersBar from "./StickyFiltersBar";
-import { getUpcomingOccasions, getNextHoliday, GiftOccasion } from "./utils/upcomingOccasions";
+import { getUpcomingOccasions, getNextHoliday } from "./utils/upcomingOccasions";
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import { useNavigate } from "react-router-dom";
+import ContentMarketing from "./ContentMarketing";
+import PersonalizedRecommendations from "./PersonalizedRecommendations";
+import LoyaltyPoints from "../loyalty/LoyaltyPoints";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import UserPreferences from "./UserPreferences";
+import { useAuth } from "@/contexts/auth";
+import { Button } from "@/components/ui/button";
+import { Gift, Heart, User, Users, Settings } from "lucide-react";
 
 const MarketplaceWrapper = () => {
   const { 
@@ -28,11 +36,13 @@ const MarketplaceWrapper = () => {
   // Initialize product tracking
   const { trackProductViewById } = useProductTracking(products);
   const { forceSyncNow } = useProductDataSync();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // UI state
   const [showFilters, setShowFilters] = useState(true);
+  const [marketplaceTab, setMarketplaceTab] = useState("discover");
   
   // Occasion state for the hero banner
   const [currentOccasionIndex, setCurrentOccasionIndex] = useState(0);
@@ -74,6 +84,12 @@ const MarketplaceWrapper = () => {
       console.log("MarketplaceWrapper: Tracking product view for ID:", productId);
       trackProductViewById(productId);
     }
+    
+    // Set the active tab based on URL parameters
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["discover", "guides", "preferences", "rewards"].includes(tabParam)) {
+      setMarketplaceTab(tabParam);
+    }
   }, [searchParams, trackProductViewById]);
   
   // Force sync when component unmounts
@@ -92,6 +108,18 @@ const MarketplaceWrapper = () => {
     if (personId) {
       console.log(`Searching for gifts for person ID: ${personId}, occasion: ${occasionType}`);
     }
+  };
+
+  // Handle tab change
+  const handleTabChange = (tab: string) => {
+    setMarketplaceTab(tab);
+    
+    // Update URL parameters
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("tab", tab);
+      return newParams;
+    });
   };
 
   return (
@@ -123,30 +151,153 @@ const MarketplaceWrapper = () => {
         totalResults={products.length}
       />
       
-      {/* Sticky search and filters bar */}
-      <StickyFiltersBar
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        onSearch={onSearch}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-        totalItems={products.length}
-      />
-      
-      {/* Enhanced visual categories section */}
-      <GiftingCategories />
-      
-      <MarketplaceContent 
-        products={products}
-        isLoading={isLoading}
-        searchTerm={searchTerm}
-        onProductView={trackProductViewById}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-      />
-      
-      {/* Enhanced recently viewed products section */}
-      <RecentlyViewedProducts />
+      {/* New tabs for Marketplace navigation */}
+      <Tabs
+        value={marketplaceTab}
+        onValueChange={handleTabChange}
+        className="w-full mb-6"
+      >
+        <TabsList className="flex w-full justify-start mb-6 overflow-x-auto hide-scrollbar">
+          <TabsTrigger value="discover" className="flex items-center">
+            <Gift className="h-4 w-4 mr-2" />
+            Discover
+          </TabsTrigger>
+          <TabsTrigger value="guides" className="flex items-center">
+            <Heart className="h-4 w-4 mr-2" />
+            Gift Guides
+          </TabsTrigger>
+          {user && (
+            <>
+              <TabsTrigger value="preferences" className="flex items-center">
+                <Settings className="h-4 w-4 mr-2" />
+                Preferences
+              </TabsTrigger>
+              <TabsTrigger value="rewards" className="flex items-center">
+                <User className="h-4 w-4 mr-2" />
+                Rewards
+              </TabsTrigger>
+            </>
+          )}
+        </TabsList>
+        
+        <TabsContent value="discover">
+          {/* Sticky search and filters bar */}
+          <StickyFiltersBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            onSearch={onSearch}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            totalItems={products.length}
+          />
+          
+          {/* Enhanced visual categories section */}
+          <GiftingCategories />
+          
+          {/* Featured Curated Collections */}
+          <ContentMarketing
+            title="Featured Gift Collections"
+            description="Expertly curated gift ideas for every occasion"
+            variant="featured"
+          />
+          
+          {/* Main products grid with filters */}
+          <MarketplaceContent 
+            products={products}
+            isLoading={isLoading}
+            searchTerm={searchTerm}
+            onProductView={trackProductViewById}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+          />
+          
+          {/* Personalized recommendations section */}
+          <PersonalizedRecommendations 
+            products={products}
+            title="Just For You"
+            description="Recommendations based on your interests and browsing history"
+            limit={6}
+          />
+          
+          {/* Enhanced recently viewed products section */}
+          <RecentlyViewedProducts />
+          
+          {/* Mini loyalty points summary if user is logged in */}
+          {user && (
+            <div className="mt-8">
+              <LoyaltyPoints expanded={false} />
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="guides">
+          <div className="space-y-8">
+            {/* Hero section for Gift Guides */}
+            <div className="relative rounded-xl overflow-hidden h-48 md:h-64">
+              <img 
+                src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?ixlib=rb-4.0.3"
+                alt="Gift Guides Hero"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
+                <div className="p-6 md:p-10 text-white max-w-lg">
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2">Curated Gift Guides</h1>
+                  <p className="text-sm md:text-base">Find the perfect gift with our expertly curated collections for every occasion and interest</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Seasonal Collections */}
+            <ContentMarketing
+              title="Seasonal Collections"
+              description="Perfect gifts for upcoming holidays and special occasions"
+              variant="grid"
+            />
+            
+            {/* Interest-Based Collections */}
+            <ContentMarketing
+              title="For Every Interest"
+              description="Gift guides based on hobbies and interests"
+              variant="horizontal"
+            />
+            
+            {/* Budget-Friendly Collections */}
+            <ContentMarketing
+              title="Gift Guides by Budget"
+              description="Find the perfect gift in your price range"
+              variant="grid"
+            />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="preferences">
+          {user ? (
+            <div className="max-w-2xl mx-auto">
+              <UserPreferences />
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <h2 className="text-xl font-semibold mb-4">Sign In to Save Your Preferences</h2>
+              <p className="text-muted-foreground mb-6">Create an account to personalize your shopping experience</p>
+              <Button onClick={() => navigate("/auth")}>Sign In</Button>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="rewards">
+          {user ? (
+            <div className="max-w-2xl mx-auto">
+              <LoyaltyPoints expanded={true} />
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <h2 className="text-xl font-semibold mb-4">Sign In to Access Your Rewards</h2>
+              <p className="text-muted-foreground mb-6">Create an account to start earning reward points with every purchase</p>
+              <Button onClick={() => navigate("/auth")}>Sign In</Button>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -1,107 +1,320 @@
 
 import React from "react";
-import { Product } from "@/contexts/ProductContext";
-import { cn } from "@/lib/utils";
-import ProductDetails from "./ProductDetails";
-import ProductImage from "./ProductImage";
-import WishlistButton from "./WishlistButton";
-import { getBasePrice } from "./productUtils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Product } from "@/types/product";
+import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLazyImage } from "@/hooks/useLazyImage";
+import { cn } from "@/lib/utils";
+import WishlistButton from "./WishlistButton";
+import SocialShareButton from "./SocialShareButton";
+import GroupGiftingButton from "./GroupGiftingButton";
+import { Award, Star, Truck } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProductItemProps {
   product: Product;
-  viewMode: "grid" | "list";
-  onProductClick?: (productId: string) => void;
-  onWishlistClick?: (e: React.MouseEvent) => void; 
-  isFavorited?: boolean;
-  useMock?: boolean;
-  statusBadge?: { badge: string; color: string } | null;
+  viewMode?: "grid" | "list" | "modern";
+  showBadges?: boolean;
+  onProductView?: (productId: string) => void;
 }
 
-const ProductItem = ({ 
-  product, 
-  viewMode, 
-  onProductClick, 
-  onWishlistClick,
-  isFavorited = false,
-  useMock = false,
-  statusBadge = null
+const ProductItem = ({
+  product,
+  viewMode = "grid",
+  showBadges = true,
+  onProductView,
 }: ProductItemProps) => {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { src: imageSrc } = useLazyImage(
+    product.image, 
+    "/placeholder.svg",
+    { 
+      threshold: 0.1,
+      rootMargin: "100px",
+    }
+  );
   
   const handleClick = () => {
-    if (onProductClick) {
-      onProductClick(product.product_id || product.id || "");
+    const productId = product.product_id || product.id;
+    
+    if (productId) {
+      // Track product view if callback is provided
+      if (onProductView) {
+        onProductView(productId);
+      }
+      
+      // Navigate to product detail
+      navigate(`/marketplace?productId=${productId}`);
     }
   };
 
-  // Base price display logic
-  const basePrice = getBasePrice(product);
+  // Function to render rating stars
+  const renderRating = () => {
+    const rating = product.rating || product.stars || 0;
+    const fillColor = rating >= 4 ? "text-yellow-400" : "text-gray-400";
+    
+    return (
+      <div className="flex items-center">
+        <div className="flex items-center mr-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={cn(
+                "h-3 w-3", 
+                i < Math.round(rating) ? fillColor : "text-gray-200"
+              )}
+              fill={i < Math.round(rating) ? "currentColor" : "none"}
+            />
+          ))}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {product.reviewCount || product.num_reviews || 0}
+        </span>
+      </div>
+    );
+  };
   
-  return (
-    <div 
-      className={cn(
-        "group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:shadow-md",
-        viewMode === "list" ? "flex-row" : ""
-      )}
-    >
-      <div
-        className={cn(
-          "cursor-pointer relative",
-          viewMode === "list" ? "w-1/3" : "w-full"
-        )}
+  // Determine if product is on sale or has free shipping
+  const isFreeShipping = product.prime || (product as any).free_shipping;
+  const isOnSale = (product as any).sale_price && 
+    (product as any).sale_price < product.price;
+
+  // Render product based on view mode
+  if (viewMode === "list") {
+    return (
+      <Card 
+        className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
         onClick={handleClick}
-        data-testid="product-item"
       >
-        <ProductImage 
-          product={product}
-          aspectRatio="square" 
-          className="h-full w-full object-cover transition-all"
-          useMock={useMock}
-        />
-        
-        {/* Status badge */}
-        {statusBadge && (
-          <div className="absolute top-2 left-2 z-10">
-            <div className={cn("text-xs font-medium px-2 py-1 rounded-full", statusBadge.color)}>
-              {statusBadge.badge}
+        <div className="flex">
+          <div className="w-1/3 md:w-1/4 relative">
+            {showBadges && product.isBestSeller && (
+              <div className="absolute top-2 left-2 z-10">
+                <Badge className="bg-amber-500 text-white text-xs py-0">
+                  <Award className="h-3 w-3 mr-1" />
+                  Best Seller
+                </Badge>
+              </div>
+            )}
+            <div className="h-full relative">
+              <WishlistButton 
+                productId={product.id || product.product_id}
+                productName={product.title || product.name || ""}
+                productImage={product.image}
+                productPrice={product.price}
+                productBrand={product.brand}
+              />
+              <img
+                src={imageSrc}
+                alt={product.title || product.name || ""}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
           </div>
-        )}
+          <div className="w-2/3 md:w-3/4">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex flex-col h-full justify-between">
+                <div>
+                  <h3 className="font-medium text-sm md:text-base line-clamp-2">
+                    {product.title || product.name}
+                  </h3>
+                  
+                  {(product.rating || product.stars) && renderRating()}
+                  
+                  {product.brand && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {product.brand}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="mt-2">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="font-bold">
+                        ${product.price.toFixed(2)}
+                        {isOnSale && (
+                          <span className="text-xs line-through text-muted-foreground ml-1">
+                            ${(product as any).original_price?.toFixed(2)}
+                          </span>
+                        )}
+                      </p>
+                      
+                      {isFreeShipping && (
+                        <div className="flex items-center text-xs text-green-600 mt-1">
+                          <Truck className="h-3 w-3 mr-1" />
+                          <span>Free shipping</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex space-x-1">
+                      <SocialShareButton product={product} />
+                      <GroupGiftingButton product={product} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+  
+  if (viewMode === "modern") {
+    return (
+      <div 
+        className="group relative cursor-pointer"
+        onClick={handleClick}
+      >
+        <div className="relative overflow-hidden rounded-lg aspect-[4/5]">
+          {showBadges && product.isBestSeller && (
+            <div className="absolute top-2 left-2 z-10">
+              <Badge className="bg-amber-500 text-white">
+                <Award className="h-3 w-3 mr-1" />
+                Best Seller
+              </Badge>
+            </div>
+          )}
+          
+          <WishlistButton 
+            productId={product.id || product.product_id}
+            productName={product.title || product.name || ""}
+            productImage={product.image}
+            productPrice={product.price}
+            productBrand={product.brand}
+          />
+          
+          <img
+            src={imageSrc}
+            alt={product.title || product.name || ""}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+          
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 transition-opacity opacity-0 group-hover:opacity-100">
+            <div className="flex justify-end space-x-1">
+              <SocialShareButton 
+                product={product} 
+                className="bg-white/80 hover:bg-white"
+              />
+              <GroupGiftingButton 
+                product={product} 
+                className="bg-white/80 hover:bg-white"
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-3">
+          <h3 className="font-medium text-sm md:text-base line-clamp-2 group-hover:text-primary">
+            {product.title || product.name}
+          </h3>
+          
+          <div className="flex justify-between items-center mt-1">
+            <p className="font-bold">
+              ${product.price.toFixed(2)}
+              {isOnSale && (
+                <span className="text-xs line-through text-muted-foreground ml-1">
+                  ${(product as any).original_price?.toFixed(2)}
+                </span>
+              )}
+            </p>
+            
+            {(product.rating || product.stars) && renderRating()}
+          </div>
+          
+          {(isFreeShipping || product.brand) && (
+            <div className="flex justify-between items-center mt-1 text-xs text-muted-foreground">
+              {product.brand && <span>{product.brand}</span>}
+              {isFreeShipping && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-green-600">
+                        <Truck className="h-3 w-3 mr-1" />
+                        <span>Free</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Free Shipping</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      
-      {/* Wishlist button - increased touch target size for mobile */}
-      <div className={cn(
-        "absolute right-2 top-2 z-10",
-        isMobile && "right-1.5 top-1.5" 
-      )}>
+    );
+  }
+  
+  // Default grid view
+  return (
+    <Card 
+      className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      onClick={handleClick}
+    >
+      <div className="relative">
+        {showBadges && (
+          <>
+            {product.isBestSeller && (
+              <div className="absolute top-2 left-2 z-10">
+                <Badge className="bg-amber-500 text-white text-xs">
+                  <Award className="h-3 w-3 mr-1" />
+                  Best Seller
+                </Badge>
+              </div>
+            )}
+          </>
+        )}
         <WishlistButton 
-          onWishlistClick={onWishlistClick}
-          isFavorited={isFavorited}
-          productId={product.product_id || product.id || ""}
+          productId={product.id || product.product_id}
           productName={product.title || product.name || ""}
           productImage={product.image}
           productPrice={product.price}
           productBrand={product.brand}
         />
+        <div className="h-40 overflow-hidden">
+          <img
+            src={imageSrc}
+            alt={product.title || product.name || ""}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
       </div>
-      
-      {/* Product details section with mobile optimizations */}
-      <div 
-        className={cn(
-          "flex flex-col",
-          isMobile ? "p-2.5" : "p-3", // Adjusted padding for mobile
-          viewMode === "list" ? "w-2/3" : "w-full"
+      <CardContent className={isMobile ? "p-3" : "p-4"}>
+        <h3 className="font-medium text-sm line-clamp-2">
+          {product.title || product.name}
+        </h3>
+        
+        {(product.rating || product.stars) && (
+          <div className="mt-1">{renderRating()}</div>
         )}
-      >
-        <ProductDetails
-          product={product}
-          onClick={handleClick}
-          basePrice={basePrice}
-          viewMode={viewMode}
-        />
-      </div>
-    </div>
+        
+        <div className="mt-2 flex justify-between items-end">
+          <p className="font-bold">${product.price.toFixed(2)}</p>
+          
+          <div className="flex space-x-1">
+            <SocialShareButton product={product} />
+            <GroupGiftingButton product={product} />
+          </div>
+        </div>
+        
+        {isFreeShipping && (
+          <div className="flex items-center text-xs text-green-600 mt-1">
+            <Truck className="h-3 w-3 mr-1" />
+            <span>Free shipping</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

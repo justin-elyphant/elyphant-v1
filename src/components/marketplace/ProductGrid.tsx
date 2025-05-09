@@ -130,7 +130,7 @@ const ProductGrid = ({
           
           return (
             <div 
-              key={product.product_id || product.id} 
+              key={product.product_id || product.id || ""} 
               className={`${isLarge ? 'md:col-span-2' : ''} transition-transform hover:scale-[1.01]`}
             >
               <ProductItem 
@@ -176,7 +176,7 @@ const ProductGrid = ({
             const status = getProductStatus(product);
             return (
               <ProductItem 
-                key={product.product_id || product.id}
+                key={product.product_id || product.id || ""}
                 product={product}
                 viewMode={viewMode}
                 onProductClick={handleProductClick}

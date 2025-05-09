@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Product } from "@/contexts/ProductContext";
@@ -222,10 +221,9 @@ const ProductDetailsDialog = ({
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
             {recommendations.slice(0, 3).map((relatedProduct) => (
               <ProductItem 
-                key={relatedProduct.product_id || relatedProduct.id}
+                key={relatedProduct.product_id || relatedProduct.id || ""}
                 product={relatedProduct}
                 viewMode="grid"
-                useMock={recommendations.length === 0}
               />
             ))}
           </div>

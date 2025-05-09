@@ -13,11 +13,16 @@ import GroupGiftingButton from "./GroupGiftingButton";
 import { Award, Star, Truck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface ProductItemProps {
+export interface ProductItemProps {
   product: Product;
   viewMode?: "grid" | "list" | "modern";
   showBadges?: boolean;
   onProductView?: (productId: string) => void;
+  onProductClick?: (productId: string) => void;
+  onWishlistClick?: (e: React.MouseEvent) => void;
+  isFavorited?: boolean;
+  statusBadge?: { badge: string; color: string } | null;
+  useMock?: boolean;
 }
 
 const ProductItem = ({
@@ -25,6 +30,11 @@ const ProductItem = ({
   viewMode = "grid",
   showBadges = true,
   onProductView,
+  onProductClick,
+  onWishlistClick,
+  isFavorited = false,
+  statusBadge,
+  useMock = false,
 }: ProductItemProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -38,7 +48,7 @@ const ProductItem = ({
   );
   
   const handleClick = () => {
-    const productId = product.product_id || product.id;
+    const productId = product.product_id || product.id || "";
     
     if (productId) {
       // Track product view if callback is provided
@@ -46,7 +56,13 @@ const ProductItem = ({
         onProductView(productId);
       }
       
-      // Navigate to product detail
+      // Handle custom click handler if provided
+      if (onProductClick) {
+        onProductClick(productId);
+        return;
+      }
+      
+      // Default navigation behavior
       navigate(`/marketplace?productId=${productId}`);
     }
   };
@@ -274,11 +290,13 @@ const ProductItem = ({
           </>
         )}
         <WishlistButton 
-          productId={product.id || product.product_id}
+          productId={product.id || product.product_id || ""}
           productName={product.title || product.name || ""}
           productImage={product.image}
           productPrice={product.price}
           productBrand={product.brand}
+          onClick={onWishlistClick}
+          isFavorited={isFavorited}
         />
         <div className="h-40 overflow-hidden">
           <img

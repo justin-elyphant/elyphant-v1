@@ -13,7 +13,6 @@ import ModernProductCard from "../../ui/ModernProductCard";
 export const useProductInteractions = (
   products: Product[], 
   viewMode: "grid" | "list" | "modern",
-  useMock: boolean = false,
   onProductView?: (productId: string) => void
 ) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
@@ -42,7 +41,7 @@ export const useProductInteractions = (
     const product = products.find(p => p.product_id === productId);
     if (product) {
       addToRecentlyViewed({
-        id: product.product_id,
+        id: product.product_id || "",
         name: product.title || "",
         image: product.image,
         price: product.price
@@ -65,7 +64,7 @@ export const useProductInteractions = (
   const renderProductCard = useCallback((product: Product) => {
     if (viewMode === 'modern') {
       return (
-        <div key={product.product_id} className="relative">
+        <div key={product.product_id || product.id || ""} className="relative">
           {product.tags && product.tags.length > 0 && (
             <Badge className="absolute top-0 left-0 z-10 m-2 bg-purple-600">
               {product.tags[0]}
@@ -73,16 +72,16 @@ export const useProductInteractions = (
           )}
           <ModernProductCard
             product={product}
-            isFavorited={userData ? isFavorited(product.product_id) : false}
-            onToggleFavorite={(e) => handleWishlistClick(e, product.product_id)}
+            isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
+            onToggleFavorite={(e) => handleWishlistClick(e, product.product_id || product.id || "")}
             onAddToCart={(e) => handleAddToCart(e, product)}
-            onClick={() => handleProductClick(product.product_id)}
+            onClick={() => handleProductClick(product.product_id || product.id || "")}
           />
         </div>
       );
     } else {
       return (
-        <div key={product.product_id} className="relative">
+        <div key={product.product_id || product.id || ""} className="relative">
           {product.tags && product.tags.length > 0 && (
             <Badge className="absolute top-0 left-0 z-10 m-2 bg-purple-600">
               {product.tags[0]}
@@ -92,14 +91,13 @@ export const useProductInteractions = (
             product={product}
             viewMode={viewMode}
             onProductClick={handleProductClick}
-            onWishlistClick={(e) => handleWishlistClick(e, product.product_id)}
-            isFavorited={userData ? isFavorited(product.product_id) : false}
-            useMock={useMock}
+            onWishlistClick={(e) => handleWishlistClick(e, product.product_id || product.id || "")}
+            isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
           />
         </div>
       );
     }
-  }, [viewMode, userData, isFavorited, handleWishlistClick, handleProductClick, handleAddToCart, useMock]);
+  }, [viewMode, userData, isFavorited, handleWishlistClick, handleProductClick, handleAddToCart]);
 
   return {
     selectedProduct,

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Search, Mic, Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,15 +45,15 @@ const AdvancedSearch = ({
     setVoiceSearchText("");
     
     // Check if browser supports speech recognition
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     
-    if (!SpeechRecognition) {
+    if (!SpeechRecognitionAPI) {
       toast.error("Voice search is not supported in this browser");
       return;
     }
     
     try {
-      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current = new SpeechRecognitionAPI();
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       

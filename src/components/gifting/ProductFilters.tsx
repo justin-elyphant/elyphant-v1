@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown, ChevronUp, Search, Filter, SlidersHorizontal } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductFiltersProps {
   searchTerm: string;
@@ -32,43 +33,45 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   categories = [],
   clearFilters
 }) => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search gifts..."
-            className="w-full pl-8"
+            className="w-full pl-8 h-9 md:h-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Button
           variant="outline"
-          size="sm"
+          size={isMobile ? "sm" : "default"}
           type="button"
           onClick={() => setFiltersVisible(!filtersVisible)}
-          className="flex items-center whitespace-nowrap"
+          className="flex items-center whitespace-nowrap min-h-9 md:min-h-10 px-2 md:px-3"
         >
-          <SlidersHorizontal className="h-4 w-4 mr-2" />
-          {filtersVisible ? "Hide Filters" : "Filters"}
+          <SlidersHorizontal className="h-4 w-4 mr-1 md:mr-2" />
+          <span>{filtersVisible ? "Hide Filters" : "Filters"}</span>
         </Button>
       </div>
 
       {filtersVisible && (
-        <div className="grid gap-4 rounded-lg border p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 rounded-lg border p-3 sm:p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3">
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category" className="text-sm font-medium mb-1.5 block">Category</Label>
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger id="category" className="w-full">
+              <SelectTrigger id="category" className="w-full h-9 md:h-10">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.sort().map((category) => (
                   <SelectItem key={category} value={category}>
@@ -80,15 +83,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="priceRange">Price Range</Label>
+            <Label htmlFor="priceRange" className="text-sm font-medium mb-1.5 block">Price Range</Label>
             <Select
               value={priceRange}
               onValueChange={setPriceRange}
             >
-              <SelectTrigger id="priceRange" className="w-full">
+              <SelectTrigger id="priceRange" className="w-full h-9 md:h-10">
                 <SelectValue placeholder="Select price range" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50">
                 <SelectItem value="all">All Prices</SelectItem>
                 <SelectItem value="under25">Under $25</SelectItem>
                 <SelectItem value="25to50">$25 to $50</SelectItem>
@@ -98,8 +101,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             </Select>
           </div>
 
-          <div className="md:col-span-2 lg:col-span-1">
-            <Button variant="outline" size="sm" className="w-full" onClick={clearFilters}>
+          <div className={isMobile ? "" : "md:col-span-2 lg:col-span-1"}>
+            <Label className="text-sm font-medium mb-1.5 invisible">Action</Label>
+            <Button 
+              variant="outline" 
+              size={isMobile ? "sm" : "default"}
+              className="w-full h-9 md:h-10" 
+              onClick={clearFilters}
+            >
               Clear Filters
             </Button>
           </div>

@@ -1,96 +1,120 @@
 
 import React from "react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FiltersSidebarProps {
-  onFilterChange: (filters: Record<string, any>) => void;
   activeFilters: Record<string, any>;
+  onFilterChange: (filters: Record<string, any>) => void;
 }
 
-const FiltersSidebar = ({ onFilterChange, activeFilters }: FiltersSidebarProps) => {
-  const handleFilterChange = (category: string, value: any) => {
-    onFilterChange({
-      ...activeFilters,
-      [category]: value
-    });
+const FiltersSidebar = ({ activeFilters, onFilterChange }: FiltersSidebarProps) => {
+  const isMobile = useIsMobile();
+  
+  const handlePriceChange = (value: string) => {
+    const newFilters = { ...activeFilters, price: value };
+    onFilterChange(newFilters);
   };
-
+  
+  const handleFreeShippingChange = (checked: boolean) => {
+    const newFilters = { ...activeFilters, freeShipping: checked };
+    onFilterChange(newFilters);
+  };
+  
+  const handleColorChange = (color: string) => {
+    const newFilters = { ...activeFilters, color: color === activeFilters.color ? null : color };
+    onFilterChange(newFilters);
+  };
+  
   return (
-    <div className="space-y-6">
-      <Accordion type="single" collapsible defaultValue="price" className="w-full">
-        <AccordionItem value="price">
-          <AccordionTrigger className="font-medium">Budget</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {[
-                { id: "under25", label: "Under $25" },
-                { id: "25to50", label: "$25 to $50" },
-                { id: "50to100", label: "$50 to $100" },
-                { id: "over100", label: "Over $100" }
-              ].map((range) => (
-                <div key={range.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={range.id}
-                    checked={activeFilters.price === range.id}
-                    onCheckedChange={() => handleFilterChange("price", range.id)}
-                  />
-                  <Label htmlFor={range.id}>{range.label}</Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="color">
-          <AccordionTrigger>Color</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {["Black", "White", "Blue", "Red", "Green"].map((color) => (
-                <div key={color} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={color}
-                    checked={activeFilters.color === color}
-                    onCheckedChange={() => handleFilterChange("color", color)}
-                  />
-                  <Label htmlFor={color}>{color}</Label>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="shipping">
-          <AccordionTrigger>Shipping</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
+    <div className="bg-white border rounded-md overflow-hidden">
+      <div className="p-4 border-b">
+        <h3 className="font-medium">Filters</h3>
+      </div>
+      
+      <ScrollArea className={isMobile ? "h-[50vh] md:h-auto" : "h-auto"}>
+        <div className="p-4 space-y-6">
+          {/* Price filter */}
+          <div>
+            <h4 className="font-medium mb-3">Price Range</h4>
+            <RadioGroup 
+              value={activeFilters.price || ""}
+              onValueChange={handlePriceChange}
+              className="space-y-2"
+            >
               <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="free-shipping"
-                  checked={activeFilters.freeShipping}
-                  onCheckedChange={() => handleFilterChange("freeShipping", !activeFilters.freeShipping)}
-                />
-                <Label htmlFor="free-shipping">Free shipping</Label>
+                <RadioGroupItem value="under25" id="under25" className="h-5 w-5" />
+                <Label htmlFor="under25" className="text-sm cursor-pointer">Under $25</Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="25to50" id="25to50" className="h-5 w-5" />
+                <Label htmlFor="25to50" className="text-sm cursor-pointer">$25 to $50</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="50to100" id="50to100" className="h-5 w-5" />
+                <Label htmlFor="50to100" className="text-sm cursor-pointer">$50 to $100</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="over100" id="over100" className="h-5 w-5" />
+                <Label htmlFor="over100" className="text-sm cursor-pointer">Over $100</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <Separator />
+          
+          {/* Free shipping filter */}
+          <div>
+            <h4 className="font-medium mb-3">Shipping</h4>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="freeShipping" 
+                checked={activeFilters.freeShipping || false}
+                onCheckedChange={handleFreeShippingChange}
+                className="h-5 w-5"
+              />
+              <Label htmlFor="freeShipping" className="text-sm cursor-pointer">Free shipping</Label>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => onFilterChange({})}
-      >
-        Clear all filters
-      </Button>
+          </div>
+          
+          <Separator />
+          
+          {/* Color filter */}
+          <div>
+            <h4 className="font-medium mb-3">Colors</h4>
+            <div className="flex flex-wrap gap-2">
+              {["red", "blue", "green", "black", "white"].map(color => (
+                <div 
+                  key={color}
+                  className={`h-8 w-8 rounded-full border-2 cursor-pointer ${
+                    activeFilters.color === color ? 'ring-2 ring-offset-2 ring-purple-500' : ''
+                  }`}
+                  style={{ backgroundColor: color === 'white' ? '#ffffff' : color }}
+                  onClick={() => handleColorChange(color)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+      
+      {isMobile && (
+        <div className="p-4 border-t">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => onFilterChange({})}
+            className="w-full"
+          >
+            Clear All Filters
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

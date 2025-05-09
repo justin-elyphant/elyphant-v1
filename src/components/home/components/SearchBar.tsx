@@ -7,6 +7,7 @@ import SearchResults from "./SearchResults";
 import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +17,7 @@ const SearchBar = () => {
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const searchInProgressRef = useRef(false);
+  const isMobile = useIsMobile();
   
   // Get search term from URL on initial load
   useEffect(() => {
@@ -116,12 +118,12 @@ const SearchBar = () => {
     <div className="w-full">
       <form onSubmit={handleSearch} className="w-full">
         <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input 
             ref={inputRef}
             type="text"
-            placeholder="Search products, brands, friends, or experiences..." 
-            className="pl-10 w-full"
+            placeholder={isMobile ? "Search products..." : "Search products, brands, friends, or experiences..."} 
+            className="pl-8 w-full h-9 md:h-10"
             value={searchTerm}
             onChange={handleInputChange}
             autoComplete="off"
@@ -132,8 +134,9 @@ const SearchBar = () => {
           {searchTerm.length > 0 && (
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
               onClick={handleClearSearch}
+              aria-label="Clear search"
             >
               &times;
             </button>
@@ -142,18 +145,18 @@ const SearchBar = () => {
         
         {showTokenAlert && !hasValidZincToken() && (
           <Alert className="mt-2 bg-amber-50 border-amber-200 text-amber-800">
-            <AlertDescription className="flex justify-between items-center">
-              <span>Using mock search results. Add a Zinc API token for real product search.</span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={dismissAlert}>Dismiss</Button>
-                <Button size="sm" variant="default" onClick={goToTrunkline}>Go to Trunkline</Button>
+            <AlertDescription className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
+              <span className="text-sm">Using mock search results. Add a Zinc API token for real product search.</span>
+              <div className="flex gap-2 w-full xs:w-auto">
+                <Button size="sm" variant="outline" onClick={dismissAlert} className="flex-1 xs:flex-auto text-xs py-1">Dismiss</Button>
+                <Button size="sm" variant="default" onClick={goToTrunkline} className="flex-1 xs:flex-auto text-xs py-1">Go to Trunkline</Button>
               </div>
             </AlertDescription>
           </Alert>
         )}
         
         {isSearchOpen && searchTerm.trim() && (
-          <div className="absolute z-50 w-[calc(100vw-2rem)] sm:w-[450px] mt-1 bg-popover rounded-md border shadow-md">
+          <div className="absolute z-50 w-[calc(100vw-2rem)] xs:w-[100%] mt-1 bg-popover rounded-md border shadow-md">
             <SearchResults 
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}

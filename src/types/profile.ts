@@ -12,13 +12,36 @@ export interface DataSharingSettings {
   email?: SharingLevel;
 }
 
-export type Wishlist = Database['public']['Tables']['wishlists']['Row'];
+export type Wishlist = Database['public']['Tables']['profiles']['Row'] & {
+  wishlists?: WishlistData[];
+};
+
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type GiftPreference = {
   category: string;
   subcategory?: string;
   importance: number;
   notes?: string;
+};
+
+export type WishlistItem = {
+  id: string;
+  product_id: string;
+  name: string;
+  price?: number;
+  brand?: string;
+  image_url?: string;
+  added_at: string;
+};
+
+export type WishlistData = {
+  id: string;
+  title: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  is_public: boolean;
+  items: WishlistItem[];
 };
 
 export type ShippingAddress = {
@@ -87,5 +110,19 @@ export function normalizeDataSharingSettings(settings: any): DataSharingSettings
     shipping_address: settings.shipping_address || 'private',
     gift_preferences: settings.gift_preferences || 'public',
     email: 'private'  // Always enforce email as private
+  };
+}
+
+// Add this function to convert form data to API format
+export function profileFormToApiData(formData: any): any {
+  return {
+    name: formData.name,
+    email: formData.email,
+    username: formData.username,
+    bio: formData.bio || '',
+    dob: formData.birthday ? new Date(formData.birthday).toISOString() : null,
+    shipping_address: formData.address || {},
+    data_sharing_settings: formData.data_sharing_settings || {},
+    updated_at: new Date().toISOString()
   };
 }

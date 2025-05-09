@@ -3,8 +3,9 @@ import { useState, useCallback } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeGiftPreference, normalizeShippingAddress, normalizeDataSharingSettings } from "@/types/profile";
-import type { Profile } from "@/types/supabase";
+import { normalizeGiftPreference, normalizeShippingAddress } from "@/types/profile";
+import { normalizeDataSharingSettings as normalizeSettings } from "@/utils/privacyUtils";
+import type { Profile } from "@/types/profile";
 
 export const useProfileFetch = () => {
   const { user } = useAuth();
@@ -44,7 +45,7 @@ export const useProfileFetch = () => {
             ? data.gift_preferences.map(normalizeGiftPreference)
             : [],
           shipping_address: normalizeShippingAddress(data.shipping_address),
-          data_sharing_settings: normalizeDataSharingSettings(data.data_sharing_settings),
+          data_sharing_settings: normalizeSettings(data.data_sharing_settings),
           important_dates: Array.isArray(data.important_dates) ? data.important_dates : []
         };
         
@@ -63,7 +64,7 @@ export const useProfileFetch = () => {
           shipping_address: normalizeShippingAddress(null),
           gift_preferences: [],
           important_dates: [],
-          data_sharing_settings: normalizeDataSharingSettings(null)
+          data_sharing_settings: normalizeSettings(null)
         };
         
         // Try to persist this profile to the database

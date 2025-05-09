@@ -56,7 +56,7 @@ export function normalizeDataSharingSettings(settings?: DataSharingSettings | nu
   }
   
   // Ensure email is always private
-  const normalizedSettings = {
+  const normalizedSettings: DataSharingSettings = {
     ...defaults,
     ...settings,
     email: "private" // Always enforce email as private

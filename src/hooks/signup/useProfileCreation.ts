@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DataSharingSettings, getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { DataSharingSettings } from "@/types/profile";
+import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 export async function createUserProfile(
   userId: string, 

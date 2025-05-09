@@ -14,13 +14,13 @@ const SignUp: React.FC = () => {
     isSubmitting,
     handleResendVerification,
     resendCount,
-    bypassVerification = true, // Enable hybrid verification by default
+    bypassVerification = true, // Always enable hybrid verification for better UX
   } = useSignUpProcess();
   
-  // Store verification bypass preference in localStorage for consistent experience
+  // Store verification bypass preference in localStorage for consistent experience across sessions
   React.useEffect(() => {
-    localStorage.setItem("bypassVerification", bypassVerification ? "true" : "false");
-  }, [bypassVerification]);
+    localStorage.setItem("bypassVerification", "true"); // Always set to true for Phase 5
+  }, []);
   
   return (
     <div className="flex flex-col min-h-screen">

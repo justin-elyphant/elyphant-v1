@@ -13,7 +13,7 @@ export function useSignUpProcess() {
   const [resendCount, setResendCount] = useState<number>(0);
   const { onSignUpSubmit: originalOnSignUpSubmit, isSubmitting } = useSignUpSubmit();
 
-  // For the hybrid approach, we'll set a default bypass value
+  // Phase 5: Always enable verification bypass
   const [bypassVerification] = useState(true);
   
   // Check localStorage for previously stored values on component mount
@@ -32,6 +32,9 @@ export function useSignUpProcess() {
     if (storedResendCount) {
       setResendCount(Number(storedResendCount) || 0);
     }
+    
+    // Phase 5: Always set bypass verification to true
+    localStorage.setItem("bypassVerification", "true");
   }, []);
 
   const handleSignUpSubmit = async (values: any) => {
@@ -49,6 +52,16 @@ export function useSignUpProcess() {
       // Set new signup flag for custom onboarding flow
       localStorage.setItem("newSignUp", "true");
       
+      // Phase 5: Auto-redirect to profile setup since we're bypassing verification
+      if (bypassVerification) {
+        localStorage.setItem("emailVerified", "true");
+        localStorage.setItem("verifiedEmail", values.email);
+        
+        // Short delay before redirecting to ensure state is updated
+        setTimeout(() => {
+          navigate('/profile-setup', { replace: true });
+        }, 800);
+      }
     } catch (error) {
       console.error("Sign up process error:", error);
       throw error;
@@ -80,6 +93,26 @@ export function useSignUpProcess() {
         
         toast.error("Failed to resend verification email");
         return { success: false };
+      }
+      
+      // Phase 5: For bypass verification, redirect to profile setup after resend
+      if (bypassVerification) {
+        toast.success("Account created successfully!", {
+          description: "Taking you to profile setup..."
+        });
+        
+        // We'll still record that verification was sent for data completeness
+        localStorage.setItem("emailVerified", "true");
+        localStorage.setItem("verifiedEmail", userEmail);
+        
+        // Short delay before redirecting
+        setTimeout(() => {
+          navigate('/profile-setup', { replace: true });
+        }, 1000);
+      } else {
+        toast.success("Verification email sent", {
+          description: "Please check your inbox and spam folder."
+        });
       }
       
       return { success: true };

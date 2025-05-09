@@ -13,7 +13,7 @@ interface UseVerificationContainerProps {
 export const useVerificationContainer = ({
   userEmail,
   userName = "", 
-  bypassVerification = false
+  bypassVerification = true // Phase 5: Default to true
 }: UseVerificationContainerProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -22,28 +22,35 @@ export const useVerificationContainer = ({
   const [isVerified, setIsVerified] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
 
-  // Auto-bypass if requested by parent component - this enables the hybrid approach
+  // Phase 5: Enhanced auto-bypass - will always automatically verify and redirect
   useEffect(() => {
-    if (bypassVerification && !isVerified) {
-      console.log("Hybrid verification mode active, auto-verifying...");
-      handleVerificationSuccess();
+    console.log("Phase 5 - Auto verification mode active");
+    
+    // Set a short delay for UX so users see the success screen briefly
+    const verifyTimer = setTimeout(() => {
+      if (!isVerified) {
+        handleVerificationSuccess();
+      }
+    }, 800);
+    
+    // Set redirect timer slightly longer than verification timer
+    const redirectTimer = setTimeout(() => {
+      console.log("Auto-redirecting to profile setup");
       
-      // Set a timeout to auto-redirect to profile setup
-      const redirectTimer = setTimeout(() => {
-        console.log("Auto-redirecting to profile setup");
-        
-        // Store verification state and data for reliability
-        localStorage.setItem("emailVerified", "true");
-        localStorage.setItem("verifiedEmail", userEmail);
-        localStorage.setItem("userName", userName);
-        
-        // Navigate to profile setup
-        navigate("/profile-setup", { replace: true });
-      }, 2000);
+      // Store verification state and data for reliability
+      localStorage.setItem("emailVerified", "true");
+      localStorage.setItem("verifiedEmail", userEmail);
+      localStorage.setItem("userName", userName);
       
-      return () => clearTimeout(redirectTimer);
-    }
-  }, [bypassVerification, isVerified, navigate, userEmail, userName]);
+      // Navigate to profile setup
+      navigate("/profile-setup", { replace: true });
+    }, 1500);
+    
+    return () => {
+      clearTimeout(verifyTimer);
+      clearTimeout(redirectTimer);
+    };
+  }, [navigate, userEmail, userName]);
   
   // Handle successful verification
   const handleVerificationSuccess = () => {
@@ -64,120 +71,67 @@ export const useVerificationContainer = ({
     console.log("Verification successful, proceeding with profile setup");
   };
   
-  // Check if email is verified in Supabase
+  // Check if email is verified in Supabase - for Phase 5, always returns verified
   const handleCheckVerification = async (): Promise<{ verified: boolean }> => {
-    // If bypass is enabled, always return verified
-    if (bypassVerification) {
-      console.log("Hybrid verification mode active, returning verified=true");
-      
-      // Store bypass data for reliability
-      localStorage.setItem("bypassVerification", "true");
-      localStorage.setItem("emailVerified", "true");
-      localStorage.setItem("verifiedEmail", userEmail);
-      
-      return { verified: true };
+    // Phase 5: Always return verified=true
+    console.log("Phase 5 verification mode active, returning verified=true");
+    
+    // Store bypass data for reliability
+    localStorage.setItem("bypassVerification", "true");
+    localStorage.setItem("emailVerified", "true");
+    localStorage.setItem("verifiedEmail", userEmail);
+    
+    // Still send actual verification email in background for email collection
+    try {
+      // Call verify in background but don't wait for result
+      supabase.auth.resend({
+        type: 'signup',
+        email: userEmail,
+      }).then(({ error }) => {
+        if (error) console.error("Background verification email error:", error);
+      });
+    } catch (error) {
+      console.error("Error in background verification:", error);
     }
     
-    try {
-      setIsLoading(true);
-      
-      // Check user session
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      // If we have a session and a user, check if email is confirmed
-      if (sessionData?.session?.user) {
-        const user = sessionData.session.user;
-        const emailConfirmed = user.email_confirmed_at != null;
-        
-        console.log("Email confirmation status:", emailConfirmed);
-        
-        if (emailConfirmed) {
-          handleVerificationSuccess();
-          return { verified: true };
-        }
-        
-        // If not confirmed, refresh user data in case it was just confirmed
-        const { data: refreshedUser, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError) {
-          console.error("Error refreshing session:", refreshError);
-          return { verified: false };
-        }
-        
-        if (refreshedUser?.user?.email_confirmed_at) {
-          handleVerificationSuccess();
-          return { verified: true };
-        }
-      }
-      
-      // If hybrid verification is enabled, auto-verify even if not confirmed in Supabase
-      if (localStorage.getItem("bypassVerification") === "true") {
-        console.log("Hybrid verification enabled, auto-verifying user");
-        handleVerificationSuccess();
-        return { verified: true };
-      }
-      
-      return { verified: false };
-    } catch (error) {
-      console.error("Error checking verification:", error);
-      return { verified: false };
-    } finally {
-      setIsLoading(false);
-    }
+    // Mark as verified and return true regardless of actual verification status
+    handleVerificationSuccess();
+    return { verified: true };
   };
   
-  // Handle resending the verification
+  // Handle resending the verification - Phase 5: always succeeds
   const handleResendVerification = async (): Promise<{ success: boolean }> => {
     try {
       setIsLoading(true);
       
-      console.log("Resending verification email to:", userEmail);
+      console.log("Phase 5 - Resending verification email to:", userEmail);
       
-      // Use native Supabase method to resend verification email
+      // Use native Supabase method to resend verification email in background
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: userEmail,
       });
       
       if (error) {
-        console.error("Error resending verification:", error);
-        
-        // If we got a rate limit error, we'll bypass verification
-        if (error.message?.includes("rate limit") || error.status === 429) {
-          console.log("Rate limit detected in resend, continuing with hybrid flow");
-          localStorage.setItem("signupRateLimited", "true");
-          handleVerificationSuccess();
-          
-          toast.success("Verification email will be sent!", {
-            description: "You can continue without waiting for verification."
-          });
-          
-          return { success: true };
-        }
-        
-        toast.error("Failed to resend verification email", {
-          description: error.message || "Please try again later"
-        });
-        
-        return { success: false };
+        console.error("Error in background verification:", error);
+        // Continue with verification bypass regardless of error
       }
       
-      toast.success("Verification email resent!", {
-        description: "You can check it later - continue setting up your profile now."
+      toast.success("Account created successfully!", {
+        description: "Taking you to complete your profile."
       });
       
-      // For hybrid flow - just mark as successful anyway
-      if (bypassVerification) {
-        handleVerificationSuccess();
-      }
+      // Always mark as successful for Phase 5
+      handleVerificationSuccess();
       
       return { success: true };
     } catch (error) {
       console.error("Error in handleResendVerification:", error);
-      toast.error("Failed to resend verification email", {
-        description: "An unexpected error occurred"
-      });
-      return { success: false };
+      
+      // Still return success and bypass verification for Phase 5
+      handleVerificationSuccess();
+      
+      return { success: true };
     } finally {
       setIsLoading(false);
     }

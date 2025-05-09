@@ -33,86 +33,72 @@ const VerificationContentSection = ({
   onResendVerification,
   onCheckVerification,
   setVerificationCode,
-  bypassVerification = false
+  bypassVerification = true // Phase 5: Default to true
 }: VerificationContentSectionProps) => {
   const navigate = useNavigate();
   const [progress, setProgress] = React.useState(0);
 
-  // Auto-redirect when bypass is enabled
+  // Phase 5: Enhanced auto-redirect with faster progress bar
   useEffect(() => {
-    if (bypassVerification) {
-      console.log("Verification content section: bypassing verification");
-      let currentProgress = 0;
+    console.log("Phase 5: Auto-verification and redirection initiated");
+    let currentProgress = 0;
+    
+    // Show progress bar to indicate auto-verification
+    const progressInterval = setInterval(() => {
+      currentProgress += 8; // Faster progress increment for Phase 5
+      setProgress(Math.min(currentProgress, 100));
       
-      // Show progress bar to indicate auto-verification
-      const progressInterval = setInterval(() => {
-        currentProgress += 5;
-        setProgress(Math.min(currentProgress, 100));
+      if (currentProgress >= 100) {
+        clearInterval(progressInterval);
         
-        if (currentProgress >= 100) {
-          clearInterval(progressInterval);
-          
-          // Trigger success callback
-          onVerificationSuccess();
-          
-          // Navigate to profile setup with small delay
-          setTimeout(() => {
-            navigate('/profile-setup', { replace: true });
-          }, 500);
-        }
-      }, 100);
-      
-      return () => clearInterval(progressInterval);
-    }
-  }, [bypassVerification, onVerificationSuccess, navigate]);
+        // Trigger success callback
+        onVerificationSuccess();
+        
+        // Navigate to profile setup with small delay
+        setTimeout(() => {
+          navigate('/profile-setup', { replace: true });
+        }, 300);
+      }
+    }, 80); // Faster interval for Phase 5
+    
+    return () => clearInterval(progressInterval);
+  }, [onVerificationSuccess, navigate]);
 
   return (
     <CardContent>
-      {bypassVerification && (
-        <>
-          <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-700">
-              <span className="font-semibold">Simplified signup process activated!</span> Redirecting you to profile setup...
-            </AlertDescription>
-          </Alert>
-          
-          <div className="my-6">
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-center mt-2 text-muted-foreground">
-              Setting up your account...
-            </p>
-          </div>
-        </>
-      )}
+      <>
+        <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-700">
+            <span className="font-semibold">Account created successfully!</span> Setting up your profile...
+          </AlertDescription>
+        </Alert>
+        
+        <div className="my-6">
+          <Progress value={progress} className="h-2" />
+          <p className="text-sm text-center mt-2 text-muted-foreground">
+            Redirecting to profile setup...
+          </p>
+        </div>
+      </>
       
-      {isVerified ? (
-        <>
-          <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-700">
-              <span className="font-semibold">Account created successfully!</span> Taking you to profile setup...
-            </AlertDescription>
-          </Alert>
-          
-          <div className="my-6">
-            <Progress value={100} className="h-2" />
-          </div>
-        </>
-      ) : (
-        <VerificationCodeSection
-          userEmail={userEmail}
-          isVerified={isVerified}
-          isLoading={isLoading}
-          verificationChecking={verificationChecking}
-          effectiveVerificationCode={effectiveVerificationCode}
-          resendCount={resendCount}
-          onVerificationSuccess={onVerificationSuccess}
-          onResendVerification={onResendVerification}
-          onCheckVerification={onCheckVerification}
-          setVerificationCode={setVerificationCode}
-          bypassVerification={bypassVerification}
-        />
+      {/* Hide verification form in Phase 5 */}
+      {isVerified ? null : (
+        <div className="hidden">
+          <VerificationCodeSection
+            userEmail={userEmail}
+            isVerified={isVerified}
+            isLoading={isLoading}
+            verificationChecking={verificationChecking}
+            effectiveVerificationCode={effectiveVerificationCode}
+            resendCount={resendCount}
+            onVerificationSuccess={onVerificationSuccess}
+            onResendVerification={onResendVerification}
+            onCheckVerification={onCheckVerification}
+            setVerificationCode={setVerificationCode}
+            bypassVerification={bypassVerification}
+          />
+        </div>
       )}
     </CardContent>
   );

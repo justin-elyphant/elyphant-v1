@@ -15,6 +15,7 @@ export interface ProfileData {
     dob: SharingLevel;
     shipping_address: SharingLevel;
     gift_preferences: SharingLevel;
+    email: SharingLevel;
   };
   next_steps_option: string;
 }

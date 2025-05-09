@@ -11,6 +11,7 @@ export interface DataSharingSettings {
   dob: "public" | "friends" | "private";
   shipping_address: "public" | "friends" | "private";
   gift_preferences: "public" | "friends" | "private";
+  email: "public" | "friends" | "private";
 }
 
 export interface ImportantDateType {

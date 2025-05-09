@@ -18,6 +18,7 @@ export interface DataSharingSettings {
   dob: SharingLevel;
   shipping_address: SharingLevel;
   gift_preferences: SharingLevel;
+  email: SharingLevel;
   [key: string]: SharingLevel; // Allow for extension
 }
 
@@ -103,7 +104,8 @@ export const normalizeDataSharingSettings = (settings?: Partial<DataSharingSetti
   return {
     dob: settings?.dob || "friends",
     shipping_address: settings?.shipping_address || "private",
-    gift_preferences: settings?.gift_preferences || "public"
+    gift_preferences: settings?.gift_preferences || "public",
+    email: settings?.email || "private"
   };
 };
 

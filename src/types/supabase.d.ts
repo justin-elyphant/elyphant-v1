@@ -18,6 +18,7 @@ export interface DataSharingSettings {
   dob: SharingLevel;
   shipping_address: SharingLevel;
   gift_preferences: SharingLevel;
+  email: SharingLevel;
 }
 
 export interface Profile {

@@ -43,7 +43,7 @@ export const getDefaultSharingLevel = (dataType: string): SharingLevel => {
     case 'gift_preferences':
       return 'public';
     case 'email':
-      return 'private';  // Added email as a default field type
+      return 'private';
     default:
       return 'private';
   }
@@ -59,7 +59,7 @@ export const getDefaultDataSharingSettings = () => {
     dob: getDefaultSharingLevel('dob'),
     shipping_address: getDefaultSharingLevel('shipping_address'),
     gift_preferences: getDefaultSharingLevel('gift_preferences'),
-    email: getDefaultSharingLevel('email') // Added email to default settings
+    email: getDefaultSharingLevel('email')
   };
 };
 

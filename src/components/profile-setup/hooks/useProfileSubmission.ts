@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { ProfileData } from "./types";
+import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 export const useProfileSubmission = ({ onComplete, onSkip }) => {
   const { user } = useAuth();
@@ -46,6 +48,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
           dob: "friends",
           shipping_address: "friends",
           gift_preferences: "public",
+          email: "private", // Default to private for email
           ...(profileData.data_sharing_settings || {})
         },
         onboarding_completed: true,
@@ -62,6 +65,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
       console.log("Has bio:", !!formattedData.bio);
       console.log("Has important_dates:", !!formattedData.important_dates && Array.isArray(formattedData.important_dates));
       console.log("Gift preferences length:", formattedData.gift_preferences?.length || 0);
+      console.log("Email sharing setting:", formattedData.data_sharing_settings.email);
 
       // Try up to 3 times to save the profile data
       let attempts = 0;

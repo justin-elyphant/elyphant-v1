@@ -20,7 +20,7 @@ const shippingAddressSchema = z.object({
   country: z.string().min(1, "Country is required")
 }).optional();
 
-// Define the data sharing settings schema
+// Define the data sharing settings schema with email field
 const dataSharingSettingsSchema = z.object({
   dob: z.enum(["public", "friends", "private"]),
   shipping_address: z.enum(["public", "friends", "private"]),

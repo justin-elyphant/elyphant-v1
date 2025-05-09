@@ -29,7 +29,8 @@ export const useProfileValidation = (activeStep: number, profileData: ProfileDat
         return !!profileData.data_sharing_settings && 
                !!profileData.data_sharing_settings.dob &&
                !!profileData.data_sharing_settings.shipping_address &&
-               !!profileData.data_sharing_settings.gift_preferences;
+               !!profileData.data_sharing_settings.gift_preferences &&
+               !!profileData.data_sharing_settings.email; // Added email check
       
       case 5: // Next steps
         return true; // Always valid - any option or no option is fine

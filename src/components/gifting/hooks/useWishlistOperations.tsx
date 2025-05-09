@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { WishlistItem, Wishlist } from "@/types/profile";
@@ -13,7 +14,7 @@ export function useWishlistOperations() {
     setWishlistedProducts,
     wishlists, 
     setWishlists,
-    isInitialized // Add this property to fix the first error
+    isInitialized
   } = useWishlistState();
   
   const { syncWishlistToProfile } = useWishlistSync();
@@ -69,19 +70,8 @@ export function useWishlistOperations() {
       const existingWishlists = profile?.wishlists || [];
       const updatedWishlists = [...existingWishlists, newWishlist];
       
-      // Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          wishlists: updatedWishlists,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-      
-      if (updateError) {
-        console.error("Error creating wishlist:", updateError);
-        throw updateError;
-      }
+      // Update profile using our new sync function
+      await syncWishlistToProfile(updatedWishlists);
       
       // Update local state
       setWishlists(updatedWishlists);
@@ -93,7 +83,7 @@ export function useWishlistOperations() {
       toast.error("Failed to create wishlist");
       return null;
     }
-  }, [user, setWishlists]);
+  }, [user, setWishlists, syncWishlistToProfile]);
   
   // Add item to wishlist
   const addToWishlist = useCallback(async (wishlistId: string, item: Omit<WishlistItem, 'id' | 'added_at'>) => {
@@ -156,7 +146,7 @@ export function useWishlistOperations() {
         ...existingWishlists.slice(wishlistIndex + 1)
       ];
       
-      // Update profile
+      // Update profile using our new sync function
       await syncWishlistToProfile(updatedWishlists);
       
       // Update local state
@@ -230,7 +220,7 @@ export function useWishlistOperations() {
         ...existingWishlists.slice(wishlistIndex + 1)
       ];
       
-      // Update profile
+      // Update profile using our new sync function
       await syncWishlistToProfile(updatedWishlists);
       
       // Update local state
@@ -294,7 +284,7 @@ export function useWishlistOperations() {
         ...existingWishlists.slice(wishlistIndex + 1)
       ];
       
-      // Update profile
+      // Update profile using our new sync function
       await syncWishlistToProfile(updatedWishlists);
       
       // Update local state
@@ -323,7 +313,7 @@ export function useWishlistOperations() {
   return {
     wishlistedProducts,
     wishlists,
-    isInitialized, // Include this in the returned object
+    isInitialized,
     handleWishlistToggle,
     createWishlist,
     addToWishlist,

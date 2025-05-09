@@ -1,115 +1,68 @@
 
-import { useState, useEffect } from "react";
-import { useLocalStorage } from "./useLocalStorage";
-import { Product } from "@/contexts/ProductContext";
-import { useProducts } from "@/contexts/ProductContext";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 
-export type SavedItemType = "later" | "wishlist";
-
-interface SavedItem {
-  productId: string;
-  saveType: SavedItemType;
-}
-
-export const useFavorites = () => {
-  const [savedItems, setSavedItems] = useLocalStorage<SavedItem[]>("savedItems", []);
-  const { products, isLoading } = useProducts();
-  const [favoriteItems, setFavoriteItems] = useState<Product[]>([]);
-  // Create a favorites array for legacy support
+export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([]);
-  
+  const [laterItems, setLaterItems] = useState<any[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const { user } = useAuth();
+
   useEffect(() => {
-    if (!products || isLoading) {
-      return; // Don't process if products aren't loaded yet
-    }
+    if (!user) return;
     
-    // Find all saved products from the main products list
-    const productIds = savedItems.map(item => item.productId);
-    const items = products.filter(product => productIds.includes(product.product_id));
-    setFavoriteItems(items);
-    
-    // Update favorites array for legacy support
-    setFavorites(productIds);
-  }, [savedItems, products, isLoading]);
-
-  const handleFavoriteToggle = (productId: string) => {
-    setSavedItems(prev => {
-      const itemExists = prev.some(item => item.productId === productId);
+    const fetchFavorites = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('gift_preferences, wishlists')
+        .eq('id', user.id)
+        .single();
       
-      if (itemExists) {
-        // Remove item if it exists
-        const newItems = prev.filter(item => item.productId !== productId);
-        toast.info("Removed from saved items");
-        return newItems;
-      } else {
-        // Add item with default save type "later"
-        toast.success("Saved for later");
-        return [...prev, { productId, saveType: "later" }];
+      if (profile) {
+        // Process gift preferences (for backward compatibility)
+        if (profile.gift_preferences && Array.isArray(profile.gift_preferences)) {
+          const favIds = profile.gift_preferences
+            .filter((pref: any) => 
+              typeof pref === 'object' && pref.importance === "high"
+            )
+            .map((pref: any) => 
+              typeof pref === 'object' ? pref.category : pref
+            );
+          
+          setFavorites(favIds || []);
+        }
+        
+        // Process wishlists
+        if (profile.wishlists && Array.isArray(profile.wishlists)) {
+          let wishlistProducts: any[] = [];
+          
+          profile.wishlists.forEach((list: any) => {
+            if (list && Array.isArray(list.items)) {
+              list.items.forEach((item: any) => {
+                if (item.name && item.price) {
+                  wishlistProducts.push({
+                    name: item.name,
+                    price: typeof item.price === 'number' ? `$${item.price.toFixed(2)}` : item.price
+                  });
+                }
+              });
+            }
+          });
+          
+          setWishlistItems(wishlistProducts.slice(0, 3));
+          
+          // Mock later items for now - can be expanded in the future
+          setLaterItems([
+            { name: "Fitness Tracker", price: "$79.99" },
+            { name: "Summer Hat", price: "$24.99" },
+          ]);
+        }
       }
-    });
-  };
-
-  const handleSaveOptionSelect = (saveType: SavedItemType, productId: string) => {
-    setSavedItems(prev => {
-      const existingItemIndex = prev.findIndex(item => item.productId === productId);
-      
-      if (existingItemIndex >= 0) {
-        // Update existing item
-        const newItems = [...prev];
-        newItems[existingItemIndex] = { ...newItems[existingItemIndex], saveType };
-        
-        toast.success(saveType === "wishlist" 
-          ? "Added to your wishlist" 
-          : "Saved for later"
-        );
-        
-        return newItems;
-      } else {
-        // Add new item with specified save type
-        toast.success(saveType === "wishlist" 
-          ? "Added to your wishlist" 
-          : "Saved for later"
-        );
-        
-        return [...prev, { productId, saveType }];
-      }
-    });
-  };
-
-  const isFavorited = (productId: string): boolean => {
-    return savedItems.some(item => item.productId === productId);
-  };
-
-  const getSaveType = (productId: string): SavedItemType | null => {
-    const item = savedItems.find(item => item.productId === productId);
-    return item ? item.saveType : null;
-  };
-
-  // Get items filtered by save type
-  const getItemsBySaveType = (saveType: SavedItemType): Product[] => {
-    if (!products || isLoading) {
-      return []; // Return empty array if products aren't loaded yet
-    }
+    };
     
-    const filteredIds = savedItems
-      .filter(item => item.saveType === saveType)
-      .map(item => item.productId);
-    
-    return products.filter(product => filteredIds.includes(product.product_id));
-  };
+    fetchFavorites();
+  }, [user]);
 
-  return {
-    favoriteItems,
-    savedItems,
-    favorites, // Add this for legacy support
-    handleFavoriteToggle,
-    handleSaveOptionSelect,
-    isFavorited,
-    getSaveType,
-    getItemsBySaveType,
-    wishlistItems: getItemsBySaveType("wishlist"),
-    laterItems: getItemsBySaveType("later"),
-    isLoading // Export loading state for components to use
-  };
-};
+  return { favorites, laterItems, wishlistItems };
+}

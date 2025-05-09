@@ -1,157 +1,159 @@
-import { useState, useEffect, useCallback } from "react";
-import { RecentlyViewedProduct, Profile } from "@/types/supabase";
-import { Product } from "@/types/product";
+import { useCallback, useState } from "react";
 import { useAuth } from "@/contexts/auth";
-import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import { Product } from "@/types/product";
 import { toast } from "sonner";
 
-/**
- * A hook to synchronize product data between local storage and the user profile in the database.
- * This provides a central mechanism for reliably tracking product interactions.
- */
-export function useProductDataSync() {
+interface ProductViewData {
+  product_id: string;
+  title: string;
+  image?: string;
+  price?: number;
+  viewed_at: number;
+}
+
+const MAX_QUEUE_SIZE = 10;
+const SYNC_DEBOUNCE_MS = 5000; // 5 second debounce
+
+export const useProductDataSync = () => {
+  const [queue, setQueue] = useState<ProductViewData[]>([]);
+  const [syncTimeout, setSyncTimeout] = useState<number | null>(null);
   const { user } = useAuth();
-  const { profile, refetchProfile } = useProfile();
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
-  const [syncQueue, setSyncQueue] = useState<RecentlyViewedProduct[]>([]);
-  const [syncError, setSyncError] = useState<Error | null>(null);
-
-  // Clear any errors when dependencies change
-  useEffect(() => {
-    setSyncError(null);
-  }, [user, profile]);
-
-  // Process the sync queue when items are added
-  useEffect(() => {
-    if (syncQueue.length > 0 && user && profile && !isSyncing) {
-      processSyncQueue();
-    }
-  }, [syncQueue, user, profile, isSyncing]);
-
-  // Main function to track a viewed product
+  const { refreshProfile } = useProfile();
+  
+  // Track a product view - queues for debounced sync
   const trackProductView = useCallback((product: Product) => {
     if (!product) return;
     
-    // Extract consistent product ID
-    const productId = product.product_id || product.id || "";
+    const productId = product.product_id || product.id;
     if (!productId) {
-      console.warn("Cannot track product without ID:", product);
+      console.warn("Cannot track product without ID");
       return;
     }
     
-    console.log("Tracking product view:", productId, product.title || product.name);
-    
-    // Create standardized product data
-    const productData: RecentlyViewedProduct = {
-      id: productId,
-      name: product.title || product.name || "",
+    const viewData: ProductViewData = {
+      product_id: productId,
+      title: product.title || product.name || "",
       image: product.image || "",
       price: product.price,
-      viewed_at: new Date().toISOString()
+      viewed_at: Date.now(),
     };
     
-    // Add to sync queue
-    setSyncQueue(prev => {
-      // Remove existing entry of the same product if present
-      const filtered = prev.filter(item => item.id !== productId);
-      // Add new entry at the beginning and maintain max length
-      return [productData, ...filtered];
+    // Add to queue
+    setQueue(prevQueue => {
+      // Remove duplicates (only keep most recent view of same product)
+      const filteredQueue = prevQueue.filter(item => item.product_id !== viewData.product_id);
+      const newQueue = [viewData, ...filteredQueue].slice(0, MAX_QUEUE_SIZE);
+      
+      // Schedule sync if not already scheduled
+      if (!syncTimeout) {
+        const timeout = window.setTimeout(() => syncQueueToProfile(), SYNC_DEBOUNCE_MS);
+        setSyncTimeout(timeout as unknown as number);
+      }
+      
+      return newQueue;
     });
     
-    return productData;
-  }, []);
-
-  // Process the sync queue
-  const processSyncQueue = useCallback(async () => {
-    if (!user || !profile || isSyncing || syncQueue.length === 0) return;
+    console.log(`Product view tracked: ${viewData.title} (${viewData.product_id})`);
+  }, [queue, syncTimeout]);
+  
+  // Sync the queue to the user's profile
+  const syncQueueToProfile = useCallback(async () => {
+    // Clear timeout
+    if (syncTimeout) {
+      clearTimeout(syncTimeout);
+      setSyncTimeout(null);
+    }
+    
+    // If no items or no user, skip
+    if (queue.length === 0 || !user) {
+      return;
+    }
+    
+    console.log(`Syncing ${queue.length} product views to profile`);
     
     try {
-      setIsSyncing(true);
-      console.log("Processing sync queue with", syncQueue.length, "items");
+      // Get current profile data
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('recently_viewed')
+        .eq('id', user.id)
+        .single();
       
-      // Get existing recently viewed array from profile or create a new one
-      const recentlyViewed = Array.isArray(profile.recently_viewed) 
-        ? profile.recently_viewed 
-        : [];
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error("Error fetching profile:", fetchError);
+        return;
+      }
       
-      // Merge queue with existing data, removing duplicates and keeping most recent
-      const productMap = new Map<string, RecentlyViewedProduct>();
+      // Get current recently viewed items
+      const currentItems = profile?.recently_viewed || [];
       
-      // First add existing items to the map
-      recentlyViewed.forEach(product => {
-        productMap.set(product.id, product);
-      });
+      // Add new items from queue
+      const newItems = [...queue];
       
-      // Then add queue items (these will overwrite existing entries with the same id)
-      syncQueue.forEach(product => {
-        productMap.set(product.id, product);
-      });
+      // Create combined list, prioritizing new items and removing duplicates
+      const seenIds = new Set();
+      const combinedItems = [];
       
-      // Convert map back to array and sort by viewed_at descending
-      const mergedProducts = Array.from(productMap.values())
-        .sort((a, b) => {
-          const dateA = new Date(a.viewed_at || 0);
-          const dateB = new Date(b.viewed_at || 0);
-          return dateB.getTime() - dateA.getTime();
-        })
-        .slice(0, 20); // Limit to 20 items
+      // First add all new items
+      for (const item of newItems) {
+        seenIds.add(item.product_id);
+        combinedItems.push({
+          id: item.product_id,
+          name: item.title,
+          image: item.image,
+          price: item.price,
+          viewed_at: new Date(item.viewed_at).toISOString()
+        });
+      }
       
-      // Update profile with new recently viewed list
-      const { error } = await supabase
+      // Then add existing items that aren't duplicates
+      for (const item of currentItems) {
+        if (!seenIds.has(item.id)) {
+          seenIds.add(item.id);
+          combinedItems.push(item);
+        }
+      }
+      
+      // Limit to 20 items
+      const updatedItems = combinedItems.slice(0, 20);
+      
+      // Update profile
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          recently_viewed: mergedProducts,
+          recently_viewed: updatedItems,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
-        
-      if (error) {
-        console.error("Error updating recently viewed products in profile:", error);
-        setSyncError(new Error(error.message));
-      } else {
-        console.log("Successfully synced", syncQueue.length, "products to profile");
-        // Clear the queue since we've processed it
-        setSyncQueue([]);
-        setLastSyncTime(Date.now());
-        
-        // Refresh profile to ensure updated data is available throughout the app
-        setTimeout(() => {
-          refetchProfile().catch(err => 
-            console.error("Error refreshing profile after updating recently viewed:", err)
-          );
-        }, 100);
+      
+      if (updateError) {
+        console.error("Error updating profile with recently viewed items:", updateError);
+        return;
       }
+      
+      // Clear the queue
+      setQueue([]);
+      
+      // Refresh profile data to keep UI in sync
+      await refreshProfile();
+      
+      console.log(`Successfully synced ${newItems.length} product views to profile`);
     } catch (err) {
-      console.error("Error syncing product data with profile:", err);
-      setSyncError(err instanceof Error ? err : new Error('Unknown error during sync'));
-      // Keep items in queue to retry later
-    } finally {
-      setIsSyncing(false);
+      console.error("Error syncing product views to profile:", err);
     }
-  }, [user, profile, isSyncing, syncQueue, refetchProfile]);
-
-  // Force a sync (useful for components that want to ensure data is synced before unmounting)
-  const forceSyncNow = useCallback(async () => {
-    await processSyncQueue();
-  }, [processSyncQueue]);
-
-  // Retry sync if there was an error
-  const retrySyncAfterError = useCallback(() => {
-    if (syncError) {
-      setSyncError(null);
-      processSyncQueue();
+  }, [queue, user, refreshProfile, syncTimeout]);
+  
+  // Force an immediate sync
+  const forceSyncNow = useCallback(() => {
+    if (queue.length > 0) {
+      syncQueueToProfile();
     }
-  }, [syncError, processSyncQueue]);
+  }, [queue, syncQueueToProfile]);
 
   return {
     trackProductView,
-    forceSyncNow,
-    isSyncing,
-    lastSyncTime,
-    syncError,
-    retrySyncAfterError,
-    queueLength: syncQueue.length
+    forceSyncNow
   };
-}
+};

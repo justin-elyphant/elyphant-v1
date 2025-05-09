@@ -30,48 +30,6 @@ export function useWishlistSync() {
         return false;
       }
       
-      // Also update legacy gift_preferences for backward compatibility
-      const allProductIds = wishlists.flatMap(list => 
-        list.items.map(item => item.product_id)
-      );
-      
-      const { data: prefProfile, error: prefError } = await supabase
-        .from('profiles')
-        .select('gift_preferences')
-        .eq('id', user.id)
-        .single();
-        
-      if (!prefError) {
-        const existingPrefs = prefProfile?.gift_preferences || [];
-        
-        // Get existing preferences that are not high importance (not wishlist items)
-        const nonWishlistPreferences = Array.isArray(existingPrefs) 
-          ? existingPrefs.filter(pref => {
-              if (typeof pref === 'string') return !allProductIds.includes(pref);
-              return pref.importance !== "high" || !allProductIds.includes(pref.category);
-            })
-          : [];
-        
-        // Format wishlist items as gift preferences
-        const wishlistPreferences = allProductIds.map(productId => ({
-          category: productId,
-          importance: "high" as const
-        }));
-        
-        // Combine preferences
-        const updatedPreferences = [
-          ...nonWishlistPreferences,
-          ...wishlistPreferences
-        ];
-        
-        await supabase
-          .from('profiles')
-          .update({ 
-            gift_preferences: updatedPreferences,
-          })
-          .eq('id', user.id);
-      }
-      
       console.log("Wishlist sync completed successfully");
       return true;
     } catch (err) {

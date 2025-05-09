@@ -1,13 +1,18 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { useAuthSession } from '@/hooks/auth/useAuthSession';
+import { useDebugMode } from '@/hooks/useDebugMode';
+import { useAuthFunctions } from './authHooks';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
   isProcessingToken: boolean;
+  isDebugMode: boolean;
+  signOut: () => Promise<void>;
+  deleteUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -15,6 +20,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   isProcessingToken: false,
+  isDebugMode: false,
+  signOut: async () => {},
+  deleteUser: async () => {},
 });
 
 export const useAuth = () => {
@@ -27,6 +35,8 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, user, isLoading, isProcessingToken } = useAuthSession();
+  const [isDebugMode] = useDebugMode();
+  const { signOut, deleteUser } = useAuthFunctions(user);
 
   return (
     <AuthContext.Provider
@@ -35,6 +45,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isLoading,
         isProcessingToken,
+        isDebugMode,
+        signOut,
+        deleteUser,
       }}
     >
       {children}

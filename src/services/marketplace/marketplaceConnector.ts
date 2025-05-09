@@ -13,53 +13,63 @@ class MockMarketplaceProvider implements MarketplaceProvider {
   private mockProducts: Product[] = [
     {
       id: "1",
+      product_id: "1",
       title: "Premium Wireless Headphones",
       description: "High-quality sound with noise cancellation",
       price: 199.99,
       brand: "SoundMaster",
       category: "Electronics",
       image: "https://placehold.co/400x300?text=Headphones",
-      rating: { rate: 4.8, count: 120 }
+      rating: 4.8,
+      reviewCount: 120
     },
     {
       id: "2",
+      product_id: "2",
       title: "Stainless Steel Water Bottle",
       description: "Keeps drinks cold for 24 hours, hot for 12",
       price: 35.00,
       brand: "HydroMate",
       category: "Home & Kitchen",
       image: "https://placehold.co/400x300?text=Water+Bottle",
-      rating: { rate: 4.5, count: 89 }
+      rating: 4.5,
+      reviewCount: 89
     },
     {
       id: "3",
+      product_id: "3",
       title: "Smart Fitness Watch",
       description: "Track your activity, sleep and heart rate",
       price: 149.99,
       brand: "FitTech",
       category: "Electronics",
       image: "https://placehold.co/400x300?text=Fitness+Watch",
-      rating: { rate: 4.2, count: 75 }
+      rating: 4.2,
+      reviewCount: 75
     },
     {
       id: "4",
+      product_id: "4",
       title: "Organic Cotton T-Shirt",
       description: "Soft and sustainable casual wear",
       price: 24.99,
       brand: "EcoStyle",
       category: "Clothing",
       image: "https://placehold.co/400x300?text=T-Shirt",
-      rating: { rate: 4.0, count: 63 }
+      rating: 4.0,
+      reviewCount: 63
     },
     {
       id: "5",
+      product_id: "5",
       title: "Ceramic Pour-Over Coffee Maker",
       description: "For the perfect hand-brewed coffee",
       price: 42.50,
       brand: "BrewMaster",
       category: "Home & Kitchen",
       image: "https://placehold.co/400x300?text=Coffee+Maker",
-      rating: { rate: 4.7, count: 54 }
+      rating: 4.7,
+      reviewCount: 54
     }
   ];
   

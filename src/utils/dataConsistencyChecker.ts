@@ -94,7 +94,13 @@ export async function validateAndFixProfile(
         
         // Fix shipping address
         if (!profile.shipping_address) {
-          updates.shipping_address = {};
+          updates.shipping_address = {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: ''
+          };
         }
         
         // Fix gift preferences

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
+import MainLayout from "@/components/layout/MainLayout";
 import Home from "@/pages/Index";
 import Login from "@/pages/SignIn";
 import Register from "@/pages/SignUp";
@@ -31,16 +32,19 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* Routes that should use the main layout with header and footer */}
+          <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+          <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
+          <Route path="/user/:userId" element={<MainLayout><Profile /></MainLayout>} />
+          <Route path="/user/me" element={<MainLayout><Profile /></MainLayout>} />
+          <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
+          <Route path="/gifting" element={<MainLayout><Gifting /></MainLayout>} />
+          <Route path="/wishlists" element={<MainLayout><Wishlists /></MainLayout>} />
+          <Route path="/shared-wishlist/:wishlistId" element={<MainLayout><SharedWishlist /></MainLayout>} />
+          
+          {/* Authentication routes don't need the main layout */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/user/:userId" element={<Profile />} />
-          <Route path="/user/me" element={<Profile />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/gifting" element={<Gifting />} />
-          <Route path="/wishlists" element={<Wishlists />} />
-          <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
         </Routes>
       </Router>
     </AuthProvider>

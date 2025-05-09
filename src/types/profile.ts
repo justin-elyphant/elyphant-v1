@@ -6,10 +6,10 @@ export type SharingLevel = 'private' | 'friends' | 'public';
 export type ConnectionStatus = 'none' | 'pending' | 'accepted' | 'rejected' | 'self';
 
 export interface DataSharingSettings {
-  dob?: SharingLevel;
-  shipping_address?: SharingLevel;
-  gift_preferences?: SharingLevel;
-  email?: SharingLevel;
+  dob: SharingLevel;
+  shipping_address: SharingLevel;
+  gift_preferences: SharingLevel;
+  email: SharingLevel;
 }
 
 // Update the Wishlist type to include all required fields

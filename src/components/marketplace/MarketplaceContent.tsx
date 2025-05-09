@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
-import ProductGrid from "./product-grid/ProductGrid";  // Use the ProductGrid component
+import ProductGrid from "./ProductGrid";  // Updated import path to use the main ProductGrid component
 import MarketplaceLoading from "./MarketplaceLoading";
 import FiltersSidebar from "./FiltersSidebar";
 

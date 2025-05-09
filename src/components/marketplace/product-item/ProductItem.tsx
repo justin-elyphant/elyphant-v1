@@ -26,7 +26,7 @@ const ProductItem = ({
 }: ProductItemProps) => {
   const handleClick = () => {
     if (onProductClick) {
-      onProductClick(product.product_id);
+      onProductClick(product.product_id || product.id || "");
     }
   };
 
@@ -61,8 +61,8 @@ const ProductItem = ({
         <WishlistButton 
           onWishlistClick={onWishlistClick}
           isFavorited={isFavorited}
-          productId={product.product_id}
-          productName={product.title || ""}
+          productId={product.product_id || product.id || ""}
+          productName={product.title || product.name || ""}
           productImage={product.image}
           productPrice={product.price}
           productBrand={product.brand}

@@ -51,25 +51,32 @@ const ProductImage = ({
     
     // Fast path: Check for single image property first (most common case)
     if (product?.image && typeof product.image === 'string' && product.image !== "/placeholder.svg") {
+      console.log("Using product image:", product.image);
       return product.image;
     }
     
     // Check if product has an images array with valid items
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
       const validImage = product.images.find(img => img && typeof img === 'string' && img !== "/placeholder.svg");
-      if (validImage) return validImage;
+      if (validImage) {
+        console.log("Using image from array:", validImage);
+        return validImage;
+      }
     }
     
     // Use a specific fallback based on product category and title
     const productName = product?.title || product?.name || "Product";
     const productCategory = product?.category || "Product";
-    return getProductFallbackImage(productName, productCategory);
+    const fallback = getProductFallbackImage(productName, productCategory);
+    console.log("Using fallback image:", fallback);
+    return fallback;
   };
 
   const imageUrl = getPrimaryImage();
   const productName = product?.title || product?.name || "Product";
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.error("Image failed to load:", imageUrl);
     setImageError(true);
     // If image fails to load, use category-specific fallback
     const fallback = getProductFallbackImage(productName, product?.category || "");
@@ -86,7 +93,7 @@ const ProductImage = ({
         alt={productName}
         className="h-full w-full object-cover transition-all hover:scale-105"
         onError={handleImageError}
-        loading="lazy" // Add lazy loading for performance
+        loading="lazy" 
       />
     </AspectRatio>
   );

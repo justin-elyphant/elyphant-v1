@@ -5,7 +5,7 @@ import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import ProductItem from "./product-item/ProductItem";
-import ProductDetailsDialog from "./product-details/ProductDetailsDialog";
+import ProductDetailsDialog from "./ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 
@@ -23,7 +23,7 @@ const ProductGrid = ({
   onProductView 
 }: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<string | null> (null);
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [userData] = useLocalStorage("userData", null);
@@ -45,14 +45,16 @@ const ProductGrid = ({
   };
   
   const handleProductClick = (productId: string) => {
+    console.log("Product clicked:", productId);
     setSelectedProduct(productId);
     setDlgOpen(true);
     
     // Find the product and add to recently viewed
-    const product = products.find(p => p.product_id === productId);
+    const product = products.find(p => (p.product_id || p.id) === productId);
     if (product) {
+      console.log("Adding to recently viewed:", product.title || product.name);
       addToRecentlyViewed({
-        id: product.product_id,
+        id: product.product_id || product.id || "",
         name: product.title || product.name || "",
         image: product.image,
         price: product.price
@@ -82,18 +84,18 @@ const ProductGrid = ({
       >
         {sortedProducts.map((product) => (
           <ProductItem 
-            key={product.product_id}
+            key={product.product_id || product.id}
             product={product}
             viewMode={viewMode}
             onProductClick={handleProductClick}
-            onWishlistClick={(e) => handleWishlistClick(e, product.product_id)}
-            isFavorited={userData ? isFavorited(product.product_id) : false}
+            onWishlistClick={(e) => handleWishlistClick(e, product.product_id || product.id || "")}
+            isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
           />
         ))}
       </div>
 
       <ProductDetailsDialog 
-        productId={selectedProduct}
+        product={selectedProduct ? products.find(p => (p.product_id || p.id) === selectedProduct) || null : null}
         open={dlgOpen}
         onOpenChange={setDlgOpen}
         userData={userData}

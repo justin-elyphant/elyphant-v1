@@ -59,7 +59,7 @@ const ProductItem = ({
       >
         <ProductImage 
           product={product}
-          aspectRatio={viewMode === "list" && !isMobile ? "video" : "square"}
+          aspectRatio={viewMode === "list" && !isMobile ? "wide" : "square"}
           className="h-full w-full object-cover transition-all"
           useMock={useMock}
         />

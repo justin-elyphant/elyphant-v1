@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingCart } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ModernProductCardProps {
   product: Product;
@@ -21,6 +23,8 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
   onAddToCart,
   onClick,
 }) => {
+  const isMobile = useIsMobile();
+  
   // Ensure we have fallback values
   const title = product.title || product.name || "Product";
   const price = typeof product.price === 'number' ? product.price : 0;
@@ -67,7 +71,10 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-full bg-white hover:bg-white/90 text-black"
+            className={cn(
+              "w-full bg-white hover:bg-white/90 text-black",
+              isMobile && "py-2.5 text-sm" // Taller button on mobile
+            )}
             onClick={(e) => {
               e.stopPropagation();
               onAddToCart(e);
@@ -81,15 +88,23 @@ const ModernProductCard: React.FC<ModernProductCardProps> = ({
         <Button 
           variant="ghost" 
           size="icon" 
-          className="absolute top-2 right-2 bg-white/80 hover:bg-white/90 rounded-full h-8 w-8"
+          className={cn(
+            "absolute top-2 right-2 bg-white/80 hover:bg-white/90 rounded-full",
+            isMobile ? "h-10 w-10" : "h-8 w-8" // Larger for mobile touch targets
+          )}
           onClick={(e) => onToggleFavorite(e)}
         >
           <Heart 
-            className={`h-4 w-4 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} 
+            className={cn(
+              isMobile ? "h-5 w-5" : "h-4 w-4",
+              isFavorited ? 'fill-red-500 text-red-500' : ''
+            )} 
           />
         </Button>
       </div>
-      <CardContent className="p-3">
+      <CardContent className={cn(
+        isMobile ? "p-2.5" : "p-3" // Adjusted padding for mobile
+      )}>
         <h3 className="font-medium text-sm line-clamp-2 mt-1 mb-1">{title}</h3>
         <p className="font-bold text-base">{formattedPrice}</p>
         

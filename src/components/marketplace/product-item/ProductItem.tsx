@@ -6,6 +6,7 @@ import ProductDetails from "./ProductDetails";
 import ProductImage from "./ProductImage";
 import WishlistButton from "./WishlistButton";
 import { getBasePrice } from "./productUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductItemProps {
   product: Product;
@@ -24,6 +25,8 @@ const ProductItem = ({
   isFavorited = false,
   useMock = false
 }: ProductItemProps) => {
+  const isMobile = useIsMobile();
+  
   const handleClick = () => {
     if (onProductClick) {
       onProductClick(product.product_id || product.id || "");
@@ -56,8 +59,11 @@ const ProductItem = ({
         />
       </div>
       
-      {/* Wishlist button */}
-      <div className="absolute right-2 top-2 z-10">
+      {/* Wishlist button - increased touch target size for mobile */}
+      <div className={cn(
+        "absolute right-2 top-2 z-10",
+        isMobile && "right-1.5 top-1.5" 
+      )}>
         <WishlistButton 
           onWishlistClick={onWishlistClick}
           isFavorited={isFavorited}
@@ -69,10 +75,11 @@ const ProductItem = ({
         />
       </div>
       
-      {/* Product details section */}
+      {/* Product details section with mobile optimizations */}
       <div 
         className={cn(
-          "flex flex-col p-3",
+          "flex flex-col",
+          isMobile ? "p-2.5" : "p-3", // Adjusted padding for mobile
           viewMode === "list" ? "w-2/3" : "w-full"
         )}
       >

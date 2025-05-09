@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getMockProducts } from "@/components/marketplace/services/mockProductService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Product } from "@/types/product";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ZincProductResultsProps {
   products: Product[];
@@ -21,6 +22,7 @@ export const ZincProductResults = ({
 }: ZincProductResultsProps) => {
   const [showLoading, setShowLoading] = useState(isLoading);
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  const isMobile = useIsMobile();
   
   // Force loading state to resolve after 1.5 seconds max
   useEffect(() => {
@@ -48,7 +50,7 @@ export const ZincProductResults = ({
     
   if (showLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
         {[1, 2, 3, 4].map(i => (
           <Card key={i} className="overflow-hidden">
             <div className="animate-pulse">
@@ -67,7 +69,7 @@ export const ZincProductResults = ({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
       {displayProducts.map((product, index) => (
         <Card key={product.product_id || index} className="overflow-hidden border hover:shadow-md transition-all duration-300">
           <div className="relative">
@@ -81,6 +83,7 @@ export const ZincProductResults = ({
                 src={product.image} 
                 alt={product.title || product.name || ""} 
                 className="w-full h-full object-cover"
+                loading="lazy"
                 onError={(e) => {
                   // Replace broken images with placeholder
                   (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
@@ -89,7 +92,7 @@ export const ZincProductResults = ({
             </div>
           </div>
           
-          <CardContent className="p-4">
+          <CardContent className={isMobile ? "p-3" : "p-4"}>
             <h3 className="font-medium line-clamp-2 mb-1">
               {(product.title || product.name || "").length > 60 
                 ? (product.title || product.name || "").substring(0, 57) + "..."
@@ -119,7 +122,10 @@ export const ZincProductResults = ({
             </div>
             
             <Button 
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className={cn(
+                "w-full bg-purple-600 hover:bg-purple-700 text-white",
+                isMobile && "py-2" // Slightly taller button on mobile for better touch target
+              )}
               size="sm"
             >
               <Gift className="h-4 w-4 mr-1" />

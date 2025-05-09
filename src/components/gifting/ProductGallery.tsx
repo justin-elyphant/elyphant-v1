@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/contexts/ProductContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import ProductCard from "./ProductCard";
 import ProductFilters from "./ProductFilters";
@@ -21,6 +22,8 @@ const ProductGallery = ({
   isGifteeView = true,
   onProductSelect 
 }: ProductGalleryProps) => {
+  const isMobile = useIsMobile();
+  
   const {
     isLoading,
     filteredProducts,
@@ -99,7 +102,10 @@ const ProductGallery = ({
       </div>
       
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className={`grid ${isMobile 
+          ? 'grid-cols-1 xs:grid-cols-2 gap-3' 
+          : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'}`}
+        >
           {filteredProducts.map((product) => (
             <ProductCard
               key={product.product_id || product.id}

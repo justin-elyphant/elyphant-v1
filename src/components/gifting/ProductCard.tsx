@@ -1,9 +1,11 @@
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Heart } from "lucide-react";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useProductDataSync } from "@/hooks/useProductDataSync";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductCardProps {
   product: any;
@@ -22,6 +24,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const { addToRecentlyViewed } = useRecentlyViewed();
   const { trackProductView } = useProductDataSync();
+  const isMobile = useIsMobile();
   
   const handleClick = () => {
     if (onClick) onClick();
@@ -55,12 +58,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
           onError={(e) => {
             (e.target as HTMLImageElement).src = "/placeholder.svg";
           }}
+          loading="lazy" // Add lazy loading for performance
         />
         
         {isGifteeView && (
           <button 
             className={cn(
-              "absolute top-2 right-2 p-1 rounded-full transition-colors",
+              "absolute top-2 right-2 p-1.5 rounded-full transition-colors",
+              isMobile && "p-2", // Increased padding for better touch target on mobile
               isWishlisted 
                 ? "bg-pink-100 text-pink-500 hover:bg-pink-200" 
                 : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
@@ -70,12 +75,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
               if (onToggleWishlist) onToggleWishlist();
             }}
           >
-            <Heart className={cn("h-5 w-5", isWishlisted && "fill-pink-500")} />
+            <Heart className={cn(
+              isMobile ? "h-6 w-6" : "h-5 w-5", // Larger icon for mobile
+              isWishlisted && "fill-pink-500"
+            )} />
           </button>
         )}
       </div>
       
-      <div className="p-3">
+      <div className={cn(
+        isMobile ? "p-2.5" : "p-3" // Adjusted padding for mobile
+      )}>
         <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
           {product.name || product.title}
         </h3>

@@ -5,6 +5,7 @@ import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGrid from "./ProductGrid";  // Make sure this points to the correct component
 import MarketplaceLoading from "./MarketplaceLoading";
 import FiltersSidebar from "./FiltersSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -18,6 +19,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
   const [sortOption, setSortOption] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+  const isMobile = useIsMobile();
   
   const handleFilterChange = (newFilters: Record<string, any>) => {
     setActiveFilters(newFilters);
@@ -59,9 +61,9 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
         onSortChange={setSortOption}
       />
       
-      <div className="flex flex-col md:flex-row gap-6 mt-4">
+      <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6 mt-4`}>
         {showFilters && (
-          <div className="w-full md:w-64 flex-shrink-0">
+          <div className={`${isMobile ? "w-full" : "w-full md:w-64"} flex-shrink-0 ${isMobile ? "mb-4" : ""}`}>
             <FiltersSidebar
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}

@@ -3,9 +3,8 @@ import { useState, useCallback } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeGiftPreference, normalizeShippingAddress } from "@/types/profile";
+import { normalizeGiftPreference, normalizeShippingAddress, Profile } from "@/types/profile";
 import { normalizeDataSharingSettings as normalizeSettings } from "@/utils/privacyUtils";
-import type { Profile } from "@/types/profile";
 
 export const useProfileFetch = () => {
   const { user } = useAuth();

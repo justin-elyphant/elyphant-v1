@@ -12,11 +12,22 @@ export interface DataSharingSettings {
   email?: SharingLevel;
 }
 
-export type Wishlist = Database['public']['Tables']['profiles']['Row'] & {
-  wishlists?: WishlistData[];
+// Update the Wishlist type to include all required fields
+export type Wishlist = {
+  id: string;
+  user_id?: string;
+  title: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  is_public: boolean;
+  items: WishlistItem[];
 };
 
-export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type Profile = Database['public']['Tables']['profiles']['Row'] & {
+  wishlists?: Wishlist[];
+};
+
 export type GiftPreference = {
   category: string;
   subcategory?: string;
@@ -32,16 +43,6 @@ export type WishlistItem = {
   brand?: string;
   image_url?: string;
   added_at: string;
-};
-
-export type WishlistData = {
-  id: string;
-  title: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-  is_public: boolean;
-  items: WishlistItem[];
 };
 
 export type ShippingAddress = {
@@ -94,26 +95,7 @@ export function normalizeShippingAddress(address: any): ShippingAddress {
   };
 }
 
-// Function to normalize data sharing settings
-export function normalizeDataSharingSettings(settings: any): DataSharingSettings {
-  if (!settings) {
-    return {
-      dob: 'friends',
-      shipping_address: 'private',
-      gift_preferences: 'public',
-      email: 'private'  // Always private
-    };
-  }
-  
-  return {
-    dob: settings.dob || 'friends',
-    shipping_address: settings.shipping_address || 'private',
-    gift_preferences: settings.gift_preferences || 'public',
-    email: 'private'  // Always enforce email as private
-  };
-}
-
-// Add this function to convert form data to API format
+// Function to convert form data to API format
 export function profileFormToApiData(formData: any): any {
   return {
     name: formData.name,

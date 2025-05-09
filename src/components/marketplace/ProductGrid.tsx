@@ -30,13 +30,12 @@ const ProductGrid = ({
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
-  const { addToRecentlyViewed } = useRecentlyViewed();
+  const { addToRecentlyViewed, recentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
   
   // Generate product badges for visual indicators
   const getProductStatus = (product: Product): { badge: string; color: string } | null => {
     // Check if this is in the recently viewed items to add "Recently Viewed" badge
-    const { recentlyViewed } = useRecentlyViewed();
     const isRecentlyViewed = recentlyViewed?.some(item => item.id === (product.product_id || product.id));
     
     if (product.isBestSeller) {

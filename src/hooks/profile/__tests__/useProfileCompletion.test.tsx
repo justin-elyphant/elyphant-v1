@@ -2,6 +2,7 @@
 import { useProfileCompletion } from '../useProfileCompletion';
 import { renderHook } from '@testing-library/react';
 import { useNavigate } from 'react-router-dom';
+import { User } from '@supabase/supabase-js';
 
 // Mock the useNavigate hook
 jest.mock('react-router-dom', () => ({
@@ -37,7 +38,17 @@ jest.mock('sonner', () => ({
 
 describe('useProfileCompletion', () => {
   const mockNavigate = jest.fn();
-  const mockUser = { id: 'test-user-id', email: 'test@example.com' };
+  // Create a more complete mock user object that satisfies the User type
+  const mockUser = {
+    id: 'test-user-id',
+    email: 'test@example.com',
+    app_metadata: {},
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: '2023-01-01T00:00:00Z',
+    role: '',
+    updated_at: '',
+  } as User;
   
   beforeEach(() => {
     (useNavigate as jest.Mock).mockReturnValue(mockNavigate);

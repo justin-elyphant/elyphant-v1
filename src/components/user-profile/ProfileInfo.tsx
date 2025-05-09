@@ -6,14 +6,16 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { CalendarDays, MapPin, Info } from "lucide-react";
 import { format } from "date-fns";
 import { isDataVisible } from "@/utils/privacyUtils";
+import { ConnectionStatus } from "@/hooks/useConnectionStatus";
 
 interface ProfileInfoProps {
   userData: any;
 }
 
 const ProfileInfo = ({ userData }: ProfileInfoProps) => {
-  // For demo purposes, assume we are connected
-  const isConnected = true;
+  // For demo purposes, we'll use 'accepted' as the connection status
+  // This would normally come from useConnectionStatus hook in a real implementation
+  const connectionStatus: ConnectionStatus = 'accepted';
   
   // Handle possible undefined values safely
   const name = userData?.name || "User";
@@ -25,21 +27,21 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
   const birthdayVisible = isDataVisible(
     userData?.birthday || userData?.dob,
     dataSharingSettings.dob || "friends",
-    isConnected
+    connectionStatus
   );
   
   // Check location visibility
   const locationVisible = isDataVisible(
     (userData?.address?.city && userData?.address?.country) ? true : userData?.shipping_address,
     dataSharingSettings.shipping_address || "private",
-    isConnected
+    connectionStatus
   );
   
   // Check email visibility
   const emailVisible = isDataVisible(
     userData?.email,
     dataSharingSettings.email || "private",
-    isConnected
+    connectionStatus
   );
 
   return (

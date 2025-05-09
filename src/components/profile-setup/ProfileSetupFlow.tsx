@@ -1,3 +1,4 @@
+
 import React, { useCallback, useMemo, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -116,8 +117,8 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       case 4:
         return (
           <DataSharingStep
-            values={profileData.data_sharing_settings}
-            onChange={(settings) => updateProfileData('data_sharing_settings', settings)}
+            profileData={profileData}
+            updateProfileData={updateProfileData}
           />
         );
       case 5:

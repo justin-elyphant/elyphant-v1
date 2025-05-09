@@ -3,11 +3,13 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, ShoppingBag, Trash2, Loader2 } from "lucide-react";
+import { Edit, Share2, ShoppingBag, Trash2, Loader2, Globe, Lock } from "lucide-react";
 import GiftItemCard from "../GiftItemCard";
 import { toast } from "sonner";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
+import ShareWishlistDialog from "./ShareWishlistDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface WishlistCardProps {
   wishlist: Wishlist;
@@ -18,7 +20,8 @@ interface WishlistCardProps {
 
 const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps) => {
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
-  const { removeFromWishlist } = useWishlist();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const { removeFromWishlist, updateWishlistSharing } = useWishlist();
   
   const handleRemoveItem = async (itemId: string) => {
     try {
@@ -36,6 +39,10 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
     }
   };
 
+  const handleOpenShareDialog = () => {
+    setShareDialogOpen(true);
+  };
+
   return (
     <Card key={wishlist.id} className="relative">
       <Button 
@@ -49,7 +56,20 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
       </Button>
       
       <CardHeader>
-        <CardTitle>{wishlist.title}</CardTitle>
+        <div className="flex items-center justify-between pr-8">
+          <CardTitle>{wishlist.title}</CardTitle>
+          {wishlist.is_public ? (
+            <Badge variant="outline" className="flex gap-1 items-center text-green-600 border-green-200 bg-green-50">
+              <Globe className="h-3 w-3" />
+              Public
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="flex gap-1 items-center">
+              <Lock className="h-3 w-3" />
+              Private
+            </Badge>
+          )}
+        </div>
         <CardDescription>{wishlist.description}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -105,7 +125,7 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
             <Edit className="mr-2 h-3 w-3" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onShare(wishlist.id)}>
+          <Button variant="outline" size="sm" onClick={handleOpenShareDialog}>
             <Share2 className="mr-2 h-3 w-3" />
             Share
           </Button>
@@ -120,6 +140,13 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
           </Button>
         )}
       </CardFooter>
+
+      <ShareWishlistDialog 
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        wishlist={wishlist}
+        onShareSettingsChange={updateWishlistSharing}
+      />
     </Card>
   );
 };

@@ -1,73 +1,46 @@
-
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from '@/contexts/auth';
-import Dashboard from '@/pages/Dashboard';
-import SignUp from '@/pages/SignUp';
-import SignIn from '@/pages/SignIn';
-import ForgotPassword from '@/pages/ForgotPassword';
-import UpdatePassword from '@/pages/UpdatePassword';
-import ProfileSetup from '@/pages/ProfileSetup';
-import Settings from '@/pages/Settings';
-import Connections from '@/pages/Connections';
-import Gifting from '@/pages/Gifting';
-import Marketplace from '@/pages/Marketplace';
-import Wishlists from '@/pages/Wishlists';
-import { ProfileProvider } from '@/contexts/profile/ProfileContext';
-import { ProductProvider } from '@/contexts/ProductContext';
-import { CartProvider } from '@/contexts/CartContext';
-import Cart from '@/pages/Cart';
-import UserProfile from '@/pages/UserProfile';
-import MainLayout from '@/components/layout/MainLayout';
-import Index from '@/pages/Index';
-import Messages from '@/pages/Messages'; 
-import Trunkline from '@/pages/Trunkline'; 
-import VendorManagement from '@/pages/VendorManagement';
-import VendorSignup from '@/pages/VendorSignup';
-import VendorPartner from '@/pages/VendorPartner';
-import TrunklineLogin from '@/pages/TrunklineLogin';
-import VendorLogin from '@/pages/VendorLogin';
-import Events from '@/pages/Events';
-import Orders from '@/pages/Orders';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { useAuth } from "./contexts/auth";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Marketplace from "./pages/Marketplace";
+import Gifting from "./pages/Gifting";
+import Wishlists from "@/pages/Wishlists";
+import SharedWishlist from "@/pages/SharedWishlist";
 
 function App() {
+  const { isLoading } = useAuth();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnlineStatus = () => setIsOnline(navigator.onLine);
+
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOnlineStatus);
+
+    return () => {
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOnlineStatus);
+    };
+  }, []);
+
   return (
     <Router>
-      <AuthProvider>
-        <ProfileProvider>
-          <ProductProvider>
-            <CartProvider>
-              <Routes>
-                <Route element={<MainLayout />}>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/connections" element={<Connections />} />
-                  <Route path="/gifting" element={<Gifting />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/wishlists" element={<Wishlists />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/profile/:userId" element={<UserProfile />} />
-                  <Route path="/messages/:connectionId?" element={<Messages />} /> 
-                  <Route path="/trunkline" element={<Trunkline />} />
-                  <Route path="/vendor-management" element={<VendorManagement />} />
-                  <Route path="/vendor-signup" element={<VendorSignup />} />
-                  <Route path="/vendor-partner" element={<VendorPartner />} />
-                  <Route path="/events" element={<Events />} />
-                  <Route path="/orders" element={<Orders />} />
-                </Route>
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
-                <Route path="/trunkline-login" element={<TrunklineLogin />} />
-                <Route path="/vendor-login" element={<VendorLogin />} />
-              </Routes>
-            </CartProvider>
-          </ProductProvider>
-        </ProfileProvider>
-      </AuthProvider>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/user/:userId" element={<Profile />} />
+        <Route path="/user/me" element={<Profile />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/gifting" element={<Gifting />} />
+        <Route path="/wishlists" element={<Wishlists />} />
+        <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
+      </Routes>
     </Router>
   );
 }

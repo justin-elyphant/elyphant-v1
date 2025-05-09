@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
 import { useWishlist } from "./hooks/useWishlist";
-import { Loader2 } from "lucide-react";
+import { Loader2, Share2 } from "lucide-react";
+import ShareWishlistDialog from "./wishlist/ShareWishlistDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,12 +25,19 @@ import {
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [currentWishlist, setCurrentWishlist] = useState<Wishlist | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   
-  const { wishlists, createWishlist, deleteWishlist, isInitialized } = useWishlist();
+  const { 
+    wishlists, 
+    createWishlist, 
+    deleteWishlist, 
+    isInitialized, 
+    updateWishlistSharing 
+  } = useWishlist();
 
   useEffect(() => {
     // Set loading to false after initialization or a timeout
@@ -90,8 +98,11 @@ const MyWishlists = () => {
   };
 
   const handleShareWishlist = (id: string) => {
-    console.log(`Share wishlist ${id}`);
-    toast.info("Sharing feature coming soon!");
+    const wishlistToShare = wishlists.find(wishlist => wishlist.id === id);
+    if (wishlistToShare) {
+      setCurrentWishlist(wishlistToShare);
+      setShareDialogOpen(true);
+    }
   };
 
   if (loading) {
@@ -143,6 +154,13 @@ const MyWishlists = () => {
         onOpenChange={setEditDialogOpen}
         onSubmit={handleEditDialogSubmit}
         wishlist={currentWishlist}
+      />
+
+      <ShareWishlistDialog 
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        wishlist={currentWishlist}
+        onShareSettingsChange={updateWishlistSharing}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -17,7 +17,7 @@ export function useWishlistOperations() {
     isInitialized
   } = useWishlistState();
   
-  const { syncWishlistToProfile } = useWishlistSync();
+  const { syncWishlistToProfile, updateWishlistSharingSettings } = useWishlistSync();
 
   const handleWishlistToggle = useCallback((productId: string) => {
     setWishlistedProducts(prev => {
@@ -310,6 +310,34 @@ export function useWishlistOperations() {
     }
   }, [user, setWishlists, setWishlistedProducts, syncWishlistToProfile]);
 
+  // Update wishlist sharing settings
+  const updateWishlistSharing = useCallback(async (wishlistId: string, isPublic: boolean) => {
+    if (!user) {
+      toast.error("You must be logged in to update wishlist sharing settings");
+      return false;
+    }
+    
+    try {
+      // Update wishlist sharing settings
+      const success = await updateWishlistSharingSettings(wishlistId, isPublic);
+      
+      if (success) {
+        // Update local state
+        setWishlists(prev => prev.map(wishlist => 
+          wishlist.id === wishlistId ? { ...wishlist, is_public: isPublic } : wishlist
+        ));
+        
+        return true;
+      }
+      
+      return false;
+    } catch (err) {
+      console.error("Error updating wishlist sharing settings:", err);
+      toast.error("Failed to update wishlist sharing settings");
+      return false;
+    }
+  }, [user, updateWishlistSharingSettings, setWishlists]);
+
   return {
     wishlistedProducts,
     wishlists,
@@ -318,6 +346,7 @@ export function useWishlistOperations() {
     createWishlist,
     addToWishlist,
     removeFromWishlist,
-    deleteWishlist
+    deleteWishlist,
+    updateWishlistSharing
   };
 }

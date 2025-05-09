@@ -10,7 +10,8 @@ export function useWishlist() {
     createWishlist,
     addToWishlist,
     removeFromWishlist,
-    deleteWishlist
+    deleteWishlist,
+    updateWishlistSharing
   } = useWishlistOperations();
 
   return {
@@ -21,6 +22,7 @@ export function useWishlist() {
     createWishlist,
     addToWishlist,
     removeFromWishlist,
-    deleteWishlist
+    deleteWishlist,
+    updateWishlistSharing
   };
 }

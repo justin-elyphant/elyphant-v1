@@ -12,6 +12,7 @@ jest.mock('react-router-dom', () => ({
 jest.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: jest.fn().mockReturnThis(),
+    upsert: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnValue({ data: null, error: null })
@@ -21,45 +22,49 @@ jest.mock('@/integrations/supabase/client', () => ({
 // Mock the auth context
 jest.mock('@/contexts/auth', () => ({
   useAuth: jest.fn().mockReturnValue({
-    user: { id: 'test-user-id' }
+    user: { id: 'test-user-id' },
+    signOut: jest.fn()
   })
+}));
+
+// Mock sonner toast
+jest.mock('sonner', () => ({
+  toast: {
+    error: jest.fn(),
+    success: jest.fn()
+  }
 }));
 
 describe('useProfileCompletion', () => {
   const mockNavigate = jest.fn();
+  const mockUser = { id: 'test-user-id', email: 'test@example.com' };
   
   beforeEach(() => {
     (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
-  });
-  
-  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should return loading state initially', () => {
-    const { result } = renderHook(() => useProfileCompletion());
+  it('should provide profile completion functions', () => {
+    const { result } = renderHook(() => useProfileCompletion(mockUser));
     
-    expect(result.current.loading).toBe(true);
-    expect(result.current.isComplete).toBe(false);
+    expect(typeof result.current.handleSetupComplete).toBe('function');
+    expect(typeof result.current.handleSkip).toBe('function');
+    expect(typeof result.current.handleBackToDashboard).toBe('function');
   });
 
-  it('should navigate to profile setup if shouldRedirect is true and profile is incomplete', async () => {
-    const { result, rerender } = renderHook(() => useProfileCompletion(true));
+  it('should navigate to dashboard when handleSkip is called', () => {
+    const { result } = renderHook(() => useProfileCompletion(mockUser));
     
-    // Wait for the effect to complete
-    await new Promise(resolve => setTimeout(resolve, 0));
-    rerender();
+    result.current.handleSkip();
     
-    expect(mockNavigate).toHaveBeenCalledWith('/profile-setup');
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
   
-  it('should not navigate if shouldRedirect is false', async () => {
-    const { result, rerender } = renderHook(() => useProfileCompletion(false));
+  it('should navigate to dashboard when handleBackToDashboard is called', () => {
+    const { result } = renderHook(() => useProfileCompletion(mockUser));
     
-    // Wait for the effect to complete
-    await new Promise(resolve => setTimeout(resolve, 0));
-    rerender();
+    result.current.handleBackToDashboard();
     
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
 });

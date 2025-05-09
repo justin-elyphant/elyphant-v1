@@ -4,19 +4,19 @@ import { useNavigate } from "react-router-dom";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
-import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { isComplete, loading: profileLoading } = useProfileCompletion(true); // Set to true to enable redirects
+  const [profileLoading, setProfileLoading] = useState(true);
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
   
   // Set up a timeout to prevent indefinite loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setLocalLoadingTimeout(false);
+      setProfileLoading(false);
     }, 2000); // Stop loading after 2 seconds max
     
     return () => clearTimeout(timer);
@@ -27,6 +27,8 @@ const Dashboard = () => {
     if (!isLoading && !user) {
       console.log("No user in Dashboard, redirecting to sign-in");
       navigate("/signin", { replace: true });
+    } else if (user) {
+      setProfileLoading(false);
     }
   }, [user, navigate, isLoading]);
 
@@ -54,8 +56,6 @@ const Dashboard = () => {
 
   // If not loading and no user, redirect handled by useEffect
   if (!user) return null;
-  
-  // The redirect to /profile-setup is handled by the useProfileCompletion hook if profile is incomplete
   
   return (
     <div className="min-h-screen bg-gray-50">

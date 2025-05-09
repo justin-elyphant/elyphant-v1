@@ -1,12 +1,13 @@
+
 import { useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useProfileCompletion = (user: any) => {
   const { signOut } = useAuth();
-  const { push: navigate } = useRouter();
+  const navigate = useNavigate();
 
   const handleSetupComplete = useCallback(async () => {
     if (!user) {
@@ -20,7 +21,7 @@ export const useProfileCompletion = (user: any) => {
     const signupRateLimited = localStorage.getItem("signupRateLimited") === "true";
     if (signupRateLimited) {
       console.warn("Signup is rate limited, please try again later.");
-      toast.warn("Signup is rate limited, please try again later.");
+      toast.error("Signup is rate limited, please try again later.");
       return;
     }
 
@@ -28,7 +29,7 @@ export const useProfileCompletion = (user: any) => {
     const profileSetupLoading = localStorage.getItem("profileSetupLoading") === "true";
     if (profileSetupLoading) {
       console.warn("Profile setup is already in progress, please wait.");
-      toast.warn("Profile setup is already in progress, please wait.");
+      toast.error("Profile setup is already in progress, please wait.");
       return;
     }
 

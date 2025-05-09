@@ -6,11 +6,12 @@ import ProfileSetupFlow from "@/components/profile-setup/ProfileSetupFlow";
 import Logo from "@/components/home/components/Logo";
 import LoadingState from "./profile-setup/LoadingState";
 import { useProfileSetupState } from "./profile-setup/hooks/useProfileSetupState";
-import { useProfileCompletion } from "./profile-setup/hooks/useProfileCompletion";
+import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
+import { useAuth } from "@/contexts/auth";
 
 const ProfileSetup = () => {
+  const { user } = useAuth();
   const {
-    user,
     isInitializing,
     isNewSignUp,
     isManuallyLoading,

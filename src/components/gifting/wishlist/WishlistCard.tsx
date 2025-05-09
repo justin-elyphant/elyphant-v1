@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
@@ -38,7 +37,7 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
       setRemovingItemId(null);
     }
   };
-
+  
   const handleOpenShareDialog = () => {
     setShareDialogOpen(true);
   };

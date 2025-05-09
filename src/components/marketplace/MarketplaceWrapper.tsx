@@ -42,9 +42,8 @@ const MarketplaceWrapper = () => {
   }, [forceSyncNow]);
 
   const handleSearchSubmit = () => {
-    // Call the onSearch function which now doesn't require parameters
-    // as it will use the searchTerm state internally
-    onSearch();
+    // Pass the current searchTerm to the onSearch function
+    onSearch(searchTerm);
   };
 
   return (

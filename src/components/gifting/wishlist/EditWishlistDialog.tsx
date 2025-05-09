@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { WishlistData } from "@/types/profile";
+import { Wishlist } from "@/types/profile";
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }).max(100),
@@ -28,7 +28,7 @@ interface EditWishlistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: WishlistFormValues) => void;
-  wishlist: WishlistData | null;
+  wishlist: Wishlist | null;
 }
 
 const EditWishlistDialog = ({

@@ -1,16 +1,19 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Gift, Heart, Lock, ShoppingBag, User } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import GiftItemCard from "@/components/gifting/GiftItemCard";
+import { Gift, ShoppingBag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import SharedWishlistSkeleton from "@/components/gifting/wishlist/SharedWishlistSkeleton";
+import NoWishlistFound from "@/components/gifting/wishlist/NoWishlistFound";
+import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
+import WishlistOwnerInfo from "@/components/gifting/wishlist/WishlistOwnerInfo";
 
 const SharedWishlist = () => {
   const { wishlistId } = useParams();
@@ -112,24 +115,7 @@ const SharedWishlist = () => {
   if (loading) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-32" />
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-48 w-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <SharedWishlistSkeleton />
       </div>
     );
   }
@@ -137,20 +123,7 @@ const SharedWishlist = () => {
   if (!wishlist || !wishlist.is_public) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <Card className="text-center py-12">
-          <CardContent className="space-y-4">
-            <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-              <Lock className="h-6 w-6 text-gray-500" />
-            </div>
-            <h2 className="text-xl font-bold">This wishlist is private</h2>
-            <p className="text-muted-foreground">
-              This wishlist is either private or has been removed.
-            </p>
-            <Button asChild className="mt-4">
-              <Link to="/">Go Home</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <NoWishlistFound />
       </div>
     );
   }
@@ -159,25 +132,7 @@ const SharedWishlist = () => {
     <div className="container mx-auto py-8 px-4">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
-            {ownerProfile?.image ? (
-              <img 
-                src={ownerProfile.image} 
-                alt={ownerProfile.name} 
-                className="w-12 h-12 rounded-full object-cover" 
-              />
-            ) : (
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-            )}
-            <div>
-              <CardTitle className="text-xl">{wishlist.title}</CardTitle>
-              <CardDescription>
-                {ownerProfile?.name}'s wishlist · {wishlist.items.length} items
-              </CardDescription>
-            </div>
-          </div>
+          <WishlistOwnerInfo wishlist={wishlist} ownerProfile={ownerProfile} />
         </CardHeader>
         
         <CardContent>
@@ -185,39 +140,11 @@ const SharedWishlist = () => {
             <p className="text-muted-foreground mb-6">{wishlist.description}</p>
           )}
           
-          {wishlist.items.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {wishlist.items.map((item) => (
-                <div key={item.id} className="relative group">
-                  <GiftItemCard
-                    name={item.name}
-                    price={item.price || 0}
-                    brand={item.brand || ""}
-                    imageUrl={item.image_url || "/placeholder.svg"}
-                  />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleSaveItem(item)}
-                    disabled={savingItemId === item.id}
-                  >
-                    {savingItemId === item.id ? (
-                      <Clock className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Heart className="h-4 w-4 mr-1" />
-                    )}
-                    {savingItemId === item.id ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Gift className="h-12 w-12 mx-auto text-gray-300 mb-2" />
-              <p className="text-muted-foreground">This wishlist is empty.</p>
-            </div>
-          )}
+          <WishlistItemsGrid 
+            items={wishlist.items} 
+            onSaveItem={handleSaveItem} 
+            savingItemId={savingItemId} 
+          />
         </CardContent>
         
         <CardFooter className="flex flex-col gap-4">

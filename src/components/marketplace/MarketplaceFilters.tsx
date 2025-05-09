@@ -1,10 +1,11 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Filter, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
+import { Filter, SlidersHorizontal, LayoutGrid, List, LayoutTemplate, Bookmark, BookmarkCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSortOptions } from "./hooks/utils/categoryUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MarketplaceFiltersProps {
   showFilters: boolean;
@@ -15,6 +16,9 @@ interface MarketplaceFiltersProps {
   sortOption: string;
   onSortChange: (option: string) => void;
   isMobile?: boolean;
+  savedFiltersCount?: number;
+  onSavedFiltersToggle?: () => void;
+  savedFiltersActive?: boolean;
 }
 
 const MarketplaceFilters = ({
@@ -25,7 +29,10 @@ const MarketplaceFilters = ({
   totalItems,
   sortOption,
   onSortChange,
-  isMobile: propIsMobile
+  isMobile: propIsMobile,
+  savedFiltersCount = 0,
+  onSavedFiltersToggle,
+  savedFiltersActive = false,
 }: MarketplaceFiltersProps) => {
   const sortOptions = getSortOptions();
   const hookIsMobile = useIsMobile();
@@ -49,25 +56,83 @@ const MarketplaceFilters = ({
           <span>{showFilters ? 'Hide Filters' : 'Filters'}</span>
         </Button>
         
-        {/* Only show view mode toggle on desktop */}
+        {/* Saved filters toggle */}
+        {savedFiltersCount > 0 && onSavedFiltersToggle && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={savedFiltersActive ? "default" : "outline"}
+                  size={isMobile ? "sm" : "default"}
+                  onClick={onSavedFiltersToggle}
+                  className="min-h-9"
+                >
+                  {savedFiltersActive ? (
+                    <BookmarkCheck className="h-4 w-4" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle saved filters ({savedFiltersCount})</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        
+        {/* Enhanced view mode toggle with modern view option */}
         {!isMobile && (
           <div className="flex border rounded-md">
-            <Button 
-              variant={viewMode === 'grid' ? 'default' : 'ghost'} 
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="rounded-r-none min-h-9 px-2.5"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant={viewMode === 'list' ? 'default' : 'ghost'} 
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="rounded-l-none min-h-9 px-2.5"
-            >
-              <List className="h-4 w-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="rounded-r-none min-h-9 px-2.5"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Grid view</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={viewMode === 'list' ? 'default' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="rounded-l-none rounded-r-none min-h-9 px-2.5"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>List view</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={viewMode === 'modern' ? 'default' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setViewMode('modern')}
+                    className="rounded-l-none min-h-9 px-2.5"
+                  >
+                    <LayoutTemplate className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Modern view</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         )}
       </div>

@@ -10,19 +10,31 @@ import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
 import { sortProducts } from "./hooks/utils/categoryUtils";
+import { Slider } from "@/components/ui/slider";
 
 interface ProductGridProps {
   products: Product[];
-  viewMode: "grid" | "list";
+  viewMode: "grid" | "list" | "modern";
   sortOption?: string;
   onProductView?: (productId: string) => void;
+  savedFilters?: SavedFilters;
+  onFilterChange?: (filters: SavedFilters) => void;
+}
+
+export interface SavedFilters {
+  priceRange: [number, number];
+  categories: string[];
+  ratings: number | null;
+  favorites: boolean;
 }
 
 const ProductGrid = ({ 
   products, 
   viewMode, 
   sortOption = "relevance",
-  onProductView 
+  onProductView,
+  savedFilters,
+  onFilterChange
 }: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
@@ -108,6 +120,38 @@ const ProductGrid = ({
     }
   };
 
+  // Modern view rendering function
+  const renderModernView = () => {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {sortedProducts.map((product, index) => {
+          const status = getProductStatus(product);
+          const isLarge = index % 5 === 0; // Every 5th item will be larger
+          
+          return (
+            <div 
+              key={product.product_id || product.id} 
+              className={`${isLarge ? 'md:col-span-2' : ''} transition-transform hover:scale-[1.01]`}
+            >
+              <ProductItem 
+                product={product}
+                viewMode={isLarge ? "list" : "grid"}
+                onProductClick={handleProductClick}
+                onWishlistClick={(e) => handleWishlistClick(
+                  e, 
+                  product.product_id || product.id || "", 
+                  product.title || product.name || ""
+                )}
+                isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
+                statusBadge={status}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (sortedProducts.length === 0) {
     return (
       <div className="text-center py-12">
@@ -119,31 +163,35 @@ const ProductGrid = ({
 
   return (
     <>
-      <div className={`${viewMode === 'grid' 
-        ? isMobile 
-          ? 'grid grid-cols-1 xs:grid-cols-2 gap-3' // Mobile optimized grid
-          : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' // Keep desktop layout
-        : 'space-y-4'}`}
-      >
-        {sortedProducts.map((product) => {
-          const status = getProductStatus(product);
-          return (
-            <ProductItem 
-              key={product.product_id || product.id}
-              product={product}
-              viewMode={viewMode}
-              onProductClick={handleProductClick}
-              onWishlistClick={(e) => handleWishlistClick(
-                e, 
-                product.product_id || product.id || "", 
-                product.title || product.name || ""
-              )}
-              isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
-              statusBadge={status}
-            />
-          );
-        })}
-      </div>
+      {viewMode === "modern" ? (
+        renderModernView()
+      ) : (
+        <div className={`${viewMode === 'grid' 
+          ? isMobile 
+            ? 'grid grid-cols-1 xs:grid-cols-2 gap-3' // Mobile optimized grid
+            : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' // Keep desktop layout
+          : 'space-y-4'}`}
+        >
+          {sortedProducts.map((product) => {
+            const status = getProductStatus(product);
+            return (
+              <ProductItem 
+                key={product.product_id || product.id}
+                product={product}
+                viewMode={viewMode}
+                onProductClick={handleProductClick}
+                onWishlistClick={(e) => handleWishlistClick(
+                  e, 
+                  product.product_id || product.id || "", 
+                  product.title || product.name || ""
+                )}
+                isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
+                statusBadge={status}
+              />
+            );
+          })}
+        </div>
+      )}
 
       <ProductDetailsDialog 
         product={selectedProduct ? products.find(p => (p.product_id || p.id) === selectedProduct) || null : null}

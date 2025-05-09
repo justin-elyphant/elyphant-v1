@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
-import ProductGrid from "./ProductGrid";
+import ProductGrid, { SavedFilters } from "./ProductGrid";
 import MarketplaceLoading from "./MarketplaceLoading";
 import FiltersSidebar from "./FiltersSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEnhancedFilters } from "./hooks/useEnhancedFilters";
 import { useProductRecommendations } from "@/hooks/useProductRecommendations";
 import { AlertCircle } from "lucide-react";
+import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { toast } from "sonner";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -28,7 +30,13 @@ const MarketplaceContent = ({
   setShowFilters
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "list" : "grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">(
+    isMobile ? "list" : "grid"
+  );
+  const [savedFiltersActive, setSavedFiltersActive] = useState(false);
+  const [savedFilters] = useLocalStorage<{name: string, filters: SavedFilters}[]>(
+    "savedFilters", []
+  );
   
   // Use our enhanced filters hook
   const {
@@ -44,10 +52,31 @@ const MarketplaceContent = ({
   
   // Force list view on mobile devices when screen size changes
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile && viewMode === "grid") {
       setViewMode("list");
     }
   }, [isMobile]);
+  
+  const toggleSavedFilters = () => {
+    // If activating saved filters and we have at least one saved filter
+    if (!savedFiltersActive && savedFilters.length > 0) {
+      // Apply the first saved filter
+      const firstSavedFilter = savedFilters[0];
+      updateFilter('priceRange', firstSavedFilter.filters.priceRange);
+      updateFilter('categories', firstSavedFilter.filters.categories);
+      updateFilter('rating', firstSavedFilter.filters.ratings);
+      updateFilter('favoritesOnly', firstSavedFilter.filters.favorites);
+      
+      toast.success(`Applied filter: ${firstSavedFilter.name}`, {
+        description: "Your saved filter has been applied"
+      });
+    } else if (savedFiltersActive) {
+      // Reset filters when turning off
+      resetFilters();
+    }
+    
+    setSavedFiltersActive(!savedFiltersActive);
+  };
   
   if (isLoading) {
     return <MarketplaceLoading />;
@@ -63,21 +92,19 @@ const MarketplaceContent = ({
         showFilters={showFilters}
         setShowFilters={setShowFilters}
         viewMode={viewMode}
-        setViewMode={(mode: "grid" | "list") => {
-          // Only allow changing view mode on desktop
-          if (!isMobile) {
-            setViewMode(mode);
-          }
-        }}
+        setViewMode={setViewMode}
         totalItems={filteredProducts.length}
         sortOption={filters.sortBy}
         onSortChange={(option) => updateFilter('sortBy', option)}
         isMobile={isMobile}
+        savedFiltersCount={savedFilters.length}
+        onSavedFiltersToggle={toggleSavedFilters}
+        savedFiltersActive={savedFiltersActive}
       />
       
       <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6 mt-4`}>
         {showFilters && (
-          <div className={`${isMobile ? "w-full" : "w-full md:w-64"} flex-shrink-0 ${isMobile ? "mb-4" : ""}`}>
+          <div className={`${isMobile ? "w-full" : "w-full md:w-72"} flex-shrink-0 ${isMobile ? "mb-4" : ""}`}>
             <FiltersSidebar
               activeFilters={filters}
               onFilterChange={(newFilters) => {

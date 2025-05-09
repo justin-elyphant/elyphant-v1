@@ -3,20 +3,22 @@ import { useState, useEffect, useMemo } from "react";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-type FilterOptions = {
-  priceRange: string | null;
-  category: string | null;
+export type FilterOptions = {
+  priceRange: [number, number];
+  categories: string[];
   rating: number | null;
   freeShipping: boolean;
+  favoritesOnly: boolean;
   sortBy: string;
 };
 
 export const useEnhancedFilters = (products: Product[]) => {
   const [filters, setFilters] = useState<FilterOptions>({
-    priceRange: null,
-    category: null,
+    priceRange: [0, 1000],
+    categories: [],
     rating: null,
     freeShipping: false,
+    favoritesOnly: false,
     sortBy: "relevance"
   });
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
@@ -29,8 +31,11 @@ export const useEnhancedFilters = (products: Product[]) => {
       if (product.category) {
         categorySet.add(product.category);
       }
+      if (product.category_name && product.category_name !== product.category) {
+        categorySet.add(product.category_name);
+      }
     });
-    return Array.from(categorySet);
+    return Array.from(categorySet).sort();
   }, [products]);
   
   // Apply filters when products or filter options change
@@ -38,37 +43,48 @@ export const useEnhancedFilters = (products: Product[]) => {
     const applyFilters = () => {
       let result = [...products];
       
-      // Apply category filter
-      if (filters.category) {
-        result = result.filter(product => product.category === filters.category);
+      // Apply category filters (multi-select)
+      if (filters.categories && filters.categories.length > 0) {
+        result = result.filter(product => {
+          const productCategories = [
+            product.category,
+            product.category_name
+          ].filter(Boolean) as string[];
+          
+          // Include product if it matches any selected category
+          return filters.categories.some(category => 
+            productCategories.includes(category)
+          );
+        });
       }
       
       // Apply price range filter
       if (filters.priceRange) {
-        switch (filters.priceRange) {
-          case "under25":
-            result = result.filter(product => product.price < 25);
-            break;
-          case "25to50":
-            result = result.filter(product => product.price >= 25 && product.price <= 50);
-            break;
-          case "50to100":
-            result = result.filter(product => product.price > 50 && product.price <= 100);
-            break;
-          case "over100":
-            result = result.filter(product => product.price > 100);
-            break;
-        }
+        result = result.filter(product => 
+          product.price >= filters.priceRange[0] && 
+          product.price <= filters.priceRange[1]
+        );
       }
       
       // Apply rating filter
       if (filters.rating) {
-        result = result.filter(product => product.rating && product.rating >= filters.rating);
+        result = result.filter(product => {
+          const productRating = product.rating || product.stars;
+          return productRating && productRating >= filters.rating;
+        });
       }
       
       // Apply free shipping filter if product has that property
       if (filters.freeShipping) {
         result = result.filter(product => (product as any).free_shipping === true);
+      }
+      
+      // Apply favorites filter if selected
+      if (filters.favoritesOnly) {
+        // Note: This requires integration with the favorites system
+        // For now we'll skip the filtering as we don't have the favorites data here
+        // In a real implementation, you would filter by favorites
+        console.log('Favorites filter selected, but not implemented in this hook');
       }
       
       // Apply sorting
@@ -81,7 +97,11 @@ export const useEnhancedFilters = (products: Product[]) => {
             result.sort((a, b) => b.price - a.price);
             break;
           case "rating":
-            result.sort((a, b) => ((b.rating || 0) - (a.rating || 0)));
+            result.sort((a, b) => {
+              const ratingA = a.rating || a.stars || 0;
+              const ratingB = b.rating || b.stars || 0;
+              return ratingB - ratingA;
+            });
             break;
           case "newest":
             // This would require a date field, falling back to ID for now
@@ -89,6 +109,24 @@ export const useEnhancedFilters = (products: Product[]) => {
               const idA = Number(a.id) || 0;
               const idB = Number(b.id) || 0;
               return idB - idA;
+            });
+            break;
+          case "popularity":
+            // Sort by sales, reviews, or best seller status
+            result.sort((a, b) => {
+              // First check best seller status
+              if (a.isBestSeller && !b.isBestSeller) return -1;
+              if (!a.isBestSeller && b.isBestSeller) return 1;
+              
+              // Then check number of reviews
+              const reviewsA = a.reviewCount || a.num_reviews || 0;
+              const reviewsB = b.reviewCount || b.num_reviews || 0;
+              if (reviewsA !== reviewsB) return reviewsB - reviewsA;
+              
+              // Then check sales
+              const salesA = a.num_sales || 0;
+              const salesB = b.num_sales || 0;
+              return salesB - salesA;
             });
             break;
         }
@@ -109,10 +147,11 @@ export const useEnhancedFilters = (products: Product[]) => {
   
   const resetFilters = () => {
     setFilters({
-      priceRange: null,
-      category: null,
+      priceRange: [0, 1000],
+      categories: [],
       rating: null,
       freeShipping: false,
+      favoritesOnly: false,
       sortBy: "relevance"
     });
   };

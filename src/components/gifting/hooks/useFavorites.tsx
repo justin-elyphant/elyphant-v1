@@ -1,7 +1,8 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -64,5 +65,34 @@ export function useFavorites() {
     fetchFavorites();
   }, [user]);
 
-  return { favorites, laterItems, wishlistItems };
+  // Add the missing methods
+  const handleFavoriteToggle = useCallback((productId: string) => {
+    if (!productId) return;
+    
+    setFavorites(prev => {
+      // Check if the product is already favorited
+      const isFavorite = prev.includes(productId);
+      
+      // Toggle the favorite status
+      const newFavorites = isFavorite 
+        ? prev.filter(id => id !== productId) 
+        : [...prev, productId];
+      
+      // Show toast notification
+      if (isFavorite) {
+        toast.info("Removed from favorites");
+      } else {
+        toast.success("Added to favorites");
+      }
+      
+      return newFavorites;
+    });
+  }, []);
+  
+  // Function to check if an item is favorited
+  const isFavorited = useCallback((productId: string) => {
+    return favorites.includes(productId);
+  }, [favorites]);
+
+  return { favorites, laterItems, wishlistItems, handleFavoriteToggle, isFavorited };
 }

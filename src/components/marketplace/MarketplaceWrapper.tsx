@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useMarketplaceProducts } from "./hooks/useMarketplaceProducts";
 import { useProductTracking } from "./hooks/useProductTracking";
 import { useSearchParams } from "react-router-dom";
+import { useProductDataSync } from "@/hooks/useProductDataSync";
 
 import MarketplaceHeader from "./MarketplaceHeader";
 import GiftingCategories from "./GiftingCategories";
@@ -19,7 +20,8 @@ const MarketplaceWrapper = () => {
   } = useMarketplaceProducts();
   
   // Initialize product tracking
-  const { trackProductView } = useProductTracking(products);
+  const { trackProductViewById } = useProductTracking(products);
+  const { forceSyncNow } = useProductDataSync();
   const [searchParams] = useSearchParams();
   
   // Track product view when component mounts or URL parameters change
@@ -27,9 +29,17 @@ const MarketplaceWrapper = () => {
     const productId = searchParams.get("productId");
     if (productId) {
       console.log("MarketplaceWrapper: Tracking product view for ID:", productId);
-      trackProductView(productId);
+      trackProductViewById(productId);
     }
-  }, [searchParams, products]);
+  }, [searchParams, trackProductViewById]);
+  
+  // Force sync when component unmounts
+  useEffect(() => {
+    return () => {
+      // Ensure any pending product views are synced
+      forceSyncNow();
+    };
+  }, [forceSyncNow]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -46,7 +56,7 @@ const MarketplaceWrapper = () => {
         products={products}
         isLoading={isLoading}
         searchTerm={searchTerm}
-        onProductView={trackProductView}
+        onProductView={trackProductViewById}
       />
       
       {/* Recently viewed products section */}

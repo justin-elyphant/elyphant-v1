@@ -12,6 +12,7 @@ interface ProfileContextType {
   updateProfile: (data: Partial<Profile>) => Promise<any>;
   refetchProfile: () => Promise<Profile | null>;
   refreshProfile: () => Promise<Profile | null>; 
+  lastRefreshTime: number | null;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -20,7 +21,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { fetchProfile, loading: isFetching, error: fetchError } = useProfileFetch();
   const { updateProfile, isUpdating, updateError } = useProfileUpdate();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
 
   // Combined loading and error states
   const loading = isFetching || isUpdating;
@@ -56,6 +57,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Wrapper for updating the profile that also updates local state
   const handleUpdateProfile = async (data: Partial<Profile>) => {
     try {
+      console.log("Updating profile with data:", JSON.stringify(data, null, 2));
       const result = await updateProfile(data);
       
       if (result) {
@@ -104,7 +106,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     error,
     updateProfile: handleUpdateProfile,
     refetchProfile,
-    refreshProfile
+    refreshProfile,
+    lastRefreshTime: lastFetchTime
   };
 
   return (

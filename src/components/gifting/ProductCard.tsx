@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Heart } from "lucide-react";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useProductDataSync } from "@/hooks/useProductDataSync";
 
 interface ProductCardProps {
   product: any;
@@ -20,17 +21,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onClick
 }) => {
   const { addToRecentlyViewed } = useRecentlyViewed();
+  const { trackProductView } = useProductDataSync();
   
   const handleClick = () => {
     if (onClick) onClick();
     
-    // Track this product as recently viewed
+    // Track this product as recently viewed locally
     addToRecentlyViewed({
       id: product.product_id || product.id || "",
       name: product.title || product.name || "",
       image: product.image || "",
       price: product.price
     });
+    
+    // Also track for profile synchronization
+    trackProductView(product);
   };
 
   return (

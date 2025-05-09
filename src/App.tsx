@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { useAuth } from "./contexts/auth";
+import { AuthProvider } from "./contexts/auth";
 import Home from "@/pages/Index";
 import Login from "@/pages/SignIn";
 import Register from "@/pages/SignUp";
@@ -13,7 +13,6 @@ import Wishlists from "@/pages/Wishlists";
 import SharedWishlist from "@/pages/SharedWishlist";
 
 function App() {
-  const { isLoading } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -29,20 +28,22 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/user/:userId" element={<Profile />} />
-        <Route path="/user/me" element={<Profile />} />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/gifting" element={<Gifting />} />
-        <Route path="/wishlists" element={<Wishlists />} />
-        <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/user/:userId" element={<Profile />} />
+          <Route path="/user/me" element={<Profile />} />
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/gifting" element={<Gifting />} />
+          <Route path="/wishlists" element={<Wishlists />} />
+          <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

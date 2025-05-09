@@ -93,6 +93,16 @@ const ProductItem = ({
     );
   };
   
+  // Get the product ID reliably
+  const getProductId = (): string => {
+    return product.product_id || product.id || "";
+  };
+  
+  // Get product name reliably
+  const getProductName = (): string => {
+    return product.title || product.name || "";
+  };
+  
   // Determine if product is on sale or has free shipping
   const isFreeShipping = product.prime || (product as any).free_shipping;
   const isOnSale = (product as any).sale_price && 
@@ -117,15 +127,17 @@ const ProductItem = ({
             )}
             <div className="h-full relative">
               <WishlistButton 
-                productId={product.id || product.product_id}
-                productName={product.title || product.name || ""}
+                productId={getProductId()}
+                productName={getProductName()}
                 productImage={product.image}
                 productPrice={product.price}
                 productBrand={product.brand}
+                isFavorited={isFavorited}
+                onClick={onWishlistClick}
               />
               <img
                 src={imageSrc}
-                alt={product.title || product.name || ""}
+                alt={getProductName()}
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
@@ -136,7 +148,7 @@ const ProductItem = ({
               <div className="flex flex-col h-full justify-between">
                 <div>
                   <h3 className="font-medium text-sm md:text-base line-clamp-2">
-                    {product.title || product.name}
+                    {getProductName()}
                   </h3>
                   
                   {(product.rating || product.stars) && renderRating()}
@@ -169,8 +181,18 @@ const ProductItem = ({
                     </div>
                     
                     <div className="flex space-x-1">
-                      <SocialShareButton product={product} />
-                      <GroupGiftingButton product={product} />
+                      <SocialShareButton product={{
+                        id: getProductId(),
+                        title: getProductName(),
+                        image: product.image,
+                        price: product.price
+                      }} />
+                      <GroupGiftingButton product={{
+                        id: getProductId(),
+                        title: getProductName(),
+                        image: product.image,
+                        price: product.price
+                      }} />
                     </div>
                   </div>
                 </div>
@@ -199,16 +221,18 @@ const ProductItem = ({
           )}
           
           <WishlistButton 
-            productId={product.id || product.product_id}
-            productName={product.title || product.name || ""}
+            productId={getProductId()}
+            productName={getProductName()}
             productImage={product.image}
             productPrice={product.price}
             productBrand={product.brand}
+            isFavorited={isFavorited}
+            onClick={onWishlistClick}
           />
           
           <img
             src={imageSrc}
-            alt={product.title || product.name || ""}
+            alt={getProductName()}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
@@ -216,11 +240,21 @@ const ProductItem = ({
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 transition-opacity opacity-0 group-hover:opacity-100">
             <div className="flex justify-end space-x-1">
               <SocialShareButton 
-                product={product} 
+                product={{
+                  id: getProductId(),
+                  title: getProductName(),
+                  image: product.image,
+                  price: product.price
+                }}
                 className="bg-white/80 hover:bg-white"
               />
               <GroupGiftingButton 
-                product={product} 
+                product={{
+                  id: getProductId(),
+                  title: getProductName(),
+                  image: product.image,
+                  price: product.price
+                }}
                 className="bg-white/80 hover:bg-white"
               />
             </div>
@@ -229,7 +263,7 @@ const ProductItem = ({
         
         <div className="mt-3">
           <h3 className="font-medium text-sm md:text-base line-clamp-2 group-hover:text-primary">
-            {product.title || product.name}
+            {getProductName()}
           </h3>
           
           <div className="flex justify-between items-center mt-1">
@@ -290,8 +324,8 @@ const ProductItem = ({
           </>
         )}
         <WishlistButton 
-          productId={product.id || product.product_id || ""}
-          productName={product.title || product.name || ""}
+          productId={getProductId()}
+          productName={getProductName()}
           productImage={product.image}
           productPrice={product.price}
           productBrand={product.brand}
@@ -301,7 +335,7 @@ const ProductItem = ({
         <div className="h-40 overflow-hidden">
           <img
             src={imageSrc}
-            alt={product.title || product.name || ""}
+            alt={getProductName()}
             className="w-full h-full object-cover"
             loading="lazy"
           />
@@ -309,7 +343,7 @@ const ProductItem = ({
       </div>
       <CardContent className={isMobile ? "p-3" : "p-4"}>
         <h3 className="font-medium text-sm line-clamp-2">
-          {product.title || product.name}
+          {getProductName()}
         </h3>
         
         {(product.rating || product.stars) && (
@@ -320,8 +354,18 @@ const ProductItem = ({
           <p className="font-bold">${product.price.toFixed(2)}</p>
           
           <div className="flex space-x-1">
-            <SocialShareButton product={product} />
-            <GroupGiftingButton product={product} />
+            <SocialShareButton product={{
+              id: getProductId(),
+              title: getProductName(),
+              image: product.image,
+              price: product.price
+            }} />
+            <GroupGiftingButton product={{
+              id: getProductId(),
+              title: getProductName(),
+              image: product.image,
+              price: product.price
+            }} />
           </div>
         </div>
         

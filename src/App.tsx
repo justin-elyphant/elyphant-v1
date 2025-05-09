@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useAuth } from "./contexts/auth";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Home from "@/pages/Index";
+import Login from "@/pages/SignIn";
+import Register from "@/pages/SignUp";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
+import Profile from "@/pages/UserProfile";
 import Marketplace from "./pages/Marketplace";
 import Gifting from "./pages/Gifting";
 import Wishlists from "@/pages/Wishlists";

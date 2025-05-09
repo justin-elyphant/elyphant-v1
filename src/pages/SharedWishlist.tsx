@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,7 +80,7 @@ const SharedWishlist = () => {
       // Find user's first wishlist or create one
       let targetWishlistId = "";
       
-      if (profile?.wishlists && profile.wishlists.length > 0) {
+      if (profile && profile.wishlists && profile.wishlists.length > 0) {
         targetWishlistId = profile.wishlists[0].id;
       } else {
         toast.error("You don't have any wishlists yet");

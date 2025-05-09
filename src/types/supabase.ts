@@ -33,6 +33,9 @@ export interface RecentlyViewedProduct {
   viewed_at: string;
 }
 
+// Import Wishlist type from profile.ts
+import { Wishlist } from "./profile";
+
 export interface Profile {
   id: string;
   created_at?: string;
@@ -51,6 +54,7 @@ export interface Profile {
   important_dates?: ImportantDate[];
   interests?: string[];
   recently_viewed?: RecentlyViewedProduct[];
+  wishlists?: Wishlist[]; // Add the wishlists property
 }
 
 export type UserConnection = {

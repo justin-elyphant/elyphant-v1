@@ -104,17 +104,12 @@ const ProductItem = ({
   };
   
   // Create a properly formatted product object for sharing/gifting components
-  const createProductDataObject = (): Product => {
+  const createShareableProductObject = () => {
     return {
-      product_id: getProductId(),
-      id: getProductId(),
+      id: getProductId(), // This ensures id is always a string and never undefined
       title: getProductName(),
-      name: getProductName(),
-      price: product.price,
       image: product.image,
-      // Add any other required fields
-      description: product.description || "",
-      brand: product.brand || ""
+      price: product.price
     };
   };
   
@@ -196,8 +191,8 @@ const ProductItem = ({
                     </div>
                     
                     <div className="flex space-x-1">
-                      <SocialShareButton product={createProductDataObject()} />
-                      <GroupGiftingButton product={createProductDataObject()} />
+                      <SocialShareButton product={createShareableProductObject()} />
+                      <GroupGiftingButton product={createShareableProductObject()} />
                     </div>
                   </div>
                 </div>
@@ -245,11 +240,11 @@ const ProductItem = ({
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 transition-opacity opacity-0 group-hover:opacity-100">
             <div className="flex justify-end space-x-1">
               <SocialShareButton 
-                product={createProductDataObject()}
+                product={createShareableProductObject()}
                 className="bg-white/80 hover:bg-white"
               />
               <GroupGiftingButton 
-                product={createProductDataObject()}
+                product={createShareableProductObject()}
                 className="bg-white/80 hover:bg-white"
               />
             </div>
@@ -349,8 +344,8 @@ const ProductItem = ({
           <p className="font-bold">${product.price.toFixed(2)}</p>
           
           <div className="flex space-x-1">
-            <SocialShareButton product={createProductDataObject()} />
-            <GroupGiftingButton product={createProductDataObject()} />
+            <SocialShareButton product={createShareableProductObject()} />
+            <GroupGiftingButton product={createShareableProductObject()} />
           </div>
         </div>
         

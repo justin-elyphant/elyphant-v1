@@ -78,3 +78,52 @@ export function isDataVisible(
       return false;
   }
 }
+
+/**
+ * Validates if the provided sharing level is valid
+ * @param level The sharing level to validate
+ * @returns Whether the sharing level is valid
+ */
+export function isValidSharingLevel(level: any): level is SharingLevel {
+  return level === 'public' || level === 'friends' || level === 'private';
+}
+
+/**
+ * Gets a human-readable label for a sharing level
+ * @param level The sharing level
+ * @returns A human-readable label for the sharing level
+ */
+export function getSharingLevelLabel(level: SharingLevel): string {
+  switch (level) {
+    case 'public':
+      return 'Everyone';
+    case 'friends':
+      return 'Connected Friends Only';
+    case 'private':
+      return 'Only You';
+    default:
+      return 'Unknown';
+  }
+}
+
+/**
+ * Creates a complete data sharing settings object with all required fields
+ * @param email Email sharing level
+ * @param dob Date of birth sharing level
+ * @param address Shipping address sharing level
+ * @param preferences Gift preferences sharing level
+ * @returns Complete data sharing settings
+ */
+export function createDataSharingSettings(
+  email: SharingLevel = 'private',
+  dob: SharingLevel = 'friends',
+  address: SharingLevel = 'private',
+  preferences: SharingLevel = 'friends'
+): DataSharingSettings {
+  return {
+    email,
+    dob,
+    shipping_address: address,
+    gift_preferences: preferences
+  };
+}

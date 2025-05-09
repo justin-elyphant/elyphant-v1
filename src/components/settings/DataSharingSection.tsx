@@ -1,173 +1,106 @@
 
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Gift, Info, Mail } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
+import { Shield } from "lucide-react";
 import { SharingLevel } from "@/types/supabase";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import PrivacySelector from "./PrivacySelector";
+import { Separator } from "@/components/ui/separator";
 
+/**
+ * Section for managing data sharing settings in user profile
+ */
 const DataSharingSection = () => {
   const form = useFormContext();
+
+  const handleSharingChange = (field: string, value: SharingLevel) => {
+    form.setValue(`data_sharing_settings.${field}`, value, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">Privacy Settings</CardTitle>
-        <CardDescription>
-          Control who can see your personal information
-        </CardDescription>
+        <div className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-primary" />
+          <CardTitle>Privacy Settings</CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <FormField
-          control={form.control}
-          name="data_sharing_settings.dob"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between space-x-4">
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <Label className="text-base">Birthday</Label>
-                    <p className="text-sm text-muted-foreground">Who can see your birthday</p>
-                  </div>
-                </div>
-                <div className="w-32">
-                  <FormControl>
-                    <Select 
-                      value={field.value} 
-                      onValueChange={(val) => field.onChange(val as SharingLevel)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Everyone</SelectItem>
-                        <SelectItem value="friends">Friends Only</SelectItem>
-                        <SelectItem value="private">Only Me</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </div>
-              </div>
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="data_sharing_settings.shipping_address"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between space-x-4">
-                <div className="flex items-center space-x-3">
-                  <MapPin className="h-5 w-5 text-red-500" />
-                  <div>
-                    <Label className="text-base">Shipping Address</Label>
-                    <p className="text-sm text-muted-foreground">Who can see your address</p>
-                  </div>
-                </div>
-                <div className="w-32">
-                  <FormControl>
-                    <Select 
-                      value="friends" 
-                      disabled={true}
-                      onValueChange={(val) => field.onChange(val as SharingLevel)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Friends Only" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="friends">Friends Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </div>
-              </div>
-              <Alert className="bg-blue-50 border-blue-200 mt-2">
-                <Info className="h-4 w-4 text-blue-500" />
-                <AlertDescription className="text-sm text-blue-700">
-                  Your shipping address is only shared with your friends to enable gift giving features.
-                </AlertDescription>
-              </Alert>
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="data_sharing_settings.gift_preferences"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between space-x-4">
-                <div className="flex items-center space-x-3">
-                  <Gift className="h-5 w-5 text-purple-500" />
-                  <div>
-                    <Label className="text-base">Gift Preferences</Label>
-                    <p className="text-sm text-muted-foreground">Who can see your gift preferences</p>
-                  </div>
-                </div>
-                <div className="w-32">
-                  <FormControl>
-                    <Select 
-                      value={field.value} 
-                      onValueChange={(val) => field.onChange(val as SharingLevel)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Everyone</SelectItem>
-                        <SelectItem value="friends">Friends Only</SelectItem>
-                        <SelectItem value="private">Only Me</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </div>
-              </div>
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="data_sharing_settings.email"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between space-x-4">
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-5 w-5 text-blue-700" />
-                  <div>
-                    <Label className="text-base">Email Address</Label>
-                    <p className="text-sm text-muted-foreground">Who can see your email</p>
-                  </div>
-                </div>
-                <div className="w-32">
-                  <FormControl>
-                    <Select 
-                      value={field.value || "private"} 
-                      onValueChange={(val) => field.onChange(val as SharingLevel)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="friends">Friends Only</SelectItem>
-                        <SelectItem value="private">Only Me</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </div>
-              </div>
-            </FormItem>
-          )}
-        />
+        <p className="text-muted-foreground">
+          Control who can see your personal information. Your preferences can be changed at any time.
+        </p>
+
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="data_sharing_settings.email"
+            render={({ field }) => (
+              <FormItem>
+                <PrivacySelector
+                  value={field.value as SharingLevel}
+                  onChange={(value) => handleSharingChange("email", value)}
+                  label="Email Address Visibility"
+                  description="Who can see your email address"
+                />
+              </FormItem>
+            )}
+          />
+
+          <Separator />
+          
+          <FormField
+            control={form.control}
+            name="data_sharing_settings.dob"
+            render={({ field }) => (
+              <FormItem>
+                <PrivacySelector
+                  value={field.value as SharingLevel}
+                  onChange={(value) => handleSharingChange("dob", value)}
+                  label="Birthday Visibility"
+                  description="Who can see your date of birth"
+                />
+              </FormItem>
+            )}
+          />
+
+          <Separator />
+          
+          <FormField
+            control={form.control}
+            name="data_sharing_settings.shipping_address"
+            render={({ field }) => (
+              <FormItem>
+                <PrivacySelector
+                  value={field.value as SharingLevel}
+                  onChange={(value) => handleSharingChange("shipping_address", value)}
+                  label="Shipping Address Visibility"
+                  description="Who can see your shipping address"
+                />
+              </FormItem>
+            )}
+          />
+
+          <Separator />
+          
+          <FormField
+            control={form.control}
+            name="data_sharing_settings.gift_preferences"
+            render={({ field }) => (
+              <FormItem>
+                <PrivacySelector
+                  value={field.value as SharingLevel}
+                  onChange={(value) => handleSharingChange("gift_preferences", value)}
+                  label="Gift Preferences Visibility"
+                  description="Who can see your gift preferences and interests"
+                />
+              </FormItem>
+            )}
+          />
+        </div>
       </CardContent>
     </Card>
   );

@@ -50,7 +50,7 @@ export const useProductTracking = (products: Product[]) => {
   };
   
   // Track a product view directly from product object
-  const trackProductView = (product: Product) => {
+  const trackProductObject = (product: Product) => {
     if (!product) return;
     
     const productId = product.product_id || product.id;
@@ -72,7 +72,7 @@ export const useProductTracking = (products: Product[]) => {
   };
 
   return { 
-    trackProductView,
+    trackProductView: trackProductObject,
     trackProductViewById
   };
 };

@@ -7,6 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
+// Default data sharing settings that match our utility
+const getDefaultDataSharingSettings = () => {
+  return {
+    dob: "friends",
+    shipping_address: "friends",
+    gift_preferences: "public"
+  };
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -45,11 +54,7 @@ serve(async (req) => {
         country: ""
       },
       gift_preferences: Array.isArray(profile_data.gift_preferences) ? profile_data.gift_preferences : [],
-      data_sharing_settings: profile_data.data_sharing_settings || {
-        dob: "friends",
-        shipping_address: "private",
-        gift_preferences: "public"
-      },
+      data_sharing_settings: profile_data.data_sharing_settings || getDefaultDataSharingSettings(),
       important_dates: Array.isArray(profile_data.important_dates) ? profile_data.important_dates : [],
       updated_at: new Date().toISOString()
     }

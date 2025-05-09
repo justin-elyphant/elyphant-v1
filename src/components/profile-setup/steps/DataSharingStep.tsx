@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DataSharingSettings, SharingLevel } from "@/types/supabase";
 import { Shield, Calendar, MapPin, Gift, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getDefaultSharingLevel } from "@/utils/privacyUtils";
 
 interface DataSharingStepProps {
   values: DataSharingSettings;
@@ -18,6 +19,32 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({ values, onChange }) =
       [field]: value
     });
   };
+
+  // Ensure we have all default values
+  React.useEffect(() => {
+    const updatedValues = { ...values };
+    let needsUpdate = false;
+    
+    // Set defaults for any missing fields
+    if (!updatedValues.dob) {
+      updatedValues.dob = getDefaultSharingLevel('dob');
+      needsUpdate = true;
+    }
+    
+    if (!updatedValues.shipping_address) {
+      updatedValues.shipping_address = getDefaultSharingLevel('shipping_address');
+      needsUpdate = true;
+    }
+    
+    if (!updatedValues.gift_preferences) {
+      updatedValues.gift_preferences = getDefaultSharingLevel('gift_preferences');
+      needsUpdate = true;
+    }
+    
+    if (needsUpdate) {
+      onChange(updatedValues);
+    }
+  }, [values, onChange]);
 
   return (
     <div className="space-y-6">

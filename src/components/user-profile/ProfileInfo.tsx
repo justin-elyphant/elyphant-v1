@@ -5,18 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { CalendarDays, MapPin, Info } from "lucide-react";
 import { format } from "date-fns";
+import { isDataVisible } from "@/utils/privacyUtils";
 
 interface ProfileInfoProps {
   userData: any;
 }
-
-// Helper functions for privacy checks
-const isDataVisible = (data: any, privacySetting: string, isConnected: boolean) => {
-  if (!data) return false;
-  if (privacySetting === "public") return true;
-  if (privacySetting === "friends" && isConnected) return true;
-  return false;
-};
 
 const ProfileInfo = ({ userData }: ProfileInfoProps) => {
   // For demo purposes, assume we are connected
@@ -28,17 +21,26 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
   const bio = userData?.bio;
   const dataSharingSettings = userData?.data_sharing_settings || {};
   
-  // Check birthday visibility
-  const birthdayVisible = userData?.birthday && 
-    isDataVisible(userData.birthday, dataSharingSettings.dob || "friends", isConnected);
+  // Check birthday visibility using our utility function
+  const birthdayVisible = isDataVisible(
+    userData?.birthday || userData?.dob,
+    dataSharingSettings.dob || "friends",
+    isConnected
+  );
   
   // Check location visibility
-  const locationVisible = userData?.address?.city && userData?.address?.country &&
-    isDataVisible(userData.address, dataSharingSettings.shipping_address || "private", isConnected);
+  const locationVisible = isDataVisible(
+    (userData?.address?.city && userData?.address?.country) ? true : userData?.shipping_address,
+    dataSharingSettings.shipping_address || "private",
+    isConnected
+  );
   
   // Check email visibility
-  const emailVisible = userData?.email && 
-    isDataVisible(userData.email, dataSharingSettings.email || "private", isConnected);
+  const emailVisible = isDataVisible(
+    userData?.email,
+    dataSharingSettings.email || "private",
+    isConnected
+  );
 
   return (
     <div className="pl-4 sm:pl-8 mb-8 pt-14 sm:pt-4">
@@ -87,7 +89,7 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
                       Birthday
                     </TableCell>
                     <TableCell>
-                      {format(new Date(userData.birthday), "MMMM d")}
+                      {format(new Date(userData.birthday || userData.dob), "MMMM d")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -98,7 +100,11 @@ const ProfileInfo = ({ userData }: ProfileInfoProps) => {
                       Location
                     </TableCell>
                     <TableCell>
-                      {userData.address.city}, {userData.address.country}
+                      {userData.address ? 
+                        `${userData.address.city}, ${userData.address.country}` : 
+                        userData.shipping_address ? 
+                          `${userData.shipping_address.city}, ${userData.shipping_address.country}` : 
+                          "Location not specified"}
                     </TableCell>
                   </TableRow>
                 )}

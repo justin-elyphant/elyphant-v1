@@ -13,7 +13,7 @@ interface ProductItemProps {
   onProductClick?: (productId: string) => void;
   onWishlistClick?: (e: React.MouseEvent) => void; 
   isFavorited?: boolean;
-  useMock?: boolean; // Add the useMock prop
+  useMock?: boolean;
 }
 
 const ProductItem = ({ 
@@ -22,7 +22,7 @@ const ProductItem = ({
   onProductClick, 
   onWishlistClick,
   isFavorited = false,
-  useMock = false // Default to false
+  useMock = false
 }: ProductItemProps) => {
   const handleClick = () => {
     if (onProductClick) {
@@ -52,7 +52,7 @@ const ProductItem = ({
           product={product}
           aspectRatio="square" 
           className="h-full w-full object-cover transition-all"
-          useMock={useMock} // Pass the useMock prop to ProductImage
+          useMock={useMock}
         />
       </div>
       

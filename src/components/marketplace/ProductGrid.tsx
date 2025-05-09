@@ -13,9 +13,15 @@ interface ProductGridProps {
   products: Product[];
   viewMode: "grid" | "list";
   sortOption?: string;
+  onProductView?: (productId: string) => void;
 }
 
-const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGridProps) => {
+const ProductGrid = ({ 
+  products, 
+  viewMode, 
+  sortOption = "relevance",
+  onProductView 
+}: ProductGridProps) => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string | null> (null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
@@ -51,6 +57,11 @@ const ProductGrid = ({ products, viewMode, sortOption = "relevance" }: ProductGr
         image: product.image,
         price: product.price
       });
+    }
+    
+    // Track product view if callback provided
+    if (onProductView) {
+      onProductView(productId);
     }
   };
 

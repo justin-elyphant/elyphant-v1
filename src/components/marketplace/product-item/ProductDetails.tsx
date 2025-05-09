@@ -14,7 +14,7 @@ interface ProductDetailsProps {
     category?: string;
     brand?: string;
   };
-  onClick?: () => void; // Make this prop optional
+  onClick?: () => void;
   basePrice?: number;
   viewMode?: "grid" | "list";
   onAddToCart?: (e: React.MouseEvent) => void;

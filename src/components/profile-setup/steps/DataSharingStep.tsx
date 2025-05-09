@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -152,7 +151,7 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({ values, onChange }) =
           </div>
           <div className="w-32">
             <Select 
-              value={values.email || "private"} 
+              value={values.email} 
               onValueChange={(val) => handleChange('email', val as SharingLevel)}
             >
               <SelectTrigger>

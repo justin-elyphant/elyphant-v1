@@ -28,6 +28,7 @@ export const useProfileData = () => {
       dob: "friends",
       shipping_address: "private",
       gift_preferences: "public",
+      email: "private"
     },
     next_steps_option: "dashboard"
   });

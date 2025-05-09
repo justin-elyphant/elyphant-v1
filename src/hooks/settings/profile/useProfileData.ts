@@ -25,6 +25,7 @@ export const useProfileData = () => {
       dob: "private",
       shipping_address: "private",
       gift_preferences: "friends",
+      email: "private"
     }
   });
 

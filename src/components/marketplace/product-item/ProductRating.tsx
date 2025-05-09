@@ -9,12 +9,13 @@ interface ProductRatingProps {
   className?: string;         
 }
 
-const ProductRating = ({ rating, reviewCount, size, className }: ProductRatingProps) => {
+const ProductRating = ({ rating, reviewCount, size = "md", className }: ProductRatingProps) => {
   return <SharedProductRating 
     rating={rating} 
     reviewCount={reviewCount} 
     size={size}
     className={className}
+    showParentheses={true}
   />;
 };
 

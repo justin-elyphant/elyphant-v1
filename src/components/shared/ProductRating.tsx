@@ -8,13 +8,15 @@ interface ProductRatingProps {
   reviewCount?: number | string; // Accept both number and string
   size?: "sm" | "md" | "lg";
   className?: string;
+  showParentheses?: boolean;
 }
 
 const ProductRating: React.FC<ProductRatingProps> = ({ 
   rating = 0, 
   reviewCount, 
   size = "md",
-  className = ""
+  className = "",
+  showParentheses = false
 }) => {
   // No reviews, don't display
   if (!rating && !reviewCount) return null;
@@ -43,15 +45,19 @@ const ProductRating: React.FC<ProductRatingProps> = ({
   // Convert reviewCount to string if it's a number
   const reviewCountStr = reviewCount !== undefined ? reviewCount.toString() : undefined;
   
+  const starCount = 5;
+  const fullStars = Math.floor(rating);
+  const halfStar = rating % 1 >= 0.5;
+  
   return (
     <div className={cn("flex items-center", className)}>
-      <div className="flex items-center">
-        {[...Array(5)].map((_, i) => (
+      <div className="flex items-center text-yellow-400">
+        {[...Array(starCount)].map((_, i) => (
           <Star
             key={i}
             className={cn(
               starSize,
-              i < Math.floor(rating) 
+              i < fullStars 
                 ? "fill-yellow-400 text-yellow-400" 
                 : "fill-gray-200 text-gray-200"
             )}
@@ -60,7 +66,7 @@ const ProductRating: React.FC<ProductRatingProps> = ({
       </div>
       {reviewCountStr && (
         <span className={`ml-1 text-muted-foreground ${textSize}`}>
-          ({reviewCountStr})
+          {showParentheses ? `(${reviewCountStr})` : reviewCountStr}
         </span>
       )}
     </div>

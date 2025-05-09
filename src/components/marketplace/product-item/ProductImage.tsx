@@ -79,7 +79,7 @@ const ProductImage = ({
   return (
     <AspectRatio 
       ratio={getAspectRatioValue(aspectRatio)} 
-      className={cn("bg-slate-100 overflow-hidden rounded-md", className)}
+      className={cn("bg-slate-100 overflow-hidden rounded-t-md", className)}
     >
       <img
         src={imageUrl}

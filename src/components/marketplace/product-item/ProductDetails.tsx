@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ interface ProductDetailsProps {
     stars?: number;
     num_reviews?: number;
     category?: string;
+    brand?: string;
   };
   onClick?: () => void; // Make this prop optional
   basePrice?: number;
@@ -59,23 +61,39 @@ const ProductDetails = ({
   };
 
   return (
-    <div className="p-4 w-full">
-      <h3 
-        className="font-medium text-sm line-clamp-2 mb-1"
-        onClick={handleClick}
-      >
+    <div onClick={handleClick} className="cursor-pointer">
+      <h3 className="text-lg font-medium line-clamp-2 mb-1">
         {getCleanTitle(product?.title || "")}
       </h3>
-      <ProductRating rating={product.stars} reviewCount={product.num_reviews} size="sm" />
-      <div className="font-bold mt-1">${formatProductPrice(product.price)}</div>
-      <div className="mt-3 flex justify-between items-center">
+      
+      {product.brand && (
+        <p className="text-gray-500 text-sm mb-1">
+          {product.brand}
+        </p>
+      )}
+      
+      <div className="font-bold text-xl mt-2 mb-2">
+        ${formatProductPrice(product.price)}
+      </div>
+      
+      <ProductRating 
+        rating={product.stars} 
+        reviewCount={product.num_reviews} 
+        size="md" 
+        className="mb-3"
+      />
+      
+      <div className="mt-1">
         <Button 
           size="sm" 
           className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-          onClick={handleAddToCart}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddToCart(e);
+          }}
         >
           <Gift className="h-4 w-4 mr-1" />
-          Gift This
+          Add To Cart
         </Button>
       </div>
     </div>

@@ -103,6 +103,21 @@ const ProductItem = ({
     return product.title || product.name || "";
   };
   
+  // Create a properly formatted product object for sharing/gifting components
+  const createProductDataObject = (): Product => {
+    return {
+      product_id: getProductId(),
+      id: getProductId(),
+      title: getProductName(),
+      name: getProductName(),
+      price: product.price,
+      image: product.image,
+      // Add any other required fields
+      description: product.description || "",
+      brand: product.brand || ""
+    };
+  };
+  
   // Determine if product is on sale or has free shipping
   const isFreeShipping = product.prime || (product as any).free_shipping;
   const isOnSale = (product as any).sale_price && 
@@ -181,18 +196,8 @@ const ProductItem = ({
                     </div>
                     
                     <div className="flex space-x-1">
-                      <SocialShareButton product={{
-                        id: getProductId(),
-                        title: getProductName(),
-                        image: product.image,
-                        price: product.price
-                      }} />
-                      <GroupGiftingButton product={{
-                        id: getProductId(),
-                        title: getProductName(),
-                        image: product.image,
-                        price: product.price
-                      }} />
+                      <SocialShareButton product={createProductDataObject()} />
+                      <GroupGiftingButton product={createProductDataObject()} />
                     </div>
                   </div>
                 </div>
@@ -240,21 +245,11 @@ const ProductItem = ({
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 transition-opacity opacity-0 group-hover:opacity-100">
             <div className="flex justify-end space-x-1">
               <SocialShareButton 
-                product={{
-                  id: getProductId(),
-                  title: getProductName(),
-                  image: product.image,
-                  price: product.price
-                }}
+                product={createProductDataObject()}
                 className="bg-white/80 hover:bg-white"
               />
               <GroupGiftingButton 
-                product={{
-                  id: getProductId(),
-                  title: getProductName(),
-                  image: product.image,
-                  price: product.price
-                }}
+                product={createProductDataObject()}
                 className="bg-white/80 hover:bg-white"
               />
             </div>
@@ -354,18 +349,8 @@ const ProductItem = ({
           <p className="font-bold">${product.price.toFixed(2)}</p>
           
           <div className="flex space-x-1">
-            <SocialShareButton product={{
-              id: getProductId(),
-              title: getProductName(),
-              image: product.image,
-              price: product.price
-            }} />
-            <GroupGiftingButton product={{
-              id: getProductId(),
-              title: getProductName(),
-              image: product.image,
-              price: product.price
-            }} />
+            <SocialShareButton product={createProductDataObject()} />
+            <GroupGiftingButton product={createProductDataObject()} />
           </div>
         </div>
         

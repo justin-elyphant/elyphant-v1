@@ -80,11 +80,6 @@ const MarketplaceWrapper = () => {
     };
   }, [forceSyncNow]);
 
-  const handleSearchSubmit = () => {
-    // Pass the current searchTerm to the onSearch function
-    onSearch(searchTerm);
-  };
-  
   // Handle occasion card clicks
   const handleOccasionCardClick = (searchQuery: string, personId?: string, occasionType?: string) => {
     setSearchTerm(searchQuery);
@@ -121,9 +116,7 @@ const MarketplaceWrapper = () => {
       </div>
       
       <MarketplaceHeader 
-        searchTerm={searchTerm} 
-        setSearchTerm={setSearchTerm} 
-        onSearch={handleSearchSubmit} 
+        totalResults={products.length}
       />
       
       {/* Compact categories section always visible */}

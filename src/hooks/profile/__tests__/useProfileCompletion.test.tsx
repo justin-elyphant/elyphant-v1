@@ -14,6 +14,7 @@ jest.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: jest.fn().mockReturnThis(),
     upsert: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnValue({ data: null, error: null })
@@ -32,8 +33,19 @@ jest.mock('@/contexts/auth', () => ({
 jest.mock('sonner', () => ({
   toast: {
     error: jest.fn(),
-    success: jest.fn()
+    success: jest.fn(),
+    info: jest.fn()
   }
+}));
+
+// Mock error handling utilities
+jest.mock('@/utils/profileErrorUtils', () => ({
+  handleProfileError: jest.fn()
+}));
+
+// Mock data format utilities
+jest.mock('@/utils/dataFormatUtils', () => ({
+  formatProfileForSubmission: jest.fn(data => data)
 }));
 
 describe('useProfileCompletion', () => {
@@ -61,6 +73,7 @@ describe('useProfileCompletion', () => {
     expect(typeof result.current.handleSetupComplete).toBe('function');
     expect(typeof result.current.handleSkip).toBe('function');
     expect(typeof result.current.handleBackToDashboard).toBe('function');
+    expect(typeof result.current.isSubmitting).toBe('boolean');
   });
 
   it('should navigate to dashboard when handleSkip is called', () => {

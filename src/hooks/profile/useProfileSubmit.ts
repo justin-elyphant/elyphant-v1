@@ -1,149 +1,108 @@
 
-import { useState, useCallback, useEffect } from "react";
-import { useAuth } from "@/contexts/auth";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ProfileData } from "@/components/profile-setup/hooks/types";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { validateAndCleanProfileData } from "@/utils/dataFormatUtils";
+import { useProfileValidation } from "./useProfileValidation";
+import { useAuth } from "@/contexts/auth";
 
-interface UseProfileSubmitProps {
-  onComplete: () => void;
-  nextStepsOption?: string;
+interface UseProfileSubmitOptions {
+  onSuccess?: (data: any) => void;
+  onError?: (error: Error) => void;
+  onComplete?: () => void;
 }
 
-export const useProfileSubmit = ({ onComplete, nextStepsOption = "dashboard" }: UseProfileSubmitProps) => {
+export function useProfileSubmit(options: UseProfileSubmitOptions = {}) {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Store next steps option for handling completion
-  useEffect(() => {
-    if (nextStepsOption && nextStepsOption !== "dashboard") {
-      localStorage.setItem("nextStepsOption", nextStepsOption);
-    }
-  }, [nextStepsOption]);
-
-  const validateProfileData = (data: ProfileData): string[] => {
-    const errors: string[] = [];
-    
-    // Basic required field validation
-    if (!data.name || data.name.trim() === "") {
-      errors.push("Name is required");
-    }
-    
-    if (!data.username || data.username.trim() === "") {
-      errors.push("Username is required");
-    }
-    
-    // Ensure data_sharing_settings has required fields
-    if (!data.data_sharing_settings) {
-      errors.push("Data sharing settings are missing");
-    } else {
-      const requiredSettings = ['dob', 'shipping_address', 'gift_preferences', 'email'];
-      for (const setting of requiredSettings) {
-        if (!data.data_sharing_settings[setting]) {
-          errors.push(`Missing ${setting} privacy setting`);
-        }
-      }
-    }
-    
-    return errors;
-  };
-
-  const handleSubmit = useCallback(async (profileData: ProfileData) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<Error | null>(null);
+  const { validateProfileData } = useProfileValidation();
+  
+  const submitProfile = useCallback(async (profileData: any) => {
     if (!user) {
-      toast.error("You must be logged in to complete profile setup");
-      return;
+      const error = new Error("You must be logged in to update your profile");
+      toast.error(error.message);
+      setSubmitError(error);
+      if (options.onError) options.onError(error);
+      return false;
     }
     
-    // Validate profile data
-    const validationErrors = validateProfileData(profileData);
-    if (validationErrors.length > 0) {
-      toast.error(`Please correct the following: ${validationErrors.join(", ")}`);
-      return;
+    // First, validate the data structure
+    if (!validateProfileData(profileData)) {
+      console.error("Profile data validation failed");
+      return false;
     }
     
-    setIsLoading(true);
+    setIsSubmitting(true);
+    setSubmitError(null);
     
     try {
-      // Create username from name if not provided
-      const username = profileData.username || 
-        profileData.name?.toLowerCase().replace(/\s+/g, '_') || 
-        `user_${Date.now().toString(36)}`;
-
-      // Format the data for storage - ensuring ALL fields are included
-      const formattedData = {
-        id: user.id,
-        name: profileData.name || "",
-        username: username,
-        email: profileData.email || user.email || "",
-        profile_image: profileData.profile_image || null,
-        bio: profileData.bio || `Hi, I'm ${profileData.name || "there"}`,
-        dob: profileData.dob || null,
-        shipping_address: profileData.shipping_address || {},
-        gift_preferences: Array.isArray(profileData.gift_preferences) 
-          ? profileData.gift_preferences 
-          : [],
-        important_dates: Array.isArray(profileData.important_dates) 
-          ? profileData.important_dates 
-          : [],
-        data_sharing_settings: profileData.data_sharing_settings || getDefaultDataSharingSettings(),
-        onboarding_completed: true,
-        updated_at: new Date().toISOString()
-      };
-
-      // Try up to 3 times to save the profile data
+      // Format the data for submission
+      const [isValid, cleanedData] = validateAndCleanProfileData(profileData);
+      
+      if (!isValid || !cleanedData) {
+        throw new Error("Failed to prepare profile data for submission");
+      }
+      
+      // Ensure we have the user ID
+      cleanedData.id = user.id;
+      
+      // Try up to 3 times to submit in case of network issues
       let attempts = 0;
       let success = false;
+      let result = null;
       
       while (attempts < 3 && !success) {
         attempts++;
+        console.log(`Profile submission attempt ${attempts}`);
         
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .upsert(formattedData, {
+            .upsert(cleanedData, {
               onConflict: 'id'
-            });
-
+            })
+            .select();
+            
           if (error) {
-            console.error(`Error saving profile (attempt ${attempts}):`, error);
+            console.error(`Error in submission attempt ${attempts}:`, error);
             if (attempts === 3) throw error;
           } else {
-            console.log("Profile saved successfully, response:", data);
             success = true;
+            result = data;
+            console.log("Profile submission successful:", data);
           }
-        } catch (error) {
-          console.error(`Error in upsert operation (attempt ${attempts}):`, error);
-          if (attempts === 3) throw error;
+        } catch (err) {
+          if (attempts === 3) throw err;
+          // Wait a bit before retrying
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
       
       if (success) {
-        toast.success("Profile setup complete!");
-
-        // Clear signup-related flags
-        localStorage.removeItem("newSignUp");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("userName");
-        localStorage.removeItem("profileSetupLoading");
-        
-        setIsLoading(false);
-        onComplete();
+        toast.success("Profile updated successfully");
+        if (options.onSuccess) options.onSuccess(result);
+        return true;
       } else {
-        throw new Error("Failed to save profile after multiple attempts");
+        throw new Error("Profile submission failed after multiple attempts");
       }
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      toast.error("Failed to save profile data");
-      setIsLoading(false);
+    } catch (error: any) {
+      console.error("Profile submission error:", error);
+      setSubmitError(error);
+      toast.error("Failed to update profile", { 
+        description: error.message || "An unexpected error occurred"
+      });
+      if (options.onError) options.onError(error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+      if (options.onComplete) options.onComplete();
     }
-  }, [user, onComplete]);
-
+  }, [user, validateProfileData, options]);
+  
   return {
-    isLoading,
-    handleSubmit
+    submitProfile,
+    isSubmitting,
+    submitError
   };
-};
-
-export default useProfileSubmit;
+}

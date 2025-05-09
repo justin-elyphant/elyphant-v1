@@ -6,18 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FiltersSidebarProps {
   activeFilters: Record<string, any>;
   onFilterChange: (filters: Record<string, any>) => void;
+  categories?: string[];
 }
 
-const FiltersSidebar = ({ activeFilters, onFilterChange }: FiltersSidebarProps) => {
+const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: FiltersSidebarProps) => {
   const isMobile = useIsMobile();
   
   const handlePriceChange = (value: string) => {
-    const newFilters = { ...activeFilters, price: value };
+    const newFilters = { ...activeFilters, priceRange: value };
     onFilterChange(newFilters);
   };
   
@@ -26,8 +28,13 @@ const FiltersSidebar = ({ activeFilters, onFilterChange }: FiltersSidebarProps) 
     onFilterChange(newFilters);
   };
   
-  const handleColorChange = (color: string) => {
-    const newFilters = { ...activeFilters, color: color === activeFilters.color ? null : color };
+  const handleCategoryChange = (value: string) => {
+    const newFilters = { ...activeFilters, category: value };
+    onFilterChange(newFilters);
+  };
+  
+  const handleRatingChange = (value: string) => {
+    const newFilters = { ...activeFilters, rating: Number(value) };
     onFilterChange(newFilters);
   };
   
@@ -39,11 +46,38 @@ const FiltersSidebar = ({ activeFilters, onFilterChange }: FiltersSidebarProps) 
       
       <ScrollArea className={isMobile ? "h-[50vh] md:h-auto" : "h-auto"}>
         <div className="p-4 space-y-6">
+          {/* Category filter - new section */}
+          {categories.length > 0 && (
+            <>
+              <div>
+                <h4 className="font-medium mb-3">Category</h4>
+                <Select 
+                  value={activeFilters.category || ""} 
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Separator />
+            </>
+          )}
+          
           {/* Price filter */}
           <div>
             <h4 className="font-medium mb-3">Price Range</h4>
             <RadioGroup 
-              value={activeFilters.price || ""}
+              value={activeFilters.priceRange || ""}
               onValueChange={handlePriceChange}
               className="space-y-2"
             >
@@ -68,6 +102,37 @@ const FiltersSidebar = ({ activeFilters, onFilterChange }: FiltersSidebarProps) 
           
           <Separator />
           
+          {/* Rating filter - new section */}
+          <div>
+            <h4 className="font-medium mb-3">Rating</h4>
+            <RadioGroup 
+              value={activeFilters.rating?.toString() || ""}
+              onValueChange={handleRatingChange}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="4" id="rating4" className="h-5 w-5" />
+                <Label htmlFor="rating4" className="text-sm cursor-pointer flex items-center">
+                  <span className="text-amber-500 mr-1">★★★★</span> & up
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="3" id="rating3" className="h-5 w-5" />
+                <Label htmlFor="rating3" className="text-sm cursor-pointer flex items-center">
+                  <span className="text-amber-500 mr-1">★★★</span> & up
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="2" id="rating2" className="h-5 w-5" />
+                <Label htmlFor="rating2" className="text-sm cursor-pointer flex items-center">
+                  <span className="text-amber-500 mr-1">★★</span> & up
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <Separator />
+          
           {/* Free shipping filter */}
           <div>
             <h4 className="font-medium mb-3">Shipping</h4>
@@ -81,40 +146,25 @@ const FiltersSidebar = ({ activeFilters, onFilterChange }: FiltersSidebarProps) 
               <Label htmlFor="freeShipping" className="text-sm cursor-pointer">Free shipping</Label>
             </div>
           </div>
-          
-          <Separator />
-          
-          {/* Color filter */}
-          <div>
-            <h4 className="font-medium mb-3">Colors</h4>
-            <div className="flex flex-wrap gap-2">
-              {["red", "blue", "green", "black", "white"].map(color => (
-                <div 
-                  key={color}
-                  className={`h-8 w-8 rounded-full border-2 cursor-pointer ${
-                    activeFilters.color === color ? 'ring-2 ring-offset-2 ring-purple-500' : ''
-                  }`}
-                  style={{ backgroundColor: color === 'white' ? '#ffffff' : color }}
-                  onClick={() => handleColorChange(color)}
-                />
-              ))}
-            </div>
-          </div>
         </div>
       </ScrollArea>
       
-      {isMobile && (
-        <div className="p-4 border-t">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onFilterChange({})}
-            className="w-full"
-          >
-            Clear All Filters
-          </Button>
-        </div>
-      )}
+      <div className="p-4 border-t">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => onFilterChange({
+            priceRange: null,
+            category: null,
+            rating: null,
+            freeShipping: false,
+            sortBy: activeFilters.sortBy || "relevance"
+          })}
+          className="w-full"
+        >
+          Clear All Filters
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from "react";
-import { Product } from "@/contexts/ProductContext";
+import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
@@ -37,12 +38,22 @@ const ProductGrid = ({
     setSortedProducts(sortProducts(products, sortOption));
   }, [products, sortOption]);
 
-  const handleWishlistClick = (e: React.MouseEvent, productId: string) => {
+  const handleWishlistClick = (e: React.MouseEvent, productId: string, productName: string) => {
     e.stopPropagation();
     if (!userData) {
       setShowSignUpDialog(true);
     } else {
       handleFavoriteToggle(productId);
+      // Show a toast message
+      toast.success(isFavorited(productId) ? "Removed from wishlist" : "Added to wishlist", {
+        description: productName,
+        action: isFavorited(productId) 
+          ? undefined
+          : {
+              label: "View Wishlist",
+              onClick: () => window.location.href = "/wishlists"
+            }
+      });
     }
   };
   
@@ -92,7 +103,11 @@ const ProductGrid = ({
             product={product}
             viewMode={viewMode}
             onProductClick={handleProductClick}
-            onWishlistClick={(e) => handleWishlistClick(e, product.product_id || product.id || "")}
+            onWishlistClick={(e) => handleWishlistClick(
+              e, 
+              product.product_id || product.id || "", 
+              product.title || product.name || ""
+            )}
             isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
           />
         ))}

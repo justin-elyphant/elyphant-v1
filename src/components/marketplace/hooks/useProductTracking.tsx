@@ -2,26 +2,27 @@
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { Product } from "@/types/product";
 import { useSearchParams } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { RecentlyViewedProduct } from "@/types/supabase";
-import { toast } from "sonner";
 
 export const useProductTracking = (products: Product[]) => {
   const { addToRecentlyViewed } = useRecentlyViewed();
   const [searchParams] = useSearchParams();
   const { profile, refreshProfile } = useProfile();
   const { user } = useAuth();
+  const [lastTrackedId, setLastTrackedId] = useState<string | null>(null);
   
   // Track product view when opened via URL parameter
   useEffect(() => {
     const productId = searchParams.get("productId");
-    if (productId) {
+    if (productId && productId !== lastTrackedId) {
       trackProductView(productId);
+      setLastTrackedId(productId);
     }
-  }, [searchParams]);
+  }, [searchParams, products]);
   
   const trackProductView = (productId: string) => {
     console.log("Tracking product view:", productId);
@@ -96,7 +97,11 @@ export const useProductTracking = (products: Product[]) => {
       } else {
         console.log("Successfully updated recently viewed products in profile");
         // Refresh profile to ensure updated data is available throughout the app
-        refreshProfile();
+        setTimeout(() => {
+          refreshProfile().catch(err => 
+            console.error("Error refreshing profile after updating recently viewed:", err)
+          );
+        }, 100);
       }
     } catch (err) {
       console.error("Error syncing product view with profile:", err);

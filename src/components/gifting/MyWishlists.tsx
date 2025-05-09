@@ -29,13 +29,17 @@ const MyWishlists = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   
-  const { wishlists, createWishlist, deleteWishlist } = useWishlist();
+  const { wishlists, createWishlist, deleteWishlist, isInitialized } = useWishlist();
 
   useEffect(() => {
-    // Set loading to false after a short delay to ensure wishlists have loaded
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, [wishlists]);
+    // Set loading to false after initialization or a timeout
+    if (isInitialized) {
+      setLoading(false);
+    } else {
+      const timer = setTimeout(() => setLoading(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [wishlists, isInitialized]);
 
   const handleCreateWishlist = () => {
     setDialogOpen(true);
@@ -111,15 +115,21 @@ const MyWishlists = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
         
-        {wishlists && wishlists.map((wishlist) => (
-          <WishlistCard 
-            key={wishlist.id}
-            wishlist={wishlist}
-            onEdit={handleEditWishlist}
-            onShare={handleShareWishlist}
-            onDelete={handleDeleteWishlist}
-          />
-        ))}
+        {wishlists && wishlists.length > 0 ? (
+          wishlists.map((wishlist) => (
+            <WishlistCard 
+              key={wishlist.id}
+              wishlist={wishlist}
+              onEdit={handleEditWishlist}
+              onShare={handleShareWishlist}
+              onDelete={handleDeleteWishlist}
+            />
+          ))
+        ) : (
+          <div className="col-span-full py-8 text-center text-muted-foreground">
+            No wishlists found. Create your first wishlist to get started!
+          </div>
+        )}
       </div>
 
       <CreateWishlistDialog 

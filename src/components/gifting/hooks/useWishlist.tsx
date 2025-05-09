@@ -5,6 +5,7 @@ export function useWishlist() {
   const {
     wishlistedProducts,
     wishlists,
+    isInitialized,
     handleWishlistToggle,
     createWishlist,
     addToWishlist,
@@ -15,6 +16,7 @@ export function useWishlist() {
   return {
     wishlistedProducts,
     wishlists,
+    isInitialized,
     handleWishlistToggle,
     createWishlist,
     addToWishlist,

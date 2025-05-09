@@ -1,7 +1,9 @@
+
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
+import StandardProductGrid from "./StandardProductGrid";
 
-interface GroupedProductData {
+interface GroupedProductsType {
   wishlistItems: Product[];
   preferenceItems: Product[];
   regularItems: Product[];
@@ -9,56 +11,58 @@ interface GroupedProductData {
 }
 
 interface GroupedProductSectionProps {
-  groupedProducts: GroupedProductData;
+  groupedProducts: GroupedProductsType;
   viewMode: "grid" | "list" | "modern";
   renderProductCard: (product: Product) => React.ReactNode;
 }
 
-const GroupedProductSection: React.FC<GroupedProductSectionProps> = ({ 
-  groupedProducts, 
-  viewMode, 
-  renderProductCard 
+const GroupedProductSection: React.FC<GroupedProductSectionProps> = ({
+  groupedProducts,
+  viewMode,
+  renderProductCard
 }) => {
-  const getGridClassNames = () => {
-    return viewMode === 'modern' 
-      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' 
-      : viewMode === 'grid' 
-        ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' 
-        : 'space-y-4';
-  };
+  const { wishlistItems, preferenceItems, regularItems } = groupedProducts;
   
   return (
-    <>
+    <div className="space-y-8">
       {/* Wishlist items section */}
-      {groupedProducts.wishlistItems.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">From Wishlist</h3>
-          <div className={getGridClassNames()}>
-            {groupedProducts.wishlistItems.map(renderProductCard)}
-          </div>
+      {wishlistItems.length > 0 && (
+        <div>
+          <h3 className="text-lg font-medium mb-4">From Your Wishlist</h3>
+          <StandardProductGrid
+            products={wishlistItems}
+            viewMode={viewMode}
+            renderProductCard={renderProductCard}
+          />
         </div>
       )}
       
-      {/* Preference-based items section */}
-      {groupedProducts.preferenceItems.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">Based on Preferences</h3>
-          <div className={getGridClassNames()}>
-            {groupedProducts.preferenceItems.map(renderProductCard)}
-          </div>
+      {/* Preference items section */}
+      {preferenceItems.length > 0 && (
+        <div>
+          <h3 className="text-lg font-medium mb-4">Based on Your Preferences</h3>
+          <StandardProductGrid
+            products={preferenceItems}
+            viewMode={viewMode}
+            renderProductCard={renderProductCard}
+          />
         </div>
       )}
       
-      {/* Other recommended items section */}
-      {groupedProducts.regularItems.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">More Recommendations</h3>
-          <div className={getGridClassNames()}>
-            {groupedProducts.regularItems.map(renderProductCard)}
-          </div>
+      {/* Regular items section */}
+      {regularItems.length > 0 && (
+        <div>
+          <h3 className="text-lg font-medium mb-4">
+            {wishlistItems.length > 0 || preferenceItems.length > 0 ? "More Items" : "All Items"}
+          </h3>
+          <StandardProductGrid
+            products={regularItems}
+            viewMode={viewMode}
+            renderProductCard={renderProductCard}
+          />
         </div>
       )}
-    </>
+    </div>
   );
 };
 

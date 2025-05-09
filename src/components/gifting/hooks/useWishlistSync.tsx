@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Wishlist } from "@/types/profile";
+import { toast } from "sonner";
 
 export function useWishlistSync() {
   const { user } = useAuth();
@@ -12,6 +13,8 @@ export function useWishlistSync() {
     if (!user) return false;
     
     try {
+      console.log("Syncing wishlists to profile:", wishlists.length, "wishlists");
+      
       // Update profile with new wishlists
       const { error: updateError } = await supabase
         .from('profiles')
@@ -23,6 +26,7 @@ export function useWishlistSync() {
         
       if (updateError) {
         console.error("Error updating profile with wishlist:", updateError);
+        toast.error("Failed to save wishlist changes");
         return false;
       }
       
@@ -41,9 +45,12 @@ export function useWishlistSync() {
         const existingPrefs = prefProfile?.gift_preferences || [];
         
         // Get existing preferences that are not high importance (not wishlist items)
-        const nonWishlistPreferences = existingPrefs.filter(pref => 
-          pref.importance !== "high" || !allProductIds.includes(pref.category)
-        );
+        const nonWishlistPreferences = Array.isArray(existingPrefs) 
+          ? existingPrefs.filter(pref => {
+              if (typeof pref === 'string') return !allProductIds.includes(pref);
+              return pref.importance !== "high" || !allProductIds.includes(pref.category);
+            })
+          : [];
         
         // Format wishlist items as gift preferences
         const wishlistPreferences = allProductIds.map(productId => ({
@@ -65,9 +72,11 @@ export function useWishlistSync() {
           .eq('id', user.id);
       }
       
+      console.log("Wishlist sync completed successfully");
       return true;
     } catch (err) {
       console.error("Error syncing wishlist to profile:", err);
+      toast.error("Failed to update your wishlists");
       return false;
     }
   }, [user]);

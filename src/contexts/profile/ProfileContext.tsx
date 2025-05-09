@@ -1,8 +1,9 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProfileFetch } from './useProfileFetch';
 import { useProfileUpdate } from './useProfileUpdate';
 import { Profile } from "@/types/supabase";
+import { toast } from 'sonner';
 
 interface ProfileContextType {
   profile: Profile | null;
@@ -10,7 +11,7 @@ interface ProfileContextType {
   error: Error | null;
   updateProfile: (data: Partial<Profile>) => Promise<any>;
   refetchProfile: () => Promise<Profile | null>;
-  refreshProfile: () => Promise<Profile | null>; // Added this method
+  refreshProfile: () => Promise<Profile | null>; 
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -19,6 +20,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { fetchProfile, loading: isFetching, error: fetchError } = useProfileFetch();
   const { updateProfile, isUpdating, updateError } = useProfileUpdate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   // Combined loading and error states
   const loading = isFetching || isUpdating;
@@ -29,7 +31,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     const loadProfile = async () => {
       const profileData = await fetchProfile();
       if (profileData) {
+        console.log("Profile loaded from backend:", profileData);
         setProfile(profileData);
+        setLastFetchTime(Date.now());
       }
     };
     
@@ -38,11 +42,12 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
   // Also fetch profile data if we have localStorage flags indicating a new signup
   useEffect(() => {
-    if (localStorage.getItem("newSignUp") === "true") {
-      console.log("Detected new signup, fetching profile data");
+    if (localStorage.getItem("newSignUp") === "true" || localStorage.getItem("profileSetupLoading") === "true") {
+      console.log("Detected new signup or profile setup, fetching profile data");
       fetchProfile().then(profileData => {
         if (profileData) {
           setProfile(profileData);
+          setLastFetchTime(Date.now());
         }
       });
     }
@@ -50,27 +55,45 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
   // Wrapper for updating the profile that also updates local state
   const handleUpdateProfile = async (data: Partial<Profile>) => {
-    const result = await updateProfile(data);
-    
-    if (result) {
-      // Update the local profile state with the new data
-      const updatedProfile = await fetchProfile();
-      if (updatedProfile) {
-        setProfile(updatedProfile);
+    try {
+      const result = await updateProfile(data);
+      
+      if (result) {
+        // Update the local profile state with the new data
+        const updatedProfile = await fetchProfile();
+        if (updatedProfile) {
+          setProfile(updatedProfile);
+          setLastFetchTime(Date.now());
+        }
       }
+      
+      return result;
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      toast.error("Failed to update profile");
+      throw error;
     }
-    
-    return result;
   };
 
   // Wrapper for refetching the profile
-  const refetchProfile = async () => {
-    const profileData = await fetchProfile();
-    if (profileData) {
-      setProfile(profileData);
+  const refetchProfile = useCallback(async () => {
+    try {
+      console.log("Manually refetching profile...");
+      const profileData = await fetchProfile();
+      if (profileData) {
+        console.log("Profile refetched successfully");
+        setProfile(profileData);
+        setLastFetchTime(Date.now());
+      } else {
+        console.log("No profile data returned when refetching");
+      }
+      return profileData;
+    } catch (error) {
+      console.error("Error refetching profile:", error);
+      toast.error("Failed to refresh your profile data");
+      return null;
     }
-    return profileData;
-  };
+  }, [fetchProfile]);
   
   // Add refreshProfile as an alias of refetchProfile for backward compatibility
   const refreshProfile = refetchProfile;
@@ -81,7 +104,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     error,
     updateProfile: handleUpdateProfile,
     refetchProfile,
-    refreshProfile // Add the new method to the context value
+    refreshProfile
   };
 
   return (

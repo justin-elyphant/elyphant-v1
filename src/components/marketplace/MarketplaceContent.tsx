@@ -8,17 +8,26 @@ import FiltersSidebar from "./FiltersSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEnhancedFilters } from "./hooks/useEnhancedFilters";
 import { useProductRecommendations } from "@/hooks/useProductRecommendations";
+import { AlertCircle } from "lucide-react";
 
 interface MarketplaceContentProps {
   products: Product[];
   isLoading: boolean;
   searchTerm?: string;
   onProductView?: (productId: string) => void;
+  showFilters: boolean;
+  setShowFilters: (show: boolean) => void;
 }
 
-const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: MarketplaceContentProps) => {
+const MarketplaceContent = ({ 
+  products, 
+  isLoading, 
+  searchTerm, 
+  onProductView,
+  showFilters,
+  setShowFilters
+}: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
-  const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">(isMobile ? "list" : "grid");
   
   // Use our enhanced filters hook
@@ -83,10 +92,16 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
         )}
         
         <div className="flex-1">
-          {showRecommendations && (
-            <div className="mb-4 p-4 bg-purple-50 rounded-md border border-purple-100">
-              <p className="text-sm text-purple-800">No products match your current search criteria. 
-              Here are some recommendations that might interest you:</p>
+          {searchTerm && filteredProducts.length === 0 && (
+            <div className="mb-6 p-4 bg-amber-50 rounded-md border border-amber-200 flex items-start gap-3 text-amber-800">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">No products match "{searchTerm}"</p>
+                <p className="text-sm mt-1">Try using different keywords or browse our categories.</p>
+                {recommendations.length > 0 && (
+                  <p className="text-sm mt-1">Here are some recommendations that might interest you:</p>
+                )}
+              </div>
             </div>
           )}
           

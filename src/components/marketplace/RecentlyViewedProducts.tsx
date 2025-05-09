@@ -6,6 +6,8 @@ import { useProductRecommendations } from "@/hooks/useProductRecommendations";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { ArrowRight, Clock, Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const RecentlyViewedProducts = () => {
   const { recentlyViewed } = useRecentlyViewed();
@@ -20,9 +22,13 @@ const RecentlyViewedProducts = () => {
   return (
     <div className="mt-12 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Recently Viewed</h2>
-        <Link to="/marketplace/history" className="text-sm text-purple-600 hover:underline">
+        <div className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-purple-600" />
+          <h2 className="text-xl font-semibold">Recently Viewed</h2>
+        </div>
+        <Link to="/marketplace/history" className="text-sm text-purple-600 hover:underline flex items-center">
           View all
+          <ArrowRight className="h-4 w-4 ml-1" />
         </Link>
       </div>
       
@@ -33,7 +39,7 @@ const RecentlyViewedProducts = () => {
               key={item.id} 
               to={`/marketplace?productId=${item.id}`} 
               className={cn(
-                "inline-block rounded-md border border-gray-200 overflow-hidden hover:shadow transition-shadow",
+                "inline-block rounded-md border border-gray-200 overflow-hidden hover:shadow-md transition-all bg-white",
                 isMobile ? "w-32" : "w-48"
               )}
             >
@@ -60,11 +66,16 @@ const RecentlyViewedProducts = () => {
       </ScrollArea>
       
       {recommendations.length > 0 && (
-        <div className="mt-8 space-y-4">
+        <div className="mt-10 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">You Might Also Like</h2>
-            <Link to="/marketplace" className="text-sm text-purple-600 hover:underline">
+            <div className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-amber-500" />
+              <h2 className="text-xl font-semibold">You Might Also Like</h2>
+              <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">Based on your browsing</Badge>
+            </div>
+            <Link to="/marketplace" className="text-sm text-purple-600 hover:underline flex items-center">
               Explore more
+              <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
           
@@ -75,7 +86,7 @@ const RecentlyViewedProducts = () => {
                   key={product.product_id || product.id} 
                   to={`/marketplace?productId=${product.product_id || product.id}`} 
                   className={cn(
-                    "inline-block rounded-md border border-gray-200 overflow-hidden hover:shadow transition-shadow",
+                    "inline-block rounded-md border border-gray-200 overflow-hidden hover:shadow-md transition-all bg-gradient-to-b from-white to-amber-50",
                     isMobile ? "w-32" : "w-48"
                   )}
                 >
@@ -88,6 +99,11 @@ const RecentlyViewedProducts = () => {
                         (e.target as HTMLImageElement).src = "/placeholder.svg";
                       }}
                     />
+                    <div className="absolute top-2 right-2">
+                      <div className="bg-amber-100 text-amber-700 text-xs font-medium px-1.5 py-0.5 rounded">
+                        Recommended
+                      </div>
+                    </div>
                   </div>
                   <div className="p-2">
                     <p className="text-sm font-medium whitespace-normal line-clamp-1">

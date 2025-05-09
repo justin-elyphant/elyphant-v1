@@ -32,6 +32,35 @@ const ProductGrid = ({
   const { handleFavoriteToggle, isFavorited } = useFavorites();
   const { addToRecentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
+  
+  // Generate product badges for visual indicators
+  const getProductStatus = (product: Product): { badge: string; color: string } | null => {
+    // Check if this is in the recently viewed items to add "Recently Viewed" badge
+    const { recentlyViewed } = useRecentlyViewed();
+    const isRecentlyViewed = recentlyViewed?.some(item => item.id === (product.product_id || product.id));
+    
+    if (product.isBestSeller) {
+      return { badge: "Best Seller", color: "bg-amber-100 text-amber-800 border-amber-200" };
+    }
+    
+    if (product.tags?.includes("trending")) {
+      return { badge: "Trending", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    }
+    
+    if (product.tags?.includes("limited")) {
+      return { badge: "Limited Stock", color: "bg-red-100 text-red-800 border-red-200" };
+    }
+    
+    if (product.tags?.includes("new") || (product.id && Number(product.id) > 9000)) {
+      return { badge: "New Arrival", color: "bg-green-100 text-green-800 border-green-200" };
+    }
+    
+    if (isRecentlyViewed) {
+      return { badge: "Recently Viewed", color: "bg-purple-100 text-purple-800 border-purple-200" };
+    }
+    
+    return null;
+  };
 
   // Update sorted products when products or sort option changes
   useEffect(() => {
@@ -97,20 +126,24 @@ const ProductGrid = ({
           : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' // Keep desktop layout
         : 'space-y-4'}`}
       >
-        {sortedProducts.map((product) => (
-          <ProductItem 
-            key={product.product_id || product.id}
-            product={product}
-            viewMode={viewMode}
-            onProductClick={handleProductClick}
-            onWishlistClick={(e) => handleWishlistClick(
-              e, 
-              product.product_id || product.id || "", 
-              product.title || product.name || ""
-            )}
-            isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
-          />
-        ))}
+        {sortedProducts.map((product) => {
+          const status = getProductStatus(product);
+          return (
+            <ProductItem 
+              key={product.product_id || product.id}
+              product={product}
+              viewMode={viewMode}
+              onProductClick={handleProductClick}
+              onWishlistClick={(e) => handleWishlistClick(
+                e, 
+                product.product_id || product.id || "", 
+                product.title || product.name || ""
+              )}
+              isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
+              statusBadge={status}
+            />
+          );
+        })}
       </div>
 
       <ProductDetailsDialog 

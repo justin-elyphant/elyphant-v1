@@ -11,6 +11,7 @@ import MarketplaceContent from "./MarketplaceContent";
 import RecentlyViewedProducts from "./RecentlyViewedProducts";
 import OccasionMessage from "./header/OccasionMessage";
 import OccasionCards from "./header/OccasionCards";
+import StickyFiltersBar from "./StickyFiltersBar";
 import { getUpcomingOccasions, getNextHoliday, GiftOccasion } from "./utils/upcomingOccasions";
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,9 @@ const MarketplaceWrapper = () => {
   const { forceSyncNow } = useProductDataSync();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  // UI state
+  const [showFilters, setShowFilters] = useState(true);
   
   // Occasion state for the hero banner
   const [currentOccasionIndex, setCurrentOccasionIndex] = useState(0);
@@ -93,7 +97,7 @@ const MarketplaceWrapper = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero banner with upcoming occasions */}
-      <div className="mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-100">
+      <div className="mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-100 shadow-sm">
         <div className="flex flex-col gap-3">
           {/* Rotating occasion message */}
           <div className="h-8">
@@ -119,7 +123,17 @@ const MarketplaceWrapper = () => {
         totalResults={products.length}
       />
       
-      {/* Compact categories section always visible */}
+      {/* Sticky search and filters bar */}
+      <StickyFiltersBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        onSearch={onSearch}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        totalItems={products.length}
+      />
+      
+      {/* Enhanced visual categories section */}
       <GiftingCategories />
       
       <MarketplaceContent 
@@ -127,9 +141,11 @@ const MarketplaceWrapper = () => {
         isLoading={isLoading}
         searchTerm={searchTerm}
         onProductView={trackProductViewById}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
       />
       
-      {/* Recently viewed products section */}
+      {/* Enhanced recently viewed products section */}
       <RecentlyViewedProducts />
     </div>
   );

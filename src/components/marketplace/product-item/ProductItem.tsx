@@ -15,6 +15,7 @@ interface ProductItemProps {
   onWishlistClick?: (e: React.MouseEvent) => void; 
   isFavorited?: boolean;
   useMock?: boolean;
+  statusBadge?: { badge: string; color: string } | null;
 }
 
 const ProductItem = ({ 
@@ -23,7 +24,8 @@ const ProductItem = ({
   onProductClick, 
   onWishlistClick,
   isFavorited = false,
-  useMock = false
+  useMock = false,
+  statusBadge = null
 }: ProductItemProps) => {
   const isMobile = useIsMobile();
   
@@ -45,7 +47,7 @@ const ProductItem = ({
     >
       <div
         className={cn(
-          "cursor-pointer",
+          "cursor-pointer relative",
           viewMode === "list" ? "w-1/3" : "w-full"
         )}
         onClick={handleClick}
@@ -57,6 +59,15 @@ const ProductItem = ({
           className="h-full w-full object-cover transition-all"
           useMock={useMock}
         />
+        
+        {/* Status badge */}
+        {statusBadge && (
+          <div className="absolute top-2 left-2 z-10">
+            <div className={cn("text-xs font-medium px-2 py-1 rounded-full", statusBadge.color)}>
+              {statusBadge.badge}
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Wishlist button - increased touch target size for mobile */}

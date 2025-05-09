@@ -8,6 +8,7 @@ import { getMockProducts } from "@/components/marketplace/services/mockProductSe
 import { Skeleton } from "@/components/ui/skeleton";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils"; // Added the missing import
 
 interface ZincProductResultsProps {
   products: Product[];

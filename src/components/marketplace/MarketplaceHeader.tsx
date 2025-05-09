@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { getUpcomingOccasions, getNextHoliday, mergeOccasions, GiftOccasion } from "./utils/upcomingOccasions";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
@@ -22,7 +21,6 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
   const [animationState, setAnimationState] = useState<"in" | "out">("in");
   const { profile } = useProfile();
   const { friendOccasions, loading: loadingFriendOccasions } = useConnectedFriendsSpecialDates();
-  const isMobile = useIsMobile();
   
   // Extract user interests from profile
   const userInterests = profile?.gift_preferences || [];
@@ -105,11 +103,11 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
   const secondHoliday = nextHolidays.length > 1 ? nextHolidays[1] : null;
 
   return (
-    <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-4 sm:p-6 mb-5 sm:mb-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-center">
-        <div className="space-y-3 sm:space-y-4">
-          <Badge className="bg-purple-600 text-white px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm">New Gift Ideas Daily</Badge>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Find the Perfect Gift</h1>
+    <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div className="space-y-4">
+          <Badge className="bg-purple-600 text-white px-3 py-1">New Gift Ideas Daily</Badge>
+          <h1 className="text-3xl font-bold text-gray-900">Find the Perfect Gift</h1>
           
           {/* Dynamic event reminder with animation */}
           <OccasionMessage 
@@ -118,7 +116,7 @@ const MarketplaceHeader = ({ searchTerm, setSearchTerm, onSearch }: MarketplaceH
           />
           
           {!currentOccasion && (
-            <p className="text-sm sm:text-base text-gray-700">
+            <p className="text-gray-700">
               Discover thoughtful gifts for every occasion, interest, and relationship in your life.
             </p>
           )}

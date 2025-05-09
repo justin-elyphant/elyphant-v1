@@ -6,7 +6,6 @@ import ProductDetails from "./ProductDetails";
 import ProductImage from "./ProductImage";
 import WishlistButton from "./WishlistButton";
 import { getBasePrice } from "./productUtils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductItemProps {
   product: Product;
@@ -25,8 +24,6 @@ const ProductItem = ({
   isFavorited = false,
   useMock = false
 }: ProductItemProps) => {
-  const isMobile = useIsMobile();
-  
   const handleClick = () => {
     if (onProductClick) {
       onProductClick(product.product_id);
@@ -36,20 +33,17 @@ const ProductItem = ({
   // Base price display logic
   const basePrice = getBasePrice(product);
   
-  // Adjust viewMode for better mobile experience if needed
-  const effectiveViewMode = isMobile && viewMode === "list" ? "grid" : viewMode;
-  
   return (
     <div 
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:shadow-md",
-        effectiveViewMode === "list" ? "sm:flex-row" : ""
+        viewMode === "list" ? "flex-row" : ""
       )}
     >
       <div
         className={cn(
           "cursor-pointer",
-          effectiveViewMode === "list" ? "sm:w-1/3" : "w-full"
+          viewMode === "list" ? "w-1/3" : "w-full"
         )}
         onClick={handleClick}
         data-testid="product-item"
@@ -79,14 +73,14 @@ const ProductItem = ({
       <div 
         className={cn(
           "flex flex-col p-3",
-          effectiveViewMode === "list" ? "sm:w-2/3" : "w-full"
+          viewMode === "list" ? "w-2/3" : "w-full"
         )}
       >
         <ProductDetails
           product={product}
           onClick={handleClick}
           basePrice={basePrice}
-          viewMode={effectiveViewMode}
+          viewMode={viewMode}
         />
       </div>
     </div>

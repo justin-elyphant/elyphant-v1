@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import { Product } from "@/types/product";
-import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGrid from "./ProductGrid";  // Use the direct ProductGrid component
 import MarketplaceLoading from "./MarketplaceLoading";
@@ -19,7 +18,6 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
   const [sortOption, setSortOption] = useState("relevance");
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
-  const isMobile = useIsMobile();
   
   const handleFilterChange = (newFilters: Record<string, any>) => {
     setActiveFilters(newFilters);
@@ -50,7 +48,7 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
   }
   
   return (
-    <div className="mt-4 md:mt-6">
+    <div className="mt-6">
       <MarketplaceFilters 
         showFilters={showFilters}
         setShowFilters={setShowFilters}
@@ -61,9 +59,9 @@ const MarketplaceContent = ({ products, isLoading, searchTerm, onProductView }: 
         onSortChange={setSortOption}
       />
       
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 mt-4">
+      <div className="flex flex-col md:flex-row gap-6 mt-4">
         {showFilters && (
-          <div className={`${isMobile ? 'w-full' : 'w-full md:w-64 flex-shrink-0'}`}>
+          <div className="w-full md:w-64 flex-shrink-0">
             <FiltersSidebar
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}

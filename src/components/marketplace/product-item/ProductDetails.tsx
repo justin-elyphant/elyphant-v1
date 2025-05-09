@@ -4,7 +4,6 @@ import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProductRating from "@/components/marketplace/product-item/ProductRating";
 import { formatProductPrice } from "./productUtils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductDetailsProps {
   product: {
@@ -28,8 +27,6 @@ const ProductDetails = ({
   viewMode = "grid",
   onAddToCart 
 }: ProductDetailsProps) => {
-  const isMobile = useIsMobile(768);
-  
   // Clean up Amazon-style titles
   const getCleanTitle = (title: string): string => {
     // Remove excessive capitalization
@@ -48,10 +45,9 @@ const ProductDetails = ({
       });
     }
     
-    // Truncate title if too long based on view mode and screen size
-    const maxLength = isMobile ? 40 : viewMode === "list" ? 80 : 60;
-    if (cleanTitle.length > maxLength) {
-      cleanTitle = cleanTitle.substring(0, maxLength - 3) + "...";
+    // Truncate title if too long
+    if (cleanTitle.length > 60) {
+      cleanTitle = cleanTitle.substring(0, 57) + "...";
     }
     
     return cleanTitle;
@@ -64,43 +60,39 @@ const ProductDetails = ({
     console.log("Add to cart clicked for", product.title);
   };
 
-  const titleSizeClass = isMobile ? "text-base" : "text-lg";
-  const brandSizeClass = isMobile ? "text-xs" : "text-sm";
-  const priceSizeClass = isMobile ? "text-lg" : "text-xl";
-
   return (
     <div onClick={handleClick} className="cursor-pointer">
-      <h3 className={`${titleSizeClass} font-medium line-clamp-2 mb-1`}>
+      <h3 className="text-lg font-medium line-clamp-2 mb-1">
         {getCleanTitle(product?.title || "")}
       </h3>
       
       {product.brand && (
-        <p className={`text-gray-500 ${brandSizeClass} mb-1`}>
+        <p className="text-gray-500 text-sm mb-1">
           {product.brand}
         </p>
       )}
       
-      <div className={`font-bold ${priceSizeClass} mt-2 mb-2`}>
+      <div className="font-bold text-xl mt-2 mb-2">
         ${formatProductPrice(product.price)}
       </div>
       
       <ProductRating 
         rating={product.stars} 
         reviewCount={product.num_reviews} 
-        size={isMobile ? "sm" : "md"} 
-        className="mb-2 sm:mb-3"
+        size="md" 
+        className="mb-3"
       />
       
       <div className="mt-1">
         <Button 
-          size={isMobile ? "sm" : "sm"} 
+          size="sm" 
           className="w-full bg-purple-600 hover:bg-purple-700 text-white"
           onClick={(e) => {
             e.stopPropagation();
             handleAddToCart(e);
           }}
         >
-          <Gift className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+          <Gift className="h-4 w-4 mr-1" />
           Add To Cart
         </Button>
       </div>

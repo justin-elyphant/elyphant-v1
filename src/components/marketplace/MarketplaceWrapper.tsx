@@ -41,12 +41,18 @@ const MarketplaceWrapper = () => {
     };
   }, [forceSyncNow]);
 
+  const handleSearchSubmit = () => {
+    // Call the onSearch function which now doesn't require parameters
+    // as it will use the searchTerm state internally
+    onSearch();
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <MarketplaceHeader 
         searchTerm={searchTerm} 
         setSearchTerm={setSearchTerm} 
-        onSearch={onSearch} 
+        onSearch={handleSearchSubmit} 
       />
       
       {/* Compact categories section always visible */}

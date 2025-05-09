@@ -8,12 +8,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const RecentlyViewedProducts = () => {
-  const { recentlyViewedItems } = useRecentlyViewed();
+  const { recentlyViewed } = useRecentlyViewed();
   const { recommendations } = useProductRecommendations();
   const isMobile = useIsMobile();
   
   // If no recently viewed items, don't show this section
-  if (!recentlyViewedItems || recentlyViewedItems.length === 0) {
+  if (!recentlyViewed || recentlyViewed.length === 0) {
     return null;
   }
   
@@ -28,7 +28,7 @@ const RecentlyViewedProducts = () => {
       
       <ScrollArea className="w-full whitespace-nowrap pb-4">
         <div className="flex gap-4">
-          {recentlyViewedItems.slice(0, 8).map((item) => (
+          {recentlyViewed.slice(0, 8).map((item) => (
             <Link 
               key={item.id} 
               to={`/marketplace?productId=${item.id}`} 

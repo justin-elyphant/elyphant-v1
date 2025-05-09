@@ -6,7 +6,7 @@ import marketplaceProvider from "@/services/marketplace/marketplaceConnector";
 export const useProductRecommendations = (productId?: string) => {
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { recentlyViewedItems } = useRecentlyViewed();
+  const { recentlyViewed } = useRecentlyViewed();
   
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -20,9 +20,9 @@ export const useProductRecommendations = (productId?: string) => {
           recommendedProducts = await marketplaceProvider.getProductRecommendations(productId);
         } 
         // Otherwise, try to get recommendations based on recently viewed products
-        else if (recentlyViewedItems && recentlyViewedItems.length > 0) {
+        else if (recentlyViewed && recentlyViewed.length > 0) {
           // Use most recently viewed item for recommendations
-          const mostRecentItem = recentlyViewedItems[0];
+          const mostRecentItem = recentlyViewed[0];
           recommendedProducts = await marketplaceProvider.getProductRecommendations(mostRecentItem.id);
         }
         
@@ -35,7 +35,7 @@ export const useProductRecommendations = (productId?: string) => {
     };
     
     fetchRecommendations();
-  }, [productId, recentlyViewedItems]);
+  }, [productId, recentlyViewed]);
   
   return { recommendations, isLoading };
 };

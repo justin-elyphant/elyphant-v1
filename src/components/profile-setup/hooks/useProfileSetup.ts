@@ -16,9 +16,11 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const { activeStep, steps, handleNext, handleBack } = useProfileSteps();
   const { profileData, updateProfileData, isLoading: isDataLoading } = useProfileData();
   const { isCurrentStepValid } = useProfileValidation(activeStep, profileData);
-  const { isLoading: isSubmitLoading, handleSubmit } = useProfileSubmit({
-    onComplete,
-    nextStepsOption: profileData.next_steps_option
+  const { isSubmitting, submitProfile, submitError } = useProfileSubmit({
+    onSuccess: () => {
+      // Handle success if needed
+    },
+    onComplete
   });
   
   const [isCompleting, setIsCompleting] = useState(false);
@@ -28,7 +30,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const maxCompletionTime = 5000; // Increase timeout to 5 seconds
 
   // More reliable loading state checking
-  const isLoading = isSubmitLoading || isCompleting || isDataLoading;
+  const isLoading = isSubmitting || isCompleting || isDataLoading;
 
   // Ensure data_sharing_settings has all required fields
   useEffect(() => {
@@ -68,7 +70,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   useEffect(() => {
     console.log("useProfileSetup state:", {
       isDataLoading,
-      isSubmitLoading,
+      isSubmitting,
       isCompleting,
       totalLoading: isLoading,
       nextStepsOption: profileData.next_steps_option,
@@ -77,7 +79,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       error,
       data_sharing_settings: profileData.data_sharing_settings
     });
-  }, [isDataLoading, isSubmitLoading, isCompleting, isLoading, profileData.next_steps_option, activeStep, error, profileData.data_sharing_settings]);
+  }, [isDataLoading, isSubmitting, isCompleting, isLoading, profileData.next_steps_option, activeStep, error, profileData.data_sharing_settings]);
 
   // Force completion after a timeout - with additional safeguards
   useEffect(() => {
@@ -159,7 +161,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         data_sharing_settings: profileData.data_sharing_settings || getDefaultDataSharingSettings()
       };
       
-      await handleSubmit(finalProfileData);
+      await submitProfile(finalProfileData);
       
       // Clear completion flags and redirect
       localStorage.removeItem("newSignUp");
@@ -188,7 +190,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         onComplete();
       }, 100);
     }
-  }, [profileData, handleSubmit, onComplete, isCompleting, cleanupTimeouts, updateProfileData]);
+  }, [profileData, submitProfile, onComplete, isCompleting, cleanupTimeouts, updateProfileData]);
 
   return {
     activeStep,

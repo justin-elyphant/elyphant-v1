@@ -67,8 +67,7 @@ export const useSignUpSubmit = ({
         // Create user profile with privacy settings
         if (signUpData.user.id) {
           try {
-            // Fix: Use only 3 arguments as expected by the createUserProfile function
-            // The default data sharing settings will be handled inside createUserProfile
+            // Use only expected arguments and let the function handle defaults internally
             await createUserProfile(signUpData.user.id, values.email, values.name);
             console.log("Profile created successfully");
           } catch (profileError) {

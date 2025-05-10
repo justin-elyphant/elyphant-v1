@@ -115,7 +115,11 @@ const RecommendationCard = ({
   const getPrice = () => product.price.toFixed(2);
   const isBestSeller = () => product.isBestSeller || false;
   const getRating = () => product.rating || product.stars || 0;
-  const isFreeShipping = () => product.prime || product.free_shipping || false;
+  
+  // Safe type checking for free_shipping which isn't in the Product type
+  const isFreeShipping = () => {
+    return product.prime || (product as any).free_shipping || false;
+  };
   
   return (
     <Card 
@@ -195,3 +199,4 @@ const RecommendationCard = ({
 };
 
 export default PersonalizedRecommendations;
+

@@ -60,8 +60,10 @@ export function usePersonalizedRecommendations(
         } else {
           // If we're including viewed products, mark them
           productPool = productPool.map(product => {
-            if (recentlyViewedIds.has(product.id || product.product_id)) {
-              return { ...product, recentlyViewed: true };
+            // Fixed: Check if the product id is in recentlyViewedIds
+            const productId = product.id || product.product_id;
+            if (productId && recentlyViewedIds.has(productId)) {
+              return { ...product, isRecentlyViewed: true };
             }
             return product;
           });
@@ -112,7 +114,7 @@ export function usePersonalizedRecommendations(
           });
           
           // Small penalty for recently viewed products if they're included (-3 points)
-          if (product.recentlyViewed) {
+          if ((product as any).isRecentlyViewed) {
             score -= 3;
           }
           

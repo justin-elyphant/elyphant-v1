@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Product } from "@/contexts/ProductContext";
@@ -11,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, Box, Truck } from "lucide-react";
 import ProductItem from "./product-item/ProductItem";
 import { Badge } from "@/components/ui/badge";
+import { useQuickWishlist } from "@/hooks/useQuickWishlist";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -27,6 +29,9 @@ const ProductDetailsDialog = ({
 }: ProductDetailsDialogProps) => {
   const [activeTab, setActiveTab] = useState("details");
   
+  // Get our wishlist functionality
+  const { toggleWishlist, isFavorited } = useQuickWishlist();
+  
   if (!product) return null;
 
   console.log("ProductDetailsDialog rendering with product:", product);
@@ -39,6 +44,13 @@ const ProductDetailsDialog = ({
   const { recommendations, isLoading: loadingRecommendations } = useProductRecommendations(
     product.product_id || product.id
   );
+
+  // Handle product click for recommendations
+  const handleProductClick = (productId: string) => {
+    console.log("Recommendation clicked:", productId);
+    // You might want to implement navigation to the product detail page
+    // or open a new dialog for this product
+  };
 
   // Generate mock reviews if the product doesn't have any
   const mockReviews = [
@@ -224,6 +236,14 @@ const ProductDetailsDialog = ({
                 key={relatedProduct.product_id || relatedProduct.id || ""}
                 product={relatedProduct}
                 viewMode="grid"
+                onProductClick={handleProductClick}
+                onWishlistClick={(e) => toggleWishlist(e, {
+                  id: relatedProduct.product_id || relatedProduct.id || "",
+                  name: relatedProduct.title || relatedProduct.name || "",
+                  image: relatedProduct.image,
+                  price: relatedProduct.price
+                })}
+                isFavorited={isFavorited(relatedProduct.product_id || relatedProduct.id || "")}
               />
             ))}
           </div>

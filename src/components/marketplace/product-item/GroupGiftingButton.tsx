@@ -15,11 +15,15 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { useConnections } from "@/hooks/useConnections";
-import { Product } from "@/types/product";
 import { useAuth } from "@/contexts/auth";
 
 interface GroupGiftingButtonProps {
-  product: Product;
+  product: {
+    id: string;
+    title: string;
+    image?: string;
+    price?: number;
+  };
   variant?: "icon" | "full";
   className?: string;
 }
@@ -90,7 +94,7 @@ const GroupGiftingButton = ({
         <DialogHeader>
           <DialogTitle>Create a Group Gift</DialogTitle>
           <DialogDescription>
-            Invite friends to contribute to {product.title || product.name}
+            Invite friends to contribute to {product.title}
           </DialogDescription>
         </DialogHeader>
         
@@ -98,11 +102,11 @@ const GroupGiftingButton = ({
           <div className="flex items-center space-x-2">
             <img 
               src={product.image} 
-              alt={product.title || product.name || ""} 
+              alt={product.title} 
               className="w-16 h-16 object-cover rounded"
             />
             <div>
-              <p className="font-medium">{product.title || product.name}</p>
+              <p className="font-medium">{product.title}</p>
               <p className="text-sm text-muted-foreground">${product.price?.toFixed(2)}</p>
             </div>
           </div>

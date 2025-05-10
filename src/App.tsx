@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
@@ -15,9 +14,14 @@ import Marketplace from "./pages/Marketplace";
 import Gifting from "./pages/Gifting";
 import Wishlists from "@/pages/Wishlists";
 import SharedWishlist from "@/pages/SharedWishlist";
-import Cart from "@/pages/Cart";
+import Cart from "./pages/Cart";
 import Connections from "@/pages/Connections";
 import OnboardingPage from "@/pages/OnboardingPage";
+import { Cart } from "./pages/Cart"; 
+import PurchaseSuccess from "./pages/PurchaseSuccess";
+import OrderTracking from "./pages/OrderTracking";
+import GiftScheduling from "./pages/GiftScheduling";
+import CheckoutPage from "./components/marketplace/checkout/CheckoutPage";
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -50,7 +54,12 @@ function App() {
                 <Route path="/gifting" element={<MainLayout><Gifting /></MainLayout>} />
                 <Route path="/wishlists" element={<MainLayout><Wishlists /></MainLayout>} />
                 <Route path="/shared-wishlist/:wishlistId" element={<MainLayout><SharedWishlist /></MainLayout>} />
-                <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/purchase-success" element={<PurchaseSuccess />} />
+                <Route path="/order-tracking" element={<OrderTracking />} />
+                <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
+                <Route path="/gift-scheduling" element={<GiftScheduling />} />
                 <Route path="/connections" element={<MainLayout><Connections /></MainLayout>} />
                 
                 {/* Onboarding route (no main layout) */}

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash2, Minus, Plus, ArrowLeft } from "lucide-react";
@@ -31,8 +30,7 @@ export function Cart() {
   
   const handleCheckout = () => {
     if (isAuthenticated) {
-      // In a real app, this would navigate to the checkout process
-      toast.success("Proceeding to checkout");
+      navigate("/checkout");
     } else {
       setShowSignupDialog(true);
     }
@@ -185,6 +183,9 @@ export function Cart() {
             <AlertDialogAction onClick={() => navigate("/signup")}>
               Sign Up
             </AlertDialogAction>
+            <Button variant="outline" onClick={() => navigate("/checkout")}>
+              Continue as Guest
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

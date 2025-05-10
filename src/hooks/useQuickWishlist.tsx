@@ -4,18 +4,21 @@ import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 
 interface ProductInfo {
   id: string;
   name: string;
   image?: string;
   price?: number;
+  brand?: string;
 }
 
 export const useQuickWishlist = () => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
+  const { wishlists, addToWishlist } = useWishlist();
   const navigate = useNavigate();
   
   // Handle adding/removing from wishlist with proper feedback
@@ -40,13 +43,40 @@ export const useQuickWishlist = () => {
         description: product.name,
       });
     } else {
-      toast.success("Added to wishlist", {
-        description: product.name,
-        action: {
-          label: "View Wishlist",
-          onClick: () => navigate("/wishlists")
-        }
-      });
+      // If there's at least one wishlist, offer to add to a specific wishlist
+      if (wishlists && wishlists.length > 0) {
+        const defaultWishlist = wishlists[0];
+        
+        // Try to find a default or "My Wishlist" wishlist
+        const targetWishlist = wishlists.find(w => 
+          w.title === "My Wishlist" || w.title.toLowerCase().includes("default")
+        ) || defaultWishlist;
+        
+        // Only show this toast if the item wasn't already in any wishlist
+        toast.success("Added to wishlist", {
+          description: product.name,
+          action: {
+            label: "View Wishlist",
+            onClick: () => navigate("/wishlists")
+          },
+          // Optional: Add a second action for undo
+          altAction: wishlists.length > 1 ? {
+            label: "Change List",
+            onClick: () => {
+              // This could trigger a popover or modal to select a different wishlist
+              document.getElementById(`wishlist-trigger-${productId}`)?.click();
+            }
+          } : undefined
+        });
+      } else {
+        toast.success("Added to wishlist", {
+          description: product.name,
+          action: {
+            label: "View Wishlist",
+            onClick: () => navigate("/wishlists")
+          }
+        });
+      }
     }
   };
   

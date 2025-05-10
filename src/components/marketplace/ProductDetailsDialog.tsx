@@ -9,10 +9,12 @@ import { useProductImages } from "./product-details/useProductImages";
 import { useProductRecommendations } from "@/hooks/useProductRecommendations";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Box, Truck } from "lucide-react";
+import { Star, Box, Truck, Heart } from "lucide-react";
 import ProductItem from "./product-item/ProductItem";
 import { Badge } from "@/components/ui/badge";
 import { useQuickWishlist } from "@/hooks/useQuickWishlist";
+import { Button } from "@/components/ui/button";
+import WishlistSelectionPopover from "./WishlistSelectionPopover";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -74,6 +76,21 @@ const ProductDetailsDialog = ({
     }
   ];
 
+  // Create a trigger button for the wishlist popover
+  const wishlistTrigger = (
+    <Button 
+      variant="outline" 
+      size="sm" 
+      className="flex items-center gap-1.5 h-9"
+      id={`wishlist-trigger-${product.product_id || product.id}`}
+    >
+      <Heart 
+        className={`h-4 w-4 ${isFavorited(product.product_id || product.id) ? "fill-primary text-primary" : ""}`} 
+      />
+      {isFavorited(product.product_id || product.id) ? 'Saved' : 'Save to Wishlist'}
+    </Button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -91,7 +108,18 @@ const ProductDetailsDialog = ({
           
           <div className="flex flex-col space-y-4">
             <ProductInfo product={product} />
-            <ProductActions product={product} userData={userData} />
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <ProductActions product={product} userData={userData} />
+              
+              <WishlistSelectionPopover
+                productId={product.product_id || product.id || ""}
+                productName={product.title || product.name || ""}
+                productImage={product.image}
+                productPrice={product.price}
+                productBrand={product.brand}
+                trigger={wishlistTrigger}
+              />
+            </div>
             
             {/* Product badges */}
             <div className="flex flex-wrap gap-2 mt-2">

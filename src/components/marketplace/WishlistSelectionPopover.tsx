@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Heart, Plus, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Heart, Plus, Loader2, RefreshCw, AlertTriangle, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
@@ -38,11 +38,15 @@ export const WishlistSelectionPopover = ({
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [quickCreationName, setQuickCreationName] = useState("");
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
   
-  // Reset adding state if popover closes
+  // Reset states if popover closes
   useEffect(() => {
     if (!open) {
       setAdding(null);
+      setShowQuickCreate(false);
+      setQuickCreationName("");
     }
   }, [open]);
   
@@ -64,7 +68,13 @@ export const WishlistSelectionPopover = ({
       const success = await addToWishlist(wishlistId, itemData);
       
       if (success) {
-        toast.success(`Added "${productName}" to wishlist`);
+        toast.success(`Added "${productName}" to wishlist`, {
+          description: "You can view your wishlists anytime",
+          action: {
+            label: "View Wishlist",
+            onClick: () => window.location.href = "/wishlists"
+          }
+        });
         setOpen(false);
       }
     } catch (error) {
@@ -75,14 +85,20 @@ export const WishlistSelectionPopover = ({
     }
   };
   
-  const handleCreateQuickWishlist = async () => {
+  const handleQuickCreate = async () => {
+    if (!quickCreationName.trim()) {
+      setQuickCreationName("My Wishlist");
+    }
+    
     try {
       setCreating(true);
-      const newWishlist = await createWishlist("My Wishlist", "Items I'd like to receive");
+      const name = quickCreationName.trim() || "My Wishlist";
+      const newWishlist = await createWishlist(name, `Items I'd like to receive`);
       
       if (newWishlist) {
         // Add item to the new wishlist
         await handleAddToWishlist(newWishlist.id);
+        setShowQuickCreate(false);
       }
     } catch (error) {
       console.error("Error creating wishlist:", error);
@@ -90,6 +106,10 @@ export const WishlistSelectionPopover = ({
     } finally {
       setCreating(false);
     }
+  };
+  
+  const handleCreateQuickWishlist = () => {
+    setShowQuickCreate(true);
   };
   
   const handleRefresh = async () => {
@@ -197,7 +217,7 @@ export const WishlistSelectionPopover = ({
               Create a wishlist to save items you love
             </p>
             <Button 
-              onClick={handleCreateQuickWishlist} 
+              onClick={handleQuickCreate} 
               className="mt-2 w-full"
               disabled={creating}
             >
@@ -229,45 +249,110 @@ export const WishlistSelectionPopover = ({
           <h4 className="font-medium">Add to Wishlist</h4>
           <p className="text-sm text-muted-foreground">Select which wishlist to add this item to</p>
         </div>
-        <div className="max-h-72 overflow-auto">
-          {wishlists.map(wishlist => (
-            <div 
-              key={wishlist.id} 
-              className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 flex justify-between"
-              onClick={() => handleAddToWishlist(wishlist.id)}
-            >
-              <div>
-                <p className="font-medium">{wishlist.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
-                </p>
+        
+        {showQuickCreate ? (
+          <div className="p-4 border-b">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label htmlFor="wishlist-name" className="text-sm font-medium">
+                  Wishlist Name
+                </label>
+                <div className="flex gap-2">
+                  <input 
+                    id="wishlist-name"
+                    type="text"
+                    placeholder="My Wishlist" 
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={quickCreationName}
+                    onChange={(e) => setQuickCreationName(e.target.value)}
+                  />
+                </div>
               </div>
-              {adding === wishlist.id ? (
-                <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowQuickCreate(false)}
+                  disabled={creating}
+                >
+                  Cancel
                 </Button>
-              ) : (
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Plus className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={handleQuickCreate}
+                  disabled={creating}
+                >
+                  {creating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Create & Add
+                    </>
+                  )}
                 </Button>
-              )}
+              </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="max-h-72 overflow-auto">
+            {wishlists.map(wishlist => (
+              <div 
+                key={wishlist.id} 
+                className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 flex justify-between items-center"
+                onClick={() => handleAddToWishlist(wishlist.id)}
+              >
+                <div>
+                  <p className="font-medium">{wishlist.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
+                  </p>
+                </div>
+                {adding === wishlist.id ? (
+                  <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        
         <div className="p-3 border-t">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full"
-            onClick={() => {
-              setOpen(false);
-              // Navigate to wishlists page
-              window.location.href = "/wishlists"; 
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Wishlist
-          </Button>
+          {!showQuickCreate && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-1/2"
+                onClick={handleCreateQuickWishlist}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Wishlist
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="w-1/2"
+                onClick={() => {
+                  setOpen(false);
+                  // Navigate to wishlists page
+                  window.location.href = "/wishlists"; 
+                }}
+              >
+                Manage All
+              </Button>
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>

@@ -1,3 +1,4 @@
+
 import React from "react";
 import QuickWishlistButton from "./QuickWishlistButton";
 
@@ -10,7 +11,7 @@ interface WishlistButtonProps {
   onClick: (e: React.MouseEvent) => void;
   isFavorited: boolean;
   size?: "sm" | "md" | "lg";
-  variant?: "default" | "subtle" | "outline";
+  variant?: "default" | "subtle" | "outline" | "floating";
 }
 
 const WishlistButton = ({

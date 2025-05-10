@@ -16,6 +16,8 @@ import Gifting from "./pages/Gifting";
 import Wishlists from "@/pages/Wishlists";
 import SharedWishlist from "@/pages/SharedWishlist";
 import Cart from "@/pages/Cart";
+import Connections from "@/pages/Connections";
+import OnboardingPage from "@/pages/OnboardingPage";
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -49,6 +51,10 @@ function App() {
                 <Route path="/wishlists" element={<MainLayout><Wishlists /></MainLayout>} />
                 <Route path="/shared-wishlist/:wishlistId" element={<MainLayout><SharedWishlist /></MainLayout>} />
                 <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
+                <Route path="/connections" element={<MainLayout><Connections /></MainLayout>} />
+                
+                {/* Onboarding route (no main layout) */}
+                <Route path="/onboarding" element={<OnboardingPage />} />
                 
                 {/* Authentication routes don't need the main layout */}
                 <Route path="/login" element={<Login />} />

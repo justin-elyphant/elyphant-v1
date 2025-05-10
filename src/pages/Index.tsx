@@ -74,6 +74,22 @@ const Index = () => {
                     </Button>
                   </div>
                 </div>
+                
+                <div className="flex items-start">
+                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5">4</div>
+                  <div>
+                    <h3 className="font-semibold text-purple-800">Take the interactive tour</h3>
+                    <p className="text-purple-700 text-sm mb-2">Learn about all features with our guided onboarding experience.</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                      onClick={() => navigate("/onboarding")}
+                    >
+                      Start onboarding <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

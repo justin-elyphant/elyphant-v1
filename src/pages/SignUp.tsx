@@ -20,7 +20,12 @@ const SignUp: React.FC = () => {
   // Store verification bypass preference in localStorage for consistent experience across sessions
   React.useEffect(() => {
     localStorage.setItem("bypassVerification", "true"); // Always set to true for Phase 5
-  }, []);
+    
+    // For new sign ups, mark as new user for onboarding
+    if (step === "verification") {
+      localStorage.setItem("newSignUp", "true");
+    }
+  }, [step]);
   
   return (
     <div className="flex flex-col min-h-screen">

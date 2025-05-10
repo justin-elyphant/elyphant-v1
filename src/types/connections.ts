@@ -1,5 +1,5 @@
 
-export type RelationshipType = 'friend' | 'spouse' | 'cousin' | 'child' | 'custom';
+export type RelationshipType = 'friend' | 'spouse' | 'cousin' | 'child' | 'parent' | 'sibling' | 'colleague' | 'custom';
 
 export type DataVerificationStatus = {
   shipping: 'verified' | 'missing' | 'outdated';
@@ -21,4 +21,15 @@ export interface Connection {
   interests?: string[];
   bio?: string;
   reason?: string;
+  connectionDate?: string;
 }
+
+export type ConnectionRequest = {
+  id: string;
+  userId: string;
+  name: string;
+  username: string;
+  imageUrl?: string;
+  requestDate: string;
+  status: 'pending' | 'accepted' | 'rejected';
+};

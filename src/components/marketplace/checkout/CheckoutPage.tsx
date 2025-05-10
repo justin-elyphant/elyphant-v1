@@ -86,13 +86,27 @@ const CheckoutPage = () => {
     setActiveTab(value);
   };
 
-  const handleUpdateCheckoutData = (section: string, data: Record<string, any>) => {
+  const handleUpdateCheckoutData = (section: keyof CheckoutData, data: Record<string, any>) => {
     setCheckoutData(prev => ({
       ...prev,
       [section]: {
         ...prev[section as keyof typeof prev],
         ...data
       }
+    }));
+  };
+
+  const handleShippingMethodChange = (method: string) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      shippingMethod: method
+    }));
+  };
+
+  const handlePaymentMethodChange = (method: string) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      paymentMethod: method
     }));
   };
 
@@ -164,7 +178,7 @@ const CheckoutPage = () => {
               
               <ShippingOptionsForm
                 selectedMethod={checkoutData.shippingMethod}
-                onSelect={(method) => handleUpdateCheckoutData("shippingMethod", method)}
+                onSelect={handleShippingMethodChange}
               />
               
               <div className="flex justify-end mt-6">
@@ -204,7 +218,7 @@ const CheckoutPage = () => {
                       id="card-payment" 
                       name="payment-method"
                       checked={checkoutData.paymentMethod === "card"}
-                      onChange={() => handleUpdateCheckoutData("paymentMethod", "card")}
+                      onChange={() => handlePaymentMethodChange("card")}
                       className="mr-2"
                     />
                     <label htmlFor="card-payment" className="flex items-center">

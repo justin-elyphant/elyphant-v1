@@ -59,13 +59,17 @@ export const useQuickWishlist = () => {
             label: "View Wishlist",
             onClick: () => navigate("/wishlists")
           },
-          // Optional: Add a second action for undo
-          altAction: wishlists.length > 1 ? {
-            label: "Change List",
-            onClick: () => {
-              // This could trigger a popover or modal to select a different wishlist
-              document.getElementById(`wishlist-trigger-${productId}`)?.click();
+          // For additional actions, we need to use Sonner's supported format
+          // Using a second action button instead of altAction
+          ...(wishlists.length > 1 ? {
+            action: {
+              label: "View Wishlist",
+              onClick: () => navigate("/wishlists")
             }
+          } : {}),
+          onDismiss: wishlists.length > 1 ? () => {
+            // This could trigger a popover or modal to select a different wishlist
+            document.getElementById(`wishlist-trigger-${productId}`)?.click();
           } : undefined
         });
       } else {

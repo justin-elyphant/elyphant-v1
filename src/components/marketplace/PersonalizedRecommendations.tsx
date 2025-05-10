@@ -8,10 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useLazyImage } from "@/hooks/useLazyImage";
 import { Badge } from "@/components/ui/badge";
-import WishlistButton from "./product-item/WishlistButton";
+import { useQuickWishlist } from "@/hooks/useQuickWishlist";
+import QuickWishlistButton from "./product-item/QuickWishlistButton";
 import { Heart, Award, Star, Clock, Truck } from "lucide-react";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import SignUpDialog from "./SignUpDialog";
 
 interface PersonalizedRecommendationsProps {
   products: Product[];
@@ -42,6 +44,7 @@ const PersonalizedRecommendations = ({
   const navigate = useNavigate();
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
+  const { toggleWishlist, showSignUpDialog, setShowSignUpDialog } = useQuickWishlist();
   
   if (isLoading) {
     return (
@@ -84,10 +87,20 @@ const PersonalizedRecommendations = ({
             key={product.id || product.product_id} 
             product={product} 
             isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
-            onFavoriteToggle={() => handleFavoriteToggle(product.product_id || product.id || "")}
+            onFavoriteToggle={(e) => toggleWishlist(e, {
+              id: product.product_id || product.id || "",
+              name: product.title || product.name || "",
+              image: product.image,
+              price: product.price
+            })}
           />
         ))}
       </div>
+      
+      <SignUpDialog 
+        open={showSignUpDialog} 
+        onOpenChange={setShowSignUpDialog} 
+      />
     </div>
   );
 };
@@ -100,7 +113,7 @@ const RecommendationCard = ({
 }: { 
   product: Product; 
   isFavorited: boolean;
-  onFavoriteToggle: () => void;
+  onFavoriteToggle: (e: React.MouseEvent) => void;
 }) => {
   const navigate = useNavigate();
   const { src: imageSrc } = useLazyImage(product.image);
@@ -137,19 +150,16 @@ const RecommendationCard = ({
           )}
         </div>
         
-        {/* Wishlist button */}
-        <WishlistButton 
-          productId={product.id || product.product_id}
-          productName={getTitle()}
-          productImage={product.image}
-          productPrice={product.price}
-          productBrand={product.brand}
-          isFavorited={isFavorited}
-          onClick={(e) => {
-            e.stopPropagation();
-            onFavoriteToggle();
-          }}
-        />
+        {/* Quick wishlist button - now using our new component */}
+        <div className="absolute top-2 right-2 z-10">
+          <QuickWishlistButton
+            productId={product.id || product.product_id || ""}
+            isFavorited={isFavorited}
+            onClick={onFavoriteToggle}
+            size="md"
+            variant="default"
+          />
+        </div>
         
         {/* Product image with consistent aspect ratio */}
         <div className="aspect-square overflow-hidden">
@@ -199,4 +209,3 @@ const RecommendationCard = ({
 };
 
 export default PersonalizedRecommendations;
-

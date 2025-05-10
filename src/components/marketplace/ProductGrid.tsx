@@ -1,16 +1,14 @@
-
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { toast } from "sonner";
+import { useQuickWishlist } from "@/hooks/useQuickWishlist";
+import { sortProducts } from "./hooks/utils/categoryUtils";
 import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
-import { sortProducts } from "./hooks/utils/categoryUtils";
-import { Slider } from "@/components/ui/slider";
 
 interface ProductGridProps {
   products: Product[];
@@ -36,15 +34,25 @@ const ProductGrid = ({
   savedFilters,
   onFilterChange
 }: ProductGridProps) => {
-  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
-  const [userData] = useLocalStorage("userData", null);
-  const { handleFavoriteToggle, isFavorited } = useFavorites();
   const { addToRecentlyViewed, recentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
   
+  // Use our new hook for wishlist functionality
+  const { 
+    toggleWishlist, 
+    isFavorited, 
+    showSignUpDialog, 
+    setShowSignUpDialog 
+  } = useQuickWishlist();
+  
+  // Update sorted products when products or sort option changes
+  useEffect(() => {
+    setSortedProducts(sortProducts(products, sortOption));
+  }, [products, sortOption]);
+
   // Generate product badges for visual indicators
   const getProductStatus = (product: Product): { badge: string; color: string } | null => {
     // Check if this is in the recently viewed items to add "Recently Viewed" badge
@@ -73,30 +81,6 @@ const ProductGrid = ({
     return null;
   };
 
-  // Update sorted products when products or sort option changes
-  useEffect(() => {
-    setSortedProducts(sortProducts(products, sortOption));
-  }, [products, sortOption]);
-
-  const handleWishlistClick = (e: React.MouseEvent, productId: string, productName: string) => {
-    e.stopPropagation();
-    if (!userData) {
-      setShowSignUpDialog(true);
-    } else {
-      handleFavoriteToggle(productId);
-      // Show a toast message
-      toast.success(isFavorited(productId) ? "Removed from wishlist" : "Added to wishlist", {
-        description: productName,
-        action: isFavorited(productId) 
-          ? undefined
-          : {
-              label: "View Wishlist",
-              onClick: () => window.location.href = "/wishlists"
-            }
-      });
-    }
-  };
-  
   const handleProductClick = (productId: string) => {
     console.log("Product clicked:", productId);
     setSelectedProduct(productId);
@@ -137,12 +121,13 @@ const ProductGrid = ({
                 product={product}
                 viewMode={isLarge ? "list" : "grid"}
                 onProductClick={handleProductClick}
-                onWishlistClick={(e) => handleWishlistClick(
-                  e, 
-                  product.product_id || product.id || "", 
-                  product.title || product.name || ""
-                )}
-                isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
+                onWishlistClick={(e) => toggleWishlist(e, {
+                  id: product.product_id || product.id || "",
+                  name: product.title || product.name || "",
+                  image: product.image,
+                  price: product.price
+                })}
+                isFavorited={isFavorited(product.product_id || product.id || "")}
                 statusBadge={status}
               />
             </div>
@@ -180,12 +165,13 @@ const ProductGrid = ({
                 product={product}
                 viewMode={viewMode}
                 onProductClick={handleProductClick}
-                onWishlistClick={(e) => handleWishlistClick(
-                  e, 
-                  product.product_id || product.id || "", 
-                  product.title || product.name || ""
-                )}
-                isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
+                onWishlistClick={(e) => toggleWishlist(e, {
+                  id: product.product_id || product.id || "",
+                  name: product.title || product.name || "",
+                  image: product.image,
+                  price: product.price
+                })}
+                isFavorited={isFavorited(product.product_id || product.id || "")}
                 statusBadge={status}
               />
             );
@@ -197,7 +183,7 @@ const ProductGrid = ({
         product={selectedProduct ? products.find(p => (p.product_id || p.id) === selectedProduct) || null : null}
         open={dlgOpen}
         onOpenChange={setDlgOpen}
-        userData={userData}
+        userData={useLocalStorage("userData", null)[0]}
       />
 
       <SignUpDialog 

@@ -2,357 +2,208 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Star } from "lucide-react";
 import { Product } from "@/types/product";
-import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useLazyImage } from "@/hooks/useLazyImage";
-import { cn } from "@/lib/utils";
-import WishlistButton from "./WishlistButton";
-import SocialShareButton from "./SocialShareButton";
-import GroupGiftingButton from "./GroupGiftingButton";
-import { Award, Star, Truck } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import QuickWishlistButton from "./QuickWishlistButton";
 
-export interface ProductItemProps {
+interface ProductItemProps {
   product: Product;
-  viewMode?: "grid" | "list" | "modern";
-  showBadges?: boolean;
-  onProductView?: (productId: string) => void;
-  onProductClick?: (productId: string) => void;
-  onWishlistClick?: (e: React.MouseEvent) => void;
-  isFavorited?: boolean;
+  viewMode: "grid" | "list" | "modern"; 
+  onProductClick: (productId: string) => void;
+  onWishlistClick: (e: React.MouseEvent) => void;
+  isFavorited: boolean;
   statusBadge?: { badge: string; color: string } | null;
-  useMock?: boolean;
 }
 
 const ProductItem = ({
   product,
-  viewMode = "grid",
-  showBadges = true,
-  onProductView,
+  viewMode,
   onProductClick,
   onWishlistClick,
-  isFavorited = false,
-  statusBadge,
-  useMock = false,
+  isFavorited,
+  statusBadge
 }: ProductItemProps) => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const { src: imageSrc } = useLazyImage(
-    product.image, 
-    "/placeholder.svg",
-    { 
-      threshold: 0.1,
-      rootMargin: "100px",
-    }
-  );
+  const { src: imageSrc } = useLazyImage(product.image);
   
   const handleClick = () => {
-    const productId = product.product_id || product.id || "";
-    
-    if (productId) {
-      // Track product view if callback is provided
-      if (onProductView) {
-        onProductView(productId);
-      }
-      
-      // Handle custom click handler if provided
-      if (onProductClick) {
-        onProductClick(productId);
-        return;
-      }
-      
-      // Default navigation behavior
-      navigate(`/marketplace?productId=${productId}`);
+    onProductClick(product.product_id || product.id || "");
+  };
+  
+  // Helper functions for product data access
+  const getTitle = () => product.title || product.name || "";
+  const getPrice = () => product.price?.toFixed(2) || "0.00";
+  const getRating = () => product.rating || product.stars || 0;
+  const getReviewCount = () => product.reviewCount || product.num_reviews || 0;
+  
+  // Get the discount percentage if available
+  const getDiscountPercent = () => {
+    if ((product as any).original_price && (product as any).original_price > product.price) {
+      const discount = ((product as any).original_price - product.price) / (product as any).original_price * 100;
+      return Math.round(discount);
     }
-  };
-
-  // Function to render rating stars
-  const renderRating = () => {
-    const rating = product.rating || product.stars || 0;
-    const fillColor = rating >= 4 ? "text-yellow-400" : "text-gray-400";
-    
-    return (
-      <div className="flex items-center">
-        <div className="flex items-center mr-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={cn(
-                "h-3 w-3", 
-                i < Math.round(rating) ? fillColor : "text-gray-200"
-              )}
-              fill={i < Math.round(rating) ? "currentColor" : "none"}
-            />
-          ))}
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {product.reviewCount || product.num_reviews || 0}
-        </span>
-      </div>
-    );
+    return null;
   };
   
-  // Get the product ID reliably
-  const getProductId = (): string => {
-    return product.product_id || product.id || "";
-  };
+  const discountPercent = getDiscountPercent();
   
-  // Get product name reliably
-  const getProductName = (): string => {
-    return product.title || product.name || "";
-  };
-  
-  // Create a properly formatted product object for sharing/gifting components
-  const createShareableProductObject = () => {
-    return {
-      id: getProductId(), // This ensures id is always a string and never undefined
-      title: getProductName(),
-      image: product.image,
-      price: product.price
-    };
-  };
-  
-  // Determine if product is on sale or has free shipping
-  const isFreeShipping = product.prime || (product as any).free_shipping;
-  const isOnSale = (product as any).sale_price && 
-    (product as any).sale_price < product.price;
-
-  // Render product based on view mode
   if (viewMode === "list") {
     return (
-      <Card 
-        className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-        onClick={handleClick}
-      >
-        <div className="flex">
-          <div className="w-1/3 md:w-1/4 relative">
-            {showBadges && product.isBestSeller && (
+      <Card className="overflow-hidden cursor-pointer border hover:border-primary/50 transition-all duration-200"
+        onClick={handleClick}>
+        <div className="flex flex-col xs:flex-row">
+          <div className="relative w-full xs:w-1/3 aspect-square">
+            {/* Status badge */}
+            {statusBadge && (
               <div className="absolute top-2 left-2 z-10">
-                <Badge className="bg-amber-500 text-white text-xs py-0">
-                  <Award className="h-3 w-3 mr-1" />
-                  Best Seller
+                <Badge className={`${statusBadge.color}`}>
+                  {statusBadge.badge}
                 </Badge>
               </div>
             )}
-            <div className="h-full relative">
-              <WishlistButton 
-                productId={getProductId()}
-                productName={getProductName()}
-                productImage={product.image}
-                productPrice={product.price}
-                productBrand={product.brand}
-                isFavorited={isFavorited}
-                onClick={onWishlistClick}
-              />
-              <img
-                src={imageSrc}
-                alt={getProductName()}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
-          </div>
-          <div className="w-2/3 md:w-3/4">
-            <CardContent className="p-3 md:p-4">
-              <div className="flex flex-col h-full justify-between">
-                <div>
-                  <h3 className="font-medium text-sm md:text-base line-clamp-2">
-                    {getProductName()}
-                  </h3>
-                  
-                  {(product.rating || product.stars) && renderRating()}
-                  
-                  {product.brand && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {product.brand}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="mt-2">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="font-bold">
-                        ${product.price.toFixed(2)}
-                        {isOnSale && (
-                          <span className="text-xs line-through text-muted-foreground ml-1">
-                            ${(product as any).original_price?.toFixed(2)}
-                          </span>
-                        )}
-                      </p>
-                      
-                      {isFreeShipping && (
-                        <div className="flex items-center text-xs text-green-600 mt-1">
-                          <Truck className="h-3 w-3 mr-1" />
-                          <span>Free shipping</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex space-x-1">
-                      <SocialShareButton product={createShareableProductObject()} />
-                      <GroupGiftingButton product={createShareableProductObject()} />
-                    </div>
-                  </div>
-                </div>
+            
+            {/* Discount badge */}
+            {discountPercent && (
+              <div className="absolute top-2 right-2 z-10">
+                <Badge className="bg-red-100 text-red-800 border-red-200">
+                  {discountPercent}% OFF
+                </Badge>
               </div>
-            </CardContent>
+            )}
+            
+            {/* Product image */}
+            <img
+              src={imageSrc}
+              alt={getTitle()}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
           </div>
+          
+          <CardContent className="flex-1 p-3">
+            {/* Title */}
+            <div className="flex justify-between items-start">
+              <h3 className="font-medium text-sm line-clamp-2 flex-1">
+                {getTitle()}
+              </h3>
+              
+              {/* Quick wishlist button */}
+              <div className="ml-2">
+                <QuickWishlistButton
+                  productId={product.product_id || product.id || ""}
+                  isFavorited={isFavorited}
+                  onClick={onWishlistClick}
+                  size="sm"
+                  variant="subtle"
+                />
+              </div>
+            </div>
+            
+            {/* Price */}
+            <div className="mt-2">
+              <span className="font-bold">${getPrice()}</span>
+              {discountPercent && (product as any).original_price && (
+                <span className="text-sm text-muted-foreground line-through ml-2">
+                  ${(product as any).original_price.toFixed(2)}
+                </span>
+              )}
+            </div>
+            
+            {/* Ratings */}
+            {getRating() > 0 && (
+              <div className="flex items-center mt-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star 
+                    key={i}
+                    className={`h-3 w-3 ${i < Math.round(getRating()) ? 'text-amber-500 fill-amber-500' : 'text-gray-200'}`}
+                  />
+                ))}
+                <span className="text-xs text-muted-foreground ml-1">
+                  {getReviewCount()}
+                </span>
+              </div>
+            )}
+          </CardContent>
         </div>
       </Card>
     );
   }
   
-  if (viewMode === "modern") {
-    return (
-      <div 
-        className="group relative cursor-pointer"
-        onClick={handleClick}
-      >
-        <div className="relative overflow-hidden rounded-lg aspect-[4/5]">
-          {showBadges && product.isBestSeller && (
-            <div className="absolute top-2 left-2 z-10">
-              <Badge className="bg-amber-500 text-white">
-                <Award className="h-3 w-3 mr-1" />
-                Best Seller
-              </Badge>
-            </div>
-          )}
-          
-          <WishlistButton 
-            productId={getProductId()}
-            productName={getProductName()}
-            productImage={product.image}
-            productPrice={product.price}
-            productBrand={product.brand}
-            isFavorited={isFavorited}
-            onClick={onWishlistClick}
-          />
-          
-          <img
-            src={imageSrc}
-            alt={getProductName()}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-          
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 transition-opacity opacity-0 group-hover:opacity-100">
-            <div className="flex justify-end space-x-1">
-              <SocialShareButton 
-                product={createShareableProductObject()}
-                className="bg-white/80 hover:bg-white"
-              />
-              <GroupGiftingButton 
-                product={createShareableProductObject()}
-                className="bg-white/80 hover:bg-white"
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-3">
-          <h3 className="font-medium text-sm md:text-base line-clamp-2 group-hover:text-primary">
-            {getProductName()}
-          </h3>
-          
-          <div className="flex justify-between items-center mt-1">
-            <p className="font-bold">
-              ${product.price.toFixed(2)}
-              {isOnSale && (
-                <span className="text-xs line-through text-muted-foreground ml-1">
-                  ${(product as any).original_price?.toFixed(2)}
-                </span>
-              )}
-            </p>
-            
-            {(product.rating || product.stars) && renderRating()}
-          </div>
-          
-          {(isFreeShipping || product.brand) && (
-            <div className="flex justify-between items-center mt-1 text-xs text-muted-foreground">
-              {product.brand && <span>{product.brand}</span>}
-              {isFreeShipping && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center text-green-600">
-                        <Truck className="h-3 w-3 mr-1" />
-                        <span>Free</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Free Shipping</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-  
-  // Default grid view
+  // Default is grid view
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="overflow-hidden cursor-pointer border hover:border-primary/50 transition-all duration-200"
       onClick={handleClick}
     >
       <div className="relative">
-        {showBadges && (
-          <>
-            {product.isBestSeller && (
-              <div className="absolute top-2 left-2 z-10">
-                <Badge className="bg-amber-500 text-white text-xs">
-                  <Award className="h-3 w-3 mr-1" />
-                  Best Seller
-                </Badge>
-              </div>
-            )}
-          </>
+        {/* Status badge */}
+        {statusBadge && (
+          <div className="absolute top-2 left-2 z-10">
+            <Badge className={`${statusBadge.color}`}>
+              {statusBadge.badge}
+            </Badge>
+          </div>
         )}
-        <WishlistButton 
-          productId={getProductId()}
-          productName={getProductName()}
-          productImage={product.image}
-          productPrice={product.price}
-          productBrand={product.brand}
-          onClick={onWishlistClick}
-          isFavorited={isFavorited}
-        />
-        <div className="h-40 overflow-hidden">
+        
+        {/* Quick wishlist button */}
+        <div className="absolute top-2 right-2 z-10">
+          <QuickWishlistButton
+            productId={product.product_id || product.id || ""}
+            isFavorited={isFavorited}
+            onClick={onWishlistClick}
+            size="md"
+            variant="default"
+          />
+        </div>
+        
+        {/* Discount badge */}
+        {discountPercent && (
+          <div className="absolute bottom-2 left-2 z-10">
+            <Badge className="bg-red-100 text-red-800 border-red-200">
+              {discountPercent}% OFF
+            </Badge>
+          </div>
+        )}
+        
+        {/* Product image with consistent aspect ratio */}
+        <div className="aspect-square overflow-hidden">
           <img
             src={imageSrc}
-            alt={getProductName()}
-            className="w-full h-full object-cover"
+            alt={getTitle()}
+            className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
             loading="lazy"
           />
         </div>
       </div>
-      <CardContent className={isMobile ? "p-3" : "p-4"}>
-        <h3 className="font-medium text-sm line-clamp-2">
-          {getProductName()}
+      
+      <CardContent className="p-3">
+        {/* Product title with line clamping */}
+        <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
+          {getTitle()}
         </h3>
         
-        {(product.rating || product.stars) && (
-          <div className="mt-1">{renderRating()}</div>
-        )}
-        
-        <div className="mt-2 flex justify-between items-end">
-          <p className="font-bold">${product.price.toFixed(2)}</p>
-          
-          <div className="flex space-x-1">
-            <SocialShareButton product={createShareableProductObject()} />
-            <GroupGiftingButton product={createShareableProductObject()} />
-          </div>
+        {/* Price with original price if discounted */}
+        <div className="mt-2 flex items-baseline">
+          <span className="font-bold">${getPrice()}</span>
+          {discountPercent && (product as any).original_price && (
+            <span className="text-sm text-muted-foreground line-through ml-2">
+              ${(product as any).original_price.toFixed(2)}
+            </span>
+          )}
         </div>
         
-        {isFreeShipping && (
-          <div className="flex items-center text-xs text-green-600 mt-1">
-            <Truck className="h-3 w-3 mr-1" />
-            <span>Free shipping</span>
+        {/* Rating stars for visual evaluation */}
+        {getRating() > 0 && (
+          <div className="flex items-center mt-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star 
+                key={i}
+                className={`h-3 w-3 ${i < Math.round(getRating()) ? 'text-amber-500 fill-amber-500' : 'text-gray-200'}`}
+              />
+            ))}
+            <span className="text-xs text-muted-foreground ml-1">
+              {getReviewCount()}
+            </span>
           </div>
         )}
       </CardContent>

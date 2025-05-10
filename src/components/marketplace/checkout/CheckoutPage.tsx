@@ -86,11 +86,21 @@ const CheckoutPage = () => {
     setActiveTab(value);
   };
 
-  const handleUpdateCheckoutData = (section: keyof CheckoutData, data: Record<string, any>) => {
+  const handleUpdateShippingInfo = (data: Partial<ShippingInfo>) => {
     setCheckoutData(prev => ({
       ...prev,
-      [section]: {
-        ...prev[section as keyof typeof prev],
+      shippingInfo: {
+        ...prev.shippingInfo,
+        ...data
+      }
+    }));
+  };
+
+  const handleUpdateGiftOptions = (data: Partial<GiftOptions>) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      giftOptions: {
+        ...prev.giftOptions,
         ...data
       }
     }));
@@ -173,7 +183,7 @@ const CheckoutPage = () => {
             <TabsContent value="shipping" className="space-y-6">
               <CheckoutForm 
                 shippingInfo={checkoutData.shippingInfo} 
-                onUpdate={(data) => handleUpdateCheckoutData("shippingInfo", data)} 
+                onUpdate={handleUpdateShippingInfo} 
               />
               
               <ShippingOptionsForm
@@ -194,7 +204,7 @@ const CheckoutPage = () => {
             <TabsContent value="gift" className="space-y-6">
               <GiftOptionsForm 
                 giftOptions={checkoutData.giftOptions}
-                onUpdate={(data) => handleUpdateCheckoutData("giftOptions", data)}
+                onUpdate={handleUpdateGiftOptions}
               />
               
               <div className="flex justify-between mt-6">

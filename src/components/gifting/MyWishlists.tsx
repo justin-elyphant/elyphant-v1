@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
@@ -24,6 +23,18 @@ import {
 import { useAuth } from "@/contexts/auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { z } from "zod";
+
+// Form schema for validation (keep consistent with dialog components)
+const wishlistFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  priority: z.enum(["low", "medium", "high"]).optional()
+});
+
+type WishlistFormValues = z.infer<typeof wishlistFormSchema>;
 
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -84,13 +95,7 @@ const MyWishlists = () => {
     setDialogOpen(true);
   };
 
-  const handleDialogSubmit = async (values: { 
-    title: string; 
-    description?: string; 
-    category?: string;
-    tags?: string[];
-    priority?: string;
-  }) => {
+  const handleDialogSubmit = async (values: WishlistFormValues) => {
     await createWishlist(
       values.title, 
       values.description || "", 
@@ -110,13 +115,7 @@ const MyWishlists = () => {
     }
   };
 
-  const handleEditDialogSubmit = async (values: { 
-    title: string; 
-    description?: string;
-    category?: string;
-    tags?: string[];
-    priority?: string;
-  }) => {
+  const handleEditDialogSubmit = async (values: WishlistFormValues) => {
     if (!currentWishlist) return;
     
     // For now, we'll just show a toast that this feature is coming soon

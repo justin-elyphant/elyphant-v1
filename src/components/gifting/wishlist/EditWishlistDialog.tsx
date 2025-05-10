@@ -28,7 +28,7 @@ type WishlistFormValues = z.infer<typeof wishlistFormSchema>;
 interface EditWishlistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (values: { title: string; description?: string; category?: string; tags?: string[]; priority?: string }) => void;
+  onSubmit: (values: WishlistFormValues) => void;
   wishlist: Wishlist | null;
 }
 

@@ -40,11 +40,13 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
 
 interface WishlistCategoryBadgeProps extends BadgeProps {
   category: string;
+  size?: "sm" | "default";
 }
 
 const WishlistCategoryBadge = ({ 
   category, 
   className, 
+  size = "default",
   ...props 
 }: WishlistCategoryBadgeProps) => {
   // Get color scheme for category (or use default)
@@ -54,7 +56,8 @@ const WishlistCategoryBadge = ({
     <Badge 
       variant="outline" 
       className={cn(
-        "font-medium px-2 py-0.5 text-xs capitalize", 
+        "font-medium capitalize", 
+        size === "sm" ? "px-1.5 py-0 text-[10px]" : "px-2 py-0.5 text-xs",
         colors.bg, 
         colors.text, 
         colors.border,

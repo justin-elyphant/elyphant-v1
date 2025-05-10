@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Edit, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import GiftItemCard from "../GiftItemCard";
 import { toast } from "sonner";

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, ExternalLink, List } from "lucide-react";
+import { Heart, ExternalLink, List, Share2 } from "lucide-react";
 import { 
   Popover,
   PopoverTrigger,
@@ -12,6 +12,7 @@ import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
+import ShareStatusBadge from "@/components/gifting/wishlist/ShareStatusBadge";
 
 interface FavoritesDropdownProps {
   onSignUpRequired?: () => void;
@@ -20,7 +21,7 @@ interface FavoritesDropdownProps {
 const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
   const { user } = useAuth();
   const { favorites = [] } = useFavorites();
-  const { wishlists } = useWishlist();
+  const { wishlists, updateWishlistSharing } = useWishlist();
   const navigate = useNavigate();
   
   // Count total items across all wishlists
@@ -37,6 +38,11 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
 
   const handleViewAll = () => {
     navigate('/wishlists');
+  };
+
+  const handleShare = (e: React.MouseEvent, wishlistId: string) => {
+    e.stopPropagation();
+    navigate(`/shared-wishlist/${wishlistId}`);
   };
 
   return (
@@ -75,20 +81,41 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
               {wishlists.map((wishlist) => (
                 <div key={wishlist.id} className="p-3 hover:bg-muted/50">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{wishlist.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
-                      </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-sm">{wishlist.title}</p>
+                          <ShareStatusBadge 
+                            isPublic={wishlist.is_public} 
+                            showText={false}
+                            size="sm"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
+                        </p>
+                      </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-7 px-2"
-                      onClick={() => navigate(`/wishlists`)}
-                    >
-                      <List className="h-3.5 w-3.5" />
-                    </Button>
+                    <div className="flex gap-1">
+                      {wishlist.is_public && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={(e) => handleShare(e, wishlist.id)}
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => navigate(`/wishlists`)}
+                      >
+                        <List className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                   {wishlist.items.length > 0 && (
                     <div className="flex gap-1 mt-2 overflow-x-auto pb-1">

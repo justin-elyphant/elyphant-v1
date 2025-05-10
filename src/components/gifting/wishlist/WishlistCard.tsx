@@ -1,25 +1,24 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Share2, ShoppingBag, Trash2, Loader2, Globe, Lock } from "lucide-react";
+import { Edit, ShoppingBag, Trash2, Loader2, Globe, Lock } from "lucide-react";
 import GiftItemCard from "../GiftItemCard";
 import { toast } from "sonner";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
-import ShareWishlistDialog from "./ShareWishlistDialog";
 import { Badge } from "@/components/ui/badge";
+import WishlistShareButton from "./share/WishlistShareButton";
 
 interface WishlistCardProps {
   wishlist: Wishlist;
   onEdit: (id: string) => void;
-  onShare: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps) => {
+const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const { removeFromWishlist, updateWishlistSharing } = useWishlist();
   
   const handleRemoveItem = async (itemId: string) => {
@@ -36,10 +35,6 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
     } finally {
       setRemovingItemId(null);
     }
-  };
-  
-  const handleOpenShareDialog = () => {
-    setShareDialogOpen(true);
   };
 
   return (
@@ -119,15 +114,17 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
         )}
       </CardContent>
       <CardFooter className="flex flex-col space-y-3">
-        <div className="flex w-full justify-between">
+        <div className="flex w-full justify-between gap-2">
           <Button variant="outline" size="sm" onClick={() => onEdit(wishlist.id)}>
             <Edit className="mr-2 h-3 w-3" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" onClick={handleOpenShareDialog}>
-            <Share2 className="mr-2 h-3 w-3" />
-            Share
-          </Button>
+          <WishlistShareButton 
+            wishlist={wishlist}
+            size="sm"
+            onShareSettingsChange={updateWishlistSharing}
+            className="flex-1"
+          />
         </div>
         
         {wishlist.items.length > 0 && (
@@ -139,13 +136,6 @@ const WishlistCard = ({ wishlist, onEdit, onShare, onDelete }: WishlistCardProps
           </Button>
         )}
       </CardFooter>
-
-      <ShareWishlistDialog 
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        wishlist={wishlist}
-        onShareSettingsChange={updateWishlistSharing}
-      />
     </Card>
   );
 };

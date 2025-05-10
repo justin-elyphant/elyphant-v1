@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash2, Minus, Plus, ArrowLeft } from "lucide-react";
@@ -19,8 +20,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Changed from a const export to a named export to match App.tsx import
-export function Cart() {
+// Export the Cart component (using default export)
+function Cart() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal } = useCart();
   const [showSignupDialog, setShowSignupDialog] = useState(false);
   const navigate = useNavigate();
@@ -193,5 +194,5 @@ export function Cart() {
   );
 }
 
-// We'll also add the default export to maintain compatibility with any other imports
+// Export as default
 export default Cart;

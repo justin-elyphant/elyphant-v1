@@ -33,6 +33,7 @@ export type Product = {
   pantry?: boolean;
   prime?: boolean;
   product_details?: any[];
+  features?: string[];
   isBestSeller?: boolean;
   variants?: string[];
   

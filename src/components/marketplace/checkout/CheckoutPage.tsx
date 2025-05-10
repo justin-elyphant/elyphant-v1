@@ -13,13 +13,37 @@ import OrderSummary from "./OrderSummary";
 import GiftOptionsForm from "./GiftOptionsForm";
 import ShippingOptionsForm from "./ShippingOptionsForm";
 
+interface ShippingInfo {
+  name: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+interface GiftOptions {
+  isGift: boolean;
+  recipientName: string;
+  giftMessage: string;
+  giftWrapping: boolean;
+}
+
+interface CheckoutData {
+  shippingInfo: ShippingInfo;
+  giftOptions: GiftOptions;
+  shippingMethod: string;
+  paymentMethod: string;
+}
+
 const CheckoutPage = () => {
   const { cartItems, cartTotal } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("shipping");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [checkoutData, setCheckoutData] = useState({
+  const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     shippingInfo: {
       name: "",
       email: "",
@@ -62,7 +86,7 @@ const CheckoutPage = () => {
     setActiveTab(value);
   };
 
-  const handleUpdateCheckoutData = (section: string, data: any) => {
+  const handleUpdateCheckoutData = (section: string, data: Record<string, any>) => {
     setCheckoutData(prev => ({
       ...prev,
       [section]: {

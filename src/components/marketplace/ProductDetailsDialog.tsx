@@ -74,6 +74,11 @@ const ProductDetailsDialog = ({
     }
   };
 
+  // Extract product features safely
+  const productFeatures = Array.isArray(product.product_details) ? 
+    product.product_details.map(detail => detail?.value || detail?.toString()) : 
+    [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden max-h-[90vh]">
@@ -154,11 +159,11 @@ const ProductDetailsDialog = ({
                 </div>
                 
                 {/* Features */}
-                {product.features && product.features.length > 0 && (
+                {productFeatures.length > 0 && (
                   <div className="mb-6">
                     <h4 className="font-medium mb-2">Features</h4>
                     <ul className="text-sm list-disc pl-4 space-y-1">
-                      {product.features.map((feature, idx) => (
+                      {productFeatures.map((feature, idx) => (
                         <li key={idx}>{feature}</li>
                       ))}
                     </ul>

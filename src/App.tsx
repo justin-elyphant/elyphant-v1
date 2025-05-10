@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
@@ -14,10 +15,9 @@ import Marketplace from "./pages/Marketplace";
 import Gifting from "./pages/Gifting";
 import Wishlists from "@/pages/Wishlists";
 import SharedWishlist from "@/pages/SharedWishlist";
-import Cart from "./pages/Cart";
 import Connections from "@/pages/Connections";
 import OnboardingPage from "@/pages/OnboardingPage";
-import { Cart } from "./pages/Cart"; 
+import Cart from "./pages/Cart"; // Using the default export
 import PurchaseSuccess from "./pages/PurchaseSuccess";
 import OrderTracking from "./pages/OrderTracking";
 import GiftScheduling from "./pages/GiftScheduling";

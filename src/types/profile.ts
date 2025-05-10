@@ -24,6 +24,8 @@ export type Wishlist = {
   category?: string;
   tags?: string[];
   priority?: 'low' | 'medium' | 'high';
+  view_count?: number;
+  last_viewed?: string;
 };
 
 export type Profile = Database['public']['Tables']['profiles']['Row'] & {

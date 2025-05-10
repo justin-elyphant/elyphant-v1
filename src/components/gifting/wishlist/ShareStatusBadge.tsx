@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Globe, Lock, Eye } from "lucide-react";
+import { Globe, Lock, Eye, ShieldCheck } from "lucide-react";
 import { Badge, BadgeProps } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -41,14 +41,14 @@ const ShareStatusBadge = ({
   const badgeStyles = cn(
     sizeClasses[size],
     isPublic 
-      ? "text-green-600 border-green-200 bg-green-50 hover:bg-green-100" 
-      : "text-gray-600 border-gray-200 bg-gray-50 hover:bg-gray-100",
+      ? "text-green-600 border-green-300 bg-green-50 hover:bg-green-100" 
+      : "text-blue-600 border-blue-300 bg-blue-50 hover:bg-blue-100",
     className
   );
 
   const tooltipText = isPublic 
     ? "This wishlist is public and can be shared" 
-    : "This wishlist is private";
+    : "This wishlist is private and visible only to you";
 
   return (
     <TooltipProvider>
@@ -60,7 +60,7 @@ const ShareStatusBadge = ({
                 isPublic ? (
                   <Globe className={iconSizeClasses[size]} />
                 ) : (
-                  <Lock className={iconSizeClasses[size]} />
+                  <ShieldCheck className={iconSizeClasses[size]} />
                 )
               )}
               

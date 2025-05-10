@@ -59,7 +59,17 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
   };
 
   return (
-    <Card key={wishlist.id} className="relative">
+    <Card key={wishlist.id} className="relative overflow-hidden">
+      {/* Privacy status indicator at top corner */}
+      <div className="absolute top-0 right-0">
+        <ShareStatusBadge 
+          isPublic={wishlist.is_public} 
+          showText={false}
+          size="sm"
+          className="rounded-none rounded-bl-lg"
+        />
+      </div>
+      
       <Button 
         variant="ghost" 
         size="icon" 
@@ -70,14 +80,9 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
         <Trash2 className="h-4 w-4" />
       </Button>
       
-      <CardHeader>
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between pr-8">
           <CardTitle>{wishlist.title}</CardTitle>
-          <ShareStatusBadge 
-            isPublic={wishlist.is_public} 
-            showText={false}
-            size="sm"
-          />
         </div>
 
         {wishlist.description && (

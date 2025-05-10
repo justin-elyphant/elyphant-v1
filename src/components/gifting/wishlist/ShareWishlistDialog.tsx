@@ -14,6 +14,7 @@ import PrivacyToggle from "./share/PrivacyToggle";
 import ShareStatusBadge from "./ShareStatusBadge";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { AlertTriangle } from "lucide-react";
 
 interface ShareWishlistDialogProps {
   open: boolean;
@@ -47,7 +48,11 @@ const ShareWishlistDialog = ({
       const success = await onShareSettingsChange(wishlist.id, isPublic);
       
       if (success) {
-        toast.success(`Wishlist is now ${isPublic ? 'public' : 'private'}`);
+        toast.success(
+          isPublic 
+            ? "Wishlist is now public and can be shared" 
+            : "Wishlist is now private"
+        );
       } else {
         // Revert UI if failed
         setCurrentStatus(!isPublic);
@@ -62,13 +67,19 @@ const ShareWishlistDialog = ({
     }
   };
 
+  const getPrivacyLabel = (): string => {
+    return currentStatus ? "Public" : "Private";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle>Share Wishlist</DialogTitle>
-            <ShareStatusBadge isPublic={currentStatus} />
+            <DialogTitle className="flex items-center gap-2">
+              Share Wishlist
+              <ShareStatusBadge isPublic={currentStatus} size="sm" />
+            </DialogTitle>
           </div>
           <DialogDescription>
             Share "{wishlist.title}" with friends or make it public for anyone to view
@@ -90,9 +101,7 @@ const ShareWishlistDialog = ({
             <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
               <div className="flex items-start gap-3">
                 <div className="text-amber-800 shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                  </svg>
+                  <AlertTriangle className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-amber-800">Private Wishlist</h3>
@@ -104,6 +113,15 @@ const ShareWishlistDialog = ({
               </div>
             </div>
           )}
+        </div>
+        
+        <div className="mt-2 flex justify-end">
+          <Button 
+            onClick={() => onOpenChange(false)} 
+            className="w-full sm:w-auto"
+          >
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

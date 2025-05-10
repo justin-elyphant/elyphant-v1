@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -34,11 +35,13 @@ const ProductGrid = ({
   savedFilters,
   onFilterChange
 }: ProductGridProps) => {
+  // Always initialize these hooks first, regardless of conditions
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const { addToRecentlyViewed, recentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
+  const [userData] = useLocalStorage("userData", null);
   
   // Use our new hook for wishlist functionality
   const { 
@@ -183,7 +186,7 @@ const ProductGrid = ({
         product={selectedProduct ? products.find(p => (p.product_id || p.id) === selectedProduct) || null : null}
         open={dlgOpen}
         onOpenChange={setDlgOpen}
-        userData={useLocalStorage("userData", null)[0]}
+        userData={userData}
       />
 
       <SignUpDialog 

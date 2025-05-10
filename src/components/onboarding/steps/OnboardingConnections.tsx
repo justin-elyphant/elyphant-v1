@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Check, UserPlus } from "lucide-react";
-import { FacebookContactsButton } from "@/components/connections/FacebookContactsButton";
+import FacebookContactsButton from "@/components/connections/FacebookContactsButton";
 import { useConnections } from "@/hooks/useConnections";
 import { toast } from "sonner";
 

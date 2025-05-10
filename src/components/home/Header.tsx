@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -20,6 +21,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -43,7 +45,10 @@ const Header = () => {
 
         {/* Navigation and Auth Buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          <CategoriesDropdown />
+          <CategoriesDropdown 
+            open={isCategoriesOpen} 
+            onOpenChange={setIsCategoriesOpen} 
+          />
           <ContextualHelp
             id="categoriesHelp"
             content="Browse gifts by category to find the perfect present."
@@ -100,7 +105,10 @@ const Header = () => {
                   </SheetTrigger>
                 </div>
                 <div className="py-4">
-                  <CategoriesDropdown />
+                  <CategoriesDropdown 
+                    open={isCategoriesOpen}
+                    onOpenChange={setIsCategoriesOpen}
+                  />
                   <Link
                     to="/marketplace"
                     className="block px-4 py-2 hover:bg-gray-100 transition-colors"

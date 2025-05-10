@@ -3,13 +3,14 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, ShoppingBag, Trash2, Loader2, Globe, Lock } from "lucide-react";
+import { Edit, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import GiftItemCard from "../GiftItemCard";
 import { toast } from "sonner";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
-import { Badge } from "@/components/ui/badge";
 import WishlistShareButton from "./share/WishlistShareButton";
+import ShareStatusBadge from "./ShareStatusBadge";
+import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
 
 interface WishlistCardProps {
   wishlist: Wishlist;
@@ -37,6 +38,25 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
     }
   };
 
+  // Determine badge styles based on priority
+  const getPriorityBadge = () => {
+    if (!wishlist.priority) return null;
+
+    const styles = {
+      high: "bg-red-50 text-red-700 border-red-200",
+      medium: "bg-amber-50 text-amber-700 border-amber-200",
+      low: "bg-blue-50 text-blue-700 border-blue-200"
+    };
+
+    return (
+      <div className="flex items-center gap-1 text-xs">
+        <div className={`w-2 h-2 rounded-full ${wishlist.priority === 'high' ? 'bg-red-500' : 
+          wishlist.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+        <span className="capitalize">{wishlist.priority} priority</span>
+      </div>
+    );
+  };
+
   return (
     <Card key={wishlist.id} className="relative">
       <Button 
@@ -52,20 +72,32 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
       <CardHeader>
         <div className="flex items-center justify-between pr-8">
           <CardTitle>{wishlist.title}</CardTitle>
-          {wishlist.is_public ? (
-            <Badge variant="outline" className="flex gap-1 items-center text-green-600 border-green-200 bg-green-50">
-              <Globe className="h-3 w-3" />
-              Public
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="flex gap-1 items-center">
-              <Lock className="h-3 w-3" />
-              Private
-            </Badge>
-          )}
+          <ShareStatusBadge 
+            isPublic={wishlist.is_public} 
+            showText={false}
+            size="sm"
+          />
         </div>
-        <CardDescription>{wishlist.description}</CardDescription>
+
+        {wishlist.description && (
+          <CardDescription>{wishlist.description}</CardDescription>
+        )}
+        
+        <div className="flex flex-wrap gap-2 mt-2">
+          {wishlist.category && (
+            <WishlistCategoryBadge category={wishlist.category} />
+          )}
+          
+          {getPriorityBadge()}
+
+          {wishlist.tags?.map(tag => (
+            <Badge key={tag} variant="outline" className="text-xs bg-gray-50">
+              {tag}
+            </Badge>
+          ))}
+        </div>
       </CardHeader>
+
       <CardContent>
         <div className="grid grid-cols-2 gap-2">
           {wishlist.items.slice(0, 4).map((item) => (

@@ -1,11 +1,18 @@
 
-import React, { useState, useEffect } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Heart, Plus, Loader2, RefreshCw, AlertTriangle, Check } from "lucide-react";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth";
+import React, { useState } from "react";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Loader2, PlusCircle, Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import WishlistCategoryBadge from "../gifting/wishlist/categories/WishlistCategoryBadge";
 
 interface WishlistSelectionPopoverProps {
   productId: string;
@@ -13,346 +20,150 @@ interface WishlistSelectionPopoverProps {
   productImage?: string;
   productPrice?: number;
   productBrand?: string;
-  trigger: React.ReactNode;
+  onClose?: () => void;
+  trigger?: React.ReactNode;
+  className?: string;
 }
 
-export const WishlistSelectionPopover = ({ 
-  productId, 
+const WishlistSelectionPopover = ({
+  productId,
   productName,
   productImage,
   productPrice,
   productBrand,
-  trigger 
+  onClose,
+  trigger,
+  className
 }: WishlistSelectionPopoverProps) => {
-  const { user } = useAuth();
-  const { 
-    wishlists, 
-    createWishlist, 
-    addToWishlist, 
-    isLoading, 
-    initError,
-    reloadWishlists 
-  } = useWishlist();
-  
+  const { wishlists, addToWishlist } = useWishlist();
   const [open, setOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [adding, setAdding] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [quickCreationName, setQuickCreationName] = useState("");
-  const [showQuickCreate, setShowQuickCreate] = useState(false);
-  
-  // Reset states if popover closes
-  useEffect(() => {
-    if (!open) {
-      setAdding(null);
-      setShowQuickCreate(false);
-      setQuickCreationName("");
-    }
-  }, [open]);
-  
+  const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  // Check which wishlists already contain this product
+  const isInWishlist = (wishlistId: string) => {
+    const wishlist = wishlists.find((w) => w.id === wishlistId);
+    return wishlist?.items.some((item) => item.product_id === productId);
+  };
+
   const handleAddToWishlist = async (wishlistId: string) => {
     try {
-      setAdding(wishlistId);
-      
-      // Format item data
-      const itemData = {
-        name: productName,
+      setAddingToWishlist(wishlistId);
+      await addToWishlist(wishlistId, {
         product_id: productId,
+        name: productName,
         price: productPrice,
         image_url: productImage,
-        brand: productBrand,
-        notes: ""
-      };
-      
-      // Add to wishlist
-      const success = await addToWishlist(wishlistId, itemData);
-      
-      if (success) {
-        toast.success(`Added "${productName}" to wishlist`, {
-          description: "You can view your wishlists anytime",
-          action: {
-            label: "View Wishlist",
-            onClick: () => window.location.href = "/wishlists"
-          }
-        });
-        setOpen(false);
-      }
+        brand: productBrand
+      });
+      toast.success(`Added to wishlist`);
+      if (onClose) onClose();
+      setOpen(false);
     } catch (error) {
-      console.error("Error adding item to wishlist:", error);
-      toast.error("Failed to add item to wishlist");
+      console.error("Error adding to wishlist:", error);
+      toast.error("Failed to add to wishlist");
     } finally {
-      setAdding(null);
+      setAddingToWishlist(null);
     }
   };
-  
-  const handleQuickCreate = async () => {
-    if (!quickCreationName.trim()) {
-      setQuickCreationName("My Wishlist");
-    }
-    
-    try {
-      setCreating(true);
-      const name = quickCreationName.trim() || "My Wishlist";
-      const newWishlist = await createWishlist(name, `Items I'd like to receive`);
-      
-      if (newWishlist) {
-        // Add item to the new wishlist
-        await handleAddToWishlist(newWishlist.id);
-        setShowQuickCreate(false);
-      }
-    } catch (error) {
-      console.error("Error creating wishlist:", error);
-      toast.error("Failed to create wishlist");
-    } finally {
-      setCreating(false);
-    }
-  };
-  
-  const handleCreateQuickWishlist = () => {
-    setShowQuickCreate(true);
-  };
-  
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      await reloadWishlists();
-      toast.success("Wishlists refreshed");
-    } catch (error) {
-      console.error("Error refreshing wishlists:", error);
-      toast.error("Failed to refresh wishlists");
-    } finally {
-      setRefreshing(false);
-    }
-  };
-  
-  // Ensure user is authenticated
-  if (!user) {
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          {trigger}
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-4">
-          <div className="text-center space-y-3">
-            <p className="font-medium">Sign in to save items to your wishlist</p>
-            <p className="text-sm text-muted-foreground">
-              Create an account or sign in to save items
-            </p>
-            <Button asChild className="mt-2 w-full">
-              <a href="/login">
-                Sign In
-              </a>
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-    );
-  }
-  
-  // Show loading state
-  if (isLoading) {
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          {trigger}
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-4">
-          <div className="flex flex-col items-center justify-center py-4">
-            <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
-            <p className="text-sm text-muted-foreground">Loading your wishlists...</p>
-          </div>
-        </PopoverContent>
-      </Popover>
-    );
-  }
 
-  // Show error state with retry
-  if (initError) {
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          {trigger}
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-4">
-          <div className="text-center space-y-3">
-            <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto" />
-            <p className="font-medium">Failed to load wishlists</p>
-            <p className="text-sm text-muted-foreground">
-              We couldn't load your wishlists. Please try again.
-            </p>
-            <Button 
-              onClick={handleRefresh} 
-              className="mt-2 w-full"
-              variant="outline"
-              disabled={refreshing}
-            >
-              {refreshing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Try Again
-                </>
-              )}
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-    );
-  }
-  
-  if (!wishlists || wishlists.length === 0) {
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          {trigger}
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-4">
-          <div className="text-center space-y-3">
-            <p className="font-medium">You don't have any wishlists yet</p>
-            <p className="text-sm text-muted-foreground">
-              Create a wishlist to save items you love
-            </p>
-            <Button 
-              onClick={handleQuickCreate} 
-              className="mt-2 w-full"
-              disabled={creating}
-            >
-              {creating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Wishlist
-                </>
-              )}
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-    );
-  }
+  const handleCreateWishlist = () => {
+    navigate("/wishlists");
+    if (onClose) onClose();
+    setOpen(false);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        {trigger}
+        {trigger || (
+          <Button 
+            size="sm" 
+            variant="outline"
+            className={cn("flex items-center gap-1", className)}
+          >
+            <Heart className="h-4 w-4" />
+            Add to Wishlist
+          </Button>
+        )}
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0">
+      <PopoverContent className="w-80 p-0" align="end">
         <div className="p-4 border-b">
           <h4 className="font-medium">Add to Wishlist</h4>
-          <p className="text-sm text-muted-foreground">Select which wishlist to add this item to</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Select a wishlist to add this item to
+          </p>
         </div>
         
-        {showQuickCreate ? (
-          <div className="p-4 border-b">
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label htmlFor="wishlist-name" className="text-sm font-medium">
-                  Wishlist Name
-                </label>
-                <div className="flex gap-2">
-                  <input 
-                    id="wishlist-name"
-                    type="text"
-                    placeholder="My Wishlist" 
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={quickCreationName}
-                    onChange={(e) => setQuickCreationName(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setShowQuickCreate(false)}
-                  disabled={creating}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={handleQuickCreate}
-                  disabled={creating}
-                >
-                  {creating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="mr-2 h-4 w-4" />
-                      Create & Add
-                    </>
+        <div className="max-h-60 overflow-y-auto divide-y">
+          {wishlists?.length > 0 ? (
+            wishlists.map((wishlist) => {
+              const alreadyInWishlist = isInWishlist(wishlist.id);
+              
+              return (
+                <div 
+                  key={wishlist.id} 
+                  className={cn(
+                    "p-3 hover:bg-muted/50",
+                    alreadyInWishlist && "bg-muted/30"
                   )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="max-h-72 overflow-auto">
-            {wishlists.map(wishlist => (
-              <div 
-                key={wishlist.id} 
-                className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 flex justify-between items-center"
-                onClick={() => handleAddToWishlist(wishlist.id)}
-              >
-                <div>
-                  <p className="font-medium">{wishlist.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
-                  </p>
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                      <div className="font-medium text-sm">{wishlist.title}</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {wishlist.category && (
+                          <WishlistCategoryBadge 
+                            category={wishlist.category}
+                            size="sm"
+                          />
+                        )}
+                        {alreadyInWishlist && (
+                          <Badge variant="secondary" className="text-xs">
+                            Already added
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={alreadyInWishlist ? "secondary" : "default"}
+                      disabled={alreadyInWishlist || addingToWishlist === wishlist.id}
+                      onClick={() => handleAddToWishlist(wishlist.id)}
+                    >
+                      {addingToWishlist === wishlist.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : alreadyInWishlist ? (
+                        "Added"
+                      ) : (
+                        "Add"
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                {adding === wishlist.id ? (
-                  <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </Button>
-                ) : (
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        
-        <div className="p-3 border-t">
-          {!showQuickCreate && (
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-1/2"
-                onClick={handleCreateQuickWishlist}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Wishlist
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="w-1/2"
-                onClick={() => {
-                  setOpen(false);
-                  // Navigate to wishlists page
-                  window.location.href = "/wishlists"; 
-                }}
-              >
-                Manage All
-              </Button>
+              );
+            })
+          ) : (
+            <div className="p-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                You don't have any wishlists yet.
+              </p>
             </div>
           )}
+        </div>
+        
+        <div className="p-3 border-t">
+          <Button 
+            variant="outline" 
+            className="w-full flex items-center justify-center"
+            onClick={handleCreateWishlist}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Create New Wishlist
+          </Button>
         </div>
       </PopoverContent>
     </Popover>

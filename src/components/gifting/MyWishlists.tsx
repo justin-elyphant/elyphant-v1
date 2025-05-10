@@ -9,8 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
 import { useWishlist } from "./hooks/useWishlist";
-import { Loader2, Share2, AlertTriangle, RefreshCw } from "lucide-react";
-import ShareWishlistDialog from "./wishlist/ShareWishlistDialog";
+import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -23,15 +22,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [currentWishlist, setCurrentWishlist] = useState<Wishlist | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
   
   const { 
@@ -45,12 +47,57 @@ const MyWishlists = () => {
     reloadWishlists
   } = useWishlist();
 
+  // Get all unique categories from wishlists
+  const categories = React.useMemo(() => {
+    if (!wishlists?.length) return [];
+    const allCategories = wishlists
+      .map(list => list.category)
+      .filter((category): category is string => !!category);
+    return [...new Set(allCategories)];
+  }, [wishlists]);
+
+  // Filter wishlists based on category and search query
+  const filteredWishlists = React.useMemo(() => {
+    if (!wishlists) return [];
+    
+    return wishlists.filter(wishlist => {
+      // Filter by category if selected
+      if (categoryFilter && wishlist.category !== categoryFilter) {
+        return false;
+      }
+      
+      // Filter by search query if present
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = wishlist.title.toLowerCase().includes(query);
+        const matchesDescription = wishlist.description?.toLowerCase().includes(query) || false;
+        const matchesTags = wishlist.tags?.some(tag => tag.toLowerCase().includes(query)) || false;
+        
+        return matchesTitle || matchesDescription || matchesTags;
+      }
+      
+      return true;
+    });
+  }, [wishlists, categoryFilter, searchQuery]);
+
   const handleCreateWishlist = () => {
     setDialogOpen(true);
   };
 
-  const handleDialogSubmit = async (values: { title: string; description?: string }) => {
-    await createWishlist(values.title, values.description || "");
+  const handleDialogSubmit = async (values: { 
+    title: string; 
+    description?: string; 
+    category?: string;
+    tags?: string[];
+    priority?: string;
+  }) => {
+    await createWishlist(
+      values.title, 
+      values.description || "", 
+      values.category, 
+      values.tags,
+      values.priority as "low" | "medium" | "high" | undefined
+    );
     setDialogOpen(false);
   };
 
@@ -63,7 +110,13 @@ const MyWishlists = () => {
     }
   };
 
-  const handleEditDialogSubmit = async (values: { title: string; description?: string }) => {
+  const handleEditDialogSubmit = async (values: { 
+    title: string; 
+    description?: string;
+    category?: string;
+    tags?: string[];
+    priority?: string;
+  }) => {
     if (!currentWishlist) return;
     
     // For now, we'll just show a toast that this feature is coming soon
@@ -104,6 +157,11 @@ const MyWishlists = () => {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const clearFilters = () => {
+    setCategoryFilter(null);
+    setSearchQuery("");
   };
 
   // If not authenticated, show a sign-in prompt
@@ -177,11 +235,63 @@ const MyWishlists = () => {
         </AlertDescription>
       </Alert>
 
+      {/* Filter and search section */}
+      {wishlists && wishlists.length > 1 && (
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="w-full sm:w-1/3">
+            <Select
+              value={categoryFilter || ""}
+              onValueChange={(value) => setCategoryFilter(value || null)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Categories</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1">
+            <div className="relative">
+              <Input
+                placeholder="Search wishlists..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+              />
+              {(categoryFilter || searchQuery) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="absolute right-1 top-1 h-8"
+                  onClick={clearFilters}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state for filtered results */}
+      {wishlists?.length > 0 && filteredWishlists.length === 0 && (
+        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 text-center mb-6">
+          <p className="text-muted-foreground mb-2">No wishlists match your filters</p>
+          <Button variant="outline" onClick={clearFilters}>
+            Clear Filters
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
         
-        {wishlists && wishlists.length > 0 ? (
-          wishlists.map((wishlist) => (
+        {filteredWishlists && filteredWishlists.length > 0 ? (
+          filteredWishlists.map((wishlist) => (
             <WishlistCard 
               key={wishlist.id}
               wishlist={wishlist}
@@ -190,9 +300,11 @@ const MyWishlists = () => {
             />
           ))
         ) : (
-          <div className="col-span-full py-8 text-center text-muted-foreground">
-            No wishlists found. Create your first wishlist to get started!
-          </div>
+          wishlists?.length === 0 && (
+            <div className="col-span-full py-8 text-center text-muted-foreground">
+              No wishlists found. Create your first wishlist to get started!
+            </div>
+          )
         )}
       </div>
 
@@ -207,13 +319,6 @@ const MyWishlists = () => {
         onOpenChange={setEditDialogOpen}
         onSubmit={handleEditDialogSubmit}
         wishlist={currentWishlist}
-      />
-
-      <ShareWishlistDialog 
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        wishlist={currentWishlist}
-        onShareSettingsChange={updateWishlistSharing}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

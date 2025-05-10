@@ -1,4 +1,3 @@
-
 import type { Database } from './supabase';
 
 // Add this if it doesn't exist already
@@ -12,7 +11,7 @@ export interface DataSharingSettings {
   email: SharingLevel;
 }
 
-// Update the Wishlist type to include all required fields
+// Update the Wishlist type to include category and tags
 export type Wishlist = {
   id: string;
   user_id?: string;
@@ -22,6 +21,9 @@ export type Wishlist = {
   updated_at: string;
   is_public: boolean;
   items: WishlistItem[];
+  category?: string;
+  tags?: string[];
+  priority?: 'low' | 'medium' | 'high';
 };
 
 export type Profile = Database['public']['Tables']['profiles']['Row'] & {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Product } from "@/types/product";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -9,6 +9,7 @@ interface PersonalizedRecommendationsOptions {
   limit?: number;
   includeViewedProducts?: boolean;
   preferredCategories?: string[];
+  strategy?: 'balanced' | 'personalized' | 'popular';
 }
 
 export function usePersonalizedRecommendations(
@@ -18,7 +19,8 @@ export function usePersonalizedRecommendations(
   const { 
     limit = 6, 
     includeViewedProducts = false, 
-    preferredCategories = [] 
+    preferredCategories = [],
+    strategy = 'balanced'
   } = options;
   
   const { user } = useAuth();
@@ -26,6 +28,16 @@ export function usePersonalizedRecommendations(
   const { recentlyViewed } = useRecentlyViewed();
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Extract user interests once rather than on each render
+  const userInterests = useMemo(() => {
+    return profile?.interests || [];
+  }, [profile]);
+  
+  // Get recently viewed product IDs as a Set for efficient lookups
+  const recentlyViewedIds = useMemo(() => {
+    return new Set(recentlyViewed.map(item => item.id));
+  }, [recentlyViewed]);
 
   useEffect(() => {
     const generateRecommendations = () => {
@@ -40,20 +52,20 @@ export function usePersonalizedRecommendations(
         // Start with a deep copy of all products
         let productPool = [...allProducts];
         
-        // Get IDs of recently viewed products
-        const recentlyViewedIds = new Set(
-          recentlyViewed.map(item => item.id)
-        );
-        
         // Filter out recently viewed products if specified
         if (!includeViewedProducts) {
           productPool = productPool.filter(
             product => !recentlyViewedIds.has(product.id || product.product_id)
           );
+        } else {
+          // If we're including viewed products, mark them
+          productPool = productPool.map(product => {
+            if (recentlyViewedIds.has(product.id || product.product_id)) {
+              return { ...product, recentlyViewed: true };
+            }
+            return product;
+          });
         }
-        
-        // Get user interests from profile
-        const userInterests = profile?.interests || [];
         
         // Combine user interests with preferred categories
         const relevantCategories = [
@@ -64,13 +76,21 @@ export function usePersonalizedRecommendations(
         const scoredProducts = productPool.map(product => {
           let score = 0;
           
-          // Base score from rating
+          // Base score from rating (0-10 points)
           score += (product.rating || product.stars || 0) * 2;
           
-          // Bonus for best sellers
+          // Bonus for best sellers (10 points)
           if (product.isBestSeller) score += 10;
           
-          // Category match bonus
+          // Bonus for free shipping (5 points)
+          if (product.prime || (product as any).free_shipping) score += 5;
+          
+          // Bonus for items on sale (7 points)
+          if ((product as any).sale_price && (product as any).sale_price < product.price) {
+            score += 7;
+          }
+          
+          // Category match bonus (15 points per match)
           const productCategories = [
             product.category,
             product.category_name,
@@ -78,23 +98,79 @@ export function usePersonalizedRecommendations(
           ].filter(Boolean);
           
           relevantCategories.forEach(category => {
-            if (productCategories.some(pc => 
-              pc && category && pc.toLowerCase().includes(category.toLowerCase())
+            if (category && productCategories.some(pc => 
+              pc && pc.toLowerCase().includes(category.toLowerCase())
             )) {
               score += 15;
             }
+            
+            // Also check product title for matches (5 points per match)
+            const productTitle = product.title || product.name || '';
+            if (category && productTitle.toLowerCase().includes(category.toLowerCase())) {
+              score += 5;
+            }
           });
+          
+          // Small penalty for recently viewed products if they're included (-3 points)
+          if (product.recentlyViewed) {
+            score -= 3;
+          }
           
           return { product, score };
         });
         
-        // Sort by score (descending) and take top results
-        const topRecommendations = scoredProducts
-          .sort((a, b) => b.score - a.score)
-          .slice(0, limit)
-          .map(item => item.product);
+        // Apply different sorting strategies
+        let finalRecommendations: Product[] = [];
         
-        setRecommendations(topRecommendations);
+        switch (strategy) {
+          case 'personalized':
+            // Heavily weight interests and browsing history
+            finalRecommendations = scoredProducts
+              .sort((a, b) => b.score - a.score)
+              .slice(0, limit)
+              .map(item => item.product);
+            break;
+            
+          case 'popular':
+            // Prioritize bestsellers and highly rated items
+            finalRecommendations = scoredProducts
+              .sort((a, b) => {
+                const bPopularity = (b.product.isBestSeller ? 10 : 0) + 
+                                  (b.product.rating || b.product.stars || 0) * 2;
+                const aPopularity = (a.product.isBestSeller ? 10 : 0) + 
+                                  (a.product.rating || a.product.stars || 0) * 2;
+                return bPopularity - aPopularity;
+              })
+              .slice(0, limit)
+              .map(item => item.product);
+            break;
+            
+          case 'balanced':
+          default:
+            // Mix of relevance and diversity
+            // First get some highly relevant items
+            const highlyRelevant = scoredProducts
+              .sort((a, b) => b.score - a.score)
+              .slice(0, Math.ceil(limit * 0.6))
+              .map(item => item.product);
+              
+            // Then get some popular items that weren't already included
+            const highlyRelevantIds = new Set(highlyRelevant.map(p => p.id || p.product_id));
+            const popularItems = scoredProducts
+              .filter(item => !highlyRelevantIds.has(item.product.id || item.product.product_id))
+              .sort((a, b) => {
+                const bRating = b.product.rating || b.product.stars || 0;
+                const aRating = a.product.rating || a.product.stars || 0;
+                return bRating - aRating;
+              })
+              .slice(0, limit - highlyRelevant.length)
+              .map(item => item.product);
+              
+            // Combine both lists
+            finalRecommendations = [...highlyRelevant, ...popularItems];
+        }
+        
+        setRecommendations(finalRecommendations);
       } catch (err) {
         console.error("Error generating personalized recommendations:", err);
         // Fallback to simple selection
@@ -110,7 +186,7 @@ export function usePersonalizedRecommendations(
     };
     
     generateRecommendations();
-  }, [allProducts, includeViewedProducts, limit, preferredCategories, profile?.interests, recentlyViewed]);
+  }, [allProducts, includeViewedProducts, limit, preferredCategories, userInterests, recentlyViewedIds, strategy]);
 
   return {
     recommendations,

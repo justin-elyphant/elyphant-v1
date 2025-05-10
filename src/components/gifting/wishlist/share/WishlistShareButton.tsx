@@ -4,12 +4,12 @@ import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ButtonProps } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import ShareWishlistDialog from "./ShareWishlistDialog";
+import ShareWishlistDialog from "../ShareWishlistDialog";
 import { Wishlist } from "@/types/profile";
 
 interface WishlistShareButtonProps extends Omit<ButtonProps, "onClick"> {
   wishlist: Wishlist;
-  size?: "sm" | "md" | "lg" | "icon";
+  size?: "sm" | "default" | "lg" | "icon";
   showLabel?: boolean;
   onShareSettingsChange: (wishlistId: string, isPublic: boolean) => Promise<boolean>;
   className?: string;
@@ -17,7 +17,7 @@ interface WishlistShareButtonProps extends Omit<ButtonProps, "onClick"> {
 
 const WishlistShareButton = ({ 
   wishlist, 
-  size = "md", 
+  size = "default", 
   showLabel = true,
   onShareSettingsChange,
   className,

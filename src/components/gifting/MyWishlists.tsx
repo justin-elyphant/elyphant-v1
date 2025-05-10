@@ -93,14 +93,6 @@ const MyWishlists = () => {
     }
   };
 
-  const handleShareWishlist = (id: string) => {
-    const wishlistToShare = wishlists.find(wishlist => wishlist.id === id);
-    if (wishlistToShare) {
-      setCurrentWishlist(wishlistToShare);
-      setShareDialogOpen(true);
-    }
-  };
-
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
@@ -194,7 +186,6 @@ const MyWishlists = () => {
               key={wishlist.id}
               wishlist={wishlist}
               onEdit={handleEditWishlist}
-              onShare={handleShareWishlist}
               onDelete={handleDeleteWishlist}
             />
           ))

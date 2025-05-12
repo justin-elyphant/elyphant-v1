@@ -20,11 +20,13 @@ import { formSchema } from "./schema";
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { AddressFields } from "./AddressFields";
 import { z } from "zod";
+import ContextualHelp from "@/components/help/ContextualHelp";
+import { GiftSchedulingOptions } from "@/components/marketplace/checkout/GiftScheduling";
 
 export type RecipientInfoFormData = z.infer<typeof formSchema>;
 
 interface RecipientInfoFormProps {
-  onSubmit: (data: RecipientInfoFormData) => void;
+  onSubmit: (data: RecipientInfoFormData & { giftScheduling?: GiftSchedulingOptions }) => void;
   onCancel: () => void;
   productName: string;
 }
@@ -50,11 +52,23 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
     },
   });
 
+  // Gift scheduling options state
+  const [giftScheduling, setGiftScheduling] = React.useState<GiftSchedulingOptions>({
+    scheduleDelivery: false,
+    sendGiftMessage: false,
+    isSurprise: false,
+  });
+
   const handleSubmit = async (data: RecipientInfoFormData) => {
     try {
       // In a full implementation, we would send an invitation to the recipient via edge function
       toast.success(`Information saved for ${data.recipientFirstName}`);
-      onSubmit(data);
+      
+      // Include gift scheduling options with the form data
+      onSubmit({
+        ...data,
+        giftScheduling,
+      });
     } catch (error) {
       console.error("Error processing recipient info:", error);
       toast.error("Failed to process recipient information");
@@ -64,6 +78,15 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Recipient Information</h3>
+          <ContextualHelp
+            id="recipient-info"
+            title="Recipient Information"
+            content="Enter the details of the person who will receive this gift. Their shipping address and contact information are required for delivery."
+          />
+        </div>
+        
         <PersonalInfoFields control={form.control} />
         <AddressFields control={form.control} />
 
@@ -77,3 +100,5 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
     </Form>
   );
 };
+
+export default RecipientInfoForm;

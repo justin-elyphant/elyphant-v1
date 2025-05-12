@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export function useWishlistCreate(
   setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
-  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<void>
+  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<boolean>
 ) {
   const [isCreating, setIsCreating] = useState(false);
 

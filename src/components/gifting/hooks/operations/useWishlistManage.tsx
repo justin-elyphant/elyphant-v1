@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
@@ -5,7 +6,7 @@ import { toast } from "sonner";
 export function useWishlistManage(
   setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
   setWishlistedProducts: React.Dispatch<React.SetStateAction<string[]>>,
-  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<void>,
+  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<boolean>,
   updateWishlistSharingSettings?: (wishlistId: string, isPublic: boolean) => Promise<boolean>
 ) {
   const [deletingWishlist, setDeletingWishlist] = useState<string | null>(null);

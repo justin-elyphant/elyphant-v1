@@ -26,7 +26,7 @@ export const useMarketplaceProducts = () => {
       const searchId = `search-${searchParam}-${Date.now()}`;
       searchIdRef.current = searchId;
       
-      handleSearch(searchParam, personId, occasionType, searchIdRef, setIsLoading, setProducts);
+      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType);
     } else {
       // Load some default products with personalization
       const userInterests = profile?.gift_preferences || [];
@@ -54,7 +54,7 @@ export const useMarketplaceProducts = () => {
       const searchId = `search-${searchParam}-${Date.now()}`;
       searchIdRef.current = searchId;
       
-      handleSearch(searchParam, searchParams.get("personId"), searchParams.get("occasionType"), searchIdRef, setIsLoading, setProducts);
+      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"));
     }
   }, [searchParams]);
   
@@ -75,7 +75,7 @@ export const useMarketplaceProducts = () => {
     searchIdRef.current = searchId;
     
     // Directly handle search
-    handleSearch(term, null, null, searchIdRef, setIsLoading, setProducts);
+    handleSearch(term, searchIdRef, setIsLoading, setProducts, null, null);
   };
 
   return { 

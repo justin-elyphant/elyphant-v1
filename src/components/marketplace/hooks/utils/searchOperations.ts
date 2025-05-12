@@ -12,11 +12,11 @@ export const searchOperations = new Map();
  */
 export const handleSearch = (
   term: string, 
-  personId?: string | null, 
-  occasionType?: string | null,
   searchIdRef: React.MutableRefObject<string>,
   setIsLoading: (isLoading: boolean) => void,
-  setProducts: (products: Product[]) => void
+  setProducts: (products: Product[]) => void,
+  personId?: string | null, 
+  occasionType?: string | null
 ): void => {
   // Check if this exact search is already in progress and avoid duplicates
   const searchKey = `${term}-${personId || ''}-${occasionType || ''}`;

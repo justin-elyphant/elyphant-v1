@@ -71,10 +71,10 @@ export const useMarketplaceProducts = () => {
     
     return productsToUpdate.map((product, index) => {
       // If the product doesn't already have an image, assign a mock one
-      if (!product.image_url || product.image_url === "") {
+      if (!product.image || product.image === "") {
         return {
           ...product,
-          image_url: mockImageUrls[index % mockImageUrls.length]
+          image: mockImageUrls[index % mockImageUrls.length]
         };
       }
       return product;

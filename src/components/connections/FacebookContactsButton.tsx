@@ -23,7 +23,9 @@ const FacebookContactsButton = () => {
         // If connected, try to get friends count
         if (hasAuth) {
           try {
-            const friends = await connectWithFacebookFriends(true); // Just check count, don't connect
+            // The issue is here - we were passing an argument to connectWithFacebookFriends
+            // but the function doesn't expect any arguments based on the error
+            const friends = await connectWithFacebookFriends();
             if (friends && Array.isArray(friends)) {
               setFriendsCount(friends.length);
             }

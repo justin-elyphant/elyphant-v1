@@ -52,13 +52,19 @@ export const fetchFacebookContacts = async (): Promise<{id: string, name: string
 
 /**
  * Function to connect with Facebook contacts in the application
+ * If checkOnly is true, it will just return the contacts without showing success messages
  */
-export const connectWithFacebookFriends = async (): Promise<boolean> => {
+export const connectWithFacebookFriends = async (checkOnly?: boolean): Promise<boolean | any[]> => {
   try {
     const contacts = await fetchFacebookContacts();
     
     if (!contacts || contacts.length === 0) {
-      return false;
+      return checkOnly ? [] : false;
+    }
+    
+    if (checkOnly) {
+      // If we're just checking, return the contacts array
+      return contacts;
     }
     
     // Here you would typically send these contacts to your backend
@@ -73,7 +79,7 @@ export const connectWithFacebookFriends = async (): Promise<boolean> => {
   } catch (error) {
     console.error("Error connecting with Facebook friends:", error);
     toast.error("Failed to connect with Facebook friends");
-    return false;
+    return checkOnly ? [] : false;
   }
 };
 

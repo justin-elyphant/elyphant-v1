@@ -33,7 +33,7 @@ const VerificationContentSection = ({
   onResendVerification,
   onCheckVerification,
   setVerificationCode,
-  bypassVerification = true // Default to true
+  bypassVerification = true // Default to true for testing
 }: VerificationContentSectionProps) => {
   const navigate = useNavigate();
   const [progress, setProgress] = React.useState(0);

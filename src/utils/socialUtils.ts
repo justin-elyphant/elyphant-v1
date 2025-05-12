@@ -9,3 +9,4 @@ export const hasFacebookAuth = async (): Promise<boolean> => {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.user?.app_metadata?.provider === 'facebook';
 };
+

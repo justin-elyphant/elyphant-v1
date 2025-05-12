@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { toast } from 'sonner';
-import { Package, Truck, CheckCircle, Calendar, AlertTriangle } from 'lucide-react';
+import { Package, Truck, CheckCircle, Calendar, AlertTriangle, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export type OrderStatus = 
@@ -28,7 +28,7 @@ export const showOrderStatusNotification = ({
   recipientName
 }: OrderStatusNotificationProps) => {
   
-  const getIcon = () => {
+  const getIcon = (): LucideIcon => {
     switch (status) {
       case 'created': return Package;
       case 'processing': return Package;
@@ -87,11 +87,13 @@ export const showOrderStatusNotification = ({
     window.location.href = `/orders/${orderId}`;
   };
   
+  const Icon = getIcon();
+  
   toast(
     getTitle(),
     {
       description: getMessage(),
-      icon: getIcon(),
+      icon: <Icon />,
       variant: getVariant() as any,
       action: {
         label: "Track Order",

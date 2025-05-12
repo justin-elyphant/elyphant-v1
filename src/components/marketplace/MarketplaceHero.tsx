@@ -3,16 +3,28 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Gift, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getNextHoliday, getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
+import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
+import OccasionCards from "./header/OccasionCards";
 
 const MarketplaceHero = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({
     days: 3,
     hours: 8,
     minutes: 45,
     seconds: 30
   });
+  
+  // Get upcoming holidays and friend events
+  const upcomingHolidays = getUpcomingOccasions().filter(occ => occ.type === "holiday");
+  const { friendOccasions } = useConnectedFriendsSpecialDates();
+  
+  // Get the next two upcoming holidays
+  const nextHoliday = upcomingHolidays.length > 0 ? upcomingHolidays[0] : null;
+  const secondHoliday = upcomingHolidays.length > 1 ? upcomingHolidays[1] : null;
   
   // Update countdown timer
   useEffect(() => {
@@ -35,10 +47,19 @@ const MarketplaceHero = () => {
     return () => clearInterval(timer);
   }, []);
   
+  // Handle card click to navigate to search
+  const handleOccasionCardClick = (searchQuery: string, personId?: string, occasionType?: string) => {
+    const params = new URLSearchParams();
+    params.set("search", searchQuery);
+    if (personId) params.set("personId", personId);
+    if (occasionType) params.set("occasionType", occasionType);
+    navigate(`/marketplace?${params.toString()}`);
+  };
+  
   return (
     <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white mb-6">
       <div className="container mx-auto px-4 py-8">
-        <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-8'} items-center`}>
+        <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-8'} items-center mb-8`}>
           <div className={`${isMobile ? 'mb-6 text-center' : 'text-left'}`}>
             <h1 className="text-3xl font-bold mb-3">Holiday Gift Sale</h1>
             <p className="text-lg mb-4 opacity-90">Find the perfect gifts for everyone on your list with special discounts up to 40% off!</p>
@@ -88,8 +109,19 @@ const MarketplaceHero = () => {
           </div>
         </div>
         
+        {/* Occasion cards section for upcoming events */}
+        <div className="mb-6">
+          <h2 className="text-xl font-medium mb-3">Upcoming Gift Occasions</h2>
+          <OccasionCards 
+            friendOccasions={friendOccasions}
+            nextHoliday={nextHoliday}
+            secondHoliday={secondHoliday}
+            onCardClick={handleOccasionCardClick}
+          />
+        </div>
+        
         {/* Quick category links */}
-        <div className="flex flex-wrap justify-center gap-3 mt-8">
+        <div className="flex flex-wrap justify-center gap-3 mt-5">
           {['Electronics', 'Fashion', 'Home', 'Books', 'Toys'].map(category => (
             <Link 
               key={category} 

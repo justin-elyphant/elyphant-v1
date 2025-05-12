@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Grid2X2, Rows, Layout, BookmarkCheck } from "lucide-react";
+import { Grid2X2, Rows, BookmarkCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface MarketplaceFiltersProps {

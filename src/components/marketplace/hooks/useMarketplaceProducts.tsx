@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { searchMockProducts } from "../services/mockProductService";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { useProducts } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
 
@@ -57,6 +56,31 @@ export const useMarketplaceProducts = () => {
     }
   }, [searchParams]);
 
+  // Add mock product images
+  const addMockImagesToProducts = (productsToUpdate: Product[]): Product[] => {
+    const mockImageUrls = [
+      "https://images.unsplash.com/photo-1611930022073-84f3bb594665?q=80&w=987&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?q=80&w=1032&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1585109649139-366815a0d713?q=80&w=1170&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=1164&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1592921870789-04563d55041c?q=80&w=1170&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=987&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1598509254521-921c70c753f3?q=80&w=1632&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=1180&auto=format&fit=crop"
+    ];
+    
+    return productsToUpdate.map((product, index) => {
+      // If the product doesn't already have an image, assign a mock one
+      if (!product.image_url || product.image_url === "") {
+        return {
+          ...product,
+          image_url: mockImageUrls[index % mockImageUrls.length]
+        };
+      }
+      return product;
+    });
+  };
+
   // Load personalized products based on user profile
   const loadPersonalizedProducts = () => {
     // Only show loading if we don't already have products
@@ -100,6 +124,9 @@ export const useMarketplaceProducts = () => {
       personalizedProducts = searchMockProducts("gift ideas", 16);
       console.log("No interests found, using default products");
     }
+    
+    // Add mock images to products
+    personalizedProducts = addMockImagesToProducts(personalizedProducts);
     
     setProducts(personalizedProducts);
     setIsLoading(false);
@@ -163,6 +190,9 @@ export const useMarketplaceProducts = () => {
         // Regular search without personalization
         mockResults = searchMockProducts(term, 16);
       }
+      
+      // Add mock images to products
+      mockResults = addMockImagesToProducts(mockResults);
       
       // Update products state
       setProducts(mockResults);

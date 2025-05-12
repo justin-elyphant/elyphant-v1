@@ -1,76 +1,50 @@
 
-import React, { useState } from "react";
-import { 
+import React from "react";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger 
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ContextualHelpProps {
   id: string;
-  content: React.ReactNode | string;
+  content: React.ReactNode;
   title?: string;
-  children?: React.ReactNode;
-  icon?: boolean;
   side?: "top" | "right" | "bottom" | "left";
   className?: string;
-  iconClassName?: string;
+  iconSize?: number;
 }
 
 const ContextualHelp: React.FC<ContextualHelpProps> = ({
   id,
   content,
   title,
-  children,
-  icon = true,
   side = "top",
   className,
-  iconClassName
+  iconSize = 16,
 }) => {
-  const [viewed, setViewed] = useState(() => {
-    const viewedTips = JSON.parse(localStorage.getItem("viewedHelpTips") || "{}");
-    return !!viewedTips[id];
-  });
-
-  const handleTooltipOpen = () => {
-    if (!viewed) {
-      const viewedTips = JSON.parse(localStorage.getItem("viewedHelpTips") || "{}");
-      viewedTips[id] = true;
-      localStorage.setItem("viewedHelpTips", JSON.stringify(viewedTips));
-      setViewed(true);
-    }
-  };
-  
-  const tooltipTrigger = children ? (
-    <TooltipTrigger asChild>
-      <div className="inline-flex cursor-help">{children}</div>
-    </TooltipTrigger>
-  ) : (
-    <TooltipTrigger asChild>
-      <div className={cn(
-        "inline-flex cursor-help",
-        !viewed && "animate-pulse",
-        iconClassName
-      )}>
-        <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary" />
-      </div>
-    </TooltipTrigger>
-  );
-
   return (
     <TooltipProvider>
-      <Tooltip onOpenChange={(open) => open && handleTooltipOpen()}>
-        {tooltipTrigger}
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <button 
+            className={cn("text-muted-foreground hover:text-foreground focus:outline-none", className)} 
+            aria-label="Help"
+            type="button"
+          >
+            <HelpCircle size={iconSize} />
+          </button>
+        </TooltipTrigger>
         <TooltipContent 
           side={side} 
-          sideOffset={5} 
-          className={cn("max-w-xs p-3", className)}
+          className="max-w-xs p-4" 
+          sideOffset={8}
         >
-          {title && <h4 className="font-medium mb-1">{title}</h4>}
-          <div className="text-sm">{content}</div>
+          {title && <h3 className="font-medium mb-1">{title}</h3>}
+          <div className="text-sm text-muted-foreground">{content}</div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

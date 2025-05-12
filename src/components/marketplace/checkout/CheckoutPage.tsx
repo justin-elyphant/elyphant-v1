@@ -5,13 +5,14 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CreditCard, Gift, Info, Truck } from "lucide-react";
+import { ArrowLeft, CreditCard, Gift, Info, Truck, Calendar } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import CheckoutForm from "./CheckoutForm";
 import OrderSummary from "./OrderSummary";
 import GiftOptionsForm from "./GiftOptionsForm";
 import ShippingOptionsForm from "./ShippingOptionsForm";
+import GiftScheduling, { GiftSchedulingOptions } from "./GiftScheduling";
 
 interface ShippingInfo {
   name: string;
@@ -33,6 +34,7 @@ interface GiftOptions {
 interface CheckoutData {
   shippingInfo: ShippingInfo;
   giftOptions: GiftOptions;
+  giftScheduling: GiftSchedulingOptions;
   shippingMethod: string;
   paymentMethod: string;
 }
@@ -58,6 +60,10 @@ const CheckoutPage = () => {
       recipientName: "",
       giftMessage: "",
       giftWrapping: false
+    },
+    giftScheduling: {
+      scheduleDelivery: false,
+      sendGiftMessage: false
     },
     shippingMethod: "standard",
     paymentMethod: "card"
@@ -103,6 +109,13 @@ const CheckoutPage = () => {
         ...prev.giftOptions,
         ...data
       }
+    }));
+  };
+
+  const handleUpdateGiftScheduling = (data: GiftSchedulingOptions) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      giftScheduling: data
     }));
   };
 
@@ -165,7 +178,7 @@ const CheckoutPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="shipping" className="flex items-center gap-2">
                 <Truck className="h-4 w-4" />
                 <span className="hidden sm:inline">Shipping</span>
@@ -173,6 +186,10 @@ const CheckoutPage = () => {
               <TabsTrigger value="gift" className="flex items-center gap-2" disabled={!canProceedToPayment()}>
                 <Gift className="h-4 w-4" />
                 <span className="hidden sm:inline">Gift Options</span>
+              </TabsTrigger>
+              <TabsTrigger value="schedule" className="flex items-center gap-2" disabled={!canProceedToPayment()}>
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">Schedule</span>
               </TabsTrigger>
               <TabsTrigger value="payment" className="flex items-center gap-2" disabled={!canProceedToPayment()}>
                 <CreditCard className="h-4 w-4" />
@@ -211,6 +228,22 @@ const CheckoutPage = () => {
                 <Button variant="outline" onClick={() => setActiveTab("shipping")}>
                   Back to Shipping
                 </Button>
+                <Button onClick={() => setActiveTab("schedule")}>
+                  Continue to Scheduling
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="schedule" className="space-y-6">
+              <GiftScheduling
+                giftScheduling={checkoutData.giftScheduling}
+                onUpdate={handleUpdateGiftScheduling}
+              />
+              
+              <div className="flex justify-between mt-6">
+                <Button variant="outline" onClick={() => setActiveTab("gift")}>
+                  Back to Gift Options
+                </Button>
                 <Button onClick={() => setActiveTab("payment")}>
                   Continue to Payment
                 </Button>
@@ -247,8 +280,8 @@ const CheckoutPage = () => {
                 {/* Additional payment methods would be added here */}
                 
                 <div className="flex justify-between mt-6">
-                  <Button variant="outline" onClick={() => setActiveTab("gift")}>
-                    Back to Gift Options
+                  <Button variant="outline" onClick={() => setActiveTab("schedule")}>
+                    Back to Scheduling
                   </Button>
                   <Button 
                     onClick={handlePlaceOrder}

@@ -1,38 +1,52 @@
 
-/* Tour Guide Styles */
-.tour-highlight {
-  position: relative;
-  z-index: 50;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.5) !important;
-  border-radius: 4px;
+/* Onboarding and Tour Guide Styles */
+.onboarding-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.onboarding-card {
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
   transition: all 0.3s ease;
 }
 
-/* Pulse animation for highlighting elements */
-@keyframes pulse-highlight {
+.onboarding-card:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* Tour guide highlight for elements */
+.tour-highlight {
+  position: relative;
+  z-index: 51;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4);
+  border-radius: 4px;
+}
+
+.tour-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(79, 70, 229, 0);
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
   }
 }
 
-.tour-animated-highlight {
-  animation: pulse-highlight 2s infinite;
-}
-
-/* Mobile responsiveness for onboarding */
-@media (max-width: 640px) {
-  .onboarding-container {
-    padding: 1rem;
-  }
-  
+/* Mobile adaptations */
+@media (max-width: 768px) {
   .onboarding-card {
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    min-height: auto;
   }
 }

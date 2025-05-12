@@ -6,7 +6,7 @@ import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import { createConnection } from "@/hooks/signup/services/connectionService";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import TourGuide, { TourStep } from "@/components/onboarding/TourGuide";
+import TourGuide, { TourStep } from "@/components/help/TourGuide";
 import { X } from "lucide-react";
 
 const OnboardingPage = () => {
@@ -86,22 +86,30 @@ const OnboardingPage = () => {
     {
       id: "dashboard",
       title: "Your Dashboard",
-      content: <p>Welcome to your dashboard! This is where you can find an overview of your wishlists, upcoming events, and more.</p>
+      content: <p>Welcome to your dashboard! This is where you can find an overview of your wishlists, upcoming events, and more.</p>,
+      elementSelector: ".dashboard-overview", // This selector should exist in the Dashboard component
+      position: "bottom"
     },
     {
       id: "wishlists",
       title: "Manage Wishlists",
-      content: <p>Create and manage your wishlists here. Add items you'd love to receive as gifts.</p>
+      content: <p>Create and manage your wishlists here. Add items you'd love to receive as gifts.</p>,
+      elementSelector: ".wishlists-section", // This selector should exist in the Dashboard component
+      position: "right"
     },
     {
       id: "connections",
       title: "Connect with Friends",
-      content: <p>Find and connect with friends to share your wishlists and discover what they want.</p>
+      content: <p>Find and connect with friends to share your wishlists and discover what they want.</p>,
+      elementSelector: ".connections-section", // This selector should exist in the Dashboard component
+      position: "left"
     },
     {
       id: "complete",
       title: "You're All Set!",
-      content: <p>You're now ready to use all features of the app. Enjoy your gifting experience!</p>
+      content: <p>You're now ready to use all features of the app. Enjoy your gifting experience!</p>,
+      elementSelector: ".user-profile", // This selector should exist in the Dashboard header
+      position: "bottom"
     }
   ];
   
@@ -167,18 +175,20 @@ const OnboardingPage = () => {
     <>
       <OnboardingFlow onComplete={handleStartTour} onSkip={handleSkipOnboarding} />
       
-      <TourGuide 
-        steps={tourSteps}
-        isOpen={showTour}
-        onClose={() => {
-          setShowTour(false);
-          navigate("/dashboard");
-        }}
-        onComplete={() => {
-          setShowTour(false);
-          navigate("/dashboard");
-        }}
-      />
+      {showTour && (
+        <TourGuide 
+          steps={tourSteps}
+          onComplete={() => {
+            setShowTour(false);
+            navigate("/dashboard");
+          }}
+          onSkip={() => {
+            setShowTour(false);
+            navigate("/dashboard");
+          }}
+          tourId="initial-dashboard-tour"
+        />
+      )}
     </>
   );
 };

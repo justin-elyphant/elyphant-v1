@@ -36,12 +36,10 @@ const Header = () => {
         {/* Logo and Brand */}
         <Logo />
 
-        {/* Search Bar (conditionally render on non-homepage) */}
-        {!isHomePage && (
-          <div className="flex-grow max-w-md mx-4">
-            <SearchBar />
-          </div>
-        )}
+        {/* Search Bar (always render) */}
+        <div className="flex-grow max-w-md mx-4">
+          <SearchBar />
+        </div>
 
         {/* Navigation and Auth Buttons */}
         <div className="hidden md:flex items-center space-x-4">
@@ -103,6 +101,9 @@ const Header = () => {
                       <X className="h-6 w-6" />
                     </Button>
                   </SheetTrigger>
+                </div>
+                <div className="p-4">
+                  <SearchBar />
                 </div>
                 <div className="py-4">
                   <CategoriesDropdown 

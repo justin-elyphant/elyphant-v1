@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -5,22 +6,26 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Slider } from "@/components/ui/slider";
 import { BadgeCheck, Heart, Star } from "lucide-react";
 import { SavedFilters } from "./ProductGrid";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface FiltersSidebarProps {
   activeFilters: Record<string, any>;
   onFilterChange: (filters: Record<string, any>) => void;
   categories?: string[];
+  isMobile?: boolean;
 }
 
-const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: FiltersSidebarProps) => {
-  const isMobile = useIsMobile();
+const FiltersSidebar = ({ 
+  activeFilters, 
+  onFilterChange, 
+  categories = [],
+  isMobile = false
+}: FiltersSidebarProps) => {
   const [priceValues, setPriceValues] = useState<[number, number]>(
     activeFilters.priceRange ? activeFilters.priceRange : [0, 1000]
   );
@@ -100,20 +105,67 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
     onFilterChange(newFilters);
   };
   
+  const clearFilters = () => {
+    setPriceValues([0, 1000]);
+    setSelectedCategories([]);
+    
+    onFilterChange({
+      priceRange: [0, 1000],
+      categories: [],
+      rating: null,
+      freeShipping: false,
+      favoritesOnly: false,
+      sortBy: activeFilters.sortBy || "relevance"
+    });
+  };
+  
+  // Count active filters for badge display
+  const countActiveFilters = () => {
+    let count = 0;
+    if (selectedCategories.length > 0) count += 1;
+    if (priceValues[0] > 0 || priceValues[1] < 1000) count += 1;
+    if (activeFilters.rating) count += 1;
+    if (activeFilters.freeShipping) count += 1;
+    if (activeFilters.favoritesOnly) count += 1;
+    return count;
+  };
+  
+  const activeFilterCount = countActiveFilters();
+  
   return (
     <div className="bg-white border rounded-md overflow-hidden">
-      <div className="p-4 border-b">
-        <h3 className="font-medium">Filters</h3>
+      <div className="p-4 border-b flex justify-between items-center">
+        <h3 className="font-medium flex items-center">
+          Filters
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="ml-2">
+              {activeFilterCount}
+            </Badge>
+          )}
+        </h3>
+        {activeFilterCount > 0 && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearFilters}
+            className="text-xs"
+          >
+            Clear all
+          </Button>
+        )}
       </div>
       
-      <ScrollArea className={isMobile ? "h-[50vh] md:h-auto" : "h-auto max-h-[calc(100vh-200px)]"}>
-        <div className="p-4 space-y-6">
-          {/* Category filter - multi-select */}
+      <ScrollArea className={isMobile ? "h-[60vh]" : "max-h-[calc(100vh-200px)]"}>
+        <div className="p-4 space-y-5">
+          {/* Category filter with responsive grid for mobile */}
           {categories.length > 0 && (
             <>
               <div>
                 <h4 className="font-medium mb-3">Categories</h4>
-                <div className="space-y-2">
+                <div className={isMobile 
+                  ? "grid grid-cols-2 gap-2" 
+                  : "space-y-2"
+                }>
                   {categories.map((category) => (
                     <div key={category} className="flex items-center space-x-2">
                       <Checkbox 
@@ -123,7 +175,7 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
                       />
                       <Label 
                         htmlFor={`category-${category}`}
-                        className="text-sm cursor-pointer"
+                        className="text-sm cursor-pointer truncate"
                       >
                         {category}
                       </Label>
@@ -139,7 +191,7 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
           {/* Price range filter with slider */}
           <div>
             <h4 className="font-medium mb-3">Price Range</h4>
-            <div className="mt-6 px-2">
+            <div className="mt-4 px-2">
               <Slider
                 defaultValue={priceValues}
                 value={priceValues}
@@ -153,7 +205,7 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
                   ${priceValues[0]}
                 </div>
                 <div className="bg-primary/10 px-2 py-1 rounded text-xs font-medium">
-                  ${priceValues[1]}
+                  ${priceValues[1] === 1000 ? "$1000+" : `$${priceValues[1]}`}
                 </div>
               </div>
             </div>
@@ -161,16 +213,16 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
           
           <Separator />
           
-          {/* Rating filter - enhanced */}
+          {/* Rating filter - enhanced and mobile-friendly */}
           <div>
             <h4 className="font-medium mb-3">Rating</h4>
             <RadioGroup 
               value={activeFilters.rating?.toString() || ""}
               onValueChange={handleRatingChange}
-              className="space-y-2"
+              className={isMobile ? "grid grid-cols-3 gap-2" : "space-y-2"}
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="4" id="rating4" className="h-5 w-5" />
+                <RadioGroupItem value="4" id="rating4" className="h-4 w-4" />
                 <Label htmlFor="rating4" className="text-sm cursor-pointer flex items-center">
                   <span className="text-amber-500 mr-1 flex">
                     <Star className="h-3 w-3 fill-current" />
@@ -182,7 +234,7 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3" id="rating3" className="h-5 w-5" />
+                <RadioGroupItem value="3" id="rating3" className="h-4 w-4" />
                 <Label htmlFor="rating3" className="text-sm cursor-pointer flex items-center">
                   <span className="text-amber-500 mr-1 flex">
                     <Star className="h-3 w-3 fill-current" />
@@ -193,7 +245,7 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="2" id="rating2" className="h-5 w-5" />
+                <RadioGroupItem value="2" id="rating2" className="h-4 w-4" />
                 <Label htmlFor="rating2" className="text-sm cursor-pointer flex items-center">
                   <span className="text-amber-500 mr-1 flex">
                     <Star className="h-3 w-3 fill-current" />
@@ -207,10 +259,10 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
           
           <Separator />
           
-          {/* Special filters section */}
+          {/* Special filters section - mobile friendly with grid layout */}
           <div>
             <h4 className="font-medium mb-3">Special Filters</h4>
-            <div className="space-y-3">
+            <div className={isMobile ? "grid grid-cols-2 gap-3" : "space-y-3"}>
               {/* Free shipping filter */}
               <div className="flex items-center space-x-2">
                 <Checkbox 
@@ -239,20 +291,19 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
             </div>
           </div>
           
-          <Separator />
-          
           {/* Saved filter profiles */}
           {savedFilterProfiles.length > 0 && (
             <>
+              <Separator />
               <div>
                 <h4 className="font-medium mb-3">Saved Filters</h4>
-                <div className="space-y-2">
+                <div className={isMobile ? "grid grid-cols-2 gap-2" : "space-y-2"}>
                   {savedFilterProfiles.map((profile, idx) => (
                     <Button 
                       key={idx} 
                       variant="outline" 
                       size="sm" 
-                      className="w-full justify-start text-left"
+                      className="w-full justify-start text-left text-xs"
                       onClick={() => loadFilterProfile(profile)}
                     >
                       {profile.name}
@@ -260,15 +311,14 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
                   ))}
                 </div>
               </div>
-              
-              <Separator />
             </>
           )}
           
-          {/* Save current filters */}
+          {/* Save current filters - mobile friendly design */}
+          <Separator />
           <div>
-            <h4 className="font-medium mb-3">Save Current Filters</h4>
-            <div className="flex gap-2">
+            <h4 className="font-medium mb-2">Save Current Filters</h4>
+            <div className="flex gap-2 mt-1">
               <input
                 type="text"
                 className="flex-1 border rounded px-2 py-1 text-sm"
@@ -281,6 +331,7 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
                 variant="secondary"
                 onClick={saveCurrentFilters}
                 disabled={!filterProfileName}
+                className="whitespace-nowrap"
               >
                 Save
               </Button>
@@ -288,24 +339,6 @@ const FiltersSidebar = ({ activeFilters, onFilterChange, categories = [] }: Filt
           </div>
         </div>
       </ScrollArea>
-      
-      <div className="p-4 border-t">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => onFilterChange({
-            priceRange: [0, 1000],
-            categories: [],
-            rating: null,
-            freeShipping: false,
-            favoritesOnly: false,
-            sortBy: activeFilters.sortBy || "relevance"
-          })}
-          className="w-full"
-        >
-          Clear All Filters
-        </Button>
-      </div>
     </div>
   );
 };

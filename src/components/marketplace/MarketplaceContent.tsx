@@ -11,6 +11,7 @@ import { useProductRecommendations } from "@/hooks/useProductRecommendations";
 import { AlertCircle } from "lucide-react";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -30,6 +31,7 @@ const MarketplaceContent = ({
   setShowFilters
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">(
     isMobile ? "list" : "grid"
   );
@@ -56,6 +58,14 @@ const MarketplaceContent = ({
       setViewMode("list");
     }
   }, [isMobile]);
+  
+  // Initialize filters based on URL params
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam && categories.includes(categoryParam)) {
+      updateFilter('categories', [categoryParam]);
+    }
+  }, [searchParams, categories, updateFilter]);
   
   const toggleSavedFilters = () => {
     // If activating saved filters and we have at least one saved filter
@@ -114,6 +124,7 @@ const MarketplaceContent = ({
                 });
               }}
               categories={categories}
+              isMobile={isMobile}
             />
           </div>
         )}

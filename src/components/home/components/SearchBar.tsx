@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import SearchResults from "./SearchResults";
 import { hasValidZincToken } from "@/components/marketplace/zinc/zincCore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showTokenAlert, setShowTokenAlert] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +47,7 @@ const SearchBar = () => {
       // Ensure we navigate to marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
+      setIsFocused(false);
       
       // Reset search in progress after a short delay
       setTimeout(() => {
@@ -77,13 +79,13 @@ const SearchBar = () => {
       
       setSearchTerm(value);
       setIsSearchOpen(false);
+      setIsFocused(false);
       
       // Check if token is missing when user selects an item
       if (!hasValidZincToken() && !showTokenAlert) {
         setShowTokenAlert(true);
       }
       
-      console.log("Navigating to marketplace with search:", value.trim());
       // Always navigate to the marketplace with the search term
       navigate(`/marketplace?search=${encodeURIComponent(value.trim())}`);
       
@@ -115,17 +117,19 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="w-full">
+    <div className={`w-full transition-all ${isFocused ? 'md:scale-105' : ''}`}>
       <form onSubmit={handleSearch} className="w-full">
-        <div className="relative w-full">
+        <div className={`relative w-full rounded-md ${isFocused ? 'ring-2 ring-primary/20' : 'hover:shadow-sm'} transition-all`}>
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input 
             ref={inputRef}
-            type="text"
-            placeholder={isMobile ? "Search products..." : "Search products, brands, friends, or experiences..."} 
-            className="pl-8 w-full h-9 md:h-10"
+            type="search"
+            placeholder={isMobile ? "Search products..." : "Search for products, brands, or gifts..."} 
+            className={`pl-8 w-full h-9 md:h-10 pr-8 ${isFocused ? 'border-primary' : ''}`}
             value={searchTerm}
             onChange={handleInputChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -134,11 +138,11 @@ const SearchBar = () => {
           {searchTerm.length > 0 && (
             <button
               type="button"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground rounded-full bg-gray-100 hover:bg-gray-200 transition-colors p-1"
               onClick={handleClearSearch}
               aria-label="Clear search"
             >
-              &times;
+              <X className="h-3 w-3" />
             </button>
           )}
         </div>

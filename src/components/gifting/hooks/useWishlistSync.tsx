@@ -9,8 +9,8 @@ export function useWishlistSync() {
   const { user } = useAuth();
   
   // Sync changes to profile
-  const syncWishlistToProfile = useCallback(async (wishlists: Wishlist[]) => {
-    if (!user) return false;
+  const syncWishlistToProfile = useCallback(async (wishlists: Wishlist[]): Promise<void> => {
+    if (!user) return;
     
     try {
       console.log("Syncing wishlists to profile:", wishlists.length, "wishlists");
@@ -27,20 +27,17 @@ export function useWishlistSync() {
       if (updateError) {
         console.error("Error updating profile with wishlist:", updateError);
         toast.error("Failed to save wishlist changes");
-        return false;
       }
       
       console.log("Wishlist sync completed successfully");
-      return true;
     } catch (err) {
       console.error("Error syncing wishlist to profile:", err);
       toast.error("Failed to update your wishlists");
-      return false;
     }
   }, [user]);
 
   // Update wishlist sharing settings
-  const updateWishlistSharingSettings = useCallback(async (wishlistId: string, isPublic: boolean) => {
+  const updateWishlistSharingSettings = useCallback(async (wishlistId: string, isPublic: boolean): Promise<boolean> => {
     if (!user) return false;
     
     try {
@@ -81,7 +78,8 @@ export function useWishlistSync() {
       ];
       
       // Update profile
-      return syncWishlistToProfile(updatedWishlists);
+      await syncWishlistToProfile(updatedWishlists);
+      return true;
     } catch (err) {
       console.error("Error updating wishlist sharing settings:", err);
       toast.error("Failed to update wishlist sharing settings");

@@ -4,7 +4,7 @@ import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
 
 export function useWishlistCreate(
-  setWishlists: (wishlists: Wishlist[]) => void,
+  setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
   syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<void>
 ) {
   const [isCreating, setIsCreating] = useState(false);
@@ -34,10 +34,14 @@ export function useWishlistCreate(
       };
       
       // Update local state
-      setWishlists((prevWishlists) => [...prevWishlists, newWishlist]);
+      let updatedWishlists: Wishlist[] = [];
+      setWishlists((prevWishlists) => {
+        updatedWishlists = [...prevWishlists, newWishlist];
+        return updatedWishlists;
+      });
       
       // Sync with profile
-      await syncWishlistToProfile([...wishlists, newWishlist]);
+      await syncWishlistToProfile(updatedWishlists);
       
       console.log("Created new wishlist:", newWishlist);
       return newWishlist;

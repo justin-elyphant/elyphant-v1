@@ -3,8 +3,8 @@ import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
 
 export function useWishlistManage(
-  setWishlists: (wishlists: Wishlist[]) => void,
-  setWishlistedProducts: (products: string[]) => void,
+  setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
+  setWishlistedProducts: React.Dispatch<React.SetStateAction<string[]>>,
   syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<void>,
   updateWishlistSharingSettings?: (wishlistId: string, isPublic: boolean) => Promise<boolean>
 ) {
@@ -17,25 +17,27 @@ export function useWishlistManage(
       setDeletingWishlist(wishlistId);
       
       // Get current state
-      let wishlists: Wishlist[] = [];
+      let updatedWishlists: Wishlist[] = [];
+      let removedWishlist: Wishlist | undefined;
       
       // Update state with optimistic deletion
       setWishlists((prevWishlists) => {
+        // Get the wishlist being removed before filtering
+        removedWishlist = prevWishlists.find((list) => list.id === wishlistId);
+        
         // Filter out deleted wishlist
-        const filtered = prevWishlists.filter((list) => list.id !== wishlistId);
-        wishlists = filtered; // Store updated list for sync
-        return filtered;
+        updatedWishlists = prevWishlists.filter((list) => list.id !== wishlistId);
+        return updatedWishlists;
       });
       
       // Update wishlistedProducts to remove products that are only in this list
-      const removedWishlist = wishlists.find((list) => list.id === wishlistId);
       if (removedWishlist?.items) {
         // Get product IDs from deleted wishlist
         const deletedProductIds = removedWishlist.items.map((item) => item.product_id);
         
         // Create a set of all product IDs still in other wishlists
         const remainingProductIds = new Set(
-          wishlists.flatMap((list) => list.items.map((item) => item.product_id))
+          updatedWishlists.flatMap((list) => list.items.map((item) => item.product_id))
         );
         
         // Filter out product IDs that are no longer in any wishlist
@@ -45,7 +47,7 @@ export function useWishlistManage(
       }
       
       // Sync updated wishlists with profile
-      await syncWishlistToProfile(wishlists);
+      await syncWishlistToProfile(updatedWishlists);
       
       return true;
     } catch (err) {
@@ -76,28 +78,22 @@ export function useWishlistManage(
       }
       
       // Otherwise, update locally
-      let success = false;
+      let updatedWishlists: Wishlist[] = [];
       
       setWishlists((prevWishlists) => {
-        const updatedWishlists = prevWishlists.map((list) => {
+        updatedWishlists = prevWishlists.map((list) => {
           if (list.id === wishlistId) {
             return { ...list, is_public: isPublic };
           }
           return list;
         });
         
-        success = true;
-        
-        // Sync with profile
-        syncWishlistToProfile(updatedWishlists).catch((err) => {
-          console.error("Error syncing wishlist privacy settings:", err);
-          success = false;
-        });
-        
         return updatedWishlists;
       });
       
-      return success;
+      // Sync with profile
+      await syncWishlistToProfile(updatedWishlists);
+      return true;
     } catch (err) {
       console.error("Error updating wishlist sharing settings:", err);
       return false;
@@ -117,7 +113,7 @@ export function useWishlistManage(
       let updatedWishlists: Wishlist[] = [];
       
       setWishlists((prevWishlists) => {
-        const newWishlists = prevWishlists.map((list) => {
+        updatedWishlists = prevWishlists.map((list) => {
           if (list.id === wishlistId) {
             // Prevent overwriting certain fields
             const { id, items, is_public, created_at, ...allowedUpdates } = updates;
@@ -132,8 +128,7 @@ export function useWishlistManage(
           return list;
         });
         
-        updatedWishlists = newWishlists;
-        return newWishlists;
+        return updatedWishlists;
       });
       
       // Sync with profile

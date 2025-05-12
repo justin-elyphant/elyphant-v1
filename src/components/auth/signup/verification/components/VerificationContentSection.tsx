@@ -33,19 +33,19 @@ const VerificationContentSection = ({
   onResendVerification,
   onCheckVerification,
   setVerificationCode,
-  bypassVerification = true // Phase 5: Default to true
+  bypassVerification = true // Default to true
 }: VerificationContentSectionProps) => {
   const navigate = useNavigate();
   const [progress, setProgress] = React.useState(0);
 
-  // Phase 5: Enhanced auto-redirect with faster progress bar
+  // Enhanced auto-redirect with clear messaging about verification bypass
   useEffect(() => {
-    console.log("Phase 5: Auto-verification and redirection initiated");
+    console.log("Auto-verification and redirection initiated");
     let currentProgress = 0;
     
     // Show progress bar to indicate auto-verification
     const progressInterval = setInterval(() => {
-      currentProgress += 8; // Faster progress increment for Phase 5
+      currentProgress += 8; // Faster progress increment
       setProgress(Math.min(currentProgress, 100));
       
       if (currentProgress >= 100) {
@@ -59,7 +59,7 @@ const VerificationContentSection = ({
           navigate('/profile-setup', { replace: true });
         }, 300);
       }
-    }, 80); // Faster interval for Phase 5
+    }, 80);
     
     return () => clearInterval(progressInterval);
   }, [onVerificationSuccess, navigate]);
@@ -74,6 +74,14 @@ const VerificationContentSection = ({
           </AlertDescription>
         </Alert>
         
+        <Alert className="mb-4 bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-700">
+            <span className="font-semibold">Testing Mode:</span> Email verification is optional during testing.
+            You'll be automatically redirected to complete your profile setup.
+          </AlertDescription>
+        </Alert>
+        
         <div className="my-6">
           <Progress value={progress} className="h-2" />
           <p className="text-sm text-center mt-2 text-muted-foreground">
@@ -82,7 +90,7 @@ const VerificationContentSection = ({
         </div>
       </>
       
-      {/* Hide verification form in Phase 5 */}
+      {/* Hide verification form in testing mode */}
       {isVerified ? null : (
         <div className="hidden">
           <VerificationCodeSection

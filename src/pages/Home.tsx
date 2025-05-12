@@ -2,6 +2,7 @@
 import React from "react";
 import HomeContent from "@/components/home/HomeContent";
 import Header from "@/components/home/Header";
+import Footer from "@/components/home/Footer";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { OrderNotificationDemo } from "@/components/notifications/OrderStatusNotification";
 
@@ -26,6 +27,7 @@ const Home = () => {
             </div>
           )}
         </main>
+        <Footer />
       </div>
     </ProductProvider>
   );

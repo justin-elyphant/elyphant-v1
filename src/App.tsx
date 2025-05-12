@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Connections from './pages/Connections';
 import OnboardingPage from './pages/OnboardingPage';
 import NotificationsPage from "./pages/Notifications";
+import Marketplace from "./pages/Marketplace"; // Re-add the import
 import { NotificationsProvider } from "./contexts/notifications/NotificationsContext";
 
 function App() {
@@ -54,6 +55,11 @@ function App() {
                 />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                {/* Re-add the Marketplace route */}
+                <Route
+                  path="/marketplace"
+                  element={<Marketplace />}
+                />
                 {/* Redirect any unknown routes to the homepage */}
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>

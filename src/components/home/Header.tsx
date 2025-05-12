@@ -38,6 +38,16 @@ const Header = () => {
                 onOpenChange={setCategoriesOpen}
               />
             </ProductProvider>
+            
+            {/* Add Marketplace Link */}
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/marketplace")}
+              className="text-sm font-medium"
+            >
+              Marketplace
+            </Button>
+            
             <SearchBar />
             
             {user ? (

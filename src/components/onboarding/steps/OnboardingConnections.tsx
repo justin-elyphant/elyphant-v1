@@ -3,10 +3,14 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus, Mail } from "lucide-react";
-// Facebook integration removed
 import { EmailContactsButton } from "@/components/connections/EmailContactsButton";
 
-const OnboardingConnections: React.FC = () => {
+interface OnboardingConnectionsProps {
+  onNext: () => void;
+  onSkip: () => void;
+}
+
+const OnboardingConnections: React.FC<OnboardingConnectionsProps> = ({ onNext, onSkip }) => {
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -58,6 +62,15 @@ const OnboardingConnections: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
+      </div>
+      
+      <div className="flex justify-between pt-4">
+        <Button variant="outline" onClick={onSkip}>
+          Skip for now
+        </Button>
+        <Button onClick={onNext}>
+          Continue
+        </Button>
       </div>
     </div>
   );

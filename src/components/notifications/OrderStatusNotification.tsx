@@ -73,11 +73,11 @@ export const showOrderStatusNotification = ({
     }
   };
   
-  const getVariant = () => {
+  const getToastType = () => {
     switch (status) {
       case 'delivered': return 'success';
       case 'delayed': 
-      case 'cancelled': return 'destructive';
+      case 'cancelled': return 'error';
       default: return 'default';
     }
   };
@@ -88,20 +88,40 @@ export const showOrderStatusNotification = ({
   };
   
   const Icon = getIcon();
+  const toastType = getToastType();
   
-  toast(
-    getTitle(),
-    {
+  // Use the correct way to set toast type in sonner
+  if (toastType === 'success') {
+    toast.success(getTitle(), {
       description: getMessage(),
       icon: <Icon />,
-      variant: getVariant() as any,
       action: {
         label: "Track Order",
         onClick: handleTrackOrder
       },
       duration: 6000,
-    }
-  );
+    });
+  } else if (toastType === 'error') {
+    toast.error(getTitle(), {
+      description: getMessage(),
+      icon: <Icon />,
+      action: {
+        label: "Track Order",
+        onClick: handleTrackOrder
+      },
+      duration: 6000,
+    });
+  } else {
+    toast(getTitle(), {
+      description: getMessage(),
+      icon: <Icon />,
+      action: {
+        label: "Track Order",
+        onClick: handleTrackOrder
+      },
+      duration: 6000,
+    });
+  }
 };
 
 // Example usage component with demo buttons

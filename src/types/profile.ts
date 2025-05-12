@@ -1,3 +1,4 @@
+
 import type { Database } from './supabase';
 
 // Add this if it doesn't exist already

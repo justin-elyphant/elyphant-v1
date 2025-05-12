@@ -1,94 +1,110 @@
 
-import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Wishlist } from "@/types/profile";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Wishlist } from "@/types/profile";
 
-// Form schema for validation
 const wishlistFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   category: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  priority: z.enum(["low", "medium", "high"]).optional()
+  priority: z.enum(["low", "medium", "high"]).default("medium")
 });
 
-type WishlistFormValues = z.infer<typeof wishlistFormSchema>;
+type FormValues = z.infer<typeof wishlistFormSchema>;
 
 interface EditWishlistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (values: WishlistFormValues) => void;
+  onSubmit: (values: FormValues) => Promise<void>;
   wishlist: Wishlist | null;
 }
 
-const EditWishlistDialog = ({ open, onOpenChange, onSubmit, wishlist }: EditWishlistDialogProps) => {
-  const [tagInput, setTagInput] = React.useState("");
+const WISHLIST_CATEGORIES = [
+  { value: "birthday", label: "Birthday" },
+  { value: "holiday", label: "Holiday" },
+  { value: "anniversary", label: "Anniversary" },
+  { value: "wedding", label: "Wedding" },
+  { value: "baby", label: "Baby" },
+  { value: "personal", label: "Personal" },
+  { value: "shopping", label: "Shopping" },
+  { value: "gift-ideas", label: "Gift Ideas" },
+  { value: "other", label: "Other" },
+];
 
-  const form = useForm<WishlistFormValues>({
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+];
+
+const EditWishlistDialog = ({ 
+  open, 
+  onOpenChange, 
+  onSubmit,
+  wishlist 
+}: EditWishlistDialogProps) => {
+  const form = useForm<FormValues>({
     resolver: zodResolver(wishlistFormSchema),
     defaultValues: {
       title: wishlist?.title || "",
       description: wishlist?.description || "",
-      category: wishlist?.category || "other",
+      category: wishlist?.category || "personal",
       tags: wishlist?.tags || [],
-      priority: wishlist?.priority || "medium"
+      priority: (wishlist?.priority as "low" | "medium" | "high") || "medium"
     }
   });
+  
+  const { formState, reset } = form;
+  const isSubmitting = formState.isSubmitting;
 
-  // Update form when wishlist changes
-  React.useEffect(() => {
+  // Reset form when wishlist changes
+  useEffect(() => {
     if (wishlist) {
-      form.reset({
+      reset({
         title: wishlist.title,
         description: wishlist.description || "",
-        category: wishlist.category || "other",
+        category: wishlist.category || "personal",
         tags: wishlist.tags || [],
-        priority: wishlist.priority || "medium"
+        priority: (wishlist.priority as "low" | "medium" | "high") || "medium"
       });
     }
-  }, [wishlist, form]);
-
-  const handleAddTag = () => {
-    if (!tagInput.trim()) return;
-    
-    const currentTags = form.getValues("tags") || [];
-    if (!currentTags.includes(tagInput.trim())) {
-      form.setValue("tags", [...currentTags, tagInput.trim()]);
-    }
-    setTagInput("");
+  }, [wishlist, reset]);
+  
+  const handleSubmit = async (values: FormValues) => {
+    await onSubmit(values);
   };
 
-  const handleRemoveTag = (tag: string) => {
-    const currentTags = form.getValues("tags") || [];
-    form.setValue("tags", currentTags.filter(t => t !== tag));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
+  if (!wishlist) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Wishlist</DialogTitle>
+          <DialogDescription>
+            Update your wishlist details.
+          </DialogDescription>
         </DialogHeader>
+        
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="title"
@@ -96,128 +112,112 @@ const EditWishlistDialog = ({ open, onOpenChange, onSubmit, wishlist }: EditWish
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="My Wishlist" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description (optional)</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Items I'm interested in..." 
-                      className="resize-none"
-                      {...field} 
+                      {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="birthday">Birthday</SelectItem>
-                      <SelectItem value="holiday">Holiday</SelectItem>
-                      <SelectItem value="wedding">Wedding</SelectItem>
-                      <SelectItem value="baby">Baby</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <div className="flex gap-2">
-                <Input 
-                  id="tags"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Add tag..."
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={handleAddTag}
-                >
-                  Add
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-2">
-                {form.watch("tags")?.map((tag) => (
-                  <Badge 
-                    key={tag} 
-                    variant="secondary"
-                    className="flex items-center gap-1 px-2 py-1"
-                  >
-                    {tag}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => handleRemoveTag(tag)}
-                    />
-                  </Badge>
-                ))}
-              </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || "personal"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {WISHLIST_CATEGORIES.map((category) => (
+                          <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Helps organize your wishlists
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {PRIORITY_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      How important is this wishlist?
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
             </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
-            </div>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

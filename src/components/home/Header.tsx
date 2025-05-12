@@ -1,141 +1,128 @@
 
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
-import AuthButtons from "./components/AuthButtons";
-import Logo from "./components/Logo";
-import SearchBar from "./components/SearchBar";
-import CategoriesDropdown from "./components/CategoriesDropdown";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import NotificationCenter from "@/components/notifications/NotificationCenter";
-import ContextualHelp from "@/components/help/ContextualHelp";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/auth";
+import Logo from "./components/Logo";
+import AuthButtons from "./components/AuthButtons";
+import SearchBar from "./components/SearchBar";
+import UserButton from "@/components/auth/UserButton";
+import CategoriesDropdown from "./components/CategoriesDropdown";
+import { ProductProvider } from "@/contexts/ProductContext";
 
 const Header = () => {
-  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  // Determine if the current route is the homepage
-  const isHomePage = location.pathname === "/";
-
+  const { user } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  
   return (
-    <header className="bg-white shadow-md sticky top-0 z-40">
-      <div className="container mx-auto py-4 px-4 flex items-center justify-between">
-        {/* Logo and Brand */}
-        <Logo />
-
-        {/* Search Bar (always render) */}
-        <div className="flex-grow max-w-md mx-4">
-          <SearchBar />
+    <header className="sticky top-0 bg-white shadow-sm z-50">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link to="/">
+              <Logo />
+            </Link>
+          </div>
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            <ProductProvider>
+              <CategoriesDropdown 
+                open={categoriesOpen}
+                onOpenChange={setCategoriesOpen}
+              />
+            </ProductProvider>
+            <SearchBar />
+            
+            {user ? (
+              <UserButton />
+            ) : (
+              <AuthButtons />
+            )}
+          </div>
+          
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="md:hidden flex items-center"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
         </div>
-
-        {/* Navigation and Auth Buttons */}
-        <div className="hidden md:flex items-center space-x-4">
-          <CategoriesDropdown 
-            open={isCategoriesOpen} 
-            onOpenChange={setIsCategoriesOpen} 
-          />
-          <ContextualHelp
-            id="categoriesHelp"
-            content="Browse gifts by category to find the perfect present."
-          >
-            <span>Categories</span>
-          </ContextualHelp>
-          <Link to="/marketplace" className="hover:text-gray-600 transition-colors">
-            Marketplace
-          </Link>
-          <ContextualHelp
-            id="marketplaceHelp"
-            content="Explore a wide range of products in our marketplace."
-          >
-            <span>Marketplace</span>
-          </ContextualHelp>
-          <Link to="/gifting" className="hover:text-gray-600 transition-colors">
-            Gifting
-          </Link>
-          <ContextualHelp
-            id="giftingHelp"
-            content="Find personalized gift recommendations for your friends."
-          >
-            <span>Gifting</span>
-          </ContextualHelp>
-          <Link to="/wishlists" className="hover:text-gray-600 transition-colors">
-            Wishlists
-          </Link>
-          <ContextualHelp
-            id="wishlistsHelp"
-            content="Create and manage your wishlists to share with others."
-          >
-            <span>Wishlists</span>
-          </ContextualHelp>
-          <NotificationCenter className="md:block hidden" />
-          <AuthButtons />
-        </div>
-
-        {/* Mobile Menu Button */}
-        <Sheet>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" aria-label="Toggle Menu">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:max-w-sm">
-            <div className="flex flex-col h-full justify-between">
-              <div>
-                <div className="flex items-center justify-between px-4 py-6">
-                  <Logo />
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Close menu">
-                      <X className="h-6 w-6" />
-                    </Button>
-                  </SheetTrigger>
-                </div>
-                <div className="p-4">
-                  <SearchBar />
-                </div>
-                <div className="py-4">
-                  <CategoriesDropdown 
-                    open={isCategoriesOpen}
-                    onOpenChange={setIsCategoriesOpen}
-                  />
-                  <Link
-                    to="/marketplace"
-                    className="block px-4 py-2 hover:bg-gray-100 transition-colors"
-                  >
-                    Marketplace
-                  </Link>
-                  <Link
-                    to="/gifting"
-                    className="block px-4 py-2 hover:bg-gray-100 transition-colors"
-                  >
-                    Gifting
-                  </Link>
-                  <Link
-                    to="/wishlists"
-                    className="block px-4 py-2 hover:bg-gray-100 transition-colors"
-                  >
-                    Wishlists
-                  </Link>
-                </div>
-              </div>
-              <div className="p-4">
-                <AuthButtons />
-              </div>
+        
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-4 py-4 border-t">
+            <div className="flex mb-4">
+              <Input 
+                placeholder="Search for gifts..."
+                className="flex-grow mr-2"
+              />
+              <Button 
+                size="icon"
+                variant="ghost"
+                onClick={() => {/* search logic */}}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
-          </SheetContent>
-        </Sheet>
+            
+            <div className="space-y-3">
+              <ProductProvider>
+                <CategoriesDropdown 
+                  open={categoriesOpen}
+                  onOpenChange={setCategoriesOpen}
+                />
+              </ProductProvider>
+              
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                onClick={() => navigate("/marketplace")}
+              >
+                Marketplace
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                onClick={() => navigate("/wishlists")}
+              >
+                Wishlists
+              </Button>
+              
+              {/* Auth buttons for mobile */}
+              {!user && (
+                <div className="flex flex-col gap-2 pt-3 border-t">
+                  <Button 
+                    className="w-full" 
+                    onClick={() => navigate("/signup")}
+                  >
+                    Sign Up
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => navigate("/login")}
+                  >
+                    Log In
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

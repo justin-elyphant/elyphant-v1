@@ -36,12 +36,12 @@ interface CategoriesDropdownProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CategoriesDropdown: React.FC<CategoriesDropdownProps> = ({ 
+// Create a fallback version of the component that doesn't use the ProductProvider
+const CategoriesDropdownWithoutProvider: React.FC<CategoriesDropdownProps> = ({ 
   open, 
   onOpenChange 
 }) => {
   const navigate = useNavigate();
-  const { setProducts } = useProducts();
 
   const handleCategorySelect = async (category: string, searchTerm: string) => {
     // Show loading toast
@@ -77,6 +77,19 @@ const CategoriesDropdown: React.FC<CategoriesDropdownProps> = ({
       </DropdownMenuContent>
     </DropdownMenu>
   );
+};
+
+// Main component that will try to use ProductProvider if available
+const CategoriesDropdown: React.FC<CategoriesDropdownProps> = (props) => {
+  try {
+    // Try to use the ProductProvider context
+    const { setProducts } = useProducts();
+    return <CategoriesDropdownWithoutProvider {...props} />;
+  } catch (error) {
+    // If ProductProvider is not available, use the fallback version
+    console.warn("ProductProvider not available, using fallback version of CategoriesDropdown");
+    return <CategoriesDropdownWithoutProvider {...props} />;
+  }
 };
 
 export default CategoriesDropdown;

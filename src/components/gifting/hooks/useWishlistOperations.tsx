@@ -27,7 +27,7 @@ export function useWishlistOperations() {
     syncWishlistToProfile
   );
 
-  const { deleteWishlist, updateWishlistSharing, handleWishlistToggle } = useWishlistManage(
+  const { deleteWishlist, updateWishlistSharing, handleWishlistToggle, updateWishlistDetails } = useWishlistManage(
     setWishlists,
     setWishlistedProducts,
     syncWishlistToProfile,
@@ -46,6 +46,7 @@ export function useWishlistOperations() {
     removeFromWishlist,
     deleteWishlist,
     updateWishlistSharing,
+    updateWishlistDetails,
     reloadWishlists
   };
 }

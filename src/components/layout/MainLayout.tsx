@@ -1,53 +1,63 @@
-
-import React, { useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { Toaster } from 'sonner';
-import Header from "../home/Header";
-import Footer from "../home/Footer";
+import React from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
-import DebugPanel from "../debug/DebugPanel";
+import { Button } from "@/components/ui/button";
+import Logo from "../home/components/Logo";
+import UserButton from "../auth/UserButton";
+import NotificationsDropdown from "../notifications/NotificationsDropdown";
 
-interface MainLayoutProps {
-  children?: React.ReactNode;
-}
-
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  // Use a try/catch to handle the case where useAuth is called outside of AuthProvider
-  let isDebugMode = false;
-  
-  try {
-    const authContext = useAuth();
-    isDebugMode = authContext?.isDebugMode || false;
-  } catch (error) {
-    console.warn("Auth context not available in MainLayout");
-    // Continue with default values if context is not available
-  }
-  
-  const location = useLocation();
-  
-  // Scroll to top whenever the route changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+const MainLayout = ({ children }: { children: React.ReactNode }) => {
+  const { user, signOut } = useAuth();
   
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header /> {/* Always render the header */}
-      <Toaster />
-      <main className="flex-grow">
-        {children || <Outlet />}
-      </main>
-      <Footer />
-      
-      {/* Debug Panel - always rendered but only visible when toggled */}
-      <DebugPanel />
-      
-      {/* Debug mode indicator */}
-      {isDebugMode && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 text-center z-50">
-          DEBUG MODE ACTIVE - Authentication may be bypassed
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="border-b bg-white">
+        <div className="container flex items-center justify-between h-16">
+          <Link to="/" className="flex items-center">
+            <Logo />
+          </Link>
+          
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <Link to="/dashboard" className="hover:text-gray-600 transition-colors">
+              Dashboard
+            </Link>
+            <Link to="/connections" className="hover:text-gray-600 transition-colors">
+              Connections
+            </Link>
+            <Link to="/profile-setup" className="hover:text-gray-600 transition-colors">
+              Profile
+            </Link>
+            <Link to="/wishlists" className="hover:text-gray-600 transition-colors">
+              Wishlists
+            </Link>
+          </nav>
+          
+          <div className="flex items-center space-x-1">
+            {/* Add the notifications dropdown before any other header items */}
+            <NotificationsDropdown />
+            {user ? (
+              <UserButton />
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Log In</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-      )}
+      </header>
+      
+      <main className="flex-1 container py-6">{children}</main>
+      
+      <footer className="py-8 text-center text-sm text-muted-foreground">
+        <p>
+          &copy; {new Date().getFullYear()} Gift Giver. All rights reserved.
+        </p>
+      </footer>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -9,6 +9,7 @@ import OnboardingWelcome from "./steps/OnboardingWelcome";
 import OnboardingConnections from "./steps/OnboardingConnections";
 import OnboardingPreferences from "./steps/OnboardingPreferences";
 import OnboardingComplete from "./steps/OnboardingComplete";
+import "./onboardingStyles.css"; // Import the new styles
 
 export type OnboardingStep = 'welcome' | 'connections' | 'preferences' | 'complete';
 
@@ -17,7 +18,12 @@ export interface OnboardingState {
   completedSteps: OnboardingStep[];
 }
 
-const OnboardingFlow: React.FC = () => {
+interface OnboardingFlowProps {
+  onComplete: () => void;
+  onSkip?: () => void;
+}
+
+const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
@@ -29,6 +35,14 @@ const OnboardingFlow: React.FC = () => {
   const steps: OnboardingStep[] = ['welcome', 'connections', 'preferences', 'complete'];
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = (currentStepIndex / (steps.length - 1)) * 100;
+  
+  // Reset onboarding state when component mounts
+  useEffect(() => {
+    setState({
+      skippedSteps: [],
+      completedSteps: []
+    });
+  }, []);
   
   const handleNext = (skipCurrent = false) => {
     // Mark current step as completed or skipped
@@ -51,7 +65,7 @@ const OnboardingFlow: React.FC = () => {
       // Onboarding complete, redirect to dashboard
       localStorage.removeItem("newSignUp");
       localStorage.setItem("onboardingComplete", "true");
-      navigate("/dashboard");
+      onComplete();
     }
   };
 
@@ -59,7 +73,7 @@ const OnboardingFlow: React.FC = () => {
     handleNext(true);
   };
 
-  const handleComplete = () => {
+  const handleCompleteOnboarding = () => {
     // Mark all remaining steps as completed
     const remainingSteps = steps.slice(currentStepIndex).filter(step => 
       !state.completedSteps.includes(step) && step !== 'complete'
@@ -73,11 +87,26 @@ const OnboardingFlow: React.FC = () => {
     // Redirect to dashboard
     localStorage.removeItem("newSignUp");
     localStorage.setItem("onboardingComplete", "true");
-    navigate("/dashboard");
+    
+    // If the parent component provided an onComplete handler, use that
+    onComplete();
+  };
+
+  // If user skips the entire onboarding
+  const handleSkipAll = () => {
+    if (onSkip) {
+      onSkip();
+    } else {
+      localStorage.removeItem("newSignUp");
+      localStorage.setItem("onboardingComplete", "true");
+      localStorage.setItem("onboardingSkipped", "true");
+      localStorage.setItem("onboardingSkippedTime", Date.now().toString());
+      navigate("/dashboard");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4 flex flex-col onboarding-container">
       <div className="w-full max-w-2xl mx-auto mt-8">
         {currentStep !== 'complete' && (
           <div className="mb-8">
@@ -86,8 +115,8 @@ const OnboardingFlow: React.FC = () => {
                 Step {currentStepIndex + 1} of {steps.length - 1}
               </p>
               {currentStep !== 'welcome' && (
-                <Button variant="ghost" size="sm" onClick={handleSkip}>
-                  Skip this step
+                <Button variant="ghost" size="sm" onClick={handleSkipAll}>
+                  Skip All
                 </Button>
               )}
             </div>
@@ -95,7 +124,7 @@ const OnboardingFlow: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden onboarding-card">
           {currentStep === 'welcome' && (
             <OnboardingWelcome onNext={handleNext} userName={user?.user_metadata?.name || 'there'} />
           )}
@@ -109,7 +138,7 @@ const OnboardingFlow: React.FC = () => {
           )}
           
           {currentStep === 'complete' && (
-            <OnboardingComplete onComplete={handleComplete} />
+            <OnboardingComplete onComplete={handleCompleteOnboarding} />
           )}
         </div>
       </div>

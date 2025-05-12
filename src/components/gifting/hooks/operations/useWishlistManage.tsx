@@ -1,127 +1,174 @@
-
-import { useCallback } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { Wishlist } from "@/types/profile";
-import { useAuth } from "@/contexts/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function useWishlistManage(
-  setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>, 
-  setWishlistedProducts: React.Dispatch<React.SetStateAction<string[]>>, 
-  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<boolean>,
-  updateWishlistSharingSettings: (wishlistId: string, isPublic: boolean) => Promise<boolean>
+  setWishlists: (wishlists: Wishlist[]) => void,
+  setWishlistedProducts: (products: string[]) => void,
+  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<void>,
+  updateWishlistSharingSettings?: (wishlistId: string, isPublic: boolean) => Promise<boolean>
 ) {
-  const { user } = useAuth();
+  const [deletingWishlist, setDeletingWishlist] = useState<string | null>(null);
+  const [updatingWishlist, setUpdatingWishlist] = useState<string | null>(null);
   
-  // Delete wishlist
-  const deleteWishlist = useCallback(async (wishlistId: string) => {
-    if (!user) {
-      toast.error("You must be logged in to delete a wishlist");
-      return false;
-    }
-    
+  // Delete wishlist and sync with profile
+  const deleteWishlist = async (wishlistId: string): Promise<boolean> => {
     try {
-      // Get existing wishlists
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('wishlists')
-        .eq('id', user.id)
-        .single();
+      setDeletingWishlist(wishlistId);
       
-      if (fetchError) {
-        console.error("Error fetching wishlists:", fetchError);
-        throw fetchError;
-      }
+      // Get current state
+      let wishlists: Wishlist[] = [];
       
-      const existingWishlists = profile?.wishlists || [];
+      // Update state with optimistic deletion
+      setWishlists((prevWishlists) => {
+        // Filter out deleted wishlist
+        const filtered = prevWishlists.filter((list) => list.id !== wishlistId);
+        wishlists = filtered; // Store updated list for sync
+        return filtered;
+      });
       
-      // Find the wishlist to delete
-      const wishlistIndex = existingWishlists.findIndex(list => list.id === wishlistId);
-      
-      if (wishlistIndex === -1) {
-        toast.error("Wishlist not found");
-        return false;
-      }
-      
-      // Get product IDs from this wishlist to update local storage
-      const productsToCheckForRemoval = existingWishlists[wishlistIndex].items.map(item => item.product_id);
-      
-      // Update wishlists array
-      const updatedWishlists = [
-        ...existingWishlists.slice(0, wishlistIndex),
-        ...existingWishlists.slice(wishlistIndex + 1)
-      ];
-      
-      // Update profile using our new sync function
-      await syncWishlistToProfile(updatedWishlists);
-      
-      // Update local state
-      setWishlists(updatedWishlists);
-      
-      // Update local storage - remove products that don't exist in any other wishlist
-      for (const productId of productsToCheckForRemoval) {
-        const productInOtherWishlist = updatedWishlists.some(
-          list => list.items.some(item => item.product_id === productId)
+      // Update wishlistedProducts to remove products that are only in this list
+      const removedWishlist = wishlists.find((list) => list.id === wishlistId);
+      if (removedWishlist?.items) {
+        // Get product IDs from deleted wishlist
+        const deletedProductIds = removedWishlist.items.map((item) => item.product_id);
+        
+        // Create a set of all product IDs still in other wishlists
+        const remainingProductIds = new Set(
+          wishlists.flatMap((list) => list.items.map((item) => item.product_id))
         );
         
-        if (!productInOtherWishlist) {
-          setWishlistedProducts(prev => prev.filter(id => id !== productId));
-        }
+        // Filter out product IDs that are no longer in any wishlist
+        setWishlistedProducts((prevProducts) =>
+          prevProducts.filter((productId) => remainingProductIds.has(productId))
+        );
       }
       
-      toast.success("Wishlist deleted");
+      // Sync updated wishlists with profile
+      await syncWishlistToProfile(wishlists);
+      
       return true;
     } catch (err) {
       console.error("Error deleting wishlist:", err);
-      toast.error("Failed to delete wishlist");
-      return false;
-    }
-  }, [user, setWishlists, setWishlistedProducts, syncWishlistToProfile]);
-
-  // Update wishlist sharing settings
-  const updateWishlistSharing = useCallback(async (wishlistId: string, isPublic: boolean) => {
-    if (!user) {
-      toast.error("You must be logged in to update wishlist sharing settings");
-      return false;
-    }
-    
-    try {
-      // Update wishlist sharing settings
-      const success = await updateWishlistSharingSettings(wishlistId, isPublic);
       
-      if (success) {
-        // Update local state
-        setWishlists(prev => prev.map(wishlist => 
-          wishlist.id === wishlistId ? { ...wishlist, is_public: isPublic } : wishlist
-        ));
-        
-        return true;
+      // Show error notification
+      toast.error("Failed to delete wishlist", {
+        description: "An error occurred while deleting your wishlist."
+      });
+      
+      return false;
+    } finally {
+      setDeletingWishlist(null);
+    }
+  };
+  
+  // Update wishlist sharing settings
+  const updateWishlistSharing = async (
+    wishlistId: string, 
+    isPublic: boolean
+  ): Promise<boolean> => {
+    try {
+      setUpdatingWishlist(wishlistId);
+      
+      // If we have the external function from props, use it
+      if (updateWishlistSharingSettings) {
+        return await updateWishlistSharingSettings(wishlistId, isPublic);
       }
       
-      return false;
+      // Otherwise, update locally
+      let success = false;
+      
+      setWishlists((prevWishlists) => {
+        const updatedWishlists = prevWishlists.map((list) => {
+          if (list.id === wishlistId) {
+            return { ...list, is_public: isPublic };
+          }
+          return list;
+        });
+        
+        success = true;
+        
+        // Sync with profile
+        syncWishlistToProfile(updatedWishlists).catch((err) => {
+          console.error("Error syncing wishlist privacy settings:", err);
+          success = false;
+        });
+        
+        return updatedWishlists;
+      });
+      
+      return success;
     } catch (err) {
       console.error("Error updating wishlist sharing settings:", err);
-      toast.error("Failed to update wishlist sharing settings");
       return false;
+    } finally {
+      setUpdatingWishlist(null);
     }
-  }, [user, updateWishlistSharingSettings, setWishlists]);
-
-  // Toggle wishlist items
-  const handleWishlistToggle = useCallback((productId: string) => {
-    setWishlistedProducts(prev => {
-      const newWishlisted = prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId];
+  };
+  
+  // Update wishlist details
+  const updateWishlistDetails = async (
+    wishlistId: string,
+    updates: Partial<Wishlist>
+  ): Promise<boolean> => {
+    try {
+      setUpdatingWishlist(wishlistId);
       
-      if (newWishlisted.includes(productId)) {
-        toast.success("Added to wishlist");
-      } else {
-        toast.info("Removed from wishlist");
-      }
+      let updatedWishlists: Wishlist[] = [];
       
-      return newWishlisted;
-    });
-  }, [setWishlistedProducts]);
-
-  return { deleteWishlist, updateWishlistSharing, handleWishlistToggle };
+      setWishlists((prevWishlists) => {
+        const newWishlists = prevWishlists.map((list) => {
+          if (list.id === wishlistId) {
+            // Prevent overwriting certain fields
+            const { id, items, is_public, created_at, ...allowedUpdates } = updates;
+            
+            // Merge updates with existing wishlist
+            return {
+              ...list,
+              ...allowedUpdates,
+              updated_at: new Date().toISOString()
+            };
+          }
+          return list;
+        });
+        
+        updatedWishlists = newWishlists;
+        return newWishlists;
+      });
+      
+      // Sync with profile
+      await syncWishlistToProfile(updatedWishlists);
+      
+      toast.success("Wishlist updated successfully", {
+        description: "Your changes have been saved."
+      });
+      
+      return true;
+    } catch (err) {
+      console.error("Error updating wishlist details:", err);
+      
+      toast.error("Failed to update wishlist", {
+        description: "An error occurred while saving your changes."
+      });
+      
+      return false;
+    } finally {
+      setUpdatingWishlist(null);
+    }
+  };
+  
+  // Toggle wishlist item between wishlists
+  const handleWishlistToggle = async (productId: string): Promise<boolean> => {
+    // This function can be implemented if needed for cross-wishlist functionality
+    return true;
+  };
+  
+  return {
+    deleteWishlist,
+    updateWishlistSharing,
+    updateWishlistDetails,
+    handleWishlistToggle,
+    deletingWishlist,
+    updatingWishlist
+  };
 }

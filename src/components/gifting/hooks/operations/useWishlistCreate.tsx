@@ -1,55 +1,59 @@
 
+import { useState } from "react";
 import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
 
 export function useWishlistCreate(
-  setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
-  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<boolean>
+  setWishlists: (wishlists: Wishlist[]) => void,
+  syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<void>
 ) {
+  const [isCreating, setIsCreating] = useState(false);
+
   const createWishlist = async (
     title: string, 
-    description: string = "",
-    category?: string,
+    description?: string, 
+    category?: string, 
     tags?: string[],
-    priority?: 'low' | 'medium' | 'high'
-  ) => {
+    priority?: "low" | "medium" | "high"
+  ): Promise<Wishlist | null> => {
     try {
+      setIsCreating(true);
+      
+      // Create new wishlist object
       const newWishlist: Wishlist = {
         id: crypto.randomUUID(),
-        title,
-        description,
+        title: title.trim(),
+        description: description?.trim(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_public: false,
         items: [],
-        category: category || "other",
-        tags: tags || [],
-        priority: priority || "medium"
+        category,
+        tags,
+        priority
       };
       
-      setWishlists(prev => [newWishlist, ...prev]);
+      // Update local state
+      setWishlists((prevWishlists) => [...prevWishlists, newWishlist]);
       
-      await syncWishlistToProfile([newWishlist, ...await getCurrentWishlists(setWishlists)]);
-      toast.success("Wishlist created successfully");
+      // Sync with profile
+      await syncWishlistToProfile([...wishlists, newWishlist]);
+      
+      console.log("Created new wishlist:", newWishlist);
       return newWishlist;
-    } catch (error) {
-      console.error("Error creating wishlist:", error);
-      toast.error("Failed to create wishlist");
-      throw error;
+    } catch (err) {
+      console.error("Error creating wishlist:", err);
+      
+      // Show error notification
+      toast.error("Failed to create wishlist", {
+        description: "An error occurred while creating your wishlist."
+      });
+      
+      return null;
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  return { createWishlist };
+  return { createWishlist, isCreating };
 }
-
-// Helper function to get current wishlists state when syncing
-const getCurrentWishlists = async (
-  getWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>
-): Promise<Wishlist[]> => {
-  return new Promise<Wishlist[]>((resolve) => {
-    getWishlists((current) => {
-      resolve(current);
-      return current;
-    });
-  });
-};

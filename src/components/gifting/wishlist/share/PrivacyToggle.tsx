@@ -8,15 +8,48 @@ interface PrivacyToggleProps {
   isPublic: boolean;
   onToggle: (isPublic: boolean) => void;
   disabled?: boolean;
+  size?: "sm" | "md" | "lg";
 }
 
-const PrivacyToggle = ({ isPublic, onToggle, disabled = false }: PrivacyToggleProps) => {
+const PrivacyToggle = ({ 
+  isPublic, 
+  onToggle, 
+  disabled = false,
+  size = "md" 
+}: PrivacyToggleProps) => {
+  // Size variants for responsive design
+  const sizeClasses = {
+    sm: {
+      container: "space-y-2",
+      switch: "h-4 w-7",
+      icon: "h-3 w-3",
+      heading: "text-sm",
+      text: "text-xs"
+    },
+    md: {
+      container: "space-y-3",
+      switch: "",
+      icon: "h-4 w-4",
+      heading: "text-base",
+      text: "text-sm"
+    },
+    lg: {
+      container: "space-y-4",
+      switch: "scale-110",
+      icon: "h-5 w-5",
+      heading: "text-lg",
+      text: "text-base"
+    }
+  };
+  
+  const classes = sizeClasses[size];
+
   return (
-    <div className="space-y-3">
+    <div className={classes.container}>
       <div className="flex justify-between items-center">
         <div className="space-y-0.5">
-          <Label className="text-base">Wishlist Privacy</Label>
-          <p className="text-sm text-muted-foreground">
+          <Label className={classes.heading}>Wishlist Privacy</Label>
+          <p className={`text-muted-foreground ${classes.text}`}>
             Choose who can see your wishlist
           </p>
         </div>
@@ -24,17 +57,18 @@ const PrivacyToggle = ({ isPublic, onToggle, disabled = false }: PrivacyTogglePr
           checked={isPublic}
           onCheckedChange={onToggle}
           disabled={disabled}
+          className={classes.switch}
         />
       </div>
       
       <div className="rounded-md bg-muted p-3">
         <div className="flex">
           <div className={`p-2 rounded-full ${isPublic ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-            {isPublic ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            {isPublic ? <Globe className={classes.icon} /> : <Lock className={classes.icon} />}
           </div>
           <div className="ml-3">
-            <h5 className="text-sm font-medium">{isPublic ? 'Public' : 'Private'}</h5>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <h5 className={`font-medium ${classes.text}`}>{isPublic ? 'Public' : 'Private'}</h5>
+            <p className={`text-muted-foreground mt-0.5 ${size === "sm" ? "text-xs" : "text-xs"}`}>
               {isPublic 
                 ? 'Anyone with the link can view this wishlist.' 
                 : 'Only you can see this wishlist.'}

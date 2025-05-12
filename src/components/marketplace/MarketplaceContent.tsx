@@ -99,8 +99,6 @@ const MarketplaceContent = ({
   return (
     <div className="mt-6">
       <MarketplaceFilters 
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
         viewMode={viewMode}
         setViewMode={setViewMode}
         totalItems={filteredProducts.length}

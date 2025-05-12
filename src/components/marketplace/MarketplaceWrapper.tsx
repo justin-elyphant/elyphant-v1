@@ -6,6 +6,7 @@ import { useMarketplaceSearch } from "./hooks/useMarketplaceSearch";
 import StickyFiltersBar from "./StickyFiltersBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
+import MarketplaceHero from "./MarketplaceHero";
 
 const MarketplaceWrapper = () => {
   const [showFilters, setShowFilters] = useState(true);
@@ -27,7 +28,12 @@ const MarketplaceWrapper = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <MarketplaceHeader currentCategory={currentCategory} />
+      <MarketplaceHeader currentCategory={currentCategory} totalResults={filteredProducts.length} />
+      
+      {/* Hero banner with countdown - only show on main marketplace page */}
+      {!currentCategory && !searchTerm && (
+        <MarketplaceHero />
+      )}
       
       <StickyFiltersBar 
         showFilters={showFilters}

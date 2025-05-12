@@ -1,158 +1,111 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Filter, SlidersHorizontal, LayoutGrid, List, LayoutTemplate, Bookmark, BookmarkCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getSortOptions } from "./hooks/utils/categoryUtils";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Grid2X2, Rows, Layout, BookmarkCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface MarketplaceFiltersProps {
-  showFilters: boolean;
-  setShowFilters: (show: boolean) => void;
   viewMode: "grid" | "list" | "modern";
   setViewMode: (mode: "grid" | "list" | "modern") => void;
-  totalItems: number;
+  totalItems?: number;
   sortOption: string;
   onSortChange: (option: string) => void;
-  isMobile?: boolean;
-  savedFiltersCount?: number;
-  onSavedFiltersToggle?: () => void;
-  savedFiltersActive?: boolean;
+  isMobile: boolean;
+  savedFiltersCount: number;
+  onSavedFiltersToggle: () => void;
+  savedFiltersActive: boolean;
 }
 
 const MarketplaceFilters = ({
-  showFilters,
-  setShowFilters,
   viewMode,
   setViewMode,
   totalItems,
   sortOption,
   onSortChange,
-  isMobile: propIsMobile,
-  savedFiltersCount = 0,
+  isMobile,
+  savedFiltersCount,
   onSavedFiltersToggle,
-  savedFiltersActive = false,
+  savedFiltersActive
 }: MarketplaceFiltersProps) => {
-  const sortOptions = getSortOptions();
-  const hookIsMobile = useIsMobile();
-  // Use the prop if provided, otherwise use the hook
-  const isMobile = propIsMobile !== undefined ? propIsMobile : hookIsMobile;
+  // Sort options
+  const sortOptions = [
+    { value: "relevance", label: "Relevance" },
+    { value: "priceAsc", label: "Price: Low to High" },
+    { value: "priceDesc", label: "Price: High to Low" },
+    { value: "newest", label: "Newest" },
+    { value: "rating", label: "Top Rated" }
+  ];
   
-  const handleSortChange = (value: string) => {
-    onSortChange(value);
+  // Get label for current sort option
+  const getSortLabel = (value: string) => {
+    const option = sortOptions.find(opt => opt.value === value);
+    return option ? option.label : "Relevance";
   };
   
   return (
-    <div className={`flex flex-wrap justify-between items-center mb-4 md:mb-6 gap-2 md:gap-3 ${isMobile ? 'pb-2 border-b' : ''}`}>
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="outline" 
-          size={isMobile ? "sm" : "default"}
-          onClick={() => setShowFilters(!showFilters)}
-          className="min-h-9 px-2.5 md:px-3"
-        >
-          <SlidersHorizontal className="h-4 w-4 mr-1 md:mr-2" />
-          <span>{showFilters ? 'Hide Filters' : 'Filters'}</span>
-        </Button>
+    <div className="flex flex-wrap gap-3 items-center justify-between bg-white p-3 rounded-md shadow-sm border">
+      <div className="flex gap-2 items-center">
+        {/* View mode buttons */}
+        <div className="hidden sm:flex border rounded-md">
+          <Button
+            onClick={() => setViewMode("grid")}
+            variant="ghost"
+            size="sm"
+            className={`rounded-r-none ${viewMode === "grid" ? "bg-gray-100" : ""}`}
+          >
+            <Grid2X2 className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => setViewMode("list")}
+            variant="ghost"
+            size="sm"
+            className={`rounded-l-none ${viewMode === "list" ? "bg-gray-100" : ""}`}
+          >
+            <Rows className="h-4 w-4" />
+          </Button>
+        </div>
         
-        {/* Saved filters toggle */}
-        {savedFiltersCount > 0 && onSavedFiltersToggle && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={savedFiltersActive ? "default" : "outline"}
-                  size={isMobile ? "sm" : "default"}
-                  onClick={onSavedFiltersToggle}
-                  className="min-h-9"
-                >
-                  {savedFiltersActive ? (
-                    <BookmarkCheck className="h-4 w-4" />
-                  ) : (
-                    <Bookmark className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle saved filters ({savedFiltersCount})</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+        {/* Sort options */}
+        <div>
+          <Select value={sortOption} onValueChange={onSortChange}>
+            <SelectTrigger className="w-[180px] text-sm h-9">
+              <SelectValue>
+                {getSortLabel(sortOption)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         
-        {/* Enhanced view mode toggle with modern view option */}
-        {!isMobile && (
-          <div className="flex border rounded-md">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'} 
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="rounded-r-none min-h-9 px-2.5"
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Grid view</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant={viewMode === 'list' ? 'default' : 'ghost'} 
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="rounded-l-none rounded-r-none min-h-9 px-2.5"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>List view</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant={viewMode === 'modern' ? 'default' : 'ghost'} 
-                    size="sm"
-                    onClick={() => setViewMode('modern')}
-                    className="rounded-l-none min-h-9 px-2.5"
-                  >
-                    <LayoutTemplate className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Modern view</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+        {/* Saved filters button - only shown if user has saved filters */}
+        {savedFiltersCount > 0 && (
+          <Button
+            variant={savedFiltersActive ? "default" : "outline"}
+            size="sm"
+            onClick={onSavedFiltersToggle}
+            className="hidden sm:flex items-center"
+          >
+            <BookmarkCheck className="h-4 w-4 mr-2" />
+            Saved Filters
+            <Badge className="ml-2" variant="secondary">
+              {savedFiltersCount}
+            </Badge>
+          </Button>
         )}
       </div>
       
-      <div className="flex items-center gap-2">
-        <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">
-          {totalItems} items
-        </span>
-        <Select value={sortOption} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-[130px] md:w-[180px] h-9 text-xs md:text-sm">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent className="z-50">
-            {sortOptions.map(option => (
-              <SelectItem key={option.value} value={option.value} className="text-sm">
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Right side items (only shown on larger screens) */}
+      <div className="hidden md:block text-sm text-muted-foreground">
+        {totalItems !== undefined && (
+          <span>{totalItems} {totalItems === 1 ? 'item' : 'items'}</span>
+        )}
       </div>
     </div>
   );

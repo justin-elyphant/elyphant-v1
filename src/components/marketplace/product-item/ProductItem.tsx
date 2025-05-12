@@ -6,6 +6,7 @@ import { Star } from "lucide-react";
 import { Product } from "@/types/product";
 import { useLazyImage } from "@/hooks/useLazyImage";
 import QuickWishlistButton from "./QuickWishlistButton";
+import { getProductFallbackImage } from "./productImageUtils";
 
 interface ProductItemProps {
   product: Product;
@@ -24,7 +25,13 @@ const ProductItem = ({
   isFavorited,
   statusBadge
 }: ProductItemProps) => {
-  const { src: imageSrc } = useLazyImage(product.image);
+  // Get proper image or fallback
+  const productImage = product.image || getProductFallbackImage(
+    product.title || product.name || "", 
+    product.category || ""
+  );
+  
+  const { src: imageSrc } = useLazyImage(productImage);
   
   const handleClick = () => {
     onProductClick(product.product_id || product.id || "");

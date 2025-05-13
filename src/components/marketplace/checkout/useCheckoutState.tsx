@@ -109,7 +109,7 @@ export const useCheckoutState = () => {
   };
 
   const handleUpdateGiftScheduling = (data: GiftSchedulingOptions) => {
-    // Ensure boolean values for gift scheduling options
+    // Ensure boolean values for gift scheduling options - explicitly convert all values to booleans
     const updatedData: GiftSchedulingOptions = {
       scheduleDelivery: Boolean(data.scheduleDelivery),
       sendGiftMessage: Boolean(data.sendGiftMessage),

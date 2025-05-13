@@ -19,9 +19,10 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
   onUpdate 
 }) => {
   const handleCheckboxChange = (field: keyof GiftSchedulingOptions) => {
+    // Create a copy of the current options and toggle the selected field
     const updatedOptions = {
       ...giftScheduling,
-      [field]: !giftScheduling[field]
+      [field]: !Boolean(giftScheduling[field])
     };
     onUpdate(updatedOptions);
   };

@@ -109,11 +109,11 @@ export const useCheckoutState = () => {
   };
 
   const handleUpdateGiftScheduling = (data: GiftSchedulingOptions) => {
-    // Ensure boolean values for gift scheduling options - explicitly convert all values to booleans using !! operator
+    // Strictly compare against true to ensure boolean values
     const updatedData: GiftSchedulingOptions = {
-      scheduleDelivery: !!data.scheduleDelivery,
-      sendGiftMessage: !!data.sendGiftMessage,
-      isSurprise: data.isSurprise !== undefined ? !!data.isSurprise : undefined
+      scheduleDelivery: data.scheduleDelivery === true,
+      sendGiftMessage: data.sendGiftMessage === true,
+      isSurprise: data.isSurprise === undefined ? undefined : data.isSurprise === true
     };
     
     setCheckoutData(prev => ({

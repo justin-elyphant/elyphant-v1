@@ -20,10 +20,10 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
 }) => {
   const handleCheckboxChange = (field: keyof GiftSchedulingOptions) => {
     // Create a copy of the current options and toggle the selected field
-    // Ensuring proper boolean conversion
+    // Using strict comparison to ensure proper boolean typing
     const updatedOptions = {
       ...giftScheduling,
-      [field]: !Boolean(giftScheduling[field])
+      [field]: !(giftScheduling[field] === true)
     };
     onUpdate(updatedOptions);
   };
@@ -36,7 +36,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="scheduleDelivery" 
-            checked={Boolean(giftScheduling.scheduleDelivery)}
+            checked={giftScheduling.scheduleDelivery === true}
             onCheckedChange={() => handleCheckboxChange('scheduleDelivery')}
           />
           <FormLabel htmlFor="scheduleDelivery" className="cursor-pointer">
@@ -47,7 +47,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="sendGiftMessage" 
-            checked={Boolean(giftScheduling.sendGiftMessage)}
+            checked={giftScheduling.sendGiftMessage === true}
             onCheckedChange={() => handleCheckboxChange('sendGiftMessage')}
           />
           <FormLabel htmlFor="sendGiftMessage" className="cursor-pointer">
@@ -59,7 +59,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="isSurprise" 
-              checked={Boolean(giftScheduling.isSurprise)}
+              checked={giftScheduling.isSurprise === true}
               onCheckedChange={() => handleCheckboxChange('isSurprise')}
             />
             <FormLabel htmlFor="isSurprise" className="cursor-pointer">

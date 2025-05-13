@@ -1,4 +1,5 @@
 
+
 /**
  * Utility functions for device detection and feature capability checks
  */
@@ -12,8 +13,7 @@ export function isTouchDevice(): boolean {
   
   return (
     'ontouchstart' in window ||
-    navigator.maxTouchPoints > 0 ||
-    navigator.msMaxTouchPoints > 0
+    navigator.maxTouchPoints > 0
   );
 }
 
@@ -64,7 +64,8 @@ export function getDevicePixelRatio(): number {
 export function isIOS(): boolean {
   if (typeof window === 'undefined') return false;
   
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const userAgent = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(userAgent) && !('MSStream' in window);
 }
 
 /**
@@ -76,3 +77,4 @@ export function isAndroid(): boolean {
   
   return /Android/.test(navigator.userAgent);
 }
+

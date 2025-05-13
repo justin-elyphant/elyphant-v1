@@ -1,74 +1,44 @@
 
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/auth/AuthProvider';
-import { ProfileProvider } from './contexts/profile/ProfileContext';
-import { ProductProvider } from './contexts/ProductContext';
-import MainLayout from './components/layout/MainLayout';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import ProfileSetup from './pages/ProfileSetup';
-import SignUp from './pages/SignUp';
-import Login from './pages/Login';
-import Connections from './pages/Connections';
-import OnboardingPage from './pages/OnboardingPage';
-import NotificationsPage from "./pages/Notifications";
-import Marketplace from "./pages/Marketplace"; // Re-add the import
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import ProfileSetup from "./pages/ProfileSetup";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
+import NotFound from "./pages/NotFound";
+import { ThemeProvider } from "./contexts/theme/ThemeProvider";
+import { AuthProvider } from "./contexts/auth";
+import { ProfileProvider } from "./contexts/profile/ProfileContext";
 import { NotificationsProvider } from "./contexts/notifications/NotificationsContext";
+import { Toaster } from "sonner";
 
-function App() {
+const App = () => {
   return (
-    <AuthProvider>
-      <ProfileProvider>
-        <ProductProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ProfileProvider>
           <NotificationsProvider>
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <MainLayout>
-                      <Dashboard />
-                    </MainLayout>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <MainLayout>
-                      <Profile />
-                    </MainLayout>
-                  }
-                />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
-                <Route path="/login" element={<Login />} />
-                <Route
-                  path="/connections"
-                  element={
-                    <MainLayout>
-                      <Connections />
-                    </MainLayout>
-                  }
-                />
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                {/* Re-add the Marketplace route */}
-                <Route
-                  path="/marketplace"
-                  element={<Marketplace />}
-                />
-                {/* Redirect any unknown routes to the homepage */}
-                <Route path="*" element={<Navigate to="/" />} />
+                <Route path="/profile-setup" element={<ProfileSetup />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+            <Toaster position="top-right" closeButton richColors />
           </NotificationsProvider>
-        </ProductProvider>
-      </ProfileProvider>
-    </AuthProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;

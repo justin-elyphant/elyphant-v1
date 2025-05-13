@@ -1,11 +1,10 @@
 
 import React from "react";
-import { formatDistanceToNow } from "date-fns";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import { UserPlus, Gift, Bell, Heart, Calendar } from "lucide-react";
-import { Notification } from "@/hooks/useNotifications";
+import { formatDistanceToNow } from "date-fns";
+import { Bell, Gift, Calendar, Heart, MessageSquare } from "lucide-react";
+import { Notification } from "@/contexts/notifications/NotificationsContext";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -13,81 +12,65 @@ interface NotificationItemProps {
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ 
-  notification, 
+  notification,
   onRead 
 }) => {
-  const handleClick = () => {
-    if (!notification.isRead) {
-      onRead();
-    }
-    
-    // Additional logic if needed for navigation or actions
-  };
-  
-  const getNotificationIcon = () => {
+  // Convert the notification type to an appropriate icon
+  const getIcon = () => {
     switch (notification.type) {
       case 'connection':
-        return <UserPlus className="h-5 w-5 text-blue-600" />;
+        return <MessageSquare className="h-4 w-4 text-blue-500" />;
       case 'gift':
-        return <Gift className="h-5 w-5 text-purple-600" />;
+        return <Gift className="h-4 w-4 text-purple-500" />;
       case 'wishlist':
-        return <Heart className="h-5 w-5 text-rose-600" />;
+        return <Heart className="h-4 w-4 text-red-500" />;
       case 'event':
-        return <Calendar className="h-5 w-5 text-amber-600" />;
+        return <Calendar className="h-4 w-4 text-green-500" />;
+      case 'system':
       default:
-        return <Bell className="h-5 w-5 text-gray-600" />;
+        return <Bell className="h-4 w-4 text-gray-500" />;
     }
   };
 
+  // Format the timestamp to relative time (e.g., "5 minutes ago")
+  const formattedTime = formatDistanceToNow(new Date(notification.createdAt), { 
+    addSuffix: true 
+  });
+
   return (
     <div 
-      className={cn(
-        "p-4 hover:bg-gray-50 transition-colors cursor-pointer",
-        !notification.isRead && "bg-blue-50"
-      )}
-      onClick={handleClick}
+      className={`p-4 border-b last:border-b-0 transition-colors ${
+        notification.read ? 'bg-white' : 'bg-blue-50'
+      }`}
+      onClick={onRead}
     >
-      <div className="flex gap-3">
-        {notification.user ? (
-          <Avatar>
-            <AvatarImage src={notification.user.imageUrl} />
-            <AvatarFallback>{notification.user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        ) : (
-          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-            {getNotificationIcon()}
-          </div>
-        )}
+      <div className="flex items-start gap-3">
+        <div className="mt-1">
+          {getIcon()}
+        </div>
         
-        <div className="flex-1">
-          <div 
-            className={cn(
-              "text-sm",
-              !notification.isRead && "font-medium"
-            )}
-            dangerouslySetInnerHTML={{ __html: notification.content }}
-          />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium">{notification.title}</p>
+          <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
           
-          <div className="mt-1 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
-            </span>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-xs text-gray-400">{formattedTime}</span>
             
-            {notification.action && (
-              <Link 
-                to={notification.action.link} 
-                className="text-xs font-medium text-primary hover:text-primary/80"
-                onClick={(e) => e.stopPropagation()}
+            {notification.link && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.location.href = notification.link!;
+                }}
               >
-                {notification.action.label}
-              </Link>
+                {notification.actionText || "View"}
+              </Button>
             )}
           </div>
         </div>
-        
-        {!notification.isRead && (
-          <div className="h-2 w-2 rounded-full bg-blue-500 self-start mt-2" />
-        )}
       </div>
     </div>
   );

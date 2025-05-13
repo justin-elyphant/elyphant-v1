@@ -58,12 +58,12 @@ const CheckoutPage = () => {
     }
   };
 
-  // Convert string values to booleans using explicit conversion
+  // Ensure all gift scheduling values are proper booleans with strict equality operators
   const formattedGiftScheduling = {
-    scheduleDelivery: checkoutData.giftScheduling.scheduleDelivery === true,
-    sendGiftMessage: checkoutData.giftScheduling.sendGiftMessage === true,
+    scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
+    sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
     isSurprise: checkoutData.giftScheduling.isSurprise === undefined ? 
-      undefined : checkoutData.giftScheduling.isSurprise === true
+      undefined : Boolean(checkoutData.giftScheduling.isSurprise)
   };
 
   return (

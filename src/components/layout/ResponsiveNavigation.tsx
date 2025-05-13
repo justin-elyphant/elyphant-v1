@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth";
 import { Menu, X } from "lucide-react";
 import Logo from "../home/components/Logo";
 import UserButton from "../auth/UserButton";
-import NotificationsDropdown from "../notifications/NotificationsDropdown";
+import { NotificationsDropdown } from "../notifications/NotificationsDropdown";
 
 interface NavLink {
   label: string;

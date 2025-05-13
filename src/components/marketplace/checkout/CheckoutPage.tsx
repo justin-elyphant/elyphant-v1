@@ -58,7 +58,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Fix the type conversion issue by ensuring all values are proper booleans
+  // Convert string values to booleans using explicit conversion
   const formattedGiftScheduling = {
     scheduleDelivery: checkoutData.giftScheduling.scheduleDelivery === true,
     sendGiftMessage: checkoutData.giftScheduling.sendGiftMessage === true,

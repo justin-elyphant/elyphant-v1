@@ -24,6 +24,7 @@ export interface GiftOptions {
 export interface GiftSchedulingOptions {
   scheduleDelivery: boolean;
   sendGiftMessage: boolean;
+  isSurprise?: boolean; // Optional field to maintain compatibility
 }
 
 export interface CheckoutData {
@@ -108,9 +109,16 @@ export const useCheckoutState = () => {
   };
 
   const handleUpdateGiftScheduling = (data: GiftSchedulingOptions) => {
+    // Ensure boolean values for gift scheduling options
+    const updatedData: GiftSchedulingOptions = {
+      scheduleDelivery: Boolean(data.scheduleDelivery),
+      sendGiftMessage: Boolean(data.sendGiftMessage),
+      isSurprise: data.isSurprise !== undefined ? Boolean(data.isSurprise) : undefined
+    };
+    
     setCheckoutData(prev => ({
       ...prev,
-      giftScheduling: data
+      giftScheduling: updatedData
     }));
   };
 

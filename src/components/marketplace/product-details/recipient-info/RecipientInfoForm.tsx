@@ -52,7 +52,7 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
     },
   });
 
-  // Gift scheduling options state
+  // Gift scheduling options state - ensure boolean values
   const [giftScheduling, setGiftScheduling] = React.useState<GiftSchedulingOptions>({
     scheduleDelivery: false,
     sendGiftMessage: false,

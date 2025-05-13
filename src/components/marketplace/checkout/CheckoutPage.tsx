@@ -75,7 +75,7 @@ const CheckoutPage = () => {
           <CheckoutTabs 
             activeTab={activeTab} 
             onTabChange={handleTabChange}
-            canProceedToPayment={canProceedToPayment()}
+            canProceedToPayment={Boolean(canProceedToPayment())}
           >
             <TabsContent value="shipping" className="space-y-6">
               <CheckoutForm 

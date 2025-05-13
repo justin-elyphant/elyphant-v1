@@ -1,94 +1,66 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import MainLayout from "@/components/layout/MainLayout";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
-import PaymentSettings from "@/components/settings/PaymentSettings";
-import { useAuth } from "@/contexts/auth";
-import { Skeleton } from "@/components/ui/skeleton";
+import PrivacySettings from "@/components/connections/PrivacySettings";
+import { Loader2 } from "lucide-react";
+
+type SettingsTab = "general" | "notifications" | "privacy";
 
 const Settings = () => {
-  const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const { profile, loading } = useProfile();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState(tabParam || "general");
-  const [localLoading, setLocalLoading] = useState(true);
-  
-  // Set up a timeout to prevent indefinite loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLocalLoading(false);
-    }, 2000); // Stop loading after 2 seconds max
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // When tab changes in URL, update active tab
-  useEffect(() => {
-    if (tabParam) {
-      setActiveTab(tabParam);
+
+  // Redirect if not logged in
+  React.useEffect(() => {
+    if (!user && !loading) {
+      toast.error("You must be logged in to access settings");
+      navigate("/signin");
     }
-  }, [tabParam]);
-  
-  // Update URL when active tab changes
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    navigate(`/settings?tab=${tab}`);
-  };
-  
-  const tabs = [
-    { id: "general", label: "General Settings" },
-    { id: "notification", label: "Notifications" },
-    { id: "payment", label: "Payment Methods" },
-  ];
-  
-  // Determine if we should still be showing loading state
-  const showLoading = isLoading && localLoading;
-  
-  // If loading has timed out or auth check is complete and user is not logged in
-  if (!showLoading && !user) {
-    navigate("/signin", { replace: true });
-    return null;
-  }
-  
-  if (showLoading) {
+  }, [user, loading, navigate]);
+
+  if (loading || !profile) {
     return (
-      <MainLayout>
-        <div className="container max-w-5xl mx-auto py-8 px-4">
-          <div className="mb-6">
-            <Skeleton className="h-9 w-40" />
-          </div>
-          
-          <Skeleton className="h-10 w-full max-w-md mb-6" />
-          
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <Skeleton className="h-8 w-48 mb-6" />
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-12 w-full mb-4" />
-          </div>
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
-  
+
+  const tabs = [
+    { id: "general", label: "General" },
+    { id: "notifications", label: "Notifications" },
+    { id: "privacy", label: "Privacy & Security" },
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "general":
+        return <GeneralSettings />;
+      case "notifications":
+        return <NotificationSettings />;
+      case "privacy":
+        return <PrivacySettings />;
+      default:
+        return <GeneralSettings />;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <SettingsLayout 
-        tabs={tabs} 
-        activeTab={activeTab} 
-        onTabChange={handleTabChange}
-      >
-        {activeTab === "general" && <GeneralSettings />}
-        {activeTab === "notification" && <NotificationSettings />}
-        {activeTab === "payment" && <PaymentSettings />}
-      </SettingsLayout>
-    </div>
+    <SettingsLayout
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
+    >
+      {renderTabContent()}
+    </SettingsLayout>
   );
 };
 

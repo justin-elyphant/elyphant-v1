@@ -1,18 +1,18 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { toast } from "sonner";
-import { useEffect } from "react";
-import { DataSharingSettings, SharingLevel } from "@/types/supabase";
-
-// Define the valid importance values
-type Importance = "low" | "medium" | "high";
+import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 
 export const useSettingsForm = () => {
-  const { profile, loading: profileLoading, updateProfile } = useProfile();
-  
+  const { user } = useAuth();
+  const { profile, updateProfile, loading } = useProfile();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Setup form with default values
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -20,7 +20,7 @@ export const useSettingsForm = () => {
       email: "",
       bio: "",
       profile_image: null,
-      birthday: null,
+      birthday: undefined,
       address: {
         street: "",
         city: "",
@@ -33,139 +33,83 @@ export const useSettingsForm = () => {
       data_sharing_settings: {
         dob: "private",
         shipping_address: "private",
-        gift_preferences: "friends"
+        gift_preferences: "friends",
+        email: "private"
       }
     }
   });
 
-  // Load profile data into form when available
+  // Load profile data when available
   useEffect(() => {
-    if (profile && !profileLoading) {
-      console.log("Setting form values from profile:", profile);
-      
-      // Convert birthday string to Date if available
-      let birthdayDate = null;
-      if (profile.dob) {
-        try {
-          birthdayDate = new Date(profile.dob);
-          // Check if date is valid
-          if (isNaN(birthdayDate.getTime())) {
-            console.warn("Invalid date format for birthday:", profile.dob);
-            birthdayDate = null;
-          }
-        } catch (e) {
-          console.error("Error parsing birthday date:", e);
-          birthdayDate = null;
-        }
-      }
-      
-      // Extract interests from gift preferences
-      const interests: string[] = [];
-      if (profile.gift_preferences && Array.isArray(profile.gift_preferences)) {
-        profile.gift_preferences.forEach(pref => {
-          if (typeof pref === 'string') {
-            interests.push(pref);
-          } else if (pref && typeof pref === 'object' && 'category' in pref) {
-            interests.push(pref.category);
-          }
-        });
-      }
-      
-      // Extract important dates if available
-      const importantDates = [];
-      if (profile.important_dates && Array.isArray(profile.important_dates)) {
-        for (const date of profile.important_dates) {
-          if (date && date.date && date.description) {
-            try {
-              const parsedDate = new Date(date.date);
-              if (!isNaN(parsedDate.getTime())) {
-                importantDates.push({
-                  date: parsedDate,
-                  description: date.description
-                });
-              }
-            } catch (e) {
-              console.error("Error parsing important date:", e);
-            }
-          }
-        }
-      }
-
-      // Ensure we have a valid shipping address object
-      const address = {
-        street: profile.shipping_address?.street || "",
-        city: profile.shipping_address?.city || "",
-        state: profile.shipping_address?.state || "",
-        zipCode: profile.shipping_address?.zipCode || "",
-        country: profile.shipping_address?.country || ""
-      };
-
-      // Ensure we have valid data sharing settings
-      const dataSharingSettings = {
-        dob: (profile.data_sharing_settings?.dob || "private") as SharingLevel,
-        shipping_address: (profile.data_sharing_settings?.shipping_address || "private") as SharingLevel,
-        gift_preferences: (profile.data_sharing_settings?.gift_preferences || "friends") as SharingLevel
-      };
-
+    if (profile && !loading) {
       form.reset({
         name: profile.name || "",
         email: profile.email || "",
         bio: profile.bio || "",
-        profile_image: profile.profile_image,
-        birthday: birthdayDate,
-        address: address,
-        interests: interests,
-        importantDates: importantDates,
-        data_sharing_settings: dataSharingSettings
-      });
-      
-      console.log("Form reset with profile data");
-    }
-  }, [profile, profileLoading, form]);
-
-  const onSubmit = async (data: SettingsFormValues) => {
-    try {
-      // Format the data for storage
-      const formattedData = {
-        name: data.name,
-        email: data.email,
-        bio: data.bio || `Hi, I'm ${data.name}`,
-        profile_image: data.profile_image,
-        dob: data.birthday?.toISOString(),
-        shipping_address: {
-          street: data.address.street,
-          city: data.address.city,
-          state: data.address.state,
-          zipCode: data.address.zipCode,
-          country: data.address.country
+        profile_image: profile.profile_image || null,
+        birthday: profile.dob ? new Date(profile.dob) : undefined,
+        address: profile.shipping_address || {
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: ""
         },
-        gift_preferences: data.interests.map(interest => ({
-          category: interest,
-          importance: "medium" as Importance // Explicitly type as Importance
-        })),
+        interests: profile.interests || [],
+        importantDates: profile.important_dates?.map(date => ({
+          date: new Date(date.date),
+          description: date.description
+        })) || [],
+        data_sharing_settings: profile.data_sharing_settings || {
+          dob: "private",
+          shipping_address: "private",
+          gift_preferences: "friends",
+          email: "private"
+        }
+      });
+    }
+  }, [profile, loading, form]);
+
+  // Handle form submission
+  const onSubmit = async (data: SettingsFormValues) => {
+    if (!user) {
+      toast.error("You must be logged in to update your profile");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Format the data for Supabase
+      const updateData = {
+        name: data.name,
+        bio: data.bio,
+        profile_image: data.profile_image,
+        dob: data.birthday ? data.birthday.toISOString() : null,
+        shipping_address: data.address,
+        interests: data.interests,
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),
           description: date.description
         })),
-        // Ensure all required properties are defined in data_sharing_settings
-        data_sharing_settings: {
-          dob: data.data_sharing_settings.dob as SharingLevel,
-          shipping_address: data.data_sharing_settings.shipping_address as SharingLevel,
-          gift_preferences: data.data_sharing_settings.gift_preferences as SharingLevel
-        } as DataSharingSettings
+        data_sharing_settings: data.data_sharing_settings
       };
-
-      await updateProfile(formattedData);
+      
+      await updateProfile(updateData);
       toast.success("Profile updated successfully");
     } catch (error) {
-      console.error("Error in form submission:", error);
-      toast.error("Failed to save profile changes");
+      console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile", {
+        description: error instanceof Error ? error.message : "Unknown error"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     form,
     onSubmit,
-    isLoading: profileLoading
+    isLoading
   };
 };

@@ -1,120 +1,98 @@
 
 import React from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import AddressAutocomplete from "./AddressAutocomplete";
-import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { MapPin } from "lucide-react";
 
 const AddressSection = () => {
   const form = useFormContext();
-  
-  const handleAddressAutocomplete = (address: {
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  }) => {
-    form.setValue("address.street", address.address);
-    form.setValue("address.city", address.city);
-    form.setValue("address.state", address.state);
-    form.setValue("address.zipCode", address.zipCode);
-    form.setValue("address.country", address.country);
-  };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Shipping Address</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-medium">Shipping Address</h3>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
         <FormField
           control={form.control}
           name="address.street"
           render={({ field }) => (
-            <FormItem className="space-y-2">
-              <AddressAutocomplete
-                value={field.value}
-                onChange={field.onChange}
-                onAddressSelect={handleAddressAutocomplete}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="address.city"
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <Label htmlFor="city">City</Label>
+            <FormItem>
+              <FormLabel>Street Address</FormLabel>
               <FormControl>
-                <Input 
-                  id="city"
-                  placeholder="New York"
-                  {...field}
-                />
+                <Input placeholder="123 Main St" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
-        <FormField
-          control={form.control}
-          name="address.state"
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <Label htmlFor="state">State/Province</Label>
-              <FormControl>
-                <Input 
-                  id="state"
-                  placeholder="NY"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="address.zipCode"
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <Label htmlFor="zipCode">Postal/Zip Code</Label>
-              <FormControl>
-                <Input 
-                  id="zipCode"
-                  placeholder="10001"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="address.country"
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <FormControl>
-                <Input 
-                  id="country"
-                  placeholder="United States"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-    </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="address.city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City</FormLabel>
+                <FormControl>
+                  <Input placeholder="San Francisco" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="address.state"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>State/Province</FormLabel>
+                <FormControl>
+                  <Input placeholder="California" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="address.zipCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ZIP/Postal Code</FormLabel>
+                <FormControl>
+                  <Input placeholder="94103" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="address.country"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Country</FormLabel>
+                <FormControl>
+                  <Input placeholder="United States" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

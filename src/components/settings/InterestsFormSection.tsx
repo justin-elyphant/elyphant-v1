@@ -1,68 +1,66 @@
 
 import React from "react";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 
-export interface InterestsFormSectionProps {
+interface InterestsFormSectionProps {
   interests: string[];
   removeInterest: (index: number) => void;
   newInterest: string;
-  setNewInterest: (value: string) => void;
+  setNewInterest: (interest: string) => void;
   addInterest: () => void;
 }
 
-const InterestsFormSection: React.FC<InterestsFormSectionProps> = ({
+const InterestsFormSection = ({
   interests,
   removeInterest,
   newInterest,
   setNewInterest,
   addInterest
-}) => {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addInterest();
-    }
-  };
-
+}: InterestsFormSectionProps) => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Interests</h3>
-      <p className="text-sm text-muted-foreground">Add your interests to help connections find better gifts for you</p>
       
       <div className="flex flex-wrap gap-2 mb-4">
-        {interests.map((interest, index) => (
-          <div 
-            key={index} 
-            className="bg-muted px-3 py-1 rounded-full flex items-center gap-1"
-          >
-            <span>{interest}</span>
-            <button 
-              type="button" 
-              onClick={() => removeInterest(index)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ))}
+        {interests.length > 0 ? (
+          interests.map((interest, index) => (
+            <Badge key={index} variant="secondary">
+              {interest}
+              <button
+                type="button"
+                onClick={() => removeInterest(index)}
+                className="ml-1 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground">No interests added yet.</p>
+        )}
       </div>
       
       <div className="flex gap-2">
         <Input
+          placeholder="Add a new interest"
           value={newInterest}
           onChange={(e) => setNewInterest(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Add an interest (e.g., Photography, Hiking)"
-          className="flex-1"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && newInterest.trim()) {
+              e.preventDefault();
+              addInterest();
+            }
+          }}
         />
-        <Button 
-          type="button" 
+        
+        <Button
+          type="button"
           onClick={addInterest}
-          variant="outline"
+          disabled={!newInterest.trim()}
         >
-          <Plus className="h-4 w-4 mr-1" />
           Add
         </Button>
       </div>

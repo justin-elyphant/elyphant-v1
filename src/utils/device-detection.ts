@@ -88,7 +88,8 @@ export function isIOS(): boolean {
   if (typeof window === 'undefined') return false;
   
   const userAgent = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+  // Fixed: Removed MSStream check to resolve TypeScript error
+  return /iPad|iPhone|iPod/.test(userAgent);
 }
 
 /**
@@ -100,4 +101,3 @@ export function isAndroid(): boolean {
   
   return /Android/.test(navigator.userAgent);
 }
-

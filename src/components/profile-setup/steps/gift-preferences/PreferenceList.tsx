@@ -1,92 +1,96 @@
 
-import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Gift, X, ShoppingBag } from "lucide-react";
-import { GiftPreference } from "@/types/supabase";
-import { popularBrands } from "./utils";
+import React from 'react';
+import { GiftPreference } from '@/types/supabase';
+import { Button } from '@/components/ui/button';
+import { Trash } from 'lucide-react';
+import { numberToImportance } from './utils';
 
 interface PreferenceListProps {
   preferences: GiftPreference[];
   onRemove: (index: number) => void;
-  experienceCategories: { label: string; emoji: string }[];
+  onUpdate: (index: number, importance: "low" | "medium" | "high") => void;
 }
 
 const PreferenceList: React.FC<PreferenceListProps> = ({ 
   preferences, 
-  onRemove,
-  experienceCategories
+  onRemove, 
+  onUpdate 
 }) => {
-  if (preferences.length === 0) return null;
-
-  // Helper function to determine if a preference is an experience
-  const isExperienceCategory = (category: string) => {
-    return experienceCategories.some(exp => exp.label === category) || 
-          category.toLowerCase().includes("experience") ||
-          category.toLowerCase().includes("class") ||
-          category.toLowerCase().includes("tour");
-  };
-
-  // Helper function to get emoji for experience
-  const getExperienceEmoji = (category: string) => {
-    const experience = experienceCategories.find(exp => exp.label === category);
-    return experience ? experience.emoji : "🎁";
-  };
-
-  // Helper function to determine if a preference is a brand
-  const isBrandCategory = (category: string) => {
-    return popularBrands.some(brand => brand.label === category);
-  };
-
-  // Helper function to get logo URL for a brand
-  const getBrandLogoUrl = (category: string) => {
-    const brand = popularBrands.find(brand => brand.label === category);
-    return brand ? brand.logoUrl : undefined;
-  };
+  if (preferences.length === 0) {
+    return (
+      <div className="text-center py-8 border border-dashed rounded-lg">
+        <p className="text-muted-foreground">No gift preferences added yet</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Add categories below to get started
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-4">
-      <Label className="text-sm mb-2 block">Your Gift Preferences</Label>
-      <div className="flex flex-wrap gap-2">
-        {preferences.map((pref, index) => (
-          <Badge
-            key={index}
-            variant={pref.importance === "high" ? "default" : 
-                   pref.importance === "medium" ? "secondary" : "outline"}
-            className="flex items-center gap-1 px-3 py-1"
+    <div className="space-y-2">
+      {preferences.map((preference, index) => (
+        <div 
+          key={index} 
+          className="flex items-center justify-between p-3 border rounded-md"
+        >
+          <div className="flex-1">
+            <p className="font-medium">{preference.category}</p>
+            <div className="flex mt-1 space-x-2">
+              <ImportanceButton 
+                label="Low" 
+                isActive={preference.importance === 1} 
+                onClick={() => onUpdate(index, "low")}
+              />
+              <ImportanceButton 
+                label="Medium" 
+                isActive={preference.importance === 2}
+                onClick={() => onUpdate(index, "medium")}
+              />
+              <ImportanceButton 
+                label="High" 
+                isActive={preference.importance === 3}
+                onClick={() => onUpdate(index, "high")}
+              />
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => onRemove(index)}
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
           >
-            {isExperienceCategory(pref.category) ? (
-              <span className="mr-1">{getExperienceEmoji(pref.category)}</span>
-            ) : isBrandCategory(pref.category) ? (
-              <div className="h-3.5 w-auto max-w-[20px] mr-1 flex items-center">
-                {getBrandLogoUrl(pref.category) ? (
-                  <img 
-                    src={getBrandLogoUrl(pref.category)} 
-                    alt={pref.category} 
-                    className="h-3.5 w-auto max-w-[20px] object-contain" 
-                  />
-                ) : (
-                  <ShoppingBag className="h-3 w-3" />
-                )}
-              </div>
-            ) : (
-              <Gift className="h-3 w-3" />
-            )}
-            <span>{pref.category}</span>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
-              className="h-4 w-4 p-0 ml-1"
-              onClick={() => onRemove(index)}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </Badge>
-        ))}
-      </div>
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
     </div>
+  );
+};
+
+interface ImportanceButtonProps {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const ImportanceButton: React.FC<ImportanceButtonProps> = ({
+  label,
+  isActive,
+  onClick
+}) => {
+  return (
+    <button
+      type="button"
+      className={`px-2 py-1 rounded text-xs ${
+        isActive 
+          ? 'bg-primary text-primary-foreground' 
+          : 'bg-muted text-muted-foreground'
+      }`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 };
 

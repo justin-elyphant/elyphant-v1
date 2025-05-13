@@ -1,107 +1,105 @@
 
 import React, { useState } from "react";
-import { ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { GiftPreference } from "@/types/supabase";
-
-// Import our smaller components
-import CategoryInput from "./gift-preferences/CategoryInput";
-import ImportanceSelector from "./gift-preferences/ImportanceSelector";
-import PreferenceList from "./gift-preferences/PreferenceList";
 import CategorySection from "./gift-preferences/CategorySection";
-import { experienceCategories, popularBrands, getOtherCategories } from "./gift-preferences/utils";
+import PreferenceList from "./gift-preferences/PreferenceList";
+import { createGiftPreference } from "./gift-preferences/utils";
 
 interface GiftPreferencesStepProps {
-  values: GiftPreference[];
-  onChange: (preferences: GiftPreference[]) => void;
+  preferences: GiftPreference[];
+  onPreferencesChange: (preferences: GiftPreference[]) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ values, onChange }) => {
+const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
+  preferences,
+  onPreferencesChange,
+  onNext,
+  onBack
+}) => {
   const [newCategory, setNewCategory] = useState("");
-  const [selectedImportance, setSelectedImportance] = useState<"high" | "medium" | "low">("medium");
+  const [newImportance, setNewImportance] = useState<"low" | "medium" | "high">("medium");
   
   const handleAddPreference = () => {
     if (!newCategory.trim()) return;
     
-    const newPreference = {
-      category: newCategory.trim(),
-      importance: selectedImportance
-    };
+    const newPreference = createGiftPreference(newCategory, newImportance);
     
-    onChange([...values, newPreference]);
+    onPreferencesChange([...preferences, newPreference]);
     setNewCategory("");
+    setNewImportance("medium");
   };
   
   const handleRemovePreference = (index: number) => {
-    const updatedPreferences = [...values];
+    const updatedPreferences = [...preferences];
     updatedPreferences.splice(index, 1);
-    onChange(updatedPreferences);
+    onPreferencesChange(updatedPreferences);
   };
   
-  const handleSelectSuggestion = (category: string, importance: "high" | "medium" | "low" = "medium") => {
-    // Check if the category already exists
-    const exists = values.some(pref => pref.category.toLowerCase() === category.toLowerCase());
-    if (exists) return;
+  const handleUpdatePreference = (index: number, importance: "low" | "medium" | "high") => {
+    const updatedPreferences = [...preferences];
     
-    const newPreference = {
-      category: category,
-      importance: importance
-    };
+    const updatedPreference = createGiftPreference(
+      updatedPreferences[index].category, 
+      importance
+    );
     
-    onChange([...values, newPreference]);
+    updatedPreferences[index] = updatedPreference;
+    onPreferencesChange(updatedPreferences);
   };
 
   return (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-medium">What gifts do you like?</h3>
-        <p className="text-sm text-muted-foreground">
-          Help your friends and family know what you'd appreciate receiving
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Gift Preferences</h2>
+        <p className="text-muted-foreground">
+          Let us know what types of gifts you enjoy receiving. This helps friends and family find the perfect gift for you.
         </p>
       </div>
       
+      <PreferenceList 
+        preferences={preferences}
+        onRemove={handleRemovePreference}
+        onUpdate={handleUpdatePreference}
+      />
+      
       <div className="space-y-4">
-        <CategoryInput 
-          value={newCategory}
-          onChange={setNewCategory}
-          onAdd={handleAddPreference}
-        />
+        <div>
+          <Label htmlFor="category">Add a gift category</Label>
+          <div className="flex space-x-2">
+            <Input
+              id="category"
+              placeholder="e.g., Books, Electronics, Clothing"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+            />
+            <Button onClick={handleAddPreference} type="button">
+              Add
+            </Button>
+          </div>
+        </div>
         
-        <ImportanceSelector 
-          value={selectedImportance}
-          onChange={setSelectedImportance}
+        <CategorySection
+          selectedImportance={newImportance}
+          onImportanceChange={setNewImportance}
         />
-        
-        <PreferenceList 
-          preferences={values}
-          onRemove={handleRemovePreference}
-          experienceCategories={experienceCategories}
-        />
-        
-        <CategorySection 
-          title="Experiences"
-          description="Some people prefer experiences over physical gifts. Click any experiences you'd enjoy."
-          categories={experienceCategories}
-          onSelect={(category) => handleSelectSuggestion(category, "high")}
-          renderPrefix={(category) => (
-            typeof category !== 'string' && category.emoji ? 
-              <span className="mr-1">{category.emoji}</span> : null
-          )}
-        />
-        
-        <CategorySection 
-          title="Popular Brands"
-          description="Click any brands you prefer for gifts."
-          categories={popularBrands}
-          onSelect={(category) => handleSelectSuggestion(category, "medium")}
-          renderPrefix={() => <ShoppingBag className="h-3 w-3 mr-1" />}
-        />
-        
-        <CategorySection 
-          title="Other Categories"
-          description="Click any other categories you're interested in."
-          categories={getOtherCategories()}
-          onSelect={(category) => handleSelectSuggestion(category, "medium")}
-        />
+      </div>
+      
+      <div className="flex justify-between pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        <Button type="button" onClick={onNext}>
+          Next
+        </Button>
       </div>
     </div>
   );

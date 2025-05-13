@@ -1,21 +1,20 @@
 
-import { ShippingAddress, SharingLevel, GiftPreference, ImportantDate } from "@/types/supabase";
+import { ShippingAddress, ImportantDate, GiftPreference } from "@/types/supabase";
 
 export interface ProfileData {
   name: string;
+  bio: string;
   username: string;
   email: string;
-  profile_image: string | null;
-  dob: string;
-  bio?: string;
+  dob: string; 
+  profile_image: string;
   shipping_address: ShippingAddress;
+  important_dates: ImportantDate[];
   gift_preferences: GiftPreference[];
-  important_dates?: ImportantDate[];
-  data_sharing_settings: {
-    dob: SharingLevel;
-    shipping_address: SharingLevel;
-    gift_preferences: SharingLevel;
-    email: SharingLevel;
+  data_sharing: {
+    email: "public" | "private" | "friends";
+    dob: "public" | "private" | "friends";
+    shipping_address: "public" | "private" | "friends";
+    gift_preferences: "public" | "private" | "friends";
   };
-  next_steps_option: string;
 }

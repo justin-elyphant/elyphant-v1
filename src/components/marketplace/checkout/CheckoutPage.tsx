@@ -58,6 +58,14 @@ const CheckoutPage = () => {
     }
   };
 
+  // Make sure we properly format gift scheduling options as booleans
+  const formattedGiftScheduling = {
+    scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
+    sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
+    isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
+      Boolean(checkoutData.giftScheduling.isSurprise) : undefined
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <CheckoutHeader title="Checkout" />
@@ -108,12 +116,7 @@ const CheckoutPage = () => {
             
             <TabsContent value="schedule" className="space-y-6">
               <GiftScheduling
-                giftScheduling={{
-                  scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
-                  sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
-                  isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
-                    Boolean(checkoutData.giftScheduling.isSurprise) : undefined
-                }}
+                giftScheduling={formattedGiftScheduling}
                 onUpdate={handleUpdateGiftScheduling}
               />
               

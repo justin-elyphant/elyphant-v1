@@ -1,40 +1,33 @@
 
 import { GiftPreference } from "@/types/supabase";
 
-// Convert importance string to number value used in the API
-export function importanceToValue(importance: "low" | "medium" | "high"): number {
-  switch (importance) {
-    case "low": return 1;
-    case "medium": return 3;
-    case "high": return 5;
-    default: return 3;
-  }
-}
-
-// Convert importance number from API to string 
-export function valueToImportance(value: number): "low" | "medium" | "high" {
-  if (value <= 1) return "low";
-  if (value >= 4) return "high";
-  return "medium"; 
-}
-
-// Create a new gift preference object
+/**
+ * Creates a new gift preference object with the given category and importance level
+ */
 export function createGiftPreference(
-  category: string, 
+  category: string,
   importance: "low" | "medium" | "high"
 ): GiftPreference {
+  // Convert string importance levels to numeric values
+  const importanceMap = {
+    low: 1,
+    medium: 2,
+    high: 3
+  };
+  
   return {
     category: category.trim(),
-    importance: importanceToValue(importance)
+    importance: importanceMap[importance] || 2,
+    subcategory: "",
+    notes: ""
   };
 }
 
-// Format gift preferences for display
-export function formatGiftPreferences(
-  preferences: GiftPreference[]
-): Array<{ category: string, importance: "low" | "medium" | "high" }> {
-  return preferences.map(pref => ({
-    category: pref.category,
-    importance: valueToImportance(pref.importance)
-  }));
+/**
+ * Converts a numeric importance to its string representation
+ */
+export function getImportanceLabel(importance: number): "low" | "medium" | "high" {
+  if (importance <= 1) return "low";
+  if (importance >= 3) return "high";
+  return "medium";
 }

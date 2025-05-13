@@ -1,67 +1,56 @@
 
-import type { DataSharingSettings, SharingLevel, ConnectionStatus } from "@/types/profile";
+import { DataSharingSettings, SharingLevel } from "@/types/supabase";
 
-// Get default privacy settings with email always set to private
-export function getDefaultDataSharingSettings(): DataSharingSettings {
+/**
+ * Ensures that data sharing settings have all required fields.
+ * If settings are missing or invalid, returns default privacy settings.
+ */
+export function normalizeDataSharingSettings(settings: any): DataSharingSettings {
+  if (!settings || typeof settings !== 'object') {
+    return {
+      email: 'private',
+      dob: 'private',
+      shipping_address: 'private',
+      gift_preferences: 'private'
+    };
+  }
+
   return {
-    dob: "friends",
-    shipping_address: "private",
-    gift_preferences: "public",
-    email: "private" // Email is always private by default
+    email: isValidSharingLevel(settings.email) ? settings.email : 'private',
+    dob: isValidSharingLevel(settings.dob) ? settings.dob : 'private',
+    shipping_address: isValidSharingLevel(settings.shipping_address) ? settings.shipping_address : 'private',
+    gift_preferences: isValidSharingLevel(settings.gift_preferences) ? settings.gift_preferences : 'private'
   };
 }
 
-// Check if data should be visible based on sharing level and connection status
-export function isDataVisible(
-  data: any,
-  sharingLevel: SharingLevel | undefined = "friends",
-  connectionStatus: ConnectionStatus = "none"
+/**
+ * Validates that a value is a valid sharing level
+ */
+function isValidSharingLevel(value: any): value is SharingLevel {
+  return typeof value === 'string' && ['private', 'friends', 'public'].includes(value);
+}
+
+/**
+ * Checks if a user can access a specific data item based on privacy settings
+ */
+export function canAccessData(
+  dataOwnerSettings: DataSharingSettings, 
+  dataField: keyof DataSharingSettings, 
+  connectionStatus: 'self' | 'friends' | 'none'
 ): boolean {
-  if (!data) return false;
-  
-  // If sharing level is not specified, default to friends
-  const level = sharingLevel || "friends";
-  
-  switch (level) {
-    case "public":
-      return true;
-    case "friends":
-      return connectionStatus === "accepted" || connectionStatus === "self";
-    case "private":
-    default:
-      return connectionStatus === "self";
+  if (connectionStatus === 'self') {
+    return true;
   }
-}
 
-// Get human readable label for sharing level
-export function getSharingLevelLabel(level: SharingLevel): string {
-  switch (level) {
-    case "public":
-      return "Everyone";
-    case "friends":
-      return "Only Friends";
-    case "private":
-      return "Only Me";
-    default:
-      return "Unknown";
-  }
-}
-
-// Normalize data sharing settings to ensure all required fields are present
-export function normalizeDataSharingSettings(settings?: DataSharingSettings | null): DataSharingSettings {
-  const defaults = getDefaultDataSharingSettings();
+  const privacyLevel = dataOwnerSettings[dataField];
   
-  if (!settings) {
-    return defaults;
+  if (privacyLevel === 'public') {
+    return true;
   }
   
-  // Ensure all required properties are present with non-null values
-  const normalizedSettings: DataSharingSettings = {
-    dob: settings.dob || defaults.dob,
-    shipping_address: settings.shipping_address || defaults.shipping_address,
-    gift_preferences: settings.gift_preferences || defaults.gift_preferences,
-    email: settings.email || defaults.email
-  };
+  if (privacyLevel === 'friends' && connectionStatus === 'friends') {
+    return true;
+  }
   
-  return normalizedSettings;
+  return false;
 }

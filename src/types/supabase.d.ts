@@ -25,6 +25,7 @@ export interface Profile {
   interests?: string[];
   important_dates?: ImportantDate[];
   recently_viewed?: RecentlyViewedProduct[];
+  gift_preferences?: GiftPreference[];
   data_sharing_settings: DataSharingSettings;
   created_at?: string;
   updated_at?: string;
@@ -54,11 +55,13 @@ export interface RecentlyViewedProduct {
   viewed_at: string;
 }
 
+export type SharingLevel = 'private' | 'friends' | 'public';
+
 export interface DataSharingSettings {
-  email: "public" | "private" | "friends";
-  dob: "public" | "private" | "friends";
-  shipping_address: "public" | "private" | "friends";
-  gift_preferences: "public" | "private" | "friends";
+  email: SharingLevel;
+  dob: SharingLevel;
+  shipping_address: SharingLevel;
+  gift_preferences: SharingLevel;
 }
 
 export interface UserAddress {
@@ -88,9 +91,14 @@ export interface UserSpecialDate {
   date: string;
   name: string;
   description?: string;
+  visibility?: SharingLevel;
 }
 
 export interface GiftPreference {
   category: string;
-  importance: number;
+  importance: number | "low" | "medium" | "high";
+  subcategory?: string;
+  notes?: string;
 }
+
+export type ConnectionStatus = 'none' | 'pending' | 'accepted' | 'rejected' | 'self';

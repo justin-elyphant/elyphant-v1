@@ -1,8 +1,12 @@
 
-import type { Database } from './supabase';
+import type { 
+  Database, 
+  SharingLevel, 
+  GiftPreference,
+  ShippingAddress
+} from './supabase.d';
 
-// Add this if it doesn't exist already
-export type SharingLevel = 'private' | 'friends' | 'public';
+export { SharingLevel };
 export type ConnectionStatus = 'none' | 'pending' | 'accepted' | 'rejected' | 'self';
 
 export interface DataSharingSettings {
@@ -33,13 +37,6 @@ export type Profile = Database['public']['Tables']['profiles']['Row'] & {
   wishlists?: Wishlist[];
 };
 
-export type GiftPreference = {
-  category: string;
-  subcategory?: string;
-  importance: number;
-  notes?: string;
-};
-
 export type WishlistItem = {
   id: string;
   product_id: string;
@@ -48,16 +45,6 @@ export type WishlistItem = {
   brand?: string;
   image_url?: string;
   added_at: string;
-};
-
-export type ShippingAddress = {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  name?: string;
-  id?: string;
 };
 
 // Function to ensure gift preferences are properly formatted

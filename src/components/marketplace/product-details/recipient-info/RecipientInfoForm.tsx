@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import {
@@ -56,7 +56,7 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
   const [giftScheduling, setGiftScheduling] = React.useState<GiftSchedulingOptions>({
     scheduleDelivery: false,
     sendGiftMessage: false,
-    isSurprise: false,
+    isSurprise: false, // Note this is still included for backward compatibility
   });
 
   const handleSubmit = async (data: RecipientInfoFormData) => {

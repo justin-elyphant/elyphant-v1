@@ -59,11 +59,12 @@ const CheckoutPage = () => {
   };
 
   // Create a properly typed version of the gift scheduling options
+  // Using strict conversion to boolean values
   const formattedGiftScheduling = {
-    scheduleDelivery: checkoutData.giftScheduling.scheduleDelivery === true,
-    sendGiftMessage: checkoutData.giftScheduling.sendGiftMessage === true,
+    scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
+    sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
     isSurprise: checkoutData.giftScheduling.isSurprise === undefined ? 
-      undefined : checkoutData.giftScheduling.isSurprise === true
+      undefined : Boolean(checkoutData.giftScheduling.isSurprise)
   };
 
   return (

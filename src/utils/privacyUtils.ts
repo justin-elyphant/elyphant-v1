@@ -55,11 +55,12 @@ export function normalizeDataSharingSettings(settings?: DataSharingSettings | nu
     return defaults;
   }
   
-  // Ensure email is always private
+  // Ensure all required properties are present with non-null values
   const normalizedSettings: DataSharingSettings = {
-    ...defaults,
-    ...settings,
-    email: "private" // Always enforce email as private
+    dob: settings.dob || defaults.dob,
+    shipping_address: settings.shipping_address || defaults.shipping_address,
+    gift_preferences: settings.gift_preferences || defaults.gift_preferences,
+    email: settings.email || defaults.email
   };
   
   return normalizedSettings;

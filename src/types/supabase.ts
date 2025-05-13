@@ -1,17 +1,8 @@
-export type SharingLevel = 'public' | 'friends' | 'private';
+import type { Database } from './supabase';
 
-export interface ShippingAddress {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
-
-export interface GiftPreference {
-  category: string;
-  importance: 'high' | 'medium' | 'low';
-}
+// Add this if it doesn't exist already
+export type SharingLevel = 'private' | 'friends' | 'public';
+export type ConnectionStatus = 'none' | 'pending' | 'accepted' | 'rejected' | 'self';
 
 export interface DataSharingSettings {
   dob: SharingLevel;
@@ -20,123 +11,104 @@ export interface DataSharingSettings {
   email: SharingLevel;
 }
 
-export interface ImportantDate {
-  date: string;
-  description: string;
-}
-
-export interface RecentlyViewedProduct {
+// Update the Wishlist type to include category and tags
+export type Wishlist = {
   id: string;
+  user_id?: string;
+  title: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  is_public: boolean;
+  items: WishlistItem[];
+  category?: string;
+  tags?: string[];
+  priority?: 'low' | 'medium' | 'high';
+  view_count?: number;
+  last_viewed?: string;
+};
+
+export type Profile = Database['public']['Tables']['profiles']['Row'] & {
+  wishlists?: Wishlist[];
+};
+
+export type GiftPreference = {
+  category: string;
+  subcategory?: string;
+  importance: number;
+  notes?: string;
+};
+
+export type WishlistItem = {
+  id: string;
+  product_id: string;
   name: string;
-  image: string;
   price?: number;
-  viewed_at: string;
-}
+  brand?: string;
+  image_url?: string;
+  added_at: string;
+};
 
-// Import Wishlist type from profile.ts
-import { Wishlist } from "./profile";
-
-export interface Profile {
-  id: string;
-  created_at?: string;
-  updated_at?: string;
+export type ShippingAddress = {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
   name?: string;
-  username?: string;
-  email?: string;
-  profile_image?: string | null;
-  profile_type?: string;
-  dob?: string;
-  shipping_address?: ShippingAddress;
-  gift_preferences?: GiftPreference[];
-  data_sharing_settings?: DataSharingSettings;
-  next_steps_option?: string;
-  bio?: string;
-  important_dates?: ImportantDate[];
-  interests?: string[];
-  recently_viewed?: RecentlyViewedProduct[];
-  wishlists?: Wishlist[]; // Add the wishlists property
+  id?: string;
+};
+
+// Function to ensure gift preferences are properly formatted
+export function normalizeGiftPreference(pref: any): GiftPreference {
+  if (!pref) {
+    return {
+      category: '',
+      importance: 3
+    };
+  }
+  
+  return {
+    category: pref.category || '',
+    subcategory: pref.subcategory || '',
+    importance: typeof pref.importance === 'number' ? pref.importance : 3,
+    notes: pref.notes || ''
+  };
 }
 
-export type UserConnection = {
-  id: string;
-  user_id: string;
-  connected_user_id: string;
-  relationship_type: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
-  created_at: string;
-  updated_at: string;
-  data_access_permissions: {
-    dob: boolean;
-    shipping_address: boolean;
-    gift_preferences: boolean;
-  };
-};
-
-export type UserAddress = {
-  id: string;
-  user_id: string;
-  name: string;
-  is_default: boolean;
-  address: ShippingAddress;
-  created_at: string;
-  updated_at: string;
-};
-
-export type UserSpecialDate = {
-  id: string;
-  user_id: string;
-  date_type: 'birthday' | 'anniversary' | 'custom';
-  date: string; // MM-DD format
-  visibility: SharingLevel;
-  created_at: string;
-  updated_at: string;
-};
-
-export type AutoGiftingRule = {
-  id: string;
-  user_id: string;
-  recipient_id: string;
-  date_type: 'birthday' | 'anniversary' | 'custom';
-  is_active: boolean;
-  gift_preferences?: {
-    categories?: string[];
-    min_price?: number;
-    max_price?: number;
-    note?: string;
-  };
-  budget_limit: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type Database = {
-  public: {
-    Tables: {
-      profiles: {
-        Row: Profile;
-        Insert: Partial<Profile>;
-        Update: Partial<Profile>;
-      };
-      user_connections: {
-        Row: UserConnection;
-        Insert: Omit<UserConnection, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<UserConnection, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      user_addresses: {
-        Row: UserAddress;
-        Insert: Omit<UserAddress, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<UserAddress, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      user_special_dates: {
-        Row: UserSpecialDate;
-        Insert: Omit<UserSpecialDate, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<UserSpecialDate, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      auto_gifting_rules: {
-        Row: AutoGiftingRule;
-        Insert: Omit<AutoGiftingRule, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<AutoGiftingRule, 'id' | 'created_at' | 'updated_at'>>;
-      };
+// Function to ensure shipping address is properly formatted
+export function normalizeShippingAddress(address: any): ShippingAddress {
+  if (!address) {
+    return {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
     };
+  }
+  
+  return {
+    street: address.street || '',
+    city: address.city || '',
+    state: address.state || '',
+    zipCode: address.zipCode || '',
+    country: address.country || '',
+    name: address.name || '',
+    id: address.id || ''
   };
-};
+}
+
+// Function to convert form data to API format
+export function profileFormToApiData(formData: any): any {
+  return {
+    name: formData.name,
+    email: formData.email,
+    username: formData.username,
+    bio: formData.bio || '',
+    dob: formData.birthday ? new Date(formData.birthday).toISOString() : null,
+    shipping_address: formData.address || {},
+    data_sharing_settings: formData.data_sharing_settings || {},
+    updated_at: new Date().toISOString()
+  };
+}

@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { toast } from "sonner";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
+import { normalizeDataSharingSettings } from "@/utils/privacyUtils";
+import { ShippingAddress, DataSharingSettings } from "@/types/profile";
 
 export const useSettingsForm = () => {
   const { user } = useAuth();
@@ -60,12 +62,7 @@ export const useSettingsForm = () => {
           date: new Date(date.date),
           description: date.description
         })) || [],
-        data_sharing_settings: profile.data_sharing_settings || {
-          dob: "private",
-          shipping_address: "private",
-          gift_preferences: "friends",
-          email: "private"
-        }
+        data_sharing_settings: normalizeDataSharingSettings(profile.data_sharing_settings)
       });
     }
   }, [profile, loading, form]);
@@ -80,25 +77,36 @@ export const useSettingsForm = () => {
     try {
       setIsLoading(true);
       
+      // Ensure all required fields in data_sharing_settings are provided
+      const dataSharingSettings: DataSharingSettings = {
+        dob: data.data_sharing_settings.dob || "private",
+        shipping_address: data.data_sharing_settings.shipping_address || "private",
+        gift_preferences: data.data_sharing_settings.gift_preferences || "friends",
+        email: data.data_sharing_settings.email || "private"
+      };
+      
+      // Ensure all required fields in shipping_address are provided
+      const shippingAddress: ShippingAddress = {
+        street: data.address.street || "",
+        city: data.address.city || "",
+        state: data.address.state || "",
+        zipCode: data.address.zipCode || "",
+        country: data.address.country || ""
+      };
+      
       // Format the data for Supabase
       const updateData = {
         name: data.name,
         bio: data.bio,
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
-        shipping_address: {
-          street: data.address.street || "",
-          city: data.address.city || "",
-          state: data.address.state || "",
-          zipCode: data.address.zipCode || "",
-          country: data.address.country || ""
-        },
+        shipping_address: shippingAddress,
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),
           description: date.description
         })),
-        data_sharing_settings: data.data_sharing_settings
+        data_sharing_settings: dataSharingSettings
       };
       
       await updateProfile(updateData);

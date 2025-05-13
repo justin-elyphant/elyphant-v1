@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import ScheduledGiftCard from '../ScheduledGiftCard';
 import { format } from 'date-fns';
 import '@testing-library/jest-dom'; // Add this to access toHaveAttribute matcher

@@ -3,21 +3,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "sonner";
-
-interface AuthContextProps {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  signOut: () => Promise<void>;
-  signIn: (email: string, password: string) => Promise<{
-    error: Error | null;
-    data: Session | null;
-  }>;
-  signUp: (email: string, password: string) => Promise<{
-    error: Error | null;
-    data: { user: User | null; session: Session | null };
-  }>;
-}
+import { AuthContextProps } from "./types";
+import { useAuthFunctions } from "./authHooks";
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
@@ -33,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDebugMode] = useState(() => localStorage.getItem("debugMode") === "true");
 
   useEffect(() => {
     // Set up auth state listener first
@@ -54,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const { signOut, deleteUser } = useAuthFunctions(user);
+
   const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -67,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       toast.success("Signed in successfully");
-      return { error: null, data };
+      return { error: null, data: data.session };
     } catch (error) {
       toast.error("An unexpected error occurred");
       return { error: error as Error, data: null };
@@ -100,23 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.success("Signed out successfully");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Failed to sign out");
-    }
-  };
-
-  const value = {
+  const value: AuthContextProps = {
     user,
     session,
     isLoading,
     signIn,
     signUp,
-    signOut
+    signOut,
+    deleteUser,
+    isDebugMode
   };
 
   return (

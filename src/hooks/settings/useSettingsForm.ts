@@ -86,7 +86,13 @@ export const useSettingsForm = () => {
         bio: data.bio,
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
-        shipping_address: data.address,
+        shipping_address: {
+          street: data.address.street || "",
+          city: data.address.city || "",
+          state: data.address.state || "",
+          zipCode: data.address.zipCode || "",
+          country: data.address.country || ""
+        },
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),

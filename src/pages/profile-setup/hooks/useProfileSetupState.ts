@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 
 export const useProfileSetupState = () => {
-  const { user, isDebugMode, isLoading: authLoading } = useAuth();
+  const { user, isDebugMode = false, isLoading: authLoading } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
   const [isNewSignUp, setIsNewSignUp] = useState(false);
   const [isManuallyLoading, setIsManuallyLoading] = useState(false);

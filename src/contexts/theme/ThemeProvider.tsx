@@ -3,13 +3,12 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
-interface ThemeContextProps {
+interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  resolvedTheme: 'light' | 'dark';
 }
 
-const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function useTheme() {
   const context = useContext(ThemeContext);
@@ -19,43 +18,48 @@ export function useTheme() {
   return context;
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
     return savedTheme || 'system';
   });
-  
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
-  // Update the theme when it changes
   useEffect(() => {
+    const root = window.document.documentElement;
+    
     localStorage.setItem('theme', theme);
-    
-    const updateTheme = () => {
-      const root = window.document.documentElement;
+
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
+        ? 'dark' 
+        : 'light';
+      
       root.classList.remove('light', 'dark');
-      
-      let resolvedTheme: 'light' | 'dark' = 'light';
-      
-      if (theme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.add(systemTheme);
-        resolvedTheme = systemTheme;
-      } else {
-        root.classList.add(theme);
-        resolvedTheme = theme;
-      }
-      
-      setResolvedTheme(resolvedTheme);
-    };
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.remove('light', 'dark');
+      root.classList.add(theme);
+    }
+  }, [theme]);
+
+  // Listen for system theme changes when in system mode
+  useEffect(() => {
+    if (theme !== 'system') return;
     
-    updateTheme();
-    
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
     const handleChange = () => {
-      if (theme === 'system') {
-        updateTheme();
+      const root = window.document.documentElement;
+      if (mediaQuery.matches) {
+        root.classList.remove('light');
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+        root.classList.add('light');
       }
     };
     
@@ -63,8 +67,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
+  const value = { theme, setTheme };
+  
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

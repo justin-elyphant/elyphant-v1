@@ -14,6 +14,7 @@ export interface Notification {
   read: boolean;
   createdAt: string;
   userId?: string;
+  link?: string;
 }
 
 interface NotificationsContextType {
@@ -23,6 +24,7 @@ interface NotificationsContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
+  deleteNotification: (id: string) => void;
   addTestNotification: (type: NotificationType) => void;
 }
 
@@ -33,6 +35,7 @@ const NotificationsContext = createContext<NotificationsContextType>({
   markAsRead: () => {},
   markAllAsRead: () => {},
   clearAll: () => {},
+  deleteNotification: () => {},
   addTestNotification: () => {},
 });
 
@@ -111,6 +114,15 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.removeItem(`notifications_${user.id}`);
     }
   };
+
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    // Update unread count if we're removing an unread notification
+    const notificationToDelete = notifications.find(n => n.id === id);
+    if (notificationToDelete && !notificationToDelete.read) {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+  };
   
   // For testing purposes
   const addTestNotification = (type: NotificationType) => {
@@ -137,6 +149,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         markAsRead,
         markAllAsRead,
         clearAll,
+        deleteNotification,
         addTestNotification
       }}
     >

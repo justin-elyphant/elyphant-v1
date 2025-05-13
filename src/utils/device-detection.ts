@@ -1,5 +1,4 @@
 
-
 /**
  * Utility functions for device detection and feature capability checks
  */
@@ -15,6 +14,30 @@ export function isTouchDevice(): boolean {
     'ontouchstart' in window ||
     navigator.maxTouchPoints > 0
   );
+}
+
+/**
+ * Checks if the current device is a mobile device
+ * @returns boolean indicating if the device is mobile
+ */
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+/**
+ * Checks if the current device is a tablet
+ * @returns boolean indicating if the device is a tablet
+ */
+export function isTabletDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  // Check if device is iPad or Android tablet
+  const isIPad = /iPad/i.test(navigator.userAgent);
+  const isAndroidTablet = /Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
+  
+  return isIPad || isAndroidTablet || (window.innerWidth >= 768 && window.innerWidth < 1024);
 }
 
 /**
@@ -65,7 +88,7 @@ export function isIOS(): boolean {
   if (typeof window === 'undefined') return false;
   
   const userAgent = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(userAgent) && !('MSStream' in window);
+  return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
 }
 
 /**

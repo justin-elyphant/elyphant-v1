@@ -1,30 +1,29 @@
 
-import React, { useState } from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { LucideIcon, Eye, EyeOff } from "lucide-react";
+import React from "react";
 import { UseFormReturn } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { LucideIcon } from "lucide-react";
 
 interface InputFieldProps {
   form: UseFormReturn<any>;
   name: string;
   label: string;
-  placeholder: string;
+  placeholder?: string;
   type?: string;
   Icon?: LucideIcon;
+  autoComplete?: string;
 }
 
-const InputField = ({ form, name, label, placeholder, type = "text", Icon }: InputFieldProps) => {
-  const [showPassword, setShowPassword] = useState(false);
-  
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-  
-  const isPassword = type === "password";
-  const inputType = isPassword ? (showPassword ? "text" : "password") : type;
-
+const InputField: React.FC<InputFieldProps> = ({
+  form,
+  name,
+  label,
+  placeholder = "",
+  type = "text",
+  Icon,
+  autoComplete,
+}) => {
   return (
     <FormField
       control={form.control}
@@ -35,32 +34,17 @@ const InputField = ({ form, name, label, placeholder, type = "text", Icon }: Inp
           <FormControl>
             <div className="relative">
               {Icon && (
-                <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <span className="absolute left-3 top-2.5 text-gray-400">
+                  <Icon className="h-4 w-4" />
+                </span>
               )}
-              <Input 
-                type={inputType} 
-                placeholder={placeholder} 
-                className={Icon ? "pl-10" : ""} 
-                {...field} 
+              <Input
+                placeholder={placeholder}
+                type={type}
+                className={Icon ? "pl-10" : ""}
+                autoComplete={autoComplete}
+                {...field}
               />
-              {isPassword && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={togglePasswordVisibility}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span className="sr-only">
-                    {showPassword ? "Hide password" : "Show password"}
-                  </span>
-                </Button>
-              )}
             </div>
           </FormControl>
           <FormMessage />

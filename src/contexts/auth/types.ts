@@ -1,25 +1,14 @@
 
-import { User, Session } from "@supabase/supabase-js";
+import { Session, User } from '@supabase/supabase-js';
 
 export interface AuthState {
-  user: User | null;
   session: Session | null;
+  user: User | null;
   isLoading: boolean;
-  isDebugMode: boolean;
-  signOut: () => Promise<void>;
-  getUserProfile: () => Promise<any>;
-  resendVerificationEmail: () => Promise<void>;
-  updateUserProfile: (updates: any) => Promise<void>;
-  deleteUser: () => Promise<void>;
 }
 
-export interface AuthContextProps {
-  user: any;
-  session: any;
-  isLoading: boolean;
-  isDebugMode: boolean;
-  toggleDebugMode: () => void;
-  isProcessingToken: boolean;
+export interface AuthContextProps extends AuthState {
   signOut: () => Promise<void>;
   deleteUser: () => Promise<void>;
+  isDebugMode: boolean;
 }

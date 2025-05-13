@@ -1,4 +1,3 @@
-
 import { addDays, isAfter, isBefore, setYear } from "date-fns";
 
 export interface GiftOccasion {
@@ -19,21 +18,15 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
   const occasions: GiftOccasion[] = [
     // 2025 Occasions
     { 
-      name: "Valentine's Day",
-      searchTerm: "valentines day gifts",
-      date: new Date(2025, 1, 14), // February 14, 2025
-      type: "holiday"
-    },
-    { 
-      name: "Easter",
-      searchTerm: "easter gifts",
-      date: new Date(2025, 3, 20), // April 20, 2025
-      type: "holiday"
-    },
-    { 
       name: "Mother's Day",
       searchTerm: "mothers day gifts",
-      date: new Date(2025, 4, 11), // May 11, 2025
+      date: new Date(2025, 4, 11), // May 11, 2025 - already passed on May 13
+      type: "holiday"
+    },
+    { 
+      name: "Valentine's Day",
+      searchTerm: "valentines day gifts",
+      date: new Date(2026, 1, 14), // February 14, 2026 (for next year)
       type: "holiday"
     },
     {
@@ -45,7 +38,13 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
     {
       name: "Graduation Season",
       searchTerm: "graduation gifts",
-      date: new Date(2025, 4, 15), // Mid-May 2025
+      date: new Date(2025, 4, 31), // May 31, 2025 - moved to end of May
+      type: "holiday"
+    },
+    { 
+      name: "Easter",
+      searchTerm: "easter gifts",
+      date: new Date(2026, 3, 5), // April 5, 2026 (for next year)
       type: "holiday"
     },
     {
@@ -109,7 +108,7 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
       type: "holiday"
     },
     
-    // 2026 Occasions
+    // 2026 Occasions (keeping these for reference)
     { 
       name: "Valentine's Day",
       searchTerm: "valentines day gifts",
@@ -178,4 +177,3 @@ export const mergeOccasions = (
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5); // Only take the 5 closest events
 };
-

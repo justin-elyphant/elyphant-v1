@@ -8,7 +8,7 @@ import { getNextHoliday, getUpcomingOccasions, GiftOccasion } from "./utils/upco
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import OccasionCards from "./header/OccasionCards";
 import { useAuth } from "@/contexts/auth";
-import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, addDays } from "date-fns";
+import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from "date-fns";
 
 const MarketplaceHero = () => {
   const isMobile = useIsMobile();
@@ -33,6 +33,14 @@ const MarketplaceHero = () => {
   // Get the next two upcoming holidays
   const nextHoliday = upcomingHolidays.length > 0 ? upcomingHolidays[0] : null;
   const secondHoliday = upcomingHolidays.length > 1 ? upcomingHolidays[1] : null;
+
+  // For debugging
+  useEffect(() => {
+    console.log("Current date:", new Date());
+    console.log("Upcoming holidays:", upcomingHolidays);
+    console.log("Next holiday:", nextHoliday);
+    console.log("Friend occasions:", friendOccasions);
+  }, [upcomingHolidays, nextHoliday, friendOccasions]);
   
   // Find the closest event (holiday or friend event)
   useEffect(() => {
@@ -43,7 +51,10 @@ const MarketplaceHero = () => {
     // For logged in users, check if a friend event is closer
     if (user && friendOccasions.length > 0) {
       const sortedEvents = [...friendOccasions, ...(nextHoliday ? [nextHoliday] : [])]
-        .filter(event => event.date > new Date()) // Only future events
+        .filter(event => {
+          // Ensure it's a future event by comparing timestamp values
+          return event.date.getTime() > new Date().getTime();
+        })
         .sort((a, b) => a.date.getTime() - b.date.getTime());
       
       if (sortedEvents.length > 0) {
@@ -53,11 +64,14 @@ const MarketplaceHero = () => {
     }
     
     if (closestEvent && closestDate) {
+      console.log("Setting target event to:", closestEvent.name, closestDate);
       setTargetEvent({
         name: closestEvent.name,
         date: closestDate,
         type: closestEvent.type
       });
+    } else {
+      console.log("No target event found");
     }
   }, [nextHoliday, friendOccasions, user]);
   
@@ -75,6 +89,7 @@ const MarketplaceHero = () => {
       const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
       const seconds = Math.max(0, differenceInSeconds(eventDate, now) % 60);
       
+      console.log("Countdown values:", { days, hours, minutes, seconds });
       setTimeLeft({ days, hours, minutes, seconds });
       
       // If the countdown is over, find the next event

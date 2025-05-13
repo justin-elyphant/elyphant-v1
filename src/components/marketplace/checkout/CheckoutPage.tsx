@@ -62,6 +62,7 @@ const CheckoutPage = () => {
   const formattedGiftScheduling = {
     scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
     sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
+    // Ensure isSurprise is a boolean if it exists
     isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
       Boolean(checkoutData.giftScheduling.isSurprise) : undefined
   };

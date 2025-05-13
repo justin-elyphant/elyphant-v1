@@ -1,56 +1,60 @@
 
-import { DataSharingSettings, SharingLevel } from "@/types/supabase";
+// Define data sharing settings types
+export type DataSharingLevel = 'none' | 'minimal' | 'standard' | 'extensive' | 'full';
+
+export interface DataSharingSettings {
+  sharing_level: DataSharingLevel;
+  allow_marketing: boolean;
+  allow_wishlist_suggestions: boolean;
+  allow_event_reminders: boolean;
+  allow_friend_recommendations: boolean;
+  allow_data_analysis: boolean;
+}
 
 /**
- * Ensures that data sharing settings have all required fields.
- * If settings are missing or invalid, returns default privacy settings.
+ * Get default data sharing settings for new users
  */
-export function normalizeDataSharingSettings(settings: any): DataSharingSettings {
-  if (!settings || typeof settings !== 'object') {
-    return {
-      email: 'private',
-      dob: 'private',
-      shipping_address: 'private',
-      gift_preferences: 'private'
-    };
-  }
+export const getDefaultDataSharingSettings = (): DataSharingSettings => ({
+  sharing_level: 'standard',
+  allow_marketing: false,
+  allow_wishlist_suggestions: true,
+  allow_event_reminders: true,
+  allow_friend_recommendations: true,
+  allow_data_analysis: false
+});
 
-  return {
-    email: isValidSharingLevel(settings.email) ? settings.email : 'private',
-    dob: isValidSharingLevel(settings.dob) ? settings.dob : 'private',
-    shipping_address: isValidSharingLevel(settings.shipping_address) ? settings.shipping_address : 'private',
-    gift_preferences: isValidSharingLevel(settings.gift_preferences) ? settings.gift_preferences : 'private'
+/**
+ * Get a human-readable label for a sharing level
+ */
+export const getSharingLevelLabel = (level: DataSharingLevel): string => {
+  const labels: Record<DataSharingLevel, string> = {
+    none: 'No Sharing',
+    minimal: 'Minimal',
+    standard: 'Standard',
+    extensive: 'Extensive',
+    full: 'Full Access'
   };
-}
+  return labels[level] || 'Unknown';
+};
 
 /**
- * Validates that a value is a valid sharing level
+ * Check if data should be visible based on privacy settings
  */
-function isValidSharingLevel(value: any): value is SharingLevel {
-  return typeof value === 'string' && ['private', 'friends', 'public'].includes(value);
-}
-
-/**
- * Checks if a user can access a specific data item based on privacy settings
- */
-export function canAccessData(
-  dataOwnerSettings: DataSharingSettings, 
-  dataField: keyof DataSharingSettings, 
-  connectionStatus: 'self' | 'friends' | 'none'
-): boolean {
-  if (connectionStatus === 'self') {
-    return true;
-  }
-
-  const privacyLevel = dataOwnerSettings[dataField];
+export const isDataVisible = (
+  field: string,
+  sharingLevel: DataSharingLevel,
+  isOwner: boolean = false
+): boolean => {
+  if (isOwner) return true;
   
-  if (privacyLevel === 'public') {
-    return true;
-  }
+  // Fields visible at different sharing levels
+  const visibilityMap: Record<DataSharingLevel, string[]> = {
+    none: [],
+    minimal: ['name', 'username', 'avatar_url'],
+    standard: ['name', 'username', 'avatar_url', 'bio', 'interests'],
+    extensive: ['name', 'username', 'avatar_url', 'bio', 'interests', 'birthday', 'special_dates'],
+    full: ['name', 'username', 'avatar_url', 'bio', 'interests', 'birthday', 'special_dates', 'address', 'email', 'phone']
+  };
   
-  if (privacyLevel === 'friends' && connectionStatus === 'friends') {
-    return true;
-  }
-  
-  return false;
-}
+  return visibilityMap[sharingLevel]?.includes(field) || false;
+};

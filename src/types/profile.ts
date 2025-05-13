@@ -1,102 +1,57 @@
 
-import type { 
-  Database, 
-  SharingLevel, 
-  GiftPreference,
-  ShippingAddress
-} from './supabase.d';
+// Import the Database type without causing circular references
+import { Database } from '@/integrations/supabase/types';
 
-export { SharingLevel };
-export type ConnectionStatus = 'none' | 'pending' | 'accepted' | 'rejected' | 'self';
+// Define types for profile data
+export interface ProfileData {
+  id?: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  birthday?: string;
+  email?: string;
+  interests?: string[];
+  gift_preferences?: GiftPreference[];
+  shipping_address?: ShippingAddress;
+  data_sharing_settings?: DataSharingSettings;
+  next_steps_option?: string;
+}
+
+export interface GiftPreference {
+  category: string;
+  importance: number;
+  notes?: string;
+}
+
+export interface ShippingAddress {
+  id?: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
 
 export interface DataSharingSettings {
-  dob: SharingLevel;
-  shipping_address: SharingLevel;
-  gift_preferences: SharingLevel;
-  email: SharingLevel;
+  sharing_level: string;
+  allow_marketing: boolean;
+  allow_wishlist_suggestions: boolean;
+  allow_event_reminders: boolean;
+  allow_friend_recommendations: boolean;
+  allow_data_analysis: boolean;
 }
 
-// Update the Wishlist type to include category and tags
-export type Wishlist = {
+export type Profile = {
   id: string;
-  user_id?: string;
-  title: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-  is_public: boolean;
-  items: WishlistItem[];
-  category?: string;
-  tags?: string[];
-  priority?: 'low' | 'medium' | 'high';
-  view_count?: number;
-  last_viewed?: string;
+  username: string;
+  full_name: string;
+  avatar_url: string;
+  email?: string;
+  bio: string;
+  birthday?: string;
+  interests: string[];
+  gift_preferences?: GiftPreference[];
+  data_sharing_settings?: DataSharingSettings;
 };
-
-export type Profile = Database['public']['Tables']['profiles']['Row'] & {
-  wishlists?: Wishlist[];
-};
-
-export type WishlistItem = {
-  id: string;
-  product_id: string;
-  name: string;
-  price?: number;
-  brand?: string;
-  image_url?: string;
-  added_at: string;
-};
-
-// Function to ensure gift preferences are properly formatted
-export function normalizeGiftPreference(pref: any): GiftPreference {
-  if (!pref) {
-    return {
-      category: '',
-      importance: 3
-    };
-  }
-  
-  return {
-    category: pref.category || '',
-    subcategory: pref.subcategory || '',
-    importance: typeof pref.importance === 'number' ? pref.importance : 3,
-    notes: pref.notes || ''
-  };
-}
-
-// Function to ensure shipping address is properly formatted
-export function normalizeShippingAddress(address: any): ShippingAddress {
-  if (!address) {
-    return {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: ''
-    };
-  }
-  
-  return {
-    street: address.street || '',
-    city: address.city || '',
-    state: address.state || '',
-    zipCode: address.zipCode || '',
-    country: address.country || '',
-    name: address.name || '',
-    id: address.id || ''
-  };
-}
-
-// Function to convert form data to API format
-export function profileFormToApiData(formData: any): any {
-  return {
-    name: formData.name,
-    email: formData.email,
-    username: formData.username,
-    bio: formData.bio || '',
-    dob: formData.birthday ? new Date(formData.birthday).toISOString() : null,
-    shipping_address: formData.address || {},
-    data_sharing_settings: formData.data_sharing_settings || {},
-    updated_at: new Date().toISOString()
-  };
-}

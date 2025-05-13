@@ -1,33 +1,70 @@
 
-import { GiftPreference } from "@/types/supabase";
+import { GiftPreference } from "@/types/profile";
+
+export type CategoryImportance = 'low' | 'medium' | 'high';
 
 /**
- * Creates a new gift preference object with the given category and importance level
+ * Convert numeric value to importance level
  */
-export function createGiftPreference(
-  category: string,
-  importance: "low" | "medium" | "high"
-): GiftPreference {
-  // Convert string importance levels to numeric values
-  const importanceMap = {
-    low: 1,
-    medium: 2,
-    high: 3
-  };
-  
+export const valueToImportance = (value: number): CategoryImportance => {
+  if (value <= 1) return 'low';
+  if (value <= 2) return 'medium';
+  return 'high';
+};
+
+/**
+ * Convert importance level to numeric value
+ */
+export const importanceToValue = (importance: CategoryImportance): number => {
+  switch (importance) {
+    case 'low': return 1;
+    case 'medium': return 2;
+    case 'high': return 3;
+    default: return 2;
+  }
+};
+
+/**
+ * Create a new gift preference
+ */
+export const createGiftPreference = (
+  category: string, 
+  importance: CategoryImportance = 'medium',
+  notes: string = ''
+): GiftPreference => {
   return {
-    category: category.trim(),
-    importance: importanceMap[importance] || 2,
-    subcategory: "",
-    notes: ""
+    category,
+    importance: importanceToValue(importance),
+    notes
   };
-}
+};
 
 /**
- * Converts a numeric importance to its string representation
+ * Get default gift preferences
  */
-export function getImportanceLabel(importance: number): "low" | "medium" | "high" {
-  if (importance <= 1) return "low";
-  if (importance >= 3) return "high";
-  return "medium";
-}
+export const getDefaultGiftPreferences = (): GiftPreference[] => {
+  return [];
+};
+
+/**
+ * Generate categories list
+ */
+export const getCategories = (): string[] => {
+  return [
+    'Books',
+    'Electronics',
+    'Fashion',
+    'Home & Kitchen',
+    'Beauty & Personal Care',
+    'Sports & Outdoors',
+    'Toys & Games',
+    'Art & Crafts',
+    'Music',
+    'Food & Beverage',
+    'Travel Experiences',
+    'Jewelry',
+    'Fitness',
+    'Gardening',
+    'Tech Gadgets'
+  ];
+};

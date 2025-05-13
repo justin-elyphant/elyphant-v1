@@ -1,5 +1,12 @@
 
-export type SharingLevel = 'public' | 'friends' | 'private';
+export type SharingLevel = "public" | "friends" | "private";
+
+export interface DataSharingSettings {
+  dob: SharingLevel;
+  shipping_address: SharingLevel;
+  gift_preferences: SharingLevel;
+  email?: SharingLevel;
+}
 
 export interface ShippingAddress {
   street: string;
@@ -11,30 +18,51 @@ export interface ShippingAddress {
 
 export interface GiftPreference {
   category: string;
-  importance: 'high' | 'medium' | 'low';
+  importance: "low" | "medium" | "high";
 }
 
-export interface DataSharingSettings {
-  dob: SharingLevel;
-  shipping_address: SharingLevel;
-  gift_preferences: SharingLevel;
-  email: SharingLevel;
+export interface ImportantDate {
+  date: string; // ISO string format
+  description: string;
 }
 
-export interface Profile {
+export interface UserProfile {
   id: string;
-  created_at?: string;
-  updated_at?: string;
-  name?: string;
+  name: string;
+  email: string;
   username?: string;
-  email?: string;
+  bio?: string;
+  dob?: string; // ISO string format
   profile_image?: string | null;
-  profile_type?: string;
-  dob?: string;
   shipping_address?: ShippingAddress;
   gift_preferences?: GiftPreference[];
+  important_dates?: ImportantDate[];
   data_sharing_settings?: DataSharingSettings;
-  next_steps_option?: string;
+  onboarding_completed?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  recently_viewed?: RecentlyViewedProduct[];
 }
 
-// Add more types as needed
+export interface RecentlyViewedProduct {
+  id: string;
+  name: string;
+  description?: string;
+  price?: number;
+  image?: string;
+  url?: string;
+  viewed_at: string; // ISO string format
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  link?: string;
+  action_text?: string;
+  created_at: string;
+  updated_at?: string;
+}

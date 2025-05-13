@@ -1,103 +1,115 @@
 
 /**
- * Utility functions for device detection and feature capability checks
+ * Device detection utility functions
  */
 
 /**
- * Checks if the current device is touch-enabled
- * @returns boolean indicating if touch is supported
+ * Detects if the current device is a mobile device
+ * @returns {boolean} True if the device is mobile
  */
-export function isTouchDevice(): boolean {
+export const isMobileDevice = (): boolean => {
   if (typeof window === 'undefined') return false;
   
-  return (
-    'ontouchstart' in window ||
-    navigator.maxTouchPoints > 0
-  );
-}
+  const userAgent = navigator.userAgent;
+  
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+};
 
 /**
- * Checks if the current device is a mobile device
- * @returns boolean indicating if the device is mobile
+ * Detects if the current device is a tablet
+ * @returns {boolean} True if the device is a tablet
  */
-export function isMobileDevice(): boolean {
+export const isTabletDevice = (): boolean => {
   if (typeof window === 'undefined') return false;
   
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
+  const userAgent = navigator.userAgent;
+  
+  // Check if it's an iPad specifically
+  const isIpad = /iPad/i.test(userAgent);
+  
+  // Check for other tablets based on screen size
+  const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(userAgent);
+  
+  // Use screen size as additional check
+  const hasTabletScreenSize = window.innerWidth >= 600 && window.innerWidth < 1200;
+  
+  return isIpad || isTablet || (isMobileDevice() && hasTabletScreenSize);
+};
 
 /**
- * Checks if the current device is a tablet
- * @returns boolean indicating if the device is a tablet
+ * Detects if the current device is a desktop
+ * @returns {boolean} True if the device is desktop
  */
-export function isTabletDevice(): boolean {
+export const isDesktopDevice = (): boolean => {
+  return !isMobileDevice() && !isTabletDevice();
+};
+
+/**
+ * Determines if the current device is a touch device
+ * @returns {boolean} True if touch is supported
+ */
+export const isTouchDevice = (): boolean => {
   if (typeof window === 'undefined') return false;
   
-  // Check if device is iPad or Android tablet
-  const isIPad = /iPad/i.test(navigator.userAgent);
-  const isAndroidTablet = /Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
-  
-  return isIPad || isAndroidTablet || (window.innerWidth >= 768 && window.innerWidth < 1024);
-}
+  return (('ontouchstart' in window) ||
+     (navigator.maxTouchPoints > 0));
+};
 
 /**
- * Checks if the browser supports the Web Speech API for speech recognition
- * @returns boolean indicating if speech recognition is supported
+ * Detects viewport size category
+ * @returns {string} 'xs', 'sm', 'md', 'lg', or 'xl'
  */
-export function isSpeechRecognitionSupported(): boolean {
+export const getViewportSize = (): string => {
+  if (typeof window === 'undefined') return 'md';
+  
+  const width = window.innerWidth;
+  
+  if (width < 640) return 'xs';  // Extra small
+  if (width < 768) return 'sm';  // Small
+  if (width < 1024) return 'md'; // Medium
+  if (width < 1280) return 'lg'; // Large
+  return 'xl';                   // Extra large
+};
+
+/**
+ * Checks if the window matches the given breakpoint
+ * @param {string} breakpoint - 'xs', 'sm', 'md', 'lg', or 'xl'
+ * @returns {boolean} True if the breakpoint matches
+ */
+export const matchesBreakpoint = (breakpoint: string): boolean => {
+  const size = getViewportSize();
+  return size === breakpoint;
+};
+
+/**
+ * Detects if the browser is Safari
+ * @returns {boolean} True if the browser is Safari
+ */
+export const isSafari = (): boolean => {
   if (typeof window === 'undefined') return false;
   
-  return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
-}
+  const userAgent = navigator.userAgent;
+  return userAgent.includes('Safari') && !userAgent.includes('Chrome');
+};
 
 /**
- * Checks if the device has a small screen (mobile)
- * @returns boolean indicating if the screen is small
+ * Detects if the device is iOS
+ * @returns {boolean} True if the device is iOS
  */
-export function isSmallScreen(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  return window.innerWidth < 768;
-}
-
-/**
- * Checks if the device is in portrait orientation
- * @returns boolean indicating if the device is in portrait mode
- */
-export function isPortraitOrientation(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  return window.innerHeight > window.innerWidth;
-}
-
-/**
- * Gets the device pixel ratio for high-DPI screens
- * @returns the device pixel ratio
- */
-export function getDevicePixelRatio(): number {
-  if (typeof window === 'undefined') return 1;
-  
-  return window.devicePixelRatio || 1;
-}
-
-/**
- * Checks if the device is using iOS
- * @returns boolean indicating if the device is running iOS
- */
-export function isIOS(): boolean {
+export const isIOS = (): boolean => {
   if (typeof window === 'undefined') return false;
   
   const userAgent = navigator.userAgent;
   // Fixed: Removed MSStream check to resolve TypeScript error
   return /iPad|iPhone|iPod/.test(userAgent);
-}
+};
 
 /**
- * Checks if the device is using Android
- * @returns boolean indicating if the device is running Android
+ * Detects if the device is Android
+ * @returns {boolean} True if the device is Android
  */
-export function isAndroid(): boolean {
+export const isAndroid = (): boolean => {
   if (typeof window === 'undefined') return false;
   
   return /Android/.test(navigator.userAgent);
-}
+};

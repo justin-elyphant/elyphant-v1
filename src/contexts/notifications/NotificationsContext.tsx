@@ -1,10 +1,9 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
-export type NotificationType = 'connection' | 'wishlist' | 'gift' | 'event' | 'system';
+export type NotificationType = "connection" | "wishlist" | "gift" | "event" | "system";
 
 export interface Notification {
   id: string;
@@ -13,131 +12,154 @@ export interface Notification {
   type: NotificationType;
   read: boolean;
   createdAt: string;
-  userId?: string;
   link?: string;
+  actionText?: string;
 }
 
 interface NotificationsContextType {
   notifications: Notification[];
   unreadCount: number;
-  addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
-  deleteNotification: (id: string) => void;
+  addNotification: (notification: Omit<Notification, "id" | "createdAt" | "read">) => void;
   addTestNotification: (type: NotificationType) => void;
+  deleteNotification: (id: string) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType>({
   notifications: [],
   unreadCount: 0,
-  addNotification: () => {},
   markAsRead: () => {},
   markAllAsRead: () => {},
   clearAll: () => {},
-  deleteNotification: () => {},
+  addNotification: () => {},
   addTestNotification: () => {},
+  deleteNotification: () => {}
 });
 
 export const useNotifications = () => useContext(NotificationsContext);
 
-export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+interface NotificationsProviderProps {
+  children: React.ReactNode;
+}
+
+// Local storage key for persisting notifications
+const NOTIFICATIONS_STORAGE_KEY = "elyphant_notifications";
+
+export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = notifications.filter(n => !n.read).length;
   
-  // Load notifications from localStorage initially
+  // Load notifications from local storage on mount
   useEffect(() => {
-    if (user) {
+    const savedNotifications = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    if (savedNotifications) {
       try {
-        const savedNotifications = localStorage.getItem(`notifications_${user.id}`);
-        if (savedNotifications) {
-          const parsedNotifications = JSON.parse(savedNotifications);
-          setNotifications(parsedNotifications);
-          setUnreadCount(parsedNotifications.filter((n: Notification) => !n.read).length);
-        }
+        const parsed = JSON.parse(savedNotifications);
+        setNotifications(parsed);
       } catch (error) {
-        console.error('Error loading notifications:', error);
+        console.error("Failed to parse saved notifications:", error);
+        localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
       }
-    } else {
-      // Clear notifications when user logs out
-      setNotifications([]);
-      setUnreadCount(0);
     }
-  }, [user]);
+  }, []);
   
-  // Save notifications to localStorage when they change
+  // Save notifications to local storage when they change
   useEffect(() => {
-    if (user && notifications.length > 0) {
-      localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
-    }
-  }, [notifications, user]);
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+  }, [notifications]);
   
-  const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Math.random().toString(36).substring(2, 11),
-      createdAt: new Date().toISOString(),
-      read: false,
-      userId: user?.id
-    };
-    
-    setNotifications(prev => [newNotification, ...prev]);
-    setUnreadCount(prev => prev + 1);
-    
-    // Show a toast for real-time feedback
-    toast.info(notification.title, {
-      description: notification.message,
-    });
-  };
-  
+  // Mark a notification as read
   const markAsRead = (id: string) => {
     setNotifications(prev => 
       prev.map(notification => 
-        notification.id === id ? { ...notification, read: true } : notification
+        notification.id === id 
+          ? { ...notification, read: true } 
+          : notification
       )
     );
-    setUnreadCount(prev => Math.max(0, prev - 1));
   };
   
+  // Mark all notifications as read
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-    setUnreadCount(0);
+    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
+    toast.success("All notifications marked as read");
   };
   
+  // Clear all notifications
   const clearAll = () => {
     setNotifications([]);
-    setUnreadCount(0);
-    if (user) {
-      localStorage.removeItem(`notifications_${user.id}`);
-    }
-  };
-
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-    // Update unread count if we're removing an unread notification
-    const notificationToDelete = notifications.find(n => n.id === id);
-    if (notificationToDelete && !notificationToDelete.read) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
+    toast.success("All notifications cleared");
   };
   
-  // For testing purposes
-  const addTestNotification = (type: NotificationType) => {
-    const typeMessages = {
-      connection: { title: 'New Connection', message: 'Someone sent you a connection request' },
-      wishlist: { title: 'Wishlist Updated', message: 'An item on your wishlist is now on sale!' },
-      gift: { title: 'Gift Received', message: 'Someone sent you a gift' },
-      event: { title: 'Upcoming Event', message: 'Don\'t forget about an upcoming birthday next week' },
-      system: { title: 'System Update', message: 'We\'ve added new features to the app' }
+  // Delete a specific notification
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  };
+  
+  // Add a new notification
+  const addNotification = (notification: Omit<Notification, "id" | "createdAt" | "read">) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      read: false
     };
     
-    addNotification({
-      ...typeMessages[type],
-      type
+    setNotifications(prev => [newNotification, ...prev]);
+    
+    // Show a toast notification
+    toast(notification.title, {
+      description: notification.message,
+      action: notification.link ? {
+        label: notification.actionText || "View",
+        onClick: () => window.open(notification.link, "_blank")
+      } : undefined
     });
+  };
+  
+  // Add a test notification (for development purposes)
+  const addTestNotification = (type: NotificationType) => {
+    const testNotifications: Record<NotificationType, Omit<Notification, "id" | "createdAt" | "read">> = {
+      connection: {
+        title: "New Connection Request",
+        message: "Sarah Johnson wants to connect with you",
+        type: "connection",
+        link: "/connections",
+        actionText: "View Request"
+      },
+      wishlist: {
+        title: "Wishlist Updated",
+        message: "Michael added 3 new items to his Birthday wishlist",
+        type: "wishlist",
+        link: "/wishlists/michael",
+        actionText: "View Wishlist"
+      },
+      gift: {
+        title: "Gift Purchased",
+        message: "Your gift for Emily's birthday has been shipped",
+        type: "gift",
+        link: "/orders",
+        actionText: "Track Order"
+      },
+      event: {
+        title: "Upcoming Birthday",
+        message: "Don't forget: David's birthday is in 5 days",
+        type: "event",
+        link: "/calendar",
+        actionText: "View Calendar"
+      },
+      system: {
+        title: "System Update",
+        message: "We've added new features to your gifting experience",
+        type: "system",
+        link: "/whats-new",
+        actionText: "Learn More"
+      }
+    };
+    
+    addNotification(testNotifications[type]);
   };
   
   return (
@@ -145,12 +167,12 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         notifications,
         unreadCount,
-        addNotification,
         markAsRead,
         markAllAsRead,
         clearAll,
-        deleteNotification,
-        addTestNotification
+        addNotification,
+        addTestNotification,
+        deleteNotification
       }}
     >
       {children}

@@ -1,35 +1,42 @@
 
 import { useState, useEffect } from 'react';
-import { isMobileDevice, isTabletDevice } from '@/utils/device-detection';
+import { isMobileDevice, isTabletDevice, getViewportSize } from '@/utils/device-detection';
 
-export const useViewport = () => {
-  const [width, setWidth] = useState(window.innerWidth);
-  const [height, setHeight] = useState(window.innerHeight);
-  const [isMobile, setIsMobile] = useState(isMobileDevice());
-  const [isTablet, setIsTablet] = useState(isTabletDevice());
-  
+export function useViewport() {
+  const [isMobile, setIsMobile] = useState<boolean>(isMobileDevice());
+  const [isTablet, setIsTablet] = useState<boolean>(isTabletDevice());
+  const [viewportSize, setViewportSize] = useState<string>(getViewportSize());
+  const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
+  const [height, setHeight] = useState<number>(typeof window !== 'undefined' ? window.innerHeight : 0);
+
   useEffect(() => {
     const handleResize = () => {
+      setIsMobile(isMobileDevice());
+      setIsTablet(isTabletDevice());
+      setViewportSize(getViewportSize());
       setWidth(window.innerWidth);
       setHeight(window.innerHeight);
-      setIsMobile(window.innerWidth < 768 || isMobileDevice());
-      setIsTablet(
-        (window.innerWidth >= 768 && window.innerWidth < 1024) || 
-        isTabletDevice()
-      );
     };
-    
-    window.addEventListener('resize', handleResize);
+
+    // Set initial values
     handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
     
+    // Clean up
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
+
   return {
-    width,
-    height,
     isMobile,
     isTablet,
     isDesktop: !isMobile && !isTablet,
+    viewportSize,
+    width,
+    height,
+    isSmallScreen: width < 640, // xs
+    isMediumScreen: width >= 640 && width < 1024, // sm and md
+    isLargeScreen: width >= 1024, // lg and xl
   };
-};
+}

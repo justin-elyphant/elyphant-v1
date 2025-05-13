@@ -58,7 +58,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="isSurprise" 
-              checked={Boolean(giftScheduling.isSurprise)}
+              checked={giftScheduling.isSurprise}
               onCheckedChange={() => handleCheckboxChange('isSurprise')}
             />
             <FormLabel htmlFor="isSurprise" className="cursor-pointer">

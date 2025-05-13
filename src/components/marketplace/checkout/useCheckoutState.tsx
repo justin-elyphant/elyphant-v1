@@ -110,18 +110,28 @@ export const useCheckoutState = () => {
 
   const handleUpdateGiftScheduling = (data: Partial<GiftSchedulingOptions>) => {
     // Ensure all values are properly typed as booleans
-    const updatedData: GiftSchedulingOptions = {
-      scheduleDelivery: Boolean(data.scheduleDelivery),
-      sendGiftMessage: Boolean(data.sendGiftMessage),
-      // Only include isSurprise if it exists in the input data
-      ...(data.isSurprise !== undefined ? { 
-        isSurprise: Boolean(data.isSurprise)
-      } : {})
-    };
+    const updatedData: Partial<GiftSchedulingOptions> = {};
+    
+    // Only include fields that are present in the input data
+    if ('scheduleDelivery' in data) {
+      updatedData.scheduleDelivery = Boolean(data.scheduleDelivery);
+    }
+    
+    if ('sendGiftMessage' in data) {
+      updatedData.sendGiftMessage = Boolean(data.sendGiftMessage);
+    }
+    
+    // Only include isSurprise if it exists in the input data
+    if (data.isSurprise !== undefined) {
+      updatedData.isSurprise = Boolean(data.isSurprise);
+    }
     
     setCheckoutData(prev => ({
       ...prev,
-      giftScheduling: updatedData
+      giftScheduling: {
+        ...prev.giftScheduling,
+        ...updatedData
+      }
     }));
   };
 

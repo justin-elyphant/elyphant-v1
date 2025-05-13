@@ -1,84 +1,113 @@
 
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
+/**
+ * Utility function to merge and apply Tailwind classes conditionally
+ * @param inputs Class values to merge
+ * @returns A string of merged class names
+ */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
- * Format a number as currency
- * @param value - The number to format
- * @param currency - The currency code (default: USD)
- * @returns Formatted currency string
+ * Format a price value to a localized currency string
+ * @param value The price value
+ * @param currency The currency code (default: USD)
+ * @param locale The locale (default: en-US)
+ * @returns A formatted currency string
  */
-export function formatCurrency(value: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
+export function formatPrice(
+  value: number,
+  currency: string = "USD",
+  locale: string = "en-US"
+): string {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
   }).format(value);
 }
 
 /**
- * Format a date string to a human-readable format
- * @param dateString - The date string to format
- * @param format - The format to use (default: 'medium')
- * @returns Formatted date string
+ * Format a date string to a localized date format
+ * @param date The date to format
+ * @param locale The locale (default: en-US)
+ * @returns A formatted date string
  */
-export function formatDate(dateString: string, format: 'short' | 'medium' | 'long' = 'medium'): string {
-  try {
-    const date = new Date(dateString);
-    
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: format === 'short' ? 'short' : 'long',
-      day: 'numeric',
-    };
-    
-    if (format === 'long') {
-      options.hour = 'numeric';
-      options.minute = 'numeric';
+export function formatDate(
+  date: Date | string,
+  locale: string = "en-US"
+): string {
+  if (typeof date === "string") {
+    date = new Date(date);
+  }
+  
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+/**
+ * Truncate a string to a specified length and append an ellipsis if needed
+ * @param str The string to truncate
+ * @param length The maximum length (default: 50)
+ * @returns The truncated string
+ */
+export function truncateString(str: string, length: number = 50): string {
+  if (str.length <= length) return str;
+  return str.slice(0, length) + "...";
+}
+
+/**
+ * Get a random item from an array
+ * @param array The array to get a random item from
+ * @returns A random item from the array
+ */
+export function getRandomItem<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+/**
+ * Generate a random ID string
+ * @param length The length of the ID (default: 8)
+ * @returns A random ID string
+ */
+export function generateId(length: number = 8): string {
+  return Math.random().toString(36).substring(2, 2 + length);
+}
+
+/**
+ * Deep clone an object
+ * @param obj The object to clone
+ * @returns A deep clone of the object
+ */
+export function deepClone<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") return obj;
+  return JSON.parse(JSON.stringify(obj));
+}
+
+/**
+ * Debounce a function
+ * @param fn The function to debounce
+ * @param delay The delay in milliseconds
+ * @returns A debounced function
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(this: any, ...args: Parameters<T>) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
     }
     
-    return new Intl.DateTimeFormat('en-US', options).format(date);
-  } catch {
-    return dateString; // Return original if parsing fails
-  }
-}
-
-/**
- * Truncate text to a specific length and add ellipsis if needed
- * @param text - The text to truncate
- * @param length - The maximum length (default: 100)
- * @returns Truncated text
- */
-export function truncateText(text: string, length: number = 100): string {
-  if (!text) return '';
-  if (text.length <= length) return text;
-  return text.slice(0, length) + '...';
-}
-
-/**
- * Generate a unique ID with an optional prefix
- * @param prefix - Optional prefix for the ID
- * @returns A unique ID string
- */
-export function generateId(prefix: string = 'id'): string {
-  return `${prefix}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-/**
- * Normalize tag strings for consistent formatting
- * @param tags - Array of tag strings
- * @returns Array of normalized tag strings
- */
-export function normalizeTags(tags: string[]): string[] {
-  if (!tags || !Array.isArray(tags)) return [];
-  
-  return tags
-    .filter(Boolean) // Remove empty tags
-    .map(tag => tag.trim().toLowerCase())
-    .filter((tag, index, self) => self.indexOf(tag) === index); // Remove duplicates
+    timeoutId = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
 }

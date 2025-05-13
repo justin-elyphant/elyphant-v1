@@ -1,62 +1,44 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
-import { Button } from "@/components/ui/button";
-import Logo from "../home/components/Logo";
-import UserButton from "../auth/UserButton";
-import NotificationsDropdown from "../notifications/NotificationsDropdown";
 
-const MainLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, signOut } = useAuth();
+import React from "react";
+import { ResponsiveLayout } from "./ResponsiveLayout";
+import { ResponsiveNavigation } from "./ResponsiveNavigation";
+import { ResponsiveContainer } from "./ResponsiveContainer";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+interface MainLayoutProps {
+  children: React.ReactNode;
+}
+
+const MainLayout = ({ children }: MainLayoutProps) => {
+  const isMobile = useIsMobile();
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="border-b bg-white">
-        <div className="container flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center">
-            <Logo />
-          </Link>
-          
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link to="/dashboard" className="hover:text-gray-600 transition-colors">
-              Dashboard
-            </Link>
-            <Link to="/connections" className="hover:text-gray-600 transition-colors">
-              Connections
-            </Link>
-            <Link to="/profile-setup" className="hover:text-gray-600 transition-colors">
-              Profile
-            </Link>
-            <Link to="/wishlists" className="hover:text-gray-600 transition-colors">
-              Wishlists
-            </Link>
-          </nav>
-          
-          <div className="flex items-center space-x-1">
-            {/* Add the notifications dropdown before any other header items */}
-            <NotificationsDropdown />
-            {user ? (
-              <UserButton />
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link to="/login">Log In</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/signup">Sign Up</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <ResponsiveNavigation />
       
-      <main className="flex-1 container py-6">{children}</main>
+      <main className="flex-1">
+        <ResponsiveContainer 
+          className={isMobile ? "py-4" : "py-6"}
+        >
+          {children}
+        </ResponsiveContainer>
+      </main>
       
-      <footer className="py-8 text-center text-sm text-muted-foreground">
-        <p>
-          &copy; {new Date().getFullYear()} Gift Giver. All rights reserved.
-        </p>
+      <footer className="py-6 text-center text-sm text-muted-foreground border-t">
+        <ResponsiveContainer>
+          <p>
+            &copy; {new Date().getFullYear()} Gift Giver. All rights reserved.
+          </p>
+          
+          {/* Additional footer links can be added here */}
+          {!isMobile && (
+            <div className="mt-2 flex items-center justify-center space-x-4 text-xs">
+              <a href="#" className="hover:underline">Privacy Policy</a>
+              <a href="#" className="hover:underline">Terms of Service</a>
+              <a href="#" className="hover:underline">Contact Us</a>
+            </div>
+          )}
+        </ResponsiveContainer>
       </footer>
     </div>
   );

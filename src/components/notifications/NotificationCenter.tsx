@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Bell } from "lucide-react";
 import NotificationItem from "./NotificationItem";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 
 interface NotificationCenterProps {
   className?: string;
@@ -22,7 +22,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className }) =>
   const { notifications, markAllAsRead, markAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
   
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
   
   // Handle closing the notification center
   const handleOpenChange = (isOpen: boolean) => {

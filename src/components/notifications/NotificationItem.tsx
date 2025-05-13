@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, Gift, Calendar, Heart, MessageSquare } from "lucide-react";
 import { Notification } from "@/contexts/notifications/NotificationsContext";

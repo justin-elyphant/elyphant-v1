@@ -84,8 +84,8 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
         </div>
         
         <CategorySection
-          selectedImportance={newImportance}
-          onImportanceChange={setNewImportance}
+          selectedValue={newImportance}
+          onSelectionChange={setNewImportance}
         />
       </div>
       

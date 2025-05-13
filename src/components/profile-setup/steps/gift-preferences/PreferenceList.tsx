@@ -1,9 +1,10 @@
 
-import React from 'react';
-import { GiftPreference } from '@/types/supabase';
-import { Button } from '@/components/ui/button';
-import { Trash } from 'lucide-react';
-import { numberToImportance } from './utils';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { GiftPreference } from "@/types/supabase";
+import { Badge } from "@/components/ui/badge";
+import { valueToImportance } from "./utils";
 
 interface PreferenceListProps {
   preferences: GiftPreference[];
@@ -12,85 +13,60 @@ interface PreferenceListProps {
 }
 
 const PreferenceList: React.FC<PreferenceListProps> = ({ 
-  preferences, 
-  onRemove, 
-  onUpdate 
+  preferences,
+  onRemove,
+  onUpdate
 }) => {
-  if (preferences.length === 0) {
+  const getImportanceBadgeStyle = (importance: number) => {
+    const importanceLevel = valueToImportance(importance);
+    
+    switch (importanceLevel) {
+      case "high":
+        return "bg-red-100 text-red-700 hover:bg-red-200";
+      case "medium":
+        return "bg-amber-100 text-amber-700 hover:bg-amber-200";
+      case "low":
+      default:
+        return "bg-blue-100 text-blue-700 hover:bg-blue-200";
+    }
+  };
+
+  if (!preferences || preferences.length === 0) {
     return (
-      <div className="text-center py-8 border border-dashed rounded-lg">
-        <p className="text-muted-foreground">No gift preferences added yet</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Add categories below to get started
-        </p>
+      <div className="text-center p-6 border border-dashed rounded-md text-muted-foreground">
+        No gift preferences added yet
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      {preferences.map((preference, index) => (
-        <div 
-          key={index} 
-          className="flex items-center justify-between p-3 border rounded-md"
-        >
-          <div className="flex-1">
-            <p className="font-medium">{preference.category}</p>
-            <div className="flex mt-1 space-x-2">
-              <ImportanceButton 
-                label="Low" 
-                isActive={preference.importance === 1} 
-                onClick={() => onUpdate(index, "low")}
-              />
-              <ImportanceButton 
-                label="Medium" 
-                isActive={preference.importance === 2}
-                onClick={() => onUpdate(index, "medium")}
-              />
-              <ImportanceButton 
-                label="High" 
-                isActive={preference.importance === 3}
-                onClick={() => onUpdate(index, "high")}
-              />
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onRemove(index)}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+    <div className="space-y-3">
+      <h3 className="font-medium">Your Gift Preferences</h3>
+      <ul className="space-y-2">
+        {preferences.map((preference, index) => (
+          <li 
+            key={`${preference.category}-${index}`} 
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
           >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
+            <div className="flex items-center gap-2">
+              <span>{preference.category}</span>
+              <Badge className={getImportanceBadgeStyle(preference.importance)}>
+                {valueToImportance(preference.importance)}
+              </Badge>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onRemove(index)}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
-  );
-};
-
-interface ImportanceButtonProps {
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-}
-
-const ImportanceButton: React.FC<ImportanceButtonProps> = ({
-  label,
-  isActive,
-  onClick
-}) => {
-  return (
-    <button
-      type="button"
-      className={`px-2 py-1 rounded text-xs ${
-        isActive 
-          ? 'bg-primary text-primary-foreground' 
-          : 'bg-muted text-muted-foreground'
-      }`}
-      onClick={onClick}
-    >
-      {label}
-    </button>
   );
 };
 

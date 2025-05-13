@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileData } from "./types";
+import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 export const useProfileData = () => {
   const { user } = useAuth();
@@ -13,7 +14,7 @@ export const useProfileData = () => {
     username: "",
     bio: "",
     email: user?.email || "",
-    profile_image: null,
+    profile_image: "",
     dob: "",
     shipping_address: {
       street: "",
@@ -30,7 +31,6 @@ export const useProfileData = () => {
       gift_preferences: "public",
       email: "private"
     },
-    next_steps_option: "dashboard"
   });
 
   useEffect(() => {
@@ -69,11 +69,7 @@ export const useProfileData = () => {
             shipping_address: data.shipping_address || prevData.shipping_address,
             gift_preferences: data.gift_preferences || [],
             important_dates: data.important_dates || [],
-            data_sharing_settings: data.data_sharing_settings || {
-              dob: "friends",
-              shipping_address: "private",
-              gift_preferences: "public"
-            }
+            data_sharing_settings: data.data_sharing_settings || getDefaultDataSharingSettings()
           }));
         }
       } catch (error) {

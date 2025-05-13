@@ -110,8 +110,10 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       case 3:
         return (
           <GiftPreferencesStep
-            values={profileData.gift_preferences}
-            onChange={(preferences) => updateProfileData('gift_preferences', preferences)}
+            preferences={profileData.gift_preferences}
+            onPreferencesChange={(preferences) => updateProfileData('gift_preferences', preferences)}
+            onNext={handleNext}
+            onBack={handleBack}
           />
         );
       case 4:
@@ -124,14 +126,14 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       case 5:
         return (
           <NextStepsStep
-            onSelectOption={(option) => updateProfileData('next_steps_option', option)}
+            onSelectOption={(option) => updateProfileData('next_steps_option' as keyof typeof profileData, option)}
             selectedOption={profileData.next_steps_option}
           />
         );
       default:
         return null;
     }
-  }, [activeStep, profileData, updateProfileData]);
+  }, [activeStep, profileData, updateProfileData, handleNext, handleBack]);
 
   // Create memoized complete handler with additional safety
   const handleCompleteClick = useCallback(() => {

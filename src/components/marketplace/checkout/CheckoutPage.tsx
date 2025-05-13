@@ -108,7 +108,12 @@ const CheckoutPage = () => {
             
             <TabsContent value="schedule" className="space-y-6">
               <GiftScheduling
-                giftScheduling={checkoutData.giftScheduling}
+                giftScheduling={{
+                  scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
+                  sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
+                  isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
+                    Boolean(checkoutData.giftScheduling.isSurprise) : undefined
+                }}
                 onUpdate={handleUpdateGiftScheduling}
               />
               

@@ -135,8 +135,8 @@ const CheckoutPage = () => {
                 paymentMethod={checkoutData.paymentMethod}
                 onPaymentMethodChange={handlePaymentMethodChange}
                 onPlaceOrder={handlePlaceOrder}
-                isProcessing={isProcessing}
-                canPlaceOrder={canPlaceOrder()}
+                isProcessing={Boolean(isProcessing)}
+                canPlaceOrder={Boolean(canPlaceOrder())}
                 onPrevious={() => handleTabChange("schedule")}
               />
             </TabsContent>

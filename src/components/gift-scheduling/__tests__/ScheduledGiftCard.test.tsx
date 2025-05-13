@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ScheduledGiftCard from '../ScheduledGiftCard';
 import { format } from 'date-fns';
+import '@testing-library/jest-dom'; // Add this to access toHaveAttribute matcher
 
 describe('ScheduledGiftCard', () => {
   const mockGift = {
@@ -11,7 +12,7 @@ describe('ScheduledGiftCard', () => {
     productImage: 'wallet.jpg',
     recipientName: 'John Doe',
     scheduledDate: new Date(2025, 11, 25),
-    status: 'scheduled'
+    status: 'scheduled' as const // Use const assertion to match the union type
   };
 
   it('renders gift details correctly', () => {
@@ -31,7 +32,7 @@ describe('ScheduledGiftCard', () => {
   });
 
   it('shows status badge when showActions is false', () => {
-    const sentGift = { ...mockGift, status: 'sent' };
+    const sentGift = { ...mockGift, status: 'sent' as const };
     render(<ScheduledGiftCard gift={sentGift} showActions={false} />);
     
     expect(screen.queryByText('Edit')).not.toBeInTheDocument();
@@ -40,7 +41,7 @@ describe('ScheduledGiftCard', () => {
   });
 
   it('shows failed status badge for failed gifts', () => {
-    const failedGift = { ...mockGift, status: 'failed' };
+    const failedGift = { ...mockGift, status: 'failed' as const };
     render(<ScheduledGiftCard gift={failedGift} showActions={false} />);
     
     expect(screen.getByText('Failed')).toBeInTheDocument();

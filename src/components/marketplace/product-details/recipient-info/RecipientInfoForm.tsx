@@ -3,7 +3,6 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from 'sonner';
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -15,7 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { formSchema } from "./schema";
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { AddressFields } from "./AddressFields";
@@ -52,11 +50,11 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
     },
   });
 
-  // Gift scheduling options state - ensure boolean values
+  // Gift scheduling options state with proper boolean types
   const [giftScheduling, setGiftScheduling] = React.useState<GiftSchedulingOptions>({
     scheduleDelivery: false,
     sendGiftMessage: false,
-    isSurprise: false, // Note this is still included for backward compatibility
+    isSurprise: false
   });
 
   const handleSubmit = async (data: RecipientInfoFormData) => {

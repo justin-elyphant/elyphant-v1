@@ -108,14 +108,14 @@ export const useCheckoutState = () => {
     }));
   };
 
-  const handleUpdateGiftScheduling = (data: GiftSchedulingOptions) => {
-    // Handle both boolean values and string representations of booleans
+  const handleUpdateGiftScheduling = (data: Partial<GiftSchedulingOptions>) => {
+    // Ensure all values are properly typed as booleans
     const updatedData: GiftSchedulingOptions = {
-      scheduleDelivery: data.scheduleDelivery === true || data.scheduleDelivery === "true",
-      sendGiftMessage: data.sendGiftMessage === true || data.sendGiftMessage === "true",
+      scheduleDelivery: Boolean(data.scheduleDelivery),
+      sendGiftMessage: Boolean(data.sendGiftMessage),
       // Only include isSurprise if it exists in the input data
       ...(data.isSurprise !== undefined ? { 
-        isSurprise: data.isSurprise === true || data.isSurprise === "true" 
+        isSurprise: Boolean(data.isSurprise)
       } : {})
     };
     

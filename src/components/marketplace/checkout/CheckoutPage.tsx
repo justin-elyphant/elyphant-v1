@@ -58,7 +58,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Make sure we properly format gift scheduling options as booleans
+  // Properly format gift scheduling options as booleans to fix TypeScript error
   const formattedGiftScheduling = {
     scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
     sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),

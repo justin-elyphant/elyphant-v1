@@ -34,7 +34,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="scheduleDelivery" 
-            checked={giftScheduling.scheduleDelivery}
+            checked={!!giftScheduling.scheduleDelivery}
             onCheckedChange={() => handleCheckboxChange('scheduleDelivery')}
           />
           <FormLabel htmlFor="scheduleDelivery" className="cursor-pointer">
@@ -45,7 +45,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="sendGiftMessage" 
-            checked={giftScheduling.sendGiftMessage}
+            checked={!!giftScheduling.sendGiftMessage}
             onCheckedChange={() => handleCheckboxChange('sendGiftMessage')}
           />
           <FormLabel htmlFor="sendGiftMessage" className="cursor-pointer">
@@ -57,7 +57,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="isSurprise" 
-              checked={giftScheduling.isSurprise}
+              checked={!!giftScheduling.isSurprise}
               onCheckedChange={() => handleCheckboxChange('isSurprise')}
             />
             <FormLabel htmlFor="isSurprise" className="cursor-pointer">

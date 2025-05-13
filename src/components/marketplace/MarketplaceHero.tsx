@@ -7,16 +7,24 @@ import { Link, useNavigate } from "react-router-dom";
 import { getNextHoliday, getUpcomingOccasions, GiftOccasion } from "./utils/upcomingOccasions";
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import OccasionCards from "./header/OccasionCards";
+import { useAuth } from "@/contexts/auth";
+import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, addDays } from "date-fns";
 
 const MarketplaceHero = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [timeLeft, setTimeLeft] = useState({
-    days: 3,
-    hours: 8,
-    minutes: 45,
-    seconds: 30
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
   });
+  const [targetEvent, setTargetEvent] = useState<{
+    name: string;
+    date: Date;
+    type: string;
+  } | null>(null);
   
   // Get upcoming holidays and friend events
   const upcomingHolidays = getUpcomingOccasions().filter(occ => occ.type === "holiday");
@@ -26,26 +34,71 @@ const MarketplaceHero = () => {
   const nextHoliday = upcomingHolidays.length > 0 ? upcomingHolidays[0] : null;
   const secondHoliday = upcomingHolidays.length > 1 ? upcomingHolidays[1] : null;
   
+  // Find the closest event (holiday or friend event)
+  useEffect(() => {
+    // Default to the next holiday if available
+    let closestEvent = nextHoliday;
+    let closestDate = closestEvent?.date;
+    
+    // For logged in users, check if a friend event is closer
+    if (user && friendOccasions.length > 0) {
+      const sortedEvents = [...friendOccasions, ...(nextHoliday ? [nextHoliday] : [])]
+        .filter(event => event.date > new Date()) // Only future events
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      if (sortedEvents.length > 0) {
+        closestEvent = sortedEvents[0];
+        closestDate = closestEvent.date;
+      }
+    }
+    
+    if (closestEvent && closestDate) {
+      setTargetEvent({
+        name: closestEvent.name,
+        date: closestDate,
+        type: closestEvent.type
+      });
+    }
+  }, [nextHoliday, friendOccasions, user]);
+  
   // Update countdown timer
   useEffect(() => {
+    if (!targetEvent) return;
+    
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
+      const now = new Date();
+      const eventDate = targetEvent.date;
+      
+      // Calculate the time difference
+      const days = Math.max(0, differenceInDays(eventDate, now));
+      const hours = Math.max(0, differenceInHours(eventDate, now) % 24);
+      const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
+      const seconds = Math.max(0, differenceInSeconds(eventDate, now) % 60);
+      
+      setTimeLeft({ days, hours, minutes, seconds });
+      
+      // If the countdown is over, find the next event
+      if (days <= 0 && hours <= 0 && minutes <= 0 && seconds <= 0) {
+        // This will trigger the useEffect to find the next event
+        if (user) {
+          // For logged-in users, refetch both holidays and friend events
+          // This would be handled by the dependencies of the first useEffect
+        } else {
+          // For non-logged in users, just set to the next holiday
+          const nextAvailableHoliday = upcomingHolidays.find(h => h.date > now);
+          if (nextAvailableHoliday) {
+            setTargetEvent({
+              name: nextAvailableHoliday.name,
+              date: nextAvailableHoliday.date,
+              type: nextAvailableHoliday.type
+            });
+          }
         }
-        // Reset when timer ends
-        return { days: 3, hours: 8, minutes: 45, seconds: 30 };
-      });
+      }
     }, 1000);
     
     return () => clearInterval(timer);
-  }, []);
+  }, [targetEvent, user, upcomingHolidays]);
   
   // Handle card click to navigate to search
   const handleOccasionCardClick = (searchQuery: string, personId?: string, occasionType?: string) => {
@@ -61,33 +114,52 @@ const MarketplaceHero = () => {
       <div className="container mx-auto px-4 py-8">
         <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-8'} items-center mb-8`}>
           <div className={`${isMobile ? 'mb-6 text-center' : 'text-left'}`}>
-            <h1 className="text-3xl font-bold mb-3">Holiday Gift Sale</h1>
-            <p className="text-lg mb-4 opacity-90">Find the perfect gifts for everyone on your list with special discounts up to 40% off!</p>
+            {targetEvent ? (
+              <>
+                <h1 className="text-3xl font-bold mb-3">
+                  {targetEvent.name} is Coming!
+                </h1>
+                <p className="text-lg mb-4 opacity-90">
+                  Find the perfect gifts for {targetEvent.type === "birthday" || targetEvent.type === "anniversary" ? "your loved ones" : "everyone on your list"}. Don't miss out!
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold mb-3">Find the Perfect Gift</h1>
+                <p className="text-lg mb-4 opacity-90">
+                  Discover thoughtful gifts for every occasion and relationship in your life.
+                </p>
+              </>
+            )}
             
             {/* Countdown timer */}
-            <div className="flex items-center mb-6 justify-center md:justify-start">
-              <Clock className="mr-2 h-5 w-5" />
-              <span className="text-lg font-medium">Sale ends in:</span>
-            </div>
-            
-            <div className="flex space-x-3 mb-6 justify-center md:justify-start">
-              <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
-                <div className="text-2xl font-bold">{timeLeft.days}</div>
-                <div className="text-xs">Days</div>
-              </div>
-              <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
-                <div className="text-2xl font-bold">{timeLeft.hours}</div>
-                <div className="text-xs">Hours</div>
-              </div>
-              <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
-                <div className="text-2xl font-bold">{timeLeft.minutes}</div>
-                <div className="text-xs">Mins</div>
-              </div>
-              <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
-                <div className="text-2xl font-bold">{timeLeft.seconds}</div>
-                <div className="text-xs">Secs</div>
-              </div>
-            </div>
+            {targetEvent && (
+              <>
+                <div className="flex items-center mb-6 justify-center md:justify-start">
+                  <Clock className="mr-2 h-5 w-5" />
+                  <span className="text-lg font-medium">Coming up in:</span>
+                </div>
+                
+                <div className="flex space-x-3 mb-6 justify-center md:justify-start">
+                  <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
+                    <div className="text-2xl font-bold">{timeLeft.days}</div>
+                    <div className="text-xs">Days</div>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
+                    <div className="text-2xl font-bold">{timeLeft.hours}</div>
+                    <div className="text-xs">Hours</div>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
+                    <div className="text-2xl font-bold">{timeLeft.minutes}</div>
+                    <div className="text-xs">Mins</div>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
+                    <div className="text-2xl font-bold">{timeLeft.seconds}</div>
+                    <div className="text-xs">Secs</div>
+                  </div>
+                </div>
+              </>
+            )}
             
             <div className="flex space-x-4 justify-center md:justify-start">
               <Button className="bg-white text-purple-700 hover:bg-gray-100">
@@ -95,7 +167,7 @@ const MarketplaceHero = () => {
                 Shop Now
               </Button>
               <Button variant="outline" className="border-white text-white hover:bg-white/20">
-                View Deals
+                View All Gifts
               </Button>
             </div>
           </div>

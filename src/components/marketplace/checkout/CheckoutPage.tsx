@@ -58,11 +58,13 @@ const CheckoutPage = () => {
     }
   };
 
-  // Ensure all gift scheduling options are strictly boolean values
+  // Force all gift scheduling options to be strictly boolean values
+  // by using double negation to ensure true boolean conversion
   const formattedGiftScheduling = {
-    scheduleDelivery: checkoutData.giftScheduling.scheduleDelivery === true,
-    sendGiftMessage: checkoutData.giftScheduling.sendGiftMessage === true,
-    isSurprise: checkoutData.giftScheduling.isSurprise === true
+    scheduleDelivery: !!checkoutData.giftScheduling.scheduleDelivery,
+    sendGiftMessage: !!checkoutData.giftScheduling.sendGiftMessage,
+    isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
+      !!checkoutData.giftScheduling.isSurprise : undefined
   };
 
   return (

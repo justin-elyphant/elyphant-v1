@@ -1,57 +1,90 @@
 
-// Import the Database type without causing circular references
-import { Database } from '@/integrations/supabase/types';
+// Profile types for the application
 
-// Define types for profile data
-export interface ProfileData {
-  id?: string;
-  username?: string;
-  full_name?: string;
-  avatar_url?: string;
-  bio?: string;
-  birthday?: string;
-  email?: string;
-  interests?: string[];
-  gift_preferences?: GiftPreference[];
-  shipping_address?: ShippingAddress;
-  data_sharing_settings?: DataSharingSettings;
-  next_steps_option?: string;
+import { SharingLevel } from "./supabase";
+
+export interface Profile {
+  id: string;
+  name: string | null;
+  email: string | null;
+  bio: string | null;
+  profile_image: string | null;
+  interests: string[];
+  created_at: string | null;
+  updated_at: string | null;
+  data_sharing_settings: DataSharingSettings;
+  address: ShippingAddress | null;
+  gift_preferences: GiftPreference[];
+  important_dates: ImportantDate[];
+}
+
+export interface ShippingAddress {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+export interface ImportantDate {
+  date: Date;
+  description: string;
+}
+
+export interface DataSharingSettings {
+  email: SharingLevel;
+  dob: SharingLevel;
+  shipping_address: SharingLevel;
+  gift_preferences: SharingLevel;
 }
 
 export interface GiftPreference {
   category: string;
-  importance: number;
+  importance: 'low' | 'medium' | 'high';
   notes?: string;
 }
 
-export interface ShippingAddress {
-  id?: string;
-  address_line1: string;
-  address_line2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-}
-
-export interface DataSharingSettings {
-  sharing_level: string;
-  allow_marketing: boolean;
-  allow_wishlist_suggestions: boolean;
-  allow_event_reminders: boolean;
-  allow_friend_recommendations: boolean;
-  allow_data_analysis: boolean;
-}
-
-export type Profile = {
+export interface Wishlist {
   id: string;
-  username: string;
-  full_name: string;
-  avatar_url: string;
-  email?: string;
-  bio: string;
-  birthday?: string;
-  interests: string[];
-  gift_preferences?: GiftPreference[];
-  data_sharing_settings?: DataSharingSettings;
-};
+  user_id: string;
+  title: string;
+  description: string | null;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+  items: WishlistItem[];
+}
+
+export interface WishlistItem {
+  id: string;
+  wishlist_id: string;
+  product_id?: string;
+  title: string;
+  description?: string;
+  price?: number;
+  image_url?: string;
+  url?: string;
+  created_at: string;
+  priority?: 'low' | 'medium' | 'high';
+  purchased?: boolean;
+  purchased_by?: string;
+}
+
+// Normalization utilities
+export function normalizeGiftPreference(preference: any): GiftPreference {
+  return {
+    category: preference?.category || '',
+    importance: preference?.importance || 'medium',
+    notes: preference?.notes || undefined
+  };
+}
+
+export function normalizeShippingAddress(address: any): ShippingAddress {
+  return {
+    street: address?.street || '',
+    city: address?.city || '',
+    state: address?.state || '',
+    zipCode: address?.zipCode || '',
+    country: address?.country || ''
+  };
+}

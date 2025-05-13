@@ -1,171 +1,109 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { createGiftPreference, CategoryImportance, getCategories } from "./gift-preferences/utils";
-import { GiftPreference } from '@/types/profile';
-import CategorySection from './gift-preferences/CategorySection';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { GiftPreference } from "@/types/profile";
+import ImportanceSelector from "./components/ImportanceSelector";
+import CategorySection from "./components/CategorySection";
 
 export interface GiftPreferencesStepProps {
-  preferences?: GiftPreference[];
-  onChange: (preferences: GiftPreference[]) => void;
+  preferences: GiftPreference[];
+  onNext: () => void;
+  onBack: () => void;
+  onPreferencesChange: (preferences: GiftPreference[]) => void;
 }
 
-const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ 
-  preferences = [], 
-  onChange 
+const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
+  preferences,
+  onNext,
+  onBack,
+  onPreferencesChange
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [importance, setImportance] = useState<CategoryImportance>('medium');
-  const [notes, setNotes] = useState('');
-  const [allCategories] = useState(getCategories());
-  
-  // Find categories the user has already selected
-  const selectedCategories = preferences.map(pref => pref.category);
-  
-  // Handle adding a new preference
-  const handleAddPreference = (category: string) => {
-    setSelectedCategory(category);
-    
-    // If we already have preferences for this category, initialize with those values
-    const existingPref = preferences.find(p => p.category === category);
-    if (existingPref) {
-      // Convert numeric importance to string category
-      const importanceLevel = existingPref.importance <= 1 ? 'low' : 
-                             existingPref.importance <= 2 ? 'medium' : 'high';
-      setImportance(importanceLevel as CategoryImportance);
-      setNotes(existingPref.notes || '');
-    } else {
-      setImportance('medium');
-      setNotes('');
-    }
-  };
-  
-  // Save the current preference
-  const handleSavePreference = () => {
-    if (!selectedCategory) return;
-    
-    const newPreferences = [...preferences];
-    const existingIndex = newPreferences.findIndex(p => p.category === selectedCategory);
-    
-    const updatedPreference = createGiftPreference(
-      selectedCategory,
-      importance,
-      notes
+  // Categories for gift preferences
+  const categories = [
+    { id: "electronics", name: "Electronics" },
+    { id: "clothing", name: "Clothing" },
+    { id: "books", name: "Books" },
+    { id: "homeDecor", name: "Home Decor" },
+    { id: "outdoors", name: "Outdoors & Adventure" },
+    { id: "sports", name: "Sports" },
+    { id: "beauty", name: "Beauty & Personal Care" },
+    { id: "food", name: "Food & Beverages" },
+    { id: "games", name: "Games & Entertainment" },
+    { id: "art", name: "Art & Crafts" },
+    { id: "music", name: "Music" },
+    { id: "travel", name: "Travel" }
+  ];
+
+  const handleImportanceChange = (category: string, importance: 'low' | 'medium' | 'high') => {
+    const updatedPreferences = preferences.map(pref => 
+      pref.category === category ? { ...pref, importance } : pref
     );
     
-    if (existingIndex >= 0) {
-      newPreferences[existingIndex] = updatedPreference;
+    onPreferencesChange(updatedPreferences);
+  };
+
+  const handleToggleCategory = (category: string, isSelected: boolean) => {
+    let updatedPreferences = [...preferences];
+    
+    if (isSelected) {
+      // Add category
+      if (!updatedPreferences.some(p => p.category === category)) {
+        updatedPreferences.push({ category, importance: 'medium' });
+      }
     } else {
-      newPreferences.push(updatedPreference);
+      // Remove category
+      updatedPreferences = updatedPreferences.filter(p => p.category !== category);
     }
     
-    onChange(newPreferences);
-    setSelectedCategory(null);
+    onPreferencesChange(updatedPreferences);
   };
-  
-  // Remove a preference
-  const handleRemovePreference = (category: string) => {
-    const newPreferences = preferences.filter(p => p.category !== category);
-    onChange(newPreferences);
-  };
-  
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-1">Gift Preferences</h2>
-        <p className="text-muted-foreground">
-          Tell us what types of gifts you enjoy receiving
-        </p>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Gift Preferences</CardTitle>
+        <CardDescription>
+          Select categories you're interested in receiving gifts from and set their importance
+        </CardDescription>
+      </CardHeader>
       
-      {selectedCategory ? (
-        // Editing a specific category
-        <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
-          <CategorySection
-            categoryName={selectedCategory}
-            selectedImportance={importance}
-            onImportanceChange={setImportance}
-            notes={notes}
-            onNotesChange={setNotes}
+      <CardContent>
+        <div className="space-y-6">
+          <CategorySection 
+            categories={categories}
+            selectedCategories={preferences.map(p => p.category)}
+            onToggleCategory={handleToggleCategory}
           />
           
-          <div className="flex justify-end space-x-3">
-            <Button
-              variant="outline"
-              onClick={() => setSelectedCategory(null)}
-            >
-              Cancel
+          {preferences.length > 0 && (
+            <div className="space-y-4 mt-6">
+              <h3 className="text-lg font-medium">Set Importance</h3>
+              <div className="space-y-3">
+                {preferences.map((preference) => (
+                  <ImportanceSelector
+                    key={preference.category}
+                    category={preference.category}
+                    importance={preference.importance}
+                    onImportanceChange={handleImportanceChange}
+                    categoryName={categories.find(c => c.id === preference.category)?.name || preference.category}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-between pt-4">
+            <Button variant="outline" onClick={onBack}>
+              Back
             </Button>
-            <Button onClick={handleSavePreference}>
-              Save Preference
+            <Button onClick={onNext}>
+              Next
             </Button>
           </div>
         </div>
-      ) : (
-        // Showing all categories
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {allCategories.map((category) => {
-            const isSelected = selectedCategories.includes(category);
-            return (
-              <div
-                key={category}
-                className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                  isSelected 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-gray-200 hover:border-primary/50'
-                }`}
-                onClick={() => handleAddPreference(category)}
-              >
-                <div className="flex justify-between items-center">
-                  <span>{category}</span>
-                  {isSelected && (
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      
-      {preferences.length > 0 && !selectedCategory && (
-        <div className="mt-6">
-          <h3 className="text-lg font-medium mb-3">Your Selected Preferences</h3>
-          <ul className="space-y-2">
-            {preferences.map((pref) => (
-              <li 
-                key={pref.category}
-                className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
-              >
-                <div>
-                  <span className="font-medium">{pref.category}</span>
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    (Importance: {pref.importance <= 1 ? 'Low' : pref.importance <= 2 ? 'Medium' : 'High'})
-                  </span>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleAddPreference(pref.category)}
-                  >
-                    Edit
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => handleRemovePreference(pref.category)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

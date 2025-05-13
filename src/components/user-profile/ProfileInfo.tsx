@@ -1,130 +1,91 @@
 
 import React from "react";
-import { Users, Heart } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { CalendarDays, MapPin, Info } from "lucide-react";
+import { CalendarClock, Mail, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { isFieldVisible } from "@/utils/privacyUtils";
+import { Profile } from "@/types/profile";
 import { format } from "date-fns";
-import { isDataVisible } from "@/utils/privacyUtils";
-import { ConnectionStatus } from "@/hooks/useConnectionStatus";
 
 interface ProfileInfoProps {
-  userData: any;
+  profile: Profile;
+  isFriend?: boolean;
+  isCurrentUser?: boolean;
 }
 
-const ProfileInfo = ({ userData }: ProfileInfoProps) => {
-  // For demo purposes, we'll use 'accepted' as the connection status
-  // This would normally come from useConnectionStatus hook in a real implementation
-  const connectionStatus: ConnectionStatus = 'accepted';
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ 
+  profile, 
+  isFriend = false, 
+  isCurrentUser = false 
+}) => {
+  const dataSharingSettings = profile.data_sharing_settings || {
+    email: 'private',
+    dob: 'private',
+    shipping_address: 'private',
+    gift_preferences: 'friends'
+  };
   
-  // Handle possible undefined values safely
-  const name = userData?.name || "User";
-  const username = userData?.username || "username";
-  const bio = userData?.bio;
-  const dataSharingSettings = userData?.data_sharing_settings || {};
-  
-  // Check birthday visibility using our utility function
-  const birthdayVisible = isDataVisible(
-    userData?.birthday || userData?.dob,
-    dataSharingSettings.dob || "friends",
-    connectionStatus
-  );
-  
-  // Check location visibility
-  const locationVisible = isDataVisible(
-    (userData?.address?.city && userData?.address?.country) ? true : userData?.shipping_address,
-    dataSharingSettings.shipping_address || "private",
-    connectionStatus
-  );
-  
-  // Check email visibility
-  const emailVisible = isDataVisible(
-    userData?.email,
-    dataSharingSettings.email || "private",
-    connectionStatus
-  );
+  // Check if fields should be visible based on sharing settings
+  const showEmail = isFieldVisible(dataSharingSettings.email, isFriend, isCurrentUser);
+  const showBirthday = isFieldVisible(dataSharingSettings.dob, isFriend, isCurrentUser);
+  const showAddress = isFieldVisible(dataSharingSettings.shipping_address, isFriend, isCurrentUser);
+
+  const getBirthday = () => {
+    const birthday = profile.important_dates?.find(date => 
+      date.description.toLowerCase().includes('birthday')
+    );
+    return birthday ? format(new Date(birthday.date), 'MMMM d') : null;
+  };
 
   return (
-    <div className="pl-4 sm:pl-8 mb-8 pt-14 sm:pt-4">
-      <h1 className="text-xl sm:text-2xl font-bold">{name}</h1>
-      <div className="text-sm text-muted-foreground mb-2">@{username}</div>
-      <div className="flex items-center gap-3 sm:gap-6 mt-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
-        <div className="flex items-center">
-          <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-          <span className="font-medium">127</span> Followers
+    <div className="space-y-4">
+      {/* Bio */}
+      {profile.bio && (
+        <div>
+          <p className="text-sm text-muted-foreground">{profile.bio}</p>
         </div>
-        <div className="flex items-center">
-          <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-          <span className="font-medium">83</span> Following
-        </div>
-        <div className="flex items-center">
-          <Heart className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-          <span className="font-medium">254</span> Likes
-        </div>
-      </div>
-      
-      {bio ? (
-        <p className="mt-4 text-muted-foreground">{bio}</p>
-      ) : (
-        <p className="mt-4 text-muted-foreground">
-          {userData?.profileType === "gifter" 
-            ? "I love finding the perfect gifts for my friends and family!" 
-            : userData?.profileType === "giftee"
-            ? "Check out my wishlists for gift ideas!"
-            : "I enjoy both giving and receiving gifts!"}
-        </p>
       )}
       
-      {/* Personal Info Card */}
-      {(birthdayVisible || locationVisible || emailVisible) && (
-        <Card className="mt-4 w-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md">Personal Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableBody>
-                {birthdayVisible && userData?.birthday && (
-                  <TableRow>
-                    <TableCell className="font-medium flex items-center">
-                      <CalendarDays className="h-4 w-4 mr-2" />
-                      Birthday
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(userData.birthday || userData.dob), "MMMM d")}
-                    </TableCell>
-                  </TableRow>
-                )}
-                {locationVisible && (
-                  <TableRow>
-                    <TableCell className="font-medium flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Location
-                    </TableCell>
-                    <TableCell>
-                      {userData.address ? 
-                        `${userData.address.city}, ${userData.address.country}` : 
-                        userData.shipping_address ? 
-                          `${userData.shipping_address.city}, ${userData.shipping_address.country}` : 
-                          "Location not specified"}
-                    </TableCell>
-                  </TableRow>
-                )}
-                {emailVisible && userData?.email && (
-                  <TableRow>
-                    <TableCell className="font-medium flex items-center">
-                      <Info className="h-4 w-4 mr-2" />
-                      Email
-                    </TableCell>
-                    <TableCell>
-                      {userData.email}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      {/* Contact & Location Info */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {/* Email */}
+        {profile.email && showEmail && (
+          <div className="flex items-center gap-2 text-sm">
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <span>{profile.email}</span>
+          </div>
+        )}
+        
+        {/* Birthday */}
+        {getBirthday() && showBirthday && (
+          <div className="flex items-center gap-2 text-sm">
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+            <span>Birthday: {getBirthday()}</span>
+          </div>
+        )}
+        
+        {/* Address */}
+        {profile.address && showAddress && profile.address.city && (
+          <div className="flex items-center gap-2 text-sm">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span>
+              {profile.address.city}, {profile.address.state}
+            </span>
+          </div>
+        )}
+      </div>
+      
+      {/* Interests */}
+      {profile.interests && profile.interests.length > 0 && (
+        <div>
+          <h4 className="text-sm font-medium mb-2">Interests</h4>
+          <div className="flex flex-wrap gap-2">
+            {profile.interests.map((interest, index) => (
+              <Badge key={index} variant="secondary">
+                {interest}
+              </Badge>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

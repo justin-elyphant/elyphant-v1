@@ -62,6 +62,7 @@ const CheckoutPage = () => {
   const formattedGiftScheduling = {
     scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
     sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
+    // Use optional chaining with the Boolean constructor to ensure type safety
     isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
       Boolean(checkoutData.giftScheduling.isSurprise) : undefined
   };

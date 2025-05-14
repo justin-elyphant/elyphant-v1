@@ -15,11 +15,14 @@ export interface Profile {
   important_dates?: ImportantDate[];
   data_sharing_settings?: DataSharingSettings;
   wishlists?: Wishlist[];
+  interests?: string[];  // Add interests field
   onboarding_completed?: boolean;
   updated_at?: string;
+  recently_viewed?: RecentlyViewedItem[];  // Add recently_viewed field
 }
 
 export interface ShippingAddress {
+  // Use consistent naming that aligns with the rest of the codebase
   address_line1?: string;
   address_line2?: string;
   city?: string;
@@ -27,6 +30,21 @@ export interface ShippingAddress {
   zip_code?: string;
   country?: string;
   is_default?: boolean;
+  // Aliases for compatibility with form fields using different property names
+  street?: string;  // Alias for address_line1
+  zipCode?: string; // Alias for zip_code
+}
+
+export interface RecentlyViewedItem {
+  id: string;
+  product_id: string;
+  viewed_at: string;
+  product_data: {
+    title: string;
+    price?: number;
+    image_url?: string;
+    brand?: string;
+  };
 }
 
 export interface GiftPreference {
@@ -107,7 +125,10 @@ export function normalizeShippingAddress(address: any | null | undefined): Shipp
     state: address.state || '',
     zip_code: address.zip_code || address.zipCode || '',
     country: address.country || 'US',
-    is_default: address.is_default || true
+    is_default: address.is_default || true,
+    // Add aliases for compatibility
+    street: address.address_line1 || address.street || '',
+    zipCode: address.zip_code || address.zipCode || ''
   };
 }
 
@@ -125,7 +146,10 @@ export function mapFormAddressToApiAddress(formAddress: any): ShippingAddress {
     state: formAddress.state || '',
     zip_code: formAddress.zipCode || '',
     country: formAddress.country || '',
-    is_default: true
+    is_default: true,
+    // Add aliases
+    street: formAddress.street || '',
+    zipCode: formAddress.zipCode || ''
   };
 }
 
@@ -138,10 +162,10 @@ export function mapApiAddressToFormAddress(apiAddress: ShippingAddress): any {
   }
   
   return {
-    street: apiAddress.address_line1 || '',
+    street: apiAddress.address_line1 || apiAddress.street || '',
     city: apiAddress.city || '',
     state: apiAddress.state || '',
-    zipCode: apiAddress.zip_code || '',
+    zipCode: apiAddress.zip_code || apiAddress.zipCode || '',
     country: apiAddress.country || ''
   };
 }
@@ -159,6 +183,7 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
       category: interest,
       importance: 'medium' as 'low' | 'medium' | 'high'
     })),
+    interests: formData.interests,  // Add interests mapping
     data_sharing_settings: formData.data_sharing_settings,
     important_dates: formData.importantDates?.map((date: any) => ({
       title: date.description,

@@ -1,26 +1,32 @@
 
 import { Profile } from "@/types/profile";
 
-export interface UserProfileWithActivity extends Profile {
-  recently_viewed?: Array<{
-    id: string;
-    product_id: string;
-    viewed_at: string;
-    product_data: {
-      id: string;
-      title: string;
-      price: number;
-      image_url?: string;
-      brand?: string;
-      category?: string;
-    };
-  }>;
+// Define types for recently viewed items 
+export interface RecentlyViewedItem {
+  id: string;
+  product_id: string;
+  viewed_at: string;
+  product_data: {
+    title: string;
+    price?: number;
+    image_url?: string;
+    brand?: string;
+  };
 }
 
-export function getRecentlyViewed(profile: Profile | null): any[] {
-  if (!profile) return [];
+// Helper function to get recently viewed items
+export function getRecentlyViewed(profile: Profile | null): RecentlyViewedItem[] {
+  if (!profile || !profile.recently_viewed) {
+    return [];
+  }
   
-  // For TypeScript, we need to cast or use a guard
-  const profileWithActivity = profile as UserProfileWithActivity;
-  return profileWithActivity.recently_viewed || [];
+  // Return the recently viewed items array
+  return Array.isArray(profile.recently_viewed) ? profile.recently_viewed : [];
+}
+
+// Add the recently_viewed property to the Profile type
+declare module "@/types/profile" {
+  interface Profile {
+    recently_viewed?: RecentlyViewedItem[];
+  }
 }

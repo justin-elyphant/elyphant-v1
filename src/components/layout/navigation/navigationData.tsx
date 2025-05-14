@@ -11,13 +11,29 @@ export const getDefaultLinks = () => [
 ];
 
 export const getMarketplaceItems = (): NavDropdownItem[] => [
-  { label: "All Products", href: "/marketplace", icon: <ShoppingBag className="h-4 w-4" /> },
-  { label: "Categories", href: "/marketplace/categories", icon: <Gift className="h-4 w-4" /> },
+  { 
+    label: "All Products", 
+    href: "/marketplace", 
+    icon: React.createElement(ShoppingBag, { className: "h-4 w-4" }) 
+  },
+  { 
+    label: "Categories", 
+    href: "/marketplace/categories", 
+    icon: React.createElement(Gift, { className: "h-4 w-4" }) 
+  },
   { label: "Trending", href: "/marketplace/trending" }
 ];
 
 export const getConnectionsItems = (): NavDropdownItem[] => [
-  { label: "My Friends", href: "/connections/friends", icon: <Users className="h-4 w-4" /> },
-  { label: "Find Friends", href: "/connections/find", icon: <Users className="h-4 w-4" /> },
+  { 
+    label: "My Friends", 
+    href: "/connections/friends", 
+    icon: React.createElement(Users, { className: "h-4 w-4" }) 
+  },
+  { 
+    label: "Find Friends", 
+    href: "/connections/find", 
+    icon: React.createElement(Users, { className: "h-4 w-4" }) 
+  },
   { label: "Invitations", href: "/connections/invitations" }
 ];

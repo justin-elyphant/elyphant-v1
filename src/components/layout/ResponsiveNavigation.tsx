@@ -9,6 +9,7 @@ import Logo from "../home/components/Logo";
 import UserButton from "../auth/UserButton";
 import { NotificationsDropdown } from "../notifications/NotificationsDropdown";
 import NavigationDropdown, { NavDropdownItem } from "../navigation/NavigationDropdown";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface NavLink {
   label: string;
@@ -54,7 +55,7 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
   ];
 
   return (
-    <header className={`border-b bg-white shadow-sm sticky top-0 z-50 ${className}`}>
+    <header className={`border-b bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 ${className}`}>
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center">
           <Logo />
@@ -95,6 +96,7 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
         
         {/* Right side actions */}
         <div className="flex items-center space-x-1">
+          <ThemeToggle size="icon" variant="ghost" />
           <NotificationsDropdown />
           
           {user ? (
@@ -131,6 +133,11 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       {/* Mobile Menu with improved dropdowns */}
       {isMobile && mobileMenuOpen && (
         <div className="py-3 px-4 border-t bg-background">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b">
+            <p className="text-sm font-medium">Settings</p>
+            <ThemeToggle size="sm" showTooltip={false} />
+          </div>
+          
           <nav className="flex flex-col space-y-3">
             {links.map((link) => (
               <Link
@@ -214,4 +221,4 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       )}
     </header>
   );
-};
+}

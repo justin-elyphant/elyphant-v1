@@ -13,7 +13,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background dark:bg-gray-950">
       <ResponsiveNavigation />
       
       <main className="flex-1">
@@ -24,7 +24,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </ResponsiveContainer>
       </main>
       
-      <footer className="py-6 text-center text-sm text-muted-foreground border-t">
+      <footer className="py-6 text-center text-sm text-muted-foreground border-t dark:border-gray-800">
         <ResponsiveContainer>
           <p>
             &copy; {new Date().getFullYear()} Gift Giver. All rights reserved.

@@ -4,6 +4,7 @@ import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
 import { SignUpFormValues } from "./SignUpForm";
 import OnboardingIntentModal from "./OnboardingIntentModal";
+import { useNavigate } from "react-router-dom";
 
 interface SignUpContentWrapperProps {
   step: "signup" | "verification";
@@ -28,9 +29,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   resendCount = 0,
   bypassVerification = true, // Default to bypassing verification for better UX
 }) => {
-  // This modal should show after registration and verification for new users,
-  // but not show up again in their subsequent sessions.
   const [showIntentModal, setShowIntentModal] = React.useState(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     // Only fire on verification step (user successfully signed up)
@@ -48,12 +48,24 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     // Save chosen intent
     localStorage.setItem("userIntent", userIntent);
     setShowIntentModal(false);
-    // No navigation/branching here; follow-up flows will use this value
+
+    // New branching logic
+    if (userIntent === "giftor") {
+      // Skip profile setup and go directly to marketplace/gifting experience
+      localStorage.setItem("onboardingComplete", "true"); // Mark onboarding as done
+      localStorage.removeItem("newSignUp");
+      navigate("/marketplace", { replace: true });
+    } else if (userIntent === "giftee") {
+      // Continue to profile setup flow as usual (handled by existing logic)
+      // No action needed, /profile-setup will be routed after verification step
+    }
   };
 
   const handleSkip = () => {
+    // Treat skip as giftee (default)
     localStorage.setItem("userIntent", "skipped");
     setShowIntentModal(false);
+    // Continue to profile setup as normal
   };
 
   if (step === "signup") {
@@ -86,3 +98,4 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 };
 
 export default SignUpContentWrapper;
+

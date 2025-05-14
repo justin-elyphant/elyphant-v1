@@ -28,7 +28,7 @@ const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // On mount: If user is NOT logged in, clear all onboarding-related state and localStorage for a fresh sign up experience.
+  // On mount: If user is NOT logged in, clear all onboarding-related state and localStorage for a fresh sign up experience, *especially userIntent*
   React.useEffect(() => {
     if (!user) {
       CLEAR_ONBOARDING_KEYS.forEach((key) => localStorage.removeItem(key));
@@ -39,7 +39,6 @@ const SignUp: React.FC = () => {
   React.useEffect(() => {
     const newSignUp = localStorage.getItem("newSignUp") === "true";
     const hasIntent = !!localStorage.getItem("userIntent");
-
     if (user && (!newSignUp || hasIntent)) {
       navigate("/dashboard", { replace: true });
     }
@@ -60,6 +59,7 @@ const SignUp: React.FC = () => {
   // Store verification bypass preference in localStorage for consistent experience across sessions
   React.useEffect(() => {
     localStorage.setItem("bypassVerification", "true");
+    // If at verification, set newSignUp
     if (step === "verification") {
       localStorage.setItem("newSignUp", "true");
     }
@@ -86,3 +86,4 @@ const SignUp: React.FC = () => {
 };
 
 export default SignUp;
+

@@ -6,18 +6,40 @@ import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper"
 import Header from "@/components/home/Header";
 import { useAuth } from "@/contexts/auth";
 
+const CLEAR_ONBOARDING_KEYS = [
+  "userId",
+  "userEmail",
+  "userName",
+  "newSignUp",
+  "userIntent",
+  "onboardingComplete",
+  "onboardingSkipped",
+  "onboardingSkippedTime",
+  "bypassVerification",
+  "profileSetupLoading",
+  "emailVerified",
+  "verifiedEmail",
+  "pendingVerificationEmail",
+  "pendingVerificationName",
+  "verificationResendCount"
+];
+
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Changed: Only auto-navigate if NOT a new signup
+  // On mount: If user is NOT logged in, clear all onboarding-related state and localStorage for a fresh sign up experience.
   React.useEffect(() => {
-    // Check flag in localStorage to allow onboarding flow
+    if (!user) {
+      CLEAR_ONBOARDING_KEYS.forEach((key) => localStorage.removeItem(key));
+    }
+  }, [user]);
+
+  // Only auto-navigate if NOT a new signup, to allow onboarding flow
+  React.useEffect(() => {
     const newSignUp = localStorage.getItem("newSignUp") === "true";
-    // Also check for "userIntent" (means modal handled and onboarding choice made)
     const hasIntent = !!localStorage.getItem("userIntent");
 
-    // Only redirect existing, non-onboarding users
     if (user && (!newSignUp || hasIntent)) {
       navigate("/dashboard", { replace: true });
     }
@@ -34,17 +56,15 @@ const SignUp: React.FC = () => {
     resendCount,
     bypassVerification = true, // Always enable hybrid verification for better UX
   } = useSignUpProcess();
-  
+
   // Store verification bypass preference in localStorage for consistent experience across sessions
   React.useEffect(() => {
-    localStorage.setItem("bypassVerification", "true"); // Always set to true for Phase 5
-
-    // For new sign ups, mark as new user for onboarding
+    localStorage.setItem("bypassVerification", "true");
     if (step === "verification") {
       localStorage.setItem("newSignUp", "true");
     }
   }, [step]);
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

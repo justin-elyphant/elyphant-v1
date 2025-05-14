@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -114,12 +113,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Sign out
+  // Sign out (updated: clear all state + onboarding localStorage keys)
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
+
+      // Remove all relevant keys on logout to avoid state leaks
+      const keysToClear = [
+        "userId",
+        "userEmail",
+        "userName",
+        "newSignUp",
+        "userIntent",
+        "onboardingComplete",
+        "onboardingSkipped",
+        "onboardingSkippedTime",
+        "bypassVerification",
+        "profileSetupLoading",
+        "emailVerified",
+        "verifiedEmail"
+      ];
+      keysToClear.forEach((key) => localStorage.removeItem(key));
+
+      setState({
+        session: null,
+        user: null,
+        isLoading: false
+      });
+
       navigate('/');
       toast.success("Signed out successfully");
+
+      // Extra: log for debugging
+      // eslint-disable-next-line no-console
+      console.log("All onboarding/auth localStorage cleared (signOut). State reset.");
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Failed to sign out");

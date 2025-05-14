@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useSignUpProcess } from "@/hooks/auth";
@@ -24,13 +25,20 @@ const SignUp: React.FC = () => {
   const { user } = useAuth();
 
   // Always clear onboarding keys for /signup, unless logged in
+  // ALSO: Fully reset any stuck sign up state (step/userEmail) for a cold visit
   React.useEffect(() => {
     if (!user) {
       CLEAR_ONBOARDING_KEYS.forEach((key) => localStorage.removeItem(key));
-      // HACK: remove all onboarding-related state but keep localStorage functional
-      // (removing all of localStorage could break 3rd party integrations)
-      // localStorage.clear(); // Uncomment if you do want to clear everything
-      console.log("[SignUp] Onboarding keys wiped!", { user });
+      // This ensures NO persisted email/name/step carryover from a prior session.
+
+      // Extra fix: wipe any in-memory stuck state if starting at signup with no "newSignUp" present
+      // (patches issues from prior state leaks in hooks)
+      if (!localStorage.getItem("newSignUp")) {
+        localStorage.setItem("signupStep", "signup");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userName");
+      }
+      console.log("[SignUp] Onboarding keys wiped and signup state force-reset!", { user });
     }
   }, [user]);
 
@@ -72,6 +80,10 @@ const SignUp: React.FC = () => {
         localStorage.removeItem("userIntent");
       }
       console.log("[SignUp] Set 'newSignUp' and sanitized userIntent at verification step");
+    }
+    // If returning to signup step, clear newSignUp flag so cold reload starts over!
+    if (step === "signup") {
+      localStorage.removeItem("newSignUp");
     }
   }, [step]);
 

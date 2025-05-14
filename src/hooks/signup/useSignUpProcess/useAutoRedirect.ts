@@ -20,28 +20,28 @@ export const useAutoRedirect = ({
 }: UseAutoRedirectProps) => {
   const navigate = useNavigate();
 
-  // AUTO-REDIRECT TO PROFILE SETUP WHEN EMAIL IS SENT OR VERIFICATION IS BYPASSED
   useEffect(() => {
+    // Persist new signup and user data
     if ((emailSent && step === "verification") || bypassVerification) {
-      console.log("Auto-redirecting to profile setup from useAutoRedirect", { 
-        emailSent, 
-        step, 
-        bypassVerification 
-      });
-      
-      // Store in localStorage for persistence
       localStorage.setItem("newSignUp", "true");
       localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("userName", userName || "");
-      
-      // Show positive success message
+
+      // Don't auto-redirect to /profile-setup if user intent not chosen yet (let modal show)
+      const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+      const userIntent = localStorage.getItem("userIntent");
+
+      if (isNewSignUp && !userIntent) {
+        // Do not navigate; onboarding modal should show
+        return;
+      }
+
       if (bypassVerification) {
         toast.success("Account created successfully!", {
           description: "We've simplified your signup experience."
         });
       }
-      
-      // Use navigate with replace to prevent back-button issues
+
       navigate('/profile-setup', { replace: true });
     }
   }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);

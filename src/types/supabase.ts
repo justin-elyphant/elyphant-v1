@@ -22,18 +22,19 @@ export interface UserConnection {
   updated_at: string;
 }
 
-export interface UserAddress {
-  id: string;
-  user_id: string;
-  address_type: 'shipping' | 'billing';
-  street: string;
+export interface ShippingAddress {
+  address_line1: string;
+  address_line2?: string;
   city: string;
   state: string;
-  postal_code: string;
+  zip_code: string;
   country: string;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
+  is_default?: boolean;
+}
+
+export interface GiftPreference {
+  category: string;
+  importance: 'low' | 'medium' | 'high';
 }
 
 export interface RecentlyViewedProduct {
@@ -54,4 +55,22 @@ export interface DataSharingSettings {
   dob: SharingLevel;
   shipping_address: SharingLevel;
   gift_preferences: SharingLevel;
+}
+
+export interface Profile {
+  id: string;
+  user_id?: string;
+  name?: string;
+  username?: string;
+  email: string;
+  profile_image?: string | null;
+  bio?: string;
+  dob?: string | null;
+  shipping_address?: ShippingAddress;
+  gift_preferences?: GiftPreference[];
+  important_dates?: UserSpecialDate[];
+  data_sharing_settings?: DataSharingSettings;
+  updated_at?: string;
+  created_at?: string;
+  onboarding_completed?: boolean;
 }

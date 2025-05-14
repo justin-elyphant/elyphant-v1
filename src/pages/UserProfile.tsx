@@ -1,175 +1,133 @@
-
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
-import { supabase } from "@/integrations/supabase/client";
-import ProfileHeader from "@/components/user-profile/ProfileHeader";
-import ProfileBanner from "@/components/user-profile/ProfileBanner";
+import React from "react";
+import { useParams } from "react-router-dom";
 import ProfileInfo from "@/components/user-profile/ProfileInfo";
-import ProfileTabs from "@/components/user-profile/ProfileTabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import MainLayout from "@/components/layout/MainLayout";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Profile } from "@/types/profile";
+import { Loader } from "lucide-react";
 
 const UserProfile = () => {
-  const { userId } = useParams<{ userId: string }>();
-  const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
-  
-  const [profileData, setProfileData] = useState<any>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [activeTab, setActiveTab] = useState("wishlists");
-  const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
+  const { userId } = useParams();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLocalLoadingTimeout(false);
-    }, 3000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  const isCurrentUser = user?.id === userId;
   
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!userId) {
-        setError("No user ID provided");
-        setLoadingProfile(false);
-        return;
-      }
-      
       try {
-        console.log("Fetching profile data for:", userId);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Error fetching profile:", error);
-          setError("Failed to load profile data");
-          setLoadingProfile(false);
-          return;
-        }
-        
-        if (!data) {
-          console.log("No profile found for user:", userId);
-          setError("Profile not found");
-          setLoadingProfile(false);
-          return;
-        }
-        
-        console.log("Profile data loaded:", data);
-        setProfileData(data);
+        setLoading(true);
         setError(null);
-      } catch (err) {
-        console.error("Unexpected error fetching profile:", err);
-        setError("An unexpected error occurred");
+        
+        if (!userId) {
+          setError("User ID is required");
+          return;
+        }
+        
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          setProfile(data as Profile);
+        } else {
+          setError("User not found");
+        }
+      } catch (err: any) {
+        console.error("Error fetching user profile:", err);
+        setError(err.message || "Failed to load profile");
       } finally {
-        setLoadingProfile(false);
+        setLoading(false);
       }
     };
     
-    if (userId) {
-      fetchProfile();
-    }
+    fetchProfile();
   }, [userId]);
   
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    toast.success(isFollowing ? "Unfollowed user" : "Now following user");
-  };
-  
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success("Profile link copied to clipboard");
-  };
-  
-  const isPageLoading = (isLoading && localLoadingTimeout) || (loadingProfile && localLoadingTimeout);
-  
-  if (isPageLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container max-w-5xl mx-auto py-8 px-4">
-          <Skeleton className="h-10 w-48 mb-6" />
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex flex-col md:flex-row gap-6">
-              <Skeleton className="h-40 w-40 rounded-full" />
-              <div className="flex-1 space-y-4">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-6 w-80" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-            </div>
-          </div>
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </div>
+      </MainLayout>
     );
   }
   
-  if (error) {
+  if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container max-w-5xl mx-auto py-8 px-4">
-          <ProfileHeader profile={null} isCurrentUser={false} />
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <h2 className="text-xl font-medium text-red-600 mb-2">Error Loading Profile</h2>
-            <p className="text-gray-500">{error}</p>
-            <button
-              onClick={() => navigate(-1)}
-              className="mt-4 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
-            >
-              Go Back
-            </button>
-          </div>
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+          <h2 className="text-xl font-bold text-red-500">
+            {error || "Profile not found"}
+          </h2>
+          <Button asChild>
+            <Link to="/dashboard">Back to Dashboard</Link>
+          </Button>
         </div>
-      </div>
+      </MainLayout>
     );
   }
-
-  const mockWishlists = [
-    {
-      id: 1,
-      title: "Birthday Wishlist",
-      items: (profileData?.gift_preferences || []).slice(0, 3).map((pref, index) => ({
-        id: index,
-        name: typeof pref === 'string' ? pref : pref.category,
-        image: `/placeholders/gift-${index + 1}.jpg`
-      }))
-    }
-  ];
-
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container max-w-5xl mx-auto py-8 px-4">
-        <ProfileHeader profile={profileData} isCurrentUser={isCurrentUser} />
-        
-        {profileData && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <ProfileBanner 
-              userData={profileData}
-              isCurrentUser={isCurrentUser}
-              isFollowing={isFollowing}
-              onFollow={handleFollow}
-              onShare={handleShare}
-            />
-            
-            <ProfileInfo userData={profileData} />
-            
-            <ProfileTabs
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              isCurrentUser={isCurrentUser}
-              mockWishlists={mockWishlists}
-              userData={profileData}
-            />
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h1 className="text-2xl font-bold">User Profile</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline">Connect</Button>
+            <Button>Message</Button>
           </div>
-        )}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1">
+            <ProfileInfo profile={profile} />
+          </div>
+          
+          <div className="md:col-span-2">
+            <Tabs defaultValue="wishlists">
+              <TabsList className="w-full">
+                <TabsTrigger value="wishlists" className="flex-1">Wishlists</TabsTrigger>
+                <TabsTrigger value="events" className="flex-1">Events</TabsTrigger>
+                <TabsTrigger value="activity" className="flex-1">Activity</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="wishlists" className="mt-4">
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No public wishlists to display
+                  </p>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="events" className="mt-4">
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No upcoming events
+                  </p>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="activity" className="mt-4">
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No recent activity
+                  </p>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 

@@ -1,61 +1,62 @@
 
+// Utility functions for handling privacy settings
+import { SharingLevel } from '@/types/supabase';
+
 export type PrivacyLevel = 'private' | 'friends' | 'public';
 
-export interface DataSharingSettings {
-  dob?: PrivacyLevel;
-  shipping_address?: PrivacyLevel;
-  gift_preferences?: PrivacyLevel;
-  email?: PrivacyLevel;
-  [key: string]: PrivacyLevel | undefined;
+export function getSharingLevelLabel(level: SharingLevel): string {
+  switch (level) {
+    case 'private':
+      return 'Only Me';
+    case 'friends':
+      return 'Friends Only';
+    case 'public':
+      return 'Everyone';
+    default:
+      return 'Unknown';
+  }
 }
 
-/**
- * Gets the default privacy settings for user data
- */
-export const getDefaultDataSharingSettings = (): DataSharingSettings => {
-  return {
-    dob: 'friends',
-    shipping_address: 'friends',
-    gift_preferences: 'public',
+export function normalizeDataSharingSettings(settings: any): Record<string, PrivacyLevel> {
+  const defaultSettings = {
     email: 'private',
+    dob: 'friends',
+    shipping_address: 'private',
+    gift_preferences: 'friends'
   };
-};
 
-/**
- * Normalizes data sharing settings from potentially incomplete user input
- */
-export const normalizeDataSharingSettings = (settings: any | null | undefined): DataSharingSettings => {
-  const defaults = getDefaultDataSharingSettings();
-  
-  if (!settings) {
-    return defaults;
-  }
-  
+  if (!settings) return defaultSettings;
+
   return {
-    dob: settings.dob || defaults.dob,
-    shipping_address: settings.shipping_address || defaults.shipping_address,
-    gift_preferences: settings.gift_preferences || defaults.gift_preferences,
-    email: settings.email || defaults.email,
+    email: settings.email || defaultSettings.email,
+    dob: settings.dob || defaultSettings.dob,
+    shipping_address: settings.shipping_address || defaultSettings.shipping_address,
+    gift_preferences: settings.gift_preferences || defaultSettings.gift_preferences
   };
-};
+}
 
-/**
- * Check if a user should be able to see data given its privacy level and the relationship
- */
-export const canViewData = (
-  privacyLevel: PrivacyLevel,
-  isOwner: boolean,
-  isFriend: boolean
-): boolean => {
-  if (isOwner) return true;
-  
-  switch (privacyLevel) {
-    case 'public':
-      return true;
-    case 'friends':
-      return isFriend;
+export function getPrivacyIcon(level: PrivacyLevel): string {
+  switch (level) {
     case 'private':
+      return 'Lock';
+    case 'friends':
+      return 'Users';
+    case 'public':
+      return 'Globe';
     default:
-      return false;
+      return 'Info';
   }
-};
+}
+
+export function getPrivacyColor(level: PrivacyLevel): string {
+  switch (level) {
+    case 'private':
+      return 'text-red-500';
+    case 'friends':
+      return 'text-amber-500';
+    case 'public':
+      return 'text-green-500';
+    default:
+      return 'text-gray-500';
+  }
+}

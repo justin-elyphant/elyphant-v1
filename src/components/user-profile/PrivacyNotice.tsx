@@ -1,42 +1,63 @@
 
-import React from "react";
-import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React from 'react';
+import { Shield, Users, Globe } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PrivacyLevel } from '@/utils/privacyUtils';
 
 interface PrivacyNoticeProps {
-  dataType: string;
-  onConnect?: () => void;
-  alreadyRequested?: boolean;
+  level: PrivacyLevel;
+  className?: string;
 }
 
-const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ 
-  dataType, 
-  onConnect,
-  alreadyRequested = false
-}) => {
+const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ level, className = '' }) => {
+  const getPrivacyDetails = (level: PrivacyLevel) => {
+    switch (level) {
+      case 'private':
+        return {
+          label: 'Only Me',
+          icon: <Shield className="h-3 w-3 mr-1" />,
+          color: 'bg-red-100 text-red-800 hover:bg-red-200'
+        };
+      case 'friends':
+        return {
+          label: 'Friends Only',
+          icon: <Users className="h-3 w-3 mr-1" />,
+          color: 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+        };
+      case 'public':
+        return {
+          label: 'Public',
+          icon: <Globe className="h-3 w-3 mr-1" />,
+          color: 'bg-green-100 text-green-800 hover:bg-green-200'
+        };
+      default:
+        return {
+          label: 'Private',
+          icon: <Shield className="h-3 w-3 mr-1" />,
+          color: 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+        };
+    }
+  };
+
+  const details = getPrivacyDetails(level);
+
   return (
-    <Alert className="bg-gray-50 border-gray-200">
-      <AlertCircle className="h-4 w-4 text-gray-500" />
-      <AlertDescription className="text-gray-600 flex flex-wrap items-center gap-2">
-        <span>This user's {dataType} information is only visible to friends.</span>
-        {onConnect && !alreadyRequested && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onConnect} 
-            className="ml-auto text-xs h-7"
-          >
-            Send Friend Request
-          </Button>
-        )}
-        {onConnect && alreadyRequested && (
-          <span className="text-xs text-gray-500 ml-auto">
-            Friend request pending
-          </span>
-        )}
-      </AlertDescription>
-    </Alert>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="outline" className={`${details.color} flex items-center text-xs px-2 py-0.5 ${className}`}>
+          {details.icon}
+          {details.label}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="text-xs">
+          {level === 'private' && 'Only you can see this information'}
+          {level === 'friends' && 'Only your connections can see this information'}
+          {level === 'public' && 'Anyone can see this information'}
+        </p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

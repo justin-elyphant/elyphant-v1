@@ -3,6 +3,7 @@
 
 export interface Profile {
   id: string;
+  user_id: string;
   name?: string;
   username?: string;
   email: string;
@@ -100,12 +101,41 @@ export function normalizeShippingAddress(address: any | null | undefined): Shipp
   }
   
   return {
-    address_line1: address.address_line1 || address.line1 || '',
+    address_line1: address.address_line1 || address.street || '',
     address_line2: address.address_line2 || address.line2 || '',
     city: address.city || '',
     state: address.state || '',
-    zip_code: address.zip_code || address.zip || '',
+    zip_code: address.zip_code || address.zipCode || '',
     country: address.country || 'US',
     is_default: address.is_default || true
+  };
+}
+
+// Function to convert form data to API data format
+export function profileFormToApiData(formData: any): Partial<Profile> {
+  return {
+    name: formData.name,
+    email: formData.email,
+    username: formData.username,
+    bio: formData.bio || '',
+    dob: formData.birthday ? formData.birthday.toISOString() : null,
+    shipping_address: formData.address ? {
+      address_line1: formData.address.street,
+      city: formData.address.city,
+      state: formData.address.state,
+      zip_code: formData.address.zipCode,
+      country: formData.address.country,
+      is_default: true
+    } : undefined,
+    gift_preferences: formData.interests?.map((interest: string) => ({
+      category: interest,
+      importance: 'medium'
+    })),
+    data_sharing_settings: formData.data_sharing_settings,
+    important_dates: formData.importantDates?.map((date: any) => ({
+      title: date.description,
+      date: date.date.toISOString(),
+      type: 'custom'
+    }))
   };
 }

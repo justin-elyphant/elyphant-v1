@@ -32,30 +32,32 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [showIntentModal, setShowIntentModal] = React.useState(false);
   const navigate = useNavigate();
 
-  // Handle displaying the intent modal for new signups before any automatic redirects
+  // Show modal ONLY AFTER signup is successful (step === 'verification' and we have the user's email)
   React.useEffect(() => {
-    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    // If we're still at the initial "signup" step, don't show the modal.
+    if (step !== "verification" || !userEmail) {
+      setShowIntentModal(false);
+      return;
+    }
+    // Only show if userIntent is not yet set (hasn't proceeded past modal yet)
     const intentAlreadySelected = !!localStorage.getItem("userIntent");
-    // Show modal if it's a new sign up and userIntent is not set
-    if (isNewSignUp && !intentAlreadySelected) {
+    if (!intentAlreadySelected) {
       setShowIntentModal(true);
     }
-  }, [step]);
+  }, [step, userEmail]);
 
-  // If the modal is open, block further progression until a choice is made
   if (showIntentModal) {
     const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
       localStorage.setItem("userIntent", userIntent);
       setShowIntentModal(false);
 
-      // New: branch immediately based on role
+      // Branch immediately based on role
       if (userIntent === "giftor") {
         localStorage.setItem("onboardingComplete", "true");
         localStorage.removeItem("newSignUp");
         navigate("/marketplace", { replace: true });
       } else {
         // giftee
-        // Continue to profile setup as normal, let auto-redirect proceed (or VerificationView logic)
         navigate("/profile-setup", { replace: true });
       }
     };
@@ -76,7 +78,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Standard sign up flow
+  // Show the signup form if we haven't submitted yet
   if (step === "signup") {
     return (
       <SignUpView 
@@ -86,7 +88,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Show verification view for "verification" step. In the new flow, this only briefly flashes before intent modal appears for new users.
+  // Show verification screen (e.g., "Account Created!" or similar) after signup,
+  // but AFTER the intent modal has been completed (never before signup!).
   return (
     <VerificationView
       userEmail={userEmail}

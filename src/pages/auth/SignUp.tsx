@@ -9,13 +9,20 @@ import { useAuth } from "@/contexts/auth";
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
+  // Changed: Only auto-navigate if NOT a new signup
   React.useEffect(() => {
-    if (user) {
+    // Check flag in localStorage to allow onboarding flow
+    const newSignUp = localStorage.getItem("newSignUp") === "true";
+    // Also check for "userIntent" (means modal handled and onboarding choice made)
+    const hasIntent = !!localStorage.getItem("userIntent");
+
+    // Only redirect existing, non-onboarding users
+    if (user && (!newSignUp || hasIntent)) {
       navigate("/dashboard", { replace: true });
     }
   }, [user, navigate]);
-  
+
   const {
     step,
     userEmail,
@@ -31,7 +38,7 @@ const SignUp: React.FC = () => {
   // Store verification bypass preference in localStorage for consistent experience across sessions
   React.useEffect(() => {
     localStorage.setItem("bypassVerification", "true"); // Always set to true for Phase 5
-    
+
     // For new sign ups, mark as new user for onboarding
     if (step === "verification") {
       localStorage.setItem("newSignUp", "true");

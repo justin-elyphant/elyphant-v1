@@ -6,22 +6,17 @@ import WishlistTabContent from "./tabs/WishlistTabContent";
 import SettingsTabContent from "./tabs/SettingsTabContent";
 import ActivityTabContent from "./tabs/ActivityTabContent";
 import ConnectTabContent from "./tabs/ConnectTabContent";
-import { getRecentlyViewed } from "./types";
 import { Profile } from "@/types/profile";
 
-interface ProfileTabsProps {
+export interface ProfileTabsProps {
   profile: Profile | null;
   isOwnProfile: boolean;
   onUpdateProfile?: (data: Partial<Profile>) => Promise<void>;
 }
 
-const ProfileTabs: React.FC<ProfileTabsProps> = ({
-  profile,
-  isOwnProfile,
-  onUpdateProfile
-}) => {
+const ProfileTabs: React.FC<ProfileTabsProps> = ({ profile, isOwnProfile, onUpdateProfile }) => {
   // Get recently viewed items or an empty array
-  const recentlyViewed = getRecentlyViewed(profile);
+  const recentlyViewed = profile?.recently_viewed || [];
 
   return (
     <Tabs defaultValue="overview" className="w-full">
@@ -43,19 +38,23 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       <TabsContent value="overview">
         <OverviewTabContent profile={profile} isOwnProfile={isOwnProfile} />
       </TabsContent>
-      
+
       <TabsContent value="wishlist">
         <WishlistTabContent profile={profile} isOwnProfile={isOwnProfile} />
       </TabsContent>
-      
+
       <TabsContent value="activity">
-        <ActivityTabContent profile={profile} recentlyViewed={recentlyViewed} isOwnProfile={isOwnProfile} />
+        <ActivityTabContent 
+          profile={profile} 
+          recentlyViewed={recentlyViewed}
+          isOwnProfile={isOwnProfile} 
+        />
       </TabsContent>
-      
+
       <TabsContent value="connect">
         <ConnectTabContent profile={profile} isOwnProfile={isOwnProfile} />
       </TabsContent>
-      
+
       {isOwnProfile && (
         <TabsContent value="settings">
           <SettingsTabContent profile={profile} onUpdateProfile={onUpdateProfile} />

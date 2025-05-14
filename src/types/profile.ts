@@ -1,4 +1,3 @@
-
 // This file defines all types related to user profiles
 
 export interface Profile {
@@ -22,7 +21,7 @@ export interface Profile {
 }
 
 export interface ShippingAddress {
-  // Use consistent naming that aligns with the rest of the codebase
+  // Use consistent naming that aligns with the form fields
   address_line1?: string;
   address_line2?: string;
   city?: string;
@@ -58,6 +57,8 @@ export interface ImportantDate {
   date: string;
   type: string;
   reminder_days?: number;
+  // Aliases for compatibility with form fields
+  description?: string;  // Alias for title
 }
 
 export interface DataSharingSettings {

@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
@@ -60,7 +59,7 @@ export const useSettingsForm = () => {
         interests: profile.interests || [],
         importantDates: profile.important_dates?.map(date => ({
           date: new Date(date.date),
-          description: date.description
+          description: date.title || date.description || ""
         })) || [],
         data_sharing_settings: normalizeDataSharingSettings(profile.data_sharing_settings)
       });
@@ -85,13 +84,16 @@ export const useSettingsForm = () => {
         email: data.data_sharing_settings.email || "private"
       };
       
-      // Ensure all required fields in shipping_address are provided
+      // Convert form address to API format
       const shippingAddress: ShippingAddress = {
-        street: data.address.street || "",
+        address_line1: data.address.street || "",
         city: data.address.city || "",
         state: data.address.state || "",
-        zipCode: data.address.zipCode || "",
-        country: data.address.country || ""
+        zip_code: data.address.zipCode || "",
+        country: data.address.country || "",
+        // Also keep aliases for compatibility
+        street: data.address.street || "",
+        zipCode: data.address.zipCode || ""
       };
       
       // Format the data for Supabase
@@ -104,7 +106,8 @@ export const useSettingsForm = () => {
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),
-          description: date.description
+          title: date.description, // Map description to title
+          type: "custom"
         })),
         data_sharing_settings: dataSharingSettings
       };

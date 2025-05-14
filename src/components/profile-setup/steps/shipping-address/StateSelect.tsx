@@ -1,83 +1,94 @@
 
-import React from "react";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useFormContext } from 'react-hook-form';
 
-interface StateSelectProps {
-  value: string;
-  onChange: (value: string) => void;
-}
+const usStates = [
+  { value: 'AL', label: 'Alabama' },
+  { value: 'AK', label: 'Alaska' },
+  { value: 'AZ', label: 'Arizona' },
+  { value: 'AR', label: 'Arkansas' },
+  { value: 'CA', label: 'California' },
+  { value: 'CO', label: 'Colorado' },
+  { value: 'CT', label: 'Connecticut' },
+  { value: 'DE', label: 'Delaware' },
+  { value: 'FL', label: 'Florida' },
+  { value: 'GA', label: 'Georgia' },
+  { value: 'HI', label: 'Hawaii' },
+  { value: 'ID', label: 'Idaho' },
+  { value: 'IL', label: 'Illinois' },
+  { value: 'IN', label: 'Indiana' },
+  { value: 'IA', label: 'Iowa' },
+  { value: 'KS', label: 'Kansas' },
+  { value: 'KY', label: 'Kentucky' },
+  { value: 'LA', label: 'Louisiana' },
+  { value: 'ME', label: 'Maine' },
+  { value: 'MD', label: 'Maryland' },
+  { value: 'MA', label: 'Massachusetts' },
+  { value: 'MI', label: 'Michigan' },
+  { value: 'MN', label: 'Minnesota' },
+  { value: 'MS', label: 'Mississippi' },
+  { value: 'MO', label: 'Missouri' },
+  { value: 'MT', label: 'Montana' },
+  { value: 'NE', label: 'Nebraska' },
+  { value: 'NV', label: 'Nevada' },
+  { value: 'NH', label: 'New Hampshire' },
+  { value: 'NJ', label: 'New Jersey' },
+  { value: 'NM', label: 'New Mexico' },
+  { value: 'NY', label: 'New York' },
+  { value: 'NC', label: 'North Carolina' },
+  { value: 'ND', label: 'North Dakota' },
+  { value: 'OH', label: 'Ohio' },
+  { value: 'OK', label: 'Oklahoma' },
+  { value: 'OR', label: 'Oregon' },
+  { value: 'PA', label: 'Pennsylvania' },
+  { value: 'RI', label: 'Rhode Island' },
+  { value: 'SC', label: 'South Carolina' },
+  { value: 'SD', label: 'South Dakota' },
+  { value: 'TN', label: 'Tennessee' },
+  { value: 'TX', label: 'Texas' },
+  { value: 'UT', label: 'Utah' },
+  { value: 'VT', label: 'Vermont' },
+  { value: 'VA', label: 'Virginia' },
+  { value: 'WA', label: 'Washington' },
+  { value: 'WV', label: 'West Virginia' },
+  { value: 'WI', label: 'Wisconsin' },
+  { value: 'WY', label: 'Wyoming' },
+  { value: 'DC', label: 'District of Columbia' },
+];
 
-const StateSelect: React.FC<StateSelectProps> = ({ value, onChange }) => {
-  const states = [
-    { code: "AL", name: "Alabama" },
-    { code: "AK", name: "Alaska" },
-    { code: "AZ", name: "Arizona" },
-    { code: "AR", name: "Arkansas" },
-    { code: "CA", name: "California" },
-    { code: "CO", name: "Colorado" },
-    { code: "CT", name: "Connecticut" },
-    { code: "DE", name: "Delaware" },
-    { code: "FL", name: "Florida" },
-    { code: "GA", name: "Georgia" },
-    { code: "HI", name: "Hawaii" },
-    { code: "ID", name: "Idaho" },
-    { code: "IL", name: "Illinois" },
-    { code: "IN", name: "Indiana" },
-    { code: "IA", name: "Iowa" },
-    { code: "KS", name: "Kansas" },
-    { code: "KY", name: "Kentucky" },
-    { code: "LA", name: "Louisiana" },
-    { code: "ME", name: "Maine" },
-    { code: "MD", name: "Maryland" },
-    { code: "MA", name: "Massachusetts" },
-    { code: "MI", name: "Michigan" },
-    { code: "MN", name: "Minnesota" },
-    { code: "MS", name: "Mississippi" },
-    { code: "MO", name: "Missouri" },
-    { code: "MT", name: "Montana" },
-    { code: "NE", name: "Nebraska" },
-    { code: "NV", name: "Nevada" },
-    { code: "NH", name: "New Hampshire" },
-    { code: "NJ", name: "New Jersey" },
-    { code: "NM", name: "New Mexico" },
-    { code: "NY", name: "New York" },
-    { code: "NC", name: "North Carolina" },
-    { code: "ND", name: "North Dakota" },
-    { code: "OH", name: "Ohio" },
-    { code: "OK", name: "Oklahoma" },
-    { code: "OR", name: "Oregon" },
-    { code: "PA", name: "Pennsylvania" },
-    { code: "RI", name: "Rhode Island" },
-    { code: "SC", name: "South Carolina" },
-    { code: "SD", name: "South Dakota" },
-    { code: "TN", name: "Tennessee" },
-    { code: "TX", name: "Texas" },
-    { code: "UT", name: "Utah" },
-    { code: "VT", name: "Vermont" },
-    { code: "VA", name: "Virginia" },
-    { code: "WA", name: "Washington" },
-    { code: "WV", name: "West Virginia" },
-    { code: "WI", name: "Wisconsin" },
-    { code: "WY", name: "Wyoming" },
-  ];
-
+const StateSelect = () => {
+  const form = useFormContext();
+  
   return (
-    <div className="space-y-2">
-      <Label htmlFor="state">State</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id="state">
-          <SelectValue placeholder="Select a state" />
-        </SelectTrigger>
-        <SelectContent>
-          {states.map((state) => (
-            <SelectItem key={state.code} value={state.code}>
-              {state.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <FormField
+      control={form.control}
+      name="address.state"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>State</FormLabel>
+          <FormControl>
+            <Select
+              value={field.value || ''}
+              onValueChange={field.onChange}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a state" />
+              </SelectTrigger>
+              <SelectContent>
+                {usStates.map((state) => (
+                  <SelectItem key={state.value} value={state.value}>
+                    {state.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 };
 

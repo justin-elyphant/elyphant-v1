@@ -1,22 +1,53 @@
-// Create basic types for Supabase tables
 
-import { Profile as BaseProfile, ShippingAddress, GiftPreference, ImportantDate } from "./profile";
+// Import types we need
+import { PrivacyLevel } from "@/utils/privacyUtils";
 
-// Re-export Profile type with any necessary adjustments for Supabase
-export interface Profile extends BaseProfile {
-  // Any Supabase-specific additions or changes
-}
+// Define types for Supabase-related data structures
+export type Database = {
+  public: {
+    Tables: {
+      // Define your tables here
+    };
+  };
+};
 
-// User address for multiple addresses
-export interface UserAddress {
+// User connection type
+export type UserConnection = {
   id: string;
   user_id: string;
-  is_default: boolean;
-  address: ShippingAddress;
+  connected_user_id: string;
+  status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
-  updated_at: string;
-  name: string;
-}
+  updated_at?: string;
+  relationship_type: string;
+  data_access_permissions?: {
+    dob: boolean;
+    gift_preferences: boolean;
+    shipping_address: boolean;
+  };
+};
 
-// Re-export common types
-export { ShippingAddress, GiftPreference, ImportantDate };
+// User special date type
+export type UserSpecialDate = {
+  id: string;
+  user_id: string;
+  date_type: string;
+  date: string;
+  visibility: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+// User address type
+export type UserAddress = {
+  id: string;
+  user_id: string;
+  name: string;
+  address: Record<string, any>;
+  is_default?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+// Export types needed elsewhere
+export type { PrivacyLevel, PrivacyLevel as SharingLevel };

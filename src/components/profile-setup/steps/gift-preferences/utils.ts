@@ -1,68 +1,30 @@
 
-// Define importance levels
-export enum CategoryImportance {
-  Low = 0,
-  Medium = 1,
-  High = 2
+export type CategoryImportance = 'low' | 'medium' | 'high';
+
+export function valueToImportance(value: number): CategoryImportance {
+  if (value <= 33) return 'low';
+  if (value <= 66) return 'medium';
+  return 'high';
 }
 
-// Interface for category preferences
-export interface CategoryPreference {
-  category: string;
-  importance: "low" | "medium" | "high";
-}
-
-// Function to convert importance string to enum value
-export function valueToImportance(value: string | number): CategoryImportance {
-  if (typeof value === 'string') {
-    switch (value.toLowerCase()) {
-      case 'low': return CategoryImportance.Low;
-      case 'high': return CategoryImportance.High;
-      default: return CategoryImportance.Medium;
-    }
-  } else if (typeof value === 'number') {
-    if (value >= 0 && value <= 2) {
-      return value as CategoryImportance;
-    }
-  }
-  return CategoryImportance.Medium;
-}
-
-// Function to convert enum value to importance string
-export function importanceToValue(importance: CategoryImportance): "low" | "medium" | "high" {
+export function importanceToValue(importance: CategoryImportance): number {
   switch (importance) {
-    case CategoryImportance.Low: return "low";
-    case CategoryImportance.High: return "high";
-    default: return "medium";
+    case 'low': return 33;
+    case 'medium': return 66;
+    case 'high': return 100;
+    default: return 66;
   }
 }
 
-// Function to get suggested categories based on search term
-export function getSuggestedCategories(searchTerm: string): string[] {
-  const allCategories = [
-    'Books',
-    'Electronics',
-    'Home & Kitchen',
-    'Fashion',
-    'Beauty & Personal Care',
-    'Toys & Games',
-    'Sports & Outdoors',
-    'Tools & Home Improvement',
-    'Health & Wellness',
-    'Art & Crafts',
-    'Music',
-    'Movies & TV',
-    'Food & Drinks',
-    'Jewelry',
-    'Travel',
-    'Experiences',
-    'Other'
-  ];
-  
-  if (!searchTerm) return allCategories;
-  
-  const lowerSearchTerm = searchTerm.toLowerCase();
-  return allCategories.filter(cat => 
-    cat.toLowerCase().includes(lowerSearchTerm)
-  );
-}
+export const getSuggestedCategories = (): string[] => [
+  "Books",
+  "Electronics",
+  "Fashion",
+  "Home & Garden",
+  "Sports & Outdoors",
+  "Beauty & Personal Care",
+  "Toys & Games",
+  "Health & Wellness",
+  "Art & Crafts",
+  "Food & Beverages"
+];

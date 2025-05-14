@@ -1,52 +1,66 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import WishlistsTabContent from "./tabs/WishlistsTabContent";
-import FavoritesTabContent from "./tabs/FavoritesTabContent";
+import OverviewTabContent from "./tabs/OverviewTabContent";
+import WishlistTabContent from "./tabs/WishlistTabContent";
+import SettingsTabContent from "./tabs/SettingsTabContent";
 import ActivityTabContent from "./tabs/ActivityTabContent";
-import { useProfile } from "@/contexts/profile/ProfileContext";
+import ConnectTabContent from "./tabs/ConnectTabContent";
+import { getRecentlyViewed } from "./types";
+import { Profile } from "@/types/profile";
 
-export interface ProfileTabsProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  isCurrentUser: boolean;
-  mockWishlists: any[];
-  userData?: any;
+interface ProfileTabsProps {
+  profile: Profile | null;
+  isOwnProfile: boolean;
+  onUpdateProfile?: (data: Partial<Profile>) => Promise<void>;
 }
 
-const ProfileTabs = ({ activeTab, setActiveTab, isCurrentUser, mockWishlists, userData }: ProfileTabsProps) => {
-  const { profile } = useProfile();
-  const recentlyViewedCount = profile?.recently_viewed?.length || 0;
-  
+const ProfileTabs: React.FC<ProfileTabsProps> = ({
+  profile,
+  isOwnProfile,
+  onUpdateProfile
+}) => {
+  // Get recently viewed items or an empty array
+  const recentlyViewed = getRecentlyViewed(profile);
+
   return (
-    <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="w-full grid grid-cols-3">
-        <TabsTrigger value="wishlists">Wishlists</TabsTrigger>
-        <TabsTrigger value="favorites">Saved Items</TabsTrigger>
+    <Tabs defaultValue="overview" className="w-full">
+      <TabsList className="grid grid-cols-5 md:w-auto w-full">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
         <TabsTrigger value="activity">
           Activity
-          {recentlyViewedCount > 0 && (
-            <span className="ml-2 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
-              {recentlyViewedCount}
+          {recentlyViewed.length > 0 && (
+            <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full h-5 w-5 inline-flex items-center justify-center">
+              {recentlyViewed.length}
             </span>
           )}
         </TabsTrigger>
+        <TabsTrigger value="connect">Connect</TabsTrigger>
+        {isOwnProfile && <TabsTrigger value="settings">Settings</TabsTrigger>}
       </TabsList>
-      
-      <TabsContent value="wishlists" className="mt-6">
-        <WishlistsTabContent 
-          isCurrentUser={isCurrentUser} 
-          wishlists={mockWishlists} 
-        />
+
+      <TabsContent value="overview">
+        <OverviewTabContent profile={profile} isOwnProfile={isOwnProfile} />
       </TabsContent>
       
-      <TabsContent value="favorites" className="mt-6">
-        <FavoritesTabContent isCurrentUser={isCurrentUser} />
+      <TabsContent value="wishlist">
+        <WishlistTabContent profile={profile} isOwnProfile={isOwnProfile} />
       </TabsContent>
       
-      <TabsContent value="activity" className="mt-6">
-        <ActivityTabContent />
+      <TabsContent value="activity">
+        <ActivityTabContent profile={profile} recentlyViewed={recentlyViewed} isOwnProfile={isOwnProfile} />
       </TabsContent>
+      
+      <TabsContent value="connect">
+        <ConnectTabContent profile={profile} isOwnProfile={isOwnProfile} />
+      </TabsContent>
+      
+      {isOwnProfile && (
+        <TabsContent value="settings">
+          <SettingsTabContent profile={profile} onUpdateProfile={onUpdateProfile} />
+        </TabsContent>
+      )}
     </Tabs>
   );
 };

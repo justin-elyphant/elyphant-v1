@@ -1,11 +1,9 @@
 
 import React from "react";
-import { Shield } from "lucide-react";
-import { SharingLevel } from "@/types/supabase";
-import { ProfileData } from "../hooks/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { getSharingLevelLabel } from "@/utils/privacyUtils";
-import PrivacySelector from "@/components/settings/PrivacySelector";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ProfileData } from "../hooks/types";
 
 interface DataSharingStepProps {
   profileData: ProfileData;
@@ -13,58 +11,98 @@ interface DataSharingStepProps {
 }
 
 const DataSharingStep: React.FC<DataSharingStepProps> = ({ profileData, updateProfileData }) => {
-  const handlePrivacyChange = (field: keyof ProfileData["data_sharing_settings"], value: SharingLevel) => {
-    updateProfileData("data_sharing_settings", {
+  const handleSharingChange = (field: string, value: "public" | "friends" | "private") => {
+    const updatedSettings = {
       ...profileData.data_sharing_settings,
-      [field]: value,
-    });
+      [field]: value
+    };
+    
+    updateProfileData("data_sharing_settings", updatedSettings);
   };
-
+  
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Shield className="h-5 w-5 text-primary" />
-        <h2 className="text-2xl font-semibold">Privacy Settings</h2>
+      <div>
+        <h2 className="text-xl font-bold mb-2">Privacy Settings</h2>
+        <p className="text-muted-foreground">
+          Control who can see your profile information.
+        </p>
       </div>
-
-      <p className="text-muted-foreground">
-        Control who can see your personal information. Your preferences can be changed at any time in settings.
-      </p>
-
-      <Alert className="bg-blue-50 border-blue-200">
-        <AlertDescription className="text-blue-800">
-          Your privacy matters to us. We default to the most secure options, but you can customize your preferences.
-        </AlertDescription>
-      </Alert>
-
-      <div className="space-y-8 pt-4">
-        <PrivacySelector
-          value={profileData.data_sharing_settings.email}
-          onChange={(value) => handlePrivacyChange("email", value)}
-          label="Email Address Visibility"
-          description="Who can see your email address"
-        />
+      
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email-privacy">Email Address</Label>
+          <Select
+            value={profileData.data_sharing_settings?.email || "private"}
+            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("email", value)}
+          >
+            <SelectTrigger id="email-privacy" className="w-full">
+              <SelectValue placeholder="Select who can see your email" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
+              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
+              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            We recommend keeping your email private.
+          </p>
+        </div>
         
-        <PrivacySelector
-          value={profileData.data_sharing_settings.dob}
-          onChange={(value) => handlePrivacyChange("dob", value)}
-          label="Birthday Visibility"
-          description="Who can see your date of birth"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="dob-privacy">Date of Birth</Label>
+          <Select
+            value={profileData.data_sharing_settings?.dob || "friends"}
+            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("dob", value)}
+          >
+            <SelectTrigger id="dob-privacy" className="w-full">
+              <SelectValue placeholder="Select who can see your birthday" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
+              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
+              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         
-        <PrivacySelector
-          value={profileData.data_sharing_settings.shipping_address}
-          onChange={(value) => handlePrivacyChange("shipping_address", value)}
-          label="Shipping Address Visibility"
-          description="Who can see your shipping address"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="address-privacy">Shipping Address</Label>
+          <Select
+            value={profileData.data_sharing_settings?.shipping_address || "private"}
+            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("shipping_address", value)}
+          >
+            <SelectTrigger id="address-privacy" className="w-full">
+              <SelectValue placeholder="Select who can see your address" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
+              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
+              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            This allows friends to send you gifts directly.
+          </p>
+        </div>
         
-        <PrivacySelector
-          value={profileData.data_sharing_settings.gift_preferences}
-          onChange={(value) => handlePrivacyChange("gift_preferences", value)}
-          label="Gift Preferences Visibility"
-          description="Who can see your gift preferences and interests"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="preferences-privacy">Gift Preferences</Label>
+          <Select
+            value={profileData.data_sharing_settings?.gift_preferences || "friends"}
+            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("gift_preferences", value)}
+          >
+            <SelectTrigger id="preferences-privacy" className="w-full">
+              <SelectValue placeholder="Select who can see your preferences" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
+              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
+              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );

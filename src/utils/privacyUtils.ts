@@ -1,6 +1,9 @@
 
 import { DataSharingSettings, SharingLevel } from "@/types/supabase";
 
+// Privacy level type
+export type PrivacyLevel = 'private' | 'friends' | 'public';
+
 /**
  * Get default data sharing settings
  * @returns Default data sharing settings
@@ -12,6 +15,22 @@ export function getDefaultDataSharingSettings(): DataSharingSettings {
     gift_preferences: 'public' as SharingLevel,
     email: 'private' as SharingLevel
   };
+}
+
+/**
+ * Get a human-readable label for a sharing level
+ */
+export function getSharingLevelLabel(level: PrivacyLevel): string {
+  switch (level) {
+    case 'private':
+      return 'Only you';
+    case 'friends':
+      return 'Friends only';
+    case 'public':
+      return 'Public';
+    default:
+      return 'Unknown';
+  }
 }
 
 /**

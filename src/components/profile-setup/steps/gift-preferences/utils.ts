@@ -1,68 +1,58 @@
 
-import { GiftPreference } from "@/types/profile";
+// Define types for gift preferences
+export type CategoryImportance = "low" | "medium" | "high";
 
-// List of category suggestions
-export const categorySuggestions = [
+// Map numeric values to importance levels
+export function valueToImportance(value: number): CategoryImportance {
+  if (value <= 33) return "low";
+  if (value <= 66) return "medium";
+  return "high";
+}
+
+// Map importance levels to numeric values
+export function importanceToValue(importance: CategoryImportance): number {
+  switch (importance) {
+    case "low":
+      return 33;
+    case "medium":
+      return 66;
+    case "high":
+      return 100;
+    default:
+      return 66; // default to medium
+  }
+}
+
+// Predefined gift preference categories
+export const giftCategories = [
   "Books",
   "Electronics",
   "Fashion",
   "Home Decor",
-  "Kitchen Gadgets",
-  "Gaming",
-  "Sports Equipment",
-  "Fitness",
-  "Beauty",
-  "Skincare",
-  "Hobbies",
-  "Art Supplies",
-  "Plants",
-  "Gardening",
-  "Travel Accessories",
-  "Photography",
+  "Kitchen",
   "Music",
-  "Outdoor Gear",
+  "Sports",
+  "Beauty",
+  "Outdoors",
+  "Toys",
+  "Games",
+  "Art",
   "Jewelry",
-  "DIY Tools",
-  "Board Games",
-  "Collectibles",
-  "Stationery",
-  "Coffee & Tea",
-  "Wine & Spirits",
-  "Subscription Boxes",
-  "Eco-Friendly Products",
-  "Pet Accessories",
-  "Smart Home",
-  "Wellness"
+  "Travel",
+  "Food & Drink",
+  "Pets",
+  "Fitness",
+  "DIY",
+  "Garden",
+  "Technology"
 ];
 
-/**
- * Calculate a recommended importance score based on existing preferences
- */
-export function getRecommendedImportance(
-  category: string,
-  existingPreferences: GiftPreference[]
-): "low" | "medium" | "high" {
-  // If we have a lot of high importance preferences, suggest medium
-  const highCount = existingPreferences.filter(p => p.importance === "high").length;
-  if (highCount >= 5) {
-    return "medium";
-  }
+// Find suggested categories based on a search term
+export function getSuggestedCategories(searchTerm: string): string[] {
+  if (!searchTerm) return giftCategories.slice(0, 6);
   
-  // Default to medium
-  return "medium";
-}
-
-/**
- * Group preferences by importance
- */
-export function groupPreferencesByImportance(preferences: GiftPreference[]): {
-  high: GiftPreference[];
-  medium: GiftPreference[];
-  low: GiftPreference[];
-} {
-  return {
-    high: preferences.filter(p => p.importance === "high"),
-    medium: preferences.filter(p => p.importance === "medium"),
-    low: preferences.filter(p => p.importance === "low")
-  };
+  const normalizedSearch = searchTerm.toLowerCase();
+  return giftCategories
+    .filter(cat => cat.toLowerCase().includes(normalizedSearch))
+    .slice(0, 10);
 }

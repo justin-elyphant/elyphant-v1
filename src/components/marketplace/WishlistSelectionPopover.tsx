@@ -51,6 +51,9 @@ const WishlistSelectionPopover = ({
       setAddingToWishlist(wishlistId);
       await addToWishlist(wishlistId, {
         product_id: productId,
+        title: productName, // Use title for the required field
+        wishlist_id: wishlistId, // Add the missing required field
+        created_at: new Date().toISOString(), // Add the missing required field
         name: productName,
         price: productPrice,
         image_url: productImage,

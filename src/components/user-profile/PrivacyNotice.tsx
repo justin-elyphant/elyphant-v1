@@ -1,63 +1,62 @@
 
-import React from 'react';
-import { Shield, Users, Globe } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { PrivacyLevel } from '@/utils/privacyUtils';
+import React from "react";
+import { AlertCircle, Eye, EyeOff, Users } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
+import { PrivacyLevel } from "@/utils/privacyUtils";
 
 interface PrivacyNoticeProps {
   level: PrivacyLevel;
   className?: string;
 }
 
-const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ level, className = '' }) => {
-  const getPrivacyDetails = (level: PrivacyLevel) => {
+const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ level, className }) => {
+  const getIcon = () => {
     switch (level) {
-      case 'private':
-        return {
-          label: 'Only Me',
-          icon: <Shield className="h-3 w-3 mr-1" />,
-          color: 'bg-red-100 text-red-800 hover:bg-red-200'
-        };
-      case 'friends':
-        return {
-          label: 'Friends Only',
-          icon: <Users className="h-3 w-3 mr-1" />,
-          color: 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-        };
-      case 'public':
-        return {
-          label: 'Public',
-          icon: <Globe className="h-3 w-3 mr-1" />,
-          color: 'bg-green-100 text-green-800 hover:bg-green-200'
-        };
+      case "public":
+        return <Eye className="h-4 w-4 text-warning" />;
+      case "friends":
+        return <Users className="h-4 w-4 text-info" />;
+      case "private":
+        return <EyeOff className="h-4 w-4 text-success" />;
       default:
-        return {
-          label: 'Private',
-          icon: <Shield className="h-3 w-3 mr-1" />,
-          color: 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-        };
+        return <AlertCircle className="h-4 w-4" />;
     }
   };
 
-  const details = getPrivacyDetails(level);
+  const getText = () => {
+    switch (level) {
+      case "public":
+        return "This information is visible to everyone";
+      case "friends":
+        return "This information is only visible to your friends";
+      case "private":
+        return "This information is private and only visible to you";
+      default:
+        return "Privacy level not set";
+    }
+  };
+
+  const getBgColor = () => {
+    switch (level) {
+      case "public":
+        return "bg-warning/10";
+      case "friends":
+        return "bg-info/10";
+      case "private":
+        return "bg-success/10";
+      default:
+        return "bg-muted";
+    }
+  };
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Badge variant="outline" className={`${details.color} flex items-center text-xs px-2 py-0.5 ${className}`}>
-          {details.icon}
-          {details.label}
-        </Badge>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="text-xs">
-          {level === 'private' && 'Only you can see this information'}
-          {level === 'friends' && 'Only your connections can see this information'}
-          {level === 'public' && 'Anyone can see this information'}
-        </p>
-      </TooltipContent>
-    </Tooltip>
+    <Alert className={cn("flex items-center", getBgColor(), className)}>
+      <div className="flex items-center gap-2">
+        {getIcon()}
+        <AlertDescription>{getText()}</AlertDescription>
+      </div>
+    </Alert>
   );
 };
 

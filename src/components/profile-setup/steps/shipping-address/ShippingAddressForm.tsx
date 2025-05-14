@@ -4,31 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CountrySelect } from "./CountrySelect";
 import { StateSelect } from "./StateSelect";
-import { ShippingAddress } from "@/types/profile";
+import { ShippingAddress } from "@/types/shipping";
 
 interface ShippingAddressFormProps {
-  value: ShippingAddress;
-  onChange: (value: ShippingAddress) => void;
+  address: ShippingAddress;
+  onChange: (address: ShippingAddress) => void;
 }
 
-export function ShippingAddressForm({ value, onChange }: ShippingAddressFormProps) {
+export function ShippingAddressForm({ address, onChange }: ShippingAddressFormProps) {
   const handleChange = (field: keyof ShippingAddress, fieldValue: string) => {
     onChange({
-      ...value,
+      ...address,
       [field]: fieldValue,
     });
   };
 
   const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
-      ...value,
+      ...address,
       address_line1: e.target.value,
     });
   };
 
   const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
-      ...value,
+      ...address,
       zip_code: e.target.value,
     });
   };
@@ -40,7 +40,7 @@ export function ShippingAddressForm({ value, onChange }: ShippingAddressFormProp
         <Input
           id="street"
           placeholder="123 Main St"
-          value={value.address_line1 || ""}
+          value={address.address_line1 || ""}
           onChange={handleStreetChange}
           className="w-full"
         />
@@ -52,7 +52,7 @@ export function ShippingAddressForm({ value, onChange }: ShippingAddressFormProp
           <Input
             id="city"
             placeholder="City"
-            value={value.city || ""}
+            value={address.city || ""}
             onChange={(e) => handleChange("city", e.target.value)}
             className="w-full"
           />
@@ -63,7 +63,7 @@ export function ShippingAddressForm({ value, onChange }: ShippingAddressFormProp
           <Input
             id="zipCode"
             placeholder="ZIP Code"
-            value={value.zip_code || ""}
+            value={address.zip_code || ""}
             onChange={handleZipCodeChange}
             className="w-full"
           />
@@ -72,11 +72,11 @@ export function ShippingAddressForm({ value, onChange }: ShippingAddressFormProp
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StateSelect
-          value={value.state || ""}
+          value={address.state || ""}
           onChange={(state) => handleChange("state", state)}
         />
         <CountrySelect
-          value={value.country || ""}
+          value={address.country || ""}
           onChange={(country) => handleChange("country", country)}
         />
       </div>

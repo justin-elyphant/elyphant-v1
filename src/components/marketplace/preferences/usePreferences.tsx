@@ -77,8 +77,11 @@ export const usePreferences = ({ onPreferencesChange }: UsePreferencesProps = {}
       // If user is logged in, update profile
       if (user) {
         await updateProfile({
-          interests: preferences.interests,
-          // We could add more profile fields here
+          // Convert interests to gift_preferences format
+          gift_preferences: preferences.interests.map(interest => ({
+            category: interest,
+            importance: "medium" as const
+          }))
         });
       }
       

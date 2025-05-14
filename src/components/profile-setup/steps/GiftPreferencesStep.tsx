@@ -1,95 +1,112 @@
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift } from "lucide-react";
-import CategorySection from "./gift-preferences/CategorySection";
-import { Button } from "@/components/ui/button";
-import PreferenceList from "./gift-preferences/PreferenceList";
+import React, { useState, useEffect } from "react";
 import { GiftPreference } from "@/types/profile";
-import { categorySuggestions } from "./gift-preferences/utils";
+import { CategoryImportance } from "./gift-preferences/utils";
+import CategorySection from "./gift-preferences/CategorySection";
 
 interface GiftPreferencesStepProps {
   preferences: GiftPreference[];
   onPreferencesChange: (preferences: GiftPreference[]) => void;
-  onNext: () => void;
-  onBack: () => void;
+  onNext?: () => void;
+  onBack?: () => void;
 }
 
-const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
-  preferences,
+const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({ 
+  preferences, 
   onPreferencesChange,
   onNext,
-  onBack,
+  onBack
 }) => {
-  const [categorySearch, setCategorySearch] = useState("");
-  const [filteredCategories, setFilteredCategories] = useState(categorySuggestions);
-
-  // Update filtered categories when searching
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
+  
+  // Initialize selected categories from preferences
   useEffect(() => {
-    if (!categorySearch.trim()) {
-      setFilteredCategories(categorySuggestions);
-      return;
+    if (preferences && preferences.length > 0) {
+      setSelectedCategories(preferences.map(p => p.category));
     }
-
-    const filtered = categorySuggestions.filter((category) =>
-      category.toLowerCase().includes(categorySearch.toLowerCase())
+  }, [preferences]);
+  
+  // Handle category selection
+  const handleCategorySelect = (category: string) => {
+    // Only add if not already in the list
+    if (!selectedCategories.includes(category)) {
+      const newSelectedCategories = [...selectedCategories, category];
+      setSelectedCategories(newSelectedCategories);
+      
+      // Update preferences with new category
+      const newPreferences = [
+        ...preferences,
+        {
+          category,
+          importance: "medium" as CategoryImportance
+        }
+      ];
+      
+      onPreferencesChange(newPreferences);
+    }
+  };
+  
+  // Handle removing a category
+  const handleRemoveCategory = (category: string) => {
+    const newSelectedCategories = selectedCategories.filter(c => c !== category);
+    setSelectedCategories(newSelectedCategories);
+    
+    const newPreferences = preferences.filter(p => p.category !== category);
+    onPreferencesChange(newPreferences);
+  };
+  
+  // Update importance for a specific category
+  const handleImportanceChange = (category: string, importance: CategoryImportance) => {
+    const newPreferences = preferences.map(p => 
+      p.category === category 
+        ? { ...p, importance } 
+        : p
     );
-    setFilteredCategories(filtered);
-  }, [categorySearch]);
-
-  // Handle adding a new preference
-  const handleAddPreference = (category: string) => {
-    const newPreference = { category, importance: "medium" as const };
-    const exists = preferences.some((p) => p.category === category);
-
-    if (!exists) {
-      onPreferencesChange([...preferences, newPreference]);
-    }
-
-    setCategorySearch("");
-  };
-
-  // Handle removing a preference
-  const handleRemovePreference = (index: number) => {
-    const newPreferences = [...preferences];
-    newPreferences.splice(index, 1);
     onPreferencesChange(newPreferences);
   };
-
-  // Handle updating importance of a preference
-  const handleUpdateImportance = (index: number, importance: "low" | "medium" | "high") => {
-    const newPreferences = [...preferences];
-    newPreferences[index] = { ...newPreferences[index], importance };
-    onPreferencesChange(newPreferences);
-  };
-
+  
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center space-x-2">
-          <Gift className="h-5 w-5 text-primary" />
-          <CardTitle>Gift Preferences</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            Help your friends and family know what you like. Select categories or add your own.
-          </p>
-
-          <CategorySection 
-            selectedCategories={preferences.map(p => p.category)}
-            onCategorySelect={handleAddPreference}
-            searchTerm={categorySearch}
-            onSearchChange={setCategorySearch}
-            suggestedCategories={filteredCategories}
-          />
-
-          <PreferenceList
-            preferences={preferences}
-            onRemovePreference={handleRemovePreference}
-            onUpdateImportance={handleUpdateImportance}
-          />
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-xl font-bold mb-2">Gift Preferences</h2>
+        <p className="text-muted-foreground">
+          Tell us about the types of gifts you're interested in. This helps us personalize recommendations.
+        </p>
+      </div>
+      
+      <CategorySection 
+        preferences={preferences}
+        onChange={onPreferencesChange}
+        selectedCategories={selectedCategories}
+        onCategorySelect={handleCategorySelect}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        suggestedCategories={suggestedCategories}
+      />
+      
+      {selectedCategories.length > 0 && (
+        <div className="space-y-4 mt-6">
+          <h3 className="text-md font-medium">Your Selected Categories</h3>
+          <div className="flex flex-wrap gap-2">
+            {selectedCategories.map(category => (
+              <div 
+                key={category}
+                className="bg-primary/10 text-primary rounded-full py-1 px-3 flex items-center text-sm"
+              >
+                {category}
+                <button
+                  onClick={() => handleRemoveCategory(category)}
+                  className="ml-2 text-primary hover:text-primary/80"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

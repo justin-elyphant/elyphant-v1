@@ -1,8 +1,8 @@
 
 import React from "react";
-import { ShippingAddress } from "@/types/supabase";
+import { ShippingAddress } from "@/types/shipping";
 import ShippingAddressHeader from "./shipping-address/ShippingAddressHeader";
-import ShippingAddressForm from "./shipping-address/ShippingAddressForm";
+import { ShippingAddressForm } from "./shipping-address/ShippingAddressForm";
 
 interface ShippingAddressStepProps {
   value: ShippingAddress;

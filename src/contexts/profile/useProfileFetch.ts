@@ -1,91 +1,64 @@
 
 import { useState, useCallback } from 'react';
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth";
-import { supabase } from "@/integrations/supabase/client";
-import { normalizeGiftPreference, normalizeShippingAddress, Profile } from "@/types/profile";
-import { normalizeDataSharingSettings } from "@/utils/privacyUtils";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
+import { Profile } from '@/types/supabase';
+import { toast } from 'sonner';
 
-export const useProfileFetch = () => {
+export function useProfileFetch() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (): Promise<Profile | null> => {
     if (!user) {
+      console.log("No authenticated user found");
       return null;
     }
 
     try {
       setLoading(true);
       setError(null);
-      
-      console.log("Fetching profile for user ID:", user.id);
-      
-      const { data, error: fetchError } = await supabase
+
+      console.log("Fetching profile for user:", user.id);
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .maybeSingle();
-      
-      if (fetchError) {
-        console.error("Error fetching profile:", fetchError);
-        throw fetchError;
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        setError(error);
+        return null;
       }
+
+      if (!profile) {
+        console.log("No profile found for user:", user.id);
+        return null;
+      }
+
+      console.log("Profile fetched successfully:", profile);
       
-      // If we have a profile, normalize and return it
-      if (data) {
-        console.log("Profile data loaded:", JSON.stringify(data, null, 2));
-        
-        // Ensure all expected fields have valid values
-        const safeProfile = {
-          ...data,
-          gift_preferences: Array.isArray(data.gift_preferences) 
-            ? data.gift_preferences.map(normalizeGiftPreference)
-            : [],
-          shipping_address: normalizeShippingAddress(data.shipping_address),
-          data_sharing_settings: normalizeDataSharingSettings(data.data_sharing_settings),
-          important_dates: Array.isArray(data.important_dates) ? data.important_dates : []
-        };
-        
-        return safeProfile;
-      } else {
-        console.warn("No profile found for user:", user.id);
-        
-        // Create a minimal profile object if no profile is found
-        const minimalProfile: Profile = {
-          id: user.id,
-          name: user.user_metadata?.name || user.email?.split('@')[0] || "",
-          email: user.email || "",
-          username: (user.user_metadata?.name || user.email?.split('@')[0] || "").toLowerCase().replace(/\s+/g, '_'),
-          profile_image: null,
-          bio: user.user_metadata?.name ? `Hi, I'm ${user.user_metadata.name}` : "",
-          shipping_address: normalizeShippingAddress(null),
-          gift_preferences: [],
-          important_dates: [],
-          data_sharing_settings: normalizeDataSharingSettings(null)
-        };
-        
-        // Try to persist this profile to the database
-        try {
-          const { error: upsertError } = await supabase
-            .from('profiles')
-            .upsert(minimalProfile);
-            
-          if (upsertError) {
-            console.error("Failed to create minimal profile:", upsertError);
-          } else {
-            console.log("Created minimal profile in database");
-          }
-        } catch (e) {
-          console.error("Failed to create minimal profile:", e);
+      // Add the user_id field that's expected by certain components
+      const enhancedProfile: Profile = {
+        ...profile,
+        user_id: user.id,  // Add user_id based on id to match expectations
+        gift_preferences: profile.gift_preferences || [],
+        important_dates: profile.important_dates || [],
+        data_sharing_settings: profile.data_sharing_settings || {
+          dob: 'private',
+          shipping_address: 'private', 
+          gift_preferences: 'friends',
+          email: 'private'
         }
-        
-        return minimalProfile;
-      }
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
+      };
+
+      return enhancedProfile;
+    } catch (error) {
+      console.error("Unexpected error fetching profile:", error);
+      setError(error instanceof Error ? error : new Error(String(error)));
+      toast.error("Failed to fetch profile data");
       return null;
     } finally {
       setLoading(false);
@@ -97,4 +70,4 @@ export const useProfileFetch = () => {
     loading,
     error
   };
-};
+}

@@ -18,6 +18,7 @@ interface SignUpContentWrapperProps {
   bypassVerification?: boolean;
 }
 
+// Helper to check valid intent
 const validIntent = (intent: string | null) => intent === "giftor" || intent === "giftee";
 
 const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
@@ -35,17 +36,17 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [intentHandled, setIntentHandled] = React.useState(false);
   const navigate = useNavigate();
 
-  // Debug logs to help trace modal logic
+  // --- STRICT: Only consider modal when on verification step and userEmail; never show on signup form! ---
   React.useEffect(() => {
-    const intent = localStorage.getItem("userIntent");
-    console.log("[SignUpContentWrapper] Effect: step/email/intent:", { step, userEmail, intent });
-
-    // Modal should ONLY be open if we're at verification step, have an email, and intent is not valid
+    // Only check modal logic at verification phase with userEmail
     if (step !== "verification" || !userEmail) {
-      setShowIntentModal(false);
-      setIntentHandled(false);
+      if (showIntentModal) setShowIntentModal(false);
+      if (intentHandled) setIntentHandled(false);
       return;
     }
+    const intent = localStorage.getItem("userIntent");
+    console.log("[SignUpContentWrapper] Effect: (step/email/intent):", { step, userEmail, intent });
+
     if (!validIntent(intent)) {
       setShowIntentModal(true);
       setIntentHandled(false);
@@ -53,16 +54,14 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       setShowIntentModal(false);
       setIntentHandled(true);
     }
-  }, [step, userEmail]);
+  }, [step, userEmail]); // Only react to step/email changes
 
-  // Strict modal block: if modal is visible and unhandled, block everything
-  if (showIntentModal && !intentHandled) {
-    // Always double-check that userIntent is missing or invalid
+  // --- STRONG BLOCK: Modal overrides *everything* at verification if not handled. ---
+  if (step === "verification" && showIntentModal && !intentHandled && userEmail) {
     const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
       localStorage.setItem("userIntent", userIntent);
       setShowIntentModal(false);
       setIntentHandled(true);
-
       if (userIntent === "giftor") {
         localStorage.setItem("onboardingComplete", "true");
         localStorage.removeItem("newSignUp");
@@ -73,15 +72,13 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     };
 
     const handleSkip = () => {
-      // Don't allow "skipped" to proceed to setup. Instead, require validity
+      // Don't allow skipping; force modal to remain until user selects
       localStorage.setItem("userIntent", "skipped");
-      setShowIntentModal(true); // Reopen modal for force-choose (skip disables all navigation)
+      setShowIntentModal(true);
       setIntentHandled(false);
-      // Optionally show a toast here if you want
     };
 
-    // Extra debug
-    console.log("[SignUpContentWrapper] Modal is rendered, blocking UI.");
+    console.log("[SignUpContentWrapper] Modal is rendered, blocking UI. (ONLY ON VERIFICATION PAGE)");
 
     return (
       <OnboardingIntentModal
@@ -92,7 +89,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Show the signup form if we haven't submitted yet
+  // Only show signup view if actively at signup phase (no modal possible here)
   if (step === "signup") {
     return (
       <SignUpView 
@@ -102,7 +99,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Only allow verification screen if modal was handled and valid intent chosen
+  // Only show verification *if* modal handled or valid intent
   return (
     <VerificationView
       userEmail={userEmail}

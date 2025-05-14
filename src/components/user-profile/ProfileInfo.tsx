@@ -1,90 +1,82 @@
 
-import React from "react";
-import { CalendarClock, Mail, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { isFieldVisible } from "@/utils/privacyUtils";
-import { Profile } from "@/types/profile";
-import { format } from "date-fns";
+import React from 'react';
+import { useProfile } from '@/contexts/profile/ProfileContext';
+import { PrivacyLevel } from '@/utils/privacyUtils';
+import PrivacyNotice from './PrivacyNotice';
 
 interface ProfileInfoProps {
-  profile: Profile;
+  isOwner: boolean;
   isFriend?: boolean;
-  isCurrentUser?: boolean;
 }
 
-const ProfileInfo: React.FC<ProfileInfoProps> = ({ 
-  profile, 
-  isFriend = false, 
-  isCurrentUser = false 
-}) => {
-  const dataSharingSettings = profile.data_sharing_settings || {
-    email: 'private',
-    dob: 'private',
-    shipping_address: 'private',
-    gift_preferences: 'friends'
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ isOwner, isFriend = false }) => {
+  const { profile } = useProfile();
+  
+  if (!profile) return null;
+  
+  const privacySettings = profile.data_sharing_settings || {};
+  
+  // Helper to check if data should be displayed based on privacy setting
+  const shouldDisplayData = (privacySetting: PrivacyLevel = 'private') => {
+    if (isOwner) return true;
+    
+    switch (privacySetting) {
+      case 'public': return true;
+      case 'friends': return !!isFriend;
+      default: return false;
+    }
   };
   
-  // Check if fields should be visible based on sharing settings
-  const showEmail = isFieldVisible(dataSharingSettings.email, isFriend, isCurrentUser);
-  const showBirthday = isFieldVisible(dataSharingSettings.dob, isFriend, isCurrentUser);
-  const showAddress = isFieldVisible(dataSharingSettings.shipping_address, isFriend, isCurrentUser);
-
-  const getBirthday = () => {
-    const birthday = profile.important_dates?.find(date => 
-      date.description.toLowerCase().includes('birthday')
-    );
-    return birthday ? format(new Date(birthday.date), 'MMMM d') : null;
-  };
-
   return (
     <div className="space-y-4">
-      {/* Bio */}
-      {profile.bio && (
-        <div>
-          <p className="text-sm text-muted-foreground">{profile.bio}</p>
+      {/* Bio section */}
+      <div className="bg-white p-4 rounded-lg shadow-sm">
+        <h3 className="text-lg font-medium mb-2">Bio</h3>
+        <p className="text-gray-600">{profile.bio || "No bio added yet"}</p>
+      </div>
+      
+      {/* Email - only show if privacy allows */}
+      {shouldDisplayData(privacySettings.email as PrivacyLevel) && (
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="text-lg font-medium mb-2 flex items-center">
+            Email
+            {!isOwner && <PrivacyNotice level={privacySettings.email as PrivacyLevel} />}
+          </h3>
+          <p className="text-gray-600">{profile.email}</p>
         </div>
       )}
       
-      {/* Contact & Location Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {/* Email */}
-        {profile.email && showEmail && (
-          <div className="flex items-center gap-2 text-sm">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span>{profile.email}</span>
-          </div>
-        )}
-        
-        {/* Birthday */}
-        {getBirthday() && showBirthday && (
-          <div className="flex items-center gap-2 text-sm">
-            <CalendarClock className="h-4 w-4 text-muted-foreground" />
-            <span>Birthday: {getBirthday()}</span>
-          </div>
-        )}
-        
-        {/* Address */}
-        {profile.address && showAddress && profile.address.city && (
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span>
-              {profile.address.city}, {profile.address.state}
-            </span>
-          </div>
-        )}
-      </div>
+      {/* Birthday - only show if privacy allows */}
+      {profile.dob && shouldDisplayData(privacySettings.dob as PrivacyLevel) && (
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="text-lg font-medium mb-2 flex items-center">
+            Birthday
+            {!isOwner && <PrivacyNotice level={privacySettings.dob as PrivacyLevel} />}
+          </h3>
+          <p className="text-gray-600">
+            {new Date(profile.dob).toLocaleDateString('en-US', { 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </p>
+        </div>
+      )}
       
-      {/* Interests */}
-      {profile.interests && profile.interests.length > 0 && (
-        <div>
-          <h4 className="text-sm font-medium mb-2">Interests</h4>
-          <div className="flex flex-wrap gap-2">
-            {profile.interests.map((interest, index) => (
-              <Badge key={index} variant="secondary">
-                {interest}
-              </Badge>
-            ))}
-          </div>
+      {/* Shipping address - only show if privacy allows */}
+      {profile.shipping_address && shouldDisplayData(privacySettings.shipping_address as PrivacyLevel) && (
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="text-lg font-medium mb-2 flex items-center">
+            Shipping Address
+            {!isOwner && <PrivacyNotice level={privacySettings.shipping_address as PrivacyLevel} />}
+          </h3>
+          <p className="text-gray-600">
+            {profile.shipping_address?.address_line1}
+            {profile.shipping_address?.address_line2 && `, ${profile.shipping_address.address_line2}`}
+            <br />
+            {profile.shipping_address?.city}, {profile.shipping_address?.state} {profile.shipping_address?.zip_code}
+            <br />
+            {profile.shipping_address?.country}
+          </p>
         </div>
       )}
     </div>

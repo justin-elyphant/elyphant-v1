@@ -1,51 +1,61 @@
 
-// Privacy utilities for managing data sharing settings
+export type PrivacyLevel = 'private' | 'friends' | 'public';
 
-import { DataSharingSettings } from "@/types/supabase";
-
-/**
- * Get default data sharing settings
- * @returns DataSharingSettings with default values
- */
-export const getDefaultDataSharingSettings = (): DataSharingSettings => ({
-  email: 'private',
-  dob: 'private',
-  shipping_address: 'private',
-  gift_preferences: 'friends'
-});
+export interface DataSharingSettings {
+  dob?: PrivacyLevel;
+  shipping_address?: PrivacyLevel;
+  gift_preferences?: PrivacyLevel;
+  email?: PrivacyLevel;
+  [key: string]: PrivacyLevel | undefined;
+}
 
 /**
- * Normalize data sharing settings by ensuring all required fields exist
- * @param settings Partial settings object
- * @returns Complete settings object with defaults for missing values
+ * Gets the default privacy settings for user data
  */
-export const normalizeDataSharingSettings = (settings?: Partial<DataSharingSettings>): DataSharingSettings => {
-  const defaults = getDefaultDataSharingSettings();
-  
-  if (!settings) return defaults;
-  
+export const getDefaultDataSharingSettings = (): DataSharingSettings => {
   return {
-    email: settings.email || defaults.email,
-    dob: settings.dob || defaults.dob,
-    shipping_address: settings.shipping_address || defaults.shipping_address,
-    gift_preferences: settings.gift_preferences || defaults.gift_preferences
+    dob: 'friends',
+    shipping_address: 'friends',
+    gift_preferences: 'public',
+    email: 'private',
   };
 };
 
 /**
- * Check if a specific field should be visible based on current sharing level and viewer relationship
- * @param fieldSharingLevel The privacy level set for the field ('private', 'friends', 'public')
- * @param isFriend Whether the viewer is a friend of the profile owner
- * @param isOwner Whether the viewer is the profile owner
- * @returns Boolean indicating if the field should be visible
+ * Normalizes data sharing settings from potentially incomplete user input
  */
-export const isFieldVisible = (
-  fieldSharingLevel: string, 
-  isFriend: boolean = false,
-  isOwner: boolean = false
+export const normalizeDataSharingSettings = (settings: any | null | undefined): DataSharingSettings => {
+  const defaults = getDefaultDataSharingSettings();
+  
+  if (!settings) {
+    return defaults;
+  }
+  
+  return {
+    dob: settings.dob || defaults.dob,
+    shipping_address: settings.shipping_address || defaults.shipping_address,
+    gift_preferences: settings.gift_preferences || defaults.gift_preferences,
+    email: settings.email || defaults.email,
+  };
+};
+
+/**
+ * Check if a user should be able to see data given its privacy level and the relationship
+ */
+export const canViewData = (
+  privacyLevel: PrivacyLevel,
+  isOwner: boolean,
+  isFriend: boolean
 ): boolean => {
-  if (isOwner) return true; // Owner always sees their own data
-  if (fieldSharingLevel === 'public') return true;
-  if (fieldSharingLevel === 'friends' && isFriend) return true;
-  return false;
+  if (isOwner) return true;
+  
+  switch (privacyLevel) {
+    case 'public':
+      return true;
+    case 'friends':
+      return isFriend;
+    case 'private':
+    default:
+      return false;
+  }
 };

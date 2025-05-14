@@ -1,90 +1,111 @@
 
-// Profile types for the application
-
-import { SharingLevel } from "./supabase";
+// This file defines all types related to user profiles
 
 export interface Profile {
   id: string;
-  name: string | null;
-  email: string | null;
-  bio: string | null;
-  profile_image: string | null;
-  interests: string[];
-  created_at: string | null;
-  updated_at: string | null;
-  data_sharing_settings: DataSharingSettings;
-  address: ShippingAddress | null;
-  gift_preferences: GiftPreference[];
-  important_dates: ImportantDate[];
+  name?: string;
+  username?: string;
+  email: string;
+  profile_image?: string | null;
+  bio?: string;
+  dob?: string | null;
+  shipping_address?: ShippingAddress;
+  gift_preferences?: GiftPreference[];
+  important_dates?: ImportantDate[];
+  data_sharing_settings?: DataSharingSettings;
+  wishlists?: Wishlist[];
+  onboarding_completed?: boolean;
+  updated_at?: string;
 }
 
 export interface ShippingAddress {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
-
-export interface ImportantDate {
-  date: Date;
-  description: string;
-}
-
-export interface DataSharingSettings {
-  email: SharingLevel;
-  dob: SharingLevel;
-  shipping_address: SharingLevel;
-  gift_preferences: SharingLevel;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  is_default?: boolean;
 }
 
 export interface GiftPreference {
   category: string;
-  importance: 'low' | 'medium' | 'high';
-  notes?: string;
+  importance?: 'low' | 'medium' | 'high';
+}
+
+export interface ImportantDate {
+  id?: string;
+  title: string;
+  date: string;
+  type: string;
+  reminder_days?: number;
+}
+
+export interface DataSharingSettings {
+  dob?: 'private' | 'friends' | 'public';
+  shipping_address?: 'private' | 'friends' | 'public';
+  gift_preferences?: 'private' | 'friends' | 'public';
+  email?: 'private' | 'friends' | 'public';
 }
 
 export interface Wishlist {
   id: string;
   user_id: string;
   title: string;
-  description: string | null;
+  description?: string;
   is_public: boolean;
-  created_at: string;
-  updated_at: string;
   items: WishlistItem[];
+  created_at: string;
+  updated_at?: string;
+  // Additional fields used in the application:
+  category?: string;
+  tags?: string[];
+  priority?: 'low' | 'medium' | 'high';
 }
 
 export interface WishlistItem {
   id: string;
   wishlist_id: string;
-  product_id?: string;
+  product_id: string;
   title: string;
-  description?: string;
+  created_at: string;
+  // Additional fields used in the application:
+  name?: string;
+  brand?: string;
+  added_at?: string;
   price?: number;
   image_url?: string;
-  url?: string;
-  created_at: string;
-  priority?: 'low' | 'medium' | 'high';
-  purchased?: boolean;
-  purchased_by?: string;
 }
 
-// Normalization utilities
-export function normalizeGiftPreference(preference: any): GiftPreference {
-  return {
-    category: preference?.category || '',
-    importance: preference?.importance || 'medium',
-    notes: preference?.notes || undefined
-  };
+// Helper functions for normalization
+export function normalizeGiftPreference(preferences: any[] | null | undefined): GiftPreference[] {
+  if (!preferences || !Array.isArray(preferences)) {
+    return [];
+  }
+  
+  return preferences.map(pref => {
+    if (typeof pref === 'string') {
+      return { category: pref, importance: 'medium' };
+    }
+    return { 
+      category: pref.category || 'general', 
+      importance: pref.importance || 'medium' 
+    };
+  });
 }
 
-export function normalizeShippingAddress(address: any): ShippingAddress {
+export function normalizeShippingAddress(address: any | null | undefined): ShippingAddress {
+  if (!address) {
+    return {};
+  }
+  
   return {
-    street: address?.street || '',
-    city: address?.city || '',
-    state: address?.state || '',
-    zipCode: address?.zipCode || '',
-    country: address?.country || ''
+    address_line1: address.address_line1 || address.line1 || '',
+    address_line2: address.address_line2 || address.line2 || '',
+    city: address.city || '',
+    state: address.state || '',
+    zip_code: address.zip_code || address.zip || '',
+    country: address.country || 'US',
+    is_default: address.is_default || true
   };
 }

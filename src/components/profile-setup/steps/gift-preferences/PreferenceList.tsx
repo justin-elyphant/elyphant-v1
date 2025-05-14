@@ -1,73 +1,92 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { GiftPreference } from "@/types/supabase";
 import { Badge } from "@/components/ui/badge";
-import { valueToImportance } from "./utils";
+import { Button } from "@/components/ui/button";
+import { GiftPreference } from "@/types/profile";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PreferenceListProps {
   preferences: GiftPreference[];
-  onRemove: (index: number) => void;
-  onUpdate: (index: number, importance: "low" | "medium" | "high") => void;
+  onRemovePreference: (index: number) => void;
+  onUpdateImportance: (index: number, importance: "low" | "medium" | "high") => void;
 }
 
-const PreferenceList: React.FC<PreferenceListProps> = ({ 
+const PreferenceList: React.FC<PreferenceListProps> = ({
   preferences,
-  onRemove,
-  onUpdate
+  onRemovePreference,
+  onUpdateImportance,
 }) => {
-  const getImportanceBadgeStyle = (importance: number) => {
-    const importanceLevel = valueToImportance(importance);
-    
-    switch (importanceLevel) {
-      case "high":
-        return "bg-red-100 text-red-700 hover:bg-red-200";
-      case "medium":
-        return "bg-amber-100 text-amber-700 hover:bg-amber-200";
-      case "low":
-      default:
-        return "bg-blue-100 text-blue-700 hover:bg-blue-200";
-    }
-  };
-
-  if (!preferences || preferences.length === 0) {
+  // If no preferences, show empty state
+  if (preferences.length === 0) {
     return (
-      <div className="text-center p-6 border border-dashed rounded-md text-muted-foreground">
-        No gift preferences added yet
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No preferences added yet. Add some categories above.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <h3 className="font-medium">Your Gift Preferences</h3>
-      <ul className="space-y-2">
+    <div className="space-y-2">
+      <h3 className="text-sm font-medium">Your Gift Preferences</h3>
+      
+      <div className="flex flex-wrap gap-2">
         {preferences.map((preference, index) => (
-          <li 
-            key={`${preference.category}-${index}`} 
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
-          >
-            <div className="flex items-center gap-2">
+          <div key={index} className="flex items-center gap-1">
+            <Badge
+              variant="outline"
+              className={cn(
+                "pl-2 pr-1 py-1 flex items-center gap-1",
+                preference.importance === "high" && "bg-primary/10 text-primary",
+                preference.importance === "medium" && "bg-orange-50 text-orange-600",
+                preference.importance === "low" && "bg-slate-50 text-slate-600"
+              )}
+            >
               <span>{preference.category}</span>
-              <Badge className={getImportanceBadgeStyle(preference.importance)}>
-                {valueToImportance(preference.importance)}
-              </Badge>
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => onRemove(index)}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0 rounded-full hover:bg-background/80"
+                onClick={() => onRemovePreference(index)}
               >
-                <Trash2 className="h-4 w-4 text-red-500" />
+                <X className="h-3 w-3" />
               </Button>
+            </Badge>
+            
+            <div className="flex border rounded-md overflow-hidden text-[10px]">
+              <button
+                onClick={() => onUpdateImportance(index, "low")}
+                className={cn(
+                  "px-1.5 py-0.5",
+                  preference.importance === "low" ? "bg-slate-100 text-slate-800" : "bg-white text-slate-500 hover:bg-slate-50"
+                )}
+              >
+                Low
+              </button>
+              <button
+                onClick={() => onUpdateImportance(index, "medium")}
+                className={cn(
+                  "px-1.5 py-0.5",
+                  preference.importance === "medium" ? "bg-orange-100 text-orange-800" : "bg-white text-slate-500 hover:bg-slate-50"
+                )}
+              >
+                Medium
+              </button>
+              <button
+                onClick={() => onUpdateImportance(index, "high")}
+                className={cn(
+                  "px-1.5 py-0.5",
+                  preference.importance === "high" ? "bg-primary/10 text-primary" : "bg-white text-slate-500 hover:bg-slate-50"
+                )}
+              >
+                High
+              </button>
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
-};
+}
 
 export default PreferenceList;

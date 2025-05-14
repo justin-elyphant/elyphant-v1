@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "./useLocalStorage";
-import { WishlistItem, Wishlist } from "@/types/profile";
+import { WishlistItem, Wishlist, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -74,9 +74,9 @@ export function useWishlistState() {
           console.log("Loaded wishlists from profile:", profile.wishlists.length);
           
           // Ensure we have valid wishlist objects
-          const validWishlists = profile.wishlists.filter(list => 
-            list && typeof list === 'object' && list.id && Array.isArray(list.items)
-          );
+          const validWishlists = profile.wishlists
+            .filter(list => list && typeof list === 'object' && list.id && Array.isArray(list.items))
+            .map(list => normalizeWishlist({...list, user_id: user.id}));
           
           if (validWishlists.length > 0) {
             if (isMounted) {
@@ -153,20 +153,22 @@ export function useWishlistState() {
         
         // Create a default wishlist from these products
         if (wishlists.length === 0) {
-          const defaultWishlist: Wishlist = {
+          const defaultWishlist: Wishlist = normalizeWishlist({
             id: crypto.randomUUID(),
+            user_id: user.id,
             title: "My Wishlist",
             description: "Items I've saved",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             is_public: false,
-            items: profileWishlistedProducts.map(productId => ({
+            items: profileWishlistedProducts.map(productId => normalizeWishlistItem({
               id: crypto.randomUUID(),
+              wishlist_id: crypto.randomUUID(), // This will be updated
               product_id: productId,
-              name: `Item ${productId}`,
-              added_at: new Date().toISOString()
+              title: `Item ${productId}`,
+              created_at: new Date().toISOString()
             }))
-          };
+          });
           
           setWishlists([defaultWishlist]);
           syncWishlist([defaultWishlist]);
@@ -177,15 +179,18 @@ export function useWishlistState() {
     };
     
     const createDefaultWishlist = () => {
-      const defaultWishlist: Wishlist = {
+      if (!user) return;
+      
+      const defaultWishlist: Wishlist = normalizeWishlist({
         id: crypto.randomUUID(),
+        user_id: user.id,
         title: "My Wishlist",
         description: "Items I've saved",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_public: false,
         items: []
-      };
+      });
       
       setWishlists([defaultWishlist]);
       syncWishlist([defaultWishlist]);
@@ -239,9 +244,9 @@ export function useWishlistState() {
       }
       
       if (profile?.wishlists && Array.isArray(profile.wishlists)) {
-        const validWishlists = profile.wishlists.filter(list => 
-          list && typeof list === 'object' && list.id && Array.isArray(list.items)
-        );
+        const validWishlists = profile.wishlists
+          .filter(list => list && typeof list === 'object' && list.id && Array.isArray(list.items))
+          .map(list => normalizeWishlist({...list, user_id: user.id}));
         
         setWishlists(validWishlists);
         

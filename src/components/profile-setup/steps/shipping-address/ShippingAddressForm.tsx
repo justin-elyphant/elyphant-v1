@@ -1,65 +1,85 @@
 
 import React from "react";
-import { ShippingAddress } from "@/types/supabase";
-import AddressSearchField from "./AddressSearchField";
-import CityStateFields from "./CityStateFields";
-import ZipCountryFields from "./ZipCountryFields";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CountrySelect } from "./CountrySelect";
+import { StateSelect } from "./StateSelect";
+import { ShippingAddress } from "@/types/profile";
 
 interface ShippingAddressFormProps {
-  address: ShippingAddress;
-  onChange: (address: ShippingAddress) => void;
+  value: ShippingAddress;
+  onChange: (value: ShippingAddress) => void;
 }
 
-const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ 
-  address, 
-  onChange 
-}) => {
-  const handleChange = (field: keyof ShippingAddress, value: string) => {
+export function ShippingAddressForm({ value, onChange }: ShippingAddressFormProps) {
+  const handleChange = (field: keyof ShippingAddress, fieldValue: string) => {
     onChange({
-      ...address,
-      [field]: value
+      ...value,
+      [field]: fieldValue,
     });
   };
 
-  const handleAddressSelect = (selectedAddress: {
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  }) => {
+  const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
-      street: selectedAddress.address,
-      city: selectedAddress.city,
-      state: selectedAddress.state,
-      zipCode: selectedAddress.zipCode,
-      country: selectedAddress.country || address.country
+      ...value,
+      address_line1: e.target.value,
+    });
+  };
+
+  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      zip_code: e.target.value,
     });
   };
 
   return (
     <div className="space-y-4">
-      <AddressSearchField 
-        value={address.street || ""}
-        onChange={(value) => handleChange('street', value)}
-        onAddressSelect={handleAddressSelect}
-      />
-      
-      <CityStateFields 
-        cityValue={address.city || ""}
-        stateValue={address.state || ""}
-        onCityChange={(value) => handleChange('city', value)}
-        onStateChange={(value) => handleChange('state', value)}
-      />
-      
-      <ZipCountryFields 
-        zipValue={address.zipCode || ""}
-        countryValue={address.country || ""}
-        onZipChange={(value) => handleChange('zipCode', value)}
-        onCountryChange={(value) => handleChange('country', value)}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="street">Street Address</Label>
+        <Input
+          id="street"
+          placeholder="123 Main St"
+          value={value.address_line1 || ""}
+          onChange={handleStreetChange}
+          className="w-full"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="city">City</Label>
+          <Input
+            id="city"
+            placeholder="City"
+            value={value.city || ""}
+            onChange={(e) => handleChange("city", e.target.value)}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="zipCode">ZIP Code</Label>
+          <Input
+            id="zipCode"
+            placeholder="ZIP Code"
+            value={value.zip_code || ""}
+            onChange={handleZipCodeChange}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <StateSelect
+          value={value.state || ""}
+          onChange={(state) => handleChange("state", state)}
+        />
+        <CountrySelect
+          value={value.country || ""}
+          onChange={(country) => handleChange("country", country)}
+        />
+      </div>
     </div>
   );
-};
-
-export default ShippingAddressForm;
+}

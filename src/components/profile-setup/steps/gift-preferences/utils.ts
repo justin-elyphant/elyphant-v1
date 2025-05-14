@@ -1,70 +1,68 @@
 
 import { GiftPreference } from "@/types/profile";
 
-export type CategoryImportance = 'low' | 'medium' | 'high';
+// List of category suggestions
+export const categorySuggestions = [
+  "Books",
+  "Electronics",
+  "Fashion",
+  "Home Decor",
+  "Kitchen Gadgets",
+  "Gaming",
+  "Sports Equipment",
+  "Fitness",
+  "Beauty",
+  "Skincare",
+  "Hobbies",
+  "Art Supplies",
+  "Plants",
+  "Gardening",
+  "Travel Accessories",
+  "Photography",
+  "Music",
+  "Outdoor Gear",
+  "Jewelry",
+  "DIY Tools",
+  "Board Games",
+  "Collectibles",
+  "Stationery",
+  "Coffee & Tea",
+  "Wine & Spirits",
+  "Subscription Boxes",
+  "Eco-Friendly Products",
+  "Pet Accessories",
+  "Smart Home",
+  "Wellness"
+];
 
 /**
- * Convert numeric value to importance level
+ * Calculate a recommended importance score based on existing preferences
  */
-export const valueToImportance = (value: number): CategoryImportance => {
-  if (value <= 1) return 'low';
-  if (value <= 2) return 'medium';
-  return 'high';
-};
-
-/**
- * Convert importance level to numeric value
- */
-export const importanceToValue = (importance: CategoryImportance): number => {
-  switch (importance) {
-    case 'low': return 1;
-    case 'medium': return 2;
-    case 'high': return 3;
-    default: return 2;
+export function getRecommendedImportance(
+  category: string,
+  existingPreferences: GiftPreference[]
+): "low" | "medium" | "high" {
+  // If we have a lot of high importance preferences, suggest medium
+  const highCount = existingPreferences.filter(p => p.importance === "high").length;
+  if (highCount >= 5) {
+    return "medium";
   }
-};
+  
+  // Default to medium
+  return "medium";
+}
 
 /**
- * Create a new gift preference
+ * Group preferences by importance
  */
-export const createGiftPreference = (
-  category: string, 
-  importance: CategoryImportance = 'medium',
-  notes: string = ''
-): GiftPreference => {
+export function groupPreferencesByImportance(preferences: GiftPreference[]): {
+  high: GiftPreference[];
+  medium: GiftPreference[];
+  low: GiftPreference[];
+} {
   return {
-    category,
-    importance: importanceToValue(importance),
-    notes
+    high: preferences.filter(p => p.importance === "high"),
+    medium: preferences.filter(p => p.importance === "medium"),
+    low: preferences.filter(p => p.importance === "low")
   };
-};
-
-/**
- * Get default gift preferences
- */
-export const getDefaultGiftPreferences = (): GiftPreference[] => {
-  return [];
-};
-
-/**
- * Generate categories list
- */
-export const getCategories = (): string[] => {
-  return [
-    'Books',
-    'Electronics',
-    'Fashion',
-    'Home & Kitchen',
-    'Beauty & Personal Care',
-    'Sports & Outdoors',
-    'Toys & Games',
-    'Art & Crafts',
-    'Music',
-    'Food & Beverage',
-    'Travel Experiences',
-    'Jewelry',
-    'Fitness',
-    'Gardening',
-    'Tech Gadgets'
-  ];
-};
+}

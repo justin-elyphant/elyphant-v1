@@ -1,13 +1,15 @@
 
 import { useState } from "react";
-import { Wishlist } from "@/types/profile";
+import { Wishlist, normalizeWishlist } from "@/types/profile";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth";
 
 export function useWishlistCreate(
   setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
   syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<boolean>
 ) {
   const [isCreating, setIsCreating] = useState(false);
+  const { user } = useAuth();
 
   const createWishlist = async (
     title: string, 
@@ -17,13 +19,19 @@ export function useWishlistCreate(
     priority?: "low" | "medium" | "high"
   ): Promise<Wishlist | null> => {
     try {
+      if (!user) {
+        toast.error("You must be logged in to create a wishlist");
+        return null;
+      }
+      
       setIsCreating(true);
       
       // Create new wishlist object
-      const newWishlist: Wishlist = {
+      const newWishlist: Wishlist = normalizeWishlist({
         id: crypto.randomUUID(),
+        user_id: user.id,
         title: title.trim(),
-        description: description?.trim(),
+        description: description?.trim() || "",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_public: false,
@@ -31,7 +39,7 @@ export function useWishlistCreate(
         category,
         tags,
         priority
-      };
+      });
       
       // Update local state
       let updatedWishlists: Wishlist[] = [];

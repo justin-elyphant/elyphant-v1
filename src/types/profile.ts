@@ -111,6 +111,41 @@ export function normalizeShippingAddress(address: any | null | undefined): Shipp
   };
 }
 
+/**
+ * Create a mapping utility to convert between form data and API formats
+ */
+export function mapFormAddressToApiAddress(formAddress: any): ShippingAddress {
+  if (!formAddress) {
+    return {};
+  }
+  
+  return {
+    address_line1: formAddress.street || '',
+    city: formAddress.city || '',
+    state: formAddress.state || '',
+    zip_code: formAddress.zipCode || '',
+    country: formAddress.country || '',
+    is_default: true
+  };
+}
+
+/**
+ * Map API address format to form address format
+ */
+export function mapApiAddressToFormAddress(apiAddress: ShippingAddress): any {
+  if (!apiAddress) {
+    return {};
+  }
+  
+  return {
+    street: apiAddress.address_line1 || '',
+    city: apiAddress.city || '',
+    state: apiAddress.state || '',
+    zipCode: apiAddress.zip_code || '',
+    country: apiAddress.country || ''
+  };
+}
+
 // Function to convert form data to API data format
 export function profileFormToApiData(formData: any): Partial<Profile> {
   return {
@@ -119,17 +154,10 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     username: formData.username,
     bio: formData.bio || '',
     dob: formData.birthday ? formData.birthday.toISOString() : null,
-    shipping_address: formData.address ? {
-      address_line1: formData.address.street,
-      city: formData.address.city,
-      state: formData.address.state,
-      zip_code: formData.address.zipCode,
-      country: formData.address.country,
-      is_default: true
-    } : undefined,
+    shipping_address: formData.address ? mapFormAddressToApiAddress(formData.address) : undefined,
     gift_preferences: formData.interests?.map((interest: string) => ({
       category: interest,
-      importance: 'medium'
+      importance: 'medium' as 'low' | 'medium' | 'high'
     })),
     data_sharing_settings: formData.data_sharing_settings,
     important_dates: formData.importantDates?.map((date: any) => ({
@@ -137,5 +165,46 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
       date: date.date.toISOString(),
       type: 'custom'
     }))
+  };
+}
+
+/**
+ * Normalize a wishlist item
+ */
+export function normalizeWishlistItem(item: any): WishlistItem {
+  return {
+    id: item.id || crypto.randomUUID(),
+    wishlist_id: item.wishlist_id || '',
+    product_id: item.product_id || '',
+    title: item.title || item.name || '',
+    created_at: item.created_at || item.added_at || new Date().toISOString(),
+    name: item.name || '',
+    image_url: item.image_url || '',
+    brand: item.brand || '',
+    price: item.price || null,
+    added_at: item.added_at || item.created_at || new Date().toISOString()
+  };
+}
+
+/**
+ * Normalize a wishlist
+ */
+export function normalizeWishlist(wishlist: any): Wishlist {
+  const items = Array.isArray(wishlist.items) 
+    ? wishlist.items.map(normalizeWishlistItem)
+    : [];
+  
+  return {
+    id: wishlist.id || crypto.randomUUID(),
+    user_id: wishlist.user_id || '',
+    title: wishlist.title || 'Untitled Wishlist',
+    description: wishlist.description || '',
+    is_public: typeof wishlist.is_public === 'boolean' ? wishlist.is_public : false,
+    created_at: wishlist.created_at || new Date().toISOString(),
+    updated_at: wishlist.updated_at || new Date().toISOString(),
+    items,
+    category: wishlist.category,
+    tags: wishlist.tags,
+    priority: wishlist.priority
   };
 }

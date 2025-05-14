@@ -1,5 +1,5 @@
 
-import { WishlistItem, Wishlist } from "@/types/profile";
+import { WishlistItem, Wishlist, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -19,15 +19,16 @@ export async function createWishlist(userId: string, title: string, description?
     }
     
     // Create new wishlist with default values
-    const newWishlist: Wishlist = {
+    const newWishlist: Wishlist = normalizeWishlist({
       id: crypto.randomUUID(),
+      user_id: userId,
       title,
       description: description || "",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_public: false,
       items: []
-    };
+    });
     
     // Add to existing wishlists or create new array
     const wishlists = Array.isArray(profile?.wishlists) ? [...profile.wishlists, newWishlist] : [newWishlist];
@@ -82,15 +83,18 @@ export async function addToWishlist(
     }
     
     // Create new item
-    const newItem: WishlistItem = {
+    const newItem: WishlistItem = normalizeWishlistItem({
       id: crypto.randomUUID(),
+      wishlist_id: wishlistId,
       product_id: product.id,
+      title: product.title || product.name,
       name: product.title || product.name,
       price: product.price,
       brand: product.brand,
       image_url: product.image || product.image_url,
-      added_at: new Date().toISOString()
-    };
+      added_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
+    });
     
     // Add item to wishlist
     wishlists[wishlistIndex].items = [...wishlists[wishlistIndex].items, newItem];
@@ -123,26 +127,5 @@ export function normalizeWishlistData(wishlists: any[] | null): Wishlist[] {
     return [];
   }
   
-  return wishlists.map(list => ({
-    id: list.id || crypto.randomUUID(),
-    title: list.title || "My Wishlist",
-    description: list.description || "",
-    created_at: list.created_at || new Date().toISOString(),
-    updated_at: list.updated_at || new Date().toISOString(),
-    is_public: typeof list.is_public === 'boolean' ? list.is_public : false,
-    items: Array.isArray(list.items) ? list.items.map(normalizeWishlistItem) : []
-  }));
-}
-
-// Normalize wishlist item data
-function normalizeWishlistItem(item: any): WishlistItem {
-  return {
-    id: item.id || crypto.randomUUID(),
-    product_id: item.product_id || "",
-    name: item.name || "",
-    price: item.price || null,
-    brand: item.brand || null,
-    image_url: item.image_url || null,
-    added_at: item.added_at || new Date().toISOString()
-  };
+  return wishlists.map(list => normalizeWishlist(list));
 }

@@ -1,50 +1,67 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Session, User } from "@supabase/supabase-js";
-import { toast } from "sonner";
-import { AuthContextProps } from "./types";
-import { useAuthFunctions } from "./authHooks";
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { AuthContextProps, AuthState } from './types';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-const AuthContext = createContext<AuthContextProps | undefined>(undefined);
+// Default context state
+const defaultContextState: AuthContextProps = {
+  session: null,
+  user: null,
+  isLoading: true,
+  signOut: async () => {},
+  deleteUser: async () => {},
+  isDebugMode: false
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-}
+// Create the context
+const AuthContext = createContext<AuthContextProps>(defaultContextState);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDebugMode] = useState(() => localStorage.getItem("debugMode") === "true");
+// Provider component
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+  const [state, setState] = useState<AuthState>({
+    session: null,
+    user: null,
+    isLoading: true
+  });
+  const [isDebugMode] = useState<boolean>(false);
 
+  // Initialize auth state from Supabase
   useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
+    // Set the initial auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setState({
+        session,
+        user: session?.user ?? null,
+        isLoading: false
+      });
+    }).catch(error => {
+      console.error("Error getting session:", error);
+      setState(prev => ({ ...prev, isLoading: false }));
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setState({
+        session,
+        user: session?.user ?? null,
+        isLoading: false
+      });
+    });
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const { signOut, deleteUser } = useAuthFunctions(user);
-
-  const signIn = async (email: string, password: string) => {
+  // Sign in with email and password
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -52,19 +69,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        toast.error("Failed to sign in", { description: error.message });
+        console.error("Sign in error:", error);
+        toast.error("Failed to sign in", {
+          description: error.message
+        });
         return { error, data: null };
       }
       
       toast.success("Signed in successfully");
       return { error: null, data: data.session };
-    } catch (error) {
-      toast.error("An unexpected error occurred");
-      return { error: error as Error, data: null };
+    } catch (err) {
+      console.error("Sign in exception:", err);
+      const error = err instanceof Error ? err : new Error('An unknown error occurred');
+      toast.error("Sign in failed");
+      return { error, data: null };
     }
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string) => {
+  // Sign up with email and password
+  const signUp = useCallback(async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -72,28 +95,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        toast.error("Failed to sign up", { description: error.message });
+        console.error("Sign up error:", error);
+        toast.error("Failed to sign up", {
+          description: error.message
+        });
         return { error, data: { user: null, session: null } };
       }
       
-      toast.success("Signed up successfully", { 
-        description: "Check your email for verification instructions"
+      toast.success("Signed up successfully", {
+        description: "Please check your email for verification."
       });
-      
       return { error: null, data };
-    } catch (error) {
-      toast.error("An unexpected error occurred");
-      return { 
-        error: error as Error, 
-        data: { user: null, session: null } 
-      };
+    } catch (err) {
+      console.error("Sign up exception:", err);
+      const error = err instanceof Error ? err : new Error('An unknown error occurred');
+      toast.error("Sign up failed");
+      return { error, data: { user: null, session: null } };
     }
-  };
+  }, []);
 
+  // Sign out
+  const signOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+      toast.success("Signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out");
+    }
+  }, [navigate]);
+
+  // Delete user account
+  const deleteUser = useCallback(async () => {
+    try {
+      if (!state.user) {
+        toast.error("No user is signed in");
+        return;
+      }
+      
+      // This is a placeholder - in a real app you'd likely need a secure server function
+      // to delete the user since the client doesn't have permission to delete auth.users
+      
+      toast.error("Account deletion is not implemented yet");
+      
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error("Failed to delete account");
+    }
+  }, [state.user]);
+
+  // Create context value
   const value: AuthContextProps = {
-    user,
-    session,
-    isLoading,
+    ...state,
     signIn,
     signUp,
     signOut,
@@ -106,4 +160,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
+// Custom hook to use the auth context
+export const useAuth = (): AuthContextProps => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

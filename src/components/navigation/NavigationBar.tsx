@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ const NavigationBar = () => {
       {/* Mobile Menu */}
       <MobileNavMenu 
         isOpen={mobileMenuOpen} 
-        onClose={() => setMobileMenuOpen(false)}
+        onClose={toggleMobileMenu}
         onSignOut={handleSignOut}
         isAuthenticated={!!user}
         marketplaceItems={marketplaceItems}

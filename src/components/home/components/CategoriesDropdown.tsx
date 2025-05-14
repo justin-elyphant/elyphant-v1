@@ -58,22 +58,24 @@ const CategoriesDropdownWithoutProvider: React.FC<CategoriesDropdownProps> = ({
     <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="flex items-center gap-1">
-          Categories <ChevronDown className="h-4 w-4" />
+          Categories <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="w-56 bg-white p-0 max-h-[70vh] overflow-y-auto z-50" 
+        className="w-64 bg-background p-0 max-h-[70vh] overflow-y-auto z-50 border shadow-md" 
         align="start"
       >
-        {categories.map((category, index) => (
-          <DropdownMenuItem 
-            key={index} 
-            className="px-4 py-2 hover:bg-accent cursor-pointer"
-            onClick={() => handleCategorySelect(category.url, category.searchTerm)}
-          >
-            {category.name}
-          </DropdownMenuItem>
-        ))}
+        <div className="grid grid-cols-1 gap-0.5">
+          {categories.map((category, index) => (
+            <DropdownMenuItem 
+              key={index} 
+              className="px-4 py-2.5 cursor-pointer hover:bg-accent hover:text-accent-foreground"
+              onClick={() => handleCategorySelect(category.url, category.searchTerm)}
+            >
+              {category.name}
+            </DropdownMenuItem>
+          ))}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

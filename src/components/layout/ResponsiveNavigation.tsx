@@ -4,10 +4,11 @@ import { Link, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingBag, Gift, Users } from "lucide-react";
 import Logo from "../home/components/Logo";
 import UserButton from "../auth/UserButton";
 import { NotificationsDropdown } from "../notifications/NotificationsDropdown";
+import NavigationDropdown, { NavDropdownItem } from "../navigation/NavigationDropdown";
 
 interface NavLink {
   label: string;
@@ -39,6 +40,19 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
   
   const isActive = (path: string) => location.pathname === path;
 
+  // Define dropdown menus
+  const marketplaceItems: NavDropdownItem[] = [
+    { label: "All Products", href: "/marketplace", icon: <ShoppingBag className="h-4 w-4" /> },
+    { label: "Categories", href: "/marketplace/categories", icon: <Gift className="h-4 w-4" /> },
+    { label: "Trending", href: "/marketplace/trending" }
+  ];
+
+  const connectionsItems: NavDropdownItem[] = [
+    { label: "My Friends", href: "/connections/friends", icon: <Users className="h-4 w-4" /> },
+    { label: "Find Friends", href: "/connections/find", icon: <Users className="h-4 w-4" /> },
+    { label: "Invitations", href: "/connections/invitations" }
+  ];
+
   return (
     <header className={`border-b bg-white shadow-sm sticky top-0 z-50 ${className}`}>
       <div className="container flex items-center justify-between h-16">
@@ -60,6 +74,22 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
                 {link.label}
               </Link>
             ))}
+            
+            <NavigationDropdown 
+              label="Marketplace" 
+              items={marketplaceItems}
+              triggerClassName="text-sm font-medium text-foreground/80 hover:text-foreground"
+              variant={isActive("/marketplace") ? "default" : "ghost"}
+            />
+            
+            {user && (
+              <NavigationDropdown 
+                label="Connections" 
+                items={connectionsItems}
+                triggerClassName="text-sm font-medium text-foreground/80 hover:text-foreground"
+                variant={isActive("/connections") ? "default" : "ghost"}
+              />
+            )}
           </nav>
         )}
         
@@ -98,7 +128,7 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
         </div>
       </div>
       
-      {/* Mobile Menu */}
+      {/* Mobile Menu with improved dropdowns */}
       {isMobile && mobileMenuOpen && (
         <div className="py-3 px-4 border-t bg-background">
           <nav className="flex flex-col space-y-3">
@@ -114,6 +144,44 @@ export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
                 {link.label}
               </Link>
             ))}
+            
+            {/* Mobile Marketplace Menu */}
+            <div className="space-y-1 border-t pt-2">
+              <p className="px-3 py-1 text-sm font-semibold text-muted-foreground">Marketplace</p>
+              {marketplaceItems.map((item, index) => (
+                <Link
+                  key={index}
+                  to={item.href}
+                  className={`py-2 px-4 rounded-md flex items-center ${isActive(item.href)
+                    ? "bg-primary/10 text-primary font-semibold" 
+                    : "hover:bg-muted"}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.icon && <span className="mr-2">{item.icon}</span>}
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+            
+            {/* Mobile Connections Menu (for logged in users) */}
+            {user && (
+              <div className="space-y-1 border-t pt-2">
+                <p className="px-3 py-1 text-sm font-semibold text-muted-foreground">Connections</p>
+                {connectionsItems.map((item, index) => (
+                  <Link
+                    key={index}
+                    to={item.href}
+                    className={`py-2 px-4 rounded-md flex items-center ${isActive(item.href)
+                      ? "bg-primary/10 text-primary font-semibold" 
+                      : "hover:bg-muted"}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.icon && <span className="mr-2">{item.icon}</span>}
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
             
             {/* Authentication buttons for mobile */}
             {!user ? (

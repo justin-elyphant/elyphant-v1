@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { GiftPreference } from "@/types/profile";
-import { CategoryImportance } from "./gift-preferences/utils";
 import CategorySection from "./gift-preferences/CategorySection";
 
 interface GiftPreferencesStepProps {
@@ -40,7 +39,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
         ...preferences,
         {
           category,
-          importance: "medium" as CategoryImportance
+          importance: "medium"
         }
       ];
       
@@ -58,7 +57,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
   };
   
   // Update importance for a specific category
-  const handleImportanceChange = (category: string, importance: CategoryImportance) => {
+  const handleImportanceChange = (category: string, importance: "low" | "medium" | "high") => {
     const newPreferences = preferences.map(p => 
       p.category === category 
         ? { ...p, importance } 

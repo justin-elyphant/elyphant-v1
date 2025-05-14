@@ -11,10 +11,10 @@ export const isProfileComplete = (profile: Profile | null): boolean => {
   const hasName = !!profile.name;
   const hasDob = !!profile.dob;
   const hasShippingAddress = !!profile.shipping_address &&
-    !!profile.shipping_address.street &&
+    !!profile.shipping_address.address_line1 &&
     !!profile.shipping_address.city &&
     !!profile.shipping_address.state &&
-    !!profile.shipping_address.zipCode &&
+    !!profile.shipping_address.zip_code &&
     !!profile.shipping_address.country;
   const hasGiftPreferences = !!profile.gift_preferences && profile.gift_preferences.length > 0;
 

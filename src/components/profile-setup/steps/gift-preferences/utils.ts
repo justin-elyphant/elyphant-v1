@@ -9,7 +9,7 @@ export enum CategoryImportance {
 // Interface for category preferences
 export interface CategoryPreference {
   category: string;
-  importance: CategoryImportance;
+  importance: "low" | "medium" | "high";
 }
 
 // Function to convert importance string to enum value
@@ -29,49 +29,40 @@ export function valueToImportance(value: string | number): CategoryImportance {
 }
 
 // Function to convert enum value to importance string
-export function importanceToValue(importance: CategoryImportance): 'low' | 'medium' | 'high' {
+export function importanceToValue(importance: CategoryImportance): "low" | "medium" | "high" {
   switch (importance) {
-    case CategoryImportance.Low: return 'low';
-    case CategoryImportance.High: return 'high';
-    default: return 'medium';
+    case CategoryImportance.Low: return "low";
+    case CategoryImportance.High: return "high";
+    default: return "medium";
   }
 }
 
-// Predefined gift categories
-export const GIFT_CATEGORIES = [
-  'Books',
-  'Electronics',
-  'Home & Kitchen',
-  'Fashion',
-  'Beauty & Personal Care',
-  'Toys & Games',
-  'Sports & Outdoors',
-  'Tools & Home Improvement',
-  'Health & Wellness',
-  'Art & Crafts',
-  'Music',
-  'Movies & TV',
-  'Food & Drinks',
-  'Jewelry',
-  'Travel',
-  'Experiences',
-  'Other'
-];
-
-// Function to convert frontend category preferences to API format
-export function convertToApiFormat(preferences: CategoryPreference[]): any[] {
-  return preferences.map(pref => ({
-    category: pref.category,
-    importance: importanceToValue(pref.importance)
-  }));
-}
-
-// Function to convert API category preferences to frontend format
-export function convertFromApiFormat(preferences: any[]): CategoryPreference[] {
-  if (!Array.isArray(preferences)) return [];
+// Function to get suggested categories based on search term
+export function getSuggestedCategories(searchTerm: string): string[] {
+  const allCategories = [
+    'Books',
+    'Electronics',
+    'Home & Kitchen',
+    'Fashion',
+    'Beauty & Personal Care',
+    'Toys & Games',
+    'Sports & Outdoors',
+    'Tools & Home Improvement',
+    'Health & Wellness',
+    'Art & Crafts',
+    'Music',
+    'Movies & TV',
+    'Food & Drinks',
+    'Jewelry',
+    'Travel',
+    'Experiences',
+    'Other'
+  ];
   
-  return preferences.map(pref => ({
-    category: pref.category || '',
-    importance: valueToImportance(pref.importance)
-  }));
+  if (!searchTerm) return allCategories;
+  
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return allCategories.filter(cat => 
+    cat.toLowerCase().includes(lowerSearchTerm)
+  );
 }

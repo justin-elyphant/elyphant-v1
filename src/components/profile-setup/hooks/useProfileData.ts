@@ -17,10 +17,10 @@ export const useProfileData = () => {
     profile_image: "",
     dob: "",
     shipping_address: {
-      street: "",
+      address_line1: "",
       city: "",
       state: "",
-      zipCode: "",
+      zip_code: "",
       country: ""
     },
     gift_preferences: [],

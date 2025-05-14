@@ -24,9 +24,9 @@ export const useProfileUpdate = () => {
       // Ensure shipping_address has all required fields
       const safeShippingAddress = normalizeShippingAddress(updateData.shipping_address);
 
-      // Format gift preferences to ensure it's an array of objects
+      // Format gift preferences to ensure it's an array of objects with proper type
       const safeGiftPreferences = Array.isArray(updateData.gift_preferences) 
-        ? updateData.gift_preferences.map(normalizeGiftPreference)
+        ? updateData.gift_preferences.map(pref => normalizeGiftPreference(pref))
         : [];
       
       const dataWithId = {
@@ -53,7 +53,6 @@ export const useProfileUpdate = () => {
             .from('profiles')
             .upsert(dataWithId, {
               onConflict: 'id'
-              // Removed the 'returning: minimal' option as it's not supported
             });
 
           if (error) {

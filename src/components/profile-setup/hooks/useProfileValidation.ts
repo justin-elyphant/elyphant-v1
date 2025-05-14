@@ -15,10 +15,10 @@ export const useProfileValidation = (activeStep: number, profileData: ProfileDat
       
       case 2: // Shipping address
         return !!profileData.shipping_address && 
-               !!profileData.shipping_address.street &&
+               !!profileData.shipping_address.address_line1 &&
                !!profileData.shipping_address.city &&
                !!profileData.shipping_address.state &&
-               !!profileData.shipping_address.zipCode &&
+               !!profileData.shipping_address.zip_code &&
                !!profileData.shipping_address.country;
       
       case 3: // Gift preferences

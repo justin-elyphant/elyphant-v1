@@ -1,139 +1,81 @@
 
 import { Profile } from "@/types/profile";
-import { normalizeDataSharingSettings } from "@/utils/privacyUtils";
-import { toast } from "sonner";
 
-// Check if a profile has all required fields properly initialized
-export function checkProfileConsistency(profile: Profile | null): { 
-  isValid: boolean; 
-  missingFields: string[]; 
-  recommendations: string[] 
-} {
-  const missingFields: string[] = [];
-  const recommendations: string[] = [];
-  
-  if (!profile) {
-    return {
-      isValid: false,
-      missingFields: ["profile"],
-      recommendations: ["User not authenticated or profile not loaded"]
-    };
-  }
-  
-  // Check required fields
-  if (!profile.id) missingFields.push("id");
-  if (!profile.name) missingFields.push("name");
-  if (!profile.email) missingFields.push("email");
-  if (!profile.username) missingFields.push("username");
-  
-  // Check data structure fields
-  if (!profile.shipping_address) {
-    missingFields.push("shipping_address");
-    recommendations.push("Initialize shipping_address to empty object");
-  }
-  
-  if (!Array.isArray(profile.gift_preferences)) {
-    missingFields.push("gift_preferences");
-    recommendations.push("Initialize gift_preferences to empty array");
-  }
-  
-  if (!Array.isArray(profile.important_dates)) {
-    missingFields.push("important_dates");
-    recommendations.push("Initialize important_dates to empty array");
-  }
-  
-  // Check data sharing settings
-  if (!profile.data_sharing_settings) {
-    missingFields.push("data_sharing_settings");
-    recommendations.push("Initialize data_sharing_settings with defaults");
-  } else {
-    // Check if data sharing settings have all required fields
-    const settings = profile.data_sharing_settings;
-    const requiredFields = ['dob', 'shipping_address', 'gift_preferences', 'email'];
-    const missingSettings = requiredFields.filter(field => !settings[field as keyof typeof settings]);
-    
-    if (missingSettings.length > 0) {
-      missingFields.push(`data_sharing_settings: ${missingSettings.join(', ')}`);
-      recommendations.push("Normalize data sharing settings using normalizeDataSharingSettings");
-    }
-    
-    // Ensure email is always private
-    if (settings.email !== 'private') {
-      recommendations.push("Enforce email privacy to 'private'");
-    }
-  }
-  
-  return {
-    isValid: missingFields.length === 0,
-    missingFields,
-    recommendations
-  };
-}
-
-// Run a profile consistency check and fix issues automatically if requested
+/**
+ * Validates profile data and fixes inconsistencies
+ * @param profile The profile to validate
+ * @param updateCallback Optional callback to update the profile if fixes are needed
+ * @param autoFix Whether to automatically fix issues
+ * @returns Boolean indicating if the profile is valid
+ */
 export async function validateAndFixProfile(
   profile: Profile | null, 
-  updateProfileFn?: (data: Partial<Profile>) => Promise<any>,
+  updateCallback?: (data: Partial<Profile>) => Promise<any>,
   autoFix: boolean = false
 ): Promise<boolean> {
-  const result = checkProfileConsistency(profile);
+  if (!profile) return false;
   
-  console.log("Profile consistency check:", result);
+  let needsFixes = false;
+  const fixes: Partial<Profile> = {};
   
-  if (!result.isValid) {
-    // Log issues
-    console.warn("Profile data inconsistency detected:", {
-      missing: result.missingFields,
-      recommendations: result.recommendations
-    });
-    
-    // Try to fix issues if requested and update function is available
-    if (autoFix && updateProfileFn && profile) {
-      try {
-        const updates: Partial<Profile> = {};
-        
-        // Fix shipping address
-        if (!profile.shipping_address) {
-          updates.shipping_address = {
-            street: '',
-            city: '',
-            state: '',
-            zipCode: '',
-            country: ''
-          };
-        }
-        
-        // Fix gift preferences
-        if (!Array.isArray(profile.gift_preferences)) {
-          updates.gift_preferences = [];
-        }
-        
-        // Fix important dates
-        if (!Array.isArray(profile.important_dates)) {
-          updates.important_dates = [];
-        }
-        
-        // Fix data sharing settings
-        if (!profile.data_sharing_settings || 
-            Object.keys(profile.data_sharing_settings).length < 4) {
-          updates.data_sharing_settings = normalizeDataSharingSettings(profile.data_sharing_settings);
-        }
-        
-        // Update profile if there are changes to make
-        if (Object.keys(updates).length > 0) {
-          console.log("Attempting to fix profile inconsistencies:", updates);
-          await updateProfileFn(updates);
-          toast.success("Profile data has been optimized");
-          return true;
-        }
-      } catch (error) {
-        console.error("Failed to fix profile inconsistencies:", error);
-        return false;
-      }
-    }
-    
-    return false;
+  // Check required fields
+  if (!profile.name) {
+    console.log("Profile missing name");
+    needsFixes = true;
+    if (autoFix) fixes.name = "User";
   }
   
-  return true;
+  // Check shipping address structure
+  if (profile.shipping_address) {
+    const address = profile.shipping_address;
+    
+    // Make sure we're using the standardized field names
+    if ((address as any).street && !address.address_line1) {
+      fixes.shipping_address = {
+        ...address,
+        address_line1: (address as any).street
+      };
+      needsFixes = true;
+    }
+    
+    if ((address as any).zipCode && !address.zip_code) {
+      fixes.shipping_address = {
+        ...(fixes.shipping_address || address),
+        zip_code: (address as any).zipCode
+      };
+      needsFixes = true;
+    }
+  }
+  
+  // Check gift preferences
+  if (!Array.isArray(profile.gift_preferences) || profile.gift_preferences.length === 0) {
+    fixes.gift_preferences = [];
+    needsFixes = true;
+  }
+  
+  // Check data_sharing_settings
+  if (!profile.data_sharing_settings || !profile.data_sharing_settings.email) {
+    fixes.data_sharing_settings = {
+      ...(profile.data_sharing_settings || {}),
+      dob: profile.data_sharing_settings?.dob || 'private',
+      shipping_address: profile.data_sharing_settings?.shipping_address || 'private',
+      gift_preferences: profile.data_sharing_settings?.gift_preferences || 'public',
+      email: 'private'
+    };
+    needsFixes = true;
+  }
+  
+  // If there are fixes and we have an update callback and autoFix is true, apply them
+  if (needsFixes && autoFix && updateCallback) {
+    try {
+      await updateCallback(fixes);
+      console.log("Auto-fixed profile inconsistencies:", fixes);
+      return true;
+    } catch (error) {
+      console.error("Failed to auto-fix profile:", error);
+      return false;
+    }
+  }
+  
+  return !needsFixes;
 }

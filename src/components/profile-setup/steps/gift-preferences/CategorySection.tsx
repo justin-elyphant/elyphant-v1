@@ -1,11 +1,12 @@
 
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { CategoryImportance, getSuggestedCategories } from "./utils";
+import { GiftPreference } from "@/types/profile";
+import { getSuggestedCategories } from "./utils";
 
 export interface CategorySectionProps {
-  preferences: Array<{ category: string; importance: CategoryImportance }>;
-  onChange: (preferences: Array<{ category: string; importance: CategoryImportance }>) => void;
+  preferences: GiftPreference[];
+  onChange: (preferences: GiftPreference[]) => void;
   selectedCategories?: string[];
   onCategorySelect?: (category: string) => void;
   searchTerm?: string;

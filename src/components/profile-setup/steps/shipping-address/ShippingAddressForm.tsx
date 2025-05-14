@@ -2,8 +2,8 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CountrySelect } from "./CountrySelect";
-import { StateSelect } from "./StateSelect";
+import CountrySelect from "./CountrySelect";
+import StateSelect from "./StateSelect";
 import { ShippingAddress } from "@/types/shipping";
 
 interface ShippingAddressFormProps {

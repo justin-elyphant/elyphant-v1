@@ -14,6 +14,11 @@ export function getReadablePrivacyLevel(level: PrivacyLevel): string {
   }
 }
 
+// Add the missing getSharingLevelLabel function
+export function getSharingLevelLabel(level: PrivacyLevel): string {
+  return getReadablePrivacyLevel(level);
+}
+
 export function getDefaultDataSharingSettings(): DataSharingSettings {
   return {
     dob: 'private',

@@ -1,3 +1,4 @@
+
 // This file defines all types related to user profiles
 
 export interface Profile {
@@ -21,7 +22,7 @@ export interface Profile {
 }
 
 export interface ShippingAddress {
-  // Use consistent naming that aligns with the form fields
+  // Standard fields
   address_line1?: string;
   address_line2?: string;
   city?: string;
@@ -29,6 +30,10 @@ export interface ShippingAddress {
   zip_code?: string;
   country?: string;
   is_default?: boolean;
+  
+  // Convenience aliases for better DX
+  street?: string;  // Alias for address_line1
+  zipCode?: string; // Alias for zip_code
 }
 
 export interface RecentlyViewedItem {
@@ -54,6 +59,7 @@ export interface ImportantDate {
   date: string;
   type: string;
   reminder_days?: number;
+  description?: string; // Add description as an alias for title for backwards compatibility
 }
 
 export interface DataSharingSettings {

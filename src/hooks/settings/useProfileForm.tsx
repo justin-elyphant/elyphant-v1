@@ -79,13 +79,13 @@ export const useProfileForm = () => {
       if (profile.important_dates) {
         if (Array.isArray(profile.important_dates)) {
           profile.important_dates.forEach(date => {
-            if (date && date.date && date.description) {
+            if (date && date.date) {
               try {
                 const parsedDate = new Date(date.date);
                 if (!isNaN(parsedDate.getTime())) {
                   importantDates.push({
                     date: parsedDate,
-                    description: date.description
+                    description: date.title || date.description || ""
                   });
                 }
               } catch (e) {
@@ -100,10 +100,10 @@ export const useProfileForm = () => {
       
       // Ensure we have a valid shipping address object
       const address = {
-        street: profile.shipping_address?.street || "",
+        street: profile.shipping_address?.address_line1 || profile.shipping_address?.street || "",
         city: profile.shipping_address?.city || "",
         state: profile.shipping_address?.state || "",
-        zipCode: profile.shipping_address?.zipCode || "",
+        zipCode: profile.shipping_address?.zip_code || profile.shipping_address?.zipCode || "",
         country: profile.shipping_address?.country || ""
       };
       
@@ -151,11 +151,14 @@ export const useProfileForm = () => {
         profile_image: data.profile_image,
         dob: data.birthday ? data.birthday.toISOString() : null,
         shipping_address: {
-          street: data.address.street || "",
+          address_line1: data.address.street || "",
           city: data.address.city || "",
           state: data.address.state || "",
-          zipCode: data.address.zipCode || "",
-          country: data.address.country || ""
+          zip_code: data.address.zipCode || "",
+          country: data.address.country || "",
+          // Add aliases for compatibility
+          street: data.address.street || "",
+          zipCode: data.address.zipCode || ""
         },
         gift_preferences: data.interests.map(interest => ({
           category: interest,
@@ -163,7 +166,9 @@ export const useProfileForm = () => {
         })),
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),
-          description: date.description
+          title: date.description,
+          description: date.description,
+          type: "custom"
         })),
         data_sharing_settings: data.data_sharing_settings || {
           dob: "private", 

@@ -14,10 +14,10 @@ interface ShippingAddressFormProps {
 export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ address, onChange }) => {
   // Convert between API and form formats
   const formAddress = {
-    street: address.address_line1 || "",
+    street: address.address_line1 || address.street || "",
     city: address.city || "",
     state: address.state || "",
-    zipCode: address.zip_code || "",
+    zipCode: address.zip_code || address.zipCode || "",
     country: address.country || "US"
   };
 

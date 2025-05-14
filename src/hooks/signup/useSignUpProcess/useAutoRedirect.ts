@@ -21,16 +21,19 @@ export const useAutoRedirect = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only redirect if we are NOT at onboarding-blocked modal: userIntent must exist
+    // Only redirect if userIntent is present *and* valid ('giftor' or 'giftee')
     const userIntent = localStorage.getItem("userIntent");
+    const validIntent = userIntent === "giftor" || userIntent === "giftee";
+    console.log("[useAutoRedirect] Auto-redirect check", { emailSent, step, userEmail, userIntent, validIntent, bypassVerification });
+
     if ((emailSent && step === "verification") || bypassVerification) {
       localStorage.setItem("newSignUp", "true");
       localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("userName", userName || "");
 
-      // -- CRITICAL: Only redirect if userIntent is set --
-      if (!userIntent) {
-        console.log("[useAutoRedirect] BLOCKING navigation—no onboarding intent chosen", { step, userEmail, bypassVerification });
+      // -- CRITICAL: Only redirect if userIntent is set and valid --
+      if (!validIntent) {
+        console.log("[useAutoRedirect] BLOCKING navigation—no or invalid onboarding intent", { step, userEmail, userIntent, validIntent, bypassVerification });
         return; // Don't navigate yet—the modal will trigger it
       }
 
@@ -40,8 +43,14 @@ export const useAutoRedirect = ({
         });
       }
 
-      console.log("[useAutoRedirect] Navigating to /profile-setup (userIntent exists)", { userIntent });
-      navigate('/profile-setup', { replace: true });
+      // If 'giftor', go to marketplace, else profile-setup
+      if (userIntent === "giftor") {
+        console.log("[useAutoRedirect] Navigating to /marketplace (userIntent = giftor)");
+        navigate('/marketplace', { replace: true });
+      } else {
+        console.log("[useAutoRedirect] Navigating to /profile-setup (userIntent = giftee)");
+        navigate('/profile-setup', { replace: true });
+      }
     }
   }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
   

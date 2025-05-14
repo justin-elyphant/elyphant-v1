@@ -59,12 +59,16 @@ export const useRecentlyViewed = (options: UseRecentlyViewedOptions = {}) => {
     setRecentlyViewed([]);
   };
 
+  // Add alias for backward compatibility
+  const addToRecentlyViewed = addItem;
+
   return {
     recentlyViewed,
     loading,
     addItem,
     removeItem,
-    clearAll
+    clearAll,
+    addToRecentlyViewed // Add this alias to maintain compatibility
   };
 };
 

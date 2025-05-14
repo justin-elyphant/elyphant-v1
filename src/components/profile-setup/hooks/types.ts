@@ -1,13 +1,5 @@
 
-import { ShippingAddress, GiftPreference } from "@/types/supabase";
-
-export interface ImportantDate {
-  id: string;
-  name: string;
-  date: string;
-  type: string;
-  reminder_days?: number;
-}
+import { ShippingAddress, GiftPreference, ImportantDate } from "@/types/profile";
 
 export interface ProfileData {
   name: string;

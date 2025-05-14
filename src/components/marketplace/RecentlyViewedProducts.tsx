@@ -37,7 +37,7 @@ const RecentlyViewedProducts = () => {
           {recentlyViewed.slice(0, 8).map((item) => (
             <Link 
               key={item.id} 
-              to={`/marketplace?productId=${item.id}`} 
+              to={`/marketplace?productId=${item.product_id}`} 
               className={cn(
                 "inline-block rounded-md border border-gray-200 overflow-hidden hover:shadow-md transition-all bg-white",
                 isMobile ? "w-32" : "w-48"
@@ -45,8 +45,8 @@ const RecentlyViewedProducts = () => {
             >
               <div className="aspect-square relative">
                 <img 
-                  src={item.image || "/placeholder.svg"} 
-                  alt={item.name} 
+                  src={item.product_data.image_url || "/placeholder.svg"} 
+                  alt={item.product_data.title} 
                   className="object-cover w-full h-full"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "/placeholder.svg";
@@ -55,9 +55,11 @@ const RecentlyViewedProducts = () => {
               </div>
               <div className="p-2">
                 <p className="text-sm font-medium whitespace-normal line-clamp-1">
-                  {item.name}
+                  {item.product_data.title}
                 </p>
-                <p className="text-sm font-bold text-gray-900">${item.price?.toFixed(2)}</p>
+                <p className="text-sm font-bold text-gray-900">
+                  ${item.product_data.price?.toFixed(2)}
+                </p>
               </div>
             </Link>
           ))}

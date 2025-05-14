@@ -1,166 +1,229 @@
-
-import { useState, useCallback } from 'react';
-import { useWishlist } from '@/components/gifting/hooks/useWishlist';
+import { useState, useEffect, useCallback } from 'react';
+import { useLocalStorage } from '@/components/gifting/hooks/useLocalStorage';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
+import { Wishlist, WishlistItem } from '@/types/profile';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 
-interface WishlistItem {
-  id: string;
-  product_id: string;
-  name: string;
-  price?: number;
-  brand?: string;
-  image_url?: string;
-  added_at: string;
+interface UseWishlistManagementProps {
+  initialWishlists?: Wishlist[];
 }
 
-interface WishlistFormValues {
-  title: string;
-  description?: string;
-}
+export const useWishlistManagement = (props: UseWishlistManagementProps = {}) => {
+  const { initialWishlists = [] } = props;
+  const [wishlists, setWishlists] = useState<Wishlist[]>(initialWishlists);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [userData] = useLocalStorage("userData", null);
+  const { user } = useAuth();
 
-export const useWishlistManagement = () => {
-  const navigate = useNavigate();
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [isRemovingItem, setIsRemovingItem] = useState<string | null>(null);
-  const [isAddingItem, setIsAddingItem] = useState<string | null>(null);
-  
-  const {
-    wishlists,
-    createWishlist,
-    deleteWishlist,
-    updateWishlistSharing,
-    addToWishlist,
-    removeFromWishlist,
-    isLoading,
-    initError,
-    reloadWishlists
-  } = useWishlist();
-
-  // Create new wishlist with proper feedback
-  const handleCreateWishlist = useCallback(async (values: WishlistFormValues) => {
-    try {
-      const newWishlist = await createWishlist(values.title, values.description);
-      if (newWishlist) {
-        toast.success(`Wishlist "${values.title}" created`, {
-          description: "You can now add products to your wishlist",
-          action: {
-            label: "View",
-            onClick: () => navigate(`/wishlists`)
-          }
-        });
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error("Error creating wishlist:", err);
-      toast.error("Failed to create wishlist");
-      return false;
+  // Load wishlists on mount
+  useEffect(() => {
+    if (user) {
+      fetchWishlists();
+    } else {
+      setLoading(false);
     }
-  }, [createWishlist, navigate]);
+  }, [user]);
 
-  // Delete wishlist with confirmation
-  const handleDeleteWishlist = useCallback(async (wishlistId: string, wishlistTitle: string) => {
-    setIsDeleting(wishlistId);
+  // Fetch wishlists from Supabase
+  const fetchWishlists = async () => {
+    setLoading(true);
     try {
-      const success = await deleteWishlist(wishlistId);
-      if (success) {
-        toast.success(`Wishlist "${wishlistTitle}" deleted`);
-        return true;
+      const { data, error } = await supabase
+        .from('wishlists')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
       }
-      return false;
-    } catch (err) {
-      console.error("Error deleting wishlist:", err);
-      toast.error("Failed to delete wishlist");
-      return false;
+
+      setWishlists(data || []);
+    } catch (error: any) {
+      setError(error);
+      toast.error(`Failed to fetch wishlists: ${error.message}`);
     } finally {
-      setIsDeleting(null);
+      setLoading(false);
     }
-  }, [deleteWishlist]);
+  };
 
-  // Handle privacy toggle
-  const handlePrivacyToggle = useCallback(async (wishlistId: string, isPublic: boolean) => {
-    setIsEditing(wishlistId);
+  // Create a new wishlist
+  const createWishlist = async (title: string, description?: string, is_public: boolean = false) => {
     try {
-      const success = await updateWishlistSharing(wishlistId, isPublic);
-      if (success) {
-        toast.success(
-          isPublic ? "Wishlist is now public" : "Wishlist is now private"
-        );
-      }
-      return success;
-    } catch (err) {
-      console.error("Error updating privacy settings:", err);
-      toast.error("Failed to update privacy settings");
-      return false;
-    } finally {
-      setIsEditing(null);
-    }
-  }, [updateWishlistSharing]);
+      const { data, error } = await supabase
+        .from('wishlists')
+        .insert([{ user_id: user?.id, title, description, is_public }])
+        .select('*')
+        .single();
 
-  // Add item to wishlist
-  const handleAddToWishlist = useCallback(async (
-    wishlistId: string, 
-    product: {
-      product_id: string;
-      name: string;
-      price?: number;
-      image_url?: string;
-      brand?: string;
-    }
-  ) => {
-    setIsAddingItem(product.product_id);
-    try {
-      const success = await addToWishlist(wishlistId, product);
-      if (success) {
-        toast.success(`Added "${product.name}" to wishlist`);
+      if (error) {
+        throw error;
       }
-      return success;
-    } catch (err) {
-      console.error("Error adding item to wishlist:", err);
-      toast.error("Failed to add item to wishlist");
-      return false;
-    } finally {
-      setIsAddingItem(null);
-    }
-  }, [addToWishlist]);
 
-  // Remove item from wishlist
-  const handleRemoveFromWishlist = useCallback(async (
-    wishlistId: string,
-    itemId: string,
-    itemName: string
-  ) => {
-    setIsRemovingItem(itemId);
-    try {
-      const success = await removeFromWishlist(wishlistId, itemId);
-      if (success) {
-        toast.success(`Removed "${itemName}" from wishlist`);
-      }
-      return success;
-    } catch (err) {
-      console.error("Error removing item from wishlist:", err);
-      toast.error("Failed to remove item from wishlist");
-      return false;
-    } finally {
-      setIsRemovingItem(null);
+      setWishlists(prevWishlists => [data, ...prevWishlists]);
+      toast.success(`Wishlist "${title}" created successfully`);
+      return data;
+    } catch (error: any) {
+      setError(error);
+      toast.error(`Failed to create wishlist: ${error.message}`);
+      return null;
     }
-  }, [removeFromWishlist]);
+  };
+
+  // Update an existing wishlist
+  const updateWishlist = async (wishlistId: string, updates: Partial<Wishlist>) => {
+    try {
+      const { data, error } = await supabase
+        .from('wishlists')
+        .update(updates)
+        .eq('id', wishlistId)
+        .select('*')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      setWishlists(prevWishlists =>
+        prevWishlists.map(wishlist => (wishlist.id === wishlistId ? { ...wishlist, ...data } : wishlist))
+      );
+      toast.success(`Wishlist "${data.title}" updated successfully`);
+      return true;
+    } catch (error: any) {
+      setError(error);
+      toast.error(`Failed to update wishlist: ${error.message}`);
+      return false;
+    }
+  };
+
+  // Delete a wishlist
+  const deleteWishlist = async (wishlistId: string) => {
+    try {
+      const { error } = await supabase
+        .from('wishlists')
+        .delete()
+        .eq('id', wishlistId);
+
+      if (error) {
+        throw error;
+      }
+
+      setWishlists(prevWishlists => prevWishlists.filter(wishlist => wishlist.id !== wishlistId));
+      toast.success("Wishlist deleted successfully");
+    } catch (error: any) {
+      setError(error);
+      toast.error(`Failed to delete wishlist: ${error.message}`);
+    }
+  };
+
+  // Add a product to a wishlist
+  const addProductToWishlist = async (wishlistId: string, product: any) => {
+  try {
+    // Create a properly formatted wishlist item
+    const wishlistItem: Omit<WishlistItem, "id" | "added_at"> = {
+      wishlist_id: wishlistId,
+      product_id: product.product_id || product.id || "",
+      title: product.name || product.title || "",
+      created_at: new Date().toISOString(),
+      // Include these optional fields
+      price: product.price,
+      image_url: product.image_url || product.image,
+      brand: product.brand,
+      name: product.name || product.title || ""
+    };
+
+    const { data, error } = await supabase
+      .from('wishlist_items')
+      .insert([wishlistItem])
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    setWishlists(prevWishlists =>
+      prevWishlists.map(wishlist =>
+        wishlist.id === wishlistId
+          ? { ...wishlist, items: [...(wishlist.items || []), data] }
+          : wishlist
+      )
+    );
+    toast.success(`Product added to wishlist`);
+  } catch (error: any) {
+    setError(error);
+    toast.error(`Failed to add product to wishlist: ${error.message}`);
+  }
+};
+
+  // Remove a product from a wishlist
+  const removeProductFromWishlist = async (wishlistItemId: string, wishlistId: string) => {
+    try {
+      const { error } = await supabase
+        .from('wishlist_items')
+        .delete()
+        .eq('id', wishlistItemId);
+
+      if (error) {
+        throw error;
+      }
+
+      setWishlists(prevWishlists =>
+        prevWishlists.map(wishlist => ({
+          ...wishlist,
+          items: wishlist.items?.filter(item => item.id !== wishlistItemId) || []
+        }))
+      );
+      toast.success("Product removed from wishlist");
+    } catch (error: any) {
+      setError(error);
+      toast.error(`Failed to remove product from wishlist: ${error.message}`);
+    }
+  };
+
+  // Toggle product in favorites (local storage)
+  const handleFavoriteToggle = useCallback((productId: string) => {
+    if (!userData) {
+      return false;
+    }
+
+    const existingFavorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    const isAlreadyFavorite = existingFavorites.includes(productId);
+
+    let updatedFavorites;
+    if (isAlreadyFavorite) {
+      updatedFavorites = existingFavorites.filter((id: string) => id !== productId);
+    } else {
+      updatedFavorites = [...existingFavorites, productId];
+    }
+
+    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    return true;
+  }, [userData]);
+
+  // Check if a product is favorited
+  const isFavorited = useCallback((productId: string) => {
+    if (!userData) {
+      return false;
+    }
+
+    const existingFavorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    return existingFavorites.includes(productId);
+  }, [userData]);
 
   return {
     wishlists,
-    isLoading,
-    initError,
-    reloadWishlists,
-    handleCreateWishlist,
-    handleDeleteWishlist,
-    handlePrivacyToggle,
-    handleAddToWishlist,
-    handleRemoveFromWishlist,
-    isDeleting,
-    isEditing,
-    isRemovingItem,
-    isAddingItem
+    loading,
+    error,
+    fetchWishlists,
+    createWishlist,
+    updateWishlist,
+    deleteWishlist,
+    addProductToWishlist,
+    removeProductFromWishlist,
+    handleFavoriteToggle,
+    isFavorited
   };
 };

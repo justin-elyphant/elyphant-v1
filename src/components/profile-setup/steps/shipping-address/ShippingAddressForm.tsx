@@ -1,85 +1,97 @@
 
 import React from "react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { ShippingAddress } from "@/types/profile";
 import CountrySelect from "./CountrySelect";
 import StateSelect from "./StateSelect";
-import { ShippingAddress } from "@/types/shipping";
 
 interface ShippingAddressFormProps {
   address: ShippingAddress;
   onChange: (address: ShippingAddress) => void;
 }
 
-export function ShippingAddressForm({ address, onChange }: ShippingAddressFormProps) {
-  const handleChange = (field: keyof ShippingAddress, fieldValue: string) => {
-    onChange({
-      ...address,
-      [field]: fieldValue,
-    });
+export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ address, onChange }) => {
+  // Convert between API and form formats
+  const formAddress = {
+    street: address.address_line1 || "",
+    city: address.city || "",
+    state: address.state || "",
+    zipCode: address.zip_code || "",
+    country: address.country || "US"
   };
 
-  const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (field: string, value: string) => {
+    // Update the form data
+    const updatedForm = {
+      ...formAddress,
+      [field]: value
+    };
+    
+    // Convert back to API format when calling onChange
     onChange({
-      ...address,
-      address_line1: e.target.value,
-    });
-  };
-
-  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({
-      ...address,
-      zip_code: e.target.value,
+      address_line1: updatedForm.street,
+      city: updatedForm.city,
+      state: updatedForm.state,
+      zip_code: updatedForm.zipCode,
+      country: updatedForm.country,
+      // Add aliases for compatibility
+      street: updatedForm.street,
+      zipCode: updatedForm.zipCode
     });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="grid gap-4">
+      <div className="grid gap-2">
         <Label htmlFor="street">Street Address</Label>
         <Input
           id="street"
           placeholder="123 Main St"
-          value={address.address_line1 || ""}
-          onChange={handleStreetChange}
-          className="w-full"
+          value={formAddress.street}
+          onChange={(e) => handleChange("street", e.target.value)}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            placeholder="City"
-            value={address.city || ""}
-            onChange={(e) => handleChange("city", e.target.value)}
-            className="w-full"
+      <div className="grid gap-2">
+        <Label htmlFor="city">City</Label>
+        <Input
+          id="city"
+          placeholder="City"
+          value={formAddress.city}
+          onChange={(e) => handleChange("city", e.target.value)}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="state">State</Label>
+          <StateSelect
+            value={formAddress.state}
+            onChange={(state) => handleChange("state", state)}
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="zipCode">ZIP Code</Label>
-          <Input
-            id="zipCode"
-            placeholder="ZIP Code"
-            value={address.zip_code || ""}
-            onChange={handleZipCodeChange}
-            className="w-full"
+        <div className="grid gap-2">
+          <Label htmlFor="country">Country</Label>
+          <CountrySelect
+            value={formAddress.country}
+            onChange={(country) => handleChange("country", country)}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StateSelect
-          value={address.state || ""}
-          onChange={(state) => handleChange("state", state)}
-        />
-        <CountrySelect
-          value={address.country || ""}
-          onChange={(country) => handleChange("country", country)}
+      <div className="grid gap-2">
+        <Label htmlFor="zipCode">Zip / Postal Code</Label>
+        <Input
+          id="zipCode"
+          placeholder="Zip Code"
+          value={formAddress.zipCode}
+          onChange={(e) => handleChange("zipCode", e.target.value)}
         />
       </div>
     </div>
   );
-}
+};
+
+export default ShippingAddressForm;

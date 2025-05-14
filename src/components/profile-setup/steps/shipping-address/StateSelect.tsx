@@ -1,94 +1,72 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useFormContext } from 'react-hook-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const usStates = [
-  { value: 'AL', label: 'Alabama' },
-  { value: 'AK', label: 'Alaska' },
-  { value: 'AZ', label: 'Arizona' },
-  { value: 'AR', label: 'Arkansas' },
-  { value: 'CA', label: 'California' },
-  { value: 'CO', label: 'Colorado' },
-  { value: 'CT', label: 'Connecticut' },
-  { value: 'DE', label: 'Delaware' },
-  { value: 'FL', label: 'Florida' },
-  { value: 'GA', label: 'Georgia' },
-  { value: 'HI', label: 'Hawaii' },
-  { value: 'ID', label: 'Idaho' },
-  { value: 'IL', label: 'Illinois' },
-  { value: 'IN', label: 'Indiana' },
-  { value: 'IA', label: 'Iowa' },
-  { value: 'KS', label: 'Kansas' },
-  { value: 'KY', label: 'Kentucky' },
-  { value: 'LA', label: 'Louisiana' },
-  { value: 'ME', label: 'Maine' },
-  { value: 'MD', label: 'Maryland' },
-  { value: 'MA', label: 'Massachusetts' },
-  { value: 'MI', label: 'Michigan' },
-  { value: 'MN', label: 'Minnesota' },
-  { value: 'MS', label: 'Mississippi' },
-  { value: 'MO', label: 'Missouri' },
-  { value: 'MT', label: 'Montana' },
-  { value: 'NE', label: 'Nebraska' },
-  { value: 'NV', label: 'Nevada' },
-  { value: 'NH', label: 'New Hampshire' },
-  { value: 'NJ', label: 'New Jersey' },
-  { value: 'NM', label: 'New Mexico' },
-  { value: 'NY', label: 'New York' },
-  { value: 'NC', label: 'North Carolina' },
-  { value: 'ND', label: 'North Dakota' },
-  { value: 'OH', label: 'Ohio' },
-  { value: 'OK', label: 'Oklahoma' },
-  { value: 'OR', label: 'Oregon' },
-  { value: 'PA', label: 'Pennsylvania' },
-  { value: 'RI', label: 'Rhode Island' },
-  { value: 'SC', label: 'South Carolina' },
-  { value: 'SD', label: 'South Dakota' },
-  { value: 'TN', label: 'Tennessee' },
-  { value: 'TX', label: 'Texas' },
-  { value: 'UT', label: 'Utah' },
-  { value: 'VT', label: 'Vermont' },
-  { value: 'VA', label: 'Virginia' },
-  { value: 'WA', label: 'Washington' },
-  { value: 'WV', label: 'West Virginia' },
-  { value: 'WI', label: 'Wisconsin' },
-  { value: 'WY', label: 'Wyoming' },
-  { value: 'DC', label: 'District of Columbia' },
-];
+interface StateSelectProps {
+  value: string;
+  onChange: (state: string) => void;
+}
 
-const StateSelect = () => {
-  const form = useFormContext();
-  
+const StateSelect: React.FC<StateSelectProps> = ({ value, onChange }) => {
   return (
-    <FormField
-      control={form.control}
-      name="address.state"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>State</FormLabel>
-          <FormControl>
-            <Select
-              value={field.value || ''}
-              onValueChange={field.onChange}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a state" />
-              </SelectTrigger>
-              <SelectContent>
-                {usStates.map((state) => (
-                  <SelectItem key={state.value} value={state.value}>
-                    {state.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select state" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="AL">Alabama</SelectItem>
+        <SelectItem value="AK">Alaska</SelectItem>
+        <SelectItem value="AZ">Arizona</SelectItem>
+        <SelectItem value="AR">Arkansas</SelectItem>
+        <SelectItem value="CA">California</SelectItem>
+        <SelectItem value="CO">Colorado</SelectItem>
+        <SelectItem value="CT">Connecticut</SelectItem>
+        <SelectItem value="DE">Delaware</SelectItem>
+        <SelectItem value="FL">Florida</SelectItem>
+        <SelectItem value="GA">Georgia</SelectItem>
+        <SelectItem value="HI">Hawaii</SelectItem>
+        <SelectItem value="ID">Idaho</SelectItem>
+        <SelectItem value="IL">Illinois</SelectItem>
+        <SelectItem value="IN">Indiana</SelectItem>
+        <SelectItem value="IA">Iowa</SelectItem>
+        <SelectItem value="KS">Kansas</SelectItem>
+        <SelectItem value="KY">Kentucky</SelectItem>
+        <SelectItem value="LA">Louisiana</SelectItem>
+        <SelectItem value="ME">Maine</SelectItem>
+        <SelectItem value="MD">Maryland</SelectItem>
+        <SelectItem value="MA">Massachusetts</SelectItem>
+        <SelectItem value="MI">Michigan</SelectItem>
+        <SelectItem value="MN">Minnesota</SelectItem>
+        <SelectItem value="MS">Mississippi</SelectItem>
+        <SelectItem value="MO">Missouri</SelectItem>
+        <SelectItem value="MT">Montana</SelectItem>
+        <SelectItem value="NE">Nebraska</SelectItem>
+        <SelectItem value="NV">Nevada</SelectItem>
+        <SelectItem value="NH">New Hampshire</SelectItem>
+        <SelectItem value="NJ">New Jersey</SelectItem>
+        <SelectItem value="NM">New Mexico</SelectItem>
+        <SelectItem value="NY">New York</SelectItem>
+        <SelectItem value="NC">North Carolina</SelectItem>
+        <SelectItem value="ND">North Dakota</SelectItem>
+        <SelectItem value="OH">Ohio</SelectItem>
+        <SelectItem value="OK">Oklahoma</SelectItem>
+        <SelectItem value="OR">Oregon</SelectItem>
+        <SelectItem value="PA">Pennsylvania</SelectItem>
+        <SelectItem value="RI">Rhode Island</SelectItem>
+        <SelectItem value="SC">South Carolina</SelectItem>
+        <SelectItem value="SD">South Dakota</SelectItem>
+        <SelectItem value="TN">Tennessee</SelectItem>
+        <SelectItem value="TX">Texas</SelectItem>
+        <SelectItem value="UT">Utah</SelectItem>
+        <SelectItem value="VT">Vermont</SelectItem>
+        <SelectItem value="VA">Virginia</SelectItem>
+        <SelectItem value="WA">Washington</SelectItem>
+        <SelectItem value="WV">West Virginia</SelectItem>
+        <SelectItem value="WI">Wisconsin</SelectItem>
+        <SelectItem value="WY">Wyoming</SelectItem>
+        <SelectItem value="DC">District of Columbia</SelectItem>
+      </SelectContent>
+    </Select>
   );
 };
 

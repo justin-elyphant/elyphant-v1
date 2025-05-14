@@ -6,20 +6,40 @@ import WishlistTabContent from "./tabs/WishlistTabContent";
 import SettingsTabContent from "./tabs/SettingsTabContent";
 import ActivityTabContent from "./tabs/ActivityTabContent";
 import ConnectTabContent from "./tabs/ConnectTabContent";
-import { Profile } from "@/types/profile";
+import { RecentlyViewedItem } from "@/types/profile";
 
 export interface ProfileTabsProps {
-  profile: Profile | null;
+  profile: any;
   isOwnProfile: boolean;
-  onUpdateProfile?: (data: Partial<Profile>) => Promise<void>;
+  onUpdateProfile?: (data: any) => void;
+  // Add the props that were causing errors
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+  mockWishlists?: any[];
 }
 
-const ProfileTabs: React.FC<ProfileTabsProps> = ({ profile, isOwnProfile, onUpdateProfile }) => {
-  // Get recently viewed items or an empty array
-  const recentlyViewed = profile?.recently_viewed || [];
+const ProfileTabs: React.FC<ProfileTabsProps> = ({ 
+  profile, 
+  isOwnProfile, 
+  onUpdateProfile,
+  activeTab = "overview",
+  setActiveTab
+}) => {
+  // Get recently viewed items from profile or set empty array
+  const recentlyViewed: RecentlyViewedItem[] = profile?.recently_viewed || [];
+  
+  const handleTabChange = (value: string) => {
+    if (setActiveTab) {
+      setActiveTab(value);
+    }
+  };
 
   return (
-    <Tabs defaultValue="overview" className="w-full">
+    <Tabs 
+      defaultValue={activeTab} 
+      className="w-full"
+      onValueChange={handleTabChange}
+    >
       <TabsList className="grid grid-cols-5 md:w-auto w-full">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
@@ -46,7 +66,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ profile, isOwnProfile, onUpda
       <TabsContent value="activity">
         <ActivityTabContent 
           profile={profile} 
-          recentlyViewed={recentlyViewed}
+          recentlyViewed={recentlyViewed} 
           isOwnProfile={isOwnProfile} 
         />
       </TabsContent>
@@ -57,7 +77,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ profile, isOwnProfile, onUpda
 
       {isOwnProfile && (
         <TabsContent value="settings">
-          <SettingsTabContent profile={profile} onUpdateProfile={onUpdateProfile} />
+          <SettingsTabContent 
+            profile={profile} 
+            onUpdateProfile={onUpdateProfile} 
+          />
         </TabsContent>
       )}
     </Tabs>

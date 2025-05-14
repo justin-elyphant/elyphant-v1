@@ -1,4 +1,3 @@
-
 import { Profile, GiftPreference, ShippingAddress, ImportantDate, DataSharingSettings } from "@/types/profile";
 
 /**
@@ -6,13 +5,13 @@ import { Profile, GiftPreference, ShippingAddress, ImportantDate, DataSharingSet
  * but not originally in the base Profile type
  */
 export interface ExtendedProfile extends Profile {
-  // Add missing fields that components expect
+  // Make the gift_preferences field required
+  gift_preferences: GiftPreference[];
+  
+  // Other fields remain optional
   interests?: string[];
   recently_viewed?: any[];
   user_id: string;
-  
-  // Make sure these fields are defined
-  gift_preferences: GiftPreference[];
   shipping_address?: ShippingAddress;
   important_dates?: ImportantDate[];
   data_sharing_settings?: DataSharingSettings;
@@ -48,7 +47,8 @@ export function extendProfileWithInterests(profile: Profile | null): ExtendedPro
   return {
     ...profile,
     interests: extractInterests(profile),
-    user_id: profile.id // Ensure user_id is present
+    user_id: profile.id,
+    gift_preferences: profile.gift_preferences || [] // Ensure gift_preferences is never undefined
   };
 }
 

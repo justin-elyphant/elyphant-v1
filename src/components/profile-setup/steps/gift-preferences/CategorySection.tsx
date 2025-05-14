@@ -1,87 +1,113 @@
 
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { GiftPreference } from "@/types/profile";
-import { getSuggestedCategories } from "./utils";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { getSuggestedCategories, CATEGORIES } from './utils';
+import ImportanceSelector from './ImportanceSelector';
+import { GiftPreference } from '@/types/profile';
 
-export interface CategorySectionProps {
-  preferences: GiftPreference[];
-  onChange: (preferences: GiftPreference[]) => void;
-  selectedCategories?: string[];
-  onCategorySelect?: (category: string) => void;
-  searchTerm?: string;
-  onSearchChange?: React.Dispatch<React.SetStateAction<string>>;
-  suggestedCategories?: string[];
+interface CategorySectionProps {
+  selectedPreferences: GiftPreference[];
+  onAddPreference: (preference: GiftPreference) => void;
+  onRemovePreference: (category: string) => void;
+  onUpdateImportance: (category: string, importance: 'low' | 'medium' | 'high') => void;
 }
 
 const CategorySection: React.FC<CategorySectionProps> = ({
-  preferences,
-  onChange,
-  selectedCategories = [],
-  onCategorySelect,
-  searchTerm = "",
-  onSearchChange,
-  suggestedCategories = []
+  selectedPreferences,
+  onAddPreference,
+  onRemovePreference,
+  onUpdateImportance,
 }) => {
-  const [localSearchTerm, setLocalSearchTerm] = useState("");
-  const [localSuggestions, setLocalSuggestions] = useState(getSuggestedCategories(""));
+  const [customCategory, setCustomCategory] = useState('');
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  const suggestedCategories = getSuggestedCategories();
+  const displayCategories = showAllCategories ? CATEGORIES : suggestedCategories;
   
-  // Use either passed in values or local state
-  const currentSearchTerm = onSearchChange ? searchTerm : localSearchTerm;
-  const currentSuggestions = onCategorySelect ? suggestedCategories : localSuggestions;
-  
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (onSearchChange) {
-      onSearchChange(value);
-    } else {
-      setLocalSearchTerm(value);
-      setLocalSuggestions(getSuggestedCategories(value));
+  // Filter out categories that are already selected
+  const selectedCategoryNames = selectedPreferences.map(pref => pref.category);
+  const availableCategories = displayCategories.filter(
+    category => !selectedCategoryNames.includes(category)
+  );
+
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim() && !selectedCategoryNames.includes(customCategory.trim())) {
+      onAddPreference({
+        category: customCategory.trim(),
+        importance: 'medium'
+      });
+      setCustomCategory('');
     }
   };
-  
-  const handleCategorySelect = (category: string) => {
-    if (onCategorySelect) {
-      onCategorySelect(category);
-    } else {
-      // If no external handler, manage internally
-      if (!preferences.some(p => p.category === category)) {
-        onChange([...preferences, { category, importance: "medium" }]);
-      }
-    }
-  };
-  
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="space-y-2">
-        <Input
-          placeholder="Search for categories..."
-          value={currentSearchTerm}
-          onChange={handleSearchChange}
-          className="w-full"
-        />
+        <h3 className="text-lg font-medium">Selected Categories</h3>
+        {selectedPreferences.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No categories selected yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {selectedPreferences.map((pref) => (
+              <div key={pref.category} className="flex items-center bg-muted p-2 rounded-md">
+                <span>{pref.category}</span>
+                <ImportanceSelector
+                  value={pref.importance}
+                  onChange={(importance) => onUpdateImportance(pref.category, importance as 'low' | 'medium' | 'high')}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onRemovePreference(pref.category)}
+                  className="h-8 w-8 p-0 ml-2"
+                >
+                  &times;
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {currentSuggestions.map((category) => {
-          const isSelected = (selectedCategories || []).includes(category) || 
-                           preferences.some(p => p.category === category);
-          return (
-            <button
+
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium">Suggested Categories</h3>
+        <div className="flex flex-wrap gap-2">
+          {availableCategories.map((category) => (
+            <Badge
               key={category}
-              type="button"
-              onClick={() => handleCategorySelect(category)}
-              disabled={isSelected}
-              className={`text-sm py-1.5 px-2.5 rounded-md ${
-                isSelected
-                  ? "bg-primary/10 text-primary border border-primary/30"
-                  : "hover:bg-muted border border-border"
-              }`}
+              variant="outline"
+              className="px-3 py-1 cursor-pointer hover:bg-primary hover:text-primary-foreground"
+              onClick={() => onAddPreference({ category, importance: 'medium' })}
             >
               {category}
-            </button>
-          );
-        })}
+            </Badge>
+          ))}
+          {!showAllCategories && (
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-1"
+              onClick={() => setShowAllCategories(true)}
+            >
+              Show more...
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium">Add Custom Category</h3>
+        <div className="flex space-x-2">
+          <Input
+            placeholder="Enter custom category"
+            value={customCategory}
+            onChange={(e) => setCustomCategory(e.target.value)}
+            className="max-w-sm"
+          />
+          <Button onClick={handleAddCustomCategory}>Add</Button>
+        </div>
       </div>
     </div>
   );

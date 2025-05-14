@@ -28,17 +28,25 @@ const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // On mount: If user is NOT logged in, clear all onboarding-related state and localStorage for a fresh sign up experience, *especially userIntent*
+  // On mount: Forcibly clear all onboarding-related state and localStorage (including userIntent) for EVERY visit to /signup unless user is truly logged in. 
   React.useEffect(() => {
+    // Always do this FIRST for new sessions or logouts.
     if (!user) {
       CLEAR_ONBOARDING_KEYS.forEach((key) => localStorage.removeItem(key));
+      // Add extra wipe for good measure (debugging help)
+      localStorage.clear(); // CAUTION: this removes everything—it's safe ONLY on this page!
     }
+    console.log("[SignUp] Onboarding keys wiped!", { user });
   }, [user]);
 
-  // Only auto-navigate if NOT a new signup, to allow onboarding flow
+  // After wiping keys, handle navigation
   React.useEffect(() => {
+    // Evaluate after keys have been removed
     const newSignUp = localStorage.getItem("newSignUp") === "true";
     const hasIntent = !!localStorage.getItem("userIntent");
+    console.log("[SignUp] Checking navigation conditions", { user, newSignUp, hasIntent });
+
+    // Only auto-navigate if NOT a new signup, to allow onboarding flow
     if (user && (!newSignUp || hasIntent)) {
       navigate("/dashboard", { replace: true });
     }
@@ -63,6 +71,7 @@ const SignUp: React.FC = () => {
     if (step === "verification") {
       localStorage.setItem("newSignUp", "true");
     }
+    console.log("[SignUp] Step changed", { step });
   }, [step]);
 
   return (

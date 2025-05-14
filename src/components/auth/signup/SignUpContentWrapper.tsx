@@ -32,14 +32,15 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [intentHandled, setIntentHandled] = React.useState(false);
   const navigate = useNavigate();
 
-  // Whenever userIntent is missing and we reach step=verification, show modal. If userIntent changes (e.g., by other tabs), instantly close it.
+  // Debug logs to help trace modal logic
   React.useEffect(() => {
+    const intent = localStorage.getItem("userIntent");
+    console.log("[SignUpContentWrapper] Effect: step/email/intent:", { step, userEmail, intent });
     if (step !== "verification" || !userEmail) {
       setShowIntentModal(false);
       setIntentHandled(false);
       return;
     }
-    const intent = localStorage.getItem("userIntent");
     if (!intent) {
       setShowIntentModal(true);
       setIntentHandled(false);
@@ -49,8 +50,9 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     }
   }, [step, userEmail]);
 
-  // Defensive: block everything until modal is explicitly handled if modal is open
+  // Strict modal block: if modal is visible and unhandled, block everything
   if (showIntentModal && !intentHandled) {
+    // Always double-check that userIntent is missing
     const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
       localStorage.setItem("userIntent", userIntent);
       setShowIntentModal(false);
@@ -71,6 +73,9 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       setIntentHandled(true);
       navigate("/profile-setup", { replace: true });
     };
+
+    // Extra debug
+    console.log("[SignUpContentWrapper] Modal is rendered, blocking UI.");
 
     return (
       <OnboardingIntentModal

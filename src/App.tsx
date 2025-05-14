@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import SignIn from "./pages/auth/SignIn";
@@ -9,6 +8,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
+import ProfileSetup from "./pages/ProfileSetup";
 import { AuthProvider } from "@/contexts/auth";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
@@ -28,6 +28,7 @@ function App() {
               <Route path="/profile/:userId" element={<UserProfile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ThemeProvider>

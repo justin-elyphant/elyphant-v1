@@ -28,28 +28,27 @@ const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // On mount: Forcibly clear all onboarding-related state and localStorage (including userIntent) for EVERY visit to /signup unless user is truly logged in. 
+  // Always clear onboarding keys for /signup, unless logged in
   React.useEffect(() => {
-    // Always do this FIRST for new sessions or logouts.
     if (!user) {
       CLEAR_ONBOARDING_KEYS.forEach((key) => localStorage.removeItem(key));
-      // Add extra wipe for good measure (debugging help)
-      localStorage.clear(); // CAUTION: this removes everything—it's safe ONLY on this page!
+      localStorage.clear();
+      console.log("[SignUp] Onboarding keys wiped!", { user });
     }
-    console.log("[SignUp] Onboarding keys wiped!", { user });
   }, [user]);
 
-  // After wiping keys, handle navigation
+  // WARNING: Do NOT navigate to /profile-setup unless userIntent is present!
   React.useEffect(() => {
-    // Evaluate after keys have been removed
     const newSignUp = localStorage.getItem("newSignUp") === "true";
-    const hasIntent = !!localStorage.getItem("userIntent");
-    console.log("[SignUp] Checking navigation conditions", { user, newSignUp, hasIntent });
+    const userIntent = localStorage.getItem("userIntent");
+    console.log("[SignUp] Checking navigation after key wipe", { user, newSignUp, userIntent });
 
-    // Only auto-navigate if NOT a new signup, to allow onboarding flow
-    if (user && (!newSignUp || hasIntent)) {
+    // Only navigate away if intent is set (block otherwise, let modal run)
+    if (user && (!newSignUp || !!userIntent)) {
+      console.log("[SignUp] Auto-navigating to /dashboard, not blocking onboarding modal.", { user, newSignUp, userIntent });
       navigate("/dashboard", { replace: true });
     }
+    // Else: explicitly do NOTHING, modal+onboarding will control all navigation.
   }, [user, navigate]);
 
   const {
@@ -61,13 +60,13 @@ const SignUp: React.FC = () => {
     isSubmitting,
     handleResendVerification,
     resendCount,
-    bypassVerification = true, // Always enable hybrid verification for better UX
+    bypassVerification = true,
   } = useSignUpProcess();
 
-  // Store verification bypass preference in localStorage for consistent experience across sessions
+  // Always set bypassVerification in localStorage
   React.useEffect(() => {
     localStorage.setItem("bypassVerification", "true");
-    // If at verification, set newSignUp
+    // Only set newSignUp at VERIFICATION (never anywhere else!)
     if (step === "verification") {
       localStorage.setItem("newSignUp", "true");
     }
@@ -95,4 +94,3 @@ const SignUp: React.FC = () => {
 };
 
 export default SignUp;
-

@@ -21,19 +21,17 @@ export const useAutoRedirect = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Persist new signup and user data
+    // Only redirect if we are NOT at onboarding-blocked modal: userIntent must exist
+    const userIntent = localStorage.getItem("userIntent");
     if ((emailSent && step === "verification") || bypassVerification) {
       localStorage.setItem("newSignUp", "true");
       localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("userName", userName || "");
 
-      // Don't auto-redirect to /profile-setup if user intent not chosen yet (let modal show)
-      const isNewSignUp = localStorage.getItem("newSignUp") === "true";
-      const userIntent = localStorage.getItem("userIntent");
-
-      if (isNewSignUp && !userIntent) {
-        // Do not navigate; onboarding modal should show
-        return;
+      // -- CRITICAL: Only redirect if userIntent is set --
+      if (!userIntent) {
+        console.log("[useAutoRedirect] BLOCKING navigation—no onboarding intent chosen", { step, userEmail, bypassVerification });
+        return; // Don't navigate yet—the modal will trigger it
       }
 
       if (bypassVerification) {
@@ -42,9 +40,10 @@ export const useAutoRedirect = ({
         });
       }
 
+      console.log("[useAutoRedirect] Navigating to /profile-setup (userIntent exists)", { userIntent });
       navigate('/profile-setup', { replace: true });
     }
   }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
-
+  
   return null;
 };

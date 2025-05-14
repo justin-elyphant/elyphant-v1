@@ -30,6 +30,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true, // Default to bypassing verification for better UX
 }) => {
   const [showIntentModal, setShowIntentModal] = React.useState(false);
+  const [intentHandled, setIntentHandled] = React.useState(false); // add this
   const navigate = useNavigate();
 
   // Show modal ONLY AFTER signup is successful (step === 'verification' and we have the user's email)
@@ -37,38 +38,47 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     // If we're still at the initial "signup" step, don't show the modal.
     if (step !== "verification" || !userEmail) {
       setShowIntentModal(false);
+      setIntentHandled(false);
       return;
     }
     // Only show if userIntent is not yet set (hasn't proceeded past modal yet)
     const intentAlreadySelected = !!localStorage.getItem("userIntent");
     if (!intentAlreadySelected) {
       setShowIntentModal(true);
+      setIntentHandled(false);
+    } else {
+      setShowIntentModal(false);
+      setIntentHandled(true); // ensure we won't block rendering below
     }
   }, [step, userEmail]);
 
-  if (showIntentModal) {
-    const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
-      localStorage.setItem("userIntent", userIntent);
-      setShowIntentModal(false);
+  // Only navigate on explicit user/manual modal action
+  const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
+    localStorage.setItem("userIntent", userIntent);
+    setShowIntentModal(false);
+    setIntentHandled(true);
 
-      // Branch immediately based on role
-      if (userIntent === "giftor") {
-        localStorage.setItem("onboardingComplete", "true");
-        localStorage.removeItem("newSignUp");
-        navigate("/marketplace", { replace: true });
-      } else {
-        // giftee
-        navigate("/profile-setup", { replace: true });
-      }
-    };
-
-    const handleSkip = () => {
-      // Treat skip as giftee
-      localStorage.setItem("userIntent", "skipped");
-      setShowIntentModal(false);
+    // Branch immediately based on role
+    if (userIntent === "giftor") {
+      localStorage.setItem("onboardingComplete", "true");
+      localStorage.removeItem("newSignUp");
+      navigate("/marketplace", { replace: true });
+    } else {
+      // giftee
       navigate("/profile-setup", { replace: true });
-    };
+    }
+  };
 
+  const handleSkip = () => {
+    // Treat skip as giftee for now
+    localStorage.setItem("userIntent", "skipped");
+    setShowIntentModal(false);
+    setIntentHandled(true);
+    navigate("/profile-setup", { replace: true });
+  };
+
+  // INTENTIONAL: Block further UI (including verification view) until modal is dismissed
+  if (showIntentModal && !intentHandled) {
     return (
       <OnboardingIntentModal
         open={showIntentModal}
@@ -89,7 +99,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   }
 
   // Show verification screen (e.g., "Account Created!" or similar) after signup,
-  // but AFTER the intent modal has been completed (never before signup!).
+  // but only if onboarding has been completed or intent handled.
   return (
     <VerificationView
       userEmail={userEmail}

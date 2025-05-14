@@ -32,42 +32,51 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [showIntentModal, setShowIntentModal] = React.useState(false);
   const navigate = useNavigate();
 
+  // Handle displaying the intent modal for new signups before any automatic redirects
   React.useEffect(() => {
-    // Only fire on verification step (user successfully signed up)
-    // Don't show if userIntent already selected
-    if (
-      step === "verification" &&
-      localStorage.getItem("newSignUp") === "true" &&
-      !localStorage.getItem("userIntent")
-    ) {
+    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    const intentAlreadySelected = !!localStorage.getItem("userIntent");
+    // Show modal if it's a new sign up and userIntent is not set
+    if (isNewSignUp && !intentAlreadySelected) {
       setShowIntentModal(true);
     }
   }, [step]);
 
-  const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
-    // Save chosen intent
-    localStorage.setItem("userIntent", userIntent);
-    setShowIntentModal(false);
+  // If the modal is open, block further progression until a choice is made
+  if (showIntentModal) {
+    const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
+      localStorage.setItem("userIntent", userIntent);
+      setShowIntentModal(false);
 
-    // New branching logic
-    if (userIntent === "giftor") {
-      // Skip profile setup and go directly to marketplace/gifting experience
-      localStorage.setItem("onboardingComplete", "true"); // Mark onboarding as done
-      localStorage.removeItem("newSignUp");
-      navigate("/marketplace", { replace: true });
-    } else if (userIntent === "giftee") {
-      // Continue to profile setup flow as usual (handled by existing logic)
-      // No action needed, /profile-setup will be routed after verification step
-    }
-  };
+      // New: branch immediately based on role
+      if (userIntent === "giftor") {
+        localStorage.setItem("onboardingComplete", "true");
+        localStorage.removeItem("newSignUp");
+        navigate("/marketplace", { replace: true });
+      } else {
+        // giftee
+        // Continue to profile setup as normal, let auto-redirect proceed (or VerificationView logic)
+        navigate("/profile-setup", { replace: true });
+      }
+    };
 
-  const handleSkip = () => {
-    // Treat skip as giftee (default)
-    localStorage.setItem("userIntent", "skipped");
-    setShowIntentModal(false);
-    // Continue to profile setup as normal
-  };
+    const handleSkip = () => {
+      // Treat skip as giftee
+      localStorage.setItem("userIntent", "skipped");
+      setShowIntentModal(false);
+      navigate("/profile-setup", { replace: true });
+    };
 
+    return (
+      <OnboardingIntentModal
+        open={showIntentModal}
+        onSelect={handleSelectIntent}
+        onSkip={handleSkip}
+      />
+    );
+  }
+
+  // Standard sign up flow
   if (step === "signup") {
     return (
       <SignUpView 
@@ -77,25 +86,17 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Show verification view and intent modal if needed
+  // Show verification view for "verification" step. In the new flow, this only briefly flashes before intent modal appears for new users.
   return (
-    <>
-      <VerificationView
-        userEmail={userEmail}
-        userName={userName}
-        onBackToSignUp={handleBackToSignUp}
-        onResendVerification={onResendVerification}
-        resendCount={resendCount}
-        bypassVerification={bypassVerification}
-      />
-      <OnboardingIntentModal
-        open={showIntentModal}
-        onSelect={handleSelectIntent}
-        onSkip={handleSkip}
-      />
-    </>
+    <VerificationView
+      userEmail={userEmail}
+      userName={userName}
+      onBackToSignUp={handleBackToSignUp}
+      onResendVerification={onResendVerification}
+      resendCount={resendCount}
+      bypassVerification={bypassVerification}
+    />
   );
 };
 
 export default SignUpContentWrapper;
-

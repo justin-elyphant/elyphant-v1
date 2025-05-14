@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -21,7 +20,7 @@ export const useProductInteractions = (
   const [userData] = useLocalStorage("userData", null);
   const { handleFavoriteToggle, isFavorited } = useFavorites();
   const { addToCart } = useCart();
-  const { addToRecentlyViewed } = useRecentlyViewed();
+  const { addItem } = useRecentlyViewed();
 
   // Memoize event handlers
   const handleWishlistClick = useCallback((e: React.MouseEvent, productId: string) => {
@@ -40,9 +39,9 @@ export const useProductInteractions = (
     // Add to recently viewed items
     const product = products.find(p => p.product_id === productId);
     if (product) {
-      addToRecentlyViewed({
+      addItem({
         id: product.product_id || "",
-        name: product.title || "",
+        title: product.title || product.name || "",
         image: product.image,
         price: product.price
       });
@@ -52,7 +51,7 @@ export const useProductInteractions = (
         onProductView(productId);
       }
     }
-  }, [products, addToRecentlyViewed, onProductView]);
+  }, [products, addItem, onProductView]);
   
   const handleAddToCart = useCallback((e: React.MouseEvent, product: Product) => {
     e.stopPropagation();

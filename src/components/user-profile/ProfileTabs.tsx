@@ -7,11 +7,12 @@ import SettingsTabContent from "./tabs/SettingsTabContent";
 import ActivityTabContent from "./tabs/ActivityTabContent";
 import ConnectTabContent from "./tabs/ConnectTabContent";
 import { RecentlyViewedItem } from "@/types/profile";
+import { Profile } from "@/types/profile";
 
 export interface ProfileTabsProps {
   profile: any;
   isOwnProfile: boolean;
-  onUpdateProfile?: (data: any) => void;
+  onUpdateProfile?: (data: Partial<Profile>) => Promise<void>;
   // Add the props that were causing errors
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
@@ -32,6 +33,14 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     if (setActiveTab) {
       setActiveTab(value);
     }
+  };
+
+  // Create a wrapped update function that returns a Promise
+  const handleUpdateProfile = async (data: Partial<Profile>): Promise<void> => {
+    if (onUpdateProfile) {
+      return Promise.resolve(onUpdateProfile(data));
+    }
+    return Promise.resolve();
   };
 
   return (
@@ -79,7 +88,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         <TabsContent value="settings">
           <SettingsTabContent 
             profile={profile} 
-            onUpdateProfile={onUpdateProfile} 
+            onUpdateProfile={handleUpdateProfile} 
           />
         </TabsContent>
       )}

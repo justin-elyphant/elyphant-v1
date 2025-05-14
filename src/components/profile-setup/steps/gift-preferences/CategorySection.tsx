@@ -55,7 +55,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                 <span>{pref.category}</span>
                 <ImportanceSelector
                   value={pref.importance}
-                  onChange={(importance) => onUpdateImportance(pref.category, importance as 'low' | 'medium' | 'high')}
+                  onChange={(importance) => onUpdateImportance(pref.category, importance)}
                 />
                 <Button
                   variant="ghost"

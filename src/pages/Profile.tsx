@@ -1,67 +1,94 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
-import ProfileHeader from "@/components/user-profile/ProfileHeader";
+import { supabase } from "@/integrations/supabase/client";
 import ProfileTabs from "@/components/user-profile/ProfileTabs";
+import LoadingState from "./profile-setup/LoadingState";
+import { Profile as ProfileType } from "@/types/profile";
 
 const Profile = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("wishlists");
-  
-  // Mock profile data for the ProfileHeader component
-  const profile = {
-    id: user?.id || "guest",
-    username: user?.email?.split('@')[0] || "Guest User",
-    email: user?.email || "",
-    avatar_url: user?.user_metadata?.avatar_url || "",
-    bio: "Welcome to my profile",
-    interests: ["Gifts", "Tech", "Books"],
-    created_at: new Date().toISOString()
-  };
-  
-  // Mock wishlist data for the ProfileTabs component
-  const mockWishlists = [
-    {
-      id: "1",
-      title: "Birthday Wishlist",
-      description: "Things I want for my birthday",
-      created_at: new Date().toISOString(),
-      is_public: true,
-      items_count: 5
-    },
-    {
-      id: "2",
-      title: "Holiday Wishlist",
-      description: "Gift ideas for the holidays",
-      created_at: new Date().toISOString(),
-      is_public: true,
-      items_count: 3
+  const { username } = useParams();
+  const [profileData, setProfileData] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const fetchProfile = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+      }
+
+      if (data) {
+        setProfileData(data);
+        setIsCurrentUser(user?.id === data.id);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setIsLoading(false);
     }
-  ];
-  
-  if (!user) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center p-8">
-          <h1 className="text-2xl font-bold mb-4">Profile Not Available</h1>
-          <p>Please sign in to view your profile.</p>
-        </div>
-      </div>
-    );
+  }, [username, user?.id]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const updateProfile = async (data: Partial<ProfileType>) => {
+    setIsLoading(true);
+    try {
+      const { data: updatedData, error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', profileData?.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating profile:", error);
+      }
+
+      if (updatedData) {
+        setProfileData(updatedData);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <LoadingState />;
   }
-  
+
+  if (!profileData) {
+    return <div>Profile not found</div>;
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <ProfileHeader 
-        profile={profile}
-        isCurrentUser={true}
-      />
-      <ProfileTabs 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isCurrentUser={true}
-        mockWishlists={mockWishlists}
-      />
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="container mx-auto px-4">
+        <h1 className="text-3xl font-semibold mb-4">
+          {profileData.name || profileData.username || "User Profile"}
+        </h1>
+        <ProfileTabs 
+          profile={profileData}
+          isOwnProfile={isCurrentUser} // Changed from isCurrentUser to isOwnProfile
+          onUpdateProfile={updateProfile}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          // ... any other needed props
+        />
+      </div>
     </div>
   );
 };

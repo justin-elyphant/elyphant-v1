@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -39,7 +38,7 @@ const ProductGrid = ({
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
-  const { addToRecentlyViewed, recentlyViewed } = useRecentlyViewed();
+  const { addItem, recentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
   const [userData] = useLocalStorage("userData", null);
   
@@ -93,9 +92,9 @@ const ProductGrid = ({
     const product = products.find(p => (p.product_id || p.id) === productId);
     if (product) {
       console.log("Adding to recently viewed:", product.title || product.name);
-      addToRecentlyViewed({
+      addItem({
         id: product.product_id || product.id || "",
-        name: product.title || product.name || "",
+        title: product.title || product.name || "",
         image: product.image,
         price: product.price
       });

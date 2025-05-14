@@ -1,7 +1,7 @@
 
 // Import types we need
 import { PrivacyLevel } from "@/utils/privacyUtils";
-import { ShippingAddress, ImportantDate, GiftPreference } from "@/types/profile";
+import { ShippingAddress, ImportantDate, GiftPreference, RecentlyViewedItem } from "@/types/profile";
 
 // Define types for Supabase-related data structures
 export type Database = {
@@ -78,18 +78,8 @@ export type DataSharingSettings = {
   email?: PrivacyLevel;
 };
 
-// Recently viewed item type
-export type RecentlyViewedItem = {
-  id: string;
-  product_id: string;
-  viewed_at: string;
-  product_data: {
-    title: string;
-    price?: number;
-    image_url?: string;
-    brand?: string;
-  };
-};
-
 // Export types needed elsewhere
 export type { PrivacyLevel, PrivacyLevel as SharingLevel };
+
+// Re-export types from profile.ts for backward compatibility
+export type { ShippingAddress, ImportantDate, GiftPreference, RecentlyViewedItem };

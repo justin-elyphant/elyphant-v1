@@ -1,78 +1,41 @@
 
-import { GiftPreference } from '@/types/profile';
+export type CategoryImportance = 'low' | 'medium' | 'high';
 
-/**
- * Define all available gift categories
- */
-export const CATEGORIES = [
+// Predefined categories for users to choose from
+export const CATEGORIES: string[] = [
   'Books',
   'Electronics',
-  'Fashion',
+  'Clothing',
   'Home Decor',
   'Kitchen',
-  'Sports',
+  'Gaming',
   'Outdoors',
+  'Sports',
+  'Music',
+  'Art',
   'Beauty',
   'Jewelry',
-  'Travel',
-  'Music',
-  'Games',
-  'Movies',
-  'Arts & Crafts',
-  'Toys',
-  'Food & Drink',
   'Fitness',
-  'Garden',
-  'Health',
+  'Travel',
+  'Food & Beverage',
+  'Pets',
+  'Office Supplies',
+  'DIY & Crafts',
+  'Gardening',
   'Tech Gadgets'
 ];
 
-/**
- * Get a list of suggested categories based on user preferences
- */
+// Get suggested categories based on popularity or personalization
 export const getSuggestedCategories = (): string[] => {
-  return CATEGORIES.slice(0, 10); // Return first 10 categories
-};
-
-/**
- * Normalize gift preferences to ensure consistent format
- */
-export const normalizeGiftPreferences = (preferences: any[]): GiftPreference[] => {
-  if (!preferences || !Array.isArray(preferences)) {
-    return [];
-  }
-  
-  return preferences.map(pref => {
-    if (typeof pref === 'string') {
-      return { category: pref, importance: 'medium' };
-    }
-    
-    // Ensure importance is one of the allowed values
-    let importance = pref.importance || 'medium';
-    if (!['low', 'medium', 'high'].includes(importance)) {
-      importance = 'medium';
-    }
-    
-    return {
-      category: pref.category || '',
-      importance: importance as 'low' | 'medium' | 'high'
-    };
-  });
-};
-
-/**
- * Convert string array to gift preference format
- */
-export const categoriesToGiftPreferences = (categories: string[]): GiftPreference[] => {
-  return categories.map(category => ({
-    category,
-    importance: 'medium'
-  }));
-};
-
-export default {
-  CATEGORIES,
-  getSuggestedCategories,
-  normalizeGiftPreferences,
-  categoriesToGiftPreferences
+  // For now, return a subset of popular categories
+  return [
+    'Electronics',
+    'Books',
+    'Clothing',
+    'Home Decor',
+    'Kitchen',
+    'Beauty',
+    'Tech Gadgets',
+    'Food & Beverage'
+  ];
 };

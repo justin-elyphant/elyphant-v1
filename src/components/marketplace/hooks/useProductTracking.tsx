@@ -10,7 +10,7 @@ import { useProductDataSync } from "@/hooks/useProductDataSync";
  * Hook for tracking product views in the marketplace
  */
 export const useProductTracking = (products: Product[]) => {
-  const { addToRecentlyViewed } = useRecentlyViewed();
+  const { addItem } = useRecentlyViewed();
   const { trackProductView } = useProductDataSync();
   const [searchParams] = useSearchParams();
   const { profile } = useProfile();
@@ -35,9 +35,9 @@ export const useProductTracking = (products: Product[]) => {
       console.log("Found product to track:", product.title || product.name);
       
       // Add to recently viewed in local storage
-      addToRecentlyViewed({
+      addItem({
         id: product.product_id || product.id || "",
-        name: product.title || product.name || "",
+        title: product.title || product.name || "",
         image: product.image || "",
         price: product.price
       });
@@ -60,9 +60,9 @@ export const useProductTracking = (products: Product[]) => {
     }
     
     // Add to recently viewed in local storage
-    addToRecentlyViewed({
+    addItem({
       id: productId,
-      name: product.title || product.name || "",
+      title: product.title || product.name || "",
       image: product.image || "",
       price: product.price
     });

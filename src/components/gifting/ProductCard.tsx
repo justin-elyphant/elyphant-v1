@@ -24,7 +24,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onToggleWishlist,
   onClick
 }) => {
-  const { addToRecentlyViewed } = useRecentlyViewed();
+  const { addItem } = useRecentlyViewed();
   const { trackProductView } = useProductDataSync();
   const isMobile = useIsMobile();
   
@@ -32,9 +32,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
     if (onClick) onClick();
     
     // Track this product as recently viewed locally
-    addToRecentlyViewed({
+    addItem({
       id: product.product_id || product.id || "",
-      name: product.title || product.name || "",
+      title: product.title || product.name || "",
       image: product.image || "",
       price: product.price
     });

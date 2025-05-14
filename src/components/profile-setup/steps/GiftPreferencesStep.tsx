@@ -35,7 +35,7 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
       setSelectedCategories(newSelectedCategories);
       
       // Update preferences with new category
-      const newPreferences = [
+      const newPreferences: GiftPreference[] = [
         ...preferences,
         {
           category,
@@ -76,13 +76,14 @@ const GiftPreferencesStep: React.FC<GiftPreferencesStepProps> = ({
       </div>
       
       <CategorySection 
-        preferences={preferences}
-        onChange={onPreferencesChange}
-        selectedCategories={selectedCategories}
-        onCategorySelect={handleCategorySelect}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        suggestedCategories={suggestedCategories}
+        selectedPreferences={preferences}
+        onAddPreference={(pref) => {
+          const newPreferences = [...preferences, pref];
+          onPreferencesChange(newPreferences);
+          setSelectedCategories([...selectedCategories, pref.category]);
+        }}
+        onRemovePreference={handleRemoveCategory}
+        onUpdateImportance={handleImportanceChange}
       />
       
       {selectedCategories.length > 0 && (

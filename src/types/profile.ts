@@ -2,7 +2,7 @@
 
 export interface Profile {
   id: string;
-  user_id: string;
+  user_id?: string;  // Changed to optional to match supabase type
   name?: string;
   username?: string;
   email: string;
@@ -29,9 +29,6 @@ export interface ShippingAddress {
   zip_code?: string;
   country?: string;
   is_default?: boolean;
-  // Aliases for compatibility with form fields using different property names
-  street?: string;  // Alias for address_line1
-  zipCode?: string; // Alias for zip_code
 }
 
 export interface RecentlyViewedItem {
@@ -57,8 +54,6 @@ export interface ImportantDate {
   date: string;
   type: string;
   reminder_days?: number;
-  // Aliases for compatibility with form fields
-  description?: string;  // Alias for title
 }
 
 export interface DataSharingSettings {
@@ -98,20 +93,14 @@ export interface WishlistItem {
 }
 
 // Helper functions for normalization
-export function normalizeGiftPreference(preferences: any[] | null | undefined): GiftPreference[] {
-  if (!preferences || !Array.isArray(preferences)) {
-    return [];
+export function normalizeGiftPreference(pref: any): GiftPreference {
+  if (typeof pref === 'string') {
+    return { category: pref, importance: 'medium' };
   }
-  
-  return preferences.map(pref => {
-    if (typeof pref === 'string') {
-      return { category: pref, importance: 'medium' };
-    }
-    return { 
-      category: pref.category || 'general', 
-      importance: pref.importance || 'medium' 
-    };
-  });
+  return { 
+    category: pref.category || 'general', 
+    importance: pref.importance || 'medium' 
+  };
 }
 
 export function normalizeShippingAddress(address: any | null | undefined): ShippingAddress {

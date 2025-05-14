@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeGiftPreference, normalizeShippingAddress } from "@/types/profile";
-import type { Profile } from "@/types/supabase";
+import type { Profile } from "@/types/profile";
 
 export const useProfileUpdate = () => {
   const { user } = useAuth();

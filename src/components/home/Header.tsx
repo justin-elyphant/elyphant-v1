@@ -12,7 +12,7 @@ import CategoriesDropdown from "./components/CategoriesDropdown";
 import { ProductProvider } from "@/contexts/ProductContext";
 
 /**
- * Clean header: only logo, search, categories, auth; no "Connections/Profile/Dashboard/Marketplace" links.
+ * Clean header with desktop: logo (left), centered categories/search (center), auth (right).
  */
 const Header = () => {
   const navigate = useNavigate();
@@ -26,33 +26,48 @@ const Header = () => {
   return (
     <header className="sticky top-0 bg-white shadow-sm z-50">
       <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center">
+        {/* Desktop: 3-grid - Logo (left), Categories+Search (center), Auth (right) */}
+        <div className="hidden md:grid grid-cols-3 items-center justify-between">
+          {/* Logo (left) */}
+          <div className="flex items-center col-span-1">
             <Link to="/">
               <Logo />
             </Link>
           </div>
 
-          {/* Desktop: Only Categories + Search + Auth */}
-          <div className="hidden md:flex items-center space-x-6">
+          {/* Center (categories + search bar) */}
+          <div className="flex flex-col justify-center items-center col-span-1">
             {alwaysShowSearchAndCategories && (
               <ProductProvider>
-                <CategoriesDropdown
-                  open={categoriesOpen}
-                  onOpenChange={setCategoriesOpen}
-                />
-                <div className="w-80">
-                  <SearchBar />
+                <div className="flex items-center gap-4 w-full justify-center">
+                  <CategoriesDropdown
+                    open={categoriesOpen}
+                    onOpenChange={setCategoriesOpen}
+                  />
+                  <div className="w-80 max-w-full">
+                    <SearchBar />
+                  </div>
                 </div>
               </ProductProvider>
             )}
+          </div>
 
+          {/* Auth (right) */}
+          <div className="flex items-center justify-end col-span-1">
             {/* Auth buttons or nothing if user is signed in */}
             {user ? null : <AuthButtons />}
           </div>
+        </div>
 
-          {/* Mobile: Hamburger menu */}
+        {/* Mobile: Hamburger row */}
+        <div className="flex md:hidden items-center justify-between">
+          {/* Logo (left) */}
+          <div className="flex items-center">
+            <Link to="/">
+              <Logo />
+            </Link>
+          </div>
+          {/* Hamburger */}
           <button
             className="md:hidden flex items-center"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -101,7 +116,6 @@ const Header = () => {
                 </Button>
               </div>
             )}
-            {/* No links for signed-in user */}
           </div>
         )}
       </div>

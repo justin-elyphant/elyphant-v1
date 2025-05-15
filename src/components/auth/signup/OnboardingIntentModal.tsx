@@ -7,13 +7,21 @@ import { Gift, List } from "lucide-react";
 interface OnboardingIntentModalProps {
   open: boolean;
   onSelect: (userIntent: "giftor" | "giftee") => void;
-  onSkip: () => void; // Keeping the prop for interface compatibility, but we won't use it
+  onSkip: () => void; // Interface compatibility, not used here
+  suggestedIntent?: "giftor" | "giftee";
 }
 
 const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   open,
   onSelect,
+  suggestedIntent,
 }) => {
+  // Add highlight style if suggested
+  const getButtonClass = (intent: "giftor" | "giftee") =>
+    suggestedIntent === intent
+      ? "border-2 border-purple-500 bg-purple-50"
+      : "border-2";
+
   return (
     <Dialog open={open} modal={true}>
       <DialogContent className="sm:max-w-md animate-fade-in p-6 max-w-[90vw]">
@@ -25,8 +33,9 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
         <div className="flex flex-col gap-5 mt-4">
           <Button
             variant="outline"
-            className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 border-2 hover:border-purple-300"
+            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 ${getButtonClass("giftor")}`}
             onClick={() => onSelect("giftor")}
+            data-testid="intent-giftor"
           >
             <Gift className="w-6 h-6 text-purple-600 flex-shrink-0" />
             <div className="flex flex-col">
@@ -37,11 +46,17 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
                 Buy a gift for someone else (no wishlist needed)
               </span>
             </div>
+            {suggestedIntent === "giftor" && (
+              <span className="ml-auto text-xs px-2 py-1 bg-purple-200 text-purple-800 rounded">
+                Suggested
+              </span>
+            )}
           </Button>
           <Button
             variant="outline"
-            className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 border-2 hover:border-indigo-300"
+            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 ${getButtonClass("giftee")}`}
             onClick={() => onSelect("giftee")}
+            data-testid="intent-giftee"
           >
             <List className="w-6 h-6 text-indigo-600 flex-shrink-0" />
             <div className="flex flex-col">
@@ -52,6 +67,11 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
                 Create &amp; share your wishlist for perfect gifting
               </span>
             </div>
+            {suggestedIntent === "giftee" && (
+              <span className="ml-auto text-xs px-2 py-1 bg-indigo-200 text-indigo-800 rounded">
+                Suggested
+              </span>
+            )}
           </Button>
         </div>
       </DialogContent>

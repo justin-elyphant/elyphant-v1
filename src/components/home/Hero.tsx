@@ -1,10 +1,19 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Gift, ShoppingBag } from "lucide-react";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
+  // Helper to flag user's CTA intent before redirecting (for onboarding modal)
+  const handleCta = (intent: "giftor" | "giftee", url: string) => {
+    // Store for onboarding flow to pick up
+    localStorage.setItem("ctaIntent", intent);
+    navigate(url);
+  };
+
   return (
     <div className="bg-gradient-to-r from-purple-100 to-purple-200 py-8">
       <div className="container mx-auto px-4">
@@ -16,17 +25,33 @@ const Hero = () => {
               an important celebration again. Our platform handles everything from selection to delivery.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="default" className="bg-purple-600 hover:bg-purple-700">
-                <Link to="/gifting">
+              <Button
+                asChild
+                size="default"
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleCta("giftor", "/gifting");
+                }}
+              >
+                <a href="/gifting">
                   <ShoppingBag className="mr-2 h-4 w-4" />
                   Start Gifting
-                </Link>
+                </a>
               </Button>
-              <Button asChild variant="outline" size="default">
-                <Link to="/wishlists">
+              <Button
+                asChild
+                variant="outline"
+                size="default"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleCta("giftee", "/wishlists");
+                }}
+              >
+                <a href="/wishlists">
                   <Gift className="mr-2 h-4 w-4" />
                   Create Wishlist
-                </Link>
+                </a>
               </Button>
             </div>
           </div>

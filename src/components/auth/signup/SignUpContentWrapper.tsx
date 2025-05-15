@@ -36,13 +36,24 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [intentHandled, setIntentHandled] = React.useState(false);
   const navigate = useNavigate();
 
-  // --- STRICT: Only consider modal when on verification step and userEmail; never show on signup form! ---
+  // Pickup intended CTA intent (set on homepage) and clear after referencing
+  const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
+
   React.useEffect(() => {
-    // Only check modal logic at verification phase with userEmail
     if (step !== "verification" || !userEmail) {
       if (showIntentModal) setShowIntentModal(false);
       if (intentHandled) setIntentHandled(false);
       return;
+    }
+
+    // Retrieve suggested intent only ONCE on modal show, then clear the value for next visits
+    if (!intentHandled && !showIntentModal) {
+      const ctaIntent = localStorage.getItem("ctaIntent");
+      if (ctaIntent === "giftor" || ctaIntent === "giftee") {
+        setSuggestedIntent(ctaIntent);
+        // Clear so it only applies on first modal show after signup
+        localStorage.removeItem("ctaIntent");
+      }
     }
 
     const intent = localStorage.getItem("userIntent");
@@ -55,15 +66,14 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       setShowIntentModal(false);
       setIntentHandled(true);
     }
-  }, [step, userEmail]); // Only react to step/email changes
+  }, [step, userEmail, intentHandled, showIntentModal]);
 
-  // -- EARLY BLOCKER: If we should show the intent modal (verification step, no valid intent), render ONLY the modal (avoid UI flash!) --
+  // -- EARLY BLOCKER: If we should show the intent modal, render ONLY the modal --
   if (
     step === "verification" &&
     userEmail &&
     !validIntent(localStorage.getItem("userIntent"))
   ) {
-    // Only the modal is visible; rest of UI is NOT rendered, no background flash.
     const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
       localStorage.setItem("userIntent", userIntent);
       localStorage.removeItem("showingIntentModal");
@@ -79,17 +89,17 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       }
     };
 
-    // This will prevent background flash by rendering ONLY the modal:
     return (
       <OnboardingIntentModal
         open={true}
         onSelect={handleSelectIntent}
-        onSkip={() => {/* Never called, keeps interface compatible */}}
+        onSkip={() => {/* Not used */}
+        }
+        suggestedIntent={suggestedIntent}
       />
     );
   }
 
-  // Only show signup view if actively at signup phase (no modal possible here)
   if (step === "signup") {
     return (
       <SignUpView 
@@ -99,7 +109,6 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Only show verification *if* modal handled or valid intent
   return (
     <VerificationView
       userEmail={userEmail}
@@ -113,4 +122,3 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 };
 
 export default SignUpContentWrapper;
-

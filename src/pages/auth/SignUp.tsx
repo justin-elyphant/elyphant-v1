@@ -5,6 +5,7 @@ import { useSignUpProcess } from "@/hooks/auth";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 import Header from "@/components/home/Header";
 import { useAuth } from "@/contexts/auth";
+import Footer from "@/components/home/Footer"; // Import Footer
 
 // List of all onboarding keys to clear
 const CLEAR_ONBOARDING_KEYS = [
@@ -103,6 +104,7 @@ const SignUp: React.FC = () => {
           bypassVerification={bypassVerification}
         />
       </div>
+      <Footer /> {/* Add Footer here */}
     </div>
   );
 };

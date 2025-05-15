@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import Header from "@/components/home/Header";
 import SignInView from "@/components/auth/signin/views/SignInView"; // Import SignInView
+import Footer from "@/components/home/Footer"; // Import Footer
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const SignIn = () => {
         {/* Use SignInView for consistent styling */}
         <SignInView onSignInSuccess={handleSignInSuccess} />
       </div>
+      <Footer /> {/* Add Footer here */}
     </div>
   );
 };

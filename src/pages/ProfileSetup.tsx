@@ -17,12 +17,20 @@ const ProfileSetup = () => {
     isManuallyLoading,
     authLoading
   } = useProfileSetupState();
-
+  
   const {
     handleSetupComplete,
     handleSkip,
     handleBackToDashboard
   } = useProfileCompletion(user);
+
+  // Add check for showingIntentModal to avoid flashing
+  const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
+  
+  // If intent modal is showing, always show loading
+  if (showingIntentModal || authLoading || isManuallyLoading || isInitializing) {
+    return <LoadingState message="Preparing your profile setup..." />;
+  }
 
   if (isNewSignUp && !isInitializing) {
     return (
@@ -37,10 +45,6 @@ const ProfileSetup = () => {
         </main>
       </div>
     );
-  }
-
-  if (authLoading || isManuallyLoading || isInitializing) {
-    return <LoadingState />;
   }
 
   return (

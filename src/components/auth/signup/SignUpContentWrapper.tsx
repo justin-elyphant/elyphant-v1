@@ -1,4 +1,3 @@
-
 import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
@@ -44,10 +43,13 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       if (intentHandled) setIntentHandled(false);
       return;
     }
+    
     const intent = localStorage.getItem("userIntent");
     console.log("[SignUpContentWrapper] Effect: (step/email/intent):", { step, userEmail, intent });
 
+    // Always show modal if no valid intent is found
     if (!validIntent(intent)) {
+      localStorage.setItem("showingIntentModal", "true");
       setShowIntentModal(true);
       setIntentHandled(false);
     } else {
@@ -60,8 +62,10 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   if (step === "verification" && showIntentModal && !intentHandled && userEmail) {
     const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
       localStorage.setItem("userIntent", userIntent);
+      localStorage.removeItem("showingIntentModal");
       setShowIntentModal(false);
       setIntentHandled(true);
+      
       if (userIntent === "giftor") {
         localStorage.setItem("onboardingComplete", "true");
         localStorage.removeItem("newSignUp");
@@ -71,9 +75,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       }
     };
 
+    // Keeping this function for interface compatibility, but it won't be used in the UI
     const handleSkip = () => {
-      // Don't allow skipping; force modal to remain until user selects
-      localStorage.setItem("userIntent", "skipped");
+      // Force user to select an option
+      console.log("[SignUpContentWrapper] Skip attempted, but we require user selection");
+      localStorage.setItem("userIntent", "");
       setShowIntentModal(true);
       setIntentHandled(false);
     };

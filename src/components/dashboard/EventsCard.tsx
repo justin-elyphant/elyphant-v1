@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Calendar } from "lucide-react";
@@ -20,7 +19,7 @@ const EventsCard = () => {
           <Calendar className="h-5 w-5 mr-2 text-blue-500" />
           Auto-Gift Hub
         </CardTitle>
-        <CardDescription className="text-sm">
+        <CardDescription className="text-sm text-muted-foreground">
           Upcoming automated gifts
         </CardDescription>
       </CardHeader>
@@ -29,12 +28,12 @@ const EventsCard = () => {
           {upcomingGifts.length > 0 ? (
             <div className="space-y-3">
               {upcomingGifts.map((gift, index) => (
-                <div key={index} className="flex justify-between items-center text-sm pb-2 border-b last:border-0 last:pb-0">
+                <div key={index} className="flex justify-between items-center text-sm pb-2 border-b last:border-0 last:pb-0 dark:border-gray-700">
                   <div>
                     <p className="font-medium">{gift.name}</p>
                     <p className="text-muted-foreground text-xs">{gift.date}</p>
                   </div>
-                  <span className="text-green-600 font-medium">{gift.budget}</span>
+                  <span className="text-green-600 dark:text-green-400 font-medium">{gift.budget}</span>
                 </div>
               ))}
             </div>

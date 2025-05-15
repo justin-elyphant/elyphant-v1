@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Package } from "lucide-react";
@@ -21,7 +20,7 @@ const OrdersCard = () => {
           <Package className="h-5 w-5 mr-2 text-emerald-500" />
           My Orders
         </CardTitle>
-        <CardDescription className="text-sm">
+        <CardDescription className="text-sm text-muted-foreground">
           Track your recent gifts and purchases
         </CardDescription>
       </CardHeader>
@@ -30,7 +29,7 @@ const OrdersCard = () => {
           {recentOrders.length > 0 ? (
             <div className="space-y-3">
               {recentOrders.map((order) => (
-                <div key={order.id} className="flex justify-between items-center text-sm pb-2 border-b last:border-0 last:pb-0">
+                <div key={order.id} className="flex justify-between items-center text-sm pb-2 border-b last:border-0 last:pb-0 dark:border-gray-700">
                   <div>
                     <p className="font-medium">{order.id}</p>
                     <p className="text-muted-foreground text-xs">{order.date}</p>

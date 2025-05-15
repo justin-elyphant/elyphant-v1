@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
@@ -17,11 +16,11 @@ const FriendsCard = () => {
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center">
+        <CardTitle className="text-lg font-semibold flex items-center">
           <Users className="h-5 w-5 mr-2 text-gray-500" />
           Friends
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm text-muted-foreground">
           Connect with friends to share wishlists
         </CardDescription>
       </CardHeader>
@@ -34,7 +33,7 @@ const FriendsCard = () => {
                   <div className="flex items-center space-x-3">
                     <Avatar>
                       <AvatarImage src={friend.image || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                      <AvatarFallback className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground">
                         {friend.name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>

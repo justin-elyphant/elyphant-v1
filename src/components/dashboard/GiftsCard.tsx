@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Heart, Clock } from "lucide-react";
@@ -34,7 +33,7 @@ const GiftsCard = () => {
           <Heart className="h-5 w-5 mr-2 text-purple-500" />
           My Gifts
         </CardTitle>
-        <CardDescription className="text-sm">
+        <CardDescription className="text-sm text-muted-foreground">
           Manage your wishlists and saved items
         </CardDescription>
       </CardHeader>
@@ -53,7 +52,7 @@ const GiftsCard = () => {
             {wishlistCount > 0 ? (
               <div className="space-y-2">
                 {(wishlistItems || mockWishlistItems.slice(0, 3)).map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm pb-2 border-b last:border-0 last:pb-0">
+                  <div key={index} className="flex justify-between text-sm pb-2 border-b last:border-0 last:pb-0 dark:border-gray-700">
                     <p className="truncate">{item.name}</p>
                     <p className="font-medium">{item.price}</p>
                   </div>
@@ -68,7 +67,7 @@ const GiftsCard = () => {
             {laterCount > 0 ? (
               <div className="space-y-2">
                 {(laterItems || mockLaterItems).map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm pb-2 border-b last:border-0 last:pb-0">
+                  <div key={index} className="flex justify-between text-sm pb-2 border-b last:border-0 last:pb-0 dark:border-gray-700">
                     <p className="truncate">{item.name}</p>
                     <p className="font-medium">{item.price}</p>
                   </div>

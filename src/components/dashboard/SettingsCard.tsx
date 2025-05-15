@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Settings } from "lucide-react";
@@ -7,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 const SettingsCard = () => {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center">
+        <CardTitle className="text-lg font-semibold flex items-center">
           <Settings className="h-5 w-5 mr-2 text-gray-500" />
           Account Settings
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm text-muted-foreground">
           Manage your preferences
         </CardDescription>
       </CardHeader>

@@ -13,7 +13,6 @@ import PopularBrandsSection from "@/components/home/sections/PopularBrandsSectio
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
 
 const Home = () => {
-  // ... keep existing code (user, isMobile, collections, brands definitions)
   const { user } = useAuth();
   const isMobile = useIsMobile();
   
@@ -22,28 +21,28 @@ const Home = () => {
     {
       id: 1,
       name: "Gifts for Her",
-      image: null,
+      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80",
       callToAction: "Shop Now",
       searchTerm: "gifts for women"
     },
     {
       id: 2,
       name: "Gifts for Him",
-      image: null,
+      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
       callToAction: "Shop Now",
       searchTerm: "gifts for men"
     },
     {
       id: 3,
       name: "Gifts Under $50",
-      image: null,
+      image: "https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=600&q=80",
       callToAction: "Shop Now",
       searchTerm: "gifts under 50 dollars"
     },
     {
       id: 4,
       name: "Luxury Gifts",
-      image: null,
+      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
       callToAction: "Shop Luxury",
       searchTerm: "luxury gifts"
     }

@@ -1,5 +1,6 @@
 
 import React from "react";
+import Header from "@/components/home/Header";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProductProvider } from "@/contexts/ProductContext";
@@ -78,37 +79,39 @@ const Home = () => {
   ];
 
   return (
-    <ProductProvider>
-      <MainLayout>
-        {/* Hero Section */}
-        <HeroSection />
+    <>
+      <Header />
+      <ProductProvider>
+        <MainLayout>
+          {/* Hero Section */}
+          <HeroSection />
 
-        {/* Add extra space before Featured Collections */}
-        <div className="mt-8">
-          <FeaturedCollections collections={collections} />
-        </div>
+          {/* Add extra space before Featured Collections */}
+          <div className="mt-8">
+            <FeaturedCollections collections={collections} />
+          </div>
 
-        {/* Occasions-Based Gift Collections */}
-        <FeaturedOccasions />
+          {/* Occasions-Based Gift Collections */}
+          <FeaturedOccasions />
 
-        {/* Trending Products Carousel */}
-        <FeaturedProductsSection />
+          {/* Trending Products Carousel */}
+          <FeaturedProductsSection />
 
-        {/* Popular Brands Section */}
-        <PopularBrandsSection />
+          {/* Popular Brands Section */}
+          <PopularBrandsSection />
 
-        {/* Seasonal Gift Guide */}
-        <SeasonalGiftGuide />
+          {/* Seasonal Gift Guide */}
+          <SeasonalGiftGuide />
 
-        {/* Features Section */}
-        <FeaturesSection />
+          {/* Features Section */}
+          <FeaturesSection />
 
-        {/* Call to Action */}
-        <HomeCTA />
-      </MainLayout>
-    </ProductProvider>
+          {/* Call to Action */}
+          <HomeCTA />
+        </MainLayout>
+      </ProductProvider>
+    </>
   );
 };
 
 export default Home;
-

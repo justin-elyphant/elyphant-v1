@@ -24,6 +24,9 @@ import { useAuth } from "@/contexts/auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
+import SignInPrompt from "./my-wishlists/SignInPrompt";
+import LoadingWishlists from "./my-wishlists/LoadingWishlists";
+import InitErrorState from "./my-wishlists/InitErrorState";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -165,61 +168,18 @@ const MyWishlists = () => {
 
   // If not authenticated, show a sign-in prompt
   if (!user && !isLoading) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Sign In Required</h2>
-          <p className="text-gray-600 mb-6">
-            Please sign in to create and manage your wishlists.
-          </p>
-          <div className="flex gap-4">
-            <Button asChild variant="default">
-              <a href="/login">Sign In</a>
-            </Button>
-            <Button asChild variant="outline">
-              <a href="/register">Create Account</a>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    return <SignInPrompt />;
   }
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="flex flex-col justify-center items-center py-16">
-        <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
-        <p className="text-muted-foreground">Loading your wishlists...</p>
-      </div>
-    );
+    return <LoadingWishlists />;
   }
 
   // Show error state with retry option
   if (initError) {
     return (
-      <div className="bg-red-50 p-6 rounded-lg border border-red-200">
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Failed to Load Wishlists</h2>
-          <p className="text-gray-600 mb-6">
-            We couldn't load your wishlists. Please try again.
-          </p>
-          <Button 
-            onClick={handleRefresh} 
-            disabled={refreshing}
-            className="flex items-center gap-2"
-          >
-            {refreshing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Try Again
-          </Button>
-        </div>
-      </div>
+      <InitErrorState refreshing={refreshing} onRetry={handleRefresh} />
     );
   }
 

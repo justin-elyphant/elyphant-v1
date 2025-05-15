@@ -72,7 +72,6 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
             Dashboard
           </Link>
         </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-9 w-9 cursor-pointer">
@@ -113,11 +112,6 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
     );
   }
 
-  // Desktop: Show "Sign Up" as purple, side-by-side with "Sign In".
-  // The dropdown ("Sign In + Chevron") is for mobile/lazy fallback or special UX, but
-  // traditional desktop display should have two buttons.
-  // We'll use a responsive <div className="hidden md:flex ..."> pattern if needed in header, but
-  // for clarity, here's the updated purple "Sign Up" button.
   return (
     <nav className="flex items-center space-x-3">
       <Button
@@ -136,32 +130,6 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
           Sign In
         </Link>
       </Button>
-      {/* For mobile/fallback, you may include a dropdown pattern below */}
-      {/* 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
-            <LogIn className="mr-2 h-4 w-4" />
-            Sign In
-            <ChevronDown className="ml-1 h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem asChild>
-            <Link to="/signin" className="flex w-full items-center">
-              <LogIn className="mr-2 h-4 w-4" />
-              Sign In
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/signup" className="flex w-full items-center bg-purple-600 hover:bg-purple-700 text-white border-0 rounded transition-colors">
-              <User className="mr-2 h-4 w-4" />
-              Sign Up
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      */}
     </nav>
   );
 };

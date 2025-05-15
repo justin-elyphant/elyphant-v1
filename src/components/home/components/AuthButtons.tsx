@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { LogIn, User, LogOut, ChevronDown } from "lucide-react";
@@ -112,12 +113,15 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
     );
   }
 
+  // Force visual debugging: Add border to purple button variant temporarily.
+  // Remove className everywhere to prevent any override.
   return (
     <nav className="flex items-center space-x-3">
       <Button
         variant="purple"
         size="sm"
         asChild
+        className="border-4 border-red-400" // REMOVE AFTER CONFIRMATION: Red border to visually verify this is the button
       >
         <Link to="/signup">
           <User className="mr-2 h-4 w-4" />
@@ -135,3 +139,4 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
 };
 
 export default AuthButtons;
+

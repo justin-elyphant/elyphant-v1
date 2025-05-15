@@ -1,3 +1,4 @@
+
 import { Product } from "@/contexts/ProductContext";
 import { generateMockProductResults, createMockResults } from "../zinc/utils/mockResultsGenerator";
 import { normalizeProduct } from "@/contexts/ProductContext";
@@ -11,21 +12,28 @@ import { getProductFallbackImage } from "../product-item/productImageUtils";
 export const getMockProducts = (count: number = 10): Product[] => {
   const mockResults = generateMockProductResults("electronics", count);
   
-  return mockResults.map((result, index) => normalizeProduct({
-    product_id: `mock-${index}-${Date.now()}`,
-    id: `mock-${index}-${Date.now()}`,
-    title: result.title || "Mock Product",
-    name: result.title || "Mock Product",
-    price: result.price || (19.99 + index),
-    image: result.image || getReliablePlaceholderImage(index, "Electronics"),
-    description: result.description || "This is a mock product for testing purposes.",
-    category: result.category || "Electronics",
-    vendor: "Mock Vendor",
-    brand: result.brand || "Mock Brand",
-    rating: result.rating || 4.5,
-    reviewCount: result.review_count || 42,
-    images: [result.image || getReliablePlaceholderImage(index, "Electronics")]
-  }));
+  return mockResults.map((result, index) => {
+    // Always use a reliable placeholder instead of a grey box
+    const imageUrl =
+      result.image && result.image !== "/placeholder.svg" && result.image !== null
+        ? result.image
+        : getReliablePlaceholderImage(index, result.category || "Electronics");
+    return normalizeProduct({
+      product_id: `mock-${index}-${Date.now()}`,
+      id: `mock-${index}-${Date.now()}`,
+      title: result.title || "Mock Product",
+      name: result.title || "Mock Product",
+      price: result.price || (19.99 + index),
+      image: imageUrl,
+      description: result.description || "This is a mock product for testing purposes.",
+      category: result.category || "Electronics",
+      vendor: "Mock Vendor",
+      brand: result.brand || "Mock Brand",
+      rating: result.rating || 4.5,
+      reviewCount: result.review_count || 42,
+      images: [imageUrl]
+    });
+  });
 };
 
 /**
@@ -62,18 +70,25 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
       interestToBrand(interest)
     );
     
-    return mockResults.map((result, index) => normalizeProduct({
-      product_id: `personalized-${interest}-${index}-${Date.now()}`,
-      title: result.title || `${interest.charAt(0).toUpperCase() + interest.slice(1)} Gift`,
-      price: result.price || (29.99 + index * 5),
-      image: result.image || getReliablePlaceholderImage(index, interest),
-      category: result.category || interest.charAt(0).toUpperCase() + interest.slice(1),
-      vendor: brandToVendor(interestToBrand(interest)),
-      description: result.description || `Perfect gift for ${interest} enthusiasts`,
-      rating: result.rating || 4.5,
-      reviewCount: result.review_count || 30 + Math.floor(Math.random() * 50),
-      images: [result.image || getReliablePlaceholderImage(index, interest)]
-    }));
+    return mockResults.map((result, index) => {
+      // Always use a reliable placeholder instead of a grey box
+      const imageUrl =
+        result.image && result.image !== "/placeholder.svg" && result.image !== null
+          ? result.image
+          : getReliablePlaceholderImage(index, interest);
+      return normalizeProduct({
+        product_id: `personalized-${interest}-${index}-${Date.now()}`,
+        title: result.title || `${interest.charAt(0).toUpperCase() + interest.slice(1)} Gift`,
+        price: result.price || (29.99 + index * 5),
+        image: imageUrl,
+        category: result.category || interest.charAt(0).toUpperCase() + interest.slice(1),
+        vendor: brandToVendor(interestToBrand(interest)),
+        description: result.description || `Perfect gift for ${interest} enthusiasts`,
+        rating: result.rating || 4.5,
+        reviewCount: result.review_count || 30 + Math.floor(Math.random() * 50),
+        images: [imageUrl]
+      });
+    });
   }
   
   // Handle category-specific searches
@@ -93,35 +108,47 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
         lowerQuery.includes("apple") ? "Apple" : "GiftBrand"
     );
     
-    return mockResults.map((result, index) => normalizeProduct({
-      product_id: `search-${index}-${Date.now()}`,
-      title: result.title || `${query} Gift`,
-      price: result.price || (29.99 + index * 10),
-      image: result.image || getReliablePlaceholderImage(index, "Gifts"),
-      category: result.category,
-      vendor: "Amazon via Zinc",
-      description: result.description || `Perfect ${query} gift option`,
-      rating: result.rating,
-      reviewCount: result.review_count,
-      images: [result.image || getReliablePlaceholderImage(index, "Gifts")]
-    }));
+    return mockResults.map((result, index) => {
+      const imageUrl =
+        result.image && result.image !== "/placeholder.svg" && result.image !== null
+          ? result.image
+          : getReliablePlaceholderImage(index, "Gifts");
+      return normalizeProduct({
+        product_id: `search-${index}-${Date.now()}`,
+        title: result.title || `${query} Gift`,
+        price: result.price || (29.99 + index * 10),
+        image: imageUrl,
+        category: result.category,
+        vendor: "Amazon via Zinc",
+        description: result.description || `Perfect ${query} gift option`,
+        rating: result.rating,
+        reviewCount: result.review_count,
+        images: [imageUrl]
+      });
+    });
   }
   
   // Default mock search results
   const mockResults = generateMockProductResults(query, count);
   
-  return mockResults.map((result, index) => normalizeProduct({
-    product_id: `search-${index}-${Date.now()}`,
-    title: result.title || `${query} Product`,
-    price: result.price || (19.99 + index * 5),
-    image: result.image || getReliablePlaceholderImage(index, "Products"),
-    category: result.category || "Electronics",
-    vendor: "Amazon via Zinc",
-    description: result.description || `Product matching your search for ${query}`,
-    rating: result.rating || 4.0,
-    reviewCount: result.review_count || 28,
-    images: [result.image || getReliablePlaceholderImage(index, "Products")]
-  }));
+  return mockResults.map((result, index) => {
+    const imageUrl =
+      result.image && result.image !== "/placeholder.svg" && result.image !== null
+        ? result.image
+        : getReliablePlaceholderImage(index, result.category || "Products");
+    return normalizeProduct({
+      product_id: `search-${index}-${Date.now()}`,
+      title: result.title || `${query} Product`,
+      price: result.price || (19.99 + index * 5),
+      image: imageUrl,
+      category: result.category || "Electronics",
+      vendor: "Amazon via Zinc",
+      description: result.description || `Product matching your search for ${query}`,
+      rating: result.rating || 4.0,
+      reviewCount: result.review_count || 28,
+      images: [imageUrl]
+    });
+  });
 };
 
 /**
@@ -201,3 +228,4 @@ function brandToVendor(brand: string): string {
   
   return vendorMap[brand] || 'Amazon via Zinc';
 }
+

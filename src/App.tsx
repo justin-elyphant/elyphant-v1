@@ -2,7 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import SignIn from "./pages/auth/SignIn";
-import SignUp from "./pages/auth/SignUp";
+import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -15,6 +15,7 @@ import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
 import Marketplace from "./pages/Marketplace";
 import { CartProvider } from "@/contexts/CartContext";
+import Wishlists from "./pages/Wishlists"; // <-- import Wishlists page
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
                 <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/wishlists" element={<Wishlists />} /> {/* <-- add this route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </CartProvider>

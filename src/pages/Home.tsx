@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,14 +21,14 @@ const Home = () => {
     {
       id: 1,
       name: "Gifts for Her",
-      image: "/lovable-uploads/61d17bb8-5d3f-41b6-84fb-cfc08459461b.png", // Updated to user uploaded image
+      image: "/lovable-uploads/61d17bb8-5d3f-41b6-84fb-cfc08459461b.png", // User uploaded image for her
       callToAction: "Shop Now",
       searchTerm: "gifts for women"
     },
     {
       id: 2,
       name: "Gifts for Him",
-      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+      image: "/lovable-uploads/99d6a4f4-681f-4904-98fb-7c29bafba9d2.png", // Newly uploaded image for him
       callToAction: "Shop Now",
       searchTerm: "gifts for men"
     },

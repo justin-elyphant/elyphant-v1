@@ -4,7 +4,6 @@ import Header from "@/components/home/Header";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProductProvider } from "@/contexts/ProductContext";
-import MainLayout from "@/components/layout/MainLayout";
 import HeroSection from "@/components/home/sections/HeroSection";
 import FeaturesSection from "@/components/home/sections/FeaturesSection";
 import HomeCTA from "@/components/home/sections/HomeCTA";
@@ -23,14 +22,14 @@ const Home = () => {
     {
       id: 1,
       name: "Gifts for Her",
-      image: "/lovable-uploads/61d17bb8-5d3f-41b6-84fb-cfc08459461b.png", // User uploaded image for her
+      image: "/lovable-uploads/61d17bb8-5d3f-41b6-84fb-cfc08459461b.png",
       callToAction: "Shop Now",
       searchTerm: "gifts for women"
     },
     {
       id: 2,
       name: "Gifts for Him",
-      image: "/lovable-uploads/99d6a4f4-681f-4904-98fb-7c29bafba9d2.png", // User uploaded image for him
+      image: "/lovable-uploads/99d6a4f4-681f-4904-98fb-7c29bafba9d2.png",
       callToAction: "Shop Now",
       searchTerm: "gifts for men"
     },
@@ -44,7 +43,7 @@ const Home = () => {
     {
       id: 4,
       name: "Luxury Gifts",
-      image: "/lovable-uploads/11e6a90d-fd1c-495d-91e3-6be61ea55a5f.png", // User uploaded Dior photo for luxury gifts
+      image: "/lovable-uploads/11e6a90d-fd1c-495d-91e3-6be61ea55a5f.png",
       callToAction: "Shop Luxury",
       searchTerm: "luxury gifts"
     }
@@ -82,7 +81,7 @@ const Home = () => {
     <>
       <Header />
       <ProductProvider>
-        <MainLayout>
+        <div>
           {/* Hero Section */}
           <HeroSection />
 
@@ -108,7 +107,7 @@ const Home = () => {
 
           {/* Call to Action */}
           <HomeCTA />
-        </MainLayout>
+        </div>
       </ProductProvider>
     </>
   );

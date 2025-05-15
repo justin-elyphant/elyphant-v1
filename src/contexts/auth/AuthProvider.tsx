@@ -131,7 +131,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         "bypassVerification",
         "profileSetupLoading",
         "emailVerified",
-        "verifiedEmail"
+        "verifiedEmail",
+        // --- Add these keys relevant to onboarding flow ---
+        "pendingVerificationEmail",
+        "pendingVerificationName",
+        "verificationResendCount",
+        "signupStep"
       ];
       keysToClear.forEach((key) => localStorage.removeItem(key));
 

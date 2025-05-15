@@ -18,7 +18,12 @@ const CLEAR_ONBOARDING_KEYS = [
   "signupRateLimited",
   "bypassVerification",
   "onboardingSkipped",
-  "onboardingSkippedTime"
+  "onboardingSkippedTime",
+  // --- extra keys to ensure clean state ---
+  "pendingVerificationEmail",
+  "pendingVerificationName",
+  "verificationResendCount",
+  "signupStep",
 ];
 
 const SignUp: React.FC = () => {

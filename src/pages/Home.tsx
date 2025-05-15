@@ -42,7 +42,7 @@ const Home = () => {
     {
       id: 4,
       name: "Luxury Gifts",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
+      image: "/lovable-uploads/11e6a90d-fd1c-495d-91e3-6be61ea55a5f.png", // User uploaded Dior photo for luxury gifts
       callToAction: "Shop Luxury",
       searchTerm: "luxury gifts"
     }

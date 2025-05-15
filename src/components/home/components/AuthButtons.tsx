@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { LogIn, User, LogOut, ChevronDown } from "lucide-react";
@@ -117,7 +118,7 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
     <nav className="flex items-center space-x-3">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="bg-purple-600 hover:bg-purple-700" size="sm">
+          <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
             <LogIn className="mr-2 h-4 w-4" />
             Sign In
             <ChevronDown className="ml-1 h-4 w-4" />
@@ -131,7 +132,7 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/signup" className="flex w-full items-center">
+            <Link to="/signup" className="flex w-full items-center bg-purple-600 hover:bg-purple-700 text-white border-0 rounded transition-colors">
               <User className="mr-2 h-4 w-4" />
               Sign Up
             </Link>
@@ -143,3 +144,4 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
 };
 
 export default AuthButtons;
+

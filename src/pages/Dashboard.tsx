@@ -1,8 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import NavigationBar from "@/components/navigation/NavigationBar";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import Header from "@/components/home/Header";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +34,7 @@ const Dashboard = () => {
   if (isLoading || localLoadingTimeout || profileLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <NavigationBar />
+        <Header />
         <div className="container max-w-6xl mx-auto py-8 px-4">
           <div className="flex items-center justify-between mb-8">
             <Skeleton className="h-10 w-64" />
@@ -56,9 +55,9 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavigationBar />
+      <Header />
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <DashboardHeader userData={user} onLogout={signOut} />
+        {/* Removed DashboardHeader for consistency */}
         <DashboardGrid />
       </div>
     </div>
@@ -66,3 +65,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,8 @@ import AuthButtons from "./components/AuthButtons";
 import SearchBar from "./components/SearchBar";
 import CategoriesDropdown from "./components/CategoriesDropdown";
 import { ProductProvider } from "@/contexts/ProductContext";
+import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
 
-/**
- * Clean header with desktop: logo (left), centered categories/search (center), auth (right).
- */
 const Header = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -36,7 +35,6 @@ const Header = () => {
               <ProductProvider>
                 <div className="flex items-center gap-4 w-auto">
                   <CategoriesDropdown open={categoriesOpen} onOpenChange={setCategoriesOpen} />
-                  {/* Search bar width for desktop */}
                   <div className="w-[480px] max-w-full transition-all duration-200">
                     <SearchBar />
                   </div>
@@ -44,8 +42,9 @@ const Header = () => {
               </ProductProvider>
             )}
           </div>
-          {/* Right: Auth */}
-          <div className="flex items-center justify-end">
+          {/* Right: Cart + Auth */}
+          <div className="flex items-center justify-end gap-2">
+            <ShoppingCartButton />
             {user ? null : <AuthButtons />}
           </div>
         </div>
@@ -58,18 +57,22 @@ const Header = () => {
               <Logo />
             </Link>
           </div>
-          {/* Hamburger */}
-          <button
-            className="md:hidden flex items-center"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Shopping cart icon on mobile */}
+            <ShoppingCartButton />
+            {/* Hamburger */}
+            <button
+              className="md:hidden flex items-center"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* NEW: Prominent Mobile Search Bar */}
@@ -121,3 +124,4 @@ const Header = () => {
 };
 
 export default Header;
+

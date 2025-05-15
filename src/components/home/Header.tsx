@@ -82,27 +82,28 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Mobile Slide-down menu: Search/Categories/Auth only, no links */}
+        {/* NEW: Prominent Mobile Search Bar */}
+        <div className="block md:hidden mt-3">
+          <ProductProvider>
+            <div className="flex w-full gap-3 items-center">
+              {/* Prominently show the mobile search bar */}
+              <div className="flex-1">
+                <SearchBar mobile />
+              </div>
+              {/* CategoriesDropdown can also be shown inline if desired */}
+              <div className="flex-none">
+                <CategoriesDropdown
+                  open={categoriesOpen}
+                  onOpenChange={setCategoriesOpen}
+                />
+              </div>
+            </div>
+          </ProductProvider>
+        </div>
+
+        {/* Mobile Slide-down menu: Auth only, no search/categories */}
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t">
-            <ProductProvider>
-              {alwaysShowSearchAndCategories && (
-                <div className="flex flex-col gap-4 items-stretch">
-                  <div>
-                    <CategoriesDropdown
-                      open={categoriesOpen}
-                      onOpenChange={setCategoriesOpen}
-                    />
-                  </div>
-                  <div className="flex justify-center px-2">
-                    {/* The mobile prop will make the search bar fill and display well */}
-                    <div className="w-full max-w-full">
-                      <SearchBar mobile />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </ProductProvider>
             {/* Auth on mobile */}
             {!user && (
               <div className="flex flex-col gap-2 pt-3 border-t mt-4">

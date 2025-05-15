@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { LogIn, User, LogOut, ChevronDown } from "lucide-react";
@@ -122,7 +121,7 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
   return (
     <nav className="flex items-center space-x-3">
       <Button
-        className="bg-purple-600 hover:bg-purple-700 text-white border-0"
+        variant="purple"
         size="sm"
         asChild
       >
@@ -168,4 +167,3 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
 };
 
 export default AuthButtons;
-

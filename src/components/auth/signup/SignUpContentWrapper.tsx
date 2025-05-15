@@ -1,3 +1,4 @@
+
 import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
@@ -43,10 +44,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       if (intentHandled) setIntentHandled(false);
       return;
     }
-    
-    const intent = localStorage.getItem("userIntent");
-    console.log("[SignUpContentWrapper] Effect: (step/email/intent):", { step, userEmail, intent });
 
+    const intent = localStorage.getItem("userIntent");
     // Always show modal if no valid intent is found
     if (!validIntent(intent)) {
       localStorage.setItem("showingIntentModal", "true");
@@ -58,14 +57,19 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     }
   }, [step, userEmail]); // Only react to step/email changes
 
-  // --- STRONG BLOCK: Modal overrides *everything* at verification if not handled. ---
-  if (step === "verification" && showIntentModal && !intentHandled && userEmail) {
+  // -- EARLY BLOCKER: If we should show the intent modal (verification step, no valid intent), render ONLY the modal (avoid UI flash!) --
+  if (
+    step === "verification" &&
+    userEmail &&
+    !validIntent(localStorage.getItem("userIntent"))
+  ) {
+    // Only the modal is visible; rest of UI is NOT rendered, no background flash.
     const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
       localStorage.setItem("userIntent", userIntent);
       localStorage.removeItem("showingIntentModal");
       setShowIntentModal(false);
       setIntentHandled(true);
-      
+
       if (userIntent === "giftor") {
         localStorage.setItem("onboardingComplete", "true");
         localStorage.removeItem("newSignUp");
@@ -75,22 +79,12 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       }
     };
 
-    // Keeping this function for interface compatibility, but it won't be used in the UI
-    const handleSkip = () => {
-      // Force user to select an option
-      console.log("[SignUpContentWrapper] Skip attempted, but we require user selection");
-      localStorage.setItem("userIntent", "");
-      setShowIntentModal(true);
-      setIntentHandled(false);
-    };
-
-    console.log("[SignUpContentWrapper] Modal is rendered, blocking UI. (ONLY ON VERIFICATION PAGE)");
-
+    // This will prevent background flash by rendering ONLY the modal:
     return (
       <OnboardingIntentModal
-        open={showIntentModal}
+        open={true}
         onSelect={handleSelectIntent}
-        onSkip={handleSkip}
+        onSkip={() => {/* Never called, keeps interface compatible */}}
       />
     );
   }
@@ -119,3 +113,4 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 };
 
 export default SignUpContentWrapper;
+

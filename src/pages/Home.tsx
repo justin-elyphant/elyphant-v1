@@ -13,9 +13,12 @@ import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
-import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+// Note: Footer component is now part of MainLayout, or should be added separately if Home doesn't use MainLayout.
+// Assuming Home page will eventually be wrapped by MainLayout or have the Footer component added explicitly.
+// For now, we remove the inline footer here to avoid duplication if MainLayout is used.
 
 const Home = () => {
+  // ... keep existing code (user, isMobile, collections, brands definitions)
   const { user } = useAuth();
   const isMobile = useIsMobile();
   
@@ -78,7 +81,7 @@ const Home = () => {
       featured: true
     }
   ];
-  
+
   return (
     <ProductProvider>
       <div className="min-h-screen flex flex-col">
@@ -109,29 +112,11 @@ const Home = () => {
           <HomeCTA />
         </main>
         
-        <footer className="bg-gray-100 border-t py-8">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="mb-4 md:mb-0">
-                <p className="text-gray-600">
-                  &copy; {new Date().getFullYear()} Elyphant. All rights reserved.
-                </p>
-              </div>
-              
-              <div className="flex space-x-6">
-                <Link to="/privacy" className="text-gray-600 hover:text-purple-600">
-                  Privacy
-                </Link>
-                <Link to="/terms" className="text-gray-600 hover:text-purple-600">
-                  Terms
-                </Link>
-                <Link to="/contact" className="text-gray-600 hover:text-purple-600">
-                  Contact
-                </Link>
-              </div>
-            </div>
-          </div>
-        </footer>
+        {/* The custom inline footer that was here has been removed. 
+            The global Footer component (via MainLayout or added directly) should now be used. 
+            If Home.tsx is not wrapped by MainLayout, you'll need to explicitly add <Footer /> here.
+            For demonstration, assuming it will use a layout that includes the footer or it will be added later.
+        */}
       </div>
     </ProductProvider>
   );

@@ -1,9 +1,9 @@
 
 import React from "react";
-import { ResponsiveLayout } from "./ResponsiveLayout";
 import { ResponsiveNavigation } from "./ResponsiveNavigation";
 import { ResponsiveContainer } from "./ResponsiveContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Footer from "@/components/home/Footer"; // Import the detailed footer
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -24,22 +24,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </ResponsiveContainer>
       </main>
       
-      <footer className="py-6 text-center text-sm text-muted-foreground border-t dark:border-gray-800">
-        <ResponsiveContainer>
-          <p>
-            &copy; {new Date().getFullYear()} Gift Giver. All rights reserved.
-          </p>
-          
-          {/* Additional footer links can be added here */}
-          {!isMobile && (
-            <div className="mt-2 flex items-center justify-center space-x-4 text-xs">
-              <a href="#" className="hover:underline">Privacy Policy</a>
-              <a href="#" className="hover:underline">Terms of Service</a>
-              <a href="#" className="hover:underline">Contact Us</a>
-            </div>
-          )}
-        </ResponsiveContainer>
-      </footer>
+      <Footer /> {/* Use the detailed Footer component */}
     </div>
   );
 };

@@ -7,7 +7,7 @@ import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
-import { useWishlist } from "./hooks/useWishlist";
+import { useWishlists } from "./hooks/useWishlists";
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,16 +50,17 @@ const MyWishlists = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
   
-  const { 
-    wishlists, 
-    createWishlist, 
-    deleteWishlist, 
-    isInitialized, 
+  // Use new hook for wishlists
+  const {
+    wishlists,
     isLoading,
-    initError,
-    updateWishlistSharing,
-    reloadWishlists
-  } = useWishlist();
+    error,
+    fetchWishlists,
+    createWishlist,
+    deleteWishlist,
+    addToWishlist,
+    removeFromWishlist,
+  } = useWishlists();
 
   // Get all unique categories from wishlists
   const categories = React.useMemo(() => {
@@ -151,7 +152,7 @@ const MyWishlists = () => {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-      await reloadWishlists();
+      await fetchWishlists();
       toast.success("Wishlists refreshed");
     } catch (error) {
       console.error("Error refreshing wishlists:", error);
@@ -177,9 +178,9 @@ const MyWishlists = () => {
   }
 
   // Show error state with retry option
-  if (initError) {
+  if (error) {
     return (
-      <InitErrorState refreshing={refreshing} onRetry={handleRefresh} />
+      <InitErrorState refreshing={refreshing} onRetry={fetchWishlists} />
     );
   }
 

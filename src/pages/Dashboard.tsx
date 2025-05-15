@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/home/Header";
+import DashboardNavBar from "@/components/dashboard/DashboardNavBar";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +36,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
+        <DashboardNavBar />
         <div className="container max-w-6xl mx-auto py-8 px-4">
           <div className="flex items-center justify-between mb-8">
             <Skeleton className="h-10 w-64" />
@@ -56,6 +58,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      <DashboardNavBar />
       <div className="container max-w-6xl mx-auto py-8 px-4">
         {/* Removed DashboardHeader for consistency */}
         <DashboardGrid />
@@ -65,4 +68,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

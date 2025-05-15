@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, MessageSquare } from "lucide-react";
+import { LogOut, MessageSquare, Store } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface DashboardHeaderProps {
@@ -20,6 +21,15 @@ const DashboardHeader = ({ userData, onLogout }: DashboardHeaderProps) => {
         <p className="text-sm text-muted-foreground">What would you like to do today?</p>
       </div>
       <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/marketplace")}
+          className="flex items-center gap-2"
+        >
+          <Store className="h-4 w-4" />
+          <span>Marketplace</span>
+        </Button>
         <Button
           variant="outline"
           size="sm"

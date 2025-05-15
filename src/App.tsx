@@ -14,6 +14,7 @@ import { AuthProvider } from "@/contexts/auth";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
 import Marketplace from "./pages/Marketplace";
+import { CartProvider } from "@/contexts/CartContext";
 
 function App() {
   return (
@@ -21,19 +22,21 @@ function App() {
       <AuthProvider>
         <ProfileProvider>
           <ThemeProvider>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/:userId" element={<UserProfile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/profile-setup" element={<ProfileSetup />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <CartProvider>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<UserProfile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/profile-setup" element={<ProfileSetup />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </CartProvider>
           </ThemeProvider>
         </ProfileProvider>
       </AuthProvider>
@@ -42,3 +45,4 @@ function App() {
 }
 
 export default App;
+

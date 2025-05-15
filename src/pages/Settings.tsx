@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -61,26 +60,44 @@ const Settings = () => {
     }
   };
 
+  // Only show quick links for signed-in users
   return (
     <SettingsLayout
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
     >
-      <div className="mb-6">
-        <h2 className="font-semibold text-lg mb-3">Your Quick Links</h2>
-        <div className="flex flex-wrap gap-3 mb-4">
-          {userLinks.map((link) => (
+      {user && (
+        <div className="mb-6">
+          <h2 className="font-semibold text-lg mb-3">Your Quick Links</h2>
+          <div className="flex flex-wrap gap-3 mb-4">
             <Link
-              to={link.path}
-              key={link.path}
+              to="/dashboard"
               className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
             >
-              {link.label}
+              Dashboard
             </Link>
-          ))}
+            <Link
+              to="/profile"
+              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+            >
+              Profile
+            </Link>
+            <Link
+              to="/connections"
+              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+            >
+              Connections
+            </Link>
+            <Link
+              to="/wishlists"
+              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+            >
+              Wishlists
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
       {renderTabContent()}
     </SettingsLayout>
   );

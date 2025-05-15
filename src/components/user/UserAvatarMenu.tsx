@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, UserRound, LogOut } from "lucide-react";
+import { Settings, UserRound, LogOut, LayoutDashboard } from "lucide-react";
 
 const UserAvatarMenu: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -47,6 +47,10 @@ const UserAvatarMenu: React.FC = () => {
       <DropdownMenuContent align="end" className="w-56 bg-background">
         <div className="px-3 pt-2 pb-1 font-semibold text-base">{displayName}</div>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          Dashboard
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate("/profile")}>
           <UserRound className="mr-2 h-4 w-4" />
           Account
@@ -77,3 +81,4 @@ const UserAvatarMenu: React.FC = () => {
 };
 
 export default UserAvatarMenu;
+

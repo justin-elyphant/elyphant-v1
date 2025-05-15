@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -116,6 +115,7 @@ const Header = () => {
               {!user && (
                 <div className="flex flex-col gap-2 pt-3 border-t">
                   <Button 
+                    variant="purple"
                     className="w-full" 
                     onClick={() => navigate("/signup")}
                   >

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -11,12 +11,14 @@ import SearchBar from "./components/SearchBar";
 import CategoriesDropdown from "./components/CategoriesDropdown";
 import { ProductProvider } from "@/contexts/ProductContext";
 
+/**
+ * Clean header: only logo, search, categories, auth; no "Connections/Profile/Dashboard/Marketplace" links.
+ */
 const Header = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const location = useLocation();
 
   // Always show search and categories everywhere (including '/')
   const alwaysShowSearchAndCategories = true;
@@ -32,7 +34,7 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation: only SearchBar/Categories, no extra links */}
+          {/* Desktop: Only Categories + Search + Auth */}
           <div className="hidden md:flex items-center space-x-6">
             {alwaysShowSearchAndCategories && (
               <ProductProvider>
@@ -46,11 +48,11 @@ const Header = () => {
               </ProductProvider>
             )}
 
-            {/* Auth buttons or UserButton */}
+            {/* Auth buttons or nothing if user is signed in */}
             {user ? null : <AuthButtons />}
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile: Hamburger menu */}
           <button
             className="md:hidden flex items-center"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -64,7 +66,7 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Slide-down menu: Search/Categories/Auth only, no links */}
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t">
             <ProductProvider>
@@ -80,7 +82,7 @@ const Header = () => {
                 </div>
               </div>
             </ProductProvider>
-            {/* No navigation links here, just auth buttons for mobile */}
+            {/* Auth on mobile */}
             {!user && (
               <div className="flex flex-col gap-2 pt-3 border-t">
                 <Button
@@ -99,7 +101,7 @@ const Header = () => {
                 </Button>
               </div>
             )}
-            {/* Signed-in users: no dashboard/profile/etc links here */}
+            {/* No links for signed-in user */}
           </div>
         )}
       </div>
@@ -108,3 +110,4 @@ const Header = () => {
 };
 
 export default Header;
+

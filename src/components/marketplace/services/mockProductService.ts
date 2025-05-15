@@ -1,4 +1,3 @@
-
 import { Product } from "@/contexts/ProductContext";
 import { generateMockProductResults, createMockResults } from "../zinc/utils/mockResultsGenerator";
 import { normalizeProduct } from "@/contexts/ProductContext";
@@ -13,11 +12,14 @@ export const getMockProducts = (count: number = 10): Product[] => {
   const mockResults = generateMockProductResults("electronics", count);
   
   return mockResults.map((result, index) => {
-    // Always use a reliable placeholder instead of a grey box
+    // Always use a reliable placeholder image
     const imageUrl =
       result.image && result.image !== "/placeholder.svg" && result.image !== null
         ? result.image
         : getReliablePlaceholderImage(index, result.category || "Electronics");
+
+    // Ensure the images array is never empty and doesn't contain any grey boxes
+    const imagesArr = [imageUrl];
     return normalizeProduct({
       product_id: `mock-${index}-${Date.now()}`,
       id: `mock-${index}-${Date.now()}`,
@@ -31,7 +33,7 @@ export const getMockProducts = (count: number = 10): Product[] => {
       brand: result.brand || "Mock Brand",
       rating: result.rating || 4.5,
       reviewCount: result.review_count || 42,
-      images: [imageUrl]
+      images: imagesArr,
     });
   });
 };
@@ -71,11 +73,12 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
     );
     
     return mockResults.map((result, index) => {
-      // Always use a reliable placeholder instead of a grey box
+      // Always use a reliable placeholder image
       const imageUrl =
         result.image && result.image !== "/placeholder.svg" && result.image !== null
           ? result.image
           : getReliablePlaceholderImage(index, interest);
+      const imagesArr = [imageUrl];
       return normalizeProduct({
         product_id: `personalized-${interest}-${index}-${Date.now()}`,
         title: result.title || `${interest.charAt(0).toUpperCase() + interest.slice(1)} Gift`,
@@ -86,7 +89,7 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
         description: result.description || `Perfect gift for ${interest} enthusiasts`,
         rating: result.rating || 4.5,
         reviewCount: result.review_count || 30 + Math.floor(Math.random() * 50),
-        images: [imageUrl]
+        images: imagesArr,
       });
     });
   }
@@ -113,6 +116,7 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
         result.image && result.image !== "/placeholder.svg" && result.image !== null
           ? result.image
           : getReliablePlaceholderImage(index, "Gifts");
+      const imagesArr = [imageUrl];
       return normalizeProduct({
         product_id: `search-${index}-${Date.now()}`,
         title: result.title || `${query} Gift`,
@@ -123,7 +127,7 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
         description: result.description || `Perfect ${query} gift option`,
         rating: result.rating,
         reviewCount: result.review_count,
-        images: [imageUrl]
+        images: imagesArr,
       });
     });
   }
@@ -136,6 +140,7 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
       result.image && result.image !== "/placeholder.svg" && result.image !== null
         ? result.image
         : getReliablePlaceholderImage(index, result.category || "Products");
+    const imagesArr = [imageUrl];
     return normalizeProduct({
       product_id: `search-${index}-${Date.now()}`,
       title: result.title || `${query} Product`,
@@ -146,7 +151,7 @@ export const searchMockProducts = (query: string, count: number = 10): Product[]
       description: result.description || `Product matching your search for ${query}`,
       rating: result.rating || 4.0,
       reviewCount: result.review_count || 28,
-      images: [imageUrl]
+      images: imagesArr,
     });
   });
 };
@@ -228,4 +233,3 @@ function brandToVendor(brand: string): string {
   
   return vendorMap[brand] || 'Amazon via Zinc';
 }
-

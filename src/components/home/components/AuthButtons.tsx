@@ -5,13 +5,13 @@ import { LogIn, User, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
   let user = null;
   let signOut = null;
   let isLoading = false;
-  
+
   try {
     const auth = useAuth();
     user = auth?.user;
@@ -37,10 +37,10 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();  // Stop event propagation to prevent dropdown issues
-    
+    e.stopPropagation(); // Stop event propagation to prevent dropdown issues
+
     console.log("Sign out button clicked, signOut function available:", !!signOut);
-    
+
     if (signOut) {
       try {
         console.log("Executing signOut function...");
@@ -101,8 +101,8 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
               <Link to="/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleSignOut} 
+            <DropdownMenuItem
+              onClick={handleSignOut}
               className="text-destructive cursor-pointer flex items-center hover:bg-red-50"
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -114,8 +114,31 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
     );
   }
 
+  // Desktop: Show "Sign Up" as purple, side-by-side with "Sign In".
+  // The dropdown ("Sign In + Chevron") is for mobile/lazy fallback or special UX, but
+  // traditional desktop display should have two buttons.
+  // We'll use a responsive <div className="hidden md:flex ..."> pattern if needed in header, but
+  // for clarity, here's the updated purple "Sign Up" button.
   return (
     <nav className="flex items-center space-x-3">
+      <Button
+        className="bg-purple-600 hover:bg-purple-700 text-white border-0"
+        size="sm"
+        asChild
+      >
+        <Link to="/signup">
+          <User className="mr-2 h-4 w-4" />
+          Sign Up
+        </Link>
+      </Button>
+      <Button variant="ghost" size="sm" asChild>
+        <Link to="/signin">
+          <LogIn className="mr-2 h-4 w-4" />
+          Sign In
+        </Link>
+      </Button>
+      {/* For mobile/fallback, you may include a dropdown pattern below */}
+      {/* 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button className="bg-purple-600 hover:bg-purple-700 text-white border-0" size="sm">
@@ -139,6 +162,7 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      */}
     </nav>
   );
 };

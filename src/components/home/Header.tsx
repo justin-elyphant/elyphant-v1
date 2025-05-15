@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Menu, X } from "lucide-react";
@@ -17,7 +18,12 @@ const Header = () => {
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
-  
+  const location = useLocation();
+
+  const alwaysShowSearchAndCategories =
+    // Show on all routes unless Settings (which has its own nav)
+    !location.pathname.startsWith("/settings");
+
   return (
     <header className="sticky top-0 bg-white shadow-sm z-50">
       <div className="container mx-auto px-4 py-3">
@@ -28,36 +34,36 @@ const Header = () => {
               <Logo />
             </Link>
           </div>
-          
-          {/* Desktop Navigation */}
+
+          {/* Desktop Navigation, always show SearchBar and CategoriesDropdown */}
           <div className="hidden md:flex items-center space-x-6">
-            <ProductProvider>
-              <CategoriesDropdown 
-                open={categoriesOpen}
-                onOpenChange={setCategoriesOpen}
-              />
-            </ProductProvider>
-            
-            {/* Add Marketplace Link */}
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/marketplace")}
-              className="text-sm font-medium"
-            >
-              Marketplace
-            </Button>
-            
-            <SearchBar />
-            
-            {user ? (
-              <UserButton />
-            ) : (
-              <AuthButtons />
+            {alwaysShowSearchAndCategories && (
+              <ProductProvider>
+                <CategoriesDropdown
+                  open={categoriesOpen}
+                  onOpenChange={setCategoriesOpen}
+                />
+                <div className="w-80">
+                  <SearchBar />
+                </div>
+              </ProductProvider>
             )}
+            {/* Only show Marketplace navigation button if not already on it */}
+            {location.pathname !== "/marketplace" && (
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/marketplace")}
+                className="text-sm font-medium"
+              >
+                Marketplace
+              </Button>
+            )}
+
+            {user ? <UserButton /> : <AuthButtons />}
           </div>
-          
+
           {/* Mobile Menu Toggle */}
-          <button 
+          <button
             className="md:hidden flex items-center"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
@@ -69,68 +75,56 @@ const Header = () => {
             )}
           </button>
         </div>
-        
+
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t">
-            <div className="flex mb-4">
-              <Input 
-                placeholder="Search for gifts..."
-                className="flex-grow mr-2"
-              />
-              <Button 
-                size="icon"
-                variant="ghost"
-                onClick={() => {/* search logic */}}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="space-y-3">
-              <ProductProvider>
-                <CategoriesDropdown 
+            <ProductProvider>
+              {alwaysShowSearchAndCategories && (
+                <CategoriesDropdown
                   open={categoriesOpen}
                   onOpenChange={setCategoriesOpen}
                 />
-              </ProductProvider>
-              
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                onClick={() => navigate("/marketplace")}
-              >
-                Marketplace
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                onClick={() => navigate("/wishlists")}
-              >
-                Wishlists
-              </Button>
-              
-              {/* Auth buttons for mobile */}
-              {!user && (
-                <div className="flex flex-col gap-2 pt-3 border-t">
-                  <Button 
-                    variant="purple"
-                    className="w-full" 
-                    onClick={() => navigate("/signup")}
-                  >
-                    Sign Up
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={() => navigate("/login")}
-                  >
-                    Log In
-                  </Button>
-                </div>
               )}
-            </div>
+              <div className="flex mb-4">
+                <div className="flex-grow">
+                  <SearchBar mobile />
+                </div>
+              </div>
+            </ProductProvider>
+            {/* Marketplace & Wishlists buttons */}
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => navigate("/marketplace")}
+            >
+              Marketplace
+            </Button>
+            {/* Auth buttons for mobile */}
+            {!user && (
+              <div className="flex flex-col gap-2 pt-3 border-t">
+                <Button
+                  variant="purple"
+                  className="w-full"
+                  onClick={() => navigate("/signup")}
+                >
+                  Sign Up
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate("/login")}
+                >
+                  Log In
+                </Button>
+              </div>
+            )}
+            {/* Add UserButton for mobile signed-in users */}
+            {user && (
+              <div className="pt-3 border-t">
+                <UserButton />
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,51 +1,71 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceContent from "./MarketplaceContent";
-import { useMarketplaceSearch } from "./hooks/useMarketplaceSearch";
 import StickyFiltersBar from "./StickyFiltersBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import MarketplaceHero from "./MarketplaceHero";
+import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 
 const MarketplaceWrapper = () => {
   const [showFilters, setShowFilters] = useState(true);
-  const { currentCategory, filteredProducts, isLoading, getPageInfo } = useMarketplaceSearch();
+  const [products, setProducts] = useState(allProducts);
   const isMobile = useIsMobile();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  
-  // Get search term from URL
+
   const searchTerm = searchParams.get("search") || "";
-  
-  const pageInfo = getPageInfo();
-  
+  const categoryParam = searchParams.get("category");
+
+  // Live filter the mock products as the search term changes (NO API!)
+  useEffect(() => {
+    let filtered = allProducts;
+
+    if (categoryParam) {
+      filtered = filtered.filter(
+        (p) => (p.category || "").toLowerCase() === categoryParam.toLowerCase()
+      );
+    }
+
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          (p.description && p.description.toLowerCase().includes(q))
+      );
+    }
+    setProducts(filtered);
+  }, [searchTerm, categoryParam]);
+
   // Track product view analytics
   const handleProductView = (productId: string) => {
     console.log(`Product viewed: ${productId}`);
-    // In a real implementation, you would track this with an analytics service
+    // ... could hook up analytics events here
   };
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <MarketplaceHeader currentCategory={currentCategory} totalResults={filteredProducts.length} />
-      
+      <MarketplaceHeader
+        currentCategory={categoryParam}
+        totalResults={products.length}
+      />
+
       {/* Hero banner with countdown - only show on main marketplace page */}
-      {!currentCategory && !searchTerm && (
-        <MarketplaceHero />
-      )}
-      
-      <StickyFiltersBar 
+      {!categoryParam && !searchTerm && <MarketplaceHero />}
+
+      <StickyFiltersBar
         showFilters={showFilters}
         setShowFilters={setShowFilters}
-        totalItems={filteredProducts.length}
+        totalItems={products.length}
         searchTerm={searchTerm}
       />
-      
-      <main className={`container mx-auto px-4 ${isMobile ? 'pb-20' : 'pb-12'}`}>
-        <MarketplaceContent 
-          products={filteredProducts}
-          isLoading={isLoading}
+
+      <main className={`container mx-auto px-4 ${isMobile ? "pb-20" : "pb-12"}`}>
+        <MarketplaceContent
+          products={products}
+          isLoading={false}
           searchTerm={searchTerm}
           onProductView={handleProductView}
           showFilters={showFilters}

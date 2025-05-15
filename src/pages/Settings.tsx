@@ -9,8 +9,16 @@ import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import PrivacySettings from "@/components/connections/PrivacySettings";
 import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type SettingsTab = "general" | "notifications" | "privacy";
+
+const userLinks = [
+  { label: "Dashboard", path: "/dashboard" },
+  { label: "Profile", path: "/profile" },
+  { label: "Connections", path: "/connections" },
+  { label: "Wishlists", path: "/wishlists" },
+];
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
@@ -59,6 +67,20 @@ const Settings = () => {
       activeTab={activeTab}
       onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
     >
+      <div className="mb-6">
+        <h2 className="font-semibold text-lg mb-3">Your Quick Links</h2>
+        <div className="flex flex-wrap gap-3 mb-4">
+          {userLinks.map((link) => (
+            <Link
+              to={link.path}
+              key={link.path}
+              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
       {renderTabContent()}
     </SettingsLayout>
   );

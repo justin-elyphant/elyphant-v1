@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { LogIn, User, LogOut, ChevronDown } from "lucide-react";
@@ -134,7 +133,7 @@ const AuthButtons = ({ profileImage }: AuthButtonsProps) => {
           <DropdownMenuItem asChild>
             <Link to="/signup" className="flex w-full items-center">
               <User className="mr-2 h-4 w-4" />
-              Create Account
+              Sign Up
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -12,11 +12,11 @@ interface SignInViewProps {
 
 const SignInView: React.FC<SignInViewProps> = ({ onSignInSuccess }) => {
   return (
-    <Card className="w-full bg-white/90 backdrop-blur-sm shadow-2xl border-none">
+    <Card className="w-full bg-background shadow-lg border border-border"> {/* Clean white card style */}
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold text-purple-700">Welcome Back</CardTitle>
-        <CardDescription className="text-slate-600">
-          Sign in to continue to your account
+        <CardTitle className="text-2xl font-bold text-foreground">Sign In</CardTitle> {/* Standard text color */}
+        <CardDescription className="text-muted-foreground">
+          Enter your credentials to access your account
         </CardDescription>
       </CardHeader>
       
@@ -24,30 +24,30 @@ const SignInView: React.FC<SignInViewProps> = ({ onSignInSuccess }) => {
         <EmailPasswordForm onSuccess={onSignInSuccess} />
         
         <div className="relative my-4 w-full">
-          <Separator className="bg-slate-300" />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-muted-foreground">
-            OR CONTINUE WITH
+          <Separator className="bg-border" /> {/* Use border color for separator */}
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+            OR SIGN IN WITH
           </span>
         </div>
         
         <SocialLoginButtons />
       </CardContent>
       
-      <CardFooter className="flex flex-col">
-        <div className="text-sm text-muted-foreground text-center mt-2">
+      <CardFooter className="flex flex-col items-center gap-2"> {/* Reduced gap for footer */}
+        <div className="text-sm text-muted-foreground text-center">
           Don't have an account?{" "}
           <Link 
             to="/signup" 
-            className="text-purple-700 font-semibold underline-offset-4 hover:underline"
+            className="text-primary font-semibold underline-offset-4 hover:underline" // Use primary color for link
           >
             Sign up
           </Link>
         </div>
-        <div className="text-sm text-muted-foreground text-center mt-2">
+        <div className="text-sm text-muted-foreground text-center">
           Forgot your password?{" "}
           <Link 
             to="/reset-password" 
-            className="text-purple-700 font-semibold underline-offset-4 hover:underline"
+            className="text-primary font-semibold underline-offset-4 hover:underline" // Use primary color for link
           >
             Reset it
           </Link>

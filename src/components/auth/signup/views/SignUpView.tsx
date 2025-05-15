@@ -3,6 +3,8 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/SignUpForm";
 import { Link } from "react-router-dom";
+import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons"; // Reusing from signin
+import { Separator } from "@/components/ui/separator";
 
 interface SignUpViewProps {
   onSubmit: (values: SignUpFormValues) => Promise<void>;
@@ -18,8 +20,17 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit, isSubmitting = false 
           Join our community to discover and share amazing gift ideas
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <SignUpForm onSubmit={onSubmit} isSubmitting={isSubmitting} />
+        
+        <div className="relative my-4 w-full">
+          <Separator className="bg-slate-300" />
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+            OR SIGN UP WITH
+          </span>
+        </div>
+        
+        <SocialLoginButtons />
       </CardContent>
       <CardFooter className="flex flex-col items-center gap-4">
         <div className="text-sm text-muted-foreground">

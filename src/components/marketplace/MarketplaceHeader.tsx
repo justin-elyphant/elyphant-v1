@@ -19,8 +19,10 @@ const MarketplaceHeader = ({
   return (
     <div className="mb-6">
       <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center mb-4`}>
-        <h1 className="font-sans text-xl md:text-2xl font-semibold text-gray-900
-          ${isMobile ? 'mb-4 text-center w-full' : ''}`}>
+        <h1
+          className={`font-sans font-semibold text-gray-900
+            ${isMobile ? 'mb-4 text-lg text-center w-full' : 'text-xl md:text-2xl'}`}
+        >
           {currentCategory ? `${categoryDisplayName}` : "Gift Marketplace"}
         </h1>
         {totalResults !== undefined && (

@@ -27,48 +27,32 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
 
   const handleCollectionClick = async (collection: Collection) => {
-    // If already loading, don't allow multiple clicks
     if (loadingCollection !== null) {
       return;
     }
-    
-    // Set loading state
     setLoadingCollection(collection.id);
     console.log(`FeaturedCollections: Collection clicked: ${collection.name}, searchTerm: ${collection.searchTerm || collection.name}`);
-    
-    // Show loading toast
     toast.success(`Exploring ${collection.name} collection...`);
-    
     const searchTerm = collection.searchTerm || collection.name;
-    
+
     try {
-      // Pre-fetch products before navigation and log the process
       if (searchTerm) {
         console.log(`Pre-fetching products for search term: ${searchTerm}`);
-        const results = await searchProducts(searchTerm, "50"); // Request 50 products as string
+        const results = await searchProducts(searchTerm, "50");
         console.log(`Fetched ${results.length} products for "${searchTerm}"`);
-        
         if (results.length === 0) {
           console.error(`No products found for search term: ${searchTerm}`);
         }
       }
-      
-      // If the collection has a direct URL, use that
       if (collection.url) {
         window.location.href = collection.url;
-      }
-      // If it has a category, use that along with the search term
-      else if (collection.category) {
-        // Include the collection name as a pageTitle parameter and search term
+      } else if (collection.category) {
         window.location.href = `/gifting?tab=products&category=${collection.category}&pageTitle=Collection: ${encodeURIComponent(collection.name)}&search=${encodeURIComponent(searchTerm)}`;
-      }
-      // Otherwise use the name as a search term
-      else {
+      } else {
         window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
       }
     } catch (error) {
       console.error(`Error handling collection click for ${collection.name}:`, error);
-      // Continue with navigation even if pre-fetch fails
       if (collection.url) {
         window.location.href = collection.url;
       } else {
@@ -108,7 +92,6 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
           View all collections
         </a>
       </div>
-      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {enhancedCollections.map((collection) => (
           <div 
@@ -118,19 +101,27 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
           >
             <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
               <div className="aspect-video relative">
-                <div className="w-full h-full">
-                  <ProductImage 
-                    product={{
-                      name: collection.name,
-                      category: collection.category || collection.name,
-                      image: null
-                    }} 
-                    useMock={true}
+                {/* --- REAL IMAGE if provided, fallback to ProductImage if not --- */}
+                {collection.image ? (
+                  <img
+                    src={collection.image}
+                    alt={collection.name}
+                    className="w-full h-full object-cover"
                   />
-                </div>
+                ) : (
+                  <div className="w-full h-full">
+                    <ProductImage 
+                      product={{
+                        name: collection.name,
+                        category: collection.category || collection.name,
+                        image: null
+                      }} 
+                      useMock={true}
+                    />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
                   <h3 className="text-white font-medium text-lg">{collection.name}</h3>
-                  
                   {/* Display rating with our brand styling */}
                   <div className="mb-1">
                     <ProductRating 
@@ -140,7 +131,6 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                       className="text-white"
                     />
                   </div>
-                  
                   <div className="flex items-center text-white/90 text-sm mt-1 hover:text-white">
                     <span>{loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}</span>
                     <ArrowRight className="h-4 w-4 ml-1" />
@@ -156,3 +146,4 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
 };
 
 export default FeaturedCollections;
+

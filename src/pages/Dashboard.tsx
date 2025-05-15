@@ -27,7 +27,7 @@ const Dashboard = () => {
     if (!isLoading && !user) {
       console.log("No user in Dashboard, redirecting to sign-in");
       navigate("/signin", { replace: true });
-    } else if (user) {
+    } else if (!isLoading && user) {
       setProfileLoading(false);
     }
   }, [user, navigate, isLoading]);
@@ -55,7 +55,7 @@ const Dashboard = () => {
   }
 
   // If not loading and no user, redirect handled by useEffect
-  if (!user) return null;
+  if (!user && !isLoading) return null;
   
   return (
     <div className="min-h-screen bg-gray-50">

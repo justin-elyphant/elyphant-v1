@@ -8,13 +8,13 @@ import Footer from "@/components/home/Footer"; // Import Footer
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   
   React.useEffect(() => {
-    if (user) {
+    if (!isLoading && user) {
       navigate("/dashboard", { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
 
   const handleSignInSuccess = () => {
     console.log("Sign in successful, awaiting user state update for redirect");

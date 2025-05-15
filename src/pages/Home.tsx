@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,7 +16,7 @@ import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
 const Home = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  
+
   // Sample collections data
   const collections = [
     {
@@ -28,7 +29,7 @@ const Home = () => {
     {
       id: 2,
       name: "Gifts for Him",
-      image: "/lovable-uploads/99d6a4f4-681f-4904-98fb-7c29bafba9d2.png", // Newly uploaded image for him
+      image: "/lovable-uploads/99d6a4f4-681f-4904-98fb-7c29bafba9d2.png", // User uploaded image for him
       callToAction: "Shop Now",
       searchTerm: "gifts for men"
     },
@@ -47,7 +48,7 @@ const Home = () => {
       searchTerm: "luxury gifts"
     }
   ];
-  
+
   // Sample brands data
   const brands = [
     {
@@ -81,25 +82,27 @@ const Home = () => {
       <MainLayout>
         {/* Hero Section */}
         <HeroSection />
-        
-        {/* Featured Collections Section */}
-        <FeaturedCollections collections={collections} />
-        
+
+        {/* Add extra space before Featured Collections */}
+        <div className="mt-8">
+          <FeaturedCollections collections={collections} />
+        </div>
+
         {/* Occasions-Based Gift Collections */}
         <FeaturedOccasions />
-        
+
         {/* Trending Products Carousel */}
         <FeaturedProductsSection />
-        
+
         {/* Popular Brands Section */}
         <PopularBrandsSection />
-        
+
         {/* Seasonal Gift Guide */}
         <SeasonalGiftGuide />
-        
+
         {/* Features Section */}
         <FeaturesSection />
-        
+
         {/* Call to Action */}
         <HomeCTA />
       </MainLayout>
@@ -108,3 +111,4 @@ const Home = () => {
 };
 
 export default Home;
+

@@ -1,10 +1,8 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProductProvider } from "@/contexts/ProductContext";
-import { ResponsiveNavigation } from "@/components/layout/ResponsiveNavigation";
+import MainLayout from "@/components/layout/MainLayout";
 import HeroSection from "@/components/home/sections/HeroSection";
 import FeaturesSection from "@/components/home/sections/FeaturesSection";
 import HomeCTA from "@/components/home/sections/HomeCTA";
@@ -13,9 +11,6 @@ import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
-// Note: Footer component is now part of MainLayout, or should be added separately if Home doesn't use MainLayout.
-// Assuming Home page will eventually be wrapped by MainLayout or have the Footer component added explicitly.
-// For now, we remove the inline footer here to avoid duplication if MainLayout is used.
 
 const Home = () => {
   // ... keep existing code (user, isMobile, collections, brands definitions)
@@ -84,40 +79,31 @@ const Home = () => {
 
   return (
     <ProductProvider>
-      <div className="min-h-screen flex flex-col">
-        <ResponsiveNavigation />
-        <main className="flex-grow">
-          {/* Hero Section */}
-          <HeroSection />
-          
-          {/* Featured Collections Section */}
-          <FeaturedCollections collections={collections} />
-          
-          {/* Occasions-Based Gift Collections */}
-          <FeaturedOccasions />
-          
-          {/* Trending Products Carousel */}
-          <FeaturedProductsSection />
-          
-          {/* Popular Brands Section */}
-          <PopularBrandsSection />
-          
-          {/* Seasonal Gift Guide */}
-          <SeasonalGiftGuide />
-          
-          {/* Features Section */}
-          <FeaturesSection />
-          
-          {/* Call to Action */}
-          <HomeCTA />
-        </main>
+      <MainLayout>
+        {/* Hero Section */}
+        <HeroSection />
         
-        {/* The custom inline footer that was here has been removed. 
-            The global Footer component (via MainLayout or added directly) should now be used. 
-            If Home.tsx is not wrapped by MainLayout, you'll need to explicitly add <Footer /> here.
-            For demonstration, assuming it will use a layout that includes the footer or it will be added later.
-        */}
-      </div>
+        {/* Featured Collections Section */}
+        <FeaturedCollections collections={collections} />
+        
+        {/* Occasions-Based Gift Collections */}
+        <FeaturedOccasions />
+        
+        {/* Trending Products Carousel */}
+        <FeaturedProductsSection />
+        
+        {/* Popular Brands Section */}
+        <PopularBrandsSection />
+        
+        {/* Seasonal Gift Guide */}
+        <SeasonalGiftGuide />
+        
+        {/* Features Section */}
+        <FeaturesSection />
+        
+        {/* Call to Action */}
+        <HomeCTA />
+      </MainLayout>
     </ProductProvider>
   );
 };

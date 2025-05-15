@@ -12,13 +12,13 @@ export const VendorHero = ({ onContactClick }: VendorHeroProps) => {
 
   return (
     <div className="text-center max-w-4xl mx-auto mb-16">
-      <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+      <h1 className="font-sans text-3xl md:text-5xl font-bold text-gray-900 mb-6">
         Grow Your Business with Elyphant
       </h1>
-      <p className="text-xl text-gray-600 mb-4">
+      <p className="text-base md:text-xl text-muted-foreground mb-4">
         Join our marketplace and connect with customers looking for meaningful gifts
       </p>
-      <p className="text-lg text-gray-600 mb-8">
+      <p className="text-base md:text-lg text-muted-foreground mb-8">
         Our seamless vendor portal makes it easy to showcase your products, manage inventory,
         and track your success all in one place.
       </p>

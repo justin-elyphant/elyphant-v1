@@ -14,17 +14,17 @@ const MarketplaceHeader = ({
 }: MarketplaceHeaderProps) => {
   const isMobile = useIsMobile();
   
-  // Get the display name for the category
   const categoryDisplayName = getCategoryName(currentCategory);
 
   return (
     <div className="mb-6">
       <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center mb-4`}>
-        <h1 className={`text-2xl font-semibold text-gray-900 ${isMobile ? 'mb-4 text-center w-full' : ''}`}>
+        <h1 className="font-sans text-xl md:text-2xl font-semibold text-gray-900
+          ${isMobile ? 'mb-4 text-center w-full' : ''}`}>
           {currentCategory ? `${categoryDisplayName}` : "Gift Marketplace"}
         </h1>
         {totalResults !== undefined && (
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             {totalResults} {totalResults === 1 ? 'item' : 'items'} found
           </div>
         )}

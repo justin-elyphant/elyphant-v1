@@ -5,7 +5,7 @@ import { Store, Utensils, Shirt, Dumbbell, Paintbrush } from "lucide-react";
 export const BusinessTypesSection = () => {
   return (
     <div className="mb-16">
-      <h2 className="text-3xl font-bold text-center mb-10">Perfect For All Types of Businesses</h2>
+      <h2 className="font-sans text-2xl md:text-3xl font-semibold text-center mb-10">Perfect For All Types of Businesses</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
         <div className="flex flex-col items-center p-4">
           <Store className="h-10 w-10 text-purple-600 mb-2" />

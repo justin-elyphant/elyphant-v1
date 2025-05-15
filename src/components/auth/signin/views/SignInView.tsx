@@ -12,10 +12,10 @@ interface SignInViewProps {
 
 const SignInView: React.FC<SignInViewProps> = ({ onSignInSuccess }) => {
   return (
-    <Card className="w-full bg-background shadow-lg border border-border"> {/* Clean white card style */}
+    <Card className="w-full bg-background shadow-lg border border-border">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold text-foreground">Sign In</CardTitle> {/* Standard text color */}
-        <CardDescription className="text-muted-foreground">
+        <CardTitle className="font-sans text-2xl font-semibold text-foreground">Sign In</CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
           Enter your credentials to access your account
         </CardDescription>
       </CardHeader>
@@ -24,7 +24,7 @@ const SignInView: React.FC<SignInViewProps> = ({ onSignInSuccess }) => {
         <EmailPasswordForm onSuccess={onSignInSuccess} />
         
         <div className="relative my-4 w-full">
-          <Separator className="bg-border" /> {/* Use border color for separator */}
+          <Separator className="bg-border" />
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
             OR SIGN IN WITH
           </span>
@@ -33,12 +33,12 @@ const SignInView: React.FC<SignInViewProps> = ({ onSignInSuccess }) => {
         <SocialLoginButtons />
       </CardContent>
       
-      <CardFooter className="flex flex-col items-center gap-2"> {/* Reduced gap for footer */}
+      <CardFooter className="flex flex-col items-center gap-2">
         <div className="text-sm text-muted-foreground text-center">
           Don't have an account?{" "}
           <Link 
             to="/signup" 
-            className="text-primary font-semibold underline-offset-4 hover:underline" // Use primary color for link
+            className="text-primary font-semibold underline-offset-4 hover:underline"
           >
             Sign up
           </Link>
@@ -47,7 +47,7 @@ const SignInView: React.FC<SignInViewProps> = ({ onSignInSuccess }) => {
           Forgot your password?{" "}
           <Link 
             to="/reset-password" 
-            className="text-primary font-semibold underline-offset-4 hover:underline" // Use primary color for link
+            className="text-primary font-semibold underline-offset-4 hover:underline"
           >
             Reset it
           </Link>

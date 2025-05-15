@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/SignUpForm";
 import { Link } from "react-router-dom";
-import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons"; // Reusing from signin
+import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
 import { Separator } from "@/components/ui/separator";
 
 interface SignUpViewProps {
@@ -14,9 +14,9 @@ interface SignUpViewProps {
 const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit, isSubmitting = false }) => {
   return (
     <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center font-bold">Create an Account</CardTitle>
-        <CardDescription className="text-center">
+      <CardHeader className="space-y-1 text-center">
+        <CardTitle className="font-sans text-2xl font-semibold">Create an Account</CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
           Join our community to discover and share amazing gift ideas
         </CardDescription>
       </CardHeader>
@@ -35,7 +35,7 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit, isSubmitting = false 
       <CardFooter className="flex flex-col items-center gap-4">
         <div className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/signin" className="text-purple-700 underline-offset-4 hover:underline">
+          <Link to="/signin" className="text-primary font-semibold underline-offset-4 hover:underline">
             Sign in
           </Link>
         </div>

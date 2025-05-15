@@ -42,7 +42,7 @@ export const Step: React.FC<StepProps> = ({ isActive, isCompleted, children }) =
     <div className="flex flex-col items-center">
       <div
         className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold",
           isActive && "bg-primary text-primary-foreground",
           isCompleted && "bg-green-500 text-white",
           !isActive && !isCompleted && "bg-gray-200 text-gray-500"
@@ -56,5 +56,5 @@ export const Step: React.FC<StepProps> = ({ isActive, isCompleted, children }) =
 };
 
 export const StepLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <div className="mt-2 text-xs text-center">{children}</div>;
+  return <div className="mt-2 text-xs text-muted-foreground text-center">{children}</div>;
 };

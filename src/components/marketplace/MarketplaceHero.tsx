@@ -16,15 +16,12 @@ const MarketplaceHero = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  // Get upcoming holidays and friend events
   const upcomingHolidays = getUpcomingOccasions().filter(occ => occ.type === "holiday");
   const { friendOccasions } = useConnectedFriendsSpecialDates();
   
-  // Get the next two upcoming holidays
   const nextHoliday = upcomingHolidays.length > 0 ? upcomingHolidays[0] : null;
   const secondHoliday = upcomingHolidays.length > 1 ? upcomingHolidays[1] : null;
 
-  // For debugging
   useEffect(() => {
     console.log("Current date:", new Date());
     console.log("Upcoming holidays:", upcomingHolidays);
@@ -32,10 +29,8 @@ const MarketplaceHero = () => {
     console.log("Friend occasions:", friendOccasions);
   }, [upcomingHolidays, nextHoliday, friendOccasions]);
   
-  // Get the target event for countdown
   const { targetEvent } = useTargetEvent(user, nextHoliday, upcomingHolidays, friendOccasions);
   
-  // Handle card click to navigate to search
   const handleOccasionCardClick = (searchQuery: string, personId?: string, occasionType?: string) => {
     const params = new URLSearchParams();
     params.set("search", searchQuery);
@@ -44,7 +39,6 @@ const MarketplaceHero = () => {
     navigate(`/marketplace?${params.toString()}`);
   };
   
-  // Popular shopping categories
   const popularCategories = ['Electronics', 'Fashion', 'Home', 'Books', 'Toys'];
   
   return (
@@ -63,9 +57,8 @@ const MarketplaceHero = () => {
           />
         </div>
         
-        {/* Occasion cards section for upcoming events */}
         <div className="mb-6">
-          <h2 className="text-xl font-medium mb-3">Upcoming Gift Occasions</h2>
+          <h2 className="font-sans text-xl md:text-2xl font-semibold mb-3">Upcoming Gift Occasions</h2>
           <OccasionCards 
             friendOccasions={friendOccasions}
             nextHoliday={nextHoliday}
@@ -74,7 +67,6 @@ const MarketplaceHero = () => {
           />
         </div>
         
-        {/* Quick category links */}
         <CategoryLinks categories={popularCategories} />
       </div>
     </div>

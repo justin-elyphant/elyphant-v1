@@ -12,9 +12,9 @@ export const BenefitsSection = () => {
             <div className="bg-purple-100 p-3 rounded-full mr-4">
               <Globe className="h-6 w-6 text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold">Expand Your Reach</h3>
+            <h2 className="font-sans text-xl font-semibold">Expand Your Reach</h2>
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Access our growing network of gift-givers looking for unique products from businesses like yours.
           </p>
         </CardContent>
@@ -26,9 +26,9 @@ export const BenefitsSection = () => {
             <div className="bg-purple-100 p-3 rounded-full mr-4">
               <BarChart className="h-6 w-6 text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold">Boost Your Sales</h3>
+            <h2 className="font-sans text-xl font-semibold">Boost Your Sales</h2>
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Our gift recommendation engine promotes your products to the perfect customers at the right time.
           </p>
         </CardContent>
@@ -40,9 +40,9 @@ export const BenefitsSection = () => {
             <div className="bg-purple-100 p-3 rounded-full mr-4">
               <Wallet className="h-6 w-6 text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold">Simple Revenue Model</h3>
+            <h2 className="font-sans text-xl font-semibold">Simple Revenue Model</h2>
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm text-muted-foreground">
             We handle the customer experience while you focus on your products, with a straightforward 30% marketplace fee.
           </p>
         </CardContent>

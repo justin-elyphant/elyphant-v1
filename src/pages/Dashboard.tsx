@@ -11,32 +11,27 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [profileLoading, setProfileLoading] = useState(true);
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
-  
-  // Set up a timeout to prevent indefinite loading
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setLocalLoadingTimeout(false);
       setProfileLoading(false);
-    }, 2000); // Stop loading after 2 seconds max
-    
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
   
-  // Redirect to sign-in if not logged in and not loading
   useEffect(() => {
-    if (!isLoading && !user) {
-      console.log("No user in Dashboard, redirecting to sign-in");
+    console.log('Dashboard.tsx Effect: user, isLoading, localLoadingTimeout', { user, isLoading, localLoadingTimeout });
+    if (!user && !isLoading && !localLoadingTimeout) {
+      console.log("No user in Dashboard, redirecting to sign-in (after timeout/loading)");
       navigate("/signin", { replace: true });
     } else if (!isLoading && user) {
       setProfileLoading(false);
     }
-  }, [user, navigate, isLoading]);
+  }, [user, navigate, isLoading, localLoadingTimeout]);
 
-  // Determine if we should show loading state
-  const isPageLoading = (isLoading && localLoadingTimeout) || (profileLoading && localLoadingTimeout);
-  
-  // Show loading skeleton while checking auth/profile status
-  if (isPageLoading) {
+  // If still loading or waiting for timeout, show skeleton
+  if (isLoading || localLoadingTimeout || profileLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container max-w-6xl mx-auto py-8 px-4">
@@ -54,9 +49,9 @@ const Dashboard = () => {
     );
   }
 
-  // If not loading and no user, redirect handled by useEffect
-  if (!user && !isLoading) return null;
-  
+  // At this point, loading/timeouts are resolved. If still no user, let useEffect redirect.
+  if (!user && !isLoading && !localLoadingTimeout) return null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container max-w-6xl mx-auto py-8 px-4">

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -9,8 +8,9 @@ import Footer from "@/components/home/Footer"; // Import Footer
 const SignIn = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
-  
+
   React.useEffect(() => {
+    console.log('SignIn.tsx Effect: user, isLoading', { user, isLoading });
     if (!isLoading && user) {
       navigate("/dashboard", { replace: true });
     }
@@ -18,20 +18,17 @@ const SignIn = () => {
 
   const handleSignInSuccess = () => {
     console.log("Sign in successful, awaiting user state update for redirect");
-    // The useEffect above will handle the redirect once the user state is updated by AuthProvider
+    // useEffect above manages redirect
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background"> {/* Changed background */}
+    <div className="flex flex-col min-h-screen bg-background">
       <Header />
-      {/* Removed the gradient background div, use neutral page background */}
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        {/* Use SignInView for consistent styling */}
         <SignInView onSignInSuccess={handleSignInSuccess} />
       </div>
-      <Footer /> {/* Add Footer here */}
+      <Footer />
     </div>
   );
 };
-
 export default SignIn;

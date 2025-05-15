@@ -44,7 +44,8 @@ const Header = () => {
                     open={categoriesOpen}
                     onOpenChange={setCategoriesOpen}
                   />
-                  <div className="w-96 max-w-full transition-all duration-200">
+                  {/* Increase the width of the search bar for desktop */}
+                  <div className="w-[480px] max-w-full transition-all duration-200">
                     <SearchBar />
                   </div>
                 </div>
@@ -93,9 +94,11 @@ const Header = () => {
                       onOpenChange={setCategoriesOpen}
                     />
                   </div>
-                  <div>
-                    {/* Center the search bar on mobile, add some margin and make it fill parent for better visibility */}
-                    <SearchBar mobile />
+                  <div className="flex justify-center px-2">
+                    {/* The mobile prop will make the search bar fill and display well */}
+                    <div className="w-full max-w-full">
+                      <SearchBar mobile />
+                    </div>
                   </div>
                 </div>
               )}

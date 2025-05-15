@@ -11,6 +11,7 @@ import CategoriesDropdown from "./components/CategoriesDropdown";
 import { ProductProvider } from "@/contexts/ProductContext";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
 import UserAvatarMenu from "@/components/user/UserAvatarMenu";
+import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -42,9 +43,10 @@ const Header = () => {
               </ProductProvider>
             )}
           </div>
-          {/* Right: Cart + Auth/Profile */}
+          {/* Right: Cart + Notifications + Auth/Profile */}
           <div className="flex items-center justify-end gap-2">
             <ShoppingCartButton />
+            <NotificationsDropdown />
             {user ? (
               <UserAvatarMenu />
             ) : (
@@ -64,6 +66,8 @@ const Header = () => {
           <div className="flex items-center gap-2">
             {/* Shopping cart icon on mobile */}
             <ShoppingCartButton />
+            {/* Notifications bell on mobile */}
+            <NotificationsDropdown />
             {/* Hamburger */}
             <button
               className="md:hidden flex items-center"

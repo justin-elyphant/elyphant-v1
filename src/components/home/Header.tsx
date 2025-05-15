@@ -44,7 +44,7 @@ const Header = () => {
                     open={categoriesOpen}
                     onOpenChange={setCategoriesOpen}
                   />
-                  <div className="w-80 max-w-full">
+                  <div className="w-96 max-w-full transition-all duration-200">
                     <SearchBar />
                   </div>
                 </div>
@@ -86,20 +86,23 @@ const Header = () => {
           <div className="md:hidden mt-4 py-4 border-t">
             <ProductProvider>
               {alwaysShowSearchAndCategories && (
-                <CategoriesDropdown
-                  open={categoriesOpen}
-                  onOpenChange={setCategoriesOpen}
-                />
-              )}
-              <div className="flex mb-4">
-                <div className="flex-grow">
-                  <SearchBar mobile />
+                <div className="flex flex-col gap-4 items-stretch">
+                  <div>
+                    <CategoriesDropdown
+                      open={categoriesOpen}
+                      onOpenChange={setCategoriesOpen}
+                    />
+                  </div>
+                  <div>
+                    {/* Center the search bar on mobile, add some margin and make it fill parent for better visibility */}
+                    <SearchBar mobile />
+                  </div>
                 </div>
-              </div>
+              )}
             </ProductProvider>
             {/* Auth on mobile */}
             {!user && (
-              <div className="flex flex-col gap-2 pt-3 border-t">
+              <div className="flex flex-col gap-2 pt-3 border-t mt-4">
                 <Button
                   variant="purple"
                   className="w-full"

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,7 +22,7 @@ const Home = () => {
     {
       id: 1,
       name: "Gifts for Her",
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80",
+      image: "/lovable-uploads/61d17bb8-5d3f-41b6-84fb-cfc08459461b.png", // Updated to user uploaded image
       callToAction: "Shop Now",
       searchTerm: "gifts for women"
     },

@@ -1,17 +1,28 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Gift, ShoppingBag } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // Helper to flag user's CTA intent before redirecting (for onboarding modal)
-  const handleCta = (intent: "giftor" | "giftee", url: string) => {
-    // Store for onboarding flow to pick up
+  // Enhanced handler for CTAs: sets intent and routes based on auth
+  const handleCta = (intent: "giftor" | "giftee") => {
     localStorage.setItem("ctaIntent", intent);
-    navigate(url);
+    if (user) {
+      // Authenticated user: go direct to feature page
+      if (intent === "giftor") {
+        navigate("/gifting");
+      } else {
+        navigate("/wishlists");
+      }
+    } else {
+      // Not logged in: send to signup (onboarding flow will route post-auth)
+      navigate("/signup");
+    }
   };
 
   return (
@@ -26,32 +37,26 @@ const Hero = () => {
             </p>
             <div className="flex flex-wrap gap-3">
               <Button
-                asChild
                 size="default"
                 className="bg-purple-600 hover:bg-purple-700"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleCta("giftor", "/gifting");
+                  handleCta("giftor");
                 }}
               >
-                <a href="/gifting">
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  Start Gifting
-                </a>
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Start Gifting
               </Button>
               <Button
-                asChild
                 variant="outline"
                 size="default"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleCta("giftee", "/wishlists");
+                  handleCta("giftee");
                 }}
               >
-                <a href="/wishlists">
-                  <Gift className="mr-2 h-4 w-4" />
-                  Create Wishlist
-                </a>
+                <Gift className="mr-2 h-4 w-4" />
+                Create Wishlist
               </Button>
             </div>
           </div>

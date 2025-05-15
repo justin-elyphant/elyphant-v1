@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import SearchBar from "./components/SearchBar";
 import CategoriesDropdown from "./components/CategoriesDropdown";
 import { ProductProvider } from "@/contexts/ProductContext";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
+import UserAvatarMenu from "@/components/user/UserAvatarMenu";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -42,10 +42,14 @@ const Header = () => {
               </ProductProvider>
             )}
           </div>
-          {/* Right: Cart + Auth */}
+          {/* Right: Cart + Auth/Profile */}
           <div className="flex items-center justify-end gap-2">
             <ShoppingCartButton />
-            {user ? null : <AuthButtons />}
+            {user ? (
+              <UserAvatarMenu />
+            ) : (
+              <AuthButtons />
+            )}
           </div>
         </div>
 
@@ -124,4 +128,3 @@ const Header = () => {
 };
 
 export default Header;
-

@@ -1,29 +1,35 @@
 
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getCategoryName } from "./hooks/utils/category/categoryNames";
+import { usePageInfo } from "./hooks/usePageInfo";
 
 interface MarketplaceHeaderProps {
   totalResults?: number;
   currentCategory?: string | null;
+  filteredProducts?: any[];
 }
 
 const MarketplaceHeader = ({
   totalResults,
-  currentCategory
+  currentCategory,
+  filteredProducts = [],
 }: MarketplaceHeaderProps) => {
   const isMobile = useIsMobile();
-  
-  const categoryDisplayName = getCategoryName(currentCategory);
+
+  // UsePageInfo returns a getPageInfo method which returns { pageTitle, subtitle }
+  const { getPageInfo } = usePageInfo(currentCategory ?? null, filteredProducts);
+
+  // Call getPageInfo to get dynamic title/subtitle
+  const { pageTitle, subtitle } = getPageInfo();
 
   return (
     <div className="mb-6">
-      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center mb-4`}>
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center mb-2`}>
         <h1
           className={`font-sans font-semibold text-gray-900
-            ${isMobile ? 'mb-4 text-lg text-center w-full' : 'text-xl md:text-2xl'}`}
+            ${isMobile ? 'mb-2 text-lg text-center w-full' : 'text-xl md:text-2xl'}`}
         >
-          {currentCategory ? `${categoryDisplayName}` : "Gift Marketplace"}
+          {pageTitle || "Gift Marketplace"}
         </h1>
         {totalResults !== undefined && (
           <div className="text-sm text-muted-foreground">
@@ -31,8 +37,14 @@ const MarketplaceHeader = ({
           </div>
         )}
       </div>
+      {subtitle && (
+        <p className={`text-sm text-muted-foreground ${isMobile ? "text-center" : ""}`}>
+          {subtitle}
+        </p>
+      )}
     </div>
   );
 };
 
 export default MarketplaceHeader;
+

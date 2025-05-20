@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceContent from "./MarketplaceContent";
@@ -50,6 +49,7 @@ const MarketplaceWrapper = () => {
       <MarketplaceHeader
         currentCategory={categoryParam}
         totalResults={products.length}
+        filteredProducts={products}
       />
 
       {/* Hero banner with countdown - only show on main marketplace page */}

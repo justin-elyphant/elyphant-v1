@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,7 @@ const Header = () => {
           </div>
         </div>
 
-        {/* NEW: Prominent Mobile Search Bar */}
+        {/* Mobile Search Bar area with just ONE CategoriesDropdown */}
         <div className="block md:hidden mt-3">
           <ProductProvider>
             <div className="flex w-full gap-3 items-center">
@@ -91,7 +92,7 @@ const Header = () => {
               <div className="flex-1">
                 <SearchBar mobile />
               </div>
-              {/* CategoriesDropdown can also be shown inline if desired */}
+              {/* Only one CategoriesDropdown on mobile */}
               <div className="flex-none">
                 <CategoriesDropdown
                   open={categoriesOpen}

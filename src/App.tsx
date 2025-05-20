@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import SignIn from "./pages/auth/SignIn";
@@ -16,10 +15,12 @@ import { ThemeProvider } from './contexts/theme/ThemeProvider';
 import Marketplace from "./pages/Marketplace";
 import { CartProvider } from "@/contexts/CartContext";
 import Wishlists from "./pages/Wishlists"; // <-- import Wishlists page
+import ScrollToTop from "@/components/layout/ScrollToTop";
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <ProfileProvider>
           <ThemeProvider>
@@ -47,4 +48,3 @@ function App() {
 }
 
 export default App;
-

@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { User, Store, Settings, LogOut, Dashboard } from "lucide-react"; // Dashboard for Dashboard
+import { User, Store, Settings, LogOut, LayoutDashboard } from "lucide-react"; // Updated icon import
 
 import { useAuth } from "@/contexts/auth";
 
@@ -43,7 +43,7 @@ const UserAvatarMenu = () => {
         </DropdownMenuItem>
         {/* Dashboard */}
         <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-          <Dashboard className="mr-2 h-4 w-4" />
+          <LayoutDashboard className="mr-2 h-4 w-4" />
           Dashboard
         </DropdownMenuItem>
         {/* Profile / Account */}

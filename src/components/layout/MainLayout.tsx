@@ -1,5 +1,5 @@
-
 import React from "react";
+import Header from "@/components/home/Header";
 import { ResponsiveNavigation } from "./ResponsiveNavigation";
 import { ResponsiveContainer } from "./ResponsiveContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,7 +14,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-gray-950">
-      <ResponsiveNavigation />
+      {/* Always show the universal header with categories & search */}
+      <Header />
+      {/* Optionally keep navigation if needed - can comment out if you want single nav only */}
+      {/* <ResponsiveNavigation /> */}
       
       <main className="flex-1">
         <ResponsiveContainer 

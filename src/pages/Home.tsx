@@ -1,4 +1,3 @@
-
 import React from "react";
 import Header from "@/components/home/Header";
 import { useAuth } from "@/contexts/auth";
@@ -80,7 +79,7 @@ const Home = () => {
 
   return (
     <>
-      <Header />
+      {/* Remove <Header /> here as it's now injected globally via MainLayout */}
       <ProductProvider>
         <div>
           {/* Hero Section */}
@@ -110,7 +109,7 @@ const Home = () => {
           <HomeCTA />
         </div>
       </ProductProvider>
-      <Footer />
+      {/* Remove <Footer /> here as it's now injected globally via MainLayout */}
     </>
   );
 };

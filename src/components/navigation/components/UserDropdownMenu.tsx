@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { User, Settings, Bell, LogOut } from "lucide-react";
+import { User, Settings, Bell, LogOut, Store } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +46,12 @@ const UserDropdownMenu = ({ profile, email, onSignOut }: UserDropdownMenuProps) 
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/marketplace" className="flex w-full">
+            <Store className="mr-2 h-4 w-4" />
+            Marketplace
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="cursor-pointer">
           <Link to="/profile" className="flex w-full">
             <User className="mr-2 h-4 w-4" />
             Profile
@@ -74,3 +80,4 @@ const UserDropdownMenu = ({ profile, email, onSignOut }: UserDropdownMenuProps) 
 };
 
 export default UserDropdownMenu;
+

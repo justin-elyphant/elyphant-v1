@@ -12,6 +12,7 @@ import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
+import MainLayout from "@/components/layout/MainLayout";
 
 const Home = () => {
   const { user } = useAuth();
@@ -78,39 +79,42 @@ const Home = () => {
   ];
 
   return (
-    <>
-      <Header />
-      <ProductProvider>
-        <div>
-          {/* Hero Section */}
-          <HeroSection />
+    <MainLayout>
+      <>
+        <Header />
+        <ProductProvider>
+          <div>
+            {/* Hero Section */}
+            <HeroSection />
 
-          {/* Add extra space before Featured Collections */}
-          <div className="mt-8">
-            <FeaturedCollections collections={collections} />
+            {/* Add extra space before Featured Collections */}
+            <div className="mt-8">
+              <FeaturedCollections collections={collections} />
+            </div>
+
+            {/* Occasions-Based Gift Collections */}
+            <FeaturedOccasions />
+
+            {/* Trending Products Carousel */}
+            <FeaturedProductsSection />
+
+            {/* Popular Brands Section */}
+            <PopularBrandsSection />
+
+            {/* Seasonal Gift Guide */}
+            <SeasonalGiftGuide />
+
+            {/* Features Section */}
+            <FeaturesSection />
+
+            {/* Call to Action */}
+            <HomeCTA />
           </div>
-
-          {/* Occasions-Based Gift Collections */}
-          <FeaturedOccasions />
-
-          {/* Trending Products Carousel */}
-          <FeaturedProductsSection />
-
-          {/* Popular Brands Section */}
-          <PopularBrandsSection />
-
-          {/* Seasonal Gift Guide */}
-          <SeasonalGiftGuide />
-
-          {/* Features Section */}
-          <FeaturesSection />
-
-          {/* Call to Action */}
-          <HomeCTA />
-        </div>
-      </ProductProvider>
-    </>
+        </ProductProvider>
+      </>
+    </MainLayout>
   );
 };
 
 export default Home;
+

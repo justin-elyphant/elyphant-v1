@@ -12,7 +12,7 @@ import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
-import MainLayout from "@/components/layout/MainLayout";
+import Footer from "@/components/home/Footer";
 
 const Home = () => {
   const { user } = useAuth();
@@ -79,42 +79,40 @@ const Home = () => {
   ];
 
   return (
-    <MainLayout>
-      <>
-        <Header />
-        <ProductProvider>
-          <div>
-            {/* Hero Section */}
-            <HeroSection />
+    <>
+      <Header />
+      <ProductProvider>
+        <div>
+          {/* Hero Section */}
+          <HeroSection />
 
-            {/* Add extra space before Featured Collections */}
-            <div className="mt-8">
-              <FeaturedCollections collections={collections} />
-            </div>
-
-            {/* Occasions-Based Gift Collections */}
-            <FeaturedOccasions />
-
-            {/* Trending Products Carousel */}
-            <FeaturedProductsSection />
-
-            {/* Popular Brands Section */}
-            <PopularBrandsSection />
-
-            {/* Seasonal Gift Guide */}
-            <SeasonalGiftGuide />
-
-            {/* Features Section */}
-            <FeaturesSection />
-
-            {/* Call to Action */}
-            <HomeCTA />
+          {/* Add extra space before Featured Collections */}
+          <div className="mt-8">
+            <FeaturedCollections collections={collections} />
           </div>
-        </ProductProvider>
-      </>
-    </MainLayout>
+
+          {/* Occasions-Based Gift Collections */}
+          <FeaturedOccasions />
+
+          {/* Trending Products Carousel */}
+          <FeaturedProductsSection />
+
+          {/* Popular Brands Section */}
+          <PopularBrandsSection />
+
+          {/* Seasonal Gift Guide */}
+          <SeasonalGiftGuide />
+
+          {/* Features Section */}
+          <FeaturesSection />
+
+          {/* Call to Action */}
+          <HomeCTA />
+        </div>
+      </ProductProvider>
+      <Footer />
+    </>
   );
 };
 
 export default Home;
-

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -6,6 +5,7 @@ import { toast } from "sonner";
 import ProductImage from "@/components/marketplace/product-item/ProductImage";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import ProductRating from "@/components/shared/ProductRating";
+import { useNavigate } from "react-router-dom";
 
 type Collection = {
   id: number;
@@ -25,6 +25,7 @@ type CollectionProps = {
 
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   const handleCollectionClick = async (collection: Collection) => {
     if (loadingCollection !== null) {
@@ -44,19 +45,30 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
           console.error(`No products found for search term: ${searchTerm}`);
         }
       }
+      // -- NEW: Navigate with react-router instead of location.href --
+      const params = new URLSearchParams();
+      params.set("search", searchTerm);
+      params.set("pageTitle", `Collection: ${collection.name}`);
+
+      // Optionally add category if present
+      if (collection.category) {
+        params.set("category", collection.category);
+      }
+
       if (collection.url) {
-        window.location.href = collection.url;
-      } else if (collection.category) {
-        window.location.href = `/gifting?tab=products&category=${collection.category}&pageTitle=Collection: ${encodeURIComponent(collection.name)}&search=${encodeURIComponent(searchTerm)}`;
+        window.open(collection.url, "_blank");
       } else {
-        window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
+        navigate(`/marketplace?${params.toString()}`);
       }
     } catch (error) {
       console.error(`Error handling collection click for ${collection.name}:`, error);
       if (collection.url) {
-        window.location.href = collection.url;
+        window.open(collection.url, "_blank");
       } else {
-        window.location.href = `/gifting?tab=products&search=${encodeURIComponent(searchTerm)}&pageTitle=Collection: ${encodeURIComponent(collection.name)}`;
+        const params = new URLSearchParams();
+        params.set("search", searchTerm);
+        params.set("pageTitle", `Collection: ${collection.name}`);
+        navigate(`/marketplace?${params.toString()}`);
       }
     } finally {
       setLoadingCollection(null);
@@ -146,4 +158,3 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
 };
 
 export default FeaturedCollections;
-

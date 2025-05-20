@@ -2,7 +2,7 @@
 import React from "react";
 import { useSignUpProcess } from "@/hooks/auth";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
-import Header from "@/components/home/Header";
+import MainLayout from "@/components/layout/MainLayout";
 
 const SignUp: React.FC = () => {
   const {
@@ -14,22 +14,18 @@ const SignUp: React.FC = () => {
     isSubmitting,
     handleResendVerification,
     resendCount,
-    bypassVerification = true, // Always enable hybrid verification for better UX
+    bypassVerification = true,
   } = useSignUpProcess();
-  
-  // Store verification bypass preference in localStorage for consistent experience across sessions
+
   React.useEffect(() => {
-    localStorage.setItem("bypassVerification", "true"); // Always set to true for Phase 5
-    
-    // For new sign ups, mark as new user for onboarding
+    localStorage.setItem("bypassVerification", "true");
     if (step === "verification") {
       localStorage.setItem("newSignUp", "true");
     }
   }, [step]);
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
+    <MainLayout>
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
         <SignUpContentWrapper
           step={step as "signup" | "verification"}
@@ -43,7 +39,7 @@ const SignUp: React.FC = () => {
           bypassVerification={bypassVerification}
         />
       </div>
-    </div>
+    </MainLayout>
   );
 };
 

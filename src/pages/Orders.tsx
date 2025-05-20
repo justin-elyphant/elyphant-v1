@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import BackToDashboard from "@/components/shared/BackToDashboard";
 import OrdersHeader from "@/components/orders/OrdersHeader";
 import OrderTable from "@/components/orders/OrderTable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import MainLayout from "@/components/layout/MainLayout";
 
 interface Order {
   id: string;
@@ -54,18 +56,20 @@ const Orders = () => {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
-      <BackToDashboard />
-      <OrdersHeader 
-        refreshOrders={refreshOrders} 
-        isRefreshing={isRefreshing}
-      />
-      <OrderTable 
-        orders={orders} 
-        isLoading={isLoading} 
-        error={error}
-      />
-    </div>
+    <MainLayout>
+      <div className="container max-w-6xl mx-auto py-8 px-4">
+        <BackToDashboard />
+        <OrdersHeader 
+          refreshOrders={refreshOrders} 
+          isRefreshing={isRefreshing}
+        />
+        <OrderTable 
+          orders={orders} 
+          isLoading={isLoading} 
+          error={error}
+        />
+      </div>
+    </MainLayout>
   );
 };
 

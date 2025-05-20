@@ -8,6 +8,7 @@ import LoadingState from "./profile-setup/LoadingState";
 import { useProfileSetupState } from "./profile-setup/hooks/useProfileSetupState";
 import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
 import { useAuth } from "@/contexts/auth";
+import MainLayout from "@/components/layout/MainLayout";
 
 const ProfileSetup = () => {
   const { user } = useAuth();
@@ -24,17 +25,15 @@ const ProfileSetup = () => {
     handleBackToDashboard
   } = useProfileCompletion(user);
 
-  // Add check for showingIntentModal to avoid flashing
   const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
   
-  // If intent modal is showing, always show loading
   if (showingIntentModal || authLoading || isManuallyLoading || isInitializing) {
     return <LoadingState message="Preparing your profile setup..." />;
   }
 
   if (isNewSignUp && !isInitializing) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <MainLayout>
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-4xl">
             <ProfileSetupFlow 
@@ -43,12 +42,12 @@ const ProfileSetup = () => {
             />
           </div>
         </main>
-      </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <MainLayout>
       <main className="flex-1 flex flex-col p-4">
         <div className="container mx-auto flex items-center mb-8">
           <Logo />
@@ -64,7 +63,6 @@ const ProfileSetup = () => {
             </Button>
           )}
         </div>
-        
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-4xl">
             <ProfileSetupFlow 
@@ -74,7 +72,7 @@ const ProfileSetup = () => {
           </div>
         </div>
       </main>
-    </div>
+    </MainLayout>
   );
 };
 

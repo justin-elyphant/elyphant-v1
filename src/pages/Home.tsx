@@ -1,5 +1,5 @@
+
 import React from "react";
-import Header from "@/components/home/Header";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProductProvider } from "@/contexts/ProductContext";
@@ -11,7 +11,8 @@ import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
-import Footer from "@/components/home/Footer";
+// Remove direct Header/Footer imports
+import MainLayout from "@/components/layout/MainLayout";
 
 const Home = () => {
   const { user } = useAuth();
@@ -78,8 +79,7 @@ const Home = () => {
   ];
 
   return (
-    <>
-      {/* Remove <Header /> here as it's now injected globally via MainLayout */}
+    <MainLayout>
       <ProductProvider>
         <div>
           {/* Hero Section */}
@@ -109,9 +109,9 @@ const Home = () => {
           <HomeCTA />
         </div>
       </ProductProvider>
-      {/* Remove <Footer /> here as it's now injected globally via MainLayout */}
-    </>
+    </MainLayout>
   );
 };
 
 export default Home;
+

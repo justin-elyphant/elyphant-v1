@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceContent from "./MarketplaceContent";
@@ -26,8 +25,7 @@ const MarketplaceWrapper = () => {
     if (brandParam) {
       filtered = filtered.filter(
         (p) =>
-          (p.brand && p.brand.toLowerCase() === brandParam.toLowerCase()) ||
-          (p.name && p.name.toLowerCase().includes(brandParam.toLowerCase())) // fallback for brand-less products with name
+          p.brand && p.brand.toLowerCase() === brandParam.toLowerCase()
       );
     } else if (categoryParam) {
       filtered = filtered.filter(
@@ -85,4 +83,3 @@ const MarketplaceWrapper = () => {
 };
 
 export default MarketplaceWrapper;
-

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceContent from "./MarketplaceContent";
@@ -16,12 +17,19 @@ const MarketplaceWrapper = () => {
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
+  const brandParam = searchParams.get("brand");
 
-  // Live filter the mock products as the search term changes (NO API!)
+  // Live filter the mock products as the search term, category, or brand changes (NO API!)
   useEffect(() => {
     let filtered = allProducts;
 
-    if (categoryParam) {
+    if (brandParam) {
+      filtered = filtered.filter(
+        (p) =>
+          (p.brand && p.brand.toLowerCase() === brandParam.toLowerCase()) ||
+          (p.name && p.name.toLowerCase().includes(brandParam.toLowerCase())) // fallback for brand-less products with name
+      );
+    } else if (categoryParam) {
       filtered = filtered.filter(
         (p) => (p.category || "").toLowerCase() === categoryParam.toLowerCase()
       );
@@ -36,7 +44,7 @@ const MarketplaceWrapper = () => {
       );
     }
     setProducts(filtered);
-  }, [searchTerm, categoryParam]);
+  }, [searchTerm, categoryParam, brandParam]);
 
   // Track product view analytics
   const handleProductView = (productId: string) => {
@@ -53,7 +61,7 @@ const MarketplaceWrapper = () => {
       />
 
       {/* Hero banner with countdown - only show on main marketplace page */}
-      {!categoryParam && !searchTerm && <MarketplaceHero />}
+      {!categoryParam && !searchTerm && !brandParam && <MarketplaceHero />}
 
       <StickyFiltersBar
         showFilters={showFilters}
@@ -77,3 +85,4 @@ const MarketplaceWrapper = () => {
 };
 
 export default MarketplaceWrapper;
+

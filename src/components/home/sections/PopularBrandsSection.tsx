@@ -1,9 +1,14 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useProducts } from "@/contexts/ProductContext";
+import { handleBrandProducts } from "@/utils/brandUtils";
+import { toast } from "sonner";
 
 const PopularBrandsSection = () => {
   const navigate = useNavigate();
+  const { products, setProducts } = useProducts();
+  const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
   const brands = [
     {
       name: "Nike",
@@ -27,8 +32,20 @@ const PopularBrandsSection = () => {
     },
   ];
 
-  const handleBrandClick = (brandName: string) => {
-    navigate(`/marketplace?brand=${encodeURIComponent(brandName)}`);
+  const handleBrandClick = async (brandName: string) => {
+    setLoadingBrand(brandName);
+    toast.loading(`Loading ${brandName} products ...`, { id: "brand-loading" });
+    try {
+      await handleBrandProducts(brandName, products, setProducts);
+    } catch (err) {
+      // The toast in brandUtils will handle errors, but let's be explicit
+      toast.error(`Failed to load ${brandName} products`, { id: "brand-loading" });
+    } finally {
+      setLoadingBrand(null);
+      // Always navigate after loading products (even if error, just like gifting/PopularBrands)
+      const pageTitle = `${brandName} Products`;
+      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}&pageTitle=${encodeURIComponent(pageTitle)}`);
+    }
   };
 
   return (
@@ -38,20 +55,24 @@ const PopularBrandsSection = () => {
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
           Shop from trusted brands our customers love
         </p>
-        
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {brands.map((brand) => (
-            <div 
+            <div
               key={brand.name}
-              className="flex items-center justify-center p-6 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+              className={`flex items-center justify-center p-6 rounded-lg hover:shadow-md transition-shadow cursor-pointer ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
               onClick={() => handleBrandClick(brand.name)}
             >
               <img
                 src={brand.logo}
                 alt={`${brand.name} logo`}
-                className="max-h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
+                className={`max-h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
                 loading="lazy"
               />
+              {loadingBrand === brand.name && (
+                <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-2">
+                  Loading...
+                </div>
+              )}
             </div>
           ))}
         </div>

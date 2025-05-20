@@ -1,14 +1,17 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { User, Store, Settings, LogOut } from "lucide-react";
+import { User, Store, Settings, LogOut, Dashboard } from "lucide-react"; // Dashboard for Dashboard
+
 import { useAuth } from "@/contexts/auth";
 
 const UserAvatarMenu = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
+  // Get initials or fallback to "U"
   const getInitials = (email?: string | null) => {
     if (!email) return "U";
     return email.substring(0, 2).toUpperCase();
@@ -26,31 +29,48 @@ const UserAvatarMenu = () => {
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-background">
+      <DropdownMenuContent align="end" className="w-56 bg-background z-50">
         <DropdownMenuLabel>
           {user?.email}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {/* Marketplace */}
         <DropdownMenuItem asChild>
           <Link to="/marketplace" className="flex w-full">
             <Store className="mr-2 h-4 w-4" />
             Marketplace
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/profile" className="flex w-full">
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </Link>
+        {/* Dashboard */}
+        <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+          <Dashboard className="mr-2 h-4 w-4" />
+          Dashboard
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/settings" className="flex w-full">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Link>
+        {/* Profile / Account */}
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <User className="mr-2 h-4 w-4" />
+          Account
+        </DropdownMenuItem>
+        {/* Settings */}
+        <DropdownMenuItem onClick={() => navigate("/settings")}>
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
+        </DropdownMenuItem>
+        {/* Orders */}
+        <DropdownMenuItem onClick={() => navigate("/orders")}>
+          <span className="mr-2">🛒</span>
+          Orders
+        </DropdownMenuItem>
+        {/* Payment */}
+        <DropdownMenuItem onClick={() => navigate("/payments")}>
+          <span className="mr-2">💳</span>
+          Payment
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut} className="text-red-500 focus:text-red-500">
+        <DropdownMenuItem
+          onClick={signOut}
+          className="text-red-500 focus:text-red-500"
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Log out
         </DropdownMenuItem>
@@ -60,4 +80,3 @@ const UserAvatarMenu = () => {
 };
 
 export default UserAvatarMenu;
-

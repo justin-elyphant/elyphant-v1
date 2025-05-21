@@ -40,9 +40,6 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
               {" is coming!"}
             </span>
           </h1>
-          <p className="text-lg mb-4 opacity-90">
-            Find the perfect gifts for {targetEvent.type === "birthday" || targetEvent.type === "anniversary" ? "your loved ones" : "everyone on your list"}. Don't miss out!
-          </p>
           <CountdownTimer targetDate={targetEvent.date} eventName={targetEvent.name} />
         </>
       ) : (
@@ -52,9 +49,6 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
               Find the Perfect Gift
             </span>
           </h1>
-          <p className="text-lg mb-4 opacity-90">
-            Discover thoughtful gifts for every occasion and relationship in your life.
-          </p>
         </>
       )}
       

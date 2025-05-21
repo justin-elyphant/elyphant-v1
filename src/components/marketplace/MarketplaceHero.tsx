@@ -68,7 +68,13 @@ const MarketplaceHero: React.FC<MarketplaceHeroProps> = ({ isCollapsed }) => {
         </div>
         
         <div className="mb-6">
-          <h2 className="font-sans text-xl md:text-2xl font-semibold mb-3 text-gray-900">Upcoming Gift Occasions</h2>
+          <h2 className="font-sans text-xl md:text-2xl font-semibold mb-3 text-gray-900">
+            Upcoming Gift Occasions
+          </h2>
+          {/* Subtitle added here */}
+          <p className="text-lg mb-4 opacity-90">
+            Find the perfect gifts for your loved ones. Don't miss out!
+          </p>
           <OccasionCards 
             friendOccasions={friendOccasions}
             nextHoliday={nextHoliday}
@@ -82,6 +88,4 @@ const MarketplaceHero: React.FC<MarketplaceHeroProps> = ({ isCollapsed }) => {
     </div>
   );
 };
-
 export default MarketplaceHero;
-

@@ -104,15 +104,16 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
           View all collections
         </a>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Bigger grid gap, taller/roomier cards and images */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {enhancedCollections.map((collection) => (
           <div 
             key={collection.id} 
             onClick={() => handleCollectionClick(collection)}
             className="cursor-pointer"
           >
-            <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
-              <div className="aspect-video relative">
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow h-[330px] md:h-[400px] lg:h-[440px]">
+              <div className="relative w-full h-[150px] sm:h-[180px] md:h-[230px] lg:h-[260px]">
                 {/* --- REAL IMAGE if provided, fallback to ProductImage if not --- */}
                 {collection.image ? (
                   <img
@@ -132,8 +133,8 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                     />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4">
-                  <h3 className="text-white font-medium text-lg">{collection.name}</h3>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4 sm:p-6">
+                  <h3 className="text-white font-semibold text-lg sm:text-xl lg:text-2xl">{collection.name}</h3>
                   {/* Display rating with our brand styling */}
                   <div className="mb-1">
                     <ProductRating 
@@ -143,9 +144,9 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                       className="text-white"
                     />
                   </div>
-                  <div className="flex items-center text-white/90 text-sm mt-1 hover:text-white">
+                  <div className="flex items-center text-white/90 text-base sm:text-lg mt-1 hover:text-white">
                     <span>{loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}</span>
-                    <ArrowRight className="h-4 w-4 ml-1" />
+                    <ArrowRight className="h-5 w-5 ml-1" />
                   </div>
                 </div>
               </div>

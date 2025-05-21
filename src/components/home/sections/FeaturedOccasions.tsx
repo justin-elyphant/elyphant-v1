@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
@@ -138,21 +137,28 @@ const FeaturedOccasions = () => {
         </a>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-7 gap-4">
+      {/* Shrink tiles & icons, grid has smaller gaps, smaller cards */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2 md:gap-3 xl:gap-4">
         {occasions.map((occasion) => (
           <div 
             key={occasion.id} 
             onClick={() => handleOccasionClick(occasion.category, occasion.name, occasion.id, occasion.searchTerm)}
             className="cursor-pointer"
           >
-            <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color}`}>
-              <CardContent className="p-4 flex flex-col items-center text-center">
-                <div className="rounded-full p-3 bg-white shadow-sm mb-3">
-                  {occasion.icon}
+            <Card className={`h-full hover:shadow-md transition-shadow border ${occasion.color} rounded-lg`}>
+              <CardContent className="p-2 md:p-3 flex flex-col items-center text-center min-h-[110px] md:min-h-[120px] xl:min-h-[140px] justify-center">
+                <div className="rounded-full p-1.5 bg-white shadow-sm mb-1 md:mb-2">
+                  <span className="block">
+                    {React.cloneElement(occasion.icon, {
+                      className:
+                        "h-5 w-5 md:h-6 md:w-6 " +
+                        (occasion.icon.props.className || '')
+                    })}
+                  </span>
                 </div>
-                <h3 className="font-medium">{occasion.name}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{occasion.description}</p>
-                <span className="text-xs font-medium text-purple-600 hover:text-purple-800 mt-2">
+                <h3 className="font-medium text-xs md:text-sm">{occasion.name}</h3>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">{occasion.description}</p>
+                <span className="text-[10px] md:text-xs font-medium text-purple-600 hover:text-purple-800 mt-1">
                   {loadingOccasion === occasion.id ? "Loading..." : occasion.cta}
                 </span>
               </CardContent>

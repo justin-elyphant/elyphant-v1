@@ -1,7 +1,5 @@
+
 import React from "react";
-import { Cake, Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 import { GiftOccasion } from "../utils/upcomingOccasions";
 import CalendarDayCard from "./CalendarDayCard";
 
@@ -49,11 +47,12 @@ export const FriendEventCard: React.FC<FriendEventCardProps> = ({
     ? "Birthday"
     : "Anniversary";
 
-  // Color: blue/purple for birthday, rose for anniversary, lighter for fallback
-  let color = "#8B7DFB"; // purple for birthday
-  if (event?.type === "anniversary") color = "#F7C8E0";
-  if (!event && index === 1) color = "#F7C8E0"; // fallback anniv
-  if (!event && index === 0) color = "#B6A5FF"; // fallback birthday
+  // Tiny accent color as dot (purple for birthday, pink for anniv, gray for fallback)
+  let color = "#D1D5DB";
+  if (event?.type === "birthday") color = "#8B7DFB";
+  if (event?.type === "anniversary") color = "#C288AE";
+  if (!event && index === 1) color = "#C288AE"; // fallback anniv
+  if (!event && index === 0) color = "#8B7DFB"; // fallback birthday
 
   return (
     <CalendarDayCard

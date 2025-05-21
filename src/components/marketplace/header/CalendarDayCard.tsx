@@ -6,9 +6,9 @@ interface CalendarDayCardProps {
   title: React.ReactNode;
   avatarUrl?: string;
   avatarAlt?: string;
-  highlightColor?: string; // Optional for differentiated events
+  highlightColor?: string; // Can be used for a tiny accent dot if needed
   onClick?: () => void;
-  children?: React.ReactNode; // Additional details
+  children?: React.ReactNode; // Additional details if any
 }
 
 function getMonthAbbr(date: Date) {
@@ -22,49 +22,60 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
   title,
   avatarUrl,
   avatarAlt,
-  highlightColor = "#B6A5FF", // purple-ish
+  highlightColor = "#D1D5DB", // fallback for tiny indicator if needed
   onClick,
   children,
 }) => {
   return (
     <button
       type="button"
-      className="group relative bg-white shadow-card rounded-xl border border-gray-200 hover:shadow-lg transition p-0 w-full min-w-[118px] max-w-[170px] flex flex-col items-center calendar-tile"
+      className="
+        group relative bg-white rounded-xl border border-gray-200 
+        hover:shadow-lg transition p-0 w-full min-w-[118px] max-w-[170px] flex flex-col items-center calendar-tile
+        shadow-subtle
+      "
       onClick={onClick}
       tabIndex={0}
-      style={{ cursor: onClick ? "pointer" : "default" }}
+      style={{ cursor: onClick ? "pointer" : "default", background: "#fff" }}
     >
-      {/* Calendar header strip */}
+      {/* Large, floating avatar */}
+      {avatarUrl && (
+        <img
+          src={avatarUrl}
+          alt={avatarAlt || ""}
+          className="
+            absolute -top-7 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-2 border-white shadow 
+            object-cover z-20 group-hover:scale-105 transition-transform
+            bg-gray-100
+          "
+          style={{
+            boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
+          }}
+        />
+      )}
+
+      {/* Main content block */}
       <div
-        className="w-full rounded-t-xl flex items-center justify-center h-7"
-        style={{
-          background: highlightColor,
-          color: "#fff",
-          fontWeight: 700,
-          fontSize: 13,
-          letterSpacing: 1,
-        }}
+        className={`flex flex-col items-center pt-6 pb-2 px-2 relative w-full`}
+        style={{ minHeight: 84 }}
       >
-        {getMonthAbbr(date)}
+        {/* Month in muted uppercaps */}
+        <span className="text-[11px] text-gray-400 font-semibold tracking-wide mb-0.5" style={{ letterSpacing: 1 }}>
+          {getMonthAbbr(date)}
+        </span>
+        {/* Day number, big */}
+        <span className="text-2xl md:text-3xl font-bold text-gray-900 leading-none mb-1">{date.getDate()}</span>
       </div>
-      {/* Main content: Day number, avatar */}
-      <div className="flex flex-col items-center pt-2 pb-1 px-2 relative" style={{ minHeight: 70 }}>
-        <span className="text-2xl font-semibold text-gray-900 leading-none mb-1">{date.getDate()}</span>
-        {/* If avatar exists, show as overlapping the day */}
-        {avatarUrl && (
-          <img
-            src={avatarUrl}
-            alt={avatarAlt || ""}
-            className="rounded-full border-2 border-white shadow absolute -top-5 right-3 w-7 h-7 object-cover z-10 group-hover:scale-105 transition-transform"
-            style={{
-              boxShadow: "0 2px 8px rgba(120,110,230,0.09)",
-            }}
-          />
-        )}
-      </div>
+      {/* Tiny accent dot for occasion type, if color is set and NOT default */}
+      {highlightColor && highlightColor !== "#D1D5DB" && (
+        <span 
+          className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full"
+          style={{ background: highlightColor }}
+        />
+      )}
       {/* Title and optional children */}
       <div className="flex flex-col items-center px-2 pb-2 w-full">
-        <div className="font-sans text-xs font-semibold text-gray-700 text-center truncate w-full">{title}</div>
+        <div className="font-sans text-xs font-semibold text-gray-600 text-center truncate w-full">{title}</div>
         {children}
       </div>
     </button>

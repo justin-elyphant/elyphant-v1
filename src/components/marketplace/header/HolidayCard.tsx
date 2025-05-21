@@ -1,6 +1,5 @@
+
 import React from "react";
-import { Star, Gift } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { GiftOccasion } from "../utils/upcomingOccasions";
 import CalendarDayCard from "./CalendarDayCard";
 
@@ -35,10 +34,10 @@ export const HolidayCard: React.FC<HolidayCardProps> = ({
     ? "Holiday"
     : "Thank You";
 
-  // Color: gold for holiday, green for thank-you
-  let color = "#F8BC58";
+  // Accent dot (gold for holiday, green for thank-you, gray fallback)
+  let color = "#D1D5DB";
   if (type === "thank-you") color = "#5ECB81";
-  if (!holiday && type === "holiday") color = "#B6A5FF";
+  if (type === "holiday" && !!holiday) color = "#F8BC58";
 
   return (
     <CalendarDayCard

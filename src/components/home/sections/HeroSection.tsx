@@ -126,7 +126,7 @@ const HeroSection = () => {
                   size="lg"
                   className="rounded-full w-full sm:w-auto border-purple-300 text-purple-700 font-semibold px-8 py-3"
                 >
-                  <Link to="/wishlists">
+                  <Link to="/signup">
                     Create Wishlist
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>

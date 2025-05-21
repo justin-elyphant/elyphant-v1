@@ -59,21 +59,24 @@ const PopularBrandsSection = () => {
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
           Shop from trusted brands our customers love
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar justify-center px-2">
           {brands.map((brand) => (
             <div
               key={brand.name}
-              className={`flex items-center justify-center p-6 rounded-lg hover:shadow-md transition-shadow cursor-pointer ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
+              className={`relative flex flex-col items-center justify-center p-3 md:p-4 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
+              style={{ minWidth: 72, minHeight: 72 }}
               onClick={() => handleBrandClick(brand.name)}
             >
               <img
                 src={brand.logo}
                 alt={`${brand.name} logo`}
-                className={`max-h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
+                className={`max-h-10 max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
                 loading="lazy"
+                style={{ aspectRatio: "3/1", objectFit: "contain" }}
               />
+              <span className="text-xs font-medium text-gray-700 mt-2">{brand.name}</span>
               {loadingBrand === brand.name && (
-                <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-2">
+                <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-12">
                   Loading...
                 </div>
               )}
@@ -86,3 +89,4 @@ const PopularBrandsSection = () => {
 };
 
 export default PopularBrandsSection;
+

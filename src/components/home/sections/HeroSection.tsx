@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,10 +15,60 @@ import DebugInfoPanel from "./DebugInfoPanel";
 // Utility to pick an appropriate search term
 const getEventSearchTerm = (event: any) => {
   if (!event) return "gift";
+  // Graduation/Commencement events
+  if (
+    (event.type && event.type.toLowerCase().includes('graduation')) ||
+    (event.name && event.name.toLowerCase().includes('graduation'))
+  ) {
+    return "graduation gifts";
+  }
+  // Mother's Day
+  if (
+    (event.type && event.type.toLowerCase().includes("mother")) ||
+    (event.name && event.name.toLowerCase().includes("mother"))
+  ) {
+    return "mother's day gifts";
+  }
+  // Father's Day
+  if (
+    (event.type && event.type.toLowerCase().includes("father")) ||
+    (event.name && event.name.toLowerCase().includes("father"))
+  ) {
+    return "father's day gifts";
+  }
+  // Valentine's Day
+  if (
+    (event.type && event.type.toLowerCase().includes("valentine")) ||
+    (event.name && event.name.toLowerCase().includes("valentine"))
+  ) {
+    return "valentine's day gifts";
+  }
+  // Birthday
+  if (
+    (event.type && event.type.toLowerCase().includes("birthday")) ||
+    (event.name && event.name.toLowerCase().includes("birthday"))
+  ) {
+    return "birthday gifts";
+  }
+  // Anniversary
+  if (
+    (event.type && event.type.toLowerCase().includes("anniversary")) ||
+    (event.name && event.name.toLowerCase().includes("anniversary"))
+  ) {
+    return "anniversary gifts";
+  }
+  // Retirement
+  if (
+    (event.type && event.type.toLowerCase().includes("retire")) ||
+    (event.name && event.name.toLowerCase().includes("retire"))
+  ) {
+    return "retirement gifts";
+  }
   if (event.searchTerm && typeof event.searchTerm === "string") {
     return event.searchTerm;
   }
-  return `${event.type} gift`;
+  // Default fallback
+  return `${event.type ? event.type : "gift"} gifts`;
 };
 
 const HeroSection = () => {

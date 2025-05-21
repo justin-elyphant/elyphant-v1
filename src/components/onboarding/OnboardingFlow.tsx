@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -159,21 +160,21 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
         <div className="bg-white rounded-xl shadow-lg overflow-hidden onboarding-card">
           {currentStep === 'welcome' && (
             <OnboardingWelcome
-              onNext={(skip: boolean, data: any) => handleNext(skip, data)}
+              onNext={() => handleNext()}
               userName={user?.user_metadata?.name || 'there'}
             />
           )}
           
           {currentStep === 'connections' && (
             <OnboardingConnections
-              onNext={(skip: boolean, data: any) => handleNext(skip, data)}
+              onNext={() => handleNext()}
               onSkip={() => handleNext(true)}
             />
           )}
           
           {currentStep === 'preferences' && (
             <OnboardingPreferences
-              onNext={(skip: boolean, data: any) => handleNext(skip, data)}
+              onNext={() => handleNext()}
               onSkip={() => handleNext(true)}
             />
           )}

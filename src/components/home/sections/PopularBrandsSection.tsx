@@ -30,6 +30,10 @@ const PopularBrandsSection = () => {
       name: "Stanley",
       logo: "/lovable-uploads/7e6e1250-c215-402c-836b-e31420624764.png",
     },
+    {
+      name: "Lego",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/LEGO_logo.svg",
+    },
   ];
 
   const handleBrandClick = async (brandName: string) => {

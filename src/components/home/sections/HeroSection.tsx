@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const HeroSection = () => {
   const { friendOccasions } = useConnectedFriendsSpecialDates();
   const upcomingHolidays = getUpcomingOccasions().filter(occ => occ.type === "holiday");
   const nextHoliday = upcomingHolidays.length > 0 ? upcomingHolidays[0] : null;
+
   const { targetEvent } = useTargetEvent(
     user,
     nextHoliday,
@@ -37,11 +39,21 @@ const HeroSection = () => {
     friendOccasions
   );
 
+  // Debug logs to trace the actual values being used
+  React.useEffect(() => {
+    console.info("[HeroSection] targetEvent:", targetEvent);
+    console.info("[HeroSection] upcomingHolidays:", upcomingHolidays);
+    console.info("[HeroSection] nextHoliday:", nextHoliday);
+  }, [targetEvent, upcomingHolidays, nextHoliday]);
+
+  // If targetEvent is not set (e.g. for signed out users), fall back to nextHoliday if available
+  const displayEvent = targetEvent || nextHoliday;
+
   // Handler for contextual CTA
   const handleEventCta = (e) => {
     e.preventDefault();
-    if (!targetEvent) return;
-    const searchTerm = getEventSearchTerm(targetEvent);
+    if (!displayEvent) return;
+    const searchTerm = getEventSearchTerm(displayEvent);
     // To force reload if already on marketplace, use navigate
     navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
   };
@@ -57,14 +69,14 @@ const HeroSection = () => {
           <div className="md:w-1/2 flex flex-col justify-center">
             <GlassCard className="w-full md:w-auto mx-auto md:mx-0">
               {/* Event Countdown Block */}
-              {targetEvent && (
+              {displayEvent && displayEvent.date && (
                 <div className="mb-7 animate-fade-in flex flex-col items-center md:items-start">
                   <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-purple-500 mb-2">
-                    {targetEvent.name}
+                    {displayEvent.name}
                   </span>
                   <CountdownTimer
-                    targetDate={targetEvent.date}
-                    eventName={targetEvent.name}
+                    targetDate={displayEvent.date}
+                    eventName={displayEvent.name}
                   />
                   <Button
                     size="lg"
@@ -72,7 +84,7 @@ const HeroSection = () => {
                     onClick={handleEventCta}
                   >
                     <Gift className="mr-2 h-5 w-5" />
-                    Shop {targetEvent.name} Gifts
+                    Shop {displayEvent.name} Gifts
                   </Button>
                 </div>
               )}
@@ -137,3 +149,4 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
+

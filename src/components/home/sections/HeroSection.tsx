@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { getUpcomingOccasions } from "@/components/marketplace/utils/upcomingOcc
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
 import CountdownTimer from "@/components/marketplace/hero/CountdownTimer";
+import GlassCard from "./GlassCard";
 
 // Utility to pick an appropriate search term
 const getEventSearchTerm = (event) => {
@@ -47,65 +47,86 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-purple-50 to-indigo-100 overflow-hidden">
+    <div className="relative bg-gradient-to-br from-purple-50 to-indigo-100 overflow-hidden min-h-[580px] flex items-center">
       <div className="absolute inset-0 z-0 opacity-20">
         <div className="absolute inset-0 bg-grid-pattern"></div>
       </div>
-      <div className="container relative z-10 mx-auto px-4 py-16 md:py-24">
-        <div className="flex flex-col md:flex-row items-center">
-          <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
-            {/* Countdown + contextual event */}
-            {targetEvent && (
-              <div className="max-w-md mx-auto md:mx-0 mb-7 animate-fade-in flex flex-col items-center md:items-start">
-                <span className="block text-sm font-semibold uppercase tracking-widest text-purple-500 mb-2">
-                  {targetEvent.name}
+      <div className="container relative z-10 mx-auto px-3 md:px-8 pt-14 pb-10 md:py-20">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-10 md:gap-8">
+          {/* Left content */}
+          <div className="md:w-1/2 flex flex-col justify-center">
+            <GlassCard className="w-full md:w-auto mx-auto md:mx-0">
+              {/* Event Countdown Block */}
+              {targetEvent && (
+                <div className="mb-7 animate-fade-in flex flex-col items-center md:items-start">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-purple-500 mb-2">
+                    {targetEvent.name}
+                  </span>
+                  <CountdownTimer
+                    targetDate={targetEvent.date}
+                    eventName={targetEvent.name}
+                  />
+                  <Button
+                    size="lg"
+                    className="mt-5 w-full md:w-auto rounded-full bg-purple-600 hover:bg-purple-700 font-semibold shadow-md text-base px-7 py-3"
+                    onClick={handleEventCta}
+                  >
+                    <Gift className="mr-2 h-5 w-5" />
+                    Shop {targetEvent.name} Gifts
+                  </Button>
+                </div>
+              )}
+
+              {/* Headline + Text */}
+              <h1
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-4 mt-2 leading-tight"
+              >
+                Gift-Giving{" "}
+                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-br from-purple-600 via-purple-400 to-indigo-500">
+                  Simplified
                 </span>
-                <CountdownTimer
-                  targetDate={targetEvent.date}
-                  eventName={targetEvent.name}
-                />
+              </h1>
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 max-w-lg mx-auto md:mx-0 font-medium">
+                Create wishlists, find perfect gifts, and never miss an important occasion.
+                Our AI-powered platform makes thoughtful gifting effortless.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start w-full md:w-auto">
                 <Button
-                  size="sm"
-                  className="mt-3 bg-purple-600 hover:bg-purple-700 font-semibold"
-                  onClick={handleEventCta}
+                  asChild
+                  size="lg"
+                  className="rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg px-8 py-3 w-full sm:w-auto"
                 >
-                  <Gift className="mr-2 h-5 w-5" />
-                  Shop {targetEvent.name} Gifts
+                  <Link to={user ? "/dashboard" : "/signup"}>
+                    <Gift className="mr-2 h-5 w-5" />
+                    {user ? "Go to Dashboard" : "Start Gifting"}
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="rounded-full w-full sm:w-auto border-purple-300 text-purple-700 font-semibold px-8 py-3"
+                >
+                  <Link to="/wishlists">
+                    Create Wishlist
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
                 </Button>
               </div>
-            )}
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              Gift-Giving <span className="text-purple-600">Simplified</span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg mx-auto md:mx-0">
-              Create wishlists, find perfect gifts, and never miss an important occasion. Our AI-powered platform makes thoughtful gifting effortless.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <Button asChild size={isMobile ? "default" : "lg"} className="bg-purple-600 hover:bg-purple-700">
-                <Link to={user ? "/dashboard" : "/signup"}>
-                  <Gift className="mr-2 h-5 w-5" />
-                  {user ? "Go to Dashboard" : "Start Gifting"}
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size={isMobile ? "default" : "lg"}>
-                <Link to="/wishlists">
-                  Create Wishlist
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
+            </GlassCard>
           </div>
-          <div className="md:w-1/2 relative">
+          {/* Right Side - Hero Image */}
+          <div className="md:w-1/2 flex justify-center md:justify-end relative mt-8 md:mt-0">
             <div className="relative z-10">
-              <img 
+              <img
                 src="/lovable-uploads/40945f7c-45d5-47dd-8e0c-00ce6f201816.png"
-                alt="Gift giving made easy" 
-                className="rounded-lg shadow-xl max-w-full h-auto"
+                alt="Gift giving made easy"
+                className="rounded-3xl shadow-2xl max-w-full h-auto w-[92vw] md:w-[430px] lg:w-[520px] object-cover"
+                style={{ aspectRatio: "5/4" }}
               />
-              <div className="absolute -bottom-4 -right-4 bg-white rounded-lg p-4 shadow-lg hidden md:block">
-                <p className="font-bold text-purple-600">Thoughtful gifts, every time</p>
-                <p className="text-sm text-gray-600">Powered by smart recommendations</p>
+              <div className="absolute -bottom-5 right-0 md:-right-5 bg-white/90 rounded-xl p-4 shadow-lg min-w-[205px] max-w-xs">
+                <p className="font-bold text-purple-600 text-base mb-1">Thoughtful gifts, every time</p>
+                <p className="text-xs text-gray-600 font-medium">Powered by smart recommendations</p>
               </div>
             </div>
           </div>

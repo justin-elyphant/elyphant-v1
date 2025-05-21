@@ -23,35 +23,51 @@ export const OccasionCards: React.FC<OccasionCardsProps> = ({
   const secondEvent = upcomingFriendEvents.length > 1 ? upcomingFriendEvents[1] : null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4">
-      {/* First Friend Event Card */}
-      <FriendEventCard 
-        event={firstEvent} 
-        index={0}
-        onCardClick={(searchQuery, personId, occasionType) => onCardClick(searchQuery, personId, occasionType)}
-      />
-      
-      {/* Second Friend Event Card */}
-      <FriendEventCard 
-        event={secondEvent} 
-        index={1}
-        fallbackEvent={firstEvent}
-        onCardClick={(searchQuery, personId, occasionType) => onCardClick(searchQuery, personId, occasionType)}
-      />
-      
-      {/* Holiday Card */}
-      <HolidayCard 
-        holiday={nextHoliday}
-        type="holiday"
-        onCardClick={onCardClick}
-      />
-      
-      {/* Thank You / Second Holiday Card */}
-      <HolidayCard 
-        holiday={secondHoliday}
-        type="thank-you"
-        onCardClick={onCardClick}
-      />
+    // Horizontal scroll on mobile, centered grid with wrap on desktop
+    <div
+      className="
+        flex gap-3 md:gap-4 items-stretch
+        overflow-x-auto scrollbar-none md:overflow-x-visible
+        py-1 md:py-2
+        -mx-4 px-4
+        md:grid md:grid-cols-4 md:gap-4 md:px-0 md:mx-0
+      "
+      style={{ WebkitOverflowScrolling: "touch" }}
+      data-testid="occasion-cards-scrollable"
+    >
+      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+        <FriendEventCard 
+          event={firstEvent} 
+          index={0}
+          onCardClick={onCardClick}
+          compact
+        />
+      </div>
+      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+        <FriendEventCard 
+          event={secondEvent} 
+          index={1}
+          fallbackEvent={firstEvent}
+          onCardClick={onCardClick}
+          compact
+        />
+      </div>
+      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+        <HolidayCard 
+          holiday={nextHoliday}
+          type="holiday"
+          onCardClick={onCardClick}
+          compact
+        />
+      </div>
+      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+        <HolidayCard 
+          holiday={secondHoliday}
+          type="thank-you"
+          onCardClick={onCardClick}
+          compact
+        />
+      </div>
     </div>
   );
 };

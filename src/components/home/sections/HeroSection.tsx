@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -64,8 +63,23 @@ const HeroSection = () => {
       displayEvent.date instanceof Date
     );
 
+    // 0. Special: Serialized object from backend ({ _type: "Date", value: { iso: string } })
+    if (
+      typeof displayEvent.date === "object" &&
+      displayEvent.date !== null &&
+      displayEvent.date._type === "Date" &&
+      typeof displayEvent.date.value === "object" &&
+      displayEvent.date.value !== null &&
+      typeof displayEvent.date.value.iso === "string" &&
+      !isNaN(Date.parse(displayEvent.date.value.iso))
+    ) {
+      validEventDate = true;
+      eventDateToUse = new Date(displayEvent.date.value.iso);
+      displayEvent = { ...displayEvent, date: eventDateToUse };
+      console.info("[HeroSection] Parsed _type Date (backend serialized object) into:", eventDateToUse);
+    }
     // 1. Native Date
-    if (displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime())) {
+    else if (displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime())) {
       validEventDate = true;
       eventDateToUse = displayEvent.date;
     }

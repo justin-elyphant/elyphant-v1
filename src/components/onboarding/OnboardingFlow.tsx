@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import OnboardingConnections from "./steps/OnboardingConnections";
 import OnboardingPreferences from "./steps/OnboardingPreferences";
 import OnboardingComplete from "./steps/OnboardingComplete";
 import "./onboardingStyles.css"; // Import the new styles
+import { useGiftSearches } from "./hooks/useGiftSearches";
 
 export type OnboardingStep = 'welcome' | 'connections' | 'preferences' | 'complete';
 
@@ -44,7 +44,24 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     });
   }, []);
   
-  const handleNext = (skipCurrent = false) => {
+  const { saveGiftSearch } = useGiftSearches();
+
+  // Store onboarding answers as the user progresses
+  const [answers, setAnswers] = useState<any>({});
+
+  // Update state on step answer
+  const handleStepAnswer = (step: OnboardingStep, data: any) => {
+    setAnswers((prev: any) => ({
+      ...prev,
+      [step]: data
+    }));
+  };
+
+  const handleNext = (skipCurrent = false, stepData?: any) => {
+    // Save the step's answers, if any
+    if (stepData && currentStep !== 'complete') {
+      handleStepAnswer(currentStep, stepData);
+    }
     // Mark current step as completed or skipped
     if (skipCurrent) {
       setState(prev => ({
@@ -73,16 +90,31 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     handleNext(true);
   };
 
-  const handleCompleteOnboarding = () => {
+  const handleCompleteOnboarding = async () => {
     // Mark all remaining steps as completed
     const remainingSteps = steps.slice(currentStepIndex).filter(step => 
       !state.completedSteps.includes(step) && step !== 'complete'
     );
-    
     setState(prev => ({
       ...prev,
       completedSteps: [...prev.completedSteps, ...remainingSteps]
     }));
+
+    // Transform collected onboarding answers into a gift_searches session
+    const { welcome, connections, preferences } = answers;
+    const onboardingSession = {
+      occasion: preferences?.occasion || welcome?.occasion || undefined,
+      recipient_name: preferences?.recipient_name || connections?.recipient_name || undefined,
+      recipient_type: preferences?.recipient_type || connections?.recipient_type || undefined,
+      recipient_relationship: preferences?.recipient_relationship || connections?.recipient_relationship || undefined,
+      recipient_age_range: preferences?.recipient_age_range,
+      recipient_interests: preferences?.recipient_interests,
+      excluded_items: preferences?.excluded_items,
+      budget_range: preferences?.budget_range,
+      extra_preferences: preferences?.extra_preferences,
+      // Optionally, store more data from welcome/connections as needed
+    };
+    await saveGiftSearch(onboardingSession);
 
     // Redirect to dashboard
     localStorage.removeItem("newSignUp");
@@ -126,15 +158,24 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden onboarding-card">
           {currentStep === 'welcome' && (
-            <OnboardingWelcome onNext={handleNext} userName={user?.user_metadata?.name || 'there'} />
+            <OnboardingWelcome
+              onNext={(skip: boolean, data: any) => handleNext(skip, data)}
+              userName={user?.user_metadata?.name || 'there'}
+            />
           )}
           
           {currentStep === 'connections' && (
-            <OnboardingConnections onNext={handleNext} onSkip={handleSkip} />
+            <OnboardingConnections
+              onNext={(skip: boolean, data: any) => handleNext(skip, data)}
+              onSkip={() => handleNext(true)}
+            />
           )}
           
           {currentStep === 'preferences' && (
-            <OnboardingPreferences onNext={handleNext} onSkip={handleSkip} />
+            <OnboardingPreferences
+              onNext={(skip: boolean, data: any) => handleNext(skip, data)}
+              onSkip={() => handleNext(true)}
+            />
           )}
           
           {currentStep === 'complete' && (

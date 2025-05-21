@@ -167,6 +167,57 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_searches: {
+        Row: {
+          budget_range: string | null
+          created_at: string | null
+          excluded_items: Json | null
+          extra_preferences: Json | null
+          id: string
+          occasion: string | null
+          recipient_age_range: string | null
+          recipient_interests: Json | null
+          recipient_name: string | null
+          recipient_relationship: string | null
+          recipient_type: string | null
+          search_results: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          budget_range?: string | null
+          created_at?: string | null
+          excluded_items?: Json | null
+          extra_preferences?: Json | null
+          id?: string
+          occasion?: string | null
+          recipient_age_range?: string | null
+          recipient_interests?: Json | null
+          recipient_name?: string | null
+          recipient_relationship?: string | null
+          recipient_type?: string | null
+          search_results?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          budget_range?: string | null
+          created_at?: string | null
+          excluded_items?: Json | null
+          extra_preferences?: Json | null
+          id?: string
+          occasion?: string | null
+          recipient_age_range?: string | null
+          recipient_interests?: Json | null
+          recipient_name?: string | null
+          recipient_relationship?: string | null
+          recipient_type?: string | null
+          search_results?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string

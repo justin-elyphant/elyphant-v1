@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,7 @@ import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpec
 import OccasionCards from "./header/OccasionCards";
 import { useAuth } from "@/contexts/auth";
 import HeroContent from "./hero/HeroContent";
-import HeroImage from "./hero/HeroImage";
+// Removed: import HeroImage from "./hero/HeroImage";
 import CategoryLinks from "./hero/CategoryLinks";
 import useTargetEvent from "./hero/useTargetEvent";
 
@@ -58,16 +59,11 @@ const MarketplaceHero: React.FC<MarketplaceHeroProps> = ({ isCollapsed }) => {
   return (
     <div className="bg-gradient-to-br from-purple-50 to-indigo-100 mb-6 animate-fade-in">
       <div className="container mx-auto px-4 py-8">
-        <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-8'} items-center mb-8`}>
+        {/* Removed HeroImage - the hero now only consists of HeroContent */}
+        <div className={`${isMobile ? 'flex flex-col items-center' : 'grid grid-cols-1 gap-8 items-center'} mb-8`}>
           <HeroContent 
             targetEvent={targetEvent} 
             isMobile={isMobile} 
-          />
-          
-          <HeroImage 
-            isMobile={isMobile} 
-            imageSrc="https://images.unsplash.com/photo-1607083206968-13611e3d76db?q=80&w=1470&auto=format&fit=crop" 
-            altText="Holiday gifts" 
           />
         </div>
         
@@ -88,3 +84,4 @@ const MarketplaceHero: React.FC<MarketplaceHeroProps> = ({ isCollapsed }) => {
 };
 
 export default MarketplaceHero;
+

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
@@ -24,11 +25,14 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
   };
 
   return (
-    <div className={`${isMobile ? 'mb-6 text-center' : 'text-left'}`}>
+    <div className={`${isMobile ? 'mb-6 text-center' : 'text-left'} flex flex-col items-center md:items-start`}>
       {targetEvent ? (
         <>
-          <h1 className="text-3xl font-bold mb-3">
-            {targetEvent.name} is Coming!
+          {/* Apply color/gradient style to the event name */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 leading-tight">
+            <span className="inline-block bg-gradient-to-br from-purple-600 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-fade-in">
+              {targetEvent.name} is Coming!
+            </span>
           </h1>
           <p className="text-lg mb-4 opacity-90">
             Find the perfect gifts for {targetEvent.type === "birthday" || targetEvent.type === "anniversary" ? "your loved ones" : "everyone on your list"}. Don't miss out!
@@ -37,7 +41,11 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
         </>
       ) : (
         <>
-          <h1 className="text-3xl font-bold mb-3">Find the Perfect Gift</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 leading-tight">
+            <span className="inline-block bg-gradient-to-br from-purple-600 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-fade-in">
+              Find the Perfect Gift
+            </span>
+          </h1>
           <p className="text-lg mb-4 opacity-90">
             Discover thoughtful gifts for every occasion and relationship in your life.
           </p>
@@ -55,3 +63,4 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
 };
 
 export default HeroContent;
+

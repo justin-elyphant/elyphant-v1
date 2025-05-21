@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
@@ -16,6 +15,14 @@ interface HeroContentProps {
 }
 
 const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
+  // Helper to format button text
+  const getShopNowText = () => {
+    if (targetEvent && targetEvent.name) {
+      return `Shop ${targetEvent.name} Gift`;
+    }
+    return "Shop Gifts";
+  };
+
   return (
     <div className={`${isMobile ? 'mb-6 text-center' : 'text-left'}`}>
       {targetEvent ? (
@@ -40,10 +47,7 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
       <div className="flex space-x-4 justify-center md:justify-start">
         <Button className="bg-white text-purple-700 hover:bg-gray-100">
           <Gift className="mr-2 h-4 w-4" />
-          Shop Now
-        </Button>
-        <Button variant="outline" className="border-white text-white hover:bg-white/20">
-          View All Gifts
+          {getShopNowText()}
         </Button>
       </div>
     </div>

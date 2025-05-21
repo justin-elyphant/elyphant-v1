@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Gift, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
@@ -10,9 +10,21 @@ import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpec
 import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
 import CountdownTimer from "@/components/marketplace/hero/CountdownTimer";
 
+// Utility to pick an appropriate search term
+const getEventSearchTerm = (event) => {
+  // Use attached searchTerm, or make a generic fallback
+  if (!event) return "gift";
+  if (event.searchTerm && typeof event.searchTerm === "string") {
+    return event.searchTerm;
+  }
+  // Fallback: use event type if available
+  return `${event.type} gift`;
+};
+
 const HeroSection = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   // Get upcoming occasions logic
   const { friendOccasions } = useConnectedFriendsSpecialDates();
@@ -25,6 +37,15 @@ const HeroSection = () => {
     friendOccasions
   );
 
+  // Handler for contextual CTA
+  const handleEventCta = (e) => {
+    e.preventDefault();
+    if (!targetEvent) return;
+    const searchTerm = getEventSearchTerm(targetEvent);
+    // To force reload if already on marketplace, use navigate
+    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+  };
+
   return (
     <div className="relative bg-gradient-to-br from-purple-50 to-indigo-100 overflow-hidden">
       <div className="absolute inset-0 z-0 opacity-20">
@@ -33,13 +54,24 @@ const HeroSection = () => {
       <div className="container relative z-10 mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
-            {/* Animated Countdown: show only when there's a target event */}
+            {/* Countdown + contextual event */}
             {targetEvent && (
-              <div className="max-w-md mx-auto md:mx-0 mb-7 animate-fade-in">
+              <div className="max-w-md mx-auto md:mx-0 mb-7 animate-fade-in flex flex-col items-center md:items-start">
+                <span className="block text-sm font-semibold uppercase tracking-widest text-purple-500 mb-2">
+                  {targetEvent.name}
+                </span>
                 <CountdownTimer
                   targetDate={targetEvent.date}
                   eventName={targetEvent.name}
                 />
+                <Button
+                  size="sm"
+                  className="mt-3 bg-purple-600 hover:bg-purple-700 font-semibold"
+                  onClick={handleEventCta}
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  Shop {targetEvent.name} Gifts
+                </Button>
               </div>
             )}
 

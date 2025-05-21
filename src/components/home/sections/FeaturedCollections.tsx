@@ -7,7 +7,7 @@ import ProductImage from "@/components/marketplace/product-item/ProductImage";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import ProductRating from "@/components/shared/ProductRating";
 import { useNavigate } from "react-router-dom";
-import { AspectRatio } from "@/components/ui/aspect-ratio"; // NEW: import AspectRatio
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 type Collection = {
   id: number;
@@ -19,6 +19,7 @@ type Collection = {
   searchTerm?: string;
   rating?: number;
   reviewCount?: number;
+  description?: string; // Added optional description
 };
 
 type CollectionProps = {
@@ -26,6 +27,14 @@ type CollectionProps = {
 };
 
 const LUXURY_GIFTS_IMAGE = "/lovable-uploads/448b42d0-0ea9-433b-8d9b-ca8c143ed3dc.png";
+
+// Default descriptions
+const DEFAULT_DESCRIPTIONS: Record<string, string> = {
+  "Gifts for Her": "Thoughtful gifts for the special women in your life.",
+  "Gifts for Him": "Find the perfect present for him.",
+  "Gifts Under $50": "Affordable choices everyone will love.",
+  "Luxury Gifts": "Spoil someone with something extra special.",
+};
 
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
@@ -75,17 +84,21 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     );
   }
 
-  // Add sample ratings to collections for display purposes, and inject luxury gifts image
+  // Add sample ratings to collections for display purposes, and inject luxury gifts image & fallback description
   const enhancedCollections = collections.map(collection => {
     let patchedImage = collection.image;
     if (collection.name && collection.name.toLowerCase().includes("luxury gifts")) {
       patchedImage = LUXURY_GIFTS_IMAGE;
     }
+    const fallbackDescription =
+      collection.description || DEFAULT_DESCRIPTIONS[collection.name] || "Discover carefully curated gift ideas.";
+
     return {
       ...collection,
       image: patchedImage,
       rating: collection.rating || 4.7 + (Math.random() * 0.3),
-      reviewCount: collection.reviewCount || Math.floor(100 + Math.random() * 900)
+      reviewCount: collection.reviewCount || Math.floor(100 + Math.random() * 900),
+      description: fallbackDescription,
     };
   });
 
@@ -93,8 +106,8 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Featured Collections</h2>
-        <a 
-          href="/gifting?tab=products" 
+        <a
+          href="/gifting?tab=products"
           className="text-purple-600 hover:text-purple-800 text-sm font-medium"
         >
           View all collections
@@ -102,7 +115,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {enhancedCollections.map((collection) => (
-          <div 
+          <div
             key={collection.id}
             onClick={() => handleCollectionClick(collection)}
             className="cursor-pointer h-full"
@@ -110,22 +123,23 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
             <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full p-0 flex flex-col justify-end">
               {/* Use AspectRatio to ensure consistent image cropping */}
               <AspectRatio ratio={4 / 5} className="w-full">
-                <div className="absolute inset-0 w-full h-full z-0">
+                <div className="absolute inset-0 w-full h-full z-0 flex items-center justify-center">
                   {collection.image ? (
                     <img
                       src={collection.image}
                       alt={collection.name}
                       className="w-full h-full object-cover object-center"
+                      style={{ objectPosition: "center center" }} // force center focus
                       draggable={false}
                     />
                   ) : (
                     <div className="w-full h-full">
-                      <ProductImage 
+                      <ProductImage
                         product={{
                           name: collection.name,
                           category: collection.category || collection.name,
                           image: null
-                        }} 
+                        }}
                         useMock={true}
                         className="w-full h-full"
                       />
@@ -134,12 +148,15 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                 </div>
               </AspectRatio>
-              <div className="relative z-10 flex flex-col justify-end h-full w-full p-6 pb-7">
+              <div className="relative z-10 flex flex-col justify-end h-full w-full p-6 pb-6 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-b-lg">
                 <div>
-                  <h3 className="text-white font-semibold text-2xl md:text-2xl lg:text-3xl mb-2 drop-shadow-sm">{collection.name}</h3>
-                  <ProductRating 
-                    rating={collection.rating} 
-                    reviewCount={collection.reviewCount ? collection.reviewCount.toString() : undefined} 
+                  <h3 className="text-white font-semibold text-2xl md:text-2xl lg:text-3xl mb-1 drop-shadow-sm">{collection.name}</h3>
+                  <p className="text-white text-sm md:text-base mb-1 opacity-90 drop-shadow">
+                    {collection.description}
+                  </p>
+                  <ProductRating
+                    rating={collection.rating}
+                    reviewCount={collection.reviewCount ? collection.reviewCount.toString() : undefined}
                     size="md"
                     className="text-white drop-shadow"
                   />
@@ -160,4 +177,3 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
 };
 
 export default FeaturedCollections;
-

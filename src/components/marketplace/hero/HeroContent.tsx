@@ -15,6 +15,11 @@ interface HeroContentProps {
   isMobile: boolean;
 }
 
+// Helper to capitalize the event type
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
   // Helper to format button text
   const getShopNowText = () => {
@@ -28,10 +33,12 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
     <div className={`${isMobile ? 'mb-6 text-center' : 'text-left'} flex flex-col items-center md:items-start`}>
       {targetEvent ? (
         <>
-          {/* Apply color/gradient style to the event name */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 leading-tight">
             <span className="inline-block bg-gradient-to-br from-purple-600 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-fade-in">
-              {targetEvent.name} is Coming!
+              {targetEvent.name}
+            </span>
+            <span className="ml-2 text-black dark:text-white">
+              {` ${capitalize(targetEvent.type)} is coming!`}
             </span>
           </h1>
           <p className="text-lg mb-4 opacity-90">

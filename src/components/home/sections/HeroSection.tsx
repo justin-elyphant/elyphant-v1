@@ -5,21 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Gift, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import GiftCountdown from "./GiftCountdown";
 import { getUpcomingOccasions } from "@/components/marketplace/utils/upcomingOccasions";
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
+import CountdownTimer from "@/components/marketplace/hero/CountdownTimer";
 
 const HeroSection = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
-  // Get friend occasions for logged in users, else empty array
+  // Get upcoming occasions logic
   const { friendOccasions } = useConnectedFriendsSpecialDates();
   const upcomingHolidays = getUpcomingOccasions().filter(occ => occ.type === "holiday");
   const nextHoliday = upcomingHolidays.length > 0 ? upcomingHolidays[0] : null;
-
-  // Reuse target event logic–closest friend event or holiday, or just holiday if not signed in
   const { targetEvent } = useTargetEvent(
     user,
     nextHoliday,
@@ -35,8 +33,15 @@ const HeroSection = () => {
       <div className="container relative z-10 mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
-            {/* Countdown feature */}
-            <GiftCountdown event={targetEvent} />
+            {/* Animated Countdown: show only when there's a target event */}
+            {targetEvent && (
+              <div className="max-w-md mx-auto md:mx-0 mb-7 animate-fade-in">
+                <CountdownTimer
+                  targetDate={targetEvent.date}
+                  eventName={targetEvent.name}
+                />
+              </div>
+            )}
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Gift-Giving <span className="text-purple-600">Simplified</span>

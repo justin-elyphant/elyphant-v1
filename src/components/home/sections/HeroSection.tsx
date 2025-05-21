@@ -63,18 +63,25 @@ const HeroSection = () => {
       displayEvent.date instanceof Date
     );
 
+    // Helper type guard for special serialized date object
+    const isSerializedDateObj = (value: unknown): value is { _type: string; value: { iso: string } } =>
+      typeof value === "object" &&
+      value !== null &&
+      "_type" in value &&
+      (value as any)._type === "Date" &&
+      "value" in value &&
+      typeof (value as any).value === "object" &&
+      (value as any).value !== null &&
+      "iso" in (value as any).value &&
+      typeof (value as any).value.iso === "string";
+
     // 0. Special: Serialized object from backend ({ _type: "Date", value: { iso: string } })
     if (
-      typeof displayEvent.date === "object" &&
-      displayEvent.date !== null &&
-      displayEvent.date._type === "Date" &&
-      typeof displayEvent.date.value === "object" &&
-      displayEvent.date.value !== null &&
-      typeof displayEvent.date.value.iso === "string" &&
-      !isNaN(Date.parse(displayEvent.date.value.iso))
+      isSerializedDateObj(displayEvent.date) &&
+      !isNaN(Date.parse((displayEvent.date as any).value.iso))
     ) {
       validEventDate = true;
-      eventDateToUse = new Date(displayEvent.date.value.iso);
+      eventDateToUse = new Date((displayEvent.date as any).value.iso);
       displayEvent = { ...displayEvent, date: eventDateToUse };
       console.info("[HeroSection] Parsed _type Date (backend serialized object) into:", eventDateToUse);
     }
@@ -92,11 +99,12 @@ const HeroSection = () => {
       eventDateToUse = new Date(displayEvent.date);
       displayEvent = { ...displayEvent, date: eventDateToUse };
     }
-    // 3. { iso: string } object -- but ONLY if NOT a Date
+    // 3. { iso: string } object (not Date instance)
     else if (
       typeof displayEvent.date === "object" &&
       displayEvent.date !== null &&
-      !("getTime" in displayEvent.date) && // prevents native Date
+      !(displayEvent.date instanceof Date) &&
+      "iso" in displayEvent.date &&
       typeof (displayEvent.date as any).iso === "string" &&
       !isNaN(Date.parse((displayEvent.date as any).iso))
     ) {

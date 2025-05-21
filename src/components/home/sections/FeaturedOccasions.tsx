@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
@@ -113,12 +112,6 @@ const FeaturedOccasions = () => {
         <h2 className="text-2xl font-bold tracking-tight text-gray-900">
           Featured Occasions
         </h2>
-        <a 
-          href="/marketplace" 
-          className="text-[#7E69AB] hover:underline underline-offset-2 text-sm font-medium transition"
-        >
-          View all categories
-        </a>
       </div>
       {/* Modern luxury grid: white, subtle border, shadow, clean spacing */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4">

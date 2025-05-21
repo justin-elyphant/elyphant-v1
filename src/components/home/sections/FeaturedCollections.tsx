@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -106,12 +105,6 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     <div className="mb-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Featured Collections</h2>
-        <a
-          href="/gifting?tab=products"
-          className="text-purple-600 hover:text-purple-800 text-sm font-medium"
-        >
-          View all collections
-        </a>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {enhancedCollections.map((collection) => (
@@ -182,4 +175,3 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
 };
 
 export default FeaturedCollections;
-

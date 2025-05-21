@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -172,11 +173,11 @@ const Home = () => {
           {/* Occasions-Based Gift Collections */}
           <FeaturedOccasions />
 
+          {/* Popular Brands section moved above Featured Products */}
+          <PopularBrandsSection />
+
           {/* Trending Products Carousel */}
           <FeaturedProductsSection />
-
-          {/* Popular Brands Section */}
-          <PopularBrandsSection />
 
           {/* Seasonal Gift Guide */}
           <SeasonalGiftGuide />
@@ -193,3 +194,4 @@ const Home = () => {
 };
 
 export default Home;
+

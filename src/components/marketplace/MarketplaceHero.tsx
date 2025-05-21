@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
@@ -57,7 +56,7 @@ const MarketplaceHero: React.FC<MarketplaceHeroProps> = ({ isCollapsed }) => {
   }
 
   return (
-    <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white mb-6 animate-fade-in">
+    <div className="bg-gradient-to-br from-purple-50 to-indigo-100 mb-6 animate-fade-in">
       <div className="container mx-auto px-4 py-8">
         <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-8'} items-center mb-8`}>
           <HeroContent 
@@ -73,7 +72,7 @@ const MarketplaceHero: React.FC<MarketplaceHeroProps> = ({ isCollapsed }) => {
         </div>
         
         <div className="mb-6">
-          <h2 className="font-sans text-xl md:text-2xl font-semibold mb-3">Upcoming Gift Occasions</h2>
+          <h2 className="font-sans text-xl md:text-2xl font-semibold mb-3 text-gray-900">Upcoming Gift Occasions</h2>
           <OccasionCards 
             friendOccasions={friendOccasions}
             nextHoliday={nextHoliday}

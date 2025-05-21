@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceContent from "./MarketplaceContent";
 import StickyFiltersBar from "./StickyFiltersBar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -85,12 +84,6 @@ const MarketplaceWrapper = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <MarketplaceHeader
-        currentCategory={categoryParam}
-        totalResults={products.length}
-        filteredProducts={products}
-      />
-
       {/* Hero banner with countdown - only show on main marketplace page */}
       <MarketplaceHero isCollapsed={shouldCollapseHero} />
 

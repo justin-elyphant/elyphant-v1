@@ -19,6 +19,54 @@ const getEventSearchTerm = (event) => {
   return `${event.type} gift`;
 };
 
+// New helper: normalize any date to a native JS Date if possible
+function normalizeEventDate(event: any) {
+  if (!event || !event.date) return null;
+
+  const raw = event.date;
+  let dateObj: Date | null = null;
+
+  // 1. If already a native Date and valid
+  if (raw instanceof Date && !isNaN(raw.getTime())) {
+    dateObj = raw;
+  }
+  // 2. If it's an ISO string
+  else if (typeof raw === "string" && !isNaN(Date.parse(raw))) {
+    dateObj = new Date(raw);
+  }
+  // 3. If it's an { iso: string } object (not Date)
+  else if (
+    typeof raw === "object" &&
+    raw !== null &&
+    "iso" in raw &&
+    typeof raw.iso === "string" &&
+    !isNaN(Date.parse(raw.iso))
+  ) {
+    dateObj = new Date(raw.iso);
+  }
+  // 4. If it's a backend-serialized form: { _type: "Date", value: { iso: ... } }
+  else if (
+    typeof raw === "object" &&
+    raw !== null &&
+    raw._type === "Date" &&
+    raw.value &&
+    typeof raw.value.iso === "string" &&
+    !isNaN(Date.parse(raw.value.iso))
+  ) {
+    dateObj = new Date(raw.value.iso);
+  }
+
+  if (dateObj && !isNaN(dateObj.getTime())) {
+    return {
+      ...event,
+      date: dateObj
+    };
+  }
+
+  // Not parseable, return null
+  return null;
+}
+
 const HeroSection = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -36,84 +84,26 @@ const HeroSection = () => {
     friendOccasions
   );
 
-  // Debug logs to trace the actual values being used
-  React.useEffect(() => {
-    console.info("[HeroSection] targetEvent:", targetEvent);
-    console.info("[HeroSection] upcomingHolidays:", upcomingHolidays);
-    console.info("[HeroSection] nextHoliday:", nextHoliday);
-  }, [targetEvent, upcomingHolidays, nextHoliday]);
-
   // Pick event to display: Prefer targetEvent then nextHoliday
   let displayEvent = targetEvent || nextHoliday;
+  displayEvent = normalizeEventDate(displayEvent);
 
-  // === BEGIN DEBUG LOGGING & DATE PATCH ===
-  let validEventDate = false;
-  let eventDateToUse = null;
+  // Debug logs for diagnosis
+  React.useEffect(() => {
+    console.info("[HeroSection] targetEvent:", targetEvent);
+    console.info("[HeroSection] displayEvent (normalized):", displayEvent);
+    if (displayEvent) {
+      console.info(
+        "[HeroSection] event.date:", displayEvent.date,
+        "type:", typeof displayEvent.date,
+        "instanceof Date:", displayEvent.date instanceof Date,
+        "valueOf:", displayEvent.date && displayEvent.date.valueOf && displayEvent.date.valueOf()
+      );
+    }
+  }, [targetEvent, displayEvent]);
 
-  if (displayEvent) {
-    // Logging to check the exact value and type of displayEvent.date
-    console.info(
-      "[HeroSection] displayEvent:",
-      displayEvent,
-      "date prop:",
-      displayEvent.date,
-      "type of date:",
-      typeof displayEvent.date,
-      "instanceof Date:",
-      displayEvent.date instanceof Date
-    );
-
-    // Helper type guard for special serialized date object
-    const isSerializedDateObj = (value: unknown): value is { _type: string; value: { iso: string } } =>
-      typeof value === "object" &&
-      value !== null &&
-      "_type" in value &&
-      (value as any)._type === "Date" &&
-      "value" in value &&
-      typeof (value as any).value === "object" &&
-      (value as any).value !== null &&
-      "iso" in (value as any).value &&
-      typeof (value as any).value.iso === "string";
-
-    // 0. Special: Serialized object from backend ({ _type: "Date", value: { iso: string } })
-    if (
-      isSerializedDateObj(displayEvent.date) &&
-      !isNaN(Date.parse((displayEvent.date as any).value.iso))
-    ) {
-      validEventDate = true;
-      eventDateToUse = new Date((displayEvent.date as any).value.iso);
-      displayEvent = { ...displayEvent, date: eventDateToUse };
-      console.info("[HeroSection] Parsed _type Date (backend serialized object) into:", eventDateToUse);
-    }
-    // 1. Native Date
-    else if (displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime())) {
-      validEventDate = true;
-      eventDateToUse = displayEvent.date;
-    }
-    // 2. ISO string
-    else if (
-      typeof displayEvent.date === "string" &&
-      !isNaN(Date.parse(displayEvent.date))
-    ) {
-      validEventDate = true;
-      eventDateToUse = new Date(displayEvent.date);
-      displayEvent = { ...displayEvent, date: eventDateToUse };
-    }
-    // 3. { iso: string } object (not Date instance)
-    else if (
-      typeof displayEvent.date === "object" &&
-      displayEvent.date !== null &&
-      !(displayEvent.date instanceof Date) &&
-      "iso" in displayEvent.date &&
-      typeof (displayEvent.date as any).iso === "string" &&
-      !isNaN(Date.parse((displayEvent.date as any).iso))
-    ) {
-      validEventDate = true;
-      eventDateToUse = new Date((displayEvent.date as any).iso);
-      displayEvent = { ...displayEvent, date: eventDateToUse };
-    }
-  }
-  // === END DEBUG LOGGING & DATE PATCH ===
+  // Is the normalized event date actually valid and in the future?
+  const validEventDate = displayEvent && displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime()) && displayEvent.date.getTime() > Date.now();
 
   // Handler for contextual CTA
   const handleEventCta = (e) => {

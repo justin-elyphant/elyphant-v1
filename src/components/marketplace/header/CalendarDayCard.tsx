@@ -1,11 +1,13 @@
 
 import React from "react";
+import type { LucideIcon } from "lucide-react";
 
 interface CalendarDayCardProps {
   date: Date;
   title: React.ReactNode;
   avatarUrl?: string;
   avatarAlt?: string;
+  icon?: LucideIcon; // NEW: icon to show instead of avatar
   highlightColor?: string; // Can be used for a tiny accent dot if needed
   onClick?: () => void;
   children?: React.ReactNode; // Additional details if any
@@ -22,6 +24,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
   title,
   avatarUrl,
   avatarAlt,
+  icon,
   highlightColor = "#D1D5DB", // fallback for tiny indicator if needed
   onClick,
   children,
@@ -38,8 +41,8 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
       tabIndex={0}
       style={{ cursor: onClick ? "pointer" : "default", background: "#fff" }}
     >
-      {/* Larger, floating avatar */}
-      {avatarUrl && (
+      {/* Avatar for friend events or icon for non-friend events */}
+      {avatarUrl ? (
         <img
           src={avatarUrl}
           alt={avatarAlt || ""}
@@ -49,11 +52,20 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
             bg-gray-100
           "
           style={{
-            // New: -top-8 is 32px, matching 56px avatar
+            // -top-8 is 32px, matching 56px avatar
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
           }}
         />
-      )}
+      ) : icon ? (
+        <div
+          className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
+          style={{
+            boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
+          }}
+        >
+          {React.createElement(icon, { size: 32, color: "#8E9196" })}
+        </div>
+      ) : null}
 
       {/* Main content block */}
       <div
@@ -84,4 +96,3 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
 };
 
 export default CalendarDayCard;
-

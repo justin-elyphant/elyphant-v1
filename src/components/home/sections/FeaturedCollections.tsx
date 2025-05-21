@@ -19,7 +19,7 @@ type Collection = {
   searchTerm?: string;
   rating?: number;
   reviewCount?: number;
-  description?: string; // Added optional description
+  description?: string;
 };
 
 type CollectionProps = {
@@ -84,7 +84,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     );
   }
 
-  // Add sample ratings to collections for display purposes, and inject luxury gifts image & fallback description
+  // Add sample ratings to collections for display purposes, and inject luxury gift image & fallback description
   const enhancedCollections = collections.map(collection => {
     let patchedImage = collection.image;
     if (collection.name && collection.name.toLowerCase().includes("luxury gifts")) {
@@ -121,49 +121,43 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
             className="cursor-pointer h-full"
           >
             <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full p-0 flex flex-col justify-end">
-              {/* Use AspectRatio to ensure consistent image cropping */}
+              {/* Consistent aspect ratio, improved centering/cropping */}
               <AspectRatio ratio={4 / 5} className="w-full">
-                <div className="absolute inset-0 w-full h-full z-0 flex items-center justify-center">
-                  {collection.image ? (
-                    <img
-                      src={collection.image}
-                      alt={collection.name}
-                      className="w-full h-full object-cover object-center"
-                      style={{ objectPosition: "center center" }} // force center focus
-                      draggable={false}
-                    />
-                  ) : (
-                    <div className="w-full h-full">
-                      <ProductImage
-                        product={{
-                          name: collection.name,
-                          category: collection.category || collection.name,
-                          image: null
-                        }}
-                        useMock={true}
-                        className="w-full h-full"
-                      />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                </div>
+                <img
+                  src={collection.image ?? undefined}
+                  alt={collection.name}
+                  className="absolute inset-0 w-full h-full object-cover object-center z-0 transition-all select-none"
+                  style={{ objectPosition: "center" }}
+                  draggable={false}
+                  loading="lazy"
+                />
+                {/* STRONGER gradient for bottom fade, so text readable */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/65 to-transparent z-10" />
               </AspectRatio>
-              <div className="relative z-10 flex flex-col justify-end h-full w-full p-6 pb-6 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-b-lg">
-                <div>
-                  <h3 className="text-white font-semibold text-2xl md:text-2xl lg:text-3xl mb-1 drop-shadow-sm">{collection.name}</h3>
-                  <p className="text-white text-sm md:text-base mb-1 opacity-90 drop-shadow">
-                    {collection.description}
-                  </p>
-                  <ProductRating
-                    rating={collection.rating}
-                    reviewCount={collection.reviewCount ? collection.reviewCount.toString() : undefined}
-                    size="md"
-                    className="text-white drop-shadow"
-                  />
-                </div>
-                <div className="flex items-center text-white text-lg mt-3 font-medium hover:text-white/90 transition">
+              <div className="relative z-20 flex flex-col justify-end h-full w-full px-6 pb-4 pt-8 rounded-b-lg"
+                style={{
+                  marginTop: "-3.5rem" // pull up overlay, so all content on gradient
+                }}
+              >
+                {/* TITLE & DESCRIPTION with good contrast */}
+                <h3 className="text-white font-semibold text-lg md:text-xl lg:text-2xl mb-1 drop-shadow">
+                  {collection.name}
+                </h3>
+                <p className="text-white text-xs md:text-sm mb-0.5 opacity-95 drop-shadow whitespace-pre-line">
+                  {collection.description}
+                </p>
+
+                <ProductRating
+                  rating={collection.rating}
+                  reviewCount={collection.reviewCount ? String(collection.reviewCount) : undefined}
+                  size="md"
+                  className="text-white drop-shadow mb-0.5"
+                />
+                <div className="flex items-center text-white font-medium mt-1">
                   <span>
-                    {loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}
+                    {loadingCollection === collection.id
+                      ? "Loading..."
+                      : (collection.callToAction || "Shop now")}
                   </span>
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </div>
@@ -177,3 +171,4 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
 };
 
 export default FeaturedCollections;
+

@@ -118,50 +118,61 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
           <div
             key={collection.id}
             onClick={() => handleCollectionClick(collection)}
-            className="cursor-pointer h-full"
+            className="cursor-pointer h-full group"
           >
-            <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full p-0 flex flex-col justify-end">
-              {/* Consistent aspect ratio, improved centering/cropping */}
-              <AspectRatio ratio={4 / 5} className="w-full">
+            <Card className="relative overflow-hidden h-full p-0 flex flex-col justify-end bg-transparent border-0 shadow-none">
+              <AspectRatio 
+                ratio={4 / 5} 
+                className="w-full h-full"
+              >
                 <img
                   src={collection.image ?? undefined}
                   alt={collection.name}
-                  className="absolute inset-0 w-full h-full object-cover object-center z-0 transition-all select-none"
+                  className="absolute inset-0 w-full h-full object-cover object-center z-0 transition-all duration-300 
+                             group-hover:scale-105"
                   style={{ objectPosition: "center" }}
                   draggable={false}
                   loading="lazy"
                 />
-                {/* STRONGER gradient for bottom fade, so text readable */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/65 to-transparent z-10" />
+                {/* Subtle fade just at the bottom to improve text readability, not darkening the whole image */}
+                <div 
+                  className="absolute left-0 right-0 bottom-0 h-28 pointer-events-none z-10"
+                  style={{
+                    background: "linear-gradient(to top, rgba(0,0,0,0.48) 65%, rgba(0,0,0,0.10) 92%, rgba(0,0,0,0) 100%)"
+                  }}
+                />
               </AspectRatio>
-              <div className="relative z-20 flex flex-col justify-end h-full w-full px-6 pb-4 pt-8 rounded-b-lg"
-                style={{
-                  marginTop: "-3.5rem" // pull up overlay, so all content on gradient
-                }}
-              >
+              {/* Overlay content is positioned absolutely at the bottom, above the low fade */}
+              <div className="absolute bottom-0 left-0 w-full z-20 px-6 pb-4 pt-2 flex flex-col"
+                   style={{
+                     pointerEvents: "none"
+                   }}>
                 {/* TITLE & DESCRIPTION with good contrast */}
-                <h3 className="text-white font-semibold text-lg md:text-xl lg:text-2xl mb-1 drop-shadow">
+                <h3 className="text-white font-semibold text-lg md:text-xl lg:text-2xl mb-0.5 drop-shadow pointer-events-auto">
                   {collection.name}
                 </h3>
-                <p className="text-white text-xs md:text-sm mb-0.5 opacity-95 drop-shadow whitespace-pre-line">
+                <p className="text-white text-xs md:text-sm mb-2 opacity-95 drop-shadow pointer-events-auto whitespace-pre-line">
                   {collection.description}
                 </p>
-
-                <ProductRating
-                  rating={collection.rating}
-                  reviewCount={collection.reviewCount ? String(collection.reviewCount) : undefined}
-                  size="md"
-                  className="text-white drop-shadow mb-0.5"
-                />
-                <div className="flex items-center text-white font-medium mt-1">
-                  <span>
-                    {loadingCollection === collection.id
-                      ? "Loading..."
-                      : (collection.callToAction || "Shop now")}
-                  </span>
-                  <ArrowRight className="h-5 w-5 ml-2" />
+                <div className="flex items-center">
+                  <ProductRating
+                    rating={collection.rating}
+                    reviewCount={collection.reviewCount ? String(collection.reviewCount) : undefined}
+                    size="md"
+                    className="text-white drop-shadow mr-2 pointer-events-auto"
+                  />
+                  <div className="flex items-center text-white font-medium ml-auto pointer-events-auto">
+                    <span>
+                      {loadingCollection === collection.id
+                        ? "Loading..."
+                        : (collection.callToAction || "Shop now")}
+                    </span>
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </div>
                 </div>
               </div>
+              {/* Ensure the Card remains clickable */}
+              <span className="absolute inset-0" aria-label={`Open ${collection.name}`}></span>
             </Card>
           </div>
         ))}

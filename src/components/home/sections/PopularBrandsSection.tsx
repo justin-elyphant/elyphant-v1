@@ -42,13 +42,11 @@ const PopularBrandsSection = () => {
     try {
       await handleBrandProducts(brandName, products, setProducts);
     } catch (err) {
-      // The toast in brandUtils will handle errors, but let's be explicit
       toast.error(`Failed to load ${brandName} products`, { id: "brand-loading" });
     } finally {
       setLoadingBrand(null);
-      // Always navigate after loading products (even if error, just like gifting/PopularBrands)
-      const pageTitle = `${brandName} Products`;
-      navigate(`/marketplace?brand=${encodeURIComponent(brandName)}&pageTitle=${encodeURIComponent(pageTitle)}`);
+      // Now navigate to marketplace with ?search=brandName (not brand/pageTitle)
+      navigate(`/marketplace?search=${encodeURIComponent(brandName)}`);
     }
   };
 

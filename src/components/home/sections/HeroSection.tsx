@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -45,13 +44,50 @@ const HeroSection = () => {
   }, [targetEvent, upcomingHolidays, nextHoliday]);
 
   // Pick event to display: Prefer targetEvent then nextHoliday
-  const displayEvent = targetEvent || nextHoliday;
+  let displayEvent = targetEvent || nextHoliday;
 
-  // Check if displayEvent.date is a valid Date
+  // === BEGIN DEBUG LOGGING & DATE PATCH ===
   let validEventDate = false;
-  if (displayEvent && displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime())) {
-    validEventDate = true;
+  let eventDateToUse = null;
+
+  if (displayEvent) {
+    // Logging to check the exact value and type of displayEvent.date
+    console.info(
+      "[HeroSection] displayEvent:",
+      displayEvent,
+      "date prop:",
+      displayEvent.date,
+      "type of date:",
+      typeof displayEvent.date,
+      "instanceof Date:",
+      displayEvent.date instanceof Date
+    );
+    // Patch: If not a Date, try to create one from string/serialized object
+    if (displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime())) {
+      validEventDate = true;
+      eventDateToUse = displayEvent.date;
+    } else if (
+      typeof displayEvent.date === "string" &&
+      !isNaN(Date.parse(displayEvent.date))
+    ) {
+      // Handle ISO string
+      validEventDate = true;
+      eventDateToUse = new Date(displayEvent.date);
+      // Patch the displayEvent to use a true Date instance
+      displayEvent = { ...displayEvent, date: eventDateToUse };
+    } else if (
+      typeof displayEvent.date === "object" &&
+      displayEvent.date !== null &&
+      // Try to support { iso: string }
+      typeof displayEvent.date.iso === "string" &&
+      !isNaN(Date.parse(displayEvent.date.iso))
+    ) {
+      validEventDate = true;
+      eventDateToUse = new Date(displayEvent.date.iso);
+      displayEvent = { ...displayEvent, date: eventDateToUse };
+    }
   }
+  // === END DEBUG LOGGING & DATE PATCH ===
 
   // Handler for contextual CTA
   const handleEventCta = (e) => {

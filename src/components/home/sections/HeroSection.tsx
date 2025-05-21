@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,63 +10,17 @@ import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpec
 import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
 import CountdownTimer from "@/components/marketplace/hero/CountdownTimer";
 import GlassCard from "./GlassCard";
+import { normalizeEventDate } from "./utils/normalizeEventDate";
+import DebugInfoPanel from "./DebugInfoPanel";
 
 // Utility to pick an appropriate search term
-const getEventSearchTerm = (event) => {
+const getEventSearchTerm = (event: any) => {
   if (!event) return "gift";
   if (event.searchTerm && typeof event.searchTerm === "string") {
     return event.searchTerm;
   }
   return `${event.type} gift`;
 };
-
-// New helper: normalize any date to a native JS Date if possible
-function normalizeEventDate(event: any) {
-  if (!event || !event.date) return null;
-
-  const raw = event.date;
-  let dateObj: Date | null = null;
-
-  // 1. If already a native Date and valid
-  if (raw instanceof Date && !isNaN(raw.getTime())) {
-    dateObj = raw;
-  }
-  // 2. If it's an ISO string
-  else if (typeof raw === "string" && !isNaN(Date.parse(raw))) {
-    dateObj = new Date(raw);
-  }
-  // 3. If it's an { iso: string } object (not Date)
-  else if (
-    typeof raw === "object" &&
-    raw !== null &&
-    "iso" in raw &&
-    typeof raw.iso === "string" &&
-    !isNaN(Date.parse(raw.iso))
-  ) {
-    dateObj = new Date(raw.iso);
-  }
-  // 4. If it's a backend-serialized form: { _type: "Date", value: { iso: ... } }
-  else if (
-    typeof raw === "object" &&
-    raw !== null &&
-    raw._type === "Date" &&
-    raw.value &&
-    typeof raw.value.iso === "string" &&
-    !isNaN(Date.parse(raw.value.iso))
-  ) {
-    dateObj = new Date(raw.value.iso);
-  }
-
-  if (dateObj && !isNaN(dateObj.getTime())) {
-    return {
-      ...event,
-      date: dateObj
-    };
-  }
-
-  // Not parseable, return null
-  return null;
-}
 
 const HeroSection = () => {
   const { user } = useAuth();
@@ -88,22 +43,6 @@ const HeroSection = () => {
   let displayEvent = targetEvent || nextHoliday;
   displayEvent = normalizeEventDate(displayEvent);
 
-  // Debug logs for diagnosis
-  React.useEffect(() => {
-    console.info("[HeroSection] targetEvent:", targetEvent);
-    console.info("[HeroSection] displayEvent (normalized):", displayEvent);
-    if (displayEvent) {
-      console.info(
-        "[HeroSection] event.date:", displayEvent.date,
-        "type:", typeof displayEvent.date,
-        "instanceof Date:", displayEvent.date instanceof Date,
-        "timestamp:", displayEvent.date instanceof Date ? displayEvent.date.getTime() : 'not-a-date',
-        "now:", Date.now(),
-        "date string:", displayEvent.date && displayEvent.date.toString()
-      );
-    }
-  }, [targetEvent, displayEvent]);
-
   // Is the normalized event date actually valid and in the future?
   const validEventDate = (
     displayEvent &&
@@ -113,7 +52,7 @@ const HeroSection = () => {
   );
 
   // Handler for contextual CTA
-  const handleEventCta = (e) => {
+  const handleEventCta = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!displayEvent) return;
     const searchTerm = getEventSearchTerm(displayEvent);
@@ -126,16 +65,8 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-grid-pattern"></div>
       </div>
       <div className="container relative z-10 mx-auto px-3 md:px-8 pt-14 pb-10 md:py-20">
-        {/* --- DEBUG PANEL (Remove after debugging) --- */}
-        <div className="mb-6 p-4 rounded-xl border border-dashed border-yellow-400 bg-yellow-100 text-xs text-yellow-900 shadow-inner">
-          <div><b>Debug Info</b></div>
-          <div><b>displayEvent:</b> {JSON.stringify(displayEvent)}</div>
-          <div><b>displayEvent.date:</b> {displayEvent?.date && displayEvent.date.toString ? displayEvent.date.toString() : String(displayEvent?.date)}</div>
-          <div><b>validEventDate:</b> {String(validEventDate)}</div>
-          <div><b>date.getTime:</b> {displayEvent?.date && displayEvent.date instanceof Date ? displayEvent.date.getTime() : 'n/a'}</div>
-          <div><b>now:</b> {Date.now()}</div>
-        </div>
-        {/* --- END DEBUG PANEL --- */}
+        {/* Debug panel now only visible in development, removed for prod */}
+        <DebugInfoPanel displayEvent={displayEvent} validEventDate={validEventDate} />
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-10 md:gap-8">
           {/* Left content */}
           <div className="md:w-1/2 flex flex-col justify-center">
@@ -161,7 +92,7 @@ const HeroSection = () => {
                 </div>
               ) : (
                 <div className="mb-7 text-center animate-fade-in text-gray-500 font-medium">
-                  No upcoming events! (debug: {JSON.stringify(displayEvent)})
+                  No upcoming events!
                 </div>
               )}
 

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
@@ -38,7 +37,7 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
               {targetEvent.name}
             </span>
             <span className="ml-2 text-black dark:text-white">
-              {` ${capitalize(targetEvent.type)} is coming!`}
+              {" is coming!"}
             </span>
           </h1>
           <p className="text-lg mb-4 opacity-90">
@@ -70,4 +69,3 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
 };
 
 export default HeroContent;
-

@@ -23,10 +23,10 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, even
   const [{ days, hours, minutes, seconds }, setTimeLeft] = React.useState(getTimeParts(targetDate));
 
   React.useEffect(() => {
-    // Only update if in the future
+    // Use a smoother interval for live ticking seconds (200ms)
     const timer = setInterval(() => {
       setTimeLeft(getTimeParts(targetDate));
-    }, 1000);
+    }, 200); // Update 5 times per second
 
     return () => clearInterval(timer);
   }, [targetDate]);
@@ -60,4 +60,3 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, even
 };
 
 export default CountdownTimer;
-

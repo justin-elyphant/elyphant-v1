@@ -2,7 +2,7 @@
 import React from "react";
 import { GiftOccasion } from "../utils/upcomingOccasions";
 import CalendarDayCard from "./CalendarDayCard";
-import { Gift, Tie, GraduationCap } from "lucide-react";
+import { Gift, GraduationCap } from "lucide-react";
 
 interface HolidayCardProps {
   holiday: GiftOccasion | null;
@@ -18,8 +18,9 @@ function getHolidayIcon(holiday: GiftOccasion | null, type: "holiday" | "thank-y
     return Gift; // default
   }
   const name = holiday.name.toLowerCase();
-  if (name.includes("father")) return Tie;
-  if (name.includes("dad")) return Tie;
+  // For "father"/"dad", fallback to Gift since Tie is not available
+  if (name.includes("father")) return Gift;
+  if (name.includes("dad")) return Gift;
   if (name.includes("graduat")) return GraduationCap;
   if (name.includes("grad")) return GraduationCap;
   if (name.includes("thank")) return Gift;
@@ -72,3 +73,4 @@ export const HolidayCard: React.FC<HolidayCardProps> = ({
 };
 
 export default HolidayCard;
+

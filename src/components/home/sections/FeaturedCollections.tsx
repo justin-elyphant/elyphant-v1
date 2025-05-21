@@ -24,6 +24,8 @@ type CollectionProps = {
   collections: Collection[];
 };
 
+const LUXURY_GIFTS_IMAGE = "/lovable-uploads/448b42d0-0ea9-433b-8d9b-ca8c143ed3dc.png";
+
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -72,11 +74,19 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     );
   }
 
-  const enhancedCollections = collections.map(collection => ({
-    ...collection,
-    rating: collection.rating || 4.7 + (Math.random() * 0.3),
-    reviewCount: collection.reviewCount || Math.floor(100 + Math.random() * 900)
-  }));
+  // Add sample ratings to collections for display purposes, and inject luxury gifts image
+  const enhancedCollections = collections.map(collection => {
+    let patchedImage = collection.image;
+    if (collection.name && collection.name.toLowerCase().includes("luxury gifts")) {
+      patchedImage = LUXURY_GIFTS_IMAGE;
+    }
+    return {
+      ...collection,
+      image: patchedImage,
+      rating: collection.rating || 4.7 + (Math.random() * 0.3),
+      reviewCount: collection.reviewCount || Math.floor(100 + Math.random() * 900)
+    };
+  });
 
   return (
     <div className="mb-12">
@@ -121,9 +131,8 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
               </div>
-              {/* Overlayed content, fills the card (no white bottom space), always vertically positioned at bottom */}
               <div className="relative z-10 flex flex-col justify-end h-full w-full p-6 pb-7">
-                <div className="">
+                <div>
                   <h3 className="text-white font-semibold text-2xl md:text-2xl lg:text-3xl mb-2 drop-shadow-sm">{collection.name}</h3>
                   <ProductRating 
                     rating={collection.rating} 

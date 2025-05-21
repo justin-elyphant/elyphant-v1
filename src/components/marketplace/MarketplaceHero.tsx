@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { getNextHoliday, getUpcomingOccasions } from "./utils/upcomingOccasions";
@@ -11,7 +11,11 @@ import HeroImage from "./hero/HeroImage";
 import CategoryLinks from "./hero/CategoryLinks";
 import useTargetEvent from "./hero/useTargetEvent";
 
-const MarketplaceHero = () => {
+interface MarketplaceHeroProps {
+  isCollapsed: boolean; // If true, the hero renders minimized/hidden
+}
+
+const MarketplaceHero: React.FC<MarketplaceHeroProps> = ({ isCollapsed }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -23,10 +27,11 @@ const MarketplaceHero = () => {
   const secondHoliday = upcomingHolidays.length > 1 ? upcomingHolidays[1] : null;
 
   useEffect(() => {
-    console.log("Current date:", new Date());
-    console.log("Upcoming holidays:", upcomingHolidays);
-    console.log("Next holiday:", nextHoliday);
-    console.log("Friend occasions:", friendOccasions);
+    // Debugging logs
+    // console.log("Current date:", new Date());
+    // console.log("Upcoming holidays:", upcomingHolidays);
+    // console.log("Next holiday:", nextHoliday);
+    // console.log("Friend occasions:", friendOccasions);
   }, [upcomingHolidays, nextHoliday, friendOccasions]);
   
   const { targetEvent } = useTargetEvent(user, nextHoliday, upcomingHolidays, friendOccasions);
@@ -41,8 +46,18 @@ const MarketplaceHero = () => {
   
   const popularCategories = ['Electronics', 'Fashion', 'Home', 'Books', 'Toys'];
   
+  // Collapsed: either hide or show a small stub (for responsive) for smoother ux
+  // Note: Use min-h to animate/collapse smoothly
+  if (isCollapsed) {
+    return (
+      <div className="transition-all duration-400 overflow-hidden" style={{ minHeight: isMobile ? 0 : 0, height: 0, padding: 0, marginBottom: 0 }}>
+        {/* Hero is collapsed/hidden */}
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white mb-6">
+    <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white mb-6 animate-fade-in">
       <div className="container mx-auto px-4 py-8">
         <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-8'} items-center mb-8`}>
           <HeroContent 

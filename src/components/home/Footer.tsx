@@ -23,7 +23,7 @@ const Footer = () => {
             <div>
               <h4 className="font-medium mb-3">Platform</h4>
               <ul className="space-y-2">
-                <li><Link to="/gifting" className="text-gray-400 hover:text-white text-sm">Gifting</Link></li>
+                {/* Removed Gifting link */}
                 <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm">Marketplace</Link></li>
                 <li><Link to="/trunkline-login" className="text-gray-400 hover:text-white text-sm">Trunkline</Link></li>
               </ul>
@@ -55,3 +55,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

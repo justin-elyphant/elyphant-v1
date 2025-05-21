@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -32,44 +33,29 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
       return;
     }
     setLoadingCollection(collection.id);
-    console.log(`FeaturedCollections: Collection clicked: ${collection.name}, searchTerm: ${collection.searchTerm || collection.name}`);
     toast.success(`Exploring ${collection.name} collection...`);
     const searchTerm = collection.searchTerm || collection.name;
 
     try {
       if (searchTerm) {
-        console.log(`Pre-fetching products for search term: ${searchTerm}`);
-        const results = await searchProducts(searchTerm, "50");
-        console.log(`Fetched ${results.length} products for "${searchTerm}"`);
-        if (results.length === 0) {
-          console.error(`No products found for search term: ${searchTerm}`);
-        }
+        await searchProducts(searchTerm, "50");
       }
-      // -- NEW: Navigate with react-router instead of location.href --
       const params = new URLSearchParams();
       params.set("search", searchTerm);
       params.set("pageTitle", `Collection: ${collection.name}`);
-
-      // Optionally add category if present
       if (collection.category) {
         params.set("category", collection.category);
       }
-
       if (collection.url) {
         window.open(collection.url, "_blank");
       } else {
         navigate(`/marketplace?${params.toString()}`);
       }
     } catch (error) {
-      console.error(`Error handling collection click for ${collection.name}:`, error);
-      if (collection.url) {
-        window.open(collection.url, "_blank");
-      } else {
-        const params = new URLSearchParams();
-        params.set("search", searchTerm);
-        params.set("pageTitle", `Collection: ${collection.name}`);
-        navigate(`/marketplace?${params.toString()}`);
-      }
+      const params = new URLSearchParams();
+      params.set("search", searchTerm);
+      params.set("pageTitle", `Collection: ${collection.name}`);
+      navigate(`/marketplace?${params.toString()}`);
     } finally {
       setLoadingCollection(null);
     }
@@ -86,7 +72,6 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     );
   }
 
-  // Add sample ratings to collections for display purposes
   const enhancedCollections = collections.map(collection => ({
     ...collection,
     rating: collection.rating || 4.7 + (Math.random() * 0.3),
@@ -104,22 +89,22 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
           View all collections
         </a>
       </div>
-      {/* Bigger grid gap, taller/roomier cards and images */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {enhancedCollections.map((collection) => (
           <div 
-            key={collection.id} 
+            key={collection.id}
             onClick={() => handleCollectionClick(collection)}
-            className="cursor-pointer"
+            className="cursor-pointer h-full"
           >
-            <Card className="overflow-hidden hover:shadow-lg transition-shadow h-[330px] md:h-[400px] lg:h-[440px]">
-              <div className="relative w-full h-[150px] sm:h-[180px] md:h-[230px] lg:h-[260px]">
-                {/* --- REAL IMAGE if provided, fallback to ProductImage if not --- */}
+            <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-[410px] md:h-[480px] lg:h-[520px] p-0 flex">
+              {/* Full image as background, gradient & overlayed content */}
+              <div className="absolute inset-0 w-full h-full z-0">
                 {collection.image ? (
                   <img
                     src={collection.image}
                     alt={collection.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
+                    draggable={false}
                   />
                 ) : (
                   <div className="w-full h-full">
@@ -130,24 +115,28 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                         image: null
                       }} 
                       useMock={true}
+                      className="w-full h-full"
                     />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-4 sm:p-6">
-                  <h3 className="text-white font-semibold text-lg sm:text-xl lg:text-2xl">{collection.name}</h3>
-                  {/* Display rating with our brand styling */}
-                  <div className="mb-1">
-                    <ProductRating 
-                      rating={collection.rating} 
-                      reviewCount={collection.reviewCount ? collection.reviewCount.toString() : undefined} 
-                      size="sm" 
-                      className="text-white"
-                    />
-                  </div>
-                  <div className="flex items-center text-white/90 text-base sm:text-lg mt-1 hover:text-white">
-                    <span>{loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}</span>
-                    <ArrowRight className="h-5 w-5 ml-1" />
-                  </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              </div>
+              {/* Overlayed content, fills the card (no white bottom space), always vertically positioned at bottom */}
+              <div className="relative z-10 flex flex-col justify-end h-full w-full p-6 pb-7">
+                <div className="">
+                  <h3 className="text-white font-semibold text-2xl md:text-2xl lg:text-3xl mb-2 drop-shadow-sm">{collection.name}</h3>
+                  <ProductRating 
+                    rating={collection.rating} 
+                    reviewCount={collection.reviewCount ? collection.reviewCount.toString() : undefined} 
+                    size="md"
+                    className="text-white drop-shadow"
+                  />
+                </div>
+                <div className="flex items-center text-white text-lg mt-3 font-medium hover:text-white/90 transition">
+                  <span>
+                    {loadingCollection === collection.id ? "Loading..." : (collection.callToAction || "Shop now")}
+                  </span>
+                  <ArrowRight className="h-5 w-5 ml-2" />
                 </div>
               </div>
             </Card>
@@ -159,3 +148,4 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
 };
 
 export default FeaturedCollections;
+

@@ -7,6 +7,7 @@ interface DebugInfoPanelProps {
 }
 
 const DebugInfoPanel: React.FC<DebugInfoPanelProps> = ({ displayEvent, validEventDate }) => {
+  // Show only in local development
   if (process.env.NODE_ENV !== "development") return null;
   return (
     <div className="mb-6 p-4 rounded-xl border border-dashed border-yellow-400 bg-yellow-100 text-xs text-yellow-900 shadow-inner">

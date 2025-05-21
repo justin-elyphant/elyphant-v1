@@ -97,13 +97,20 @@ const HeroSection = () => {
         "[HeroSection] event.date:", displayEvent.date,
         "type:", typeof displayEvent.date,
         "instanceof Date:", displayEvent.date instanceof Date,
-        "valueOf:", displayEvent.date && displayEvent.date.valueOf && displayEvent.date.valueOf()
+        "timestamp:", displayEvent.date instanceof Date ? displayEvent.date.getTime() : 'not-a-date',
+        "now:", Date.now(),
+        "date string:", displayEvent.date && displayEvent.date.toString()
       );
     }
   }, [targetEvent, displayEvent]);
 
   // Is the normalized event date actually valid and in the future?
-  const validEventDate = displayEvent && displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime()) && displayEvent.date.getTime() > Date.now();
+  const validEventDate = (
+    displayEvent &&
+    displayEvent.date instanceof Date &&
+    !isNaN(displayEvent.date.getTime()) &&
+    displayEvent.date.getTime() > Date.now()
+  );
 
   // Handler for contextual CTA
   const handleEventCta = (e) => {
@@ -119,6 +126,16 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-grid-pattern"></div>
       </div>
       <div className="container relative z-10 mx-auto px-3 md:px-8 pt-14 pb-10 md:py-20">
+        {/* --- DEBUG PANEL (Remove after debugging) --- */}
+        <div className="mb-6 p-4 rounded-xl border border-dashed border-yellow-400 bg-yellow-100 text-xs text-yellow-900 shadow-inner">
+          <div><b>Debug Info</b></div>
+          <div><b>displayEvent:</b> {JSON.stringify(displayEvent)}</div>
+          <div><b>displayEvent.date:</b> {displayEvent?.date && displayEvent.date.toString ? displayEvent.date.toString() : String(displayEvent?.date)}</div>
+          <div><b>validEventDate:</b> {String(validEventDate)}</div>
+          <div><b>date.getTime:</b> {displayEvent?.date && displayEvent.date instanceof Date ? displayEvent.date.getTime() : 'n/a'}</div>
+          <div><b>now:</b> {Date.now()}</div>
+        </div>
+        {/* --- END DEBUG PANEL --- */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-10 md:gap-8">
           {/* Left content */}
           <div className="md:w-1/2 flex flex-col justify-center">

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -62,28 +63,31 @@ const HeroSection = () => {
       "instanceof Date:",
       displayEvent.date instanceof Date
     );
-    // Patch: If not a Date, try to create one from string/serialized object
+
+    // 1. Native Date
     if (displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime())) {
       validEventDate = true;
       eventDateToUse = displayEvent.date;
-    } else if (
+    }
+    // 2. ISO string
+    else if (
       typeof displayEvent.date === "string" &&
       !isNaN(Date.parse(displayEvent.date))
     ) {
-      // Handle ISO string
       validEventDate = true;
       eventDateToUse = new Date(displayEvent.date);
-      // Patch the displayEvent to use a true Date instance
       displayEvent = { ...displayEvent, date: eventDateToUse };
-    } else if (
+    }
+    // 3. { iso: string } object -- but ONLY if NOT a Date
+    else if (
       typeof displayEvent.date === "object" &&
       displayEvent.date !== null &&
-      // Try to support { iso: string }
-      typeof displayEvent.date.iso === "string" &&
-      !isNaN(Date.parse(displayEvent.date.iso))
+      !("getTime" in displayEvent.date) && // prevents native Date
+      typeof (displayEvent.date as any).iso === "string" &&
+      !isNaN(Date.parse((displayEvent.date as any).iso))
     ) {
       validEventDate = true;
-      eventDateToUse = new Date(displayEvent.date.iso);
+      eventDateToUse = new Date((displayEvent.date as any).iso);
       displayEvent = { ...displayEvent, date: eventDateToUse };
     }
   }

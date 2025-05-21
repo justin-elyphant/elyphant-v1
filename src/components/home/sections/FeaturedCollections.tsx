@@ -7,6 +7,7 @@ import ProductImage from "@/components/marketplace/product-item/ProductImage";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import ProductRating from "@/components/shared/ProductRating";
 import { useNavigate } from "react-router-dom";
+import { AspectRatio } from "@/components/ui/aspect-ratio"; // NEW: import AspectRatio
 
 type Collection = {
   id: number;
@@ -106,31 +107,33 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
             onClick={() => handleCollectionClick(collection)}
             className="cursor-pointer h-full"
           >
-            <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-[410px] md:h-[480px] lg:h-[520px] p-0 flex">
-              {/* Full image as background, gradient & overlayed content */}
-              <div className="absolute inset-0 w-full h-full z-0">
-                {collection.image ? (
-                  <img
-                    src={collection.image}
-                    alt={collection.name}
-                    className="w-full h-full object-cover object-center"
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="w-full h-full">
-                    <ProductImage 
-                      product={{
-                        name: collection.name,
-                        category: collection.category || collection.name,
-                        image: null
-                      }} 
-                      useMock={true}
-                      className="w-full h-full"
+            <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full p-0 flex flex-col justify-end">
+              {/* Use AspectRatio to ensure consistent image cropping */}
+              <AspectRatio ratio={4 / 5} className="w-full">
+                <div className="absolute inset-0 w-full h-full z-0">
+                  {collection.image ? (
+                    <img
+                      src={collection.image}
+                      alt={collection.name}
+                      className="w-full h-full object-cover object-center"
+                      draggable={false}
                     />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-              </div>
+                  ) : (
+                    <div className="w-full h-full">
+                      <ProductImage 
+                        product={{
+                          name: collection.name,
+                          category: collection.category || collection.name,
+                          image: null
+                        }} 
+                        useMock={true}
+                        className="w-full h-full"
+                      />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                </div>
+              </AspectRatio>
               <div className="relative z-10 flex flex-col justify-end h-full w-full p-6 pb-7">
                 <div>
                   <h3 className="text-white font-semibold text-2xl md:text-2xl lg:text-3xl mb-2 drop-shadow-sm">{collection.name}</h3>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,7 @@ const HomeCTA = () => {
                 asChild
                 variant="outline"
                 size={isMobile ? "default" : "lg"}
-                className="border-white text-white hover:bg-white/10 font-semibold"
+                className="border-white text-purple-600 hover:bg-white/10 font-semibold"
               >
                 <Link to="/wishlists">
                   <List className="mr-2 h-5 w-5" />
@@ -71,4 +70,3 @@ const HomeCTA = () => {
 };
 
 export default HomeCTA;
-

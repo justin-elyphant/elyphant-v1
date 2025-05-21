@@ -1,4 +1,3 @@
-
 import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
@@ -81,9 +80,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       setIntentHandled(true);
 
       if (userIntent === "giftor") {
-        localStorage.setItem("onboardingComplete", "true");
-        localStorage.removeItem("newSignUp");
-        navigate("/marketplace", { replace: true });
+        // Instead of marketplace, route to new onboarding wizard for giftors
+        navigate("/onboarding-gift", { replace: true });
       } else {
         navigate("/profile-setup", { replace: true });
       }

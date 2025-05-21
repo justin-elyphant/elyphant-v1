@@ -17,6 +17,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import Wishlists from "./pages/Wishlists";
 import AboutUs from "./pages/AboutUs";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import OnboardingGiftorFlow from "@/components/onboarding/OnboardingGiftorFlow";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/onboarding-gift" element={<OnboardingGiftorFlow />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </CartProvider>

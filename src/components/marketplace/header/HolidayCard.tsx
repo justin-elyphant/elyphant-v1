@@ -1,8 +1,8 @@
-
 import React from "react";
 import { Star, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GiftOccasion } from "../utils/upcomingOccasions";
+import CalendarDayCard from "./CalendarDayCard";
 
 interface HolidayCardProps {
   holiday: GiftOccasion | null;
@@ -25,32 +25,28 @@ export const HolidayCard: React.FC<HolidayCardProps> = ({
     }
   };
 
-  // Compact luxury tile style
-  const cardClass = compact
-    ? "flex flex-col items-center justify-center bg-white border border-gray-100 shadow-subtle rounded-lg transition hover:shadow-lg px-2 pt-4 pb-3 min-h-[120px] max-h-[138px] md:min-h-[120px] md:h-[138px] w-full"
-    : "flex flex-col items-center justify-center h-24 border-2 bg-white hover:bg-purple-50 hover:border-purple-300 transition-colors";
+  // If holiday data is missing, fake today
+  const date = holiday ? holiday.date : new Date();
+
+  // Title: "Shop Father's Day" or fallback
+  const mainLabel = holiday
+    ? `Shop ${holiday.name}`
+    : type === "holiday"
+    ? "Holiday"
+    : "Thank You";
+
+  // Color: gold for holiday, green for thank-you
+  let color = "#F8BC58";
+  if (type === "thank-you") color = "#5ECB81";
+  if (!holiday && type === "holiday") color = "#B6A5FF";
 
   return (
-    <Button
-      variant="outline"
-      className={cardClass}
+    <CalendarDayCard
+      date={date}
+      title={mainLabel}
+      highlightColor={color}
       onClick={handleClick}
-      style={{ minWidth: compact ? 120 : undefined, maxWidth: compact ? 170 : undefined }}
-      tabIndex={0}
-    >
-      {type === "holiday" ? (
-        <Star className="h-7 w-7 md:h-8 md:w-8 text-amber-500 mb-2" />
-      ) : (
-        <Gift className="h-7 w-7 md:h-8 md:w-8 text-emerald-500 mb-2" />
-      )}
-      <span className="font-sans font-semibold text-sm text-gray-900 truncate w-full">
-        {holiday
-          ? `Shop ${holiday.name}`
-          : type === "holiday"
-          ? "Holiday"
-          : "Thank You"}
-      </span>
-    </Button>
+    />
   );
 };
 

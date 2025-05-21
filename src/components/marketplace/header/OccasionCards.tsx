@@ -23,19 +23,25 @@ export const OccasionCards: React.FC<OccasionCardsProps> = ({
   const secondEvent = upcomingFriendEvents.length > 1 ? upcomingFriendEvents[1] : null;
 
   return (
-    // Horizontal scroll on mobile, centered grid with wrap on desktop
+    // Calendar style: horizontal scroll on mobile, grid on desktop, more spacing, light background
     <div
       className="
-        flex gap-3 md:gap-4 items-stretch
+        flex gap-4 md:gap-6 items-stretch
         overflow-x-auto scrollbar-none md:overflow-x-visible
-        py-1 md:py-2
+        py-2 md:py-4
         -mx-4 px-4
-        md:grid md:grid-cols-4 md:gap-4 md:px-0 md:mx-0
+        md:grid md:grid-cols-4 md:gap-6 md:px-0 md:mx-0
+        animate-fade-in
       "
-      style={{ WebkitOverflowScrolling: "touch" }}
+      style={{
+        WebkitOverflowScrolling: "touch",
+        background: "linear-gradient(90deg, #f8fafc 0%, #ede9fe 100%)",
+        borderRadius: "18px",
+        boxShadow: "0 3px 12px 0 rgba(86,76,195,0.03)",
+      }}
       data-testid="occasion-cards-scrollable"
     >
-      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+      <div className="min-w-[118px] max-w-[170px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
         <FriendEventCard 
           event={firstEvent} 
           index={0}
@@ -43,7 +49,7 @@ export const OccasionCards: React.FC<OccasionCardsProps> = ({
           compact
         />
       </div>
-      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+      <div className="min-w-[118px] max-w-[170px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
         <FriendEventCard 
           event={secondEvent} 
           index={1}
@@ -52,7 +58,7 @@ export const OccasionCards: React.FC<OccasionCardsProps> = ({
           compact
         />
       </div>
-      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+      <div className="min-w-[118px] max-w-[170px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
         <HolidayCard 
           holiday={nextHoliday}
           type="holiday"
@@ -60,7 +66,7 @@ export const OccasionCards: React.FC<OccasionCardsProps> = ({
           compact
         />
       </div>
-      <div className="min-w-[136px] max-w-[160px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
+      <div className="min-w-[118px] max-w-[170px] w-full flex-shrink-0 md:min-w-0 md:max-w-none">
         <HolidayCard 
           holiday={secondHoliday}
           type="thank-you"

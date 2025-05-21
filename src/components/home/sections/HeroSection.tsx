@@ -13,12 +13,10 @@ import GlassCard from "./GlassCard";
 
 // Utility to pick an appropriate search term
 const getEventSearchTerm = (event) => {
-  // Use attached searchTerm, or make a generic fallback
   if (!event) return "gift";
   if (event.searchTerm && typeof event.searchTerm === "string") {
     return event.searchTerm;
   }
-  // Fallback: use event type if available
   return `${event.type} gift`;
 };
 
@@ -46,15 +44,20 @@ const HeroSection = () => {
     console.info("[HeroSection] nextHoliday:", nextHoliday);
   }, [targetEvent, upcomingHolidays, nextHoliday]);
 
-  // If targetEvent is not set (e.g. for signed out users), fall back to nextHoliday if available
+  // Pick event to display: Prefer targetEvent then nextHoliday
   const displayEvent = targetEvent || nextHoliday;
+
+  // Check if displayEvent.date is a valid Date
+  let validEventDate = false;
+  if (displayEvent && displayEvent.date instanceof Date && !isNaN(displayEvent.date.getTime())) {
+    validEventDate = true;
+  }
 
   // Handler for contextual CTA
   const handleEventCta = (e) => {
     e.preventDefault();
     if (!displayEvent) return;
     const searchTerm = getEventSearchTerm(displayEvent);
-    // To force reload if already on marketplace, use navigate
     navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
   };
 
@@ -69,7 +72,7 @@ const HeroSection = () => {
           <div className="md:w-1/2 flex flex-col justify-center">
             <GlassCard className="w-full md:w-auto mx-auto md:mx-0">
               {/* Event Countdown Block */}
-              {displayEvent && displayEvent.date && (
+              {displayEvent && validEventDate ? (
                 <div className="mb-7 animate-fade-in flex flex-col items-center md:items-start">
                   <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-purple-500 mb-2">
                     {displayEvent.name}
@@ -86,6 +89,10 @@ const HeroSection = () => {
                     <Gift className="mr-2 h-5 w-5" />
                     Shop {displayEvent.name} Gifts
                   </Button>
+                </div>
+              ) : (
+                <div className="mb-7 text-center animate-fade-in text-gray-500 font-medium">
+                  No upcoming events! (debug: {JSON.stringify(displayEvent)})
                 </div>
               )}
 
@@ -149,4 +156,3 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
-

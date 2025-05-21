@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Clock } from "lucide-react";
 import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from "date-fns";
@@ -16,22 +15,30 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, even
     seconds: 0
   });
 
+  // Enhanced debug logging for countdown state and event
+  React.useEffect(() => {
+    console.info("[CountdownTimer] received targetDate:", targetDate, "eventName:", eventName);
+    if (!(targetDate instanceof Date) || isNaN(targetDate.getTime())) {
+      console.warn("[CountdownTimer] Invalid targetDate:", targetDate);
+    } else if (targetDate.getTime() < new Date().getTime()) {
+      console.info("[CountdownTimer] Note: targetDate is in the past or now:", targetDate);
+    }
+  }, [targetDate, eventName]);
+
   // Update countdown timer
   React.useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
-      
+
       // Calculate the time difference
       const days = Math.max(0, differenceInDays(targetDate, now));
       const hours = Math.max(0, differenceInHours(targetDate, now) % 24);
       const minutes = Math.max(0, differenceInMinutes(targetDate, now) % 60);
       const seconds = Math.max(0, differenceInSeconds(targetDate, now) % 60);
-      
-      console.log("Countdown values:", { days, hours, minutes, seconds });
+
       setTimeLeft({ days, hours, minutes, seconds });
-      
     }, 1000);
-    
+
     return () => clearInterval(timer);
   }, [targetDate]);
 
@@ -41,7 +48,6 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, even
         <Clock className="mr-2 h-5 w-5" />
         <span className="text-lg font-medium">Coming up in:</span>
       </div>
-      
       <div className="flex space-x-3 mb-6 justify-center md:justify-start">
         <div className="bg-white/20 rounded-lg p-2 w-16 text-center">
           <div className="text-2xl font-bold">{timeLeft.days}</div>

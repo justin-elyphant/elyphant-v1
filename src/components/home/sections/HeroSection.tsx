@@ -5,27 +5,45 @@ import { Button } from "@/components/ui/button";
 import { Gift, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import GiftCountdown from "./GiftCountdown";
+import { getUpcomingOccasions } from "@/components/marketplace/utils/upcomingOccasions";
+import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
+import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
 
 const HeroSection = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  
+
+  // Get friend occasions for logged in users, else empty array
+  const { friendOccasions } = useConnectedFriendsSpecialDates();
+  const upcomingHolidays = getUpcomingOccasions().filter(occ => occ.type === "holiday");
+  const nextHoliday = upcomingHolidays.length > 0 ? upcomingHolidays[0] : null;
+
+  // Reuse target event logic–closest friend event or holiday, or just holiday if not signed in
+  const { targetEvent } = useTargetEvent(
+    user,
+    nextHoliday,
+    upcomingHolidays,
+    friendOccasions
+  );
+
   return (
     <div className="relative bg-gradient-to-br from-purple-50 to-indigo-100 overflow-hidden">
       <div className="absolute inset-0 z-0 opacity-20">
         <div className="absolute inset-0 bg-grid-pattern"></div>
       </div>
-      
       <div className="container relative z-10 mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
+            {/* Countdown feature */}
+            <GiftCountdown event={targetEvent} />
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Gift-Giving <span className="text-purple-600">Simplified</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg mx-auto md:mx-0">
               Create wishlists, find perfect gifts, and never miss an important occasion. Our AI-powered platform makes thoughtful gifting effortless.
             </p>
-            
             <div className="flex flex-wrap gap-4 justify-center md:justify-start">
               <Button asChild size={isMobile ? "default" : "lg"} className="bg-purple-600 hover:bg-purple-700">
                 <Link to={user ? "/dashboard" : "/signup"}>
@@ -41,7 +59,6 @@ const HeroSection = () => {
               </Button>
             </div>
           </div>
-          
           <div className="md:w-1/2 relative">
             <div className="relative z-10">
               <img 

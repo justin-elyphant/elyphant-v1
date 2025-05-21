@@ -14,7 +14,8 @@ import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
 import Marketplace from "./pages/Marketplace";
 import { CartProvider } from "@/contexts/CartContext";
-import Wishlists from "./pages/Wishlists"; // <-- import Wishlists page
+import Wishlists from "./pages/Wishlists";
+import AboutUs from "./pages/AboutUs";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 
 function App() {
@@ -36,7 +37,8 @@ function App() {
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
                 <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/wishlists" element={<Wishlists />} /> {/* <-- add this route */}
+                <Route path="/wishlists" element={<Wishlists />} />
+                <Route path="/about-us" element={<AboutUs />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </CartProvider>

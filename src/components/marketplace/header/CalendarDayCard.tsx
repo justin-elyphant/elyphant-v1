@@ -38,17 +38,18 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
       tabIndex={0}
       style={{ cursor: onClick ? "pointer" : "default", background: "#fff" }}
     >
-      {/* Large, floating avatar */}
+      {/* Larger, floating avatar */}
       {avatarUrl && (
         <img
           src={avatarUrl}
           alt={avatarAlt || ""}
           className="
-            absolute -top-7 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-2 border-white shadow 
+            absolute -top-8 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
             object-cover z-20 group-hover:scale-105 transition-transform
             bg-gray-100
           "
           style={{
+            // New: -top-8 is 32px, matching 56px avatar
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
           }}
         />
@@ -56,8 +57,8 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
 
       {/* Main content block */}
       <div
-        className={`flex flex-col items-center pt-6 pb-2 px-2 relative w-full`}
-        style={{ minHeight: 84 }}
+        className={`flex flex-col items-center pt-8 pb-2 px-2 relative w-full`}
+        style={{ minHeight: 88 }}
       >
         {/* Month in muted uppercaps */}
         <span className="text-[11px] text-gray-400 font-semibold tracking-wide mb-0.5" style={{ letterSpacing: 1 }}>
@@ -83,3 +84,4 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
 };
 
 export default CalendarDayCard;
+

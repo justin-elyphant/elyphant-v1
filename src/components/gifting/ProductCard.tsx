@@ -8,6 +8,8 @@ import { useProductDataSync } from "@/hooks/useProductDataSync";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+// Add import for getPrimaryProductImage
+import { getPrimaryProductImage } from "@/components/marketplace/product-item/getPrimaryProductImage";
 
 interface ProductCardProps {
   product: any;
@@ -45,7 +47,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   // Helper functions to improve readability
   const getProductName = () => product.title || product.name || "";
-  const getProductImage = () => product.image || "/placeholder.svg";
+  // Change: use getPrimaryProductImage(product) (uses robust fallback logic!)
+  const getProductImage = () => {
+    const selectedImg = getPrimaryProductImage(product);
+    console.log("[ProductCard] selected image", {
+      title: getProductName(),
+      selectedImg,
+      image: product.image,
+      images: product.images,
+      productId: product.product_id || product.id
+    });
+    return selectedImg;
+  };
   const getPrice = () => (typeof product.price === 'number' ? product.price.toFixed(2) : '0.00');
   const isRecentlyViewed = () => product.recentlyViewed;
   const isNewArrival = () => product.tags?.includes("new") || (product.id && Number(product.id) > 9000);
@@ -206,3 +219,5 @@ const ProductCard: React.FC<ProductCardProps> = ({
 };
 
 export default ProductCard;
+
+// NOTE: This file is approaching 200+ lines and is a great candidate to be broken out into smaller, focused components for maintainability.

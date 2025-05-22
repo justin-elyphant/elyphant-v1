@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,13 +10,23 @@ import { getProductFallbackImage } from "./productImageUtils";
 
 // Utility for fallback image (always use this order: image, images[0], fallback)
 const getPrimaryProductImage = (product: Product) => {
-  if (product.image && product.image !== "/placeholder.svg") return product.image;
+  // Always use image if present and not blank/placeholder
+  if (product.image && product.image !== "/placeholder.svg") {
+    console.log("ProductItem: using image field for display:", product.image);
+    return product.image;
+  }
+  // Next use first in images array if present and not blank/placeholder
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
     const validImg = product.images.find(img => !!img && img !== "/placeholder.svg");
-    if (validImg) return validImg;
+    if (validImg) {
+      console.log("ProductItem: using first valid images[] for display:", validImg);
+      return validImg;
+    }
   }
-  // If mock/test (missing image), always show fallback
-  return getProductFallbackImage(product.title || product.name || "Product", product.category || "");
+  // If nothing found, use fallback image 
+  const fallbackImg = getProductFallbackImage(product.title || product.name || "Product", product.category || "");
+  console.log("ProductItem: using fallback image:", fallbackImg);
+  return fallbackImg;
 };
 
 interface ProductItemProps {
@@ -227,3 +238,6 @@ const ProductItem = ({
 };
 
 export default ProductItem;
+
+// The ProductItem file is now 230+ lines. 
+// Consider asking me to refactor it into separate files for image/block rendering for easier future maintenance!

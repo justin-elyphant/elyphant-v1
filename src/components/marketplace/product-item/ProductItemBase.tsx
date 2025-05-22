@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import ProductImageSection from "./ProductImageSection";
@@ -44,7 +43,7 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
         price={typeof product.price === "number" ? product.price : 0}
         productImage={product.image}
         className="w-auto"
-        onClick={stopPropagation} // Prevent card click when using the button
+        // Removed the onClick prop here to fix build error
       />
     </div>
   );
@@ -104,4 +103,3 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
 };
 
 export default ProductItemBase;
-

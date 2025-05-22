@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import ProductImageSection from "./ProductImageSection";
 import ProductInfoSection from "./ProductInfoSection";
 import { Product } from "@/types/product";
+import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
+import BuyNowButton from "@/components/marketplace/product-details/BuyNowButton";
 
 interface ProductItemBaseProps {
   product: Product;
@@ -28,6 +30,24 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
     onProductClick(product.product_id || product.id || "");
   };
 
+  // Prevent click bubbling when clicking an action button
+  const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
+
+  // Button Rendering
+  const renderActions = () => (
+    <div className="mt-3 flex gap-2">
+      <AddToCartButton product={product} variant="outline" size="sm" onClick={stopPropagation} />
+      <BuyNowButton
+        productId={product.product_id || product.id}
+        productName={product.title || product.name}
+        price={typeof product.price === "number" ? product.price : 0}
+        productImage={product.image}
+        className="w-auto"
+        onClick={stopPropagation} // Prevent card click when using the button
+      />
+    </div>
+  );
+
   if (viewMode === "list") {
     return (
       <Card className="overflow-hidden cursor-pointer border hover:border-primary/50 transition-all duration-200" onClick={handleClick}>
@@ -48,6 +68,7 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
               onWishlistClick={onWishlistClick}
               discountPercent={discountPercent}
             />
+            {renderActions()}
           </CardContent>
         </div>
       </Card>
@@ -75,10 +96,10 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
           onWishlistClick={onWishlistClick}
           discountPercent={discountPercent}
         />
+        {renderActions()}
       </CardContent>
     </Card>
   );
 };
 
 export default ProductItemBase;
-

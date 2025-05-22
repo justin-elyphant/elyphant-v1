@@ -113,27 +113,30 @@ const FiltersSidebar = ({
     let showWishlist = false;
     let friendName: string | null = null;
 
-    // New: Also check if search is just an occasion/holiday
+    const nameFromSearch = getPersonNameFromSearch(rawSearchTerm);
+    const isOccasion = isOccasionPersonId(personId || "");
     const isOccasionSearch = isOccasionSearchTerm(rawSearchTerm);
 
+    /**
+     * Logic:
+     * 1. If a real person's name is present in the search string, show friend wishlist option.
+     * 2. If not, only show if NOT an occasion/generic AND NOT an occasion-style search.
+     * 3. For anything occasion-related (Father's Day, Christmas, etc) or generic friend/role-only, hide filter.
+     */
     if (personId) {
-      const isOccasion = isOccasionPersonId(personId);
-      const nameFromSearch = getPersonNameFromSearch(rawSearchTerm);
-
-      // Core logic: show if NOT an occasion, and NOT an occasion search term
-      if (!isOccasion && !isOccasionSearch) {
-        friendName = nameFromSearch || "Friend";
-        showWishlist = true;
-      } else if (!isOccasion && nameFromSearch) {
-        // Not occasion/generic but search contains a real name
+      if (nameFromSearch) {
+        // Detected real person name in search, always show
         friendName = nameFromSearch;
         showWishlist = true;
-      } else if (nameFromSearch && !isOccasionSearch) {
-        // Is generic/occasion (like friend-3), but search starts w/ real name, not occasion: show
-        friendName = nameFromSearch;
+      } else if (!isOccasion && !isOccasionSearch) {
+        // Not a generic/occasion person and search is not occasion
+        friendName = "Friend";
         showWishlist = true;
+      } else {
+        // Do not show filter for occasion/generic or occasion search
+        friendName = null;
+        showWishlist = false;
       }
-      // Otherwise, do not show filter if search is for an occasion/holiday
     }
 
     if (showWishlist && friendName) {
@@ -141,7 +144,7 @@ const FiltersSidebar = ({
     } else {
       setFriendWishlistName(null);
     }
-    setShowFullWishlist(false); // Reset when params change
+    setShowFullWishlist(false);
     // eslint-disable-next-line
   }, [window.location.search]);
 

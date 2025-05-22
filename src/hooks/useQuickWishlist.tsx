@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
-// No longer need localStorage!
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
+import { useWishlists } from "@/components/gifting/hooks/useWishlists"; // <--- FIX: Use proper import!
 import { useAuth } from "@/contexts/auth"; // Use Supabase auth context!
 
 interface ProductInfo {
@@ -19,8 +19,8 @@ export const useQuickWishlist = () => {
   // ---- UPDATE: Use Supabase user from AuthContext ----
   const { user } = useAuth();
   const { handleFavoriteToggle, isFavorited } = useFavorites();
-  // We'll fetch and set up actual wishlists/items here:
-  const { wishlists, addToWishlist, fetchWishlists, createWishlist } = require("@/components/gifting/hooks/useWishlists").useWishlists();
+  // Use the custom hook instead of require:
+  const { wishlists, addToWishlist, fetchWishlists, createWishlist } = useWishlists();
   const navigate = useNavigate();
   
   // Ensures wishlist exists (creates "My Wishlist" if missing), returns id

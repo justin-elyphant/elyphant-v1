@@ -36,29 +36,39 @@ const FiltersSidebar = ({
   );
   const [filterProfileName, setFilterProfileName] = useState("");
   
-  // --- NEW: Detect friend-event wishlist context and manage "Show Full Wishlist" ---
-  // Detect if the active search query in the URL matches a friend event
+  // NEW: Robust friend wishlist detection for search query OR personId param
   const [showFullWishlist, setShowFullWishlist] = useState(false);
   const [friendWishlistName, setFriendWishlistName] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    // Look for a query param like Michael's birthday gift
-    const url = window.location.href;
-    const friendWishlistRegex = /[?&]search=([^&]+)/i;
-    const match = url.match(friendWishlistRegex);
-    if (match) {
-      const searchTerm = decodeURIComponent(match[1] || "");
-      const wishRegex = /^([A-Za-z ]+?)'s (birthday|[a-z]+) gift$/i;
-      const m = searchTerm.trim().match(wishRegex);
-      if (m) {
-        setFriendWishlistName(m[1]);
-      } else {
-        setFriendWishlistName(null);
+  useEffect(() => {
+    // Prefer robust method using URL params directly
+    const urlParams = new URLSearchParams(window.location.search);
+    const personId = urlParams.get("personId");
+    const rawSearchTerm = urlParams.get("search") || "";
+
+    let friendName: string | null = null;
+    if (personId) {
+      // Try to parse friend name from search, or fallback
+      if (rawSearchTerm) {
+        // Match friend event pattern in search term: "[Friend Name]'s X gift" or "[Friend Name] X gift"
+        const namePattern = /^([A-Za-z ]+?)(?:'s)? [a-z]+ gift$/i;
+        const match = decodeURIComponent(rawSearchTerm).trim().match(namePattern);
+        if (match) {
+          friendName = match[1].trim();
+        }
       }
+      // Fallback generic name if pattern not found
+      if (!friendName) friendName = "Friend";
+      setFriendWishlistName(friendName);
     } else {
-      setFriendWishlistName(null);
+      // Try to match pattern if no personId (legacy search style)
+      const wishRegex = /^([A-Za-z ]+?)'s (birthday|[a-z]+) gift$/i;
+      const m = decodeURIComponent(rawSearchTerm).trim().match(wishRegex);
+      if (m) setFriendWishlistName(m[1]);
+      else setFriendWishlistName(null);
     }
-    setShowFullWishlist(false); // Reset if search changed
+    setShowFullWishlist(false); // Reset when params change
+    // eslint-disable-next-line
   }, [window.location.search]);
 
   // Handle 'Show All' toggle

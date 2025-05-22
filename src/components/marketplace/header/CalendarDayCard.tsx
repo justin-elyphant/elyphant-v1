@@ -42,10 +42,10 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
       style={{
         cursor: onClick ? "pointer" : "default",
         background: "#fff",
-        minHeight: 152, // increase to fit avatar/icon visibly
+        minHeight: 110, // compact height
         height: "auto",
-        overflow: "visible", // ensures child absolute elements (avatar/icon) are visible
-        position: "relative", // for correct absolute positioning
+        overflow: "visible",
+        position: "relative",
       }}
     >
       {/* Avatar for friend events or icon for non-friend events */}
@@ -54,17 +54,18 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
           src={avatarUrl}
           alt={avatarAlt || ""}
           className="
-            absolute -top-10 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
+            absolute -top-9 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
             object-cover z-20 group-hover:scale-105 transition-transform
             bg-gray-100
           "
           style={{
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
+            // The avatar floats higher above the card
           }}
         />
       ) : icon ? (
         <div
-          className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
+          className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
           style={{
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
           }}
@@ -75,7 +76,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
 
       {/* Main content block */}
       <div
-        className={`flex flex-col items-center pt-12 pb-2 px-2 relative w-full`}
+        className={`flex flex-col items-center pt-5 pb-2 px-2 relative w-full`}
         style={{ minHeight: 60 }}
       >
         <span className="text-[11px] text-gray-400 font-semibold tracking-wide mb-0.5" style={{ letterSpacing: 1 }}>
@@ -100,3 +101,4 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
 };
 
 export default CalendarDayCard;
+

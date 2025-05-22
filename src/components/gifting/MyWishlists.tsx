@@ -67,7 +67,7 @@ const MyWishlists = () => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
       .map(list => list.category)
-      .filter((category): category is string => !!category);
+      .filter((category): category is string => !!category && category.trim() !== "");
     return [...new Set(allCategories)];
   }, [wishlists]);
 
@@ -208,9 +208,13 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
-                ))}
+                {categories
+                  .filter((category) => category && category.trim() !== "")
+                  .map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

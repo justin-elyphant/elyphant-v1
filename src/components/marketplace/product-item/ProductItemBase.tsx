@@ -36,9 +36,10 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
   // Button Rendering
   const renderActions = () => (
     <div className="mt-3 flex gap-2">
-      <AddToCartButton product={product} variant="outline" size="sm" onClick={stopPropagation} />
+      {/* Removed onClick from AddToCartButton */}
+      <AddToCartButton product={product} variant="outline" size="sm" />
       <BuyNowButton
-        productId={product.product_id || product.id}
+        productId={Number(product.product_id || product.id) || 0}
         productName={product.title || product.name}
         price={typeof product.price === "number" ? product.price : 0}
         productImage={product.image}
@@ -103,3 +104,4 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
 };
 
 export default ProductItemBase;
+

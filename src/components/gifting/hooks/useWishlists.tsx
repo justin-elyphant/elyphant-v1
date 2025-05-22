@@ -38,14 +38,18 @@ export function useWishlists(): UseWishlistsResult {
       return;
     }
     try {
+      // Use maybeSingle so no error if row missing:
       const { data: profile, error: fetchErr } = await supabase
         .from("profiles")
         .select("wishlists")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (fetchErr) {
         setError(fetchErr);
+        setWishlists([]);
+      } else if (!profile) {
+        // No profile row found for user, treat as empty wishlists!
         setWishlists([]);
       } else {
         const rawWishlists = profile?.wishlists ?? [];

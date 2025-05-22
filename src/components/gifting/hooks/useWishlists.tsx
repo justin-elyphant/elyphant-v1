@@ -46,16 +46,24 @@ export function useWishlists(): UseWishlistsResult {
         .maybeSingle();
 
       if (fetchErr) {
+        console.error("Supabase fetch error:", fetchErr);
         setError(fetchErr);
         setWishlists([]);
       } else if (!profile) {
         // No profile row found for user, treat as empty wishlists!
+        console.warn("Profile not found for user, treating as empty wishlists.");
+        setWishlists([]);
+      } else if (!Array.isArray(profile.wishlists)) {
+        // Defensive: wishlists field missing or malformed
+        console.warn("Profile.wishlists is missing or not an array. Data:", profile.wishlists);
         setWishlists([]);
       } else {
-        const rawWishlists = profile?.wishlists ?? [];
+        const rawWishlists = profile.wishlists ?? [];
+        console.log("Fetched wishlists array:", rawWishlists);
         setWishlists(Array.isArray(rawWishlists) ? rawWishlists.map(normalizeWishlist) : []);
       }
     } catch (err: any) {
+      console.error("General error fetching wishlists:", err);
       setError(err instanceof Error ? err : new Error("Unknown error"));
       setWishlists([]);
     }

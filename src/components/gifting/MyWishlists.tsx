@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";
@@ -67,10 +67,17 @@ const MyWishlists = () => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
       .map(list => list.category)
-      .filter((category): category is string => !!category && category.trim() !== "");
+      .filter((category): category is string => !!category && typeof category === "string" && category.trim() !== "");
     return [...new Set(allCategories)];
   }, [wishlists]);
 
+  // Log the current categories to debug the bug
+  React.useEffect(() => {
+    // Debug: log categories at render
+    // Remove these logs if not needed after bug is fixed
+    console.log("[Wishlist] Rendering categories for Select:", categories);
+  }, [categories]);
+  
   // Filter wishlists based on category and search query
   const filteredWishlists = React.useMemo(() => {
     if (!wishlists) return [];
@@ -208,18 +215,18 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {categories
-                  .filter(
-                    (category): category is string =>
-                      typeof category === "string" &&
-                      !!category.trim() &&
-                      category.trim() !== ""
-                  )
-                  .map((category) => (
-                    <SelectItem key={category} value={category}>
+                {categories.map((category, i) =>
+                  typeof category === "string" &&
+                  category.trim() !== "" &&
+                  category !== "" ? (
+                    <SelectItem
+                      key={category + i}
+                      value={category}
+                    >
                       {category}
                     </SelectItem>
-                  ))}
+                  ) : null
+                )}
               </SelectContent>
             </Select>
           </div>

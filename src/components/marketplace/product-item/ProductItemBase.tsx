@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import ProductImageSection from "./ProductImageSection";
@@ -29,21 +30,21 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
     onProductClick(product.product_id || product.id || "");
   };
 
-  // Prevent click bubbling when clicking an action button
-  const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
-
-  // Button Rendering
+  // Button Rendering: place both buttons in a row, fill available horizontal space, with gap and responsive
   const renderActions = () => (
-    <div className="mt-3 flex gap-2">
-      {/* Removed onClick from AddToCartButton */}
-      <AddToCartButton product={product} variant="outline" size="sm" />
+    <div className="mt-3 flex flex-row gap-2 w-full">
+      <AddToCartButton
+        product={product}
+        variant="outline"
+        size="sm"
+        className="flex-1 min-w-0"
+      />
       <BuyNowButton
         productId={Number(product.product_id || product.id) || 0}
         productName={product.title || product.name}
         price={typeof product.price === "number" ? product.price : 0}
         productImage={product.image}
-        className="w-auto"
-        // Removed the onClick prop here to fix build error
+        className="flex-1 min-w-0"
       />
     </div>
   );
@@ -60,7 +61,7 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
             isFavorited={isFavorited}
             onWishlistClick={onWishlistClick}
           />
-          <CardContent className="flex-1 p-3">
+          <CardContent className="flex-1 p-3 flex flex-col justify-between">
             <ProductInfoSection
               product={product}
               viewMode="list"
@@ -88,7 +89,7 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
           onWishlistClick={onWishlistClick}
         />
       </div>
-      <CardContent className="p-3">
+      <CardContent className="p-3 flex flex-col justify-between">
         <ProductInfoSection
           product={product}
           viewMode="grid"
@@ -103,3 +104,4 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
 };
 
 export default ProductItemBase;
+

@@ -183,6 +183,9 @@ const FiltersSidebar = ({
     }
   }, [friendWishlistName]);
 
+  // --- WHEN TO SHOW THE FRIEND'S WISHLIST SELECTOR ---
+  const shouldShowFriendWishlistSelector = friendWishlistName && friendWishlists.length > 0;
+
   // --- When a friend wishlist list is chosen ---
   const handleFriendWishlistSelect = (wishlistId: string | "all") => {
     setSelectedWishlistId(wishlistId);
@@ -317,7 +320,8 @@ const FiltersSidebar = ({
           </Button>
         )}
       </div>
-      {/* Only show wishlist toggle and selector if friendWishlistName exists (i.e., personId param exists) */}
+
+      {/* Friend wishlist logic block */}
       {friendWishlistName && (
         <div className="p-4 border-b flex flex-col gap-4 bg-white">
           <div className="flex items-center justify-between">
@@ -335,8 +339,8 @@ const FiltersSidebar = ({
               </span>
             </Button>
           </div>
-          {/* New: Dropdown to choose which wishlist to view (if friend has wishlists) */}
-          {(friendWishlists.length > 0 && showFullWishlist) && (
+          {/* Moved: Dropdown appears whenever we have wishlists for the friend → always visible */}
+          {shouldShowFriendWishlistSelector && (
             <FriendWishlistSelector
               wishlists={friendWishlists}
               selectedWishlistId={selectedWishlistId}
@@ -345,6 +349,7 @@ const FiltersSidebar = ({
           )}
         </div>
       )}
+
       <ScrollArea className={isMobile ? "h-[60vh]" : "max-h-[calc(100vh-200px)]"}>
         <div className="p-4 space-y-5">
           {/* Category filter with responsive grid for mobile */}

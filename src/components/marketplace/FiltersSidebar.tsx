@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -58,6 +57,19 @@ const isOccasionPersonId = (personId: string) => {
   return matchesOccasion || isGenericPersonId(personId);
 };
 
+// Helper to try to extract a person's name from the search string
+function getPersonNameFromSearch(search: string): string | null {
+  if (!search) return null;
+  // Examples to match: "Michael Davis birthday gift", "Sarah graduation gift"
+  // We'll attempt to extract the (likely) name if it's at the start
+  const namePattern = /^([A-Za-z'-]+ [A-Za-z'-]+|[A-Za-z'-]+)(?:'s)? (\w+ )?gift/i;
+  const match = decodeURIComponent(search).trim().match(namePattern);
+  if (match) {
+    return match[1].trim();
+  }
+  return null;
+}
+
 const FiltersSidebar = ({ 
   activeFilters, 
   onFilterChange, 
@@ -77,8 +89,6 @@ const FiltersSidebar = ({
   
   // NEW: Robust friend wishlist detection for search query OR personId param
   const [showFullWishlist, setShowFullWishlist] = useState(false);
-
-  // Only set friendWishlistName if personId is present in the URL
   const [friendWishlistName, setFriendWishlistName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -86,19 +96,26 @@ const FiltersSidebar = ({
     const personId = urlParams.get("personId");
     const rawSearchTerm = urlParams.get("search") || "";
 
-    // Only allow friend wishlist context if personId present AND not occasion/generic label
+    let friendName: string | null = null;
+
+    // Case 1: personId is NOT generic/occasion and exists
     if (personId && !isOccasionPersonId(personId)) {
-      let friendName: string | null = null;
-      if (rawSearchTerm) {
-        const namePattern = /^([A-Za-z ]+?)(?:'s)? [a-z]+ gift$/i;
-        const match = decodeURIComponent(rawSearchTerm).trim().match(namePattern);
-        if (match) {
-          friendName = match[1].trim();
-        }
-      }
-      if (!friendName) friendName = "Friend";
+      // Try to extract a good name first from search, fallback to "Friend"
+      friendName = getPersonNameFromSearch(rawSearchTerm) || "Friend";
       setFriendWishlistName(friendName);
-    } else {
+    }
+    // Case 2: personId IS generic, but search contains a real name
+    else if (personId && isGenericPersonId(personId)) {
+      // If search contains a likely real name at the beginning, we assume it's personalized.
+      const nameFromSearch = getPersonNameFromSearch(rawSearchTerm);
+      if (nameFromSearch) {
+        setFriendWishlistName(nameFromSearch);
+      } else {
+        setFriendWishlistName(null);
+      }
+    }
+    // Otherwise, not a friend context
+    else {
       setFriendWishlistName(null);
     }
     setShowFullWishlist(false); // Reset when params change

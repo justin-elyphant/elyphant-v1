@@ -28,6 +28,10 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 3);
 
+  // For both tabs: use side-by-side layout for cards on desktop, stack on mobile
+  const tabGridClass =
+    "flex flex-row gap-4 justify-center md:justify-start items-stretch overflow-x-auto scrollbar-none md:grid md:grid-cols-3 md:gap-4";
+
   return (
     <Tabs defaultValue="friends" className="w-full">
       <TabsList className="w-full flex justify-center mb-4">
@@ -35,7 +39,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
         <TabsTrigger value="holidays" className="flex-1">Holidays</TabsTrigger>
       </TabsList>
       <TabsContent value="friends">
-        <div className="flex flex-col gap-4">
+        <div className={tabGridClass}>
           {sortedFriends.length > 0 ? (
             sortedFriends.map((event, idx) => (
               <FriendEventCard
@@ -52,7 +56,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
         </div>
       </TabsContent>
       <TabsContent value="holidays">
-        <div className="flex flex-col gap-4">
+        <div className={tabGridClass}>
           {sortedHolidays.length > 0 ? (
             sortedHolidays.map((holiday, idx) => (
               <HolidayCard
@@ -73,4 +77,3 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
 };
 
 export default OccasionTabs;
-

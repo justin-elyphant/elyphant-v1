@@ -1,7 +1,9 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
+import { useNavigate } from "react-router-dom";
 
 interface Event {
   name: string;
@@ -20,12 +22,24 @@ function capitalize(str: string): string {
 }
 
 const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
+  const navigate = useNavigate();
+
   // Helper to format button text
   const getShopNowText = () => {
     if (targetEvent && targetEvent.name) {
       return `Shop ${targetEvent.name} Gift`;
     }
     return "Shop Gifts";
+  };
+
+  // Navigate to the marketplace with a search for the event name
+  const handleShopNowClick = () => {
+    if (targetEvent && targetEvent.name) {
+      // Use encodeURIComponent for safe URL
+      navigate(`/marketplace?search=${encodeURIComponent(targetEvent.name + " gift")}`);
+    } else {
+      navigate("/marketplace");
+    }
   };
 
   return (
@@ -53,7 +67,7 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
       )}
       
       <div className="flex space-x-4 justify-center md:justify-start">
-        <Button className="bg-white text-purple-700 hover:bg-gray-100">
+        <Button className="bg-white text-purple-700 hover:bg-gray-100" onClick={handleShopNowClick}>
           <Gift className="mr-2 h-4 w-4" />
           {getShopNowText()}
         </Button>
@@ -63,3 +77,4 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
 };
 
 export default HeroContent;
+

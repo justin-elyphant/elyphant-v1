@@ -39,7 +39,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
           {sortedFriends.length > 0 ? (
             sortedFriends.map((event, idx) => (
               <FriendEventCard
-                key={event.id || idx}
+                key={`${event.name}-${event.date.toISOString()}-${event.personId || idx}`}
                 event={event}
                 index={idx}
                 onCardClick={onCardClick}
@@ -56,7 +56,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
           {sortedHolidays.length > 0 ? (
             sortedHolidays.map((holiday, idx) => (
               <HolidayCard
-                key={holiday.id || idx}
+                key={`${holiday.name}-${holiday.date.toISOString()}-${idx}`}
                 holiday={holiday}
                 type="holiday"
                 onCardClick={onCardClick}
@@ -73,3 +73,4 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
 };
 
 export default OccasionTabs;
+

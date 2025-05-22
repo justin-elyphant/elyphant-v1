@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -144,6 +143,8 @@ const ProductDetailsDialog = ({
             
             <Separator className="my-4" />
             
+            {/* REMOVE GIFT OPTIONS TAB - Save code for later */}
+            {/* 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid grid-cols-2 mb-4">
                 <TabsTrigger value="product">Product Details</TabsTrigger>
@@ -151,81 +152,28 @@ const ProductDetailsDialog = ({
               </TabsList>
               
               <TabsContent value="product">
-                {/* Description */}
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground">
-                    {product.description || "No description available for this product."}
-                  </p>
-                </div>
-                
-                {/* Features */}
-                {productFeatures.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="font-medium mb-2">Features</h4>
-                    <ul className="text-sm list-disc pl-4 space-y-1">
-                      {productFeatures.map((feature, idx) => (
-                        <li key={idx}>{feature}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="gift">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="isGift">This is a gift</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Add a personal message and special packaging
-                      </p>
-                    </div>
-                    <Switch 
-                      id="isGift" 
-                      checked={isGift}
-                      onCheckedChange={setIsGift}
-                    />
-                  </div>
-                  
-                  {isGift && (
-                    <div className="space-y-4 pt-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="recipientName">Recipient's Name</Label>
-                        <Input
-                          id="recipientName"
-                          value={recipientName}
-                          onChange={(e) => setRecipientName(e.target.value)}
-                          placeholder="Enter recipient's name"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="giftMessage">Gift Message</Label>
-                        <Textarea
-                          id="giftMessage"
-                          value={giftMessage}
-                          onChange={(e) => setGiftMessage(e.target.value)}
-                          placeholder="Add a personal message"
-                          className="resize-none"
-                          rows={3}
-                        />
-                        <p className="text-xs text-right text-muted-foreground">
-                          {giftMessage.length}/200
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <Gift className="h-4 w-4 mr-2 text-pink-500" />
-                          <span className="text-sm">Add gift wrapping (+$4.99)</span>
-                        </div>
-                        <Switch />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+            */}
+            {/* Instead, just render the product details section directly */}
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground">
+                {product.description || "No description available for this product."}
+              </p>
+            </div>
+            
+            {productFeatures.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium mb-2">Features</h4>
+                <ul className="text-sm list-disc pl-4 space-y-1">
+                  {productFeatures.map((feature, idx) => (
+                    <li key={idx}>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* </TabsContent> */}
+            {/* -- Gift Options Tab removed until future */}
+            {/* </Tabs> */}
             
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +6,17 @@ import { Product } from "@/types/product";
 import { useLazyImage } from "@/hooks/useLazyImage";
 import QuickWishlistButton from "./QuickWishlistButton";
 import { getProductFallbackImage } from "./productImageUtils";
+
+// Utility for fallback image (always use this order: image, images[0], fallback)
+const getPrimaryProductImage = (product: Product) => {
+  if (product.image && product.image !== "/placeholder.svg") return product.image;
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    const validImg = product.images.find(img => !!img && img !== "/placeholder.svg");
+    if (validImg) return validImg;
+  }
+  // If mock/test (missing image), always show fallback
+  return getProductFallbackImage(product.title || product.name || "Product", product.category || "");
+};
 
 interface ProductItemProps {
   product: Product;
@@ -25,18 +35,16 @@ const ProductItem = ({
   isFavorited,
   statusBadge
 }: ProductItemProps) => {
-  // Get proper image or fallback
-  const productImage = product.image || getProductFallbackImage(
-    product.title || product.name || "", 
-    product.category || ""
-  );
-  
+  // Use our new logic for primary image selection
+  const productImage = getPrimaryProductImage(product);
+
+  // Use lazy loading, always attempt to load the primary image (fallback already ensured)
   const { src: imageSrc } = useLazyImage(productImage);
-  
+
   const handleClick = () => {
     onProductClick(product.product_id || product.id || "");
   };
-  
+
   // Helper functions for product data access
   const getTitle = () => product.title || product.name || "";
   const getPrice = () => product.price?.toFixed(2) || "0.00";
@@ -81,7 +89,7 @@ const ProductItem = ({
             {/* Product image */}
             <img
               src={imageSrc}
-              alt={getTitle()}
+              alt={product.title || product.name || ""}
               className="w-full h-full object-cover"
               loading="lazy"
             />
@@ -176,7 +184,7 @@ const ProductItem = ({
         <div className="aspect-square overflow-hidden">
           <img
             src={imageSrc}
-            alt={getTitle()}
+            alt={product.title || product.name || ""}
             className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
             loading="lazy"
           />

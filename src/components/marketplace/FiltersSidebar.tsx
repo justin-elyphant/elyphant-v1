@@ -19,6 +19,28 @@ interface FiltersSidebarProps {
   isMobile?: boolean;
 }
 
+const OCCASION_KEYWORDS = [
+  "fathers-day", "mothers-day", "valentines-day", "anniversary", "holiday",
+  "christmas", "thanksgiving", "hanukkah", "easter", "new-year", "birthday",
+  "wedding", "graduation", "baby-shower", "bridal-shower", "engagement",
+  "father", "mother", "dad", "mom", "friend", "coworker", "boss", "teacher",
+  "child", "children", "kid", "kids", "baby", "grandparent", "grandfather",
+  "grandmother", "uncle", "aunt", "cousin", "partner", "spouse"
+];
+
+const isOccasionPersonId = (personId: string) => {
+  if (!personId) return false;
+  // occasion/role keywords are often kebab-case or lowercased
+  const normalized = personId.toLowerCase().replace(/[^a-z\-]/g, "");
+  // strict match against list or "occasion" in id
+  return OCCASION_KEYWORDS.some((kw) =>
+    normalized === kw ||
+    normalized === `${kw}-id` ||
+    normalized.includes(kw) ||
+    normalized.startsWith(kw)
+  );
+};
+
 const FiltersSidebar = ({ 
   activeFilters, 
   onFilterChange, 
@@ -47,8 +69,8 @@ const FiltersSidebar = ({
     const personId = urlParams.get("personId");
     const rawSearchTerm = urlParams.get("search") || "";
 
-    if (personId) {
-      // Try to parse a friend name from the search term, otherwise fallback to "Friend"
+    // Only allow friend wishlist context if personId present AND not occasion keyword
+    if (personId && !isOccasionPersonId(personId)) {
       let friendName: string | null = null;
       if (rawSearchTerm) {
         const namePattern = /^([A-Za-z ]+?)(?:'s)? [a-z]+ gift$/i;

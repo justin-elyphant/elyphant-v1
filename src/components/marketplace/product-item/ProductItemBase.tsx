@@ -30,22 +30,22 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
     onProductClick(product.product_id || product.id || "");
   };
 
-  // Button Rendering: Compact and contained actions, always fit inside card
+  // Adjust for a compact, aesthetically pleasing action row
   const renderActions = () => (
-    <div className="mt-3 flex justify-center">
-      <div className="flex flex-row gap-1 w-full max-w-[240px]">
+    <div className="mt-2 flex justify-center w-full">
+      <div className="flex flex-row gap-0.5 w-full max-w-[180px]">
         <AddToCartButton
           product={product}
           variant="outline"
           size="sm"
-          className="flex-1 min-w-0 px-2 py-1 text-xs"
+          className="flex-1 min-w-0 px-1 py-1 h-8 text-[13px] font-medium rounded-md"
         />
         <BuyNowButton
           productId={Number(product.product_id || product.id) || 0}
           productName={product.title || product.name}
           price={typeof product.price === "number" ? product.price : 0}
           productImage={product.image}
-          className="flex-1 min-w-0 px-2 py-1 text-xs"
+          className="flex-1 min-w-0 px-1 py-1 h-8 text-[13px] font-medium rounded-md"
         />
       </div>
     </div>
@@ -106,4 +106,3 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
 };
 
 export default ProductItemBase;
-

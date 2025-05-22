@@ -216,7 +216,7 @@ const ProductDetailsDialog = ({
                   <Heart 
                     className={`h-4 w-4 mr-2 ${isFavorited(productId) ? 'fill-pink-500 text-pink-500' : ''}`} 
                   />
-                  {isFavorited(productId) ? "Saved" : "Save"}
+                  {isFavorited(productId) ? "Wishlisted" : "Add to Wishlist"}
                 </Button>
               </div>
             </div>

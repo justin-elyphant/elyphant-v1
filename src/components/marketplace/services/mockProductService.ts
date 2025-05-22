@@ -33,7 +33,7 @@ export function searchMockProducts(
       category: categories[i % categories.length],
       retailer: "Amazon via Zinc",
       rating: 4 + Math.random(),
-      review_count: 100 + i * 13,
+      reviewCount: 100 + i * 13, // changed from review_count to reviewCount
       isBestSeller: i === 0,
       features: [`Feature ${i+1}A`, `Feature ${i+1}B`],
       images: [getRandomImage(i)],

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -27,17 +28,34 @@ const OCCASION_KEYWORDS = [
   "grandparent", "grandfather", "grandmother", "uncle", "aunt", "cousin"
 ];
 
+// Helper: detect "generic" friend/family IDs like friend-1, uncle-3, dad-2, etc.
+const GENERIC_LABELS = [
+  "friend", "uncle", "aunt", "cousin", "dad", "mom", "father", "mother", "brother",
+  "sister", "son", "daughter", "child", "children", "kid", "kids", "baby",
+  "grandparent", "grandfather", "grandmother",
+  "coworker", "colleague", "boss", "teacher", "partner", "spouse"
+];
+
+function isGenericPersonId(personId: string) {
+  if (!personId) return false;
+  // Matches e.g. "friend-3", "uncle-2", "mom-5"
+  const genericPattern = new RegExp(`^(${GENERIC_LABELS.join("|")})-\\d+$`, "i");
+  return genericPattern.test(personId);
+}
+
 const isOccasionPersonId = (personId: string) => {
   if (!personId) return false;
   // occasion/role keywords are often kebab-case or lowercased
   const normalized = personId.toLowerCase().replace(/[^a-z\-]/g, "");
   // strict match against list or "occasion" in id
-  return OCCASION_KEYWORDS.some((kw) =>
+  const matchesOccasion = OCCASION_KEYWORDS.some((kw) =>
     normalized === kw ||
     normalized === `${kw}-id` ||
     normalized.includes(kw) ||
     normalized.startsWith(kw)
   );
+  // Also treat generic-ids like friend-2, uncle-3 as occasions, so filter is hidden
+  return matchesOccasion || isGenericPersonId(personId);
 };
 
 const FiltersSidebar = ({ 
@@ -68,7 +86,7 @@ const FiltersSidebar = ({
     const personId = urlParams.get("personId");
     const rawSearchTerm = urlParams.get("search") || "";
 
-    // Only allow friend wishlist context if personId present AND not occasion keyword
+    // Only allow friend wishlist context if personId present AND not occasion/generic label
     if (personId && !isOccasionPersonId(personId)) {
       let friendName: string | null = null;
       if (rawSearchTerm) {

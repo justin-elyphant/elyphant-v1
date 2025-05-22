@@ -5,7 +5,7 @@ import ProductImageSection from "./ProductImageSection";
 import ProductInfoSection from "./ProductInfoSection";
 import { Product } from "@/types/product";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
-import BuyNowButton from "@/components/marketplace/product-details/BuyNowButton";
+// Removed BuyNowButton import
 
 interface ProductItemBaseProps {
   product: Product;
@@ -30,21 +30,14 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
     onProductClick(product.product_id || product.id || "");
   };
 
-  // Adjust for a compact, aesthetically pleasing action row
+  // Only Add to Cart button, centered and compact
   const renderActions = () => (
     <div className="mt-2 flex justify-center w-full">
-      <div className="flex flex-row gap-0.5 w-full max-w-[180px]">
+      <div className="flex w-full max-w-[140px]">
         <AddToCartButton
           product={product}
           variant="outline"
           size="sm"
-          className="flex-1 min-w-0 px-1 py-1 h-8 text-[13px] font-medium rounded-md"
-        />
-        <BuyNowButton
-          productId={Number(product.product_id || product.id) || 0}
-          productName={product.title || product.name}
-          price={typeof product.price === "number" ? product.price : 0}
-          productImage={product.image}
           className="flex-1 min-w-0 px-1 py-1 h-8 text-[13px] font-medium rounded-md"
         />
       </div>

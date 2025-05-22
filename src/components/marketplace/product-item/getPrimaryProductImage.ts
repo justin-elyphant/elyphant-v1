@@ -2,7 +2,6 @@
 import { Product } from "@/types/product";
 import { getProductFallbackImage } from "./productImageUtils";
 
-// Consistent placeholder for all mock/test/Zinc products (guaranteed valid visible image)
 const MOCK_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=500&fit=crop";
 
 /**
@@ -16,13 +15,15 @@ export function getPrimaryProductImage(product: Product): string {
   // Helper: Is this a mock/Zinc product? - robustly detects test + Zinc mock results
   const isMock = isMockProduct(product);
 
-  // Logging (remove for prod, but useful for debugging image flow)
-  console.log("[ProductImageSelect]", {
-    product_id: product.product_id,
-    retailer: product.retailer,
-    image: product.image,
+  // Logging for debugging
+  console.log("[getPrimaryProductImage debug]", {
+    product,
+    mainImg,
+    isMissingImg,
+    isMockResult: isMock,
     images: product.images,
-    isMock
+    // What will fallback return?
+    fallbackImage: getProductFallbackImage(product.title || product.name || "Product", product.category || "")
   });
 
   // Guarantee mock placeholder for any mock product (unless it has a real image)
@@ -33,6 +34,7 @@ export function getPrimaryProductImage(product: Product): string {
       const validImg = product.images.find(img => img && img !== "/placeholder.svg");
       if (validImg) return validImg;
     }
+    // Always use a VISIBLE placeholder for mock
     return MOCK_PLACEHOLDER_IMAGE;
   }
 
@@ -45,7 +47,7 @@ export function getPrimaryProductImage(product: Product): string {
     if (validImg) return validImg;
   }
 
-  // Last fallback
+  // Last fallback - category-specific real image
   return getProductFallbackImage(
     product.title || product.name || "Product",
     product.category || ""
@@ -54,9 +56,14 @@ export function getPrimaryProductImage(product: Product): string {
 
 // Helper: Is this a mock/test/Zinc product?
 function isMockProduct(product: Product): boolean {
+  // Robust check
   return (
     (product.product_id && String(product.product_id).toUpperCase().startsWith("MOCK")) ||
+    (typeof product.product_id === "string" && product.product_id.startsWith("mock-")) ||
     (typeof product.retailer === "string" && product.retailer.toLowerCase().includes("zinc")) ||
-    (product.title && product.title.toLowerCase().includes("mock"))
+    (typeof product.vendor === "string" && product.vendor.toLowerCase().includes("zinc")) ||
+    (product.title && product.title.toLowerCase().includes("mock")) ||
+    (product.name && product.name.toLowerCase().includes("mock"))
   );
 }
+

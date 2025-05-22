@@ -6,12 +6,30 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import MarketplaceHero from "./MarketplaceHero";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
+import { X } from "lucide-react"; // Import x icon
 
 // New: ResultsChip component
-const ResultsChip = ({ query }: { query: string }) => (
+const ResultsChip = ({
+  query,
+  onClear,
+}: {
+  query: string;
+  onClear?: () => void;
+}) => (
   <div className="flex justify-center mt-1 mb-5">
-    <span className="inline-flex items-center rounded-full bg-purple-100 px-4 py-2 text-purple-700 font-semibold text-sm shadow-sm animate-fade-in border border-purple-200">
+    <span className="inline-flex items-center rounded-full bg-purple-100 px-4 py-2 text-purple-700 font-semibold text-sm shadow-sm animate-fade-in border border-purple-200 relative">
       Showing results for <span className="font-bold mx-1">"{query}"</span>
+      {onClear && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onClick={onClear}
+          className="ml-2 hover:bg-purple-200 rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          style={{ lineHeight: 0 }}
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
     </span>
   </div>
 );
@@ -21,7 +39,7 @@ const MarketplaceWrapper = () => {
   const [products, setProducts] = useState(allProducts);
   const isMobile = useIsMobile();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
@@ -87,6 +105,14 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, brandParam, shouldCollapseHero]);
 
+  // Handler to clear search and stay on same page (removes "search" query param)
+  const handleClearSearch = () => {
+    // Remove the search parameter, but keep others untouched
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("search");
+    setSearchParams(newParams, { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero banner with countdown - only show on main marketplace page */}
@@ -101,7 +127,10 @@ const MarketplaceWrapper = () => {
 
       {/* Show a 'results for' chip if searching or category/brand filter is on */}
       {(searchTerm || categoryParam || brandParam) && (
-        <ResultsChip query={searchTerm || categoryParam || brandParam || ""} />
+        <ResultsChip
+          query={searchTerm || categoryParam || brandParam || ""}
+          onClear={searchTerm ? handleClearSearch : undefined}
+        />
       )}
 
       <main

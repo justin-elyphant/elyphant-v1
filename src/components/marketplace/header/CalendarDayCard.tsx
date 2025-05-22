@@ -1,3 +1,4 @@
+
 import React from "react";
 import type { LucideIcon } from "lucide-react";
 
@@ -41,7 +42,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
       style={{ 
         cursor: onClick ? "pointer" : "default", 
         background: "#fff",
-        minHeight: 112,
+        minHeight: 96, // shrink card!
         height: "auto"
       }}
     >
@@ -51,18 +52,17 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
           src={avatarUrl}
           alt={avatarAlt || ""}
           className="
-            absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
+            absolute -top-5 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
             object-cover z-20 group-hover:scale-105 transition-transform
             bg-gray-100
           "
           style={{
-            // -top-7 is 28px, keeps avatar at the same size but more of it visible
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
           }}
         />
       ) : icon ? (
         <div
-          className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
+          className="absolute -top-5 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
           style={{
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
           }}
@@ -73,8 +73,8 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
 
       {/* Main content block */}
       <div
-        className={`flex flex-col items-center pt-7 pb-2 px-2 relative w-full`}
-        style={{ minHeight: 72 }}
+        className={`flex flex-col items-center pt-6 pb-1 px-2 relative w-full`}
+        style={{ minHeight: 60 }}
       >
         {/* less vertical padding for a more compact look */}
         {/* Month in muted uppercaps */}

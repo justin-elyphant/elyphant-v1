@@ -62,20 +62,19 @@ const MyWishlists = () => {
     removeFromWishlist,
   } = useWishlists();
 
-  // Get all unique categories from wishlists
+  // Defensive: compute list of unique, valid, non-empty string categories
   const categories = React.useMemo(() => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
-      .map(list => list.category)
-      .filter((category): category is string => !!category && typeof category === "string" && category.trim() !== "");
-    return [...new Set(allCategories)];
+      .map(list => typeof list.category === "string" ? list.category.trim() : "")
+      .filter((category) => category.length > 0);
+    // Only unique valid (non-empty) strings
+    return Array.from(new Set(allCategories));
   }, [wishlists]);
 
-  // Log the current categories to debug the bug
-  React.useEffect(() => {
-    // Debug: log categories at render
-    // Remove these logs if not needed after bug is fixed
-    console.log("[Wishlist] Rendering categories for Select:", categories);
+  // Keep logging for debug
+  useEffect(() => {
+    console.log("[Wishlist] Defensive categories for Select:", categories);
   }, [categories]);
   
   // Filter wishlists based on category and search query
@@ -215,18 +214,14 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {categories.map((category, i) =>
-                  typeof category === "string" &&
-                  category.trim() !== "" &&
-                  category !== "" ? (
-                    <SelectItem
-                      key={category + i}
-                      value={category}
-                    >
-                      {category}
-                    </SelectItem>
-                  ) : null
-                )}
+                {categories.map((category, i) => (
+                  <SelectItem
+                    key={`${category}-${i}`}
+                    value={category}
+                  >
+                    {category}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -1,20 +1,22 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { SlidersHorizontal, Grid3X3, List, BookmarkPlus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Grid2X2, Rows, BookmarkCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MarketplaceFiltersProps {
   viewMode: "grid" | "list" | "modern";
   setViewMode: (mode: "grid" | "list" | "modern") => void;
-  totalItems?: number;
+  totalItems: number;
   sortOption: string;
   onSortChange: (option: string) => void;
   isMobile: boolean;
   savedFiltersCount: number;
   onSavedFiltersToggle: () => void;
   savedFiltersActive: boolean;
+  showFilters: boolean;
+  setShowFilters: (show: boolean) => void;
 }
 
 const MarketplaceFilters = ({
@@ -26,85 +28,106 @@ const MarketplaceFilters = ({
   isMobile,
   savedFiltersCount,
   onSavedFiltersToggle,
-  savedFiltersActive
+  savedFiltersActive,
+  showFilters,
+  setShowFilters,
 }: MarketplaceFiltersProps) => {
-  // Sort options
-  const sortOptions = [
-    { value: "relevance", label: "Relevance" },
-    { value: "priceAsc", label: "Price: Low to High" },
-    { value: "priceDesc", label: "Price: High to Low" },
-    { value: "newest", label: "Newest" },
-    { value: "rating", label: "Top Rated" }
-  ];
-  
-  // Get label for current sort option
-  const getSortLabel = (value: string) => {
-    const option = sortOptions.find(opt => opt.value === value);
-    return option ? option.label : "Relevance";
+  const handleSortChange = (value: string) => {
+    onSortChange(value);
   };
-  
+
   return (
-    <div className="flex flex-wrap gap-3 items-center justify-between bg-white p-3 rounded-md shadow-sm border">
-      <div className="flex gap-2 items-center">
-        {/* View mode buttons */}
-        <div className="hidden sm:flex border rounded-md">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2">
+        {/* View mode toggle */}
+        <div className="flex items-center border rounded-md overflow-hidden">
           <Button
-            onClick={() => setViewMode("grid")}
             variant="ghost"
             size="sm"
-            className={`rounded-r-none ${viewMode === "grid" ? "bg-gray-100" : ""}`}
+            className={`rounded-none px-2.5 ${
+              viewMode === "grid" ? "bg-muted" : ""
+            }`}
+            onClick={() => setViewMode("grid")}
           >
-            <Grid2X2 className="h-4 w-4" />
+            <Grid3X3 className="h-4 w-4" />
           </Button>
           <Button
-            onClick={() => setViewMode("list")}
             variant="ghost"
             size="sm"
-            className={`rounded-l-none ${viewMode === "list" ? "bg-gray-100" : ""}`}
+            className={`rounded-none px-2.5 ${
+              viewMode === "list" ? "bg-muted" : ""
+            }`}
+            onClick={() => setViewMode("list")}
           >
-            <Rows className="h-4 w-4" />
+            <List className="h-4 w-4" />
           </Button>
         </div>
-        
-        {/* Sort options */}
-        <div>
-          <Select value={sortOption} onValueChange={onSortChange}>
-            <SelectTrigger className="w-[180px] text-sm h-9">
-              <SelectValue>
-                {getSortLabel(sortOption)}
-              </SelectValue>
+
+        {/* Filter toggle button (moved here) */}
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <SlidersHorizontal className="h-4 w-4 mr-2" />
+          {showFilters ? "Hide Filters" : "Show Filters"}
+        </Button>
+
+        {/* Saved filters toggle */}
+        {savedFiltersCount > 0 && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={savedFiltersActive ? "default" : "outline"}
+                  size="sm"
+                  onClick={onSavedFiltersToggle}
+                  className="relative"
+                >
+                  <BookmarkPlus className="h-4 w-4 mr-1" />
+                  Saved Filters
+                  <Badge
+                    variant="secondary"
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {savedFiltersCount}
+                  </Badge>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Apply your saved filter preferences</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {/* Sort dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground hidden sm:inline">
+            Sort by:
+          </span>
+          <Select value={sortOption} onValueChange={handleSortChange}>
+            <SelectTrigger className="h-8 w-[130px] sm:w-[160px]">
+              <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
-              {sortOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="price-asc">Price: Low to High</SelectItem>
+              <SelectItem value="price-desc">Price: High to Low</SelectItem>
+              <SelectItem value="rating">Highest Rated</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        
-        {/* Saved filters button - only shown if user has saved filters */}
-        {savedFiltersCount > 0 && (
-          <Button
-            variant={savedFiltersActive ? "default" : "outline"}
-            size="sm"
-            onClick={onSavedFiltersToggle}
-            className="hidden sm:flex items-center"
-          >
-            <BookmarkCheck className="h-4 w-4 mr-2" />
-            Saved Filters
-            <Badge className="ml-2" variant="secondary">
-              {savedFiltersCount}
-            </Badge>
-          </Button>
-        )}
-      </div>
-      
-      {/* Right side items (only shown on larger screens) */}
-      <div className="hidden md:block text-sm text-muted-foreground">
-        {totalItems !== undefined && (
-          <span>{totalItems} {totalItems === 1 ? 'item' : 'items'}</span>
+
+        {/* Item count */}
+        {!isMobile && (
+          <div className="text-sm text-muted-foreground ml-2">
+            {totalItems} {totalItems === 1 ? "item" : "items"}
+          </div>
         )}
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -108,6 +107,9 @@ const MarketplaceContent = ({
         savedFiltersCount={savedFilters.length}
         onSavedFiltersToggle={toggleSavedFilters}
         savedFiltersActive={savedFiltersActive}
+        // Pass filter toggle props down so button is available in header
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
       />
       
       <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6 mt-4`}>

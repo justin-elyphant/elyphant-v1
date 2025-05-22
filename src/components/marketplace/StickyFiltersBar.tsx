@@ -1,7 +1,4 @@
-
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { SlidersHorizontal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface StickyFiltersBarProps {
@@ -38,16 +35,7 @@ const StickyFiltersBar = ({
     >
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button
-            variant={showFilters ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center"
-          >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            {showFilters ? "Hide Filters" : "Filters"}
-          </Button>
-          
+          {/* Moved filter toggle button to product grid header */}
           {searchTerm && (
             <div className="hidden xs:flex text-sm">
               Search results for: <span className="font-medium ml-1">"{searchTerm}"</span>

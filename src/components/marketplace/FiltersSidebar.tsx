@@ -11,6 +11,8 @@ import { SavedFilters } from "./ProductGrid";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import FriendWishlistSelector from "./FriendWishlistSelector";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FiltersSidebarProps {
   activeFilters: Record<string, any>;
@@ -100,11 +102,15 @@ const FiltersSidebar = ({
     "savedFilters", []
   );
   const [filterProfileName, setFilterProfileName] = useState("");
-  
-  // Robust friend wishlist detection
-  const [showFullWishlist, setShowFullWishlist] = useState(false);
-  const [friendWishlistName, setFriendWishlistName] = useState<string | null>(null);
 
+  // Wishlist selector state
+  const [friendWishlists, setFriendWishlists] = useState<{ id: string; title: string }[]>([]);
+  const [selectedWishlistId, setSelectedWishlistId] = useState<string | "all">("all");
+  // Reset selected wishlist if friend changes
+  const [friendWishlistName, setFriendWishlistName] = useState<string | null>(null);
+  const [showFullWishlist, setShowFullWishlist] = useState(false);
+
+  // --- Detect friend wishlist context (mostly unchanged) ---
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const personId = urlParams.get("personId");
@@ -145,10 +151,46 @@ const FiltersSidebar = ({
       setFriendWishlistName(null);
     }
     setShowFullWishlist(false);
+    // Reset wishlist list and selected list when switching context
+    setFriendWishlists([]);
+    setSelectedWishlistId("all");
     // eslint-disable-next-line
   }, [window.location.search]);
 
-  // Handle 'Show All' toggle
+  // --- Fetch giftee's wishlists from Supabase if personId is present & real ---
+  useEffect(() => {
+    // Only attempt if friendWishlistName and personId exist, and personId is not generic/occasion
+    const urlParams = new URLSearchParams(window.location.search);
+    const personId = urlParams.get("personId");
+
+    if (friendWishlistName && personId && !isOccasionPersonId(personId)) {
+      // Fetch wishlists from Supabase
+      async function fetchWishlists() {
+        // This assumes personId is a supabase user id or a mappable profile id
+        const { data, error } = await supabase
+          .from("wishlists")
+          .select("id, title")
+          .eq("user_id", personId)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          setFriendWishlists([]);
+          return;
+        }
+        setFriendWishlists(data || []);
+      }
+      fetchWishlists();
+    }
+  }, [friendWishlistName]);
+
+  // --- When a friend wishlist list is chosen ---
+  const handleFriendWishlistSelect = (wishlistId: string | "all") => {
+    setSelectedWishlistId(wishlistId);
+
+    // Propagate selection up to product filtering context
+    onFilterChange({ ...activeFilters, friendWishlistId: wishlistId });
+  };
+
   const handleShowFullWishlistToggle = () => {
     setShowFullWishlist((prev) => {
       const newValue = !prev;
@@ -275,22 +317,32 @@ const FiltersSidebar = ({
           </Button>
         )}
       </div>
-      {/* Only show wishlist toggle if friendWishlistName exists (and therefore personId param exists) */}
+      {/* Only show wishlist toggle and selector if friendWishlistName exists (i.e., personId param exists) */}
       {friendWishlistName && (
-        <div className="p-4 border-b flex items-center justify-between bg-white">
-          <span className="font-medium text-black inline-flex items-center">
-            {showFullWishlist ? `Showing all of ${friendWishlistName}'s wishlist` : `Show all of ${friendWishlistName}'s wishlist`}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="ml-2 border border-gray-200 text-base font-semibold"
-            onClick={handleShowFullWishlistToggle}
-          >
-            <span className="text-primary font-semibold">
-              {showFullWishlist ? "Hide" : "Show All"}
+        <div className="p-4 border-b flex flex-col gap-4 bg-white">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-black inline-flex items-center">
+              {showFullWishlist ? `Showing all of ${friendWishlistName}'s wishlist` : `Show all of ${friendWishlistName}'s wishlist`}
             </span>
-          </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-2 border border-gray-200 text-base font-semibold"
+              onClick={handleShowFullWishlistToggle}
+            >
+              <span className="text-primary font-semibold">
+                {showFullWishlist ? "Hide" : "Show All"}
+              </span>
+            </Button>
+          </div>
+          {/* New: Dropdown to choose which wishlist to view (if friend has wishlists) */}
+          {(friendWishlists.length > 0 && showFullWishlist) && (
+            <FriendWishlistSelector
+              wishlists={friendWishlists}
+              selectedWishlistId={selectedWishlistId}
+              onSelect={handleFriendWishlistSelect}
+            />
+          )}
         </div>
       )}
       <ScrollArea className={isMobile ? "h-[60vh]" : "max-h-[calc(100vh-200px)]"}>

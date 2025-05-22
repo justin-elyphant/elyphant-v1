@@ -60,7 +60,16 @@ const ProductGrid = ({
   const getProductStatus = (product: Product): { badge: string; color: string } | null => {
     // Check if this is in the recently viewed items to add "Recently Viewed" badge
     const isRecentlyViewed = recentlyViewed?.some(item => item.id === (product.product_id || product.id));
-    
+
+    // --- NEW: Wishlist badge for friend event searches ---
+    if (product.fromWishlist && product.tags) {
+      // Find the friend's wishlist tag, e.g. "From Michael's Wishlist"
+      const wishlistTag = product.tags.find(tag => tag.startsWith("From ") && tag.endsWith("Wishlist"));
+      if (wishlistTag) {
+        return { badge: wishlistTag, color: "bg-pink-100 text-pink-700 border-pink-200" };
+      }
+    }
+
     if (product.isBestSeller) {
       return { badge: "Best Seller", color: "bg-amber-100 text-amber-800 border-amber-200" };
     }

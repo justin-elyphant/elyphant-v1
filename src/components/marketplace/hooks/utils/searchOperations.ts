@@ -35,35 +35,43 @@ export const handleSearch = (
   
   try {
     let mockResults: Product[] = [];
-    
-    // Check if we have a personId (meaning this is a friend's event)
-    if (personId) {
-      // Simulate getting friend's wishlist and preferences
-      // In a real implementation, you would fetch actual wishlist items and preferences
-      const friendWishlistItems = searchMockProducts(`wishlist ${term}`, 4);
-      const friendPreferenceItems = searchMockProducts(`preferences ${term}`, 6);
-      
-      // Tag the wishlist items
-      friendWishlistItems.forEach(item => {
-        // Extract the person's name from the search term
-        const nameMatch = term.match(/^([^\s]+)/);
-        const friendName = nameMatch ? nameMatch[1] : "Friend's";
-        
-        item.tags = item.tags || [];
-        item.tags.push(`From ${friendName} Wishlist`);
-        item.fromWishlist = true;
-      });
-      
-      // Tag the preference based items
-      friendPreferenceItems.forEach(item => {
-        item.tags = item.tags || [];
-        item.tags.push("Based on preferences");
-        item.fromPreferences = true;
-      });
-      
-      // Combine wishlist and preference items
-      mockResults = [...friendWishlistItems, ...friendPreferenceItems];
-      
+
+    // --- Begin: Friend Event Enhancements ---
+    let wishlistFriendName: string | null = null;
+    let wishlistProducts: Product[] = [];
+
+    // Friend-event pattern matching: "[Friend Name]'s birthday gift" or other friend event
+    // This pattern: "Michael Davis's birthday gift"
+    // Strip 'gift' from the end to look for possessive patterns
+    const friendWishlistRegex = /^([A-Za-z ]+?)'s (birthday|[a-z]+) gift$/i;
+    const friendMatch = term.trim().match(friendWishlistRegex);
+
+    if (personId || friendMatch) {
+      // We either have a personId passed, or the search term matches an event for a friend
+      if (friendMatch) {
+        // From the regexp: [1]=name, [2]=occasion
+        wishlistFriendName = friendMatch[1].trim();
+      }
+
+      // Fallback to personId as name (for generalization), or use the name from pattern
+      const friendName = wishlistFriendName || (personId ? "Friend" : "");
+
+      // Simulate friend's wishlist items using the friend's name, up to 4
+      wishlistProducts = searchMockProducts(`wishlist ${friendName}`, 4).map((item) => ({
+        ...item,
+        tags: [...(item.tags || []), `From ${friendName}'s Wishlist`],
+        fromWishlist: true,
+      }));
+
+      // Simulate friend preference items also if wanted
+      const friendPreferenceItems = searchMockProducts(`preferences ${friendName} ${occasionType || ""}`, 6).map((item) => ({
+        ...item,
+        tags: [...(item.tags || []), "Based on preferences"],
+        fromPreferences: true,
+      }));
+
+      mockResults = [...wishlistProducts, ...friendPreferenceItems];
+
       // Add some generic recommendations for this occasion type
       if (occasionType) {
         const genericItems = searchMockProducts(`${occasionType} gift ideas`, 6);

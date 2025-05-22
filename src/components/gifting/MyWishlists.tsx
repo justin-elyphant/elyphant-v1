@@ -209,8 +209,13 @@ const MyWishlists = () => {
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
                 {categories
-                  .filter((category) => category && category.trim() !== "")
-                  .map(category => (
+                  .filter(
+                    (category): category is string =>
+                      typeof category === "string" &&
+                      !!category.trim() &&
+                      category.trim() !== ""
+                  )
+                  .map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>

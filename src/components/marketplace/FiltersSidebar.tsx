@@ -70,6 +70,20 @@ function getPersonNameFromSearch(search: string): string | null {
   return null;
 }
 
+// Utility: determines if a search string is an occasion/holiday, e.g. "Father's Day gifts"
+function isOccasionSearchTerm(search: string): boolean {
+  if (!search) return false;
+  const normalized = decodeURIComponent(search).toLowerCase().replace(/[^a-z0-9\- ]/g, "");
+
+  // Return true if any keyword is matched within first 30 chars
+  return OCCASION_KEYWORDS.some(kw =>
+    normalized.startsWith(kw.replace(/-/g, " ")) ||
+    // Occasion like "father day gifts", "mothers day", "birthday", etc
+    normalized.includes(kw) ||
+    normalized.startsWith(kw)
+  );
+}
+
 const FiltersSidebar = ({ 
   activeFilters, 
   onFilterChange, 
@@ -99,22 +113,27 @@ const FiltersSidebar = ({
     let showWishlist = false;
     let friendName: string | null = null;
 
-    // Only display wishlist filter if:
-    // 1. personId is NOT an occasion/generic
-    // 2. OR, search string contains a person's name
+    // New: Also check if search is just an occasion/holiday
+    const isOccasionSearch = isOccasionSearchTerm(rawSearchTerm);
+
     if (personId) {
       const isOccasion = isOccasionPersonId(personId);
-
       const nameFromSearch = getPersonNameFromSearch(rawSearchTerm);
-      if (!isOccasion) {
-        // Not an occasion/generic: always show
+
+      // Core logic: show if NOT an occasion, and NOT an occasion search term
+      if (!isOccasion && !isOccasionSearch) {
         friendName = nameFromSearch || "Friend";
         showWishlist = true;
-      } else if (nameFromSearch) {
-        // Is an occasion/generic, but search contains a real name
+      } else if (!isOccasion && nameFromSearch) {
+        // Not occasion/generic but search contains a real name
+        friendName = nameFromSearch;
+        showWishlist = true;
+      } else if (nameFromSearch && !isOccasionSearch) {
+        // Is generic/occasion (like friend-3), but search starts w/ real name, not occasion: show
         friendName = nameFromSearch;
         showWishlist = true;
       }
+      // Otherwise, do not show filter if search is for an occasion/holiday
     }
 
     if (showWishlist && friendName) {

@@ -61,10 +61,12 @@ export function searchMockProducts(
     ) || displayCategory || "Gifts";
 
   for (let i = 0; i < maxResults; i++) {
+    // FIX: price must be a number type
+    const price = Math.round((Math.random() * 90 + 10) * 100) / 100;
     products.push({
       product_id: `MOCK-${now}-${i}`,
       title: `${displayCategory ? displayCategory : 'Sample'} Product ${i + 1}`,
-      price: (Math.random() * 90 + 10).toFixed(2) as unknown as number,
+      price: price, // number
       image: getRandomImage(i),
       description: `This is a sample description for ${displayCategory || "a mock"} product (No. ${i + 1}) for testing wishlists, cart actions, and shopping experience.`,
       brand: i % 2 === 0 ? "TestBrand" : "BrandX",
@@ -84,3 +86,4 @@ export function searchMockProducts(
 export function getMockProducts(count: number = 8): Product[] {
   return searchMockProducts("Mock", count);
 }
+

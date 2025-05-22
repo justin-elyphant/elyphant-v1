@@ -92,8 +92,13 @@ const FiltersSidebar = ({
   categories = [],
   isMobile = false
 }: FiltersSidebarProps) => {
+  // Set max price to 500
+  const PRICE_MAX = 500;
   const [priceValues, setPriceValues] = useState<[number, number]>(
-    activeFilters.priceRange ? activeFilters.priceRange : [0, 1000]
+    activeFilters.priceRange ? [
+      Math.max(0, Math.min(activeFilters.priceRange[0], PRICE_MAX)),
+      Math.max(0, Math.min(activeFilters.priceRange[1], PRICE_MAX))
+    ] : [0, PRICE_MAX]
   );
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     activeFilters.categories || []
@@ -272,11 +277,11 @@ const FiltersSidebar = ({
   };
   
   const clearFilters = () => {
-    setPriceValues([0, 1000]);
+    setPriceValues([0, PRICE_MAX]);
     setSelectedCategories([]);
     
     onFilterChange({
-      priceRange: [0, 1000],
+      priceRange: [0, PRICE_MAX],
       categories: [],
       rating: null,
       freeShipping: false,
@@ -289,7 +294,7 @@ const FiltersSidebar = ({
   const countActiveFilters = () => {
     let count = 0;
     if (selectedCategories.length > 0) count += 1;
-    if (priceValues[0] > 0 || priceValues[1] < 1000) count += 1;
+    if (priceValues[0] > 0 || priceValues[1] < PRICE_MAX) count += 1;
     if (activeFilters.rating) count += 1;
     if (activeFilters.freeShipping) count += 1;
     if (activeFilters.favoritesOnly) count += 1;
@@ -388,9 +393,9 @@ const FiltersSidebar = ({
             <h4 className="font-medium mb-3">Price Range</h4>
             <div className="mt-4 px-2">
               <Slider
-                defaultValue={priceValues}
+                defaultValue={[0, PRICE_MAX]}
                 value={priceValues}
-                max={1000}
+                max={PRICE_MAX}
                 step={10}
                 onValueChange={(value: [number, number]) => handlePriceChange(value)}
                 className="mb-6"
@@ -400,7 +405,7 @@ const FiltersSidebar = ({
                   ${priceValues[0]}
                 </div>
                 <div className="bg-primary/10 px-2 py-1 rounded text-xs font-medium">
-                  ${priceValues[1] === 1000 ? "$1000+" : `$${priceValues[1]}`}
+                  {priceValues[1] === PRICE_MAX ? "$500+" : `$${priceValues[1]}`}
                 </div>
               </div>
             </div>

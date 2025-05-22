@@ -1,14 +1,21 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OccasionHorizontalList from "./OccasionHorizontalList";
 import { GiftOccasion } from "../utils/upcomingOccasions";
+import { GraduationCap } from "lucide-react";
 
 interface OccasionTabsProps {
   friendOccasions: GiftOccasion[];
   upcomingHolidays: GiftOccasion[];
   onCardClick: (searchQuery: string, personId?: string, occasionType?: string) => void;
 }
+
+const getHolidayIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes("graduation")) return GraduationCap;
+  // Only one icon allowed by project config, so everything else:
+  return undefined;
+};
 
 const OccasionTabs: React.FC<OccasionTabsProps> = ({
   friendOccasions,
@@ -58,8 +65,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
               date: event.date,
               avatarUrl: undefined,
               avatarAlt: "",
-              icon: undefined,
-              // Only show icon if you want to later, for now avatar only
+              icon: getHolidayIcon(event.name),
               title: `Shop ${event.name}`,
               subtitle: "Upcoming Holiday",
               highlightColor: "#F8BC58",

@@ -24,6 +24,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onToggleWishlist,
   onClick
 }) => {
+  // DEBUG: Log each product received by this card
+  React.useEffect(() => {
+    console.log("[ProductCard] Rendering product", {
+      id: product.product_id || product.id,
+      title: product.title || product.name,
+      isMock: (product.retailer && typeof product.retailer === "string" && product.retailer.toLowerCase().includes("zinc")) ||
+              (product.product_id && String(product.product_id).toUpperCase().startsWith("MOCK"))
+    });
+  }, [product]);
+
   const { addItem } = useRecentlyViewed();
   const { trackProductView } = useProductDataSync();
   const isMobile = useIsMobile();

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -42,15 +43,11 @@ const StickyFiltersBar = ({
             </div>
           )}
         </div>
-        
-        {totalItems > 0 && (
-          <div className="text-sm text-muted-foreground">
-            {totalItems} {totalItems === 1 ? 'item' : 'items'}
-          </div>
-        )}
+        {/* Removed the item counter from here */}
       </div>
     </div>
   );
 };
 
 export default StickyFiltersBar;
+

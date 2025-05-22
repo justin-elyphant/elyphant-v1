@@ -33,14 +33,16 @@ export function useWishlists(): UseWishlistsResult {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch wishlists for current user
       const { data: wishlistsData, error: wishlistsError } = await supabase
         .from("wishlists")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (wishlistsError) throw wishlistsError;
+      if (wishlistsError) {
+        console.error("Supabase fetchWishlists error:", wishlistsError);
+        throw wishlistsError;
+      }
 
       const wishlistsWithItems: Wishlist[] = [];
 
@@ -50,7 +52,10 @@ export function useWishlists(): UseWishlistsResult {
           .select("*")
           .eq("wishlist_id", wishlist.id);
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error("Supabase fetch items error:", itemsError);
+          throw itemsError;
+        }
 
         wishlistsWithItems.push({
           ...wishlist,
@@ -61,8 +66,13 @@ export function useWishlists(): UseWishlistsResult {
       setWishlists(wishlistsWithItems);
     } catch (err: any) {
       setError(err);
-      toast.error("Failed to fetch wishlists");
+      toast.error(
+        "Failed to fetch wishlists" +
+          (err?.message ? `: ${err.message}` : "")
+      );
       setWishlists([]);
+      // Extra log for full context:
+      console.error("[useWishlists] fetchWishlists failed", err);
     } finally {
       setIsLoading(false);
     }

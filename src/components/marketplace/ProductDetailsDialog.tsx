@@ -27,6 +27,8 @@ const ProductDetailsDialog = ({
   userData 
 }: ProductDetailsDialogProps) => {
   const [quantity, setQuantity] = useState(1);
+  // Add animation state
+  const [isHeartAnimating, setIsHeartAnimating] = useState(false);
   const [isGift, setIsGift] = useState(false);
   const [recipientName, setRecipientName] = useState("");
   const [giftMessage, setGiftMessage] = useState("");
@@ -55,12 +57,32 @@ const ProductDetailsDialog = ({
   
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Animate heart for quick feedback
+    setIsHeartAnimating(true);
+    setTimeout(() => setIsHeartAnimating(false), 400);
+
+    // Log for troubleshooting
+    console.log("Toggling wishlist for productId:", productId, "Logged in:", !!userData);
+
     toggleWishlist(e, {
       id: productId,
       name: product.title || product.name || "",
       image: product.image,
       price: product.price
     });
+
+    // UI backup: Show toast directly (useful if for some reason the hook's toast doesn't fire)
+    if (isFavorited(productId)) {
+      // Removing from wishlist
+      import("@/hooks/use-toast").then(({ toast }) =>
+        toast.success("Removed from wishlist", { description: product.title || product.name })
+      );
+    } else {
+      // Adding to wishlist
+      import("@/hooks/use-toast").then(({ toast }) =>
+        toast.success("Added to wishlist", { description: product.title || product.name })
+      );
+    }
   };
 
   const handleShareProduct = () => {
@@ -107,11 +129,11 @@ const ProductDetailsDialog = ({
               <Button 
                 variant="secondary" 
                 size="icon" 
-                className="rounded-full bg-white/80 backdrop-blur-sm hover:bg-white"
+                className={`rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 ${isHeartAnimating ? "scale-125" : ""}`}
                 onClick={handleWishlistToggle}
               >
                 <Heart 
-                  className={`h-4 w-4 ${isFavorited(productId) ? 'fill-red-500 text-red-500' : ''}`}
+                  className={`h-4 w-4 transition-all duration-200 ${isFavorited(productId) ? 'fill-red-500 text-red-500' : ''} ${isHeartAnimating ? "scale-125" : ""}`}
                 />
               </Button>
               
@@ -211,10 +233,10 @@ const ProductDetailsDialog = ({
                 <Button 
                   variant="secondary" 
                   onClick={handleWishlistToggle}
-                  className={isFavorited(productId) ? "bg-pink-50" : ""}
+                  className={`${isFavorited(productId) ? "bg-pink-50" : ""} transition-all duration-200`}
                 >
                   <Heart 
-                    className={`h-4 w-4 mr-2 ${isFavorited(productId) ? 'fill-pink-500 text-pink-500' : ''}`} 
+                    className={`h-4 w-4 mr-2 transition-all duration-200 ${isFavorited(productId) ? 'fill-pink-500 text-pink-500' : ''} ${isHeartAnimating ? "scale-125" : ""}`} 
                   />
                   {isFavorited(productId) ? "Wishlisted" : "Add to Wishlist"}
                 </Button>

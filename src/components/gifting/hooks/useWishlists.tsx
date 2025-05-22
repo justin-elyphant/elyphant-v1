@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
@@ -32,6 +31,7 @@ export function useWishlists(): UseWishlistsResult {
     }
     setIsLoading(true);
     setError(null);
+
     try {
       const { data: wishlistsData, error: wishlistsError } = await supabase
         .from("wishlists")
@@ -39,21 +39,53 @@ export function useWishlists(): UseWishlistsResult {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
+      // More detailed error logging
       if (wishlistsError) {
-        console.error("Supabase fetchWishlists error:", wishlistsError);
+        console.error("[useWishlists] Supabase fetchWishlists error:", wishlistsError);
+        if (wishlistsError.code) {
+          console.error(`[useWishlists] Error code: ${wishlistsError.code}`);
+        }
+        if (wishlistsError.details) {
+          console.error(`[useWishlists] Error details: ${wishlistsError.details}`);
+        }
+        if (wishlistsError.hint) {
+          console.error(`[useWishlists] Error hint: ${wishlistsError.hint}`);
+        }
+        if (wishlistsError.message) {
+          console.error(`[useWishlists] Error message: ${wishlistsError.message}`);
+        }
         throw wishlistsError;
       }
 
-      const wishlistsWithItems: Wishlist[] = [];
+      if (!wishlistsData || wishlistsData.length === 0) {
+        console.info("[useWishlists] No wishlists found for user", user.id);
+        setWishlists([]);
+        setIsLoading(false);
+        setError(null);
+        return;
+      }
 
-      for (const wishlist of wishlistsData || []) {
+      const wishlistsWithItems: Wishlist[] = [];
+      for (const wishlist of wishlistsData) {
         const { data: itemsData, error: itemsError } = await supabase
           .from("wishlist_items")
           .select("*")
           .eq("wishlist_id", wishlist.id);
 
         if (itemsError) {
-          console.error("Supabase fetch items error:", itemsError);
+          console.error(`[useWishlists] Supabase fetch items error for wishlist_id: ${wishlist.id}`, itemsError);
+          if (itemsError.code) {
+            console.error(`[useWishlists] Items error code: ${itemsError.code}`);
+          }
+          if (itemsError.details) {
+            console.error(`[useWishlists] Items error details: ${itemsError.details}`);
+          }
+          if (itemsError.hint) {
+            console.error(`[useWishlists] Items error hint: ${itemsError.hint}`);
+          }
+          if (itemsError.message) {
+            console.error(`[useWishlists] Items error message: ${itemsError.message}`);
+          }
           throw itemsError;
         }
 
@@ -64,6 +96,8 @@ export function useWishlists(): UseWishlistsResult {
       }
 
       setWishlists(wishlistsWithItems);
+      console.log("[useWishlists] Loaded wishlists with items for user", user.id, wishlistsWithItems);
+
     } catch (err: any) {
       setError(err);
       toast.error(
@@ -222,4 +256,3 @@ export function useWishlists(): UseWishlistsResult {
     removeFromWishlist,
   };
 }
-

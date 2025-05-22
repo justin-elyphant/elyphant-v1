@@ -21,6 +21,9 @@ export const generateMockSearchResults = (query: string, maxResults: number = 10
     "Smartphone", "Laptop", "Headphones", "Tablet", "Smartwatch", 
     "Camera", "TV", "Monitor", "Speaker", "Gaming Console"
   ];
+
+  // Use a single mock placeholder image for all products, as requested
+  const MOCK_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=500&fit=crop";
   
   for (let i = 0; i < Math.min(maxResults, 10); i++) {
     const productId = `MOCK${Math.floor(Math.random() * 1000000)}`;
@@ -35,15 +38,16 @@ export const generateMockSearchResults = (query: string, maxResults: number = 10
     // Consistent but varied pricing
     const price = 49 + (i * 10);
     
-    // Set a default image URL by category
-    let imageUrl = "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&h=500&fit=crop";
+    // Always use the same mock placeholder image (guaranteed visible for static cards)
+    const imageUrl = MOCK_PLACEHOLDER_IMAGE;
     
     // Add the product to results
     products.push({
       product_id: productId,
       title,
       price,
-      image: imageUrl,
+      image: imageUrl, // always set main image
+      images: [imageUrl], // always set images array
       description: `Experience the amazing ${brand} ${category} featuring the latest technology and premium design. Perfect for everyday use, this ${category.toLowerCase()} offers outstanding performance and reliability.`,
       brand,
       category,
@@ -58,13 +62,11 @@ export const generateMockSearchResults = (query: string, maxResults: number = 10
         "Extended battery life",
         "1-year warranty included"
       ],
-      images: [imageUrl]
+      // no need for logic to conditionally set images/image for mocks anymore
     });
-    
-    console.log(`Added fallback image for product: ${title}`);
-    console.log(`Created images array for product: ${title}`);
   }
   
   console.log(`Generated ${products.length} mock results for "${query}"`);
   return products;
 };
+

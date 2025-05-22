@@ -30,22 +30,24 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
     onProductClick(product.product_id || product.id || "");
   };
 
-  // Button Rendering: place both buttons in a row, fill available horizontal space, with gap and responsive
+  // Button Rendering: Compact and contained actions, always fit inside card
   const renderActions = () => (
-    <div className="mt-3 flex flex-row gap-2 w-full">
-      <AddToCartButton
-        product={product}
-        variant="outline"
-        size="sm"
-        className="flex-1 min-w-0"
-      />
-      <BuyNowButton
-        productId={Number(product.product_id || product.id) || 0}
-        productName={product.title || product.name}
-        price={typeof product.price === "number" ? product.price : 0}
-        productImage={product.image}
-        className="flex-1 min-w-0"
-      />
+    <div className="mt-3 flex justify-center">
+      <div className="flex flex-row gap-1 w-full max-w-[240px]">
+        <AddToCartButton
+          product={product}
+          variant="outline"
+          size="sm"
+          className="flex-1 min-w-0 px-2 py-1 text-xs"
+        />
+        <BuyNowButton
+          productId={Number(product.product_id || product.id) || 0}
+          productName={product.title || product.name}
+          price={typeof product.price === "number" ? product.price : 0}
+          productImage={product.image}
+          className="flex-1 min-w-0 px-2 py-1 text-xs"
+        />
+      </div>
     </div>
   );
 

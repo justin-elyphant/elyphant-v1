@@ -23,8 +23,10 @@ const OCCASION_KEYWORDS = [
   "fathers-day", "mothers-day", "valentines-day", "anniversary", "holiday",
   "christmas", "thanksgiving", "hanukkah", "easter", "new-year", "birthday",
   "wedding", "graduation", "baby-shower", "bridal-shower", "engagement",
+  // Now including relationship and generic labels to treat as occasions/non-person...
   "father", "mother", "dad", "mom", "child", "children", "kid", "kids", "baby",
-  "grandparent", "grandfather", "grandmother", "uncle", "aunt", "cousin"
+  "grandparent", "grandfather", "grandmother", "uncle", "aunt", "cousin",
+  "friend", "coworker", "boss", "teacher", "partner", "spouse"
 ];
 
 const isOccasionPersonId = (personId: string) => {

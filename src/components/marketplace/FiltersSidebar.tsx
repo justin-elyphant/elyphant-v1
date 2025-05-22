@@ -23,9 +23,8 @@ const OCCASION_KEYWORDS = [
   "fathers-day", "mothers-day", "valentines-day", "anniversary", "holiday",
   "christmas", "thanksgiving", "hanukkah", "easter", "new-year", "birthday",
   "wedding", "graduation", "baby-shower", "bridal-shower", "engagement",
-  "father", "mother", "dad", "mom", "friend", "coworker", "boss", "teacher",
-  "child", "children", "kid", "kids", "baby", "grandparent", "grandfather",
-  "grandmother", "uncle", "aunt", "cousin", "partner", "spouse"
+  "father", "mother", "dad", "mom", "child", "children", "kid", "kids", "baby",
+  "grandparent", "grandfather", "grandmother", "uncle", "aunt", "cousin"
 ];
 
 const isOccasionPersonId = (personId: string) => {

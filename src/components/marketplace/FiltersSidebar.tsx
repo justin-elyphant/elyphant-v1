@@ -87,7 +87,7 @@ const FiltersSidebar = ({
   );
   const [filterProfileName, setFilterProfileName] = useState("");
   
-  // NEW: Robust friend wishlist detection for search query OR personId param
+  // Robust friend wishlist detection
   const [showFullWishlist, setShowFullWishlist] = useState(false);
   const [friendWishlistName, setFriendWishlistName] = useState<string | null>(null);
 
@@ -96,26 +96,30 @@ const FiltersSidebar = ({
     const personId = urlParams.get("personId");
     const rawSearchTerm = urlParams.get("search") || "";
 
+    let showWishlist = false;
     let friendName: string | null = null;
 
-    // Case 1: personId is NOT generic/occasion and exists
-    if (personId && !isOccasionPersonId(personId)) {
-      // Try to extract a good name first from search, fallback to "Friend"
-      friendName = getPersonNameFromSearch(rawSearchTerm) || "Friend";
-      setFriendWishlistName(friendName);
-    }
-    // Case 2: personId IS generic, but search contains a real name
-    else if (personId && isGenericPersonId(personId)) {
-      // If search contains a likely real name at the beginning, we assume it's personalized.
+    // Only display wishlist filter if:
+    // 1. personId is NOT an occasion/generic
+    // 2. OR, search string contains a person's name
+    if (personId) {
+      const isOccasion = isOccasionPersonId(personId);
+
       const nameFromSearch = getPersonNameFromSearch(rawSearchTerm);
-      if (nameFromSearch) {
-        setFriendWishlistName(nameFromSearch);
-      } else {
-        setFriendWishlistName(null);
+      if (!isOccasion) {
+        // Not an occasion/generic: always show
+        friendName = nameFromSearch || "Friend";
+        showWishlist = true;
+      } else if (nameFromSearch) {
+        // Is an occasion/generic, but search contains a real name
+        friendName = nameFromSearch;
+        showWishlist = true;
       }
     }
-    // Otherwise, not a friend context
-    else {
+
+    if (showWishlist && friendName) {
+      setFriendWishlistName(friendName);
+    } else {
       setFriendWishlistName(null);
     }
     setShowFullWishlist(false); // Reset when params change

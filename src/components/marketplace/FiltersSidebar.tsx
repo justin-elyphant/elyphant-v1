@@ -200,17 +200,19 @@ const FiltersSidebar = ({
       </div>
       {/* Wishlist toggle/filter only if a friend's wishlist context is active */}
       {friendWishlistName && (
-        <div className="p-4 border-b flex items-center justify-between bg-pink-50">
-          <span className="font-medium text-pink-700 inline-flex items-center">
+        <div className="p-4 border-b flex items-center justify-between bg-white">
+          <span className="font-medium text-black inline-flex items-center">
             {showFullWishlist ? `Showing all of ${friendWishlistName}'s wishlist` : `Show all of ${friendWishlistName}'s wishlist`}
           </span>
           <Button
             size="sm"
-            variant={showFullWishlist ? "default" : "secondary"}
-            className="ml-2 bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200"
+            variant="outline"
+            className="ml-2 border border-gray-200 text-base font-semibold"
             onClick={handleShowFullWishlistToggle}
           >
-            {showFullWishlist ? "Hide" : "Show All"}
+            <span className="text-primary font-semibold">
+              {showFullWishlist ? "Hide" : "Show All"}
+            </span>
           </Button>
         </div>
       )}

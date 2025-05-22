@@ -1,3 +1,4 @@
+
 import { Product } from "@/types/product";
 import { searchMockProducts } from "../../services/mockProductService";
 import { addMockImagesToProducts } from "./productImageUtils";
@@ -8,6 +9,7 @@ export const searchOperations = new Map();
 
 /**
  * Handle search for marketplace products
+ * @param showFullWishlist (optional) - if true, returns all wishlist items for friend (max 24)
  */
 export const handleSearch = (
   term: string, 
@@ -15,10 +17,11 @@ export const handleSearch = (
   setIsLoading: (isLoading: boolean) => void,
   setProducts: (products: Product[]) => void,
   personId?: string | null, 
-  occasionType?: string | null
+  occasionType?: string | null,
+  showFullWishlist?: boolean
 ): void => {
   // Check if this exact search is already in progress and avoid duplicates
-  const searchKey = `${term}-${personId || ''}-${occasionType || ''}`;
+  const searchKey = `${term}-${personId || ''}-${occasionType || ''}-${showFullWishlist ? "full" : ""}`;
   if (searchOperations.has(searchKey) && Date.now() - searchOperations.get(searchKey) < 2000) {
     console.log(`Skipping duplicate search for "${term}"`);
     return;
@@ -31,51 +34,61 @@ export const handleSearch = (
   toast.dismiss();
   
   setIsLoading(true);
-  console.log(`MarketplaceWrapper: Searching for "${term}" with personId: ${personId}, occasionType: ${occasionType}`);
+  console.log(`MarketplaceWrapper: Searching for "${term}" with personId: ${personId}, occasionType: ${occasionType}, fullWishlist: ${showFullWishlist}`);
   
   try {
     let mockResults: Product[] = [];
 
-    // --- Begin: Friend Event Enhancements ---
+    // --- Friend Event and Wishlist Logic ---
     let wishlistFriendName: string | null = null;
     let wishlistProducts: Product[] = [];
 
-    // Friend-event pattern matching: "[Friend Name]'s birthday gift" or other friend event
-    // This pattern: "Michael Davis's birthday gift"
-    // Strip 'gift' from the end to look for possessive patterns
+    // Friend-event pattern matching: "[Friend Name]'s birthday gift" or similar
     const friendWishlistRegex = /^([A-Za-z ]+?)'s (birthday|[a-z]+) gift$/i;
     const friendMatch = term.trim().match(friendWishlistRegex);
 
+    let isFriendEvent = false;
+
     if (personId || friendMatch) {
-      // We either have a personId passed, or the search term matches an event for a friend
+      isFriendEvent = true;
       if (friendMatch) {
-        // From the regexp: [1]=name, [2]=occasion
         wishlistFriendName = friendMatch[1].trim();
       }
+      const friendName = wishlistFriendName || (personId ? "Friend" : "Friend");
 
-      // Fallback to personId as name (for generalization), or use the name from pattern
-      const friendName = wishlistFriendName || (personId ? "Friend" : "");
+      // All wishlist items case (if sidebar filter is checked)
+      if (showFullWishlist) {
+        wishlistProducts = searchMockProducts(`wishlist ${friendName}`, 24)
+          .map((item) => ({
+            ...item,
+            tags: [...(item.tags || []), `From ${friendName}'s Wishlist`],
+            fromWishlist: true,
+          }));
+        mockResults = wishlistProducts;
+      } else {
+        // Only show most recent 4 wishlist products at the top.
+        wishlistProducts = searchMockProducts(`wishlist ${friendName}`, 4)
+          .map((item) => ({
+            ...item,
+            tags: [...(item.tags || []), `From ${friendName}'s Wishlist`],
+            fromWishlist: true,
+          }));
 
-      // Simulate friend's wishlist items using the friend's name, up to 4
-      wishlistProducts = searchMockProducts(`wishlist ${friendName}`, 4).map((item) => ({
-        ...item,
-        tags: [...(item.tags || []), `From ${friendName}'s Wishlist`],
-        fromWishlist: true,
-      }));
+        // Simulate friend preference items also if wanted
+        const friendPreferenceItems = searchMockProducts(`preferences ${friendName} ${occasionType || ""}`, 6)
+          .map((item) => ({
+            ...item,
+            tags: [...(item.tags || []), "Based on preferences"],
+            fromPreferences: true,
+          }));
 
-      // Simulate friend preference items also if wanted
-      const friendPreferenceItems = searchMockProducts(`preferences ${friendName} ${occasionType || ""}`, 6).map((item) => ({
-        ...item,
-        tags: [...(item.tags || []), "Based on preferences"],
-        fromPreferences: true,
-      }));
+        mockResults = [...wishlistProducts, ...friendPreferenceItems];
 
-      mockResults = [...wishlistProducts, ...friendPreferenceItems];
-
-      // Add some generic recommendations for this occasion type
-      if (occasionType) {
-        const genericItems = searchMockProducts(`${occasionType} gift ideas`, 6);
-        mockResults = [...mockResults, ...genericItems];
+        // Add some generic recommendations for this occasion type
+        if (occasionType) {
+          const genericItems = searchMockProducts(`${occasionType} gift ideas`, 6);
+          mockResults = [...mockResults, ...genericItems];
+        }
       }
     } else {
       // Regular search without personalization
@@ -91,12 +104,11 @@ export const handleSearch = (
     
     // Show success toast only for significant searches and only once
     if (term.length > 3) {
-      // Use a short timeout to ensure the UI has settled
       setTimeout(() => {
         // Check if this is still the current search
         if (searchIdRef.current === `search-${term}-${Date.now()}`) {
           toast.success(`Found ${mockResults.length} products for "${term}"`, {
-            id: `search-success-${term}`, // Use consistent ID to prevent duplicates
+            id: `search-success-${term}`,
           });
         }
       }, 300);
@@ -104,7 +116,7 @@ export const handleSearch = (
   } catch (error) {
     console.error('Error searching for products:', error);
     toast.error('Error searching for products', {
-      id: `search-error-${term}`, // Use consistent ID to prevent duplicates
+      id: `search-error-${term}`,
     });
   } finally {
     setIsLoading(false);
@@ -117,3 +129,4 @@ export const handleSearch = (
 export const clearSearchOperations = (): void => {
   searchOperations.clear();
 };
+

@@ -38,6 +38,7 @@ const MarketplaceContent = ({
   const [savedFilters] = useLocalStorage<{name: string, filters: SavedFilters}[]>(
     "savedFilters", []
   );
+  const [showFullWishlist, setShowFullWishlist] = useState(false);
   
   // Use our enhanced filters hook
   const {
@@ -87,6 +88,18 @@ const MarketplaceContent = ({
     setSavedFiltersActive(!savedFiltersActive);
   };
   
+  const handleFilterChange = (newFilters: Record<string, any>) => {
+    // If toggling showFullWishlist, reload products
+    if ("showFullWishlist" in newFilters) {
+      setShowFullWishlist(newFilters.showFullWishlist);
+      // (MarketplaceWrapper handles actual search. If needed, you might call handleSearch here.)
+    }
+    // Existing filter updates
+    Object.entries(newFilters).forEach(([key, value]) => {
+      updateFilter(key as keyof typeof filters, value);
+    });
+  };
+  
   if (isLoading) {
     return <MarketplaceLoading />;
   }
@@ -117,12 +130,7 @@ const MarketplaceContent = ({
           <div className={`${isMobile ? "w-full" : "w-full md:w-72"} flex-shrink-0 ${isMobile ? "mb-4" : ""}`}>
             <FiltersSidebar
               activeFilters={filters}
-              onFilterChange={(newFilters) => {
-                // Update each filter type
-                Object.entries(newFilters).forEach(([key, value]) => {
-                  updateFilter(key as keyof typeof filters, value);
-                });
-              }}
+              onFilterChange={handleFilterChange}
               categories={categories}
               isMobile={isMobile}
             />

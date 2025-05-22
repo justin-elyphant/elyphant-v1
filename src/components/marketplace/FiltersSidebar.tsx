@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -37,6 +36,41 @@ const FiltersSidebar = ({
   );
   const [filterProfileName, setFilterProfileName] = useState("");
   
+  // --- NEW: Detect friend-event wishlist context and manage "Show Full Wishlist" ---
+  // Detect if the active search query in the URL matches a friend event
+  const [showFullWishlist, setShowFullWishlist] = useState(false);
+  const [friendWishlistName, setFriendWishlistName] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    // Look for a query param like Michael's birthday gift
+    const url = window.location.href;
+    const friendWishlistRegex = /[?&]search=([^&]+)/i;
+    const match = url.match(friendWishlistRegex);
+    if (match) {
+      const searchTerm = decodeURIComponent(match[1] || "");
+      const wishRegex = /^([A-Za-z ]+?)'s (birthday|[a-z]+) gift$/i;
+      const m = searchTerm.trim().match(wishRegex);
+      if (m) {
+        setFriendWishlistName(m[1]);
+      } else {
+        setFriendWishlistName(null);
+      }
+    } else {
+      setFriendWishlistName(null);
+    }
+    setShowFullWishlist(false); // Reset if search changed
+  }, [window.location.search]);
+
+  // Handle 'Show All' toggle
+  const handleShowFullWishlistToggle = () => {
+    setShowFullWishlist((prev) => {
+      const newValue = !prev;
+      // Inform parent that it should update friend wishlist mode
+      onFilterChange({ ...activeFilters, showFullWishlist: newValue });
+      return newValue;
+    });
+  };
+
   const handlePriceChange = (value: [number, number]) => {
     setPriceValues(value);
     const newFilters = { ...activeFilters, priceRange: value };
@@ -154,7 +188,22 @@ const FiltersSidebar = ({
           </Button>
         )}
       </div>
-      
+      {/* Wishlist toggle/filter only if a friend's wishlist context is active */}
+      {friendWishlistName && (
+        <div className="p-4 border-b flex items-center justify-between bg-pink-50">
+          <span className="font-medium text-pink-700 inline-flex items-center">
+            {showFullWishlist ? `Showing all of ${friendWishlistName}'s wishlist` : `Show all of ${friendWishlistName}'s wishlist`}
+          </span>
+          <Button
+            size="sm"
+            variant={showFullWishlist ? "default" : "secondary"}
+            className="ml-2 bg-pink-100 text-pink-700 border-pink-300 hover:bg-pink-200"
+            onClick={handleShowFullWishlistToggle}
+          >
+            {showFullWishlist ? "Hide" : "Show All"}
+          </Button>
+        </div>
+      )}
       <ScrollArea className={isMobile ? "h-[60vh]" : "max-h-[calc(100vh-200px)]"}>
         <div className="p-4 space-y-5">
           {/* Category filter with responsive grid for mobile */}

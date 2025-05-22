@@ -5,6 +5,47 @@ import { useAuth } from "@/contexts/auth";
 import { Wishlist, WishlistItem, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import { toast } from "sonner";
 
+// Define how we reconstruct our Wishlist and WishlistItem types from the new DB schema
+function dbToWishlist(raw: any, items: WishlistItem[]): Wishlist {
+  return normalizeWishlist({
+    ...raw,
+    id: raw.id,
+    user_id: raw.user_id,
+    title: raw.title,
+    description: raw.description || "",
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+    is_public: raw.is_public,
+    category: raw.category,
+    tags: Array.isArray(raw.tags)
+      ? raw.tags
+      : raw.tags
+      ? Array.isArray(raw.tags)
+        ? raw.tags
+        : typeof raw.tags === "string"
+        ? raw.tags.split(",").map((t: string) => t.trim())
+        : []
+      : [],
+    priority: raw.priority,
+    items: items,
+  });
+}
+
+function dbToWishlistItem(raw: any): WishlistItem {
+  return normalizeWishlistItem({
+    ...raw,
+    id: raw.id,
+    wishlist_id: raw.wishlist_id,
+    product_id: raw.product_id,
+    name: raw.name,
+    title: raw.title,
+    image_url: raw.image_url,
+    price: raw.price ? Number(raw.price) : undefined,
+    brand: raw.brand,
+    created_at: raw.created_at,
+  });
+}
+
 interface UseWishlistsResult {
   wishlists: Wishlist[];
   isLoading: boolean;
@@ -28,7 +69,7 @@ export function useWishlists(): UseWishlistsResult {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Fetch wishlists from profile
+  // Helper: Load wishlists and their items for this user
   const fetchWishlists = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -38,33 +79,40 @@ export function useWishlists(): UseWishlistsResult {
       return;
     }
     try {
-      // Use maybeSingle so no error if row missing:
-      const { data: profile, error: fetchErr } = await supabase
-        .from("profiles")
-        .select("wishlists")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Fetch wishlists for the user
+      const { data: wlData, error: wlError } = await supabase
+        .from("wishlists")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-      if (fetchErr) {
-        console.error("Supabase fetch error:", fetchErr);
-        setError(fetchErr);
-        setWishlists([]);
-      } else if (!profile) {
-        // No profile row found for user, treat as empty wishlists!
-        console.warn("Profile not found for user, treating as empty wishlists.");
-        setWishlists([]);
-      } else if (!Array.isArray(profile.wishlists)) {
-        // Defensive: wishlists field missing or malformed
-        console.warn("Profile.wishlists is missing or not an array. Data:", profile.wishlists);
-        setWishlists([]);
-      } else {
-        const rawWishlists = profile.wishlists ?? [];
-        console.log("Fetched wishlists array:", rawWishlists);
-        setWishlists(Array.isArray(rawWishlists) ? rawWishlists.map(normalizeWishlist) : []);
+      if (wlError) throw wlError;
+
+      // Fetch wishlist items for these wishlists
+      const allWishlistIds = wlData ? wlData.map((wl) => wl.id) : [];
+      let items: WishlistItem[] = [];
+      if (allWishlistIds.length > 0) {
+        const { data: itemData, error: itemErr } = await supabase
+          .from("wishlist_items")
+          .select("*")
+          .in("wishlist_id", allWishlistIds);
+        if (itemErr) throw itemErr;
+        items = (itemData || []).map(dbToWishlistItem);
       }
+
+      // Group items by wishlist
+      const wishlistMap: { [id: string]: WishlistItem[] } = {};
+      items.forEach((item) => {
+        wishlistMap[item.wishlist_id] = wishlistMap[item.wishlist_id] || [];
+        wishlistMap[item.wishlist_id].push(item);
+      });
+
+      const wishlistsArr = (wlData || []).map((wl) =>
+        dbToWishlist(wl, wishlistMap[wl.id] || [])
+      );
+      setWishlists(wishlistsArr);
     } catch (err: any) {
-      console.error("General error fetching wishlists:", err);
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error("Unknown error fetching wishlists"));
       setWishlists([]);
     }
     setIsLoading(false);
@@ -74,7 +122,7 @@ export function useWishlists(): UseWishlistsResult {
     fetchWishlists();
   }, [fetchWishlists]);
 
-  // Create a new wishlist
+  // Create new wishlist
   const createWishlist = useCallback(
     async (
       title: string,
@@ -87,73 +135,67 @@ export function useWishlists(): UseWishlistsResult {
         toast.error("You must be logged in to create a wishlist");
         return null;
       }
-      const newWishlist: Wishlist = normalizeWishlist({
-        id: crypto.randomUUID(),
-        user_id: user.id,
-        title: title.trim(),
-        description: description?.trim() || "",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        is_public: false,
-        items: [],
-        category,
-        tags,
-        priority,
-      });
-      let updatedWishlists: Wishlist[] = [];
-      setWishlists((prev) => {
-        updatedWishlists = [newWishlist, ...prev];
-        return updatedWishlists;
-      });
-
-      // Write to profile
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          wishlists: [newWishlist, ...(wishlists || [])],
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (error) {
-        toast.error("Failed to create wishlist");
-        setWishlists((prev) => prev.filter((w) => w.id !== newWishlist.id));
-        return null;
-      } else {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("wishlists")
+          .insert([
+            {
+              user_id: user.id,
+              title: title.trim(),
+              description: description?.trim() || "",
+              category,
+              tags: tags || [],
+              priority,
+            },
+          ])
+          .select("*")
+          .single();
+        if (error || !data) {
+          toast.error("Failed to create wishlist");
+          throw error || new Error("Failed to create wishlist");
+        }
+        const newWishlist = dbToWishlist(data, []);
+        setWishlists((prev) => [newWishlist, ...prev]);
         toast.success("Wishlist created!");
+        return newWishlist;
+      } catch (err: any) {
+        setError(err instanceof Error ? err : new Error("Unknown error creating wishlist"));
+        return null;
+      } finally {
+        setIsLoading(false);
       }
-      return newWishlist;
     },
-    [user, wishlists]
+    [user]
   );
 
-  // Delete wishlist
+  // Delete wishlist and its items
   const deleteWishlist = useCallback(
     async (wishlistId: string) => {
-      const updated = wishlists.filter((w) => w.id !== wishlistId);
-      setWishlists(updated);
-
       if (!user) {
         toast.error("You must be logged in");
         return;
       }
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          wishlists: updated,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (error) {
-        toast.error("Failed to delete wishlist");
-        // roll back if failed
-        fetchWishlists();
-        return;
+      setIsLoading(true);
+      try {
+        // Deletion will cascade items as well
+        const { error } = await supabase
+          .from("wishlists")
+          .delete()
+          .eq("id", wishlistId);
+        if (error) {
+          toast.error("Failed to delete wishlist");
+          throw error;
+        }
+        setWishlists((current) => current.filter((w) => w.id !== wishlistId));
+        toast.success("Wishlist deleted!");
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Unknown error deleting wishlist"));
+      } finally {
+        setIsLoading(false);
       }
-      toast.success("Wishlist deleted!");
     },
-    [user, wishlists, fetchWishlists]
+    [user]
   );
 
   // Add item to wishlist
@@ -164,72 +206,45 @@ export function useWishlists(): UseWishlistsResult {
         return false;
       }
 
-      let added = false;
-      setWishlists((prev) => {
-        let found = false;
-        const result = prev.map((wl) => {
-          if (wl.id === wishlistId) {
-            if (wl.items.find((i) => i.product_id === item.product_id)) {
-              toast.info("Item already exists in wishlist");
-              found = true;
-              return wl;
-            }
-            found = true;
-            added = true;
-            return {
-              ...wl,
-              items: [
-                ...wl.items,
-                normalizeWishlistItem({
-                  ...item,
-                  id: crypto.randomUUID(),
-                  wishlist_id: wishlistId,
-                  created_at: new Date().toISOString(),
-                }),
-              ],
-              updated_at: new Date().toISOString(),
-            };
-          }
-          return wl;
-        });
-        return result;
-      });
-
-      const curr = wishlists.map((wl) =>
-        wl.id === wishlistId
-          ? {
-              ...wl,
-              items: [
-                ...wl.items,
-                normalizeWishlistItem({
-                  ...item,
-                  id: crypto.randomUUID(),
-                  wishlist_id: wishlistId,
-                  created_at: new Date().toISOString(),
-                }),
-              ],
-              updated_at: new Date().toISOString(),
-            }
-          : wl
-      );
-      // Save to profile
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          wishlists: curr,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (error) {
-        toast.error("Failed to add item to wishlist");
-        fetchWishlists();
+      // Prevent duplicate: check if item is already present
+      const wishlist = wishlists.find((wl) => wl.id === wishlistId);
+      if (wishlist && wishlist.items.some((i) => i.product_id === item.product_id)) {
+        toast.info("Item already exists in wishlist");
         return false;
       }
-      if (added) {
+
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("wishlist_items")
+          .insert([
+            {
+              wishlist_id: wishlistId,
+              product_id: item.product_id,
+              name: item.name,
+              title: item.title,
+              image_url: item.image_url,
+              price: item.price,
+              brand: item.brand,
+            },
+          ])
+          .select("*")
+          .single();
+
+        if (error || !data) {
+          toast.error("Failed to add item to wishlist");
+          throw error || new Error("Failed to add item");
+        }
+        // Refresh wishlists to get updated state
+        await fetchWishlists();
         toast.success("Item added to wishlist!");
+        return true;
+      } catch (err: any) {
+        setError(err instanceof Error ? err : new Error("Unknown error adding to wishlist"));
+        return false;
+      } finally {
+        setIsLoading(false);
       }
-      return true;
     },
     [user, wishlists, fetchWishlists]
   );
@@ -241,53 +256,28 @@ export function useWishlists(): UseWishlistsResult {
         toast.error("You must be logged in to remove items");
         return false;
       }
-
-      let removed = false;
-      setWishlists((prev) => {
-        const updated = prev.map((wl) =>
-          wl.id === wishlistId
-            ? {
-                ...wl,
-                items: wl.items.filter((item) => {
-                  if (item.id === itemId) removed = true;
-                  return item.id !== itemId;
-                }),
-                updated_at: new Date().toISOString(),
-              }
-            : wl
-        );
-        return updated;
-      });
-
-      const curr = wishlists.map((wl) =>
-        wl.id === wishlistId
-          ? {
-              ...wl,
-              items: wl.items.filter((item) => item.id !== itemId),
-              updated_at: new Date().toISOString(),
-            }
-          : wl
-      );
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          wishlists: curr,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (error) {
-        toast.error("Failed to remove item from wishlist");
-        fetchWishlists();
-        return false;
-      }
-      if (removed) {
+      setIsLoading(true);
+      try {
+        const { error } = await supabase
+          .from("wishlist_items")
+          .delete()
+          .eq("id", itemId)
+          .eq("wishlist_id", wishlistId);
+        if (error) {
+          toast.error("Failed to remove item from wishlist");
+          throw error;
+        }
+        await fetchWishlists();
         toast.success("Item removed from wishlist");
+        return true;
+      } catch (err: any) {
+        setError(err instanceof Error ? err : new Error("Unknown error removing wishlist item"));
+        return false;
+      } finally {
+        setIsLoading(false);
       }
-      return removed;
     },
-    [user, wishlists, fetchWishlists]
+    [user, fetchWishlists]
   );
 
   return {
@@ -301,3 +291,5 @@ export function useWishlists(): UseWishlistsResult {
     removeFromWishlist,
   };
 }
+
+// The useWishlists.tsx file is now >300 lines and should be split up for maintainability in the next step.

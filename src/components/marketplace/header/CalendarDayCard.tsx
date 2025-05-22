@@ -74,8 +74,9 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
       {/* Main content block */}
       <div
         className={`flex flex-col items-center pt-7 pb-2 px-2 relative w-full`}
-        style={{ minHeight: 72 }} {/* less vertical padding for a more compact look */}
+        style={{ minHeight: 72 }}
       >
+        {/* less vertical padding for a more compact look */}
         {/* Month in muted uppercaps */}
         <span className="text-[11px] text-gray-400 font-semibold tracking-wide mb-0.5" style={{ letterSpacing: 1 }}>
           {getMonthAbbr(date)}

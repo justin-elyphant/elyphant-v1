@@ -7,6 +7,7 @@ import MarketplaceHero from "./MarketplaceHero";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { X } from "lucide-react"; // Import x icon
+import { useRecentSearches, addRecentSearch } from "./hooks/useRecentSearches";
 
 // New: ResultsChip component
 const ResultsChip = ({
@@ -113,6 +114,20 @@ const MarketplaceWrapper = () => {
     setSearchParams(newParams, { replace: true });
   };
 
+  // Add to recent searches IF the searchTerm changes and is non-empty
+  useEffect(() => {
+    if (searchTerm && searchTerm.trim()) {
+      addRecentSearch(searchTerm.trim());
+    }
+  }, [searchTerm]);
+
+  // Handler for clicking a recent search bubble - updates URL/search param
+  const handleRecentSearchClick = (term: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("search", term);
+    setSearchParams(newParams, { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero banner with countdown - only show on main marketplace page */}
@@ -123,6 +138,7 @@ const MarketplaceWrapper = () => {
         setShowFilters={setShowFilters}
         totalItems={products.length}
         searchTerm={searchTerm}
+        onRecentSearchClick={handleRecentSearchClick}
       />
 
       {/* Show a 'results for' chip if searching or category/brand filter is on */}

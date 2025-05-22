@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for product image handling in marketplace
  */
@@ -9,7 +8,26 @@
 export const getProductFallbackImage = (productName: string = "", productCategory: string = ""): string => {
   const name = productName.toLowerCase();
   const category = productCategory.toLowerCase();
-  
+
+  // Art & Collectibles
+  if (
+    category.includes('art') ||
+    category.includes('collectible') ||
+    name.includes('art') ||
+    name.includes('collectible') ||
+    name.includes('painting') ||
+    name.includes('sculpture') ||
+    name.includes('print')
+  ) {
+    const artImages = [
+      "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500&h=500&fit=crop", // Creative workspace/monitor
+      "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=500&h=500&fit=crop", // Colorful code/monitor
+      "https://images.unsplash.com/photo-1486718448742-163732cd1544?w=500&h=500&fit=crop", // Abstract art
+      "https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=500&h=500&fit=crop" // Modern architecture/building
+    ];
+    return artImages[Math.floor(Math.random() * artImages.length)];
+  }
+
   // Electronics & Tech category
   if (
     category.includes('electronic') || 
@@ -111,7 +129,7 @@ export const getProductFallbackImage = (productName: string = "", productCategor
     "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=500&h=500&fit=crop", // Generic product
     "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=500&h=500&fit=crop"  // Generic product
   ];
-  
+
   return defaultImages[Math.floor(Math.random() * defaultImages.length)];
 };
 

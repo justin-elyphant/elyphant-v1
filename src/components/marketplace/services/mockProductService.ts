@@ -14,28 +14,66 @@ const getRandomImage = (idx: number) => {
   return urls[idx % urls.length];
 };
 
+// Robust category mapping, to match slugs to readable names.
+const slugToCategory = (slug: string) => {
+  // Convert slug-like string (e.g. 'art-collectibles') to 'Art & Collectibles'
+  const mapping: Record<string, string> = {
+    "art-collectibles": "Art & Collectibles",
+    "bath-beauty": "Bath & Beauty",
+    "bags-purses": "Bags & Purses",
+    "books-movies-music": "Books, Movies & Music",
+    "craft-supplies": "Craft Supplies & Tools",
+    "home-living": "Home & Living",
+    "toys-games": "Toys & Games",
+    "wedding-party": "Wedding & Party",
+    // fallback
+  };
+  if (mapping[slug]) return mapping[slug];
+  // Replace dashes with spaces and capitalize
+  return slug
+    .split("-")
+    .map((word) => word[0]?.toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 export function searchMockProducts(
   query: string,
   maxResults: number = 10
 ): Product[] {
+  // Fallback logic: turn dash-slugs into display names
+  let displayCategory = query;
+  if (query.includes("-") && !query.includes(" ")) {
+    displayCategory = slugToCategory(query);
+  }
   // Generate a consistent set of mock products.
   const now = Date.now();
   const products: Product[] = [];
-  const categories = ["Electronics", "Home", "Gadgets", "Fashion", "Fitness", "Books", "Outdoors", "Toys"];
+  const categories = [
+    "Electronics", "Home", "Gadgets", "Fashion", "Fitness",
+    "Books", "Outdoors", "Toys", "Art & Collectibles"
+  ];
+
+  // Always ensure at least one mock category matches the search
+  const mainCategory = categories
+    .find((cat) =>
+      displayCategory.toLowerCase().replace(/[^a-z]/g, "") // ignore non-letters
+        .includes(cat.toLowerCase().replace(/[^a-z]/g, ""))
+    ) || displayCategory || "Gifts";
+
   for (let i = 0; i < maxResults; i++) {
     products.push({
       product_id: `MOCK-${now}-${i}`,
-      title: `${query ? query : 'Sample'} Product ${i + 1}`,
+      title: `${displayCategory ? displayCategory : 'Sample'} Product ${i + 1}`,
       price: (Math.random() * 90 + 10).toFixed(2) as unknown as number,
       image: getRandomImage(i),
-      description: `This is a sample description for ${query || "a mock"} product (No. ${i + 1}) for testing wishlists, cart actions, and shopping experience.`,
+      description: `This is a sample description for ${displayCategory || "a mock"} product (No. ${i + 1}) for testing wishlists, cart actions, and shopping experience.`,
       brand: i % 2 === 0 ? "TestBrand" : "BrandX",
-      category: categories[i % categories.length],
+      category: mainCategory,
       retailer: "Amazon via Zinc",
       rating: 4 + Math.random(),
-      reviewCount: 100 + i * 13, // changed from review_count to reviewCount
+      reviewCount: 100 + i * 13,
       isBestSeller: i === 0,
-      features: [`Feature ${i+1}A`, `Feature ${i+1}B`],
+      features: [`Feature ${i + 1}A`, `Feature ${i + 1}B`],
       images: [getRandomImage(i)],
     });
   }

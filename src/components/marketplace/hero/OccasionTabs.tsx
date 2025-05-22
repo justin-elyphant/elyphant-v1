@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OccasionHorizontalList from "./OccasionHorizontalList";
 import { GiftOccasion } from "../utils/upcomingOccasions";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Gift, Heart, Beer, Glasses } from "lucide-react";
 
 interface OccasionTabsProps {
   friendOccasions: GiftOccasion[];
@@ -10,11 +11,15 @@ interface OccasionTabsProps {
   onCardClick: (searchQuery: string, personId?: string, occasionType?: string) => void;
 }
 
+// Try to map common holidays to distinct icons
 const getHolidayIcon = (name: string) => {
   const lower = name.toLowerCase();
   if (lower.includes("graduation")) return GraduationCap;
-  // Only one icon allowed by project config, so everything else:
-  return undefined;
+  if (lower.includes("father")) return Glasses; // Use Glasses as Tie is not available, fallback icon for Father's Day
+  if (lower.includes("valentine")) return Heart;
+  if (lower.includes("oktober")) return Beer;
+  // Fallback: present box for all others (Gift icon)
+  return Gift;
 };
 
 const OccasionTabs: React.FC<OccasionTabsProps> = ({

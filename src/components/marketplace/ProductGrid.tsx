@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -133,8 +134,6 @@ const ProductGrid = ({
                 }
                 isFavorited={isFavorited(product.product_id || product.id || "")}
                 statusBadge={status}
-                showAddToCart // always show add to cart for testing
-                showKeepShopping // always show keep shopping for testing
               />
             </div>
           );
@@ -184,8 +183,6 @@ const ProductGrid = ({
                 }
                 isFavorited={isFavorited(product.product_id || product.id || "")}
                 statusBadge={status}
-                showAddToCart // always show add to cart for testing
-                showKeepShopping // always show keep shopping for testing
               />
             );
           })}
@@ -214,3 +211,4 @@ const ProductGrid = ({
 };
 
 export default ProductGrid;
+

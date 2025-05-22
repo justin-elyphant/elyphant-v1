@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import SignIn from "./pages/auth/SignIn";
@@ -19,6 +20,7 @@ import AboutUs from "./pages/AboutUs";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import OnboardingGiftorFlow from "@/components/onboarding/OnboardingGiftorFlow";
 import Gifting from "./pages/Gifting";
+import Cart from "./pages/Cart";
 
 function App() {
   return (
@@ -39,6 +41,7 @@ function App() {
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
                 <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/onboarding-gift" element={<OnboardingGiftorFlow />} />

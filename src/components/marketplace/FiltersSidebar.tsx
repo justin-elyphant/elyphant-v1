@@ -38,34 +38,29 @@ const FiltersSidebar = ({
   
   // NEW: Robust friend wishlist detection for search query OR personId param
   const [showFullWishlist, setShowFullWishlist] = useState(false);
+
+  // Only set friendWishlistName if personId is present in the URL
   const [friendWishlistName, setFriendWishlistName] = useState<string | null>(null);
 
   useEffect(() => {
-    // Prefer robust method using URL params directly
     const urlParams = new URLSearchParams(window.location.search);
     const personId = urlParams.get("personId");
     const rawSearchTerm = urlParams.get("search") || "";
 
-    let friendName: string | null = null;
     if (personId) {
-      // Try to parse friend name from search, or fallback
+      // Try to parse a friend name from the search term, otherwise fallback to "Friend"
+      let friendName: string | null = null;
       if (rawSearchTerm) {
-        // Match friend event pattern in search term: "[Friend Name]'s X gift" or "[Friend Name] X gift"
         const namePattern = /^([A-Za-z ]+?)(?:'s)? [a-z]+ gift$/i;
         const match = decodeURIComponent(rawSearchTerm).trim().match(namePattern);
         if (match) {
           friendName = match[1].trim();
         }
       }
-      // Fallback generic name if pattern not found
       if (!friendName) friendName = "Friend";
       setFriendWishlistName(friendName);
     } else {
-      // Try to match pattern if no personId (legacy search style)
-      const wishRegex = /^([A-Za-z ]+?)'s (birthday|[a-z]+) gift$/i;
-      const m = decodeURIComponent(rawSearchTerm).trim().match(wishRegex);
-      if (m) setFriendWishlistName(m[1]);
-      else setFriendWishlistName(null);
+      setFriendWishlistName(null);
     }
     setShowFullWishlist(false); // Reset when params change
     // eslint-disable-next-line
@@ -198,7 +193,7 @@ const FiltersSidebar = ({
           </Button>
         )}
       </div>
-      {/* Wishlist toggle/filter only if a friend's wishlist context is active */}
+      {/* Only show wishlist toggle if friendWishlistName exists (and therefore personId param exists) */}
       {friendWishlistName && (
         <div className="p-4 border-b flex items-center justify-between bg-white">
           <span className="font-medium text-black inline-flex items-center">

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -8,8 +7,7 @@ import { useProductDataSync } from "@/hooks/useProductDataSync";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-// Add import for getPrimaryProductImage
-import { getPrimaryProductImage } from "@/components/marketplace/product-item/getPrimaryProductImage";
+import ProductCardImageSection from "./ProductCardImageSection";
 
 interface ProductCardProps {
   product: any;
@@ -45,9 +43,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
     trackProductView(product);
   };
 
-  // Helper functions to improve readability
+  // REFACTOR: Helper moved up for reuse
   const getProductName = () => product.title || product.name || "";
-  // Change: use getPrimaryProductImage(product) (uses robust fallback logic!)
+
+  // Remove old getProductImage logic; always use subcomponent
   const getProductImage = () => {
     const selectedImg = getPrimaryProductImage(product);
     console.log("[ProductCard] selected image", {
@@ -77,15 +76,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
       onClick={handleClick}
     >
       <div className="aspect-square relative overflow-hidden">
-        <img 
-          src={getProductImage()} 
-          alt={getProductName()} 
-          className="object-cover w-full h-full transition-transform group-hover:scale-105"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/placeholder.svg";
-          }}
-          loading="lazy"
-        />
+        {/* Refactored Img Section */}
+        <ProductCardImageSection product={product} productName={getProductName()} />
         
         {/* Status badges - positioned at top left for improved scannability */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
@@ -220,4 +212,4 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
 export default ProductCard;
 
-// NOTE: This file is approaching 200+ lines and is a great candidate to be broken out into smaller, focused components for maintainability.
+// NOTE: ProductCard remains long—consider further refactor to extract details/tags/badges etc.

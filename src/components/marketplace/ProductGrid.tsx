@@ -113,24 +113,28 @@ const ProductGrid = ({
         {sortedProducts.map((product, index) => {
           const status = getProductStatus(product);
           const isLarge = index % 5 === 0; // Every 5th item will be larger
-          
+
           return (
-            <div 
-              key={product.product_id || product.id || ""} 
-              className={`${isLarge ? 'md:col-span-2' : ''} transition-transform hover:scale-[1.01]`}
+            <div
+              key={product.product_id || product.id || ""}
+              className={`relative ${isLarge ? "md:col-span-2" : ""} transition-transform hover:scale-[1.01]`}
             >
-              <ProductItem 
+              <ProductItem
                 product={product}
                 viewMode={isLarge ? "list" : "grid"}
                 onProductClick={handleProductClick}
-                onWishlistClick={(e) => toggleWishlist(e, {
-                  id: product.product_id || product.id || "",
-                  name: product.title || product.name || "",
-                  image: product.image,
-                  price: product.price
-                })}
+                onWishlistClick={(e) =>
+                  toggleWishlist(e, {
+                    id: product.product_id || product.id || "",
+                    name: product.title || product.name || "",
+                    image: product.image,
+                    price: product.price,
+                  })
+                }
                 isFavorited={isFavorited(product.product_id || product.id || "")}
                 statusBadge={status}
+                showAddToCart // always show add to cart for testing
+                showKeepShopping // always show keep shopping for testing
               />
             </div>
           );
@@ -153,44 +157,57 @@ const ProductGrid = ({
       {viewMode === "modern" ? (
         renderModernView()
       ) : (
-        <div className={`${viewMode === 'grid' 
-          ? isMobile 
-            ? 'grid grid-cols-1 xs:grid-cols-2 gap-3' // Mobile optimized grid
-            : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6' // Keep desktop layout
-          : 'space-y-4'}`}
+        <div
+          className={`${
+            viewMode === "grid"
+              ? isMobile
+                ? "grid grid-cols-1 xs:grid-cols-2 gap-3"
+                : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
+              : "space-y-4"
+          }`}
         >
           {sortedProducts.map((product) => {
             const status = getProductStatus(product);
             return (
-              <ProductItem 
+              <ProductItem
                 key={product.product_id || product.id || ""}
                 product={product}
                 viewMode={viewMode}
                 onProductClick={handleProductClick}
-                onWishlistClick={(e) => toggleWishlist(e, {
-                  id: product.product_id || product.id || "",
-                  name: product.title || product.name || "",
-                  image: product.image,
-                  price: product.price
-                })}
+                onWishlistClick={(e) =>
+                  toggleWishlist(e, {
+                    id: product.product_id || product.id || "",
+                    name: product.title || product.name || "",
+                    image: product.image,
+                    price: product.price,
+                  })
+                }
                 isFavorited={isFavorited(product.product_id || product.id || "")}
                 statusBadge={status}
+                showAddToCart // always show add to cart for testing
+                showKeepShopping // always show keep shopping for testing
               />
             );
           })}
         </div>
       )}
 
-      <ProductDetailsDialog 
-        product={selectedProduct ? products.find(p => (p.product_id || p.id) === selectedProduct) || null : null}
+      <ProductDetailsDialog
+        product={
+          selectedProduct
+            ? products.find(
+                (p) => (p.product_id || p.id) === selectedProduct
+              ) || null
+            : null
+        }
         open={dlgOpen}
         onOpenChange={setDlgOpen}
         userData={userData}
       />
 
-      <SignUpDialog 
-        open={showSignUpDialog} 
-        onOpenChange={setShowSignUpDialog} 
+      <SignUpDialog
+        open={showSignUpDialog}
+        onOpenChange={setShowSignUpDialog}
       />
     </>
   );

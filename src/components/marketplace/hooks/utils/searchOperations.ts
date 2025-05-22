@@ -1,4 +1,3 @@
-
 import { Product } from "@/types/product";
 import { searchMockProducts } from "../../services/mockProductService";
 import { addMockImagesToProducts } from "./productImageUtils";
@@ -74,8 +73,7 @@ export const handleSearch = (
       // Regular search without personalization
       mockResults = searchMockProducts(term, 16);
     }
-    
-    // Add mock images to products
+    // Add mock images and features to all mockProducts
     mockResults = addMockImagesToProducts(mockResults);
     
     // Update products state

@@ -47,17 +47,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const getProductName = () => product.title || product.name || "";
 
   // Remove old getProductImage logic; always use subcomponent
-  const getProductImage = () => {
-    const selectedImg = getPrimaryProductImage(product);
-    console.log("[ProductCard] selected image", {
-      title: getProductName(),
-      selectedImg,
-      image: product.image,
-      images: product.images,
-      productId: product.product_id || product.id
-    });
-    return selectedImg;
-  };
   const getPrice = () => (typeof product.price === 'number' ? product.price.toFixed(2) : '0.00');
   const isRecentlyViewed = () => product.recentlyViewed;
   const isNewArrival = () => product.tags?.includes("new") || (product.id && Number(product.id) > 9000);

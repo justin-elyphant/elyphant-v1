@@ -1,17 +1,16 @@
+
 import React from "react";
 import Hero from "../Hero";
-import FeaturedEvents from "./FeaturedEvents";
 
 const HeroSection: React.FC = () => {
   return (
     <section>
       {/* Hero Component */}
       <Hero />
-
-      {/* Featured Events Section */}
-      <FeaturedEvents />
+      {/* Removed FeaturedEvents as its file does not exist */}
     </section>
   );
 };
 
 export default HeroSection;
+

@@ -1,11 +1,9 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import FriendEventCard from "../header/FriendEventCard";
-import HolidayCard from "../header/HolidayCard";
+import OccasionHorizontalList from "./OccasionHorizontalList";
 import { GiftOccasion } from "../utils/upcomingOccasions";
 
-// Props
 interface OccasionTabsProps {
   friendOccasions: GiftOccasion[];
   upcomingHolidays: GiftOccasion[];
@@ -17,20 +15,16 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
   upcomingHolidays,
   onCardClick,
 }) => {
-  // Top 3 sorted upcoming for each
+  // Upcoming and sorted
   const sortedFriends = [...friendOccasions]
     .filter(e => e && e.date instanceof Date && e.date.getTime() > Date.now())
     .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 3);
+    .slice(0, 4);
 
   const sortedHolidays = [...upcomingHolidays]
     .filter(e => e && e.date instanceof Date && e.date.getTime() > Date.now())
     .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 3);
-
-  // For both tabs: use side-by-side layout for cards on desktop, stack on mobile
-  const tabGridClass =
-    "flex flex-row gap-4 justify-center md:justify-start items-stretch overflow-x-auto scrollbar-none md:grid md:grid-cols-3 md:gap-4";
+    .slice(0, 4);
 
   return (
     <Tabs defaultValue="friends" className="w-full">
@@ -39,38 +33,43 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
         <TabsTrigger value="holidays" className="flex-1">Holidays</TabsTrigger>
       </TabsList>
       <TabsContent value="friends">
-        <div className={tabGridClass}>
-          {sortedFriends.length > 0 ? (
-            sortedFriends.map((event, idx) => (
-              <FriendEventCard
-                key={`${event.name}-${event.date.toISOString()}-${event.personId || idx}`}
-                event={event}
-                index={idx}
-                onCardClick={onCardClick}
-                compact={true}
-              />
-            ))
-          ) : (
-            <div className="text-gray-500 text-sm text-center py-8">No upcoming friend events</div>
-          )}
-        </div>
+        {sortedFriends.length > 0 ? (
+          <OccasionHorizontalList
+            occasions={sortedFriends.map(event => ({
+              date: event.date,
+              avatarUrl: event.personImage,
+              avatarAlt: event.personName ?? "",
+              icon: undefined,
+              title: `${event.personName.split(" ")[0]}'s ${event.type === "birthday" ? "Birthday" : "Anniv."}`,
+              subtitle: event.personName,
+              highlightColor: event.type === "birthday" ? "#8B7DFB" : "#C288AE",
+              onClick: () => onCardClick(`${event.personName} ${event.type} gift`, event.personId, event.type)
+            }))}
+            emptyMessage="No upcoming friend events"
+          />
+        ) : (
+          <div className="text-gray-500 text-sm text-center py-8">No upcoming friend events</div>
+        )}
       </TabsContent>
       <TabsContent value="holidays">
-        <div className={tabGridClass}>
-          {sortedHolidays.length > 0 ? (
-            sortedHolidays.map((holiday, idx) => (
-              <HolidayCard
-                key={`${holiday.name}-${holiday.date.toISOString()}-${idx}`}
-                holiday={holiday}
-                type="holiday"
-                onCardClick={onCardClick}
-                compact={true}
-              />
-            ))
-          ) : (
-            <div className="text-gray-500 text-sm text-center py-8">No upcoming holidays</div>
-          )}
-        </div>
+        {sortedHolidays.length > 0 ? (
+          <OccasionHorizontalList
+            occasions={sortedHolidays.map(event => ({
+              date: event.date,
+              avatarUrl: undefined,
+              avatarAlt: "",
+              icon: undefined,
+              // Only show icon if you want to later, for now avatar only
+              title: `Shop ${event.name}`,
+              subtitle: "Upcoming Holiday",
+              highlightColor: "#F8BC58",
+              onClick: () => onCardClick(event.searchTerm)
+            }))}
+            emptyMessage="No upcoming holidays"
+          />
+        ) : (
+          <div className="text-gray-500 text-sm text-center py-8">No upcoming holidays</div>
+        )}
       </TabsContent>
     </Tabs>
   );

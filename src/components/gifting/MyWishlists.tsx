@@ -214,14 +214,19 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {categories.map((category, i) => (
-                  <SelectItem
-                    key={`${category}-${i}`}
-                    value={category}
-                  >
-                    {category}
-                  </SelectItem>
-                ))}
+                {categories
+                  .filter(
+                    (category): category is string =>
+                      typeof category === "string" && !!category.trim() && category.trim() !== ""
+                  )
+                  .map((category, i) => (
+                    <SelectItem
+                      key={`${category}-${i}`}
+                      value={category}
+                    >
+                      {category}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

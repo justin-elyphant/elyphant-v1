@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,9 @@ import QuickWishlistButton from "./QuickWishlistButton";
 import { getProductFallbackImage } from "./productImageUtils";
 
 // Utility for fallback image (always use this order: image, images[0], fallback)
+// Now updated: Always guarantee a mock placeholder image for any missing photo
+const MOCK_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=500&fit=crop";
+
 const getPrimaryProductImage = (product: Product) => {
   // Always use image if present and not blank/placeholder
   if (product.image && product.image !== "/placeholder.svg") {
@@ -23,7 +25,18 @@ const getPrimaryProductImage = (product: Product) => {
       return validImg;
     }
   }
-  // If nothing found, use fallback image 
+  // --- GUARANTEE: Always show a visible mock photo if all else fails (test env + mock data)
+  // If product indicates "mock" (id, title, retailer, etc), ALWAYS show the mock placeholder image
+  if (
+    (product.product_id && String(product.product_id).startsWith("MOCK")) ||
+    (typeof product.retailer === "string" && product.retailer.toLowerCase().includes("zinc")) ||
+    (product.title && product.title.toLowerCase().includes("mock")) ||
+    (product.image && product.image === MOCK_PLACEHOLDER_IMAGE)
+  ) {
+    console.log("ProductItem: using forced mock placeholder image for display:", MOCK_PLACEHOLDER_IMAGE);
+    return MOCK_PLACEHOLDER_IMAGE;
+  }
+  // Otherwise use the normal fallback
   const fallbackImg = getProductFallbackImage(product.title || product.name || "Product", product.category || "");
   console.log("ProductItem: using fallback image:", fallbackImg);
   return fallbackImg;

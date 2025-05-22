@@ -1,10 +1,14 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
 import StickyFiltersBar from "./StickyFiltersBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import MarketplaceHero from "./MarketplaceHero";
-import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
+-import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
++import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
++import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
+
 
 // New: ResultsChip component
 const ResultsChip = ({ query }: { query: string }) => (
@@ -17,7 +21,8 @@ const ResultsChip = ({ query }: { query: string }) => (
 
 const MarketplaceWrapper = () => {
   const [showFilters, setShowFilters] = useState(true);
-  const [products, setProducts] = useState(allProducts);
+-  const [products, setProducts] = useState(allProducts);
++  const [products, setProducts] = useState(allProducts);
   const isMobile = useIsMobile();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -31,31 +36,61 @@ const MarketplaceWrapper = () => {
   // We keep track if we just searched (to avoid repeat scrolls)
   const lastSearchRef = useRef<string | null>(null);
 
-  // Filtering logic (live filter mock products)
-  useEffect(() => {
-    let filtered = allProducts;
-
-    if (brandParam) {
-      filtered = filtered.filter(
-        (p) =>
-          p.brand && p.brand.toLowerCase() === brandParam.toLowerCase()
-      );
-    } else if (categoryParam) {
-      filtered = filtered.filter(
-        (p) => (p.category || "").toLowerCase() === categoryParam.toLowerCase()
-      );
-    }
-
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          (p.description && p.description.toLowerCase().includes(q))
-      );
-    }
-    setProducts(filtered);
-  }, [searchTerm, categoryParam, brandParam]);
+-  // Filtering logic (live filter mock products)
+-  useEffect(() => {
+-    let filtered = allProducts;
+-
+-    if (brandParam) {
+-      filtered = filtered.filter(
+-        (p) =>
+-          p.brand && p.brand.toLowerCase() === brandParam.toLowerCase()
+-      );
+-    } else if (categoryParam) {
+-      filtered = filtered.filter(
+-        (p) => (p.category || "").toLowerCase() === categoryParam.toLowerCase()
+-      );
+-    }
+-
+-    if (searchTerm) {
+-      const q = searchTerm.toLowerCase();
+-      filtered = filtered.filter(
+-        (p) =>
+-          p.title.toLowerCase().includes(q) ||
+-          (p.description && p.description.toLowerCase().includes(q))
+-      );
+-    }
+-    setProducts(filtered);
+-  }, [searchTerm, categoryParam, brandParam]);
++  // Improved filtering logic: use dynamic mock product generation (for testing mode)
++  useEffect(() => {
++    // If Zinc API integration is enabled, skip mock generator (future: add feature flag/env check here)
++    // For now: always use mock generator for local/test/dev mode.
++    let results = [];
++    if (brandParam) {
++      // Combine brand and category/search if both present for more relevant mockups.
++      if (categoryParam) {
++        results = searchMockProducts(`${brandParam} ${categoryParam}`, 12);
++      } else if (searchTerm) {
++        results = searchMockProducts(`${brandParam} ${searchTerm}`, 12);
++      } else {
++        results = searchMockProducts(brandParam, 12);
++      }
++    } else if (categoryParam) {
++      // If a search term is present along with category, combine them
++      if (searchTerm) {
++        results = searchMockProducts(`${categoryParam} ${searchTerm}`, 16);
++      } else {
++        results = searchMockProducts(categoryParam, 16);
++      }
++    } else if (searchTerm) {
++      results = searchMockProducts(searchTerm, 16);
++    } else {
++      // No filter, show a sample set
++      results = searchMockProducts("Featured", 15);
++    }
++    setProducts(results);
++  }, [searchTerm, categoryParam, brandParam]);
+  
 
   // Track product view analytics
   const handleProductView = (productId: string) => {

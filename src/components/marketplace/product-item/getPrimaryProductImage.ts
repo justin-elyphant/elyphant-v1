@@ -1,6 +1,6 @@
-
 import { Product } from "@/types/product";
 import { getProductFallbackImage } from "./productImageUtils";
+import { getRandomMockProductImage } from "./mockProductImages";
 
 const MOCK_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=500&fit=crop";
 
@@ -26,16 +26,20 @@ export function getPrimaryProductImage(product: Product): string {
     fallbackImage: getProductFallbackImage(product.title || product.name || "Product", product.category || "")
   });
 
-  // Guarantee mock placeholder for any mock product (unless it has a real image)
+  // Guarantee custom mock image for any mock product (unless it has a real image)
   if (isMock) {
-    // If there is a real/valid non-placeholder image, use it, else force mock image.
-    if (!isMissingImg) return mainImg;
+    // If a real/valid non-placeholder image, use it
+    if (!isMissingImg && mainImg && !mainImg.includes("/placeholder.svg")) return mainImg;
     if (product.images && Array.isArray(product.images)) {
-      const validImg = product.images.find(img => img && img !== "/placeholder.svg");
+      const validImg = product.images.find(img => img && !img.includes("/placeholder.svg"));
       if (validImg) return validImg;
     }
-    // Always use a VISIBLE placeholder for mock
-    return MOCK_PLACEHOLDER_IMAGE;
+    // Use one of the user-uploaded mock photos, seeded by product id for visual variety
+    // Fallback: random photo if no id
+    const seed = typeof product.product_id === "string"
+      ? product.product_id.split("").reduce((a, c) => a + c.charCodeAt(0), 0)
+      : Math.floor(Math.random() * 1000);
+    return getRandomMockProductImage(seed);
   }
 
   // For non-mock: use main image if valid
@@ -66,4 +70,3 @@ function isMockProduct(product: Product): boolean {
     (product.name && product.name.toLowerCase().includes("mock"))
   );
 }
-

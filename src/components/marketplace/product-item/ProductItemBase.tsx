@@ -5,7 +5,6 @@ import ProductImageSection from "./ProductImageSection";
 import ProductInfoSection from "./ProductInfoSection";
 import { Product } from "@/types/product";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
-// Removed BuyNowButton import
 
 interface ProductItemBaseProps {
   product: Product;
@@ -30,7 +29,11 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
     onProductClick(product.product_id || product.id || "");
   };
 
-  // Only Add to Cart button, centered and compact
+  // This prevents the card/tile click event when clicking Add to Cart
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   const renderActions = () => (
     <div className="mt-2 flex justify-center w-full">
       <div className="flex w-full max-w-[140px]">
@@ -39,6 +42,8 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
           variant="outline"
           size="sm"
           className="flex-1 min-w-0 px-1 py-1 h-8 text-[13px] font-medium rounded-md"
+          // Add the click handler to prevent propagation
+          onClick={handleAddToCartClick}
         />
       </div>
     </div>

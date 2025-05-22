@@ -12,6 +12,7 @@ interface AddToCartButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   quantity?: number;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 const AddToCartButton: React.FC<AddToCartButtonProps> = ({ 
@@ -19,16 +20,20 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
   variant = "default",
   size = "default", 
   className = "",
-  quantity = 1
+  quantity = 1,
+  onClick
 }) => {
   const { addToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick(e); // Let parent stop propagation if needed
+    }
+    // Don't add if button is disabled
+    if (isAdded) return;
     addToCart(product, quantity);
     setIsAdded(true);
-    
-    // Reset button state after 2 seconds
     setTimeout(() => {
       setIsAdded(false);
     }, 2000);

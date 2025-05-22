@@ -15,7 +15,7 @@ interface OccasionTabsProps {
 const getHolidayIcon = (name: string) => {
   const lower = name.toLowerCase();
   if (lower.includes("graduation")) return GraduationCap;
-  if (lower.includes("father")) return Glasses; // Use Glasses as Tie is not available, fallback icon for Father's Day
+  if (lower.includes("father")) return Gift; // Changed to use Gift icon for Father's Day
   if (lower.includes("valentine")) return Heart;
   if (lower.includes("oktober")) return Beer;
   // Fallback: present box for all others (Gift icon)

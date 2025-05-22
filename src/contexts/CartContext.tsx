@@ -20,6 +20,10 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function getProductId(product: Product) {
+  return product.product_id || product.id || "";
+}
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartTotal, setCartTotal] = useState(0);
@@ -48,35 +52,51 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [cartItems]);
 
   const addToCart = (product: Product, quantity = 1) => {
+    // Always normalize product.id and product.product_id so both are available
+    const normalizedProduct: Product = {
+      ...product,
+      id: product.id || product.product_id,
+      product_id: product.product_id || product.id,
+      name: product.name || product.title,
+      title: product.title || product.name,
+    };
+
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.product.id === product.id);
-      
+      const newId = getProductId(normalizedProduct);
+      const existingItem = prevItems.find(item => getProductId(item.product) === newId);
+
       if (existingItem) {
-        toast.success(`Updated ${product.name} quantity in your cart`);
+        toast.success(`Updated ${normalizedProduct.name || normalizedProduct.title} quantity in your cart`);
         return prevItems.map(item => 
-          item.product.id === product.id 
+          getProductId(item.product) === newId
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       } else {
-        toast.success(`Added ${product.name} to your cart`);
-        return [...prevItems, { product, quantity }];
+        toast.success(`Added ${normalizedProduct.name || normalizedProduct.title} to your cart`);
+        return [
+          ...prevItems,
+          {
+            product: normalizedProduct,
+            quantity
+          }
+        ];
       }
     });
   };
 
   const removeFromCart = (productId: string) => {
     setCartItems(prevItems => {
-      const itemToRemove = prevItems.find(item => item.product.id === productId);
+      const itemToRemove = prevItems.find(item => getProductId(item.product) === productId);
       if (itemToRemove) {
-        toast.info(`Removed ${itemToRemove.product.name} from your cart`, {
+        toast.info(`Removed ${itemToRemove.product.name || itemToRemove.product.title} from your cart`, {
           action: {
             label: "Continue Shopping",
             onClick: () => window.location.href = "/marketplace"
           }
         });
       }
-      return prevItems.filter(item => item.product.id !== productId);
+      return prevItems.filter(item => getProductId(item.product) !== productId);
     });
   };
 
@@ -85,10 +105,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       removeFromCart(productId);
       return;
     }
-    
-    setCartItems(prevItems => 
-      prevItems.map(item => 
-        item.product.id === productId 
+
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        getProductId(item.product) === productId
           ? { ...item, quantity }
           : item
       )

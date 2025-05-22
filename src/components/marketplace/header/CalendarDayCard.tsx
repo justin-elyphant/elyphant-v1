@@ -7,10 +7,10 @@ interface CalendarDayCardProps {
   title: React.ReactNode;
   avatarUrl?: string;
   avatarAlt?: string;
-  icon?: LucideIcon; // NEW: icon to show instead of avatar
-  highlightColor?: string; // Can be used for a tiny accent dot if needed
+  icon?: LucideIcon;
+  highlightColor?: string;
   onClick?: () => void;
-  children?: React.ReactNode; // Additional details if any
+  children?: React.ReactNode;
 }
 
 function getMonthAbbr(date: Date) {
@@ -25,7 +25,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
   avatarUrl,
   avatarAlt,
   icon,
-  highlightColor = "#D1D5DB", // fallback for tiny indicator if needed
+  highlightColor = "#D1D5DB",
   onClick,
   children,
 }) => {
@@ -42,7 +42,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
       style={{ 
         cursor: onClick ? "pointer" : "default", 
         background: "#fff",
-        minHeight: 96, // shrink card!
+        minHeight: 130, // expanded to fit full avatar/icon
         height: "auto"
       }}
     >
@@ -52,7 +52,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
           src={avatarUrl}
           alt={avatarAlt || ""}
           className="
-            absolute -top-5 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
+            absolute -top-8 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
             object-cover z-20 group-hover:scale-105 transition-transform
             bg-gray-100
           "
@@ -62,7 +62,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
         />
       ) : icon ? (
         <div
-          className="absolute -top-5 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
+          className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
           style={{
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
           }}
@@ -73,10 +73,9 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
 
       {/* Main content block */}
       <div
-        className={`flex flex-col items-center pt-6 pb-1 px-2 relative w-full`}
+        className={`flex flex-col items-center pt-9 pb-2 px-2 relative w-full`}
         style={{ minHeight: 60 }}
       >
-        {/* less vertical padding for a more compact look */}
         {/* Month in muted uppercaps */}
         <span className="text-[11px] text-gray-400 font-semibold tracking-wide mb-0.5" style={{ letterSpacing: 1 }}>
           {getMonthAbbr(date)}

@@ -6,41 +6,11 @@ import { Product } from "@/types/product";
 import { useLazyImage } from "@/hooks/useLazyImage";
 import QuickWishlistButton from "./QuickWishlistButton";
 import { getProductFallbackImage } from "./productImageUtils";
+import { getPrimaryProductImage } from "./getPrimaryProductImage";
 
 // Utility for fallback image (always use this order: image, images[0], fallback)
 // Now updated: Always guarantee a mock placeholder image for any missing photo
 const MOCK_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=500&fit=crop";
-
-const getPrimaryProductImage = (product: Product) => {
-  // Always use image if present and not blank/placeholder
-  if (product.image && product.image !== "/placeholder.svg") {
-    console.log("ProductItem: using image field for display:", product.image);
-    return product.image;
-  }
-  // Next use first in images array if present and not blank/placeholder
-  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    const validImg = product.images.find(img => !!img && img !== "/placeholder.svg");
-    if (validImg) {
-      console.log("ProductItem: using first valid images[] for display:", validImg);
-      return validImg;
-    }
-  }
-  // --- GUARANTEE: Always show a visible mock photo if all else fails (test env + mock data)
-  // If product indicates "mock" (id, title, retailer, etc), ALWAYS show the mock placeholder image
-  if (
-    (product.product_id && String(product.product_id).startsWith("MOCK")) ||
-    (typeof product.retailer === "string" && product.retailer.toLowerCase().includes("zinc")) ||
-    (product.title && product.title.toLowerCase().includes("mock")) ||
-    (product.image && product.image === MOCK_PLACEHOLDER_IMAGE)
-  ) {
-    console.log("ProductItem: using forced mock placeholder image for display:", MOCK_PLACEHOLDER_IMAGE);
-    return MOCK_PLACEHOLDER_IMAGE;
-  }
-  // Otherwise use the normal fallback
-  const fallbackImg = getProductFallbackImage(product.title || product.name || "Product", product.category || "");
-  console.log("ProductItem: using fallback image:", fallbackImg);
-  return fallbackImg;
-};
 
 interface ProductItemProps {
   product: Product;
@@ -59,7 +29,7 @@ const ProductItem = ({
   isFavorited,
   statusBadge
 }: ProductItemProps) => {
-  // Use our new logic for primary image selection
+  // Use the new shared utility for primary image selection
   const productImage = getPrimaryProductImage(product);
 
   // Use lazy loading, always attempt to load the primary image (fallback already ensured)
@@ -251,6 +221,3 @@ const ProductItem = ({
 };
 
 export default ProductItem;
-
-// The ProductItem file is now 230+ lines. 
-// Consider asking me to refactor it into separate files for image/block rendering for easier future maintenance!

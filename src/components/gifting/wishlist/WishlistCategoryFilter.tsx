@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -80,26 +81,15 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
             {validRenderedCategories
-              // Only use non-empty, trimmed strings
+              // Only use non-empty, trimmed strings as an extra defensive step
               .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
-              .map((cat, i) => {
-                if (cat === "") {
-                  if (process.env.NODE_ENV === "development") {
-                    // This should not happen, warn if it does.
-                    // eslint-disable-next-line no-console
-                    console.error(
-                      "[WishlistCategoryFilter] Attempted to render <SelectItem> with empty value! This is a bug. Category index:",
-                      i
-                    );
-                  }
-                  return null;
-                }
-                return (
+              .map((cat, i) =>
+                (
                   <SelectItem key={cat + "-" + i} value={cat}>
                     {cat}
                   </SelectItem>
-                );
-              })}
+                )
+              )}
           </SelectContent>
         </Select>
       </div>

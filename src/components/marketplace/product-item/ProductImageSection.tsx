@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
@@ -39,6 +38,7 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
         </div>
       )}
 
+      {/* On grid view, always show the popover-based wishlist button */}
       {viewMode === "grid" && (
         <div className="absolute top-2 right-2 z-10">
           <WishlistSelectionPopoverButton
@@ -54,6 +54,7 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
                 ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
                 : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
             }`}
+            onAdded={undefined} // for now, no callback on tile
           />
         </div>
       )}
@@ -70,7 +71,7 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
         className={`w-full h-full object-cover ${viewMode === "grid" ? "transition-transform hover:scale-105 duration-300" : ""}`}
         loading="lazy"
       />
-      {/* For list view, add small wishlist button under title (done in ProductInfoSection) */}
+      {/* List view hearted handled in ProductInfoSection */}
     </div>
   );
 };

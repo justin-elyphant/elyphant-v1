@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
@@ -46,7 +45,7 @@ const ProductActions = ({
           <ShoppingBag className="h-4 w-4 mr-2" />
           Add to Cart
         </Button>
-        {/* Main wishlist button */}
+        {/* Always use popover-based wishlist button */}
         <WishlistSelectionPopoverButton
           product={{
             id: String(product.id),

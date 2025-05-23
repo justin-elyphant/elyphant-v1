@@ -82,7 +82,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           isRecentlyViewed={isRecentlyViewed()}
         />
 
-        {/* Popover-based Wishlist Selection */}
+        {/* Always popover-based wishlist - no more 1-click */}
         <div className="absolute top-2 right-2 z-30">
           <WishlistSelectionPopoverButton
             product={{

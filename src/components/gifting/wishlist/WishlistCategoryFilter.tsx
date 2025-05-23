@@ -36,8 +36,18 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     [selectableCategories]
   );
 
-  // Add runtime dev debug logging
+  // Extra dev logging: ensure we don't have any invalid categories
   React.useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      validRenderedCategories.forEach((cat, i) => {
+        if (typeof cat !== "string" || cat.trim().length === 0) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[WishlistCategoryFilter] Invalid category detected! Index: ${i}, Value: "${cat}"`
+          );
+        }
+      });
+    }
     logInvalidCategories(selectableCategories, "WishlistCategoryFilter selectableCategories");
     logInvalidCategories(validRenderedCategories, "WishlistCategoryFilter validRenderedCategories");
     // eslint-disable-next-line no-console
@@ -69,14 +79,27 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {/* Defensive filter to prevent empty values in SelectItem */}
             {validRenderedCategories
-              .filter((cat) => typeof cat === "string" && cat.trim().length > 0)
-              .map((cat, i) => (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
+              // Only use non-empty, trimmed strings
+              .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              .map((cat, i) => {
+                if (cat === "") {
+                  if (process.env.NODE_ENV === "development") {
+                    // This should not happen, warn if it does.
+                    // eslint-disable-next-line no-console
+                    console.error(
+                      "[WishlistCategoryFilter] Attempted to render <SelectItem> with empty value! This is a bug. Category index:",
+                      i
+                    );
+                  }
+                  return null;
+                }
+                return (
+                  <SelectItem key={cat + "-" + i} value={cat}>
+                    {cat}
+                  </SelectItem>
+                );
+              })}
           </SelectContent>
         </Select>
       </div>

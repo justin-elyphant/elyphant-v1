@@ -88,29 +88,23 @@ const MyWishlists = () => {
 
   // Filtered and sanitized categories for Select rendering - *do not* include any empty strings
   const selectableCategories = React.useMemo(
-    () => filteredCategories.filter(cat => {
-      if (typeof cat !== "string" || cat.trim() === "") {
-        console.warn("[Wishlist Select] Dropping invalid category before SelectItem:", cat);
-        return false;
-      }
-      return true;
-    }),
+    () =>
+      filteredCategories.filter(
+        (cat) =>
+          typeof cat === "string" &&
+          cat.trim() !== "" &&
+          cat !== ""
+      ),
     [filteredCategories]
   );
-
-  useEffect(() => {
-    filteredCategories.forEach((cat, idx) => {
-      if (!isValidCategoryString(cat)) {
-        console.warn(`Bad category in filteredCategories at index ${idx}:`, cat);
-      }
-    });
-  }, [filteredCategories]);
 
   // Defensive: Ensure filter is always valid—if not, reset it to null
   React.useEffect(() => {
     if (
       categoryFilter &&
-      (!selectableCategories.includes(categoryFilter) || typeof categoryFilter !== "string" || categoryFilter.trim() === "")
+      (!selectableCategories.includes(categoryFilter) ||
+        typeof categoryFilter !== "string" ||
+        categoryFilter.trim() === "")
     ) {
       console.warn("[Wishlists] Resetting invalid categoryFilter value", categoryFilter);
       setCategoryFilter(null);
@@ -256,7 +250,8 @@ const MyWishlists = () => {
             <Select
               value={categoryFilter || ""}
               onValueChange={(value) => {
-                if (!value || !selectableCategories.includes(value)) {
+                // Only update to valid value or null
+                if (!value || !selectableCategories.includes(value) || value.trim() === "") {
                   setCategoryFilter(null);
                 } else {
                   setCategoryFilter(value);
@@ -268,14 +263,12 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {/* Only render non-empty, non-whitespace categories */}
-                {selectableCategories
-                  .filter(c => typeof c === "string" && c.trim() !== "")
-                  .map((cat, i) => (
-                    <SelectItem key={cat + "-" + i} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
+                {/* Only show good categories */}
+                {selectableCategories.map((cat, i) => (
+                  <SelectItem key={cat + "-" + i} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

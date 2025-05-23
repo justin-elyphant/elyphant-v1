@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -38,11 +39,11 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 
   // Compute selected value - only allow "" for All Categories
   const currentValue =
-    typeof categoryFilter === "string" && rawCategories.includes(categoryFilter)
+    typeof categoryFilter === "string" && rawCategories.includes(categoryFilter) && categoryFilter !== ""
       ? categoryFilter
       : "";
 
-  // FINAL GUARD: Filter categories at render time for <SelectItem />
+  // FINAL GUARD: Filter categories at render time for <SelectItem />, never include ""
   function getFilteredCategoriesForSelect(categories: unknown[]): string[] {
     const filtered: string[] = [];
     categories.forEach((cat, idx) => {
@@ -67,11 +68,24 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     return filtered;
   }
 
-  // Use only strictly valid categories
+  // Use only strictly valid, non-empty categories for select items
   const finalCategoryItems = React.useMemo(
     () => getFilteredCategoriesForSelect(rawCategories),
     [rawCategories]
   );
+
+  // FINAL GUARD: DEV-only log if any invalid value slipped through before rendering
+  if (process.env.NODE_ENV === "development") {
+    finalCategoryItems.forEach((cat, idx) => {
+      if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+        // eslint-disable-next-line no-console
+        console.error(`[WishlistCategoryFilter] <SelectItem /> about to render with an invalid value (BUG):`, {
+          idx,
+          cat,
+        });
+      }
+    });
+  }
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -92,11 +106,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only the 'All Categories' option gets value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {finalCategoryItems.map((cat, i) => (
-              <SelectItem key={cat + "-" + i} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {finalCategoryItems.map((cat, i) =>
+              cat !== "" ? (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ) : null // extra guard, never render if blank
+            )}
           </SelectContent>
         </Select>
       </div>

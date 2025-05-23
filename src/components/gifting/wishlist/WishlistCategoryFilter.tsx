@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -61,9 +60,19 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     [rawCategories]
   );
 
-  // DEV: Log if anything invalid would be rendered as a SelectItem
+  // Extra guard: Only valid string categories allowed for SelectItem values
+  const safeCategoryItems = React.useMemo(
+    () =>
+      finalCategoryItems.filter(
+        (cat) =>
+          typeof cat === "string" && cat.trim().length > 0 && cat !== "" && cat !== undefined && cat !== null
+      ),
+    [finalCategoryItems]
+  );
+
+  // DEV: log if anything invalid would be rendered
   if (process.env.NODE_ENV === "development") {
-    finalCategoryItems.forEach((cat, idx) => {
+    safeCategoryItems.forEach((cat, idx) => {
       if (
         typeof cat !== "string" ||
         cat.trim().length === 0 ||
@@ -72,7 +81,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         cat === null
       ) {
         // eslint-disable-next-line no-console
-        console.error(`[WishlistCategoryFilter] <SelectItem /> about to render invalid value:`, {
+        console.error(`[WishlistCategoryFilter] <SelectItem /> (final render guard) invalid value:`, {
           idx,
           cat,
         });
@@ -86,7 +95,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || value === "" || !finalCategoryItems.includes(value)) {
+            if (!value || value === "" || !safeCategoryItems.includes(value)) {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -99,7 +108,8 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only the special all-categories option can use value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {finalCategoryItems.map((cat, i) => (
+            {safeCategoryItems.map((cat, i) => (
+              // This will always be safe: cat is never ""
               <SelectItem key={cat + "-" + i} value={cat}>
                 {cat}
               </SelectItem>

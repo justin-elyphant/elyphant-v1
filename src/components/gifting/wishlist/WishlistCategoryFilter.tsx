@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -17,17 +16,11 @@ type WishlistCategoryFilterProps = {
 // Strong filter: dedupe, remove empty/whitespace, trim all, only valid strings
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
-  // Only include trimmed, non-empty, non-whitespace strings
   return Array.from(
     new Set(
       categories
         .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-        .filter(
-          (cat) =>
-            typeof cat === "string" &&
-            cat.length > 0 &&
-            cat !== ""
-        )
+        .filter((cat) => typeof cat === "string" && cat.length > 0)
     )
   );
 }
@@ -90,11 +83,10 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* The special "All Categories" placeholder option */}
             <SelectItem value="">All Categories</SelectItem>
-            {/* Only render items if cat is non-empty, non-whitespace */}
             {filteredCategories.map((cat, i) =>
-              typeof cat === "string" && cat.trim().length > 0 ? (
+              // Never allow an empty value here
+              typeof cat === "string" && cat.length > 0 ? (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
                 </SelectItem>

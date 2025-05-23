@@ -57,8 +57,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 
   // Defensive: only allow "" for All Categories as value
   const currentValue =
-    typeof categoryFilter === "string" &&
-    validRenderedCategories.includes(categoryFilter)
+    typeof categoryFilter === "string" && validRenderedCategories.includes(categoryFilter)
       ? categoryFilter
       : "";
 
@@ -80,27 +79,26 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {validRenderedCategories
-              // Double-defensive: Only use non-empty, trimmed strings as value
-              .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
-              .map((cat, i) => {
-                if (cat === "") {
-                  // This shouldn't happen, but if it does, warn in dev and skip
-                  if (process.env.NODE_ENV === "development") {
-                    // eslint-disable-next-line no-console
-                    console.error(
-                      "[WishlistCategoryFilter] Attempted to render <SelectItem> with empty value! This is a bug. Category index:",
-                      i
-                    );
-                  }
-                  return null;
+            {validRenderedCategories.map((cat, i) => {
+              // Defensive: just to make sure, but getValidCategories should never allow empty string
+              if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+                if (process.env.NODE_ENV === "development") {
+                  // eslint-disable-next-line no-console
+                  console.error(
+                    "[WishlistCategoryFilter] Skipping rendering <SelectItem> with empty or invalid value! Index:",
+                    i,
+                    "Value:",
+                    cat
+                  );
                 }
-                return (
-                  <SelectItem key={cat + "-" + i} value={cat}>
-                    {cat}
-                  </SelectItem>
-                );
-              })}
+                return null;
+              }
+              return (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -129,3 +127,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

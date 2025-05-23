@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -43,38 +42,34 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
-  // ----------- FINAL GUARD: Only pass valid category strings to Select.Item -----------
-  function filterValidCategoryItems(categories: unknown[]): string[] {
-    const filtered = categories.filter(
-      (cat): cat is string =>
+  // FINAL GUARD: Filter categories at render time for <SelectItem />
+  function getFilteredCategoriesForSelect(categories: unknown[]): string[] {
+    const filtered: string[] = [];
+    categories.forEach((cat, idx) => {
+      if (
         typeof cat === "string" &&
         cat.trim().length > 0 &&
         cat !== "" &&
-        cat !== null &&
-        cat !== undefined
-    );
-    if (process.env.NODE_ENV === "development") {
-      categories.forEach((cat, idx) => {
-        if (
-          typeof cat !== "string" ||
-          cat.trim().length === 0 ||
-          cat === "" ||
-          cat === undefined ||
-          cat === null
-        ) {
+        cat !== undefined &&
+        cat !== null
+      ) {
+        filtered.push(cat);
+      } else {
+        if (process.env.NODE_ENV === "development") {
           // eslint-disable-next-line no-console
           console.error(
-            `[WishlistCategoryFilter] Skipping invalid category for <SelectItem /> at index ${idx}:`,
+            `[WishlistCategoryFilter] Invalid category excluded from <SelectItem /> at index ${idx}:`,
             cat
           );
         }
-      });
-    }
+      }
+    });
     return filtered;
   }
 
+  // Use only strictly valid categories
   const finalCategoryItems = React.useMemo(
-    () => filterValidCategoryItems(rawCategories),
+    () => getFilteredCategoriesForSelect(rawCategories),
     [rawCategories]
   );
 
@@ -95,6 +90,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
+            {/* Only the 'All Categories' option gets value="" */}
             <SelectItem value="">All Categories</SelectItem>
             {finalCategoryItems.map((cat, i) => (
               <SelectItem key={cat + "-" + i} value={cat}>

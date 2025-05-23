@@ -231,12 +231,11 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {/* Only map categories that are non-empty, trimmed strings */}
                 {filteredCategories.length === 0 && (
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
                 {filteredCategories.map((cat, i) => {
-                  // Only render if cat is a string and trims to non-empty
+                  // Defensive: ensure we only render non-empty, trimmed strings (not null/undefined/empty/"    ")
                   if (typeof cat !== "string") {
                     console.warn("[Wishlist Select] Category not a string, skipping:", cat);
                     return null;
@@ -247,7 +246,7 @@ const MyWishlists = () => {
                     console.warn("[Wishlist Select] Skipping empty/whitespace category for SelectItem", cat);
                     return null;
                   }
-                  // Only render valid categories
+                  // Only render categories that pass all checks
                   return (
                     <SelectItem
                       key={trimmedValue + "-" + i}

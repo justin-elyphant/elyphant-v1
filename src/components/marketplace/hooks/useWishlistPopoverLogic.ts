@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
@@ -25,8 +26,8 @@ export const useWishlistPopoverLogic = ({
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [localWishlists, setLocalWishlists] = useState(wishlists);
+  const [syncing, setSyncing] = useState(false); // New: spinner when refreshing wishlists after add/create
 
-  // Always keep localWishlists in sync when opening
   useEffect(() => {
     if (open) {
       setLocalWishlists(wishlists);
@@ -35,7 +36,9 @@ export const useWishlistPopoverLogic = ({
 
   // Utility: Always reload, update, and return fresh wishlists
   const forceReloadLocalWishlists = async () => {
+    setSyncing(true);
     const updated = await reloadWishlists();
+    setSyncing(false);
     if (Array.isArray(updated) && updated.length > 0) {
       setLocalWishlists(updated);
       return updated;
@@ -63,15 +66,18 @@ export const useWishlistPopoverLogic = ({
         image_url: productImage,
         brand: productBrand
       });
-      // << Sync backend + update localWishlists + wait for UI update
-      const latest = await forceReloadLocalWishlists();
-      // Small delay to ensure UI updates before closing (esp. on fast connections)
+      setSyncing(true);
+      const latestWishlists = await forceReloadLocalWishlists();
+      setSyncing(false);
+
+      // Wait a short moment to trigger UI update so user
+      // sees the incremented item count.
       setTimeout(() => {
         toast.success(`Added to wishlist`);
         if (onClose) onClose();
         setOpen(false);
         setAddingToWishlist(null);
-      }, 350);
+      }, 700); // Increased pause, so updated count flashes
     } catch (error) {
       console.error("Error adding to wishlist:", error);
       toast.error("Failed to add to wishlist");
@@ -90,7 +96,9 @@ export const useWishlistPopoverLogic = ({
       const newWishlist = await createWishlist(newName.trim());
       if (newWishlist) {
         // 2. Reload wishlists and update local
+        setSyncing(true);
         const latestWishlists = await forceReloadLocalWishlists();
+        setSyncing(false);
         // 3. Find newly created wishlist (ensure it's in the freshly loaded array)
         const created = latestWishlists.find(w => w.title === newName.trim());
         const newWishId = created?.id || newWishlist.id;
@@ -124,6 +132,7 @@ export const useWishlistPopoverLogic = ({
     setNewName,
     creating,
     setCreating,
+    syncing, // expose syncing for loading spinner in UI
     isInWishlist,
     handleAddToWishlist,
     handleCreateWishlist

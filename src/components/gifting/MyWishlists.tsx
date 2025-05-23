@@ -268,17 +268,14 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {selectableCategories.length === 0 && (
-                  <div className="text-muted-foreground px-4 py-2">No categories</div>
-                )}
-                {selectableCategories.map((cat, i) => (
-                  <SelectItem
-                    key={cat + "-" + i}
-                    value={cat}
-                  >
-                    {cat}
-                  </SelectItem>
-                ))}
+                {/* Only render non-empty, non-whitespace categories */}
+                {selectableCategories
+                  .filter(c => typeof c === "string" && c.trim() !== "")
+                  .map((cat, i) => (
+                    <SelectItem key={cat + "-" + i} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

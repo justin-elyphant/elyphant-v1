@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// REMOVE: useQuickWishlist and related quick-toggling logic
-import AddToCartButton from "./components/AddToCartButton";
-import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
+import ProductDetailsImageSection from "./product-details/ProductDetailsImageSection";
+import ProductDetailsActionsSection from "./product-details/ProductDetailsActionsSection";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -35,14 +33,6 @@ const ProductDetailsDialog = ({
   const [giftMessage, setGiftMessage] = useState("");
   const [activeTab, setActiveTab] = useState("product");
 
-  // --- REMOVE legacy wishlist logic
-  // const { 
-  //   toggleWishlist, 
-  //   isFavorited,
-  //   showSignUpDialog,
-  //   setShowSignUpDialog
-  // } = useQuickWishlist();
-  
   const increaseQuantity = () => {
     setQuantity(prev => Math.min(prev + 1, 10)); // Limit to 10 items
   };
@@ -52,8 +42,6 @@ const ProductDetailsDialog = ({
   };
   
   if (!product) return null;
-
-  const productId = product.product_id || product.id || "";
 
   const handleShareProduct = () => {
     if (navigator.share) {
@@ -74,54 +62,14 @@ const ProductDetailsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden max-h-[90vh]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          {/* Product Image */}
-          <div className="h-[250px] md:h-[500px] bg-muted relative overflow-hidden">
-            {product.image && (
-              <img 
-                src={product.image} 
-                alt={product.title || product.name || "Product"} 
-                className="w-full h-full object-cover"
-              />
-            )}
+          {/* Product Image & Actions Refactored */}
+          <ProductDetailsImageSection
+            product={product}
+            isHeartAnimating={isHeartAnimating}
+            onShare={handleShareProduct}
+          />
 
-            {/* Badges */}
-            <div className="absolute top-2 left-2 space-x-2">
-              {product.tags?.includes("bestseller") && (
-                <Badge className="bg-amber-100 text-amber-800 border-amber-200">Best Seller</Badge>
-              )}
-              {product.tags?.includes("new") && (
-                <Badge className="bg-green-100 text-green-800 border-green-200">New</Badge>
-              )}
-            </div>
-            
-            {/* Action buttons */}
-            <div className="absolute top-2 right-2 flex space-x-1">
-              {/* REPLACE: Heart wishlisted icon with popover-based wishlist trigger */}
-              <WishlistSelectionPopoverButton
-                product={{
-                  id: productId,
-                  name: product.title || product.name || "",
-                  image: product.image || "",
-                  price: product.price,
-                  brand: product.brand || "",
-                }}
-                // Always use same style as before
-                triggerClassName={`rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 p-2 ${isHeartAnimating ? "scale-125" : ""}`}
-                onAdded={undefined} // No action needed, auto-closes
-              />
-              
-              <Button 
-                variant="secondary" 
-                size="icon" 
-                className="rounded-full bg-white/80 backdrop-blur-sm hover:bg-white"
-                onClick={handleShareProduct}
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {/* Product Details */}
+          {/* Product Details Section */}
           <div className="p-6 overflow-y-auto max-h-[500px]">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold mb-1">
@@ -138,7 +86,6 @@ const ProductDetailsDialog = ({
             
             <Separator className="my-4" />
             
-            {/* REMOVE GIFT OPTIONS TAB - Save code for later */}
             <div className="mb-6">
               <p className="text-sm text-muted-foreground">
                 {product.description || "No description available for this product."}
@@ -155,53 +102,15 @@ const ProductDetailsDialog = ({
                 </ul>
               </div>
             )}
-            
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <Label htmlFor="quantity">Quantity</Label>
-                <div className="flex items-center border rounded-md">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-r-none"
-                    onClick={decreaseQuantity}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <div className="w-8 text-center">{quantity}</div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-l-none"
-                    onClick={increaseQuantity}
-                    disabled={quantity >= 10}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <AddToCartButton 
-                  product={product}
-                  className="flex-1"
-                  quantity={quantity}
-                />
-                {/* REPLACE: "Wishlisted"/"Add to Wishlist" button with popover-based wishlist button */}
-                <WishlistSelectionPopoverButton
-                  product={{
-                    id: productId,
-                    name: product.title || product.name || "",
-                    image: product.image || "",
-                    price: product.price,
-                    brand: product.brand || "",
-                  }}
-                  triggerClassName={`flex-1 flex justify-center items-center px-4 py-2 rounded-md transition-colors ${isHeartAnimating ? "scale-105" : ""} ${"bg-pink-50"}`}
-                  onAdded={undefined}
-                />
-              </div>
-            </div>
+
+            {/* Refactored Actions Section */}
+            <ProductDetailsActionsSection
+              product={product}
+              quantity={quantity}
+              onIncrease={increaseQuantity}
+              onDecrease={decreaseQuantity}
+              isHeartAnimating={isHeartAnimating}
+            />
           </div>
         </div>
       </DialogContent>
@@ -210,4 +119,3 @@ const ProductDetailsDialog = ({
 };
 
 export default ProductDetailsDialog;
-

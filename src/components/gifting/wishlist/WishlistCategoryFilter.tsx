@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -111,18 +110,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectItem value="">All Categories</SelectItem>
             {/* Absolutely never render a SelectItem with value="" except above */}
             {filteredCategories.map((cat, i) => {
-              if (
-                typeof cat !== "string" ||
-                cat.trim().length === 0 ||
-                cat === ""
-              ) {
+              // FINAL GUARDED CHECK: Only render if valid
+              const isValid =
+                typeof cat === "string" &&
+                cat.trim().length > 0 &&
+                cat !== "";
+              if (!isValid) {
                 if (process.env.NODE_ENV === "development") {
                   // eslint-disable-next-line no-console
                   console.error(
-                    "[WishlistCategoryFilter] Skipping <SelectItem> with invalid value! Index:",
-                    i,
-                    "Value:",
-                    cat
+                    "[WishlistCategoryFilter - RENDER GUARD] Refused to render <SelectItem> with invalid value! Index:", i, "Value:", cat
                   );
                 }
                 return null;

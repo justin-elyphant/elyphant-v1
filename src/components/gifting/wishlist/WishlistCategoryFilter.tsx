@@ -45,11 +45,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   // Debug: Warn if any empty string slips in
   React.useEffect(() => {
     filteredCategories.forEach((cat, i) => {
-      if (cat === "") {
+      if (cat === "" || typeof cat !== "string") {
         // eslint-disable-next-line no-console
         console.error(
-          "[WishlistCategoryFilter] Detected empty string category! This should never happen. Index:",
-          i
+          "[WishlistCategoryFilter] Detected empty or invalid category! This should never happen. Index:",
+          i,
+          "Value:",
+          cat
         );
       }
     });
@@ -87,7 +89,8 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* Only ONE clear/placeholder item */}
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories
-              // Only non-empty, non-whitespace strings (already enforced by getStrictValidCategories)
+              // Absolutely bulletproof: only render if non-empty and string
+              .filter((cat): cat is string => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
               .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
@@ -121,4 +124,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

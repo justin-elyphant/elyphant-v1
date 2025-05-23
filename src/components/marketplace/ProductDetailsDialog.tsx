@@ -1,17 +1,19 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/product";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Heart, Minus, Plus, Gift, Share2 } from "lucide-react";
+import { Heart, Minus, Plus, Share2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuickWishlist } from "@/hooks/useQuickWishlist";
+// REMOVE: useQuickWishlist and related quick-toggling logic
 import AddToCartButton from "./components/AddToCartButton";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -27,22 +29,20 @@ const ProductDetailsDialog = ({
   userData 
 }: ProductDetailsDialogProps) => {
   const [quantity, setQuantity] = useState(1);
-  // Add animation state
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
   const [isGift, setIsGift] = useState(false);
   const [recipientName, setRecipientName] = useState("");
   const [giftMessage, setGiftMessage] = useState("");
   const [activeTab, setActiveTab] = useState("product");
 
-  // Use our wishlist hook
-  const { 
-    toggleWishlist, 
-    isFavorited,
-    showSignUpDialog,
-    setShowSignUpDialog
-  } = useQuickWishlist();
+  // --- REMOVE legacy wishlist logic
+  // const { 
+  //   toggleWishlist, 
+  //   isFavorited,
+  //   showSignUpDialog,
+  //   setShowSignUpDialog
+  // } = useQuickWishlist();
   
-  // Handle quantity changes
   const increaseQuantity = () => {
     setQuantity(prev => Math.min(prev + 1, 10)); // Limit to 10 items
   };
@@ -54,36 +54,6 @@ const ProductDetailsDialog = ({
   if (!product) return null;
 
   const productId = product.product_id || product.id || "";
-  
-  const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Animate heart for quick feedback
-    setIsHeartAnimating(true);
-    setTimeout(() => setIsHeartAnimating(false), 400);
-
-    // Log for troubleshooting
-    console.log("Toggling wishlist for productId:", productId, "Logged in:", !!userData);
-
-    toggleWishlist(e, {
-      id: productId,
-      name: product.title || product.name || "",
-      image: product.image,
-      price: product.price
-    });
-
-    // UI backup: Show toast directly (useful if for some reason the hook's toast doesn't fire)
-    if (isFavorited(productId)) {
-      // Removing from wishlist
-      import("@/hooks/use-toast").then(({ toast }) =>
-        toast.success("Removed from wishlist", { description: product.title || product.name })
-      );
-    } else {
-      // Adding to wishlist
-      import("@/hooks/use-toast").then(({ toast }) =>
-        toast.success("Added to wishlist", { description: product.title || product.name })
-      );
-    }
-  };
 
   const handleShareProduct = () => {
     if (navigator.share) {
@@ -126,16 +96,19 @@ const ProductDetailsDialog = ({
             
             {/* Action buttons */}
             <div className="absolute top-2 right-2 flex space-x-1">
-              <Button 
-                variant="secondary" 
-                size="icon" 
-                className={`rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 ${isHeartAnimating ? "scale-125" : ""}`}
-                onClick={handleWishlistToggle}
-              >
-                <Heart 
-                  className={`h-4 w-4 transition-all duration-200 ${isFavorited(productId) ? 'fill-red-500 text-red-500' : ''} ${isHeartAnimating ? "scale-125" : ""}`}
-                />
-              </Button>
+              {/* REPLACE: Heart wishlisted icon with popover-based wishlist trigger */}
+              <WishlistSelectionPopoverButton
+                product={{
+                  id: productId,
+                  name: product.title || product.name || "",
+                  image: product.image || "",
+                  price: product.price,
+                  brand: product.brand || "",
+                }}
+                // Always use same style as before
+                triggerClassName={`rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 p-2 ${isHeartAnimating ? "scale-125" : ""}`}
+                onAdded={undefined} // No action needed, auto-closes
+              />
               
               <Button 
                 variant="secondary" 
@@ -166,16 +139,6 @@ const ProductDetailsDialog = ({
             <Separator className="my-4" />
             
             {/* REMOVE GIFT OPTIONS TAB - Save code for later */}
-            {/* 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-2 mb-4">
-                <TabsTrigger value="product">Product Details</TabsTrigger>
-                <TabsTrigger value="gift">Gift Options</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="product">
-            */}
-            {/* Instead, just render the product details section directly */}
             <div className="mb-6">
               <p className="text-sm text-muted-foreground">
                 {product.description || "No description available for this product."}
@@ -192,10 +155,6 @@ const ProductDetailsDialog = ({
                 </ul>
               </div>
             )}
-            
-            {/* </TabsContent> */}
-            {/* -- Gift Options Tab removed until future */}
-            {/* </Tabs> */}
             
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">
@@ -229,17 +188,18 @@ const ProductDetailsDialog = ({
                   className="flex-1"
                   quantity={quantity}
                 />
-                
-                <Button 
-                  variant="secondary" 
-                  onClick={handleWishlistToggle}
-                  className={`${isFavorited(productId) ? "bg-pink-50" : ""} transition-all duration-200`}
-                >
-                  <Heart 
-                    className={`h-4 w-4 mr-2 transition-all duration-200 ${isFavorited(productId) ? 'fill-pink-500 text-pink-500' : ''} ${isHeartAnimating ? "scale-125" : ""}`} 
-                  />
-                  {isFavorited(productId) ? "Wishlisted" : "Add to Wishlist"}
-                </Button>
+                {/* REPLACE: "Wishlisted"/"Add to Wishlist" button with popover-based wishlist button */}
+                <WishlistSelectionPopoverButton
+                  product={{
+                    id: productId,
+                    name: product.title || product.name || "",
+                    image: product.image || "",
+                    price: product.price,
+                    brand: product.brand || "",
+                  }}
+                  triggerClassName={`flex-1 flex justify-center items-center px-4 py-2 rounded-md transition-colors ${isHeartAnimating ? "scale-105" : ""} ${"bg-pink-50"}`}
+                  onAdded={undefined}
+                />
               </div>
             </div>
           </div>
@@ -250,3 +210,4 @@ const ProductDetailsDialog = ({
 };
 
 export default ProductDetailsDialog;
+

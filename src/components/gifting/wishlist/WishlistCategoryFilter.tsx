@@ -61,13 +61,22 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
+  // Filter again just-in-case (absolutely no empty, null, or whitespace-only strings)
+  const filteredCategories = React.useMemo(
+    () =>
+      validRenderedCategories.filter(
+        (cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+      ),
+    [validRenderedCategories]
+  );
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
       <div className="w-full sm:w-1/3">
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || !validRenderedCategories.includes(value) || value === "") {
+            if (!value || !filteredCategories.includes(value) || value === "") {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -79,7 +88,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {validRenderedCategories.map((cat, i) => {
+            {filteredCategories.map((cat, i) => {
               // Defensive: just to make sure, but getValidCategories should never allow empty string
               if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
                 if (process.env.NODE_ENV === "development") {
@@ -127,4 +136,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

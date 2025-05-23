@@ -67,16 +67,21 @@ const MyWishlists = () => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
       .map(list => typeof list.category === "string" ? list.category.trim() : "")
-      .filter((category) => category.length > 0);
+      .filter((category) => typeof category === "string" && category.length > 0);
     // Only unique valid (non-empty) strings
     return Array.from(new Set(allCategories));
   }, [wishlists]);
 
-  // Keep logging for debug
+  // Log ANY invalid categories for debugging (warn the dev if these ever occur)
   useEffect(() => {
-    console.log("[Wishlist] Defensive categories for Select:", categories);
-  }, [categories]);
-  
+    const invalid = wishlists
+      ?.map(list => list.category)
+      .filter((cat) => !cat || typeof cat !== "string" || !cat.trim());
+    if (invalid && invalid.length > 0) {
+      console.warn("[Wishlist] Found wishlists with invalid/blank categories:", invalid);
+    }
+  }, [wishlists]);
+
   // Filter wishlists based on category and search query
   const filteredWishlists = React.useMemo(() => {
     if (!wishlists) return [];
@@ -213,8 +218,10 @@ const MyWishlists = () => {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
+                {/* The placeholder has an explicit value="" */}
                 <SelectItem value="">All Categories</SelectItem>
                 {categories
+                  // Filter out falsy, empty, or invalid categories here
                   .filter(
                     (category): category is string =>
                       typeof category === "string" && !!category.trim() && category.trim() !== ""

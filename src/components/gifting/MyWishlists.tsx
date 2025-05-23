@@ -67,20 +67,19 @@ const MyWishlists = () => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
       .map(list => typeof list.category === "string" ? list.category.trim() : "")
-      .filter((category) => typeof category === "string" && category.length > 0);
+      .filter((category) => typeof category === "string" && !!category && category !== "");
     // Only unique valid (non-empty) strings
     return Array.from(new Set(allCategories));
   }, [wishlists]);
 
-  // Log ANY invalid categories for debugging (warn the dev if these ever occur)
+  // Debug log just before rendering to catch issues
   useEffect(() => {
-    const invalid = wishlists
-      ?.map(list => list.category)
-      .filter((cat) => !cat || typeof cat !== "string" || !cat.trim());
-    if (invalid && invalid.length > 0) {
-      console.warn("[Wishlist] Found wishlists with invalid/blank categories:", invalid);
+    console.log("[Wishlist] Categories about to render in Select:", categories);
+    // Show all wishlists and their categories for deeper debugging
+    if (wishlists?.some(list => !list.category || typeof list.category !== "string" || list.category.trim() === "")) {
+      console.warn("[Wishlist] Some wishlists have invalid categories:", wishlists.map(l => l.category));
     }
-  }, [wishlists]);
+  }, [categories, wishlists]);
 
   // Filter wishlists based on category and search query
   const filteredWishlists = React.useMemo(() => {
@@ -218,13 +217,13 @@ const MyWishlists = () => {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                {/* The placeholder has an explicit value="" */}
+                {/* This placeholder is correct */}
                 <SelectItem value="">All Categories</SelectItem>
                 {categories
-                  // Filter out falsy, empty, or invalid categories here
+                  // Filter out falsy, empty, or invalid categories here (safeguard)
                   .filter(
                     (category): category is string =>
-                      typeof category === "string" && !!category.trim() && category.trim() !== ""
+                      typeof category === "string" && !!category && category !== ""
                   )
                   .map((category, i) => (
                     <SelectItem

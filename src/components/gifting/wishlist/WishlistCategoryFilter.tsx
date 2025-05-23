@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,9 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       new Set(
         selectableCategories
           .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-          .filter((cat): cat is string => typeof cat === "string" && cat.length > 0)
+          .filter(
+            (cat): cat is string => typeof cat === "string" && cat.length > 0 && cat !== ""
+          )
       )
     );
   }, [selectableCategories]);
@@ -53,7 +56,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     });
   }
 
-  // Select's value logic (same as before)
+  // Select's value logic
   const currentValue =
     typeof categoryFilter === "string" &&
     filteredCategories.includes(categoryFilter) &&
@@ -81,14 +84,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* Only All Categories uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
             {/* All other items are guaranteed to be non-empty strings */}
-            {filteredCategories.map((cat, i) => (
-              <SelectItem
-                key={cat + "-" + i}
-                value={cat}
-              >
-                {cat}
-              </SelectItem>
-            ))}
+            {filteredCategories
+              .filter(
+                (cat) =>
+                  typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+              )
+              .map((cat, i) => (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>
@@ -117,3 +122,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

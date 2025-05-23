@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -34,31 +33,14 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // PREP: Strong filter so nothing empty or whitespace gets through
+  // Only sanitize/select valid categories locally as a final guard
   const filteredCategories = React.useMemo(
     () => getStrictValidCategories(selectableCategories),
     [selectableCategories]
   );
 
-  // Defensive dev logging
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      // Log any invalid category survivors
-      filteredCategories.forEach((cat, idx) => {
-        if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
-          // eslint-disable-next-line no-console
-          console.error(`[WishlistCategoryFilter][DEV] Invalid category survived to render: "${cat}" at idx ${idx}`);
-        }
-      });
-    }
-  }, [filteredCategories]);
-
-  // Don't render Select at all if nothing valid
+  // Don't render Select if nothing valid
   if (!filteredCategories.length) {
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("[WishlistCategoryFilter][DEV] No valid categories to render Select.");
-    }
     return null;
   }
 
@@ -75,7 +57,6 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            // "" triggers 'all categories'; only valid choices otherwise
             if (!value || value === "" || !filteredCategories.includes(value)) {
               onCategoryFilterChange(null);
             } else {
@@ -87,18 +68,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* DO NOT change "All Categories" below—needed for clearing */}
+            {/* Only one clear/placeholder item */}
             <SelectItem value="">All Categories</SelectItem>
-            {
-              // FINAL GUARD: Never render empty-string category
-              filteredCategories
-                .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
-                .map((cat, i) => (
-                  <SelectItem key={cat + "-" + i} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))
-            }
+            {filteredCategories.map((cat, i) => (
+              <SelectItem key={cat + "-" + i} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

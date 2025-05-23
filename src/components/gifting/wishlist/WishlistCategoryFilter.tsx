@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getValidCategories, logInvalidCategories } from "./utils/validCategoryUtils";
 
+// Util: Remove duplicates, empty/whitespace, trim
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
   return Array.from(
     new Set(
       categories
         .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-        .filter((cat) => typeof cat === "string" && cat.length > 0)
+        .filter((cat) => typeof cat === "string" && cat.length > 0 && cat !== "")
     )
   );
 }
@@ -81,10 +82,11 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
+            {/* DO NOT change "All Categories" below—needed for clearing */}
             <SelectItem value="">All Categories</SelectItem>
+            {/* Only render categories with safe, non-empty, non-whitespace string values */}
             {filteredCategories.map((cat, i) => {
-              // Only allow non-empty, non-whitespace strings as value
-              if (typeof cat === "string" && cat.trim().length > 0) {
+              if (typeof cat === "string" && cat.trim().length > 0 && cat !== "") {
                 return (
                   <SelectItem key={cat + "-" + i} value={cat}>
                     {cat}

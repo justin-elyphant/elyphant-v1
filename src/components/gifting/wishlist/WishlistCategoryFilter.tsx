@@ -14,7 +14,7 @@ type WishlistCategoryFilterProps = {
   onClearFilters: () => void;
 };
 
-// Strict utility: unique, trimmed, non-empty string categories only
+// Returns a list of de-duped, non-empty, trimmed string categories (no "")
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
   return Array.from(
@@ -34,13 +34,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Filter categories to ensure no empty strings
+  // Always filter and validate selectableCategories to only usable values, for both display & Select logic
   const filteredCategories = React.useMemo(
     () => getStrictValidCategories(selectableCategories),
     [selectableCategories]
   );
 
-  // DEV LOGGING for debugging category issues
+  // DEV LOGGING for debugging (Optional, but useful!)
   if (process.env.NODE_ENV === "development") {
     if (Array.isArray(selectableCategories)) {
       selectableCategories.forEach((cat, i) => {
@@ -58,7 +58,8 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     });
   }
 
-  // Only allow a valid value or blank for "All Categories"
+  // Determine which value should be set for the Select
+  // Only allow "" for "All Categories", otherwise must be one of filteredCategories
   const currentValue =
     typeof categoryFilter === "string" &&
     filteredCategories.includes(categoryFilter) &&
@@ -72,6 +73,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
+            // If "All Categories" or invalid selection, clear the filter (set null)
             if (!value || value === "" || !filteredCategories.includes(value)) {
               onCategoryFilterChange(null);
             } else {
@@ -83,15 +85,19 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* The only empty value */}
+            {/* Only this item is allowed with value="" */}
             <SelectItem value="">All Categories</SelectItem>
+            {/* All other items must have non-empty value */}
             {filteredCategories
-              .filter((cat) => typeof cat === "string" && cat.length > 0 && cat !== "")
-              .map((cat, i) => (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
+              .map((cat, i) =>
+                typeof cat === "string" &&
+                cat.trim().length > 0 &&
+                cat !== "" ? (
+                  <SelectItem key={cat + "-" + i} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ) : null
+              )}
           </SelectContent>
         </Select>
       </div>
@@ -120,3 +126,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

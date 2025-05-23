@@ -230,35 +230,30 @@ const MyWishlists = () => {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                {/* Only All Categories is allowed to have empty string as value */}
                 <SelectItem value="">All Categories</SelectItem>
-                {/* Guard: Show 'No categories' if none */}
+                {/* Only map categories that are non-empty, trimmed strings */}
                 {filteredCategories.length === 0 && (
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
                 {filteredCategories.map((cat, i) => {
-                  // Strongest possible guard: skip if not string, blank, or whitespace
-                  if (typeof cat !== "string" || !cat.trim()) {
-                    console.warn("Skipping category in <SelectItem> with invalid or empty value", i, cat);
+                  // Defensive: skip categories that are *not* a non-empty trimmed string
+                  if (typeof cat !== "string") {
+                    console.warn("[Wishlist Select] Category not a string, skipping:", cat);
                     return null;
                   }
-                  const trimmed = cat.trim();
-                  // At this point, trimmed is guaranteed non-empty string
-                  // For user safety, still guard (should never happen)
-                  if (!trimmed) {
-                    console.warn("CRITICAL: Encountered blank value after trim at <SelectItem>", i, cat);
+                  const trimmedValue = cat.trim();
+                  if (!trimmedValue) {
+                    // Don't render blank/whitespace categories
+                    console.warn("[Wishlist Select] Skipping empty/whitespace category for SelectItem", cat);
                     return null;
                   }
-                  if (trimmed === "") {
-                    console.warn("CRITICAL: Attempt to use empty string for category value", i, cat);
-                    return null;
-                  }
+                  // Safe to render since it's guaranteed a non-empty string
                   return (
                     <SelectItem
-                      key={`${trimmed}-${i}`}
-                      value={trimmed}
+                      key={trimmedValue + "-" + i}
+                      value={trimmedValue}
                     >
-                      {trimmed}
+                      {trimmedValue}
                     </SelectItem>
                   );
                 })}

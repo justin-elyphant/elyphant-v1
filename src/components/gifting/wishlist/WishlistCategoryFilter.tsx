@@ -24,9 +24,12 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Defensive: Ensure only non-empty, valid category values
+  // Defensive: Ensure only non-empty, valid, non-blank category values
   const validCategories = React.useMemo(
-    () => selectableCategories.filter((cat) => typeof cat === "string" && !!cat.trim()),
+    () =>
+      selectableCategories.filter(
+        (cat) => typeof cat === "string" && !!cat.trim()
+      ),
     [selectableCategories]
   );
 
@@ -49,11 +52,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {validCategories.map((cat, i) => (
-              <SelectItem key={cat + "-" + i} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {validCategories.map((cat, i) =>
+              cat && cat !== "" ? (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ) : null
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -82,3 +87,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

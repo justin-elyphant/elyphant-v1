@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
@@ -71,19 +72,24 @@ const MyWishlists = () => {
   // Defensive: compute list of unique, valid, non-empty string categories
   const categories = React.useMemo(() => {
     if (!wishlists?.length) return [];
-    const allCategories = wishlists
-      .map(list =>
-        typeof list.category === "string"
-          ? list.category.trim()
-          : ""
-      );
-    // Uniqueness only, don't filter yet
-    return Array.from(new Set(allCategories));
+    // Map through wishlists, trim, filter out blank or whitespace-only values
+    return Array.from(
+      new Set(
+        wishlists
+          .map(list =>
+            typeof list.category === "string"
+              ? list.category.trim()
+              : ""
+          )
+          .filter(cat => cat && cat.length > 0) // Filter out "" and null
+      )
+    );
   }, [wishlists]);
 
   // Filter for valid, non-empty categories (no null, empty, or whitespace-only)
-  const selectableCategories = React.useMemo(() =>
-    categories.filter(isValidCategoryString), [categories]
+  const selectableCategories = React.useMemo(
+    () => categories.filter(isValidCategoryString),
+    [categories]
   );
 
   // Defensive: Ensure filter is always valid—if not, reset it to null
@@ -329,3 +335,4 @@ const MyWishlists = () => {
 };
 
 export default MyWishlists;
+

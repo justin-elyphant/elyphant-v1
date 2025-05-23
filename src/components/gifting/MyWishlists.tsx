@@ -236,7 +236,7 @@ const MyWishlists = () => {
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
                 {filteredCategories.map((cat, i) => {
-                  // Defensive: skip categories that are *not* a non-empty trimmed string
+                  // Only render if cat is a string and trims to non-empty
                   if (typeof cat !== "string") {
                     console.warn("[Wishlist Select] Category not a string, skipping:", cat);
                     return null;
@@ -247,7 +247,7 @@ const MyWishlists = () => {
                     console.warn("[Wishlist Select] Skipping empty/whitespace category for SelectItem", cat);
                     return null;
                   }
-                  // Safe to render since it's guaranteed a non-empty string
+                  // Only render valid categories
                   return (
                     <SelectItem
                       key={trimmedValue + "-" + i}

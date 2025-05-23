@@ -62,24 +62,35 @@ const MyWishlists = () => {
     removeFromWishlist,
   } = useWishlists();
 
-  // Defensive: compute list of unique, valid, non-empty string categories
+  // Defensive: compute list of unique, valid, non-empty string categories (super strict filtering)
   const categories = React.useMemo(() => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
-      .map(list => typeof list.category === "string" ? list.category.trim() : "")
-      .filter((category) => typeof category === "string" && category.trim().length > 0);
-    // Only unique valid (non-empty) strings
+      .map(list =>
+        typeof list.category === "string"
+          ? list.category.trim()
+          : ""
+      )
+      // Keep only strings that are not just whitespace and not empty
+      .filter((category): category is string =>
+        typeof category === "string" &&
+        category.length > 0 &&
+        !!category.trim()
+      );
+    // Only unique and valid strings
     return Array.from(new Set(allCategories));
   }, [wishlists]);
 
-  // Debug log just before rendering to catch issues
+  // Debug log categories
   useEffect(() => {
-    console.log("[Wishlist] Categories about to render in Select:", categories);
-    // Show all wishlists and their categories for deeper debugging
-    if (wishlists?.some(list => !list.category || typeof list.category !== "string" || list.category.trim() === "")) {
-      console.warn("[Wishlist] Some wishlists have invalid categories:", wishlists.map(l => l.category));
-    }
-  }, [categories, wishlists]);
+    console.log("[Wishlist] Strict filter categories for Select:", categories);
+    // Log each category with index for further debugging
+    categories.forEach((cat, idx) => {
+      if (typeof cat !== "string" || cat.trim() === "") {
+        console.warn("Invalid category in dropdown at index", idx, ":", cat);
+      }
+    });
+  }, [categories]);
 
   // Filter wishlists based on category and search query
   const filteredWishlists = React.useMemo(() => {
@@ -220,10 +231,10 @@ const MyWishlists = () => {
                 {/* This placeholder is correct */}
                 <SelectItem value="">All Categories</SelectItem>
                 {categories
-                  // Even though categories are now fully sanitized, add one last filter
+                  // Final safeguard: truly only allow valid, non-empty, trimmed strings
                   .filter(
                     (category): category is string =>
-                      typeof category === "string" && category.trim().length > 0
+                      typeof category === "string" && category.length > 0 && category.trim() !== ""
                   )
                   .map((category, i) => (
                     <SelectItem

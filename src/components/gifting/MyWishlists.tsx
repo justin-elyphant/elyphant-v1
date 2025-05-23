@@ -238,19 +238,18 @@ const MyWishlists = () => {
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
                 {filteredCategories
-                  // Only include valid, trimmed, non-empty strings
+                  // Absolutely guarantee only non-empty, trimmed, string categories go through
                   .filter(
                     (category): category is string =>
                       typeof category === "string" &&
-                      !!category.trim() && // not all whitespace/empty
                       category.trim().length > 0
                   )
                   .map((category, i) => (
                     <SelectItem
-                      key={`${category}-${i}`}
+                      key={`${category.trim()}-${i}`}
                       value={category.trim()}
                     >
-                      {category}
+                      {category.trim()}
                     </SelectItem>
                   ))}
               </SelectContent>

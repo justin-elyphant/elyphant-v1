@@ -33,9 +33,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Only sanitize/select valid categories locally as a final guard
+  // Use props as the ONLY source of filtered categories
+  // Filter out invalid categories here to ensure no empty/whitespace are rendered
   const filteredCategories = React.useMemo(
-    () => getStrictValidCategories(selectableCategories),
+    () =>
+      selectableCategories.filter(
+        (cat) => typeof cat === "string" && cat.trim().length > 0
+      ),
     [selectableCategories]
   );
 

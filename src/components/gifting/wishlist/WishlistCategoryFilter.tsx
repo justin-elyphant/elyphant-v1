@@ -37,12 +37,22 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     return Array.from(new Set(validCategories));
   }, [validCategories]);
 
-  // Only valid, non-empty, non-whitespace categories for rendering SelectItems
+  // --- STRICTEST filter: nothing falsy, no whitespace, no empty string
   const filteredCategories = React.useMemo(() => {
     return dedupedCategories.filter(
-      (cat): cat is string => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+      (cat): cat is string => !!cat && typeof cat === "string" && cat.trim().length > 0 && cat !== ""
     );
   }, [dedupedCategories]);
+
+  // Development logging: sanity checks for any bad categories
+  if (process.env.NODE_ENV === "development") {
+    dedupedCategories.forEach((cat, idx) => {
+      if (!(!!cat && typeof cat === "string" && cat.trim().length > 0 && cat !== "")) {
+        // eslint-disable-next-line no-console
+        console.error("[WishlistCategoryFilter][DEV] Bad category won't render as SelectItem:", { idx, cat });
+      }
+    });
+  }
 
   // Current value for <Select />
   const currentValue =
@@ -51,19 +61,6 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     categoryFilter.trim().length > 0
       ? categoryFilter
       : "";
-
-  // Developer-only logging for debugging
-  if (process.env.NODE_ENV === "development") {
-    dedupedCategories.forEach((cat, idx) => {
-      if (!(typeof cat === "string" && !!cat.trim() && cat !== "")) {
-        // eslint-disable-next-line no-console
-        console.error("[WishlistCategoryFilter] Invalid category value in dedupedCategories:", {
-          idx,
-          cat,
-        });
-      }
-    });
-  }
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -82,7 +79,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* Only the all-categories option uses value="" */}
+            {/* Only the all-categories option has value="" */}
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories.map((cat, i) => (
               <SelectItem key={cat + "-" + i} value={cat}>

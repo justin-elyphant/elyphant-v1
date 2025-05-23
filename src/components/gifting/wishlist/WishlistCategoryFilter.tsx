@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -29,32 +30,32 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Defensive filter: Remove all falsy, whitespace, non-string values.
+  // Strict final filter: Remove all falsy, whitespace, non-string values.
   const validRenderedCategories = React.useMemo(
     () =>
-      selectableCategories.filter((cat) =>
-        typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+      (selectableCategories || []).filter(
+        (cat) =>
+          typeof cat === "string" &&
+          cat.trim().length > 0 &&
+          cat !== ""
       ),
     [selectableCategories]
   );
 
-  // Defensive: Check for any empty string leaking into SelectItem loop
+  // Debug log: RIGHT before rendering, log what will be rendered
   React.useEffect(() => {
-    selectableCategories.forEach((cat) => {
-      if (!cat || typeof cat !== "string" || !cat.trim()) {
-        console.error("[WishlistCategoryFilter] Invalid 'selectableCategories' item detected at runtime:", cat);
+    // Defensive: log categories about to be rendered
+    validRenderedCategories.forEach((cat, i) => {
+      if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+        console.error("[WishlistCategoryFilter] Invalid in SelectItem render loop:", cat, i);
       }
     });
-    validRenderedCategories.forEach((cat) => {
-      if (cat === "") {
-        console.error("[WishlistCategoryFilter] Empty string in validRenderedCategories:", cat);
-      }
-    });
-  }, [selectableCategories, validRenderedCategories]);
+    console.log("[WishlistCategoryFilter] About to render categories (should be all valid, non-empty):", validRenderedCategories);
+  }, [validRenderedCategories]);
 
   // Defensive: only allow "" for All Categories as value
   const currentValue =
-    categoryFilter &&
+    typeof categoryFilter === "string" &&
     validRenderedCategories.includes(categoryFilter)
       ? categoryFilter
       : "";
@@ -78,7 +79,12 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
             {validRenderedCategories
-              .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              .filter(
+                (cat) =>
+                  typeof cat === "string" &&
+                  cat.trim().length > 0 &&
+                  cat !== ""
+              )
               .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
@@ -112,3 +118,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

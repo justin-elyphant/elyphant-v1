@@ -230,24 +230,25 @@ const MyWishlists = () => {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                {/* Only "All Categories" is allowed to be value="" */}
+                {/* Only All Categories is allowed to have empty string as value */}
                 <SelectItem value="">All Categories</SelectItem>
-                {/* Guard against any invalid/empty category here */}
+                {/* Guard: Show 'No categories' if none */}
                 {filteredCategories.length === 0 && (
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
                 {filteredCategories.map((cat, i) => {
                   if (!isValidCategoryString(cat)) {
-                    // Last resort: skip if not a valid string
+                    // Warn for debugging bad categories (shouldn't happen)
                     console.warn("Skipping invalid category in SelectItem", i, cat);
                     return null;
                   }
                   const trimmed = cat.trim();
-                  // Defensive: never allow empty string in value except for All Categories above
-                  if (!trimmed || trimmed === "") {
+                  // Defensive: skip any blank or all-whitespace/empty after trim
+                  if (!trimmed) {
                     console.warn("Skipping trimmed blank category in SelectItem", i, cat);
                     return null;
                   }
+                  // Only now is it safe to pass 'trimmed' as value!
                   return (
                     <SelectItem
                       key={`${trimmed}-${i}`}

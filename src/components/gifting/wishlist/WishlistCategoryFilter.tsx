@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -101,11 +100,26 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories.map((cat, i) => (
-              <SelectItem key={cat + "-" + i} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {filteredCategories.map((cat, i) => {
+              // Defensive: never render an invalid category!
+              if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+                if (process.env.NODE_ENV === "development") {
+                  // eslint-disable-next-line no-console
+                  console.error(
+                    "[WishlistCategoryFilter] Skipping rendering <SelectItem> with empty or invalid value! Index:",
+                    i,
+                    "Value:",
+                    cat
+                  );
+                }
+                return null;
+              }
+              return (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -134,4 +148,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

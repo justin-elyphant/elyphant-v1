@@ -238,7 +238,7 @@ const MyWishlists = () => {
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
                 {filteredCategories
-                  // Ensure each category is a non-empty trimmed string. If not, log and skip it.
+                  // Defensive filter: only non-empty, trimmed, string category values!
                   .filter((cat) => {
                     if (typeof cat !== "string") {
                       console.warn("[SelectItem] Category not a string:", cat);
@@ -252,8 +252,13 @@ const MyWishlists = () => {
                     return true;
                   })
                   .map((cat, i) => {
-                    const trimmed = cat.trim();
-                    // Additional safety: never render an empty value here!
+                    const trimmed = (typeof cat === "string" ? cat.trim() : "");
+                    // Only render non-empty value
+                    if (trimmed === "") {
+                      // Log and skip. This should never happen due to the filter above.
+                      console.warn("[SelectItem] Will not render SelectItem for blank value at", i, "category:", cat);
+                      return null;
+                    }
                     return (
                       <SelectItem
                         key={`${trimmed}-${i}`}
@@ -262,7 +267,9 @@ const MyWishlists = () => {
                         {trimmed}
                       </SelectItem>
                     );
-                  })}
+                  })
+                  .filter(Boolean) // Remove any accidental nulls, just in case
+                }
               </SelectContent>
             </Select>
           </div>

@@ -86,9 +86,9 @@ const MyWishlists = () => {
   }, [wishlists]);
 
   // Filter out again right before rendering. DO NOT trust any source!
-  const filteredCategories = categories.filter(
-    (cat): cat is string => typeof cat === "string" && cat.trim().length > 0
-  );
+  const filteredCategories = categories
+    .map(cat => (typeof cat === "string" ? cat.trim() : ""))
+    .filter((cat): cat is string => !!cat && typeof cat === "string" && cat.length > 0);
 
   // Add debug log before rendering
   React.useEffect(() => {
@@ -237,39 +237,22 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {filteredCategories
-                  // Defensive filter: only non-empty, trimmed, string category values!
-                  .filter((cat) => {
-                    if (typeof cat !== "string") {
-                      console.warn("[SelectItem] Category not a string:", cat);
-                      return false;
-                    }
-                    const trimmed = cat.trim();
-                    if (!trimmed) {
-                      console.warn("[SelectItem] Skipping empty/whitespace category:", cat);
-                      return false;
-                    }
-                    return true;
-                  })
-                  .map((cat, i) => {
-                    const trimmed = (typeof cat === "string" ? cat.trim() : "");
-                    // Only render non-empty value
-                    if (trimmed === "") {
-                      // Log and skip. This should never happen due to the filter above.
-                      console.warn("[SelectItem] Will not render SelectItem for blank value at", i, "category:", cat);
-                      return null;
-                    }
-                    return (
-                      <SelectItem
-                        key={`${trimmed}-${i}`}
-                        value={trimmed}
-                      >
-                        {trimmed}
-                      </SelectItem>
-                    );
-                  })
-                  .filter(Boolean) // Remove any accidental nulls, just in case
-                }
+                {filteredCategories.map((cat, i) => {
+                  // Make extra sure this is never blank
+                  if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
+                    // Extra log: will not render a SelectItem for blank/invalid
+                    console.warn("[SelectItem] Will not render SelectItem for blank/invalid value at", i, "category:", cat);
+                    return null;
+                  }
+                  return (
+                    <SelectItem
+                      key={`${cat}-${i}`}
+                      value={cat}
+                    >
+                      {cat}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

@@ -72,13 +72,12 @@ const MyWishlists = () => {
           : ""
       );
     // Only unique, valid NON-empty, TRIMMED strings
+    // (force to string, trim, and check .length > 0)
     return Array.from(
       new Set(
         allCategories.filter((category): category is string =>
           Boolean(
-            category &&
             typeof category === "string" &&
-            category.trim() !== "" &&
             category.trim().length > 0
           )
         )
@@ -88,14 +87,17 @@ const MyWishlists = () => {
 
   // Filter out again right before rendering. DO NOT trust any source!
   const filteredCategories = categories.filter(
-    (cat): cat is string =>
-      typeof cat === "string" &&
-      cat.trim().length > 0
+    (cat): cat is string => typeof cat === "string" && cat.trim().length > 0
   );
 
   // Add debug log before rendering
   React.useEffect(() => {
     console.log("[Wishlist] Categories computed for Select (final):", filteredCategories);
+    filteredCategories.forEach((cat, idx) => {
+      if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
+        console.warn("Bad category in filteredCategories at", idx, ":", cat);
+      }
+    });
   }, [filteredCategories]);
 
   // Filter wishlists based on category and search query
@@ -235,14 +237,21 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {filteredCategories.map((category, i) => (
-                  <SelectItem
-                    key={`${category}-${i}`}
-                    value={category}
-                  >
-                    {category}
-                  </SelectItem>
-                ))}
+                {filteredCategories.map((category, i) => {
+                  if (typeof category !== "string" || category.trim().length === 0) {
+                    // For debugging, skip rendering, warn loudly
+                    console.warn("Skipping invalid SelectItem value (category):", category, "at", i);
+                    return null;
+                  }
+                  return (
+                    <SelectItem
+                      key={`${category}-${i}`}
+                      value={category}
+                    >
+                      {category}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

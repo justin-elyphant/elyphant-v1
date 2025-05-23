@@ -80,19 +80,9 @@ const MyWishlists = () => {
     return Array.from(new Set(allCategories));
   }, [wishlists]);
 
-  // SAFAEST: Only categories which are valid and non-empty get mapped to SelectItem
-  const filteredCategories = React.useMemo(
-    () => categories.filter(isValidCategoryString),
-    [categories]
-  );
-
-  // Defensive: Only include categories that are non-empty after trimming and are strings.
-  const selectableCategories = React.useMemo(
-    () =>
-      filteredCategories
-        .map(cat => (typeof cat === "string" ? cat.trim() : "")) // Always trim
-        .filter(cat => !!cat), // Only include non-empty strings
-    [filteredCategories]
+  // Filter for valid, non-empty categories (no null, empty, or whitespace-only)
+  const selectableCategories = React.useMemo(() =>
+    categories.filter(isValidCategoryString), [categories]
   );
 
   // Defensive: Ensure filter is always valid—if not, reset it to null
@@ -107,6 +97,15 @@ const MyWishlists = () => {
       setCategoryFilter(null);
     }
   }, [categoryFilter, selectableCategories]);
+
+  // Debug logging: Make sure there are no empty categories about to render
+  React.useEffect(() => {
+    selectableCategories.forEach((cat, i) => {
+      if (!cat || typeof cat !== "string" || !cat.trim()) {
+        console.error("[Wishlists] About to render invalid category for SelectItem:", cat, i);
+      }
+    });
+  }, [selectableCategories]);
 
   // Add dev log of all categories and filters
   React.useEffect(() => {
@@ -260,14 +259,16 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {/* Render only categories with a strict, non-empty value */}
-                {selectableCategories.map((cat, i) =>
-                  cat ? (
+                {/* Only render valid categories */}
+                {selectableCategories.map((cat, i) => {
+                  // Extra defensive: Don't render unless 100% valid
+                  if (!cat || typeof cat !== "string" || !cat.trim()) return null;
+                  return (
                     <SelectItem key={cat + "-" + i} value={cat}>
                       {cat}
                     </SelectItem>
-                  ) : null
-                )}
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

@@ -62,7 +62,7 @@ const MyWishlists = () => {
     removeFromWishlist,
   } = useWishlists();
 
-  // Defensive: compute list of unique, valid, non-empty string categories (super strict filtering)
+  // Defensive: compute list of unique, valid, non-empty string categories (SUPER strict filtering)
   const categories = React.useMemo(() => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
@@ -70,27 +70,33 @@ const MyWishlists = () => {
         typeof list.category === "string"
           ? list.category.trim()
           : ""
-      )
-      // Keep only strings that are not just whitespace and not empty
-      .filter((category): category is string =>
-        typeof category === "string" &&
-        category.length > 0 &&
-        !!category.trim()
       );
-    // Only unique and valid strings
-    return Array.from(new Set(allCategories));
+    // Only unique, valid NON-empty, TRIMMED strings
+    return Array.from(
+      new Set(
+        allCategories.filter((category): category is string =>
+          Boolean(
+            category &&
+            typeof category === "string" &&
+            category.trim() !== "" &&
+            category.trim().length > 0
+          )
+        )
+      )
+    );
   }, [wishlists]);
 
-  // Debug log categories
-  useEffect(() => {
-    console.log("[Wishlist] Strict filter categories for Select:", categories);
-    // Log each category with index for further debugging
-    categories.forEach((cat, idx) => {
-      if (typeof cat !== "string" || cat.trim() === "") {
-        console.warn("Invalid category in dropdown at index", idx, ":", cat);
-      }
-    });
-  }, [categories]);
+  // Filter out again right before rendering. DO NOT trust any source!
+  const filteredCategories = categories.filter(
+    (cat): cat is string =>
+      typeof cat === "string" &&
+      cat.trim().length > 0
+  );
+
+  // Add debug log before rendering
+  React.useEffect(() => {
+    console.log("[Wishlist] Categories computed for Select (final):", filteredCategories);
+  }, [filteredCategories]);
 
   // Filter wishlists based on category and search query
   const filteredWishlists = React.useMemo(() => {
@@ -228,22 +234,15 @@ const MyWishlists = () => {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                {/* This placeholder is correct */}
                 <SelectItem value="">All Categories</SelectItem>
-                {categories
-                  // Final safeguard: truly only allow valid, non-empty, trimmed strings
-                  .filter(
-                    (category): category is string =>
-                      typeof category === "string" && category.length > 0 && category.trim() !== ""
-                  )
-                  .map((category, i) => (
-                    <SelectItem
-                      key={`${category}-${i}`}
-                      value={category}
-                    >
-                      {category}
-                    </SelectItem>
-                  ))}
+                {filteredCategories.map((category, i) => (
+                  <SelectItem
+                    key={`${category}-${i}`}
+                    value={category}
+                  >
+                    {category}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -50,7 +50,10 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     dedupedCategories.forEach((cat, idx) => {
       if (!(typeof cat === "string" && !!cat.trim() && cat !== "")) {
         // eslint-disable-next-line no-console
-        console.error("Invalid category in <SelectItem />:", { idx, cat });
+        console.error("[WishlistCategoryFilter] Invalid category value in dedupedCategories:", {
+          idx,
+          cat,
+        });
       }
     });
   }
@@ -75,6 +78,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* Only the all-categories option uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
             {dedupedCategories
+              // Filter out any empty string or whitespace-only category to prevent SelectItem with value=""
               .filter((cat) => typeof cat === "string" && !!cat.trim() && cat !== "")
               .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>

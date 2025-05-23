@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import { useWishlist } from "../hooks/useWishlist";
 import WishlistShareButton from "./share/WishlistShareButton";
 import ShareStatusBadge from "./ShareStatusBadge";
 import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
+import WishlistSelectionPopoverButton from "./WishlistSelectionPopoverButton";
 
 interface WishlistCardProps {
   wishlist: Wishlist;
@@ -80,28 +80,36 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
         <Trash2 className="h-4 w-4" />
       </Button>
       
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between pr-8">
+      <CardHeader className="pb-2 flex items-center justify-between">
+        <div>
           <CardTitle>{wishlist.title}</CardTitle>
-        </div>
-
-        {wishlist.description && (
-          <CardDescription>{wishlist.description}</CardDescription>
-        )}
-        
-        <div className="flex flex-wrap gap-2 mt-2">
-          {wishlist.category && (
-            <WishlistCategoryBadge category={wishlist.category} />
+          {wishlist.description && (
+            <CardDescription>{wishlist.description}</CardDescription>
           )}
           
-          {getPriorityBadge()}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {wishlist.category && (
+              <WishlistCategoryBadge category={wishlist.category} />
+            )}
+            
+            {getPriorityBadge()}
 
-          {wishlist.tags?.map(tag => (
-            <Badge key={tag} variant="outline" className="text-xs bg-gray-50">
-              {tag}
-            </Badge>
-          ))}
+            {wishlist.tags?.map(tag => (
+              <Badge key={tag} variant="outline" className="text-xs bg-gray-50">
+                {tag}
+              </Badge>
+            ))}
+          </div>
         </div>
+        {/* Add-to-wishlist popover: encourage new item addition */}
+        <WishlistSelectionPopoverButton
+          product={{
+            id: "",
+            name: "",
+          }}
+          triggerClassName="ml-2"
+          onAdded={null}
+        />
       </CardHeader>
 
       <CardContent>

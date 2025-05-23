@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import ProductStatusBadges from "./ProductStatusBadges";
 import WishlistButton from "./WishlistButton";
 import ProductPriceSection from "./ProductPriceSection";
 import ProductRatingSection from "./ProductRatingSection";
+import WishlistSelectionPopoverButton from "./wishlist/WishlistSelectionPopoverButton";
 
 interface ProductCardProps {
   product: any;
@@ -82,13 +82,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
           isRecentlyViewed={isRecentlyViewed()}
         />
 
-        {/* Refactored Wishlist Button */}
-        <WishlistButton
-          isWishlisted={isWishlisted}
-          isGifteeView={isGifteeView}
-          isMobile={isMobile}
-          onToggleWishlist={onToggleWishlist}
-        />
+        {/* Popover-based Wishlist Selection */}
+        <div className="absolute top-2 right-2 z-30">
+          <WishlistSelectionPopoverButton
+            product={{
+              id: String(product.product_id || product.id),
+              name: product.title || product.name || "",
+              image: product.image || "",
+              price: product.price,
+              brand: product.brand
+            }}
+            triggerClassName={cn(
+              "p-1.5 rounded-full transition-colors",
+              isWishlisted 
+                ? "bg-pink-100 text-pink-500 hover:bg-pink-200" 
+                : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+            )}
+            onAdded={onToggleWishlist}
+          />
+        </div>
       </div>
 
       <div className={cn(

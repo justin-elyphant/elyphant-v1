@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Loader2, PlusCircle, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -35,10 +36,14 @@ const WishlistSelectionPopover = ({
   trigger,
   className
 }: WishlistSelectionPopoverProps) => {
-  const { wishlists, addToWishlist } = useWishlist();
+  const { wishlists, addToWishlist, createWishlist } = useWishlist();
   const [open, setOpen] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null);
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Check which wishlists already contain this product
   const isInWishlist = (wishlistId: string) => {
@@ -51,9 +56,9 @@ const WishlistSelectionPopover = ({
       setAddingToWishlist(wishlistId);
       await addToWishlist(wishlistId, {
         product_id: productId,
-        title: productName, // Use title for the required field
-        wishlist_id: wishlistId, // Add the missing required field
-        created_at: new Date().toISOString(), // Add the missing required field
+        title: productName,
+        wishlist_id: wishlistId,
+        created_at: new Date().toISOString(),
         name: productName,
         price: productPrice,
         image_url: productImage,
@@ -70,11 +75,34 @@ const WishlistSelectionPopover = ({
     }
   };
 
-  const handleCreateWishlist = () => {
-    navigate("/wishlists");
-    if (onClose) onClose();
-    setOpen(false);
+  const handleCreateWishlist = async () => {
+    if (!newName.trim()) {
+      toast.error("Please enter a name for your wishlist");
+      return;
+    }
+    setCreating(true);
+    try {
+      const newWishlist = await createWishlist(newName.trim());
+      if (newWishlist) {
+        toast.success("Wishlist created");
+        // Optionally, add item to the new wishlist automatically
+        await handleAddToWishlist(newWishlist.id);
+        setShowNewDialog(false);
+        setNewName("");
+      }
+    } catch (err) {
+      toast.error("Failed to create wishlist");
+    } finally {
+      setCreating(false);
+    }
   };
+
+  // For mobile: popover stretches full width, close triggers etc.
+  const popoverContentClass = cn(
+    "p-0",
+    className,
+    isMobile ? "w-full max-w-none rounded-none border-t border-gray-200 fixed bottom-0 left-0 right-0 min-h-[240px] z-[120]" : "w-80"
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -90,19 +118,26 @@ const WishlistSelectionPopover = ({
           </Button>
         )}
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-4 border-b">
+      <PopoverContent className={popoverContentClass} align={isMobile ? "center" : "end"} side={isMobile ? "top" : "bottom"}>
+        <div className="p-4 border-b flex items-center justify-between">
           <h4 className="font-medium">Add to Wishlist</h4>
-          <p className="text-sm text-muted-foreground mt-1">
-            Select a wishlist to add this item to
-          </p>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            aria-label="Close"
+            className={isMobile ? "" : "hidden"}
+          >
+            <span className="text-xl">&times;</span>
+          </Button>
         </div>
         
+        {/* Choose wishlist */}
         <div className="max-h-60 overflow-y-auto divide-y">
           {wishlists?.length > 0 ? (
             wishlists.map((wishlist) => {
               const alreadyInWishlist = isInWishlist(wishlist.id);
-              
+
               return (
                 <div 
                   key={wishlist.id} 
@@ -157,20 +192,51 @@ const WishlistSelectionPopover = ({
             </div>
           )}
         </div>
-        
-        <div className="p-3 border-t">
-          <Button 
-            variant="outline" 
-            className="w-full flex items-center justify-center"
-            onClick={handleCreateWishlist}
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Create New Wishlist
-          </Button>
-        </div>
+
+        {/* Create new wishlist inline */}
+        {!showNewDialog && (
+          <div className="p-3 border-t">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center"
+              onClick={() => setShowNewDialog(true)}
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Create New Wishlist
+            </Button>
+          </div>
+        )}
+        {showNewDialog && (
+          <div className="p-3 border-t">
+            <input
+              type="text"
+              className="input input-bordered w-full mb-2 border-gray-300 rounded px-2 py-2 text-sm"
+              placeholder="Wishlist name..."
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              disabled={creating}
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={creating}
+                onClick={handleCreateWishlist}
+              >{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}</Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setShowNewDialog(false)}
+                disabled={creating}
+              >Cancel</Button>
+            </div>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
 };
 
 export default WishlistSelectionPopover;
+

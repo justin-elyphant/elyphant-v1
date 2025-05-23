@@ -22,40 +22,29 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Strict: only valid string categories (non-empty when trimmed)
-  const validCategories = React.useMemo(() => {
-    return Array.isArray(selectableCategories)
-      ? selectableCategories.filter(
-          (cat): cat is string =>
-            typeof cat === "string" && !!cat.trim() && cat !== ""
-        )
-      : [];
+  // Strictest: only valid string categories (non-empty, trimmed, no whitespace)
+  const filteredCategories = React.useMemo(() => {
+    if (!Array.isArray(selectableCategories)) return [];
+    return selectableCategories
+      .filter((cat): cat is string =>
+        typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+      )
+      .map(cat => cat.trim()) // optional, to be extra safe
+      .filter((cat, idx, arr) => arr.indexOf(cat) === idx); // dedupe
   }, [selectableCategories]);
 
-  // Remove duplicates
-  const dedupedCategories = React.useMemo(() => {
-    return Array.from(new Set(validCategories));
-  }, [validCategories]);
-
-  // Absolutely strict filter for SelectItem: nothing falsy, no whitespace, no empty string
-  const filteredCategories = React.useMemo(() => {
-    return dedupedCategories.filter(
-      (cat): cat is string =>
-        typeof cat === "string" &&
-        cat.trim().length > 0 &&
-        cat !== ""
-    );
-  }, [dedupedCategories]);
-
-  // Development logging: sanity checks for bad categories
+  // DEV: warn about bad categories
   if (process.env.NODE_ENV === "development") {
-    if (dedupedCategories.some(cat => typeof cat !== "string" || cat.trim().length === 0 || cat === "")) {
+    if (
+      Array.isArray(selectableCategories) &&
+      selectableCategories.some(cat => typeof cat !== "string" || cat.trim().length === 0 || cat === "")
+    ) {
       // eslint-disable-next-line no-console
-      console.error("[WishlistCategoryFilter][DEV] Detected invalid category in dedupedCategories:", dedupedCategories);
+      console.error("[WishlistCategoryFilter][DEV] Detected invalid category in selectableCategories:", selectableCategories);
     }
-    if (filteredCategories.some(cat => typeof cat !== "string" || cat.trim().length === 0 || cat === "")) {
+    if (filteredCategories.some(cat => !cat || typeof cat !== "string" || cat.trim().length === 0)) {
       // eslint-disable-next-line no-console
-      console.error("[WishlistCategoryFilter][DEV] Detected invalid category in filteredCategories:", filteredCategories);
+      console.error("[WishlistCategoryFilter][DEV] Invalid value found in filteredCategories:", filteredCategories);
     }
   }
 
@@ -84,13 +73,15 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* Only the all-categories option uses value="" */}
+            {/* All Categories option (the ONLY one with value="") */}
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories.map((cat, i) => (
-              <SelectItem key={cat + "-" + i} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {filteredCategories
+              .filter(cat => cat && cat.trim().length > 0) // redundant but safest!
+              .map((cat, i) => (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

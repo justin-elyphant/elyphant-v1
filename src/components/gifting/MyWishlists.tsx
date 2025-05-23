@@ -89,14 +89,9 @@ const MyWishlists = () => {
   // Defensive: Only include categories that are non-empty after trimming and are strings.
   const selectableCategories = React.useMemo(
     () =>
-      filteredCategories.filter((cat) => {
-        const isValid = typeof cat === "string" && !!cat.trim();
-        if (!isValid) {
-          // Extra log for debugging
-          console.warn("[Wishlists] Skipping invalid category for SelectItem:", cat);
-        }
-        return isValid;
-      }),
+      filteredCategories
+        .map(cat => (typeof cat === "string" ? cat.trim() : "")) // Always trim
+        .filter(cat => !!cat), // Only include non-empty strings
     [filteredCategories]
   );
 
@@ -106,7 +101,7 @@ const MyWishlists = () => {
       categoryFilter &&
       (!selectableCategories.includes(categoryFilter) ||
         typeof categoryFilter !== "string" ||
-        categoryFilter.trim() === "")
+        !categoryFilter.trim())
     ) {
       console.warn("[Wishlists] Resetting invalid categoryFilter value", categoryFilter);
       setCategoryFilter(null);
@@ -265,19 +260,14 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {/* Map only trimmed, valid categories */}
-                {selectableCategories
-                  .map((cat, i) => {
-                    const trimmedCat = cat.trim();
-                    // Only render if non-empty after trim, extra guard
-                    if (!trimmedCat) return null;
-                    return (
-                      <SelectItem key={trimmedCat + "-" + i} value={trimmedCat}>
-                        {trimmedCat}
-                      </SelectItem>
-                    );
-                  })
-                }
+                {/* Render only categories with a strict, non-empty value */}
+                {selectableCategories.map((cat, i) =>
+                  cat ? (
+                    <SelectItem key={cat + "-" + i} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ) : null
+                )}
               </SelectContent>
             </Select>
           </div>

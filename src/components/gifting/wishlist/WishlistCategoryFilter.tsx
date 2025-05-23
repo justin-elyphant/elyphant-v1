@@ -89,8 +89,11 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* Only ONE clear/placeholder item */}
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories
-              // Absolutely bulletproof: only render if non-empty and string
-              .filter((cat): cat is string => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              // ABSOLUTE SAFETY: only non-empty strings, despite upstream filters
+              .filter(
+                (cat): cat is string =>
+                  typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+              )
               .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
@@ -124,3 +127,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

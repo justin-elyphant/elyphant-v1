@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useWishlist } from "@/components/gifting/hooks/useWishlist";
-import { Button } from "@/components/ui/button";
+
+import React from "react";
 import {
   Popover,
   PopoverContent,
@@ -10,9 +9,11 @@ import { Loader2, PlusCircle, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import WishlistCategoryBadge from "../gifting/wishlist/categories/WishlistCategoryBadge";
+import { useWishlistPopoverLogic } from "./hooks/useWishlistPopoverLogic";
+import { toast } from "sonner";
 
 interface WishlistSelectionPopoverProps {
   productId: string;
@@ -35,102 +36,32 @@ const WishlistSelectionPopover = ({
   trigger,
   className
 }: WishlistSelectionPopoverProps) => {
-  const { wishlists, addToWishlist, createWishlist, reloadWishlists } = useWishlist();
-  const [open, setOpen] = useState(false);
-  const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null);
-  const [showNewDialog, setShowNewDialog] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [creating, setCreating] = useState(false);
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [localWishlists, setLocalWishlists] = useState(wishlists);
+  const navigate = useNavigate();
 
-  // Sync localWishlists to context wishlists when open
-  useEffect(() => {
-    if (open) {
-      setLocalWishlists(wishlists);
-    }
-  }, [open, wishlists]);
+  // --- HOOK handles all business logic and state ---
+  const {
+    wishlists,
+    open,
+    setOpen,
+    addingToWishlist,
+    showNewDialog,
+    setShowNewDialog,
+    newName,
+    setNewName,
+    creating,
+    isInWishlist,
+    handleAddToWishlist,
+    handleCreateWishlist
+  } = useWishlistPopoverLogic({
+    productId,
+    productName,
+    productImage,
+    productPrice,
+    productBrand,
+    onClose
+  });
 
-  // Check which wishlists already contain this product
-  const isInWishlist = (wishlistId: string) => {
-    const wishlist = localWishlists.find((w) => w.id === wishlistId);
-    return wishlist?.items.some((item) => item.product_id === productId);
-  };
-
-  // Always hard sync after product add
-  const handleAddToWishlist = async (wishlistId: string) => {
-    try {
-      setAddingToWishlist(wishlistId);
-      await addToWishlist(wishlistId, {
-        product_id: productId,
-        title: productName,
-        wishlist_id: wishlistId,
-        created_at: new Date().toISOString(),
-        name: productName,
-        price: productPrice,
-        image_url: productImage,
-        brand: productBrand
-      });
-
-      // FORCE reload wishlists anew to reflect added item count & heart state everywhere
-      await reloadWishlists();
-      setLocalWishlists(wishlists => wishlists); // force state update if needed
-
-      toast.success(`Added to wishlist`);
-      if (onClose) onClose();
-      setOpen(false);
-    } catch (error) {
-      console.error("Error adding to wishlist:", error);
-      toast.error("Failed to add to wishlist");
-    } finally {
-      setAddingToWishlist(null);
-    }
-  };
-
-  // --- FIX: Fully sync after creating wishlist AND adding product ---
-  const handleCreateWishlist = async () => {
-    if (!newName.trim()) {
-      toast.error("Please enter a name for your wishlist");
-      return;
-    }
-    setCreating(true);
-    try {
-      const newWishlist = await createWishlist(newName.trim());
-      if (newWishlist) {
-        // Immediately reload wishlists, wait for it
-        await reloadWishlists();
-
-        // Find the created wishlist by name (ensure most up-to-date)
-        const refreshed = await reloadWishlists();
-        let created = null;
-        if (Array.isArray(refreshed)) {
-          created = refreshed.find(w => w.title === newName.trim());
-        } else {
-          created = (wishlists || []).find(w => w.title === newName.trim());
-        }
-
-        const newWishId = created?.id || newWishlist.id;
-        // Only then add the product to the created wishlist.
-        if (newWishId) {
-          await handleAddToWishlist(newWishId);
-          // Ensure UI updates with new wishlist + item
-          await reloadWishlists();
-          setLocalWishlists(wishlists => wishlists); // extra bump (for popover item count)
-        } else {
-          toast.error("Could not find the new wishlist after creation.");
-        }
-        setShowNewDialog(false);
-        setNewName("");
-      }
-    } catch (err) {
-      toast.error("Failed to create wishlist");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  // For mobile: popover stretches full width, close triggers etc.
   const popoverContentClass = cn(
     "p-0",
     className,
@@ -167,8 +98,8 @@ const WishlistSelectionPopover = ({
         
         {/* Choose wishlist */}
         <div className="max-h-60 overflow-y-auto divide-y">
-          {localWishlists?.length > 0 ? (
-            localWishlists.map((wishlist) => {
+          {wishlists?.length > 0 ? (
+            wishlists.map((wishlist) => {
               const alreadyInWishlist = isInWishlist(wishlist.id);
 
               return (

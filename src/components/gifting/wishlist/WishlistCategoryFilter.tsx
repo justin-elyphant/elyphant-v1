@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -66,18 +65,15 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     () =>
       validRenderedCategories.filter(
         (cat) =>
-          typeof cat === "string" &&
-          cat.trim().length > 0 &&
-          cat !== "" &&
-          cat !== null
+          typeof cat === "string" && cat.trim().length > 0
       ),
     [validRenderedCategories]
   );
 
-  // Extra log: fail hard if filteredCategories has an invalid value
+  // Extra: log immediately before rendering
   React.useEffect(() => {
     filteredCategories.forEach((cat, i) => {
-      if (typeof cat !== "string" || cat === "" || cat.trim().length === 0) {
+      if (typeof cat !== "string" || cat.trim().length === 0) {
         // eslint-disable-next-line no-console
         console.error("[WishlistCategoryFilter] About to render invalid category in <SelectItem>: ", i, cat);
       }
@@ -101,14 +97,19 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
+            {/* Only this entry can use "" */}
             <SelectItem value="">All Categories</SelectItem>
+            {/* All real categories must be non-empty */}
             {filteredCategories.map((cat, i) => {
-              // Defensive: never render an invalid category!
-              if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+              if (
+                typeof cat !== "string" ||
+                cat.trim().length === 0
+              ) {
+                // Defensive: Log and skip bad entries
                 if (process.env.NODE_ENV === "development") {
                   // eslint-disable-next-line no-console
                   console.error(
-                    "[WishlistCategoryFilter] Skipping rendering <SelectItem> with empty or invalid value! Index:",
+                    "[WishlistCategoryFilter] Skipping <SelectItem> with invalid value! Index:",
                     i,
                     "Value:",
                     cat
@@ -116,6 +117,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
                 }
                 return null;
               }
+              // This ensures NO SelectItem has value=""
               return (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
@@ -150,4 +152,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

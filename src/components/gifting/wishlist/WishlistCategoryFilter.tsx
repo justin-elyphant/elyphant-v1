@@ -1,17 +1,9 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getValidCategories, logInvalidCategories } from "./utils/validCategoryUtils";
-
-type WishlistCategoryFilterProps = {
-  selectableCategories: string[];
-  categoryFilter: string | null | undefined;
-  onCategoryFilterChange: (category: string | null) => void;
-  searchQuery: string;
-  onSearchQueryChange: (query: string) => void;
-  onClearFilters: () => void;
-};
 
 // Strong filter: dedupe, remove empty/whitespace, trim all, only valid strings
 function getStrictValidCategories(categories: unknown[]): string[] {
@@ -24,6 +16,15 @@ function getStrictValidCategories(categories: unknown[]): string[] {
     )
   );
 }
+
+type WishlistCategoryFilterProps = {
+  selectableCategories: string[];
+  categoryFilter: string | null | undefined;
+  onCategoryFilterChange: (category: string | null) => void;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+  onClearFilters: () => void;
+};
 
 const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   selectableCategories,
@@ -38,6 +39,15 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     () => getStrictValidCategories(selectableCategories),
     [selectableCategories]
   );
+
+  // Defensive: avoid rendering if no valid categories
+  if (!filteredCategories.length) {
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.error("[WishlistCategoryFilter][DEV] No valid filteredCategories, nothing to render", { selectableCategories, filteredCategories });
+    }
+    return null;
+  }
 
   // DEV LOGGING
   if (process.env.NODE_ENV === "development") {
@@ -85,7 +95,6 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories.map((cat, i) =>
-              // Never allow an empty value here
               typeof cat === "string" && cat.length > 0 ? (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
@@ -120,3 +129,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

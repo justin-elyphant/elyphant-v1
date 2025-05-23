@@ -247,9 +247,8 @@ const MyWishlists = () => {
       </Alert>
 
       {/* Filter and search section */}
-      {wishlists && wishlists.length > 1 && selectableCategories.length > 0 && (
+      {wishlists && wishlists.length > 1 && selectableCategories.length > 0 && selectableCategories.every((c) => typeof c === "string" && c.trim().length > 0) && (
         <WishlistCategoryFilter
-          // Extra safeguard: do NOT pass empty categories
           selectableCategories={selectableCategories}
           categoryFilter={categoryFilter}
           onCategoryFilterChange={setCategoryFilter}

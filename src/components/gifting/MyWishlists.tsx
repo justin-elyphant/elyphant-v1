@@ -71,24 +71,27 @@ const MyWishlists = () => {
           ? list.category.trim()
           : ""
       );
-    // Only unique, valid NON-empty, TRIMMED strings
-    // (force to string, trim, and check .length > 0)
+    // Only unique, valid, NON-empty, TRIMMED strings
     return Array.from(
       new Set(
         allCategories.filter((category): category is string =>
-          Boolean(
-            typeof category === "string" &&
-            category.trim().length > 0
-          )
+          typeof category === "string" && category.trim().length > 0
         )
       )
     );
   }, [wishlists]);
 
-  // Filter out again right before rendering. DO NOT trust any source!
-  const filteredCategories = categories
-    .map(cat => (typeof cat === "string" ? cat.trim() : ""))
-    .filter((cat): cat is string => !!cat && typeof cat === "string" && cat.length > 0);
+  // Extra strict: right before use. Only non-empty, trimmed, non-null.
+  const filteredCategories = React.useMemo(
+    () =>
+      categories
+        .map(cat => (typeof cat === "string" ? cat.trim() : ""))
+        .filter(
+          (cat): cat is string =>
+            !!cat && typeof cat === "string" && cat.length > 0 && cat !== ""
+        ),
+    [categories]
+  );
 
   // Add debug log before rendering
   React.useEffect(() => {
@@ -237,31 +240,25 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {filteredCategories
-                  // Only pass non-empty, trimmed values
-                  .filter((cat) => {
-                    if (typeof cat !== "string") {
-                      console.warn("[SelectItem] Skipping non-string category:", cat);
-                      return false;
-                    }
-                    const trimmed = cat.trim();
-                    if (!trimmed) {
-                      console.warn("[SelectItem] Skipping empty/whitespace category:", cat);
-                      return false;
-                    }
-                    return true;
-                  })
-                  .map((cat, i) => {
-                    const trimmed = cat.trim();
-                    return (
-                      <SelectItem
-                        key={`${trimmed}-${i}`}
-                        value={trimmed}
-                      >
-                        {trimmed}
-                      </SelectItem>
-                    );
-                  })}
+                {filteredCategories.length === 0 && (
+                  <div className="text-muted-foreground px-4 py-2">No categories</div>
+                )}
+                {filteredCategories.map((cat, i) => {
+                  // strictly ensure cat is non-empty at this point
+                  if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
+                    console.warn("[SelectItem] Skipping empty/invalid category at", i, cat);
+                    return null;
+                  }
+                  const trimmed = cat.trim();
+                  return (
+                    <SelectItem
+                      key={`${trimmed}-${i}`}
+                      value={trimmed}
+                    >
+                      {trimmed}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

@@ -28,6 +28,7 @@ import SignInPrompt from "./my-wishlists/SignInPrompt";
 import LoadingWishlists from "./my-wishlists/LoadingWishlists";
 import InitErrorState from "./my-wishlists/InitErrorState";
 import WishlistCategoryFilter from "./wishlist/WishlistCategoryFilter";
+import { getValidWishlistCategories } from "./wishlist/utils/categoryUtils";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -68,24 +69,10 @@ const MyWishlists = () => {
     removeFromWishlist,
   } = useWishlists();
 
-  // Compute list of unique, valid, non-empty, trimmed category strings (never "")
-  const categories = React.useMemo(() => {
-    if (!wishlists?.length) return [];
-    // Always trim and only keep non-empty strings
-    const validSet = new Set<string>();
-    wishlists.forEach(list => {
-      if (typeof list.category === "string") {
-        const trimmed = list.category.trim();
-        if (trimmed.length > 0) validSet.add(trimmed);
-      }
-    });
-    return Array.from(validSet);
-  }, [wishlists]);
-
-  // Ensure only valid strings in selectableCategories
+  // Use the new utility to get only valid, trimmed, deduped categories
   const selectableCategories = React.useMemo(
-    () => categories.filter(isValidCategoryString),
-    [categories]
+    () => getValidWishlistCategories(wishlists || []),
+    [wishlists]
   );
 
   // Defensive: Ensure filter is always valid—if not, reset it to null

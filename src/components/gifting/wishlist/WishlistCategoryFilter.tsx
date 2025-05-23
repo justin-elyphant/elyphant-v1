@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
  * Props for WishlistCategoryFilter.
  */
 type WishlistCategoryFilterProps = {
+  /**
+   * Array of categories (already filtered and trimmed) - must not include empty strings.
+   */
   selectableCategories: string[];
   categoryFilter: string | null | undefined;
   onCategoryFilterChange: (category: string | null) => void;
@@ -16,6 +19,9 @@ type WishlistCategoryFilterProps = {
   onClearFilters: () => void;
 };
 
+/**
+ * Filter selects: no empty value except for "All Categories"
+ */
 const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   selectableCategories,
   categoryFilter,
@@ -24,27 +30,20 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Always filter only valid, non-empty, trimmed string categories
-  const validCategories = React.useMemo(() =>
-    selectableCategories.filter(
-      (cat) => typeof cat === "string" && !!cat.trim()
-    ),
-    [selectableCategories]
-  );
-
-  // Warn (dev only) if there's invalid category
+  // Defensive: selectableCategories must never include ""
   React.useEffect(() => {
-    validCategories.forEach((cat) => {
+    selectableCategories.forEach(cat => {
       if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
-        console.warn("[WishlistCategoryFilter] Invalid category value in list:", cat);
+        console.warn("[WishlistCategoryFilter] Received invalid category in selectableCategories:", cat);
       }
     });
-  }, [validCategories]);
+  }, [selectableCategories]);
 
-  // Defensive: only allow "" for All Categories (clear)
-  const currentValue = categoryFilter && validCategories.includes(categoryFilter)
-    ? categoryFilter
-    : "";
+  // Defensive: only allow "" for All Categories
+  const currentValue =
+    categoryFilter && selectableCategories.includes(categoryFilter)
+      ? categoryFilter
+      : "";
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -52,8 +51,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            // If "All Categories" or invalid, clear the filter
-            if (!value || !validCategories.includes(value) || value === "") {
+            if (!value || !selectableCategories.includes(value) || value === "") {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -65,7 +63,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {validCategories.map((cat, i) => (
+            {selectableCategories.map((cat, i) => (
               <SelectItem
                 key={cat + "-" + i}
                 value={cat}

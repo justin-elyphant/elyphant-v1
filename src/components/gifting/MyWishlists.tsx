@@ -237,22 +237,31 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {filteredCategories.map((cat, i) => {
-                  // Make extra sure this is never blank
-                  if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
-                    // Extra log: will not render a SelectItem for blank/invalid
-                    console.warn("[SelectItem] Will not render SelectItem for blank/invalid value at", i, "category:", cat);
-                    return null;
-                  }
-                  return (
-                    <SelectItem
-                      key={`${cat}-${i}`}
-                      value={cat}
-                    >
-                      {cat}
-                    </SelectItem>
-                  );
-                })}
+                {filteredCategories
+                  // Only pass non-empty, trimmed values
+                  .filter((cat) => {
+                    if (typeof cat !== "string") {
+                      console.warn("[SelectItem] Skipping non-string category:", cat);
+                      return false;
+                    }
+                    const trimmed = cat.trim();
+                    if (!trimmed) {
+                      console.warn("[SelectItem] Skipping empty/whitespace category:", cat);
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((cat, i) => {
+                    const trimmed = cat.trim();
+                    return (
+                      <SelectItem
+                        key={`${trimmed}-${i}`}
+                        value={trimmed}
+                      >
+                        {trimmed}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           </div>

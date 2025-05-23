@@ -238,20 +238,33 @@ const MyWishlists = () => {
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
                 {filteredCategories
-                  // Absolutely guarantee only non-empty, trimmed, string categories go through
+                  // Only allow non-empty, trimmed strings through
                   .filter(
-                    (category): category is string =>
-                      typeof category === "string" &&
-                      category.trim().length > 0
+                    (category): category is string => {
+                      const isValid =
+                        typeof category === "string" &&
+                        category.trim().length > 0;
+                      if (!isValid) {
+                        // For debugging: warn in the console if this ever happens
+                        console.warn(
+                          '[MyWishlists] Skipping invalid category value:',
+                          category
+                        );
+                      }
+                      return isValid;
+                    }
                   )
-                  .map((category, i) => (
-                    <SelectItem
-                      key={`${category.trim()}-${i}`}
-                      value={category.trim()}
-                    >
-                      {category.trim()}
-                    </SelectItem>
-                  ))}
+                  .map((category, i) => {
+                    const trimmed = category.trim();
+                    return (
+                      <SelectItem
+                        key={`${trimmed}-${i}`}
+                        value={trimmed}
+                      >
+                        {trimmed}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           </div>

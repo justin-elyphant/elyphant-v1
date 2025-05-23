@@ -78,8 +78,10 @@ const MyWishlists = () => {
 
   // Use the sanitize utility to provide *only* cleaned categories
   const selectableCategories = React.useMemo(() => {
+    // getValidWishlistCategories yields raw category list (may contain bad/empty/whitespace)
+    // sanitizeCategories guarantees deduped, trimmed, non-empty, sorted!
     const cats = getValidWishlistCategories(wishlists || []);
-    return sanitizeCategories(cats); // <-- Now always deduped, trimmed, sanitized!
+    return sanitizeCategories(cats); // strict cleaning!
   }, [wishlists]);
 
   // Defensive: Ensure filter is always valid—if not, reset it to null

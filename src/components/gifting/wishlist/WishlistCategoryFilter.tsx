@@ -3,16 +3,15 @@ import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getValidCategories, logInvalidCategories } from "./utils/validCategoryUtils";
 
-// Util: Remove duplicates, empty/whitespace, trim
+// Utility: Filter out invalid/empty/whitespace-only categories safely
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
   return Array.from(
     new Set(
       categories
         .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-        .filter((cat) => typeof cat === "string" && cat.length > 0 && cat !== "")
+        .filter((cat): cat is string => typeof cat === "string" && cat.length > 0)
     )
   );
 }
@@ -34,16 +33,21 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // FINAL, guaranteed filter: only render categories that are valid, non-empty strings
+  // Final filter: absolutely no empty/whitespace category values!
   const filteredCategories = React.useMemo(
-    () =>
-      Array.isArray(selectableCategories)
-        ? selectableCategories
-            .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-            .filter((cat): cat is string => typeof cat === "string" && cat.length > 0)
-        : [],
+    () => getStrictValidCategories(selectableCategories),
     [selectableCategories]
   );
+
+  // Debug: Warn if any empty string slips in
+  React.useEffect(() => {
+    filteredCategories.forEach((cat, i) => {
+      if (cat === "") {
+        // eslint-disable-next-line no-console
+        console.error("[WishlistCategoryFilter] Detected empty string category! This should never happen. Index:", i);
+      }
+    });
+  }, [filteredCategories]);
 
   // Don't render Select if nothing valid
   if (!filteredCategories.length) {
@@ -74,15 +78,14 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* Only one clear/placeholder item */}
+            {/* Only ONE clear/placeholder item */}
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories
-              .filter((cat) => cat !== "")
-              .map((cat, i) => (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
+            {filteredCategories.map((cat, i) => (
+              // No empty/whitespace strings ever allowed as value!
+              <SelectItem key={cat + "-" + i} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -111,4 +114,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

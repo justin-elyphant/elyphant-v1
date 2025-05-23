@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { Button } from "@/components/ui/button";
@@ -84,6 +83,7 @@ const WishlistSelectionPopover = ({
     }
   };
 
+  // --- FIXED: async reliable create+add flow ---
   const handleCreateWishlist = async () => {
     if (!newName.trim()) {
       toast.error("Please enter a name for your wishlist");
@@ -93,10 +93,26 @@ const WishlistSelectionPopover = ({
     try {
       const newWishlist = await createWishlist(newName.trim());
       if (newWishlist) {
+        // Immediately reload wishlists, wait for it
         await reloadWishlists();
-        toast.success("Wishlist created");
-        // Optionally, add item to the new wishlist automatically
-        await handleAddToWishlist(newWishlist.id);
+
+        // Find the created wishlist by name (ensure most up-to-date)
+        const refreshed = await reloadWishlists();
+        let created = null;
+        // Try with refetched wishlists, get latest state.
+        if (Array.isArray(refreshed)) {
+          created = refreshed.find(w => w.title === newName.trim());
+        } else {
+          created = (wishlists || []).find(w => w.title === newName.trim());
+        }
+
+        const newWishId = created?.id || newWishlist.id;
+        // Only then add the product to the created wishlist.
+        if (newWishId) {
+          await handleAddToWishlist(newWishId);
+        } else {
+          toast.error("Could not find the new wishlist after creation.");
+        }
         setShowNewDialog(false);
         setNewName("");
       }
@@ -249,4 +265,3 @@ const WishlistSelectionPopover = ({
 };
 
 export default WishlistSelectionPopover;
-

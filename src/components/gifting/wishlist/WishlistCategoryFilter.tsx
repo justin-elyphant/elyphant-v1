@@ -34,27 +34,32 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Only include non-empty, non-whitespace, trimmed values as categories
+  // PREP: Strong filter so nothing empty or whitespace gets through
   const filteredCategories = React.useMemo(
     () => getStrictValidCategories(selectableCategories),
     [selectableCategories]
   );
 
-  // Defensive: avoid rendering if no valid categories
+  // Defensive dev logging
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      // Log any invalid category survivors
+      filteredCategories.forEach((cat, idx) => {
+        if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+          // eslint-disable-next-line no-console
+          console.error(`[WishlistCategoryFilter][DEV] Invalid category survived to render: "${cat}" at idx ${idx}`);
+        }
+      });
+    }
+  }, [filteredCategories]);
+
+  // Don't render Select at all if nothing valid
   if (!filteredCategories.length) {
     if (process.env.NODE_ENV === "development") {
-      console.error("[WishlistCategoryFilter][DEV] No valid filteredCategories, nothing to render", { selectableCategories, filteredCategories });
+      // eslint-disable-next-line no-console
+      console.error("[WishlistCategoryFilter][DEV] No valid categories to render Select.");
     }
     return null;
-  }
-
-  // Extra logging to catch any possible invalid categories
-  if (process.env.NODE_ENV === "development") {
-    filteredCategories.forEach((cat, i) => {
-      if (typeof cat !== "string" || !cat.trim() || cat === "") {
-        console.error(`[WishlistCategoryFilter][DEV] BAD: About to render invalid filtered category at index ${i}:`, `cat="${cat}"`);
-      }
-    });
   }
 
   const currentValue =
@@ -84,21 +89,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* DO NOT change "All Categories" below—needed for clearing */}
             <SelectItem value="">All Categories</SelectItem>
-            {/* Only render categories with safe, non-empty, non-whitespace string values */}
-            {filteredCategories.map((cat, i) => {
-              if (typeof cat === "string" && cat.trim().length > 0 && cat !== "") {
-                return (
+            {
+              // FINAL GUARD: Never render empty-string category
+              filteredCategories
+                .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+                .map((cat, i) => (
                   <SelectItem key={cat + "-" + i} value={cat}>
                     {cat}
                   </SelectItem>
-                );
-              } else {
-                if (process.env.NODE_ENV === "development") {
-                  console.error(`[WishlistCategoryFilter][DEV] SKIPPING invalid category:`, cat);
-                }
-                return null;
-              }
-            })}
+                ))
+            }
           </SelectContent>
         </Select>
       </div>

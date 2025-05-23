@@ -86,19 +86,29 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* Only ONE clear/placeholder item */}
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories
-              // ABSOLUTE SAFETY: only non-empty strings, despite upstream filters
+              // FINAL FILTER: only use categories that are non-empty, trimmed, pure strings!
               .filter(
-                (cat): cat is string =>
-                  typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+                (cat: string) => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
               )
-              .map((cat, i) => (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
+              .map((cat, i) => {
+                if (cat === "") {
+                  // Should never happen, debug log if so
+                  // eslint-disable-next-line no-console
+                  console.warn(
+                    "[WishlistCategoryFilter] Skipping empty category value about to render.",
+                    i,
+                    cat
+                  );
+                  return null;
+                }
+                return (
+                  <SelectItem key={cat + "-" + i} value={cat}>
+                    {cat}
+                  </SelectItem>
+                );
+              })}
           </SelectContent>
         </Select>
       </div>

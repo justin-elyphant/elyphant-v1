@@ -16,19 +16,19 @@ interface WishlistSelectionPopoverButtonProps {
   };
   triggerClassName?: string;
   onAdded?: () => void;
-  isWishlisted?: boolean; // NEW: explicit prop
+  isWishlisted?: boolean;
 }
 
 const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonProps> = ({
   product,
   triggerClassName,
   onAdded,
-  isWishlisted, // NEW
+  isWishlisted,
 }) => {
   const isMobile = useIsMobile();
   const { wishlists } = useWishlist();
 
-  // Determine if product is in any wishlist, unless overridden with prop
+  // Always live-calculate wishlist state
   const computedIsWishlisted = typeof isWishlisted === "boolean"
     ? isWishlisted
     : wishlists.some(list =>
@@ -44,7 +44,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
     >
       <Heart
         className="h-4 w-4"
-        fill={computedIsWishlisted ? "#ec4899" : "none"} // filled if in wishlist
+        fill={computedIsWishlisted ? "#ec4899" : "none"}
         color={computedIsWishlisted ? "#ec4899" : undefined}
         strokeWidth={computedIsWishlisted ? 2.5 : 2}
       />
@@ -61,9 +61,8 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
       trigger={triggerNode}
       className={isMobile ? "w-full" : ""}
       onClose={onAdded}
-      key={computedIsWishlisted ? "wishlisted" : "not-wishlisted"}
+      // Removed key={computedIsWishlisted...} -- unnecessary, just use live context
     />
   );
 };
-
 export default WishlistSelectionPopoverButton;

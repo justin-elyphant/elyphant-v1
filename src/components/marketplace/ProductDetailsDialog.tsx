@@ -22,19 +22,19 @@ const ProductDetailsDialog = ({
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
 
-  // 1. Use the shared wishlist context:
+  // Use context wishlists directly, do NOT memoize
   const { wishlists, reloadWishlists } = useWishlist();
 
-  // 2. Check if the product is in ANY wishlist
-  const isWishlisted = useMemo(() => {
-    if (!product || !wishlists) return false;
-    const id = product.product_id || product.id;
-    return wishlists.some(list =>
+  // Always recalculate isWishlisted live
+  const isWishlisted =
+    !!product &&
+    wishlists.some(list =>
       Array.isArray(list.items) &&
-      list.items.some(item => item.product_id === id)
+      list.items.some(item => item.product_id === (product.product_id || product.id))
     );
-  }, [product, wishlists]);
 
+  // 1. Use the shared wishlist context:
+  // 2. Check if the product is in ANY wishlist
   // 3. Update quantity
   const increaseQuantity = () => setQuantity(prev => Math.min(prev + 1, 10));
   const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));

@@ -33,6 +33,17 @@ export const useWishlistPopoverLogic = ({
     }
   }, [open, wishlists]);
 
+  // --- Helper to fully re-sync wishlists and set local state
+  const forceReloadLocalWishlists = async () => {
+    const updated = await reloadWishlists();
+    // backward compatible: await returns wishlists (if designed), else use context
+    if (Array.isArray(updated)) {
+      setLocalWishlists(updated);
+    } else {
+      setLocalWishlists(wishlists);
+    }
+  };
+
   const isInWishlist = (wishlistId: string) => {
     const wishlist = localWishlists.find((w) => w.id === wishlistId);
     return wishlist?.items.some((item) => item.product_id === productId);
@@ -52,8 +63,7 @@ export const useWishlistPopoverLogic = ({
         brand: productBrand
       });
 
-      await reloadWishlists();
-      setLocalWishlists(wishlists => wishlists);
+      await forceReloadLocalWishlists(); // Strong guarantee of state update
 
       toast.success(`Added to wishlist`);
       if (onClose) onClose();
@@ -75,19 +85,18 @@ export const useWishlistPopoverLogic = ({
     try {
       const newWishlist = await createWishlist(newName.trim());
       if (newWishlist) {
-        await reloadWishlists();
-        const refreshed = await reloadWishlists();
-        let created = null;
-        if (Array.isArray(refreshed)) {
-          created = refreshed.find(w => w.title === newName.trim());
-        } else {
-          created = (wishlists || []).find(w => w.title === newName.trim());
-        }
+        // Force reload all wishlists to find the correct, latest one
+        await forceReloadLocalWishlists();
+
+        // Try to find the new wishlist and add product into it
+        const syncedLists = localWishlists.length > 0 ? localWishlists : (wishlists || []);
+        const created = syncedLists.find(w => w.title === newName.trim());
         const newWishId = created?.id || newWishlist.id;
+
         if (newWishId) {
           await handleAddToWishlist(newWishId);
-          await reloadWishlists();
-          setLocalWishlists(wishlists => wishlists);
+          // After product added, re-sync everything
+          await forceReloadLocalWishlists();
         } else {
           toast.error("Could not find the new wishlist after creation.");
         }
@@ -96,6 +105,7 @@ export const useWishlistPopoverLogic = ({
       }
     } catch (err) {
       toast.error("Failed to create wishlist");
+      setCreating(false);
     } finally {
       setCreating(false);
     }

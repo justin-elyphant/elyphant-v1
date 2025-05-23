@@ -39,6 +39,11 @@ const wishlistFormSchema = z.object({
 
 type WishlistFormValues = z.infer<typeof wishlistFormSchema>;
 
+// Utility: returns true if s is a non-empty, non-whitespace string
+function isValidCategoryString(s: unknown): s is string {
+  return typeof s === "string" && s.trim().length > 0;
+}
+
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -71,38 +76,21 @@ const MyWishlists = () => {
           ? list.category.trim()
           : ""
       );
-    // Only unique, valid, NON-empty, TRIMMED strings
-    return Array.from(
-      new Set(
-        allCategories.filter(
-          (category): category is string =>
-            typeof category === "string" && category.trim().length > 0
-        )
-      )
-    );
+    // Uniqueness
+    return Array.from(new Set(allCategories));
   }, [wishlists]);
 
-  // Extra strict: right before use. Only non-empty, trimmed, non-null, and NOT an empty string
+  // Strict filtering before use (guaranteed all non-empty)
   const filteredCategories = React.useMemo(
-    () =>
-      categories
-        .map(cat => (typeof cat === "string" ? cat.trim() : ""))
-        .filter(
-          (cat): cat is string =>
-            !!cat &&
-            typeof cat === "string" &&
-            cat.length > 0 &&
-            cat !== ""
-        ),
+    () => categories.filter(isValidCategoryString),
     [categories]
   );
 
-  // Add debug log before rendering
   React.useEffect(() => {
-    console.log("[Wishlist] Categories computed for Select (final):", filteredCategories);
+    // Log problematic categories for debugging
     filteredCategories.forEach((cat, idx) => {
-      if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
-        console.warn("Bad category in filteredCategories at", idx, ":", cat);
+      if (!isValidCategoryString(cat)) {
+        console.warn(`Bad category in filteredCategories at index ${idx}:`, cat);
       }
     });
   }, [filteredCategories]);
@@ -249,15 +237,17 @@ const MyWishlists = () => {
                 )}
                 {/* Final protection before rendering: */}
                 {filteredCategories.map((cat, i) => {
-                  if (
-                    typeof cat !== "string" ||
-                    cat.trim().length === 0 ||
-                    cat.trim() === ""
-                  ) {
-                    console.warn("[SelectItem] Will skip rendering invalid category at", i, cat);
+                  // Guaranteed by filter, but extra check for safety
+                  if (!isValidCategoryString(cat)) {
+                    console.warn("Skipping invalid category in SelectItem", i, cat);
                     return null;
                   }
                   const trimmed = cat.trim();
+                  // Defensive: never allow empty string in value except for All Categories above
+                  if (trimmed === "") {
+                    console.warn("Skipping trimmed blank category in SelectItem", i, cat);
+                    return null;
+                  }
                   return (
                     <SelectItem
                       key={`${trimmed}-${i}`}

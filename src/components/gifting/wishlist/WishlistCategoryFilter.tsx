@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -60,25 +61,25 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
-  // Strongest filter: absolutely no empty, null, or whitespace-only strings
+  // ABSOLUTE filter: no empty, null, whitespace, or falsy
   const filteredCategories = React.useMemo(
     () =>
       validRenderedCategories.filter(
         (cat) =>
-          typeof cat === "string" && cat.trim().length > 0
+          typeof cat === "string" && !!cat.trim() && cat !== ""
       ),
     [validRenderedCategories]
   );
 
-  // Extra: log immediately before rendering
+  // Defensive: log if we filter out invalid categories
   React.useEffect(() => {
-    filteredCategories.forEach((cat, i) => {
-      if (typeof cat !== "string" || cat.trim().length === 0) {
+    validRenderedCategories.forEach((cat, i) => {
+      if (typeof cat !== "string" || !cat.trim() || cat === "") {
         // eslint-disable-next-line no-console
-        console.error("[WishlistCategoryFilter] About to render invalid category in <SelectItem>: ", i, cat);
+        console.error("[WishlistCategoryFilter] Removed invalid category before render: ", i, cat);
       }
     });
-  }, [filteredCategories]);
+  }, [validRenderedCategories]);
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -86,7 +87,8 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || !filteredCategories.includes(value) || value === "") {
+            // Only "" is allowed for All Categories
+            if (!value || value === "" || !filteredCategories.includes(value)) {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -103,7 +105,8 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {filteredCategories.map((cat, i) => {
               if (
                 typeof cat !== "string" ||
-                cat.trim().length === 0
+                cat.trim().length === 0 ||
+                cat === ""
               ) {
                 // Defensive: Log and skip bad entries
                 if (process.env.NODE_ENV === "development") {
@@ -152,3 +155,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

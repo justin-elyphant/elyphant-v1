@@ -110,13 +110,30 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* Only this entry can use "" */}
             <SelectItem value="">All Categories</SelectItem>
             {/* Absolutely never render a SelectItem with value="" except above */}
-            {filteredCategories
-              .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
-              .map((cat, i) => (
+            {filteredCategories.map((cat, i) => {
+              if (
+                typeof cat !== "string" ||
+                cat.trim().length === 0 ||
+                cat === ""
+              ) {
+                if (process.env.NODE_ENV === "development") {
+                  // eslint-disable-next-line no-console
+                  console.error(
+                    "[WishlistCategoryFilter] Skipping <SelectItem> with invalid value! Index:",
+                    i,
+                    "Value:",
+                    cat
+                  );
+                }
+                return null;
+              }
+              // Defensive: ensures NO SelectItem has value=""
+              return (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
                 </SelectItem>
-              ))}
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -145,4 +162,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

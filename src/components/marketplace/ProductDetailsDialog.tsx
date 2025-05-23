@@ -1,17 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Product } from "@/types/product";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Heart, Minus, Plus, Share2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Product } from "@/types/product";
 import ProductDetailsImageSection from "./product-details/ProductDetailsImageSection";
 import ProductDetailsActionsSection from "./product-details/ProductDetailsActionsSection";
+import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -20,29 +13,35 @@ interface ProductDetailsDialogProps {
   userData: any;
 }
 
-const ProductDetailsDialog = ({ 
-  product, 
-  open, 
-  onOpenChange, 
-  userData 
+const ProductDetailsDialog = ({
+  product,
+  open,
+  onOpenChange,
+  userData
 }: ProductDetailsDialogProps) => {
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
-  const [isGift, setIsGift] = useState(false);
-  const [recipientName, setRecipientName] = useState("");
-  const [giftMessage, setGiftMessage] = useState("");
-  const [activeTab, setActiveTab] = useState("product");
 
-  const increaseQuantity = () => {
-    setQuantity(prev => Math.min(prev + 1, 10)); // Limit to 10 items
-  };
-  
-  const decreaseQuantity = () => {
-    setQuantity(prev => Math.max(prev - 1, 1)); // Minimum 1 item
-  };
-  
+  // 1. Use the shared wishlist context:
+  const { wishlists, reloadWishlists } = useWishlist();
+
+  // 2. Check if the product is in ANY wishlist
+  const isWishlisted = useMemo(() => {
+    if (!product || !wishlists) return false;
+    const id = product.product_id || product.id;
+    return wishlists.some(list =>
+      Array.isArray(list.items) &&
+      list.items.some(item => item.product_id === id)
+    );
+  }, [product, wishlists]);
+
+  // 3. Update quantity
+  const increaseQuantity = () => setQuantity(prev => Math.min(prev + 1, 10));
+  const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
+
   if (!product) return null;
 
+  // 4. Share function (unchanged)
   const handleShareProduct = () => {
     if (navigator.share) {
       navigator.share({
@@ -53,20 +52,22 @@ const ProductDetailsDialog = ({
     }
   };
 
-  // Extract product features safely
-  const productFeatures = Array.isArray(product.product_details) ? 
-    product.product_details.map(detail => detail?.value || detail?.toString()) : 
-    [];
+  // 5. Product features extraction (unchanged)
+  const productFeatures = Array.isArray(product.product_details)
+    ? product.product_details.map(detail => detail?.value || detail?.toString())
+    : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden max-h-[90vh]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          {/* Product Image & Actions Refactored */}
+          {/* Pass isWishlisted to the image section */}
           <ProductDetailsImageSection
             product={product}
             isHeartAnimating={isHeartAnimating}
             onShare={handleShareProduct}
+            isWishlisted={isWishlisted}
+            reloadWishlists={reloadWishlists}
           />
 
           {/* Product Details Section */}
@@ -75,7 +76,6 @@ const ProductDetailsDialog = ({
               <DialogTitle className="text-xl font-semibold mb-1">
                 {product.title || product.name}
               </DialogTitle>
-              
               <div className="flex items-center justify-between mt-2">
                 <div className="text-lg font-bold">${product.price?.toFixed(2)}</div>
                 <div className="text-sm text-muted-foreground">
@@ -83,15 +83,12 @@ const ProductDetailsDialog = ({
                 </div>
               </div>
             </DialogHeader>
-            
             <Separator className="my-4" />
-            
             <div className="mb-6">
               <p className="text-sm text-muted-foreground">
                 {product.description || "No description available for this product."}
               </p>
             </div>
-            
             {productFeatures.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-medium mb-2">Features</h4>
@@ -102,14 +99,14 @@ const ProductDetailsDialog = ({
                 </ul>
               </div>
             )}
-
-            {/* Refactored Actions Section */}
             <ProductDetailsActionsSection
               product={product}
               quantity={quantity}
               onIncrease={increaseQuantity}
               onDecrease={decreaseQuantity}
               isHeartAnimating={isHeartAnimating}
+              isWishlisted={isWishlisted}
+              reloadWishlists={reloadWishlists}
             />
           </div>
         </div>

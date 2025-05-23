@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
@@ -9,25 +9,28 @@ interface ProductDetailsImageSectionProps {
   product: any;
   isHeartAnimating: boolean;
   onShare: () => void;
+  isWishlisted?: boolean;
+  reloadWishlists?: () => void;
 }
 
 const ProductDetailsImageSection: React.FC<ProductDetailsImageSectionProps> = ({
   product,
   isHeartAnimating,
   onShare,
+  isWishlisted,
+  reloadWishlists
 }) => {
   const productId = product.product_id || product.id || "";
 
   return (
     <div className="h-[250px] md:h-[500px] bg-muted relative overflow-hidden">
       {product.image && (
-        <img 
-          src={product.image} 
-          alt={product.title || product.name || "Product"} 
+        <img
+          src={product.image}
+          alt={product.title || product.name || "Product"}
           className="w-full h-full object-cover"
         />
       )}
-
       {/* Badges */}
       <div className="absolute top-2 left-2 space-x-2">
         {product.tags?.includes("bestseller") && (
@@ -37,8 +40,7 @@ const ProductDetailsImageSection: React.FC<ProductDetailsImageSectionProps> = ({
           <Badge className="bg-green-100 text-green-800 border-green-200">New</Badge>
         )}
       </div>
-      
-      {/* Action buttons */}
+      {/* Action buttons - pass isWishlisted */}
       <div className="absolute top-2 right-2 flex space-x-1">
         <WishlistSelectionPopoverButton
           product={{
@@ -49,11 +51,12 @@ const ProductDetailsImageSection: React.FC<ProductDetailsImageSectionProps> = ({
             brand: product.brand || "",
           }}
           triggerClassName={`rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 p-2 ${isHeartAnimating ? "scale-125" : ""}`}
-          onAdded={undefined}
+          onAdded={reloadWishlists}
+          isWishlisted={isWishlisted}
         />
-        <Button 
-          variant="secondary" 
-          size="icon" 
+        <Button
+          variant="secondary"
+          size="icon"
           className="rounded-full bg-white/80 backdrop-blur-sm hover:bg-white"
           onClick={onShare}
         >

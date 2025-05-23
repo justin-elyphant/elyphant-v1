@@ -16,20 +16,24 @@ interface WishlistSelectionPopoverButtonProps {
   };
   triggerClassName?: string;
   onAdded?: () => void;
+  isWishlisted?: boolean; // NEW: explicit prop
 }
 
 const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonProps> = ({
   product,
   triggerClassName,
   onAdded,
+  isWishlisted, // NEW
 }) => {
   const isMobile = useIsMobile();
   const { wishlists } = useWishlist();
 
-  // Determine if product is in any wishlist
-  const isWishlisted = wishlists.some(list =>
-    list.items.some(item => item.product_id === product.id)
-  );
+  // Determine if product is in any wishlist, unless overridden with prop
+  const computedIsWishlisted = typeof isWishlisted === "boolean"
+    ? isWishlisted
+    : wishlists.some(list =>
+        Array.isArray(list.items) && list.items.some(item => item.product_id === product.id)
+      );
 
   const triggerNode = (
     <Button
@@ -40,15 +44,13 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
     >
       <Heart
         className="h-4 w-4"
-        fill={isWishlisted ? "#ec4899" : "none"} // Tailwind's pink-500
-        color={isWishlisted ? "#ec4899" : undefined}
-        strokeWidth={isWishlisted ? 2.5 : 2}
+        fill={computedIsWishlisted ? "#ec4899" : "none"} // filled if in wishlist
+        color={computedIsWishlisted ? "#ec4899" : undefined}
+        strokeWidth={computedIsWishlisted ? 2.5 : 2}
       />
     </Button>
   );
 
-  // Mobile: Full width popover, or fallback to dialog if needed.
-  // Desktop: Standard popover.
   return (
     <WishlistSelectionPopover
       productId={product.id}
@@ -59,11 +61,9 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
       trigger={triggerNode}
       className={isMobile ? "w-full" : ""}
       onClose={onAdded}
-      // Add an extra prop to force a re-render if needed
-      key={isWishlisted ? "wishlisted" : "not-wishlisted"}
+      key={computedIsWishlisted ? "wishlisted" : "not-wishlisted"}
     />
   );
 };
 
 export default WishlistSelectionPopoverButton;
-

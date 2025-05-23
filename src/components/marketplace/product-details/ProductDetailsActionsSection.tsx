@@ -12,6 +12,8 @@ interface ProductDetailsActionsSectionProps {
   onIncrease: () => void;
   onDecrease: () => void;
   isHeartAnimating: boolean;
+  isWishlisted?: boolean;
+  reloadWishlists?: () => void;
 }
 
 const ProductDetailsActionsSection: React.FC<ProductDetailsActionsSectionProps> = ({
@@ -19,7 +21,9 @@ const ProductDetailsActionsSection: React.FC<ProductDetailsActionsSectionProps> 
   quantity,
   onIncrease,
   onDecrease,
-  isHeartAnimating
+  isHeartAnimating,
+  isWishlisted,
+  reloadWishlists
 }) => {
   const productId = product.product_id || product.id || "";
 
@@ -28,9 +32,9 @@ const ProductDetailsActionsSection: React.FC<ProductDetailsActionsSectionProps> 
       <div className="flex items-center justify-between mb-4">
         <Label htmlFor="quantity">Quantity</Label>
         <div className="flex items-center border rounded-md">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-8 w-8 rounded-r-none"
             onClick={onDecrease}
             disabled={quantity <= 1}
@@ -38,9 +42,9 @@ const ProductDetailsActionsSection: React.FC<ProductDetailsActionsSectionProps> 
             <Minus className="h-3 w-3" />
           </Button>
           <div className="w-8 text-center">{quantity}</div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-8 w-8 rounded-l-none"
             onClick={onIncrease}
             disabled={quantity >= 10}
@@ -49,9 +53,8 @@ const ProductDetailsActionsSection: React.FC<ProductDetailsActionsSectionProps> 
           </Button>
         </div>
       </div>
-      
       <div className="flex gap-2">
-        <AddToCartButton 
+        <AddToCartButton
           product={product}
           className="flex-1"
           quantity={quantity}
@@ -65,7 +68,8 @@ const ProductDetailsActionsSection: React.FC<ProductDetailsActionsSectionProps> 
             brand: product.brand || "",
           }}
           triggerClassName={`flex-1 flex justify-center items-center px-4 py-2 rounded-md transition-colors ${isHeartAnimating ? "scale-105" : ""} ${"bg-pink-50"}`}
-          onAdded={undefined}
+          onAdded={reloadWishlists}
+          isWishlisted={isWishlisted}
         />
       </div>
     </div>

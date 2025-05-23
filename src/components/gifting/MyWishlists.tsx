@@ -62,7 +62,7 @@ const MyWishlists = () => {
     removeFromWishlist,
   } = useWishlists();
 
-  // Defensive: compute list of unique, valid, non-empty string categories (SUPER strict filtering)
+  // Defensive: compute list of unique, valid, non-empty string categories
   const categories = React.useMemo(() => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
@@ -74,21 +74,25 @@ const MyWishlists = () => {
     // Only unique, valid, NON-empty, TRIMMED strings
     return Array.from(
       new Set(
-        allCategories.filter((category): category is string =>
-          typeof category === "string" && category.trim().length > 0
+        allCategories.filter(
+          (category): category is string =>
+            typeof category === "string" && category.trim().length > 0
         )
       )
     );
   }, [wishlists]);
 
-  // Extra strict: right before use. Only non-empty, trimmed, non-null.
+  // Extra strict: right before use. Only non-empty, trimmed, non-null, and NOT an empty string
   const filteredCategories = React.useMemo(
     () =>
       categories
         .map(cat => (typeof cat === "string" ? cat.trim() : ""))
         .filter(
           (cat): cat is string =>
-            !!cat && typeof cat === "string" && cat.length > 0 && cat !== ""
+            !!cat &&
+            typeof cat === "string" &&
+            cat.length > 0 &&
+            cat !== ""
         ),
     [categories]
   );
@@ -243,10 +247,14 @@ const MyWishlists = () => {
                 {filteredCategories.length === 0 && (
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
+                {/* Final protection before rendering: */}
                 {filteredCategories.map((cat, i) => {
-                  // strictly ensure cat is non-empty at this point
-                  if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
-                    console.warn("[SelectItem] Skipping empty/invalid category at", i, cat);
+                  if (
+                    typeof cat !== "string" ||
+                    cat.trim().length === 0 ||
+                    cat.trim() === ""
+                  ) {
+                    console.warn("[SelectItem] Will skip rendering invalid category at", i, cat);
                     return null;
                   }
                   const trimmed = cat.trim();

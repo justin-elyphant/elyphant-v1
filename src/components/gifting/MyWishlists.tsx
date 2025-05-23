@@ -41,6 +41,13 @@ const wishlistFormSchema = z.object({
 
 type WishlistFormValues = z.infer<typeof wishlistFormSchema>;
 
+// Utility: Strongly clean up any inputted category - trims and nulls whitespace/empty
+function cleanCategory(category: unknown): string | null {
+  if (typeof category !== "string") return null;
+  const trimmed = category.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 // Utility: returns true if s is a non-empty, non-whitespace string
 function isValidCategoryString(s: unknown): s is string {
   return typeof s === "string" && s.trim().length > 0;
@@ -141,10 +148,12 @@ const MyWishlists = () => {
   };
 
   const handleDialogSubmit = async (values: WishlistFormValues) => {
+    // Ensure sanitized category; never allow "" or whitespace
+    const cleanCat = cleanCategory(values.category);
     await createWishlist(
       values.title, 
       values.description || "", 
-      values.category, 
+      cleanCat, 
       values.tags,
       values.priority as "low" | "medium" | "high" | undefined
     );
@@ -162,7 +171,8 @@ const MyWishlists = () => {
 
   const handleEditDialogSubmit = async (values: WishlistFormValues) => {
     if (!currentWishlist) return;
-    
+    // Apply strong cleaning on category during edit too
+    const cleanCat = cleanCategory(values.category);
     // For now, we'll just show a toast that this feature is coming soon
     toast.info("Wishlist editing will be available soon!");
     setEditDialogOpen(false);

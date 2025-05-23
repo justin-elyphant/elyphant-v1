@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -61,7 +60,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
-  // Filter to only truly valid categories, skip empty/whitespace
+  // Strict: prepare only truly valid, non-empty, trimmed category values for rendering
   const filteredCategories = React.useMemo(
     () =>
       validRenderedCategories.filter(
@@ -109,15 +108,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only this entry can use "" */}
             <SelectItem value="">All Categories</SelectItem>
-            {/* Always filter here as a failsafe */}
+            {/* Final failsafe: only render non-empty string categories */}
             {filteredCategories
-              .filter(cat => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              .filter((cat): cat is string => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
               .map((cat, i) => {
+                // Defensive: should always pass, but in-dev logging extra guard
                 if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
                   if (process.env.NODE_ENV === "development") {
                     // eslint-disable-next-line no-console
                     console.error(
-                      "[WishlistCategoryFilter] Skipped <SelectItem> with invalid value! Index:",
+                      "[WishlistCategoryFilter] Refused to render <SelectItem> with invalid value! Index:",
                       i,
                       "Value:",
                       cat
@@ -159,4 +159,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

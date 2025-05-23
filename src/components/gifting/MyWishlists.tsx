@@ -86,15 +86,17 @@ const MyWishlists = () => {
     [categories]
   );
 
-  // Filtered and sanitized categories for Select rendering - *do not* include any empty strings
+  // Defensive: Only include categories that are non-empty after trimming and are strings.
   const selectableCategories = React.useMemo(
     () =>
-      filteredCategories.filter(
-        (cat) =>
-          typeof cat === "string" &&
-          cat.trim() !== "" &&
-          cat !== ""
-      ),
+      filteredCategories.filter((cat) => {
+        const isValid = typeof cat === "string" && !!cat.trim();
+        if (!isValid) {
+          // Extra log for debugging
+          console.warn("[Wishlists] Skipping invalid category for SelectItem:", cat);
+        }
+        return isValid;
+      }),
     [filteredCategories]
   );
 
@@ -263,12 +265,19 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {/* Only show good categories */}
-                {selectableCategories.map((cat, i) => (
-                  <SelectItem key={cat + "-" + i} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
+                {/* Map only trimmed, valid categories */}
+                {selectableCategories
+                  .map((cat, i) => {
+                    const trimmedCat = cat.trim();
+                    // Only render if non-empty after trim, extra guard
+                    if (!trimmedCat) return null;
+                    return (
+                      <SelectItem key={trimmedCat + "-" + i} value={trimmedCat}>
+                        {trimmedCat}
+                      </SelectItem>
+                    );
+                  })
+                }
               </SelectContent>
             </Select>
           </div>

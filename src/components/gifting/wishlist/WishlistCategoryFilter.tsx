@@ -9,9 +9,6 @@ import { getValidCategories, logInvalidCategories } from "./utils/validCategoryU
  * Props for WishlistCategoryFilter.
  */
 type WishlistCategoryFilterProps = {
-  /**
-   * Array of categories (already filtered and trimmed) - must not include empty strings.
-   */
   selectableCategories: string[];
   categoryFilter: string | null | undefined;
   onCategoryFilterChange: (category: string | null) => void;
@@ -20,9 +17,6 @@ type WishlistCategoryFilterProps = {
   onClearFilters: () => void;
 };
 
-/**
- * Filter selects: no empty value except for "All Categories"
- */
 const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   selectableCategories,
   categoryFilter,
@@ -70,7 +64,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     [validRenderedCategories]
   );
 
-  // Extra strict guard: check for any bad categories about to render
+  // Extra strict guard: log if any bad entries about to render
   React.useEffect(() => {
     filteredCategories.forEach((cat, i) => {
       if (
@@ -89,16 +83,23 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     });
   }, [filteredCategories]);
 
-  // Final ironclad filter: don't let any empty/whitespace/invalid values render as SelectItem
+  // --- FINAL IRONCLAD FILTER ---
+  // Absolutely never let an empty, whitespace, null, or undefined value render as a SelectItem (only allowed for All Categories);
   const finalCategoryItems = React.useMemo(
     () =>
       filteredCategories.filter(
         (cat): cat is string =>
-          typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+          typeof cat === "string" &&
+          cat.trim().length > 0 &&
+          cat !== "" &&
+          cat !== null &&
+          cat !== undefined
       ),
     [filteredCategories]
   );
 
+  // Extra runtime validation: only non-empty, non-null/undefined strings allowed!
+  // If a bad value slips through, skip it and log the error.
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
       <div className="w-full sm:w-1/3">
@@ -119,11 +120,17 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only this entry can use "" */}
             <SelectItem value="">All Categories</SelectItem>
-            {/* Only render non-empty, trimmed string categories */}
+            {/* Only render non-empty, trimmed, ironclad guaranteed string categories */}
             {finalCategoryItems.map((cat, i) => {
-              // Defensive: should always pass, but in-dev logging extra guard
-              if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
-                if (process.env.NODE_ENV === "development") {
+              if (
+                typeof cat !== "string" ||
+                cat.trim().length === 0 ||
+                cat === "" ||
+                cat === null ||
+                cat === undefined
+              ) {
+                // Defensive: should never run, but just in case, don't render and log
+                if (process.env.NODE_ENV !== "production") {
                   // eslint-disable-next-line no-console
                   console.error(
                     "[WishlistCategoryFilter] Refused to render <SelectItem> with invalid value! Index:",

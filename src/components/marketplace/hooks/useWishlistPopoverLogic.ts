@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
@@ -27,20 +26,22 @@ export const useWishlistPopoverLogic = ({
   const [creating, setCreating] = useState(false);
   const [localWishlists, setLocalWishlists] = useState(wishlists);
 
+  // Always keep localWishlists in sync when opening
   useEffect(() => {
     if (open) {
       setLocalWishlists(wishlists);
     }
   }, [open, wishlists]);
 
-  // --- Helper to fully re-sync wishlists and set local state
+  // Utility: Always reload, update, and return fresh wishlists
   const forceReloadLocalWishlists = async () => {
     const updated = await reloadWishlists();
-    // backward compatible: await returns wishlists (if designed), else use context
-    if (Array.isArray(updated)) {
+    if (Array.isArray(updated) && updated.length > 0) {
       setLocalWishlists(updated);
+      return updated;
     } else {
       setLocalWishlists(wishlists);
+      return wishlists;
     }
   };
 
@@ -62,16 +63,18 @@ export const useWishlistPopoverLogic = ({
         image_url: productImage,
         brand: productBrand
       });
-
-      await forceReloadLocalWishlists(); // Strong guarantee of state update
-
-      toast.success(`Added to wishlist`);
-      if (onClose) onClose();
-      setOpen(false);
+      // << Sync backend + update localWishlists + wait for UI update
+      const latest = await forceReloadLocalWishlists();
+      // Small delay to ensure UI updates before closing (esp. on fast connections)
+      setTimeout(() => {
+        toast.success(`Added to wishlist`);
+        if (onClose) onClose();
+        setOpen(false);
+        setAddingToWishlist(null);
+      }, 350);
     } catch (error) {
       console.error("Error adding to wishlist:", error);
       toast.error("Failed to add to wishlist");
-    } finally {
       setAddingToWishlist(null);
     }
   };
@@ -83,19 +86,17 @@ export const useWishlistPopoverLogic = ({
     }
     setCreating(true);
     try {
+      // 1. Create wishlist backend
       const newWishlist = await createWishlist(newName.trim());
       if (newWishlist) {
-        // Force reload all wishlists to find the correct, latest one
-        await forceReloadLocalWishlists();
-
-        // Try to find the new wishlist and add product into it
-        const syncedLists = localWishlists.length > 0 ? localWishlists : (wishlists || []);
-        const created = syncedLists.find(w => w.title === newName.trim());
+        // 2. Reload wishlists and update local
+        const latestWishlists = await forceReloadLocalWishlists();
+        // 3. Find newly created wishlist (ensure it's in the freshly loaded array)
+        const created = latestWishlists.find(w => w.title === newName.trim());
         const newWishId = created?.id || newWishlist.id;
-
         if (newWishId) {
+          // 4. Add product to the new wishlist, then sync again so item is counted
           await handleAddToWishlist(newWishId);
-          // After product added, re-sync everything
           await forceReloadLocalWishlists();
         } else {
           toast.error("Could not find the new wishlist after creation.");

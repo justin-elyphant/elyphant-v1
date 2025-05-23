@@ -4,6 +4,7 @@ import WishlistSelectionPopover from "@/components/marketplace/WishlistSelection
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 
 interface WishlistSelectionPopoverButtonProps {
   product: {
@@ -23,6 +24,12 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   onAdded,
 }) => {
   const isMobile = useIsMobile();
+  const { wishlists } = useWishlist();
+
+  // Determine if product is in any wishlist
+  const isWishlisted = wishlists.some(list =>
+    list.items.some(item => item.product_id === product.id)
+  );
 
   const triggerNode = (
     <Button
@@ -31,7 +38,12 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
       className={triggerClassName || ""}
       aria-label="Add to wishlist"
     >
-      <Heart className="h-4 w-4" />
+      <Heart
+        className="h-4 w-4"
+        fill={isWishlisted ? "#ec4899" : "none"} // Tailwind's pink-500
+        color={isWishlisted ? "#ec4899" : undefined}
+        strokeWidth={isWishlisted ? 2.5 : 2}
+      />
     </Button>
   );
 
@@ -47,6 +59,8 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
       trigger={triggerNode}
       className={isMobile ? "w-full" : ""}
       onClose={onAdded}
+      // Add an extra prop to force a re-render if needed
+      key={isWishlisted ? "wishlisted" : "not-wishlisted"}
     />
   );
 };

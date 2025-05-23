@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +36,7 @@ const WishlistSelectionPopover = ({
   trigger,
   className
 }: WishlistSelectionPopoverProps) => {
-  const { wishlists, addToWishlist, createWishlist } = useWishlist();
+  const { wishlists, addToWishlist, createWishlist, reloadWishlists } = useWishlist();
   const [open, setOpen] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
@@ -44,10 +44,18 @@ const WishlistSelectionPopover = ({
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [localWishlists, setLocalWishlists] = useState(wishlists);
+
+  // Sync localWishlists to context wishlists when open
+  useEffect(() => {
+    if (open) {
+      setLocalWishlists(wishlists);
+    }
+  }, [open, wishlists]);
 
   // Check which wishlists already contain this product
   const isInWishlist = (wishlistId: string) => {
-    const wishlist = wishlists.find((w) => w.id === wishlistId);
+    const wishlist = localWishlists.find((w) => w.id === wishlistId);
     return wishlist?.items.some((item) => item.product_id === productId);
   };
 
@@ -64,6 +72,7 @@ const WishlistSelectionPopover = ({
         image_url: productImage,
         brand: productBrand
       });
+      await reloadWishlists(); // Refresh local wishlists for real-time update
       toast.success(`Added to wishlist`);
       if (onClose) onClose();
       setOpen(false);
@@ -84,6 +93,7 @@ const WishlistSelectionPopover = ({
     try {
       const newWishlist = await createWishlist(newName.trim());
       if (newWishlist) {
+        await reloadWishlists();
         toast.success("Wishlist created");
         // Optionally, add item to the new wishlist automatically
         await handleAddToWishlist(newWishlist.id);
@@ -134,8 +144,8 @@ const WishlistSelectionPopover = ({
         
         {/* Choose wishlist */}
         <div className="max-h-60 overflow-y-auto divide-y">
-          {wishlists?.length > 0 ? (
-            wishlists.map((wishlist) => {
+          {localWishlists?.length > 0 ? (
+            localWishlists.map((wishlist) => {
               const alreadyInWishlist = isInWishlist(wishlist.id);
 
               return (

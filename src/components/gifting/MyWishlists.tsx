@@ -237,21 +237,22 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {filteredCategories.map((category, i) => {
-                  if (typeof category !== "string" || category.trim().length === 0) {
-                    // For debugging, skip rendering, warn loudly
-                    console.warn("Skipping invalid SelectItem value (category):", category, "at", i);
-                    return null;
-                  }
-                  return (
+                {filteredCategories
+                  // Only include valid, trimmed, non-empty strings
+                  .filter(
+                    (category): category is string =>
+                      typeof category === "string" &&
+                      !!category.trim() && // not all whitespace/empty
+                      category.trim().length > 0
+                  )
+                  .map((category, i) => (
                     <SelectItem
                       key={`${category}-${i}`}
-                      value={category}
+                      value={category.trim()}
                     >
                       {category}
                     </SelectItem>
-                  );
-                })}
+                  ))}
               </SelectContent>
             </Select>
           </div>

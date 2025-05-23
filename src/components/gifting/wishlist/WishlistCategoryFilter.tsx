@@ -37,10 +37,17 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     return Array.from(new Set(validCategories));
   }, [validCategories]);
 
+  // Only valid, non-empty, non-whitespace categories for rendering SelectItems
+  const filteredCategories = React.useMemo(() => {
+    return dedupedCategories.filter(
+      (cat): cat is string => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+    );
+  }, [dedupedCategories]);
+
   // Current value for <Select />
   const currentValue =
     typeof categoryFilter === "string" &&
-    dedupedCategories.includes(categoryFilter) &&
+    filteredCategories.includes(categoryFilter) &&
     categoryFilter.trim().length > 0
       ? categoryFilter
       : "";
@@ -64,7 +71,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || value === "" || !dedupedCategories.includes(value)) {
+            if (!value || value === "" || !filteredCategories.includes(value)) {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -77,14 +84,11 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only the all-categories option uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {dedupedCategories
-              // Filter out any empty string or whitespace-only category to prevent SelectItem with value=""
-              .filter((cat) => typeof cat === "string" && !!cat.trim() && cat !== "")
-              .map((cat, i) => (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
+            {filteredCategories.map((cat, i) => (
+              <SelectItem key={cat + "-" + i} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

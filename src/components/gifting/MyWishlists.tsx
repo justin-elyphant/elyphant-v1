@@ -27,6 +27,7 @@ import { z } from "zod";
 import SignInPrompt from "./my-wishlists/SignInPrompt";
 import LoadingWishlists from "./my-wishlists/LoadingWishlists";
 import InitErrorState from "./my-wishlists/InitErrorState";
+import WishlistCategoryFilter from "./wishlist/WishlistCategoryFilter";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -241,58 +242,14 @@ const MyWishlists = () => {
 
       {/* Filter and search section */}
       {wishlists && wishlists.length > 1 && (
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="w-full sm:w-1/3">
-            <Select
-              value={categoryFilter || ""}
-              onValueChange={(value) => {
-                // Only update to valid value or null
-                if (!value || !selectableCategories.includes(value) || value.trim() === "") {
-                  setCategoryFilter(null);
-                } else {
-                  setCategoryFilter(value);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
-                {/* Only render valid categories */}
-                {selectableCategories.map((cat, i) => {
-                  // Extra defensive: Don't render unless 100% valid
-                  if (!cat || typeof cat !== "string" || !cat.trim()) return null;
-                  return (
-                    <SelectItem key={cat + "-" + i} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex-1">
-            <div className="relative">
-              <Input
-                placeholder="Search wishlists..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-              />
-              {(categoryFilter || searchQuery) && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="absolute right-1 top-1 h-8"
-                  onClick={clearFilters}
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <WishlistCategoryFilter
+          selectableCategories={selectableCategories}
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onClearFilters={clearFilters}
+        />
       )}
 
       {/* Empty state for filtered results */}

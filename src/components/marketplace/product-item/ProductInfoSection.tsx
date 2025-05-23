@@ -1,8 +1,9 @@
 
 import React from "react";
 import { Star } from "lucide-react";
-import QuickWishlistButton from "./QuickWishlistButton";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { Product } from "@/types/product";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductInfoSectionProps {
   product: Product;
@@ -23,6 +24,7 @@ const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
   const getPrice = () => product.price?.toFixed(2) || "0.00";
   const getRating = () => product.rating || product.stars || 0;
   const getReviewCount = () => product.reviewCount || product.num_reviews || 0;
+  const isMobile = useIsMobile();
 
   return (
     <>
@@ -32,12 +34,19 @@ const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
         </h3>
         {viewMode === "list" && (
           <div className="ml-2">
-            <QuickWishlistButton
-              productId={product.product_id || product.id || ""}
-              isFavorited={isFavorited}
-              onClick={onWishlistClick}
-              size="sm"
-              variant="subtle"
+            <WishlistSelectionPopoverButton
+              product={{
+                id: String(product.product_id || product.id),
+                name: product.title || product.name || "",
+                image: product.image || "",
+                price: product.price,
+                brand: product.brand || "",
+              }}
+              triggerClassName={`p-2 rounded-full transition-colors ${
+                isFavorited
+                  ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
+                  : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+              }`}
             />
           </div>
         )}
@@ -69,4 +78,3 @@ const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
 };
 
 export default ProductInfoSection;
-

@@ -1,10 +1,11 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import QuickWishlistButton from "./QuickWishlistButton";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { Product } from "@/types/product";
 import { getPrimaryProductImage } from "./getPrimaryProductImage";
 import { useLazyImage } from "@/hooks/useLazyImage";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductImageSectionProps {
   product: Product;
@@ -25,6 +26,7 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
 }) => {
   const productImage = getPrimaryProductImage(product);
   const { src: imageSrc } = useLazyImage(productImage);
+  const isMobile = useIsMobile();
 
   // Layout/size tweaks per view
   const aspectClass = viewMode === "list" ? "relative w-full xs:w-1/3 aspect-square" : "aspect-square overflow-hidden relative";
@@ -39,12 +41,19 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
 
       {viewMode === "grid" && (
         <div className="absolute top-2 right-2 z-10">
-          <QuickWishlistButton
-            productId={product.product_id || product.id || ""}
-            isFavorited={isFavorited}
-            onClick={onWishlistClick}
-            size="md"
-            variant="default"
+          <WishlistSelectionPopoverButton
+            product={{
+              id: String(product.product_id || product.id),
+              name: product.title || product.name || "",
+              image: productImage,
+              price: product.price,
+              brand: product.brand || "",
+            }}
+            triggerClassName={`p-1.5 rounded-full transition-colors ${
+              isFavorited 
+                ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
+                : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+            }`}
           />
         </div>
       )}
@@ -67,4 +76,3 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
 };
 
 export default ProductImageSection;
-

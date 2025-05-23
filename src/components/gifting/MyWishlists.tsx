@@ -67,7 +67,7 @@ const MyWishlists = () => {
     if (!wishlists?.length) return [];
     const allCategories = wishlists
       .map(list => typeof list.category === "string" ? list.category.trim() : "")
-      .filter((category) => typeof category === "string" && !!category && category !== "");
+      .filter((category) => typeof category === "string" && category.trim().length > 0);
     // Only unique valid (non-empty) strings
     return Array.from(new Set(allCategories));
   }, [wishlists]);
@@ -220,10 +220,10 @@ const MyWishlists = () => {
                 {/* This placeholder is correct */}
                 <SelectItem value="">All Categories</SelectItem>
                 {categories
-                  // Filter out falsy, empty, or invalid categories here (safeguard)
+                  // Even though categories are now fully sanitized, add one last filter
                   .filter(
                     (category): category is string =>
-                      typeof category === "string" && !!category && category !== ""
+                      typeof category === "string" && category.trim().length > 0
                   )
                   .map((category, i) => (
                     <SelectItem

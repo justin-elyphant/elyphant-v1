@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -42,38 +43,36 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
-  // FINAL GUARD: Return only truly valid string categories (non-empty, no undefined/null/whitespace)
-  function getFilteredCategoriesForSelect(categories: unknown[]): string[] {
-    const filtered: string[] = [];
-    categories.forEach((cat, idx) => {
-      if (
+  // Extra strict filter to guarantee all mapped values are valid
+  function getStrictFilteredCategories(categories: unknown[]): string[] {
+    return categories.filter(
+      (cat) =>
         typeof cat === "string" &&
-        cat.trim().length > 0
-      ) {
-        filtered.push(cat);
-      } else if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.error(
-          `[WishlistCategoryFilter] Invalid category excluded from <SelectItem /> at index ${idx}:`,
-          cat
-        );
-      }
-    });
-    return filtered;
+        cat.trim().length > 0 &&
+        cat !== "" &&
+        cat !== undefined &&
+        cat !== null
+    ) as string[];
   }
 
-  // Use only strictly valid, non-empty categories for select items (this will not include "")
+  // Use only strictly valid, non-empty categories for select items (never include "")
   const finalCategoryItems = React.useMemo(
-    () => getFilteredCategoriesForSelect(rawCategories),
+    () => getStrictFilteredCategories(rawCategories),
     [rawCategories]
   );
 
-  // FINAL GUARD: DEV-only log if any invalid value slipped through before rendering
+  // DEV: Log if anything invalid would be rendered as a SelectItem
   if (process.env.NODE_ENV === "development") {
     finalCategoryItems.forEach((cat, idx) => {
-      if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+      if (
+        typeof cat !== "string" ||
+        cat.trim().length === 0 ||
+        cat === "" ||
+        cat === undefined ||
+        cat === null
+      ) {
         // eslint-disable-next-line no-console
-        console.error(`[WishlistCategoryFilter] <SelectItem /> about to render with an invalid value (BUG):`, {
+        console.error(`[WishlistCategoryFilter] <SelectItem /> about to render invalid value:`, {
           idx,
           cat,
         });
@@ -98,7 +97,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* The only allowed empty value is for 'All Categories' */}
+            {/* Only the special all-categories option can use value="" */}
             <SelectItem value="">All Categories</SelectItem>
             {finalCategoryItems.map((cat, i) => (
               <SelectItem key={cat + "-" + i} value={cat}>

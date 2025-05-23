@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Heart, Clock } from "lucide-react";
@@ -8,12 +9,12 @@ import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 
 const GiftsCard = () => {
   const { laterItems, wishlistItems } = useFavorites();
-  
-  // Use actual data if available, otherwise use mock data
-  const wishlistCount = wishlistItems?.length || 5;
-  const laterCount = laterItems?.length || 3;
 
-  // Mock data for the wishlist items
+  // Use counts from fetched data, never fallback to mock values
+  const wishlistCount = wishlistItems ? wishlistItems.length : 0;
+  const laterCount = laterItems ? laterItems.length : 0;
+
+  // Mock data for the wishlist items (for UI preview only, not for counts)
   const mockWishlistItems = [
     { name: "Leather Wallet", price: "$45.99" },
     { name: "Smart Watch", price: "$199.99" },

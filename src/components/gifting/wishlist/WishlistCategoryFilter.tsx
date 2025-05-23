@@ -24,17 +24,20 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 }) => {
   // Only valid string categories (non-empty, trimmed)
   const validCategories = React.useMemo(() => {
-    return getValidCategories(selectableCategories).filter(
-      (cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
-    );
+    return Array.isArray(selectableCategories)
+      ? selectableCategories.filter(
+          (cat): cat is string =>
+            typeof cat === "string" && !!cat.trim() && cat !== ""
+        )
+      : [];
   }, [selectableCategories]);
 
-  // Dedupe
+  // Remove duplicates
   const dedupedCategories = React.useMemo(() => {
     return Array.from(new Set(validCategories));
   }, [validCategories]);
 
-  // Current value pattern: only "" for "All"
+  // Current value for <Select />
   const currentValue =
     typeof categoryFilter === "string" &&
     dedupedCategories.includes(categoryFilter) &&
@@ -42,15 +45,12 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
-  // Log any suspicious entries (for dev)
+  // Developer-only logging for debugging
   if (process.env.NODE_ENV === "development") {
-    dedupedCategories.forEach((cat, i) => {
-      if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
+    dedupedCategories.forEach((cat, idx) => {
+      if (!(typeof cat === "string" && !!cat.trim() && cat !== "")) {
         // eslint-disable-next-line no-console
-        console.error("[WishlistCategoryFilter] Invalid category value in dedupedCategories:", {
-          i,
-          cat,
-        });
+        console.error("Invalid category in <SelectItem />:", { idx, cat });
       }
     });
   }
@@ -75,7 +75,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* Only the all-categories option uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
             {dedupedCategories
-              .filter((cat) => !!cat && typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              .filter((cat) => typeof cat === "string" && !!cat.trim() && cat !== "")
               .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}

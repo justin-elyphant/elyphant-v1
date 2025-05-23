@@ -58,6 +58,7 @@ const WishlistSelectionPopover = ({
     return wishlist?.items.some((item) => item.product_id === productId);
   };
 
+  // Always hard sync after product add
   const handleAddToWishlist = async (wishlistId: string) => {
     try {
       setAddingToWishlist(wishlistId);
@@ -71,7 +72,11 @@ const WishlistSelectionPopover = ({
         image_url: productImage,
         brand: productBrand
       });
-      await reloadWishlists(); // Refresh local wishlists for real-time update
+
+      // FORCE reload wishlists anew to reflect added item count & heart state everywhere
+      await reloadWishlists();
+      setLocalWishlists(wishlists => wishlists); // force state update if needed
+
       toast.success(`Added to wishlist`);
       if (onClose) onClose();
       setOpen(false);
@@ -83,7 +88,7 @@ const WishlistSelectionPopover = ({
     }
   };
 
-  // --- FIXED: async reliable create+add flow ---
+  // --- FIX: Fully sync after creating wishlist AND adding product ---
   const handleCreateWishlist = async () => {
     if (!newName.trim()) {
       toast.error("Please enter a name for your wishlist");
@@ -99,7 +104,6 @@ const WishlistSelectionPopover = ({
         // Find the created wishlist by name (ensure most up-to-date)
         const refreshed = await reloadWishlists();
         let created = null;
-        // Try with refetched wishlists, get latest state.
         if (Array.isArray(refreshed)) {
           created = refreshed.find(w => w.title === newName.trim());
         } else {
@@ -110,6 +114,9 @@ const WishlistSelectionPopover = ({
         // Only then add the product to the created wishlist.
         if (newWishId) {
           await handleAddToWishlist(newWishId);
+          // Ensure UI updates with new wishlist + item
+          await reloadWishlists();
+          setLocalWishlists(wishlists => wishlists); // extra bump (for popover item count)
         } else {
           toast.error("Could not find the new wishlist after creation.");
         }

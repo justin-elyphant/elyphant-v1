@@ -61,25 +61,33 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
-  // ABSOLUTE filter: no empty, null, whitespace, or falsy
+  // Filter to only truly valid categories, skip empty/whitespace
   const filteredCategories = React.useMemo(
     () =>
       validRenderedCategories.filter(
-        (cat) =>
-          typeof cat === "string" && !!cat.trim() && cat !== ""
+        (cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
       ),
     [validRenderedCategories]
   );
 
-  // Defensive: log if we filter out invalid categories
+  // Extra strict guard: check for any bad categories about to render
   React.useEffect(() => {
-    validRenderedCategories.forEach((cat, i) => {
-      if (typeof cat !== "string" || !cat.trim() || cat === "") {
+    filteredCategories.forEach((cat, i) => {
+      if (
+        typeof cat !== "string" ||
+        cat.trim().length === 0 ||
+        cat === ""
+      ) {
         // eslint-disable-next-line no-console
-        console.error("[WishlistCategoryFilter] Removed invalid category before render: ", i, cat);
+        console.error(
+          "[WishlistCategoryFilter] About to render <SelectItem> with INVALID value! Index:",
+          i,
+          "Value:",
+          cat
+        );
       }
     });
-  }, [validRenderedCategories]);
+  }, [filteredCategories]);
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -101,32 +109,14 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only this entry can use "" */}
             <SelectItem value="">All Categories</SelectItem>
-            {/* All real categories must be non-empty */}
-            {filteredCategories.map((cat, i) => {
-              if (
-                typeof cat !== "string" ||
-                cat.trim().length === 0 ||
-                cat === ""
-              ) {
-                // Defensive: Log and skip bad entries
-                if (process.env.NODE_ENV === "development") {
-                  // eslint-disable-next-line no-console
-                  console.error(
-                    "[WishlistCategoryFilter] Skipping <SelectItem> with invalid value! Index:",
-                    i,
-                    "Value:",
-                    cat
-                  );
-                }
-                return null;
-              }
-              // This ensures NO SelectItem has value=""
-              return (
+            {/* Absolutely never render a SelectItem with value="" except above */}
+            {filteredCategories
+              .filter((cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
                 </SelectItem>
-              );
-            })}
+              ))}
           </SelectContent>
         </Select>
       </div>

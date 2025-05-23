@@ -17,6 +17,7 @@ type WishlistCategoryFilterProps = {
 // Strong filter: dedupe, remove empty/whitespace, trim all, only valid strings
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
+  // Only include trimmed, non-empty, non-whitespace strings
   return Array.from(
     new Set(
       categories
@@ -24,8 +25,8 @@ function getStrictValidCategories(categories: unknown[]): string[] {
         .filter(
           (cat) =>
             typeof cat === "string" &&
-            !!cat &&
-            cat.trim().length > 0
+            cat.length > 0 &&
+            cat !== ""
         )
     )
   );
@@ -89,12 +90,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
+            {/* The special "All Categories" placeholder option */}
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories.map((cat, i) => (
-              <SelectItem key={cat + "-" + i} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {/* Only render items if cat is non-empty, non-whitespace */}
+            {filteredCategories.map((cat, i) =>
+              typeof cat === "string" && cat.trim().length > 0 ? (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ) : null
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -123,4 +128,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

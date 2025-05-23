@@ -106,6 +106,25 @@ const MyWishlists = () => {
     });
   }, [filteredCategories]);
 
+  // Defensive: Ensure filter is always valid—if not, reset it to null
+  React.useEffect(() => {
+    if (
+      categoryFilter &&
+      (!selectableCategories.includes(categoryFilter) || typeof categoryFilter !== "string" || categoryFilter.trim() === "")
+    ) {
+      console.warn("[Wishlists] Resetting invalid categoryFilter value", categoryFilter);
+      setCategoryFilter(null);
+    }
+  }, [categoryFilter, selectableCategories]);
+
+  // Add dev log of all categories and filters
+  React.useEffect(() => {
+    console.log("[Wishlists] selectableCategories", selectableCategories);
+    console.log("[Wishlists] current categoryFilter", categoryFilter);
+    console.log("[Wishlists] searchQuery", searchQuery);
+    console.log("[Wishlists] wishlists.length", wishlists?.length);
+  }, [selectableCategories, categoryFilter, searchQuery, wishlists]);
+
   // Filter wishlists based on category and search query
   const filteredWishlists = React.useMemo(() => {
     if (!wishlists) return [];
@@ -236,7 +255,13 @@ const MyWishlists = () => {
           <div className="w-full sm:w-1/3">
             <Select
               value={categoryFilter || ""}
-              onValueChange={(value) => setCategoryFilter(value || null)}
+              onValueChange={(value) => {
+                if (!value || !selectableCategories.includes(value)) {
+                  setCategoryFilter(null);
+                } else {
+                  setCategoryFilter(value);
+                }
+              }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Filter by category" />

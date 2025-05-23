@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
@@ -46,20 +47,22 @@ const ProductActions = ({
           Add to Cart
         </Button>
         {/* Always use popover-based wishlist button */}
-        <WishlistSelectionPopoverButton
-          product={{
-            id: String(product.id),
-            name: product.title || product.name || "",
-            image: product.image || "",
-            price: product.price,
-            brand: product.brand || "",
-          }}
-          triggerClassName={`p-1.5 rounded-full transition-colors ${isInWishlist
-              ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
-              : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
-            }`}
-          onAdded={undefined}
-        />
+        <div onClick={e => e.stopPropagation()}>
+          <WishlistSelectionPopoverButton
+            product={{
+              id: String(product.id),
+              name: product.title || product.name || "",
+              image: product.image || "",
+              price: product.price,
+              brand: product.brand || "",
+            }}
+            triggerClassName={`p-1.5 rounded-full transition-colors ${isInWishlist
+                ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
+                : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+              }`}
+            onAdded={undefined}
+          />
+        </div>
       </div>
 
       <BuyNowButton 

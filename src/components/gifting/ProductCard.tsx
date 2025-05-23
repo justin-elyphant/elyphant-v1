@@ -1,3 +1,4 @@
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -83,7 +84,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
         />
 
         {/* Always popover-based wishlist - no more 1-click */}
-        <div className="absolute top-2 right-2 z-30">
+        <div
+          className="absolute top-2 right-2 z-30"
+          onClick={e => e.stopPropagation()}
+        >
           <WishlistSelectionPopoverButton
             product={{
               id: String(product.product_id || product.id),

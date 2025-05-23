@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Star } from "lucide-react";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
@@ -32,7 +33,7 @@ const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
           {getTitle()}
         </h3>
         {viewMode === "list" && (
-          <div className="ml-2">
+          <div className="ml-2" onClick={e => e.stopPropagation()}>
             {/* Always use popover-based wishlist */}
             <WishlistSelectionPopoverButton
               product={{

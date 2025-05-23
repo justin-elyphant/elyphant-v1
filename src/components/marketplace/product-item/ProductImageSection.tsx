@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
@@ -40,7 +41,10 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
 
       {/* On grid view, always show the popover-based wishlist button */}
       {viewMode === "grid" && (
-        <div className="absolute top-2 right-2 z-10">
+        <div
+          className="absolute top-2 right-2 z-10"
+          onClick={e => e.stopPropagation()}
+        >
           <WishlistSelectionPopoverButton
             product={{
               id: String(product.product_id || product.id),

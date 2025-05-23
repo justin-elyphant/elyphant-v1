@@ -14,15 +14,14 @@ type WishlistCategoryFilterProps = {
   onClearFilters: () => void;
 };
 
-// Strict utility to ensure only unique, non-empty, trimmed strings as category options
+// Utility to ensure only unique, non-empty, trimmed strings as category options
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
-  // Step 1: Filter only proper strings, trim, and skip empty results
   return Array.from(
     new Set(
       categories
         .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-        .filter((cat) => typeof cat === "string" && cat.length > 0 && cat !== "")
+        .filter((cat) => typeof cat === "string" && cat.length > 0)
     )
   );
 }
@@ -35,10 +34,10 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Always dedupe/validate categories before rendering options
+  // Deduplicate and strictly filter categories
   const filteredCategories = React.useMemo(() => getStrictValidCategories(selectableCategories), [selectableCategories]);
 
-  // DEVELOPMENT: log both input & output for categories if there is an odd value
+  // DEV LOGGING for debugging category issues
   if (process.env.NODE_ENV === "development") {
     if (Array.isArray(selectableCategories)) {
       selectableCategories.forEach((cat, i) => {
@@ -56,7 +55,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     });
   }
 
-  // Select's value logic
+  // Make sure the value is always a valid option or empty for "All Categories"
   const currentValue =
     typeof categoryFilter === "string" &&
     filteredCategories.includes(categoryFilter) &&
@@ -84,7 +83,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* The only allowed empty value */}
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories
-              .filter(cat => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              .filter((cat) => typeof cat === "string" && cat.length > 0 && cat !== "")
               .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
@@ -118,3 +117,4 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
+

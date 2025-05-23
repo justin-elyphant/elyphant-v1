@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -22,34 +21,25 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Clean up: filter out any empty, whitespace, or non-string values up-front
+  // FILTER: Only accept non-empty, trimmed, valid strings
   const filteredCategories = React.useMemo(() => {
     if (!Array.isArray(selectableCategories)) return [];
     return selectableCategories
-      .map(cat => (typeof cat === "string" ? cat.trim() : ""))
-      .filter(
-        (cat): cat is string =>
-          typeof cat === "string" && cat.length > 0
-      )
-      .filter((cat, idx, arr) => arr.indexOf(cat) === idx); // dedupe
+      .filter(cat => typeof cat === "string" && cat.trim().length > 0); // Only valid string and not empty
   }, [selectableCategories]);
 
-  // DEV: runtime warning if any bad categories sneak through
+  // DEV LOGGING for invalid categories
   if (process.env.NODE_ENV === "development") {
     if (
       Array.isArray(selectableCategories) &&
       selectableCategories.some(cat => typeof cat !== "string" || cat.trim().length === 0)
     ) {
       // eslint-disable-next-line no-console
-      console.error("[WishlistCategoryFilter][DEV] Detected invalid category in selectableCategories:", selectableCategories);
-    }
-    if (filteredCategories.some(cat => !cat || typeof cat !== "string" || cat.trim().length === 0)) {
-      // eslint-disable-next-line no-console
-      console.error("[WishlistCategoryFilter][DEV] Invalid value found in filteredCategories:", filteredCategories);
+      console.error("[WishlistCategoryFilter][DEV] Invalid category in selectableCategories:", selectableCategories);
     }
   }
 
-  // Current value for <Select />
+  // Select's value logic (same as before)
   const currentValue =
     typeof categoryFilter === "string" &&
     filteredCategories.includes(categoryFilter) &&
@@ -74,18 +64,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* Only the all-categories option uses value="" */}
+            {/* Only All Categories uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories
-              .filter(cat => !!cat && cat !== "") // Never pass empty string to value!
-              .map((cat, i) => (
-                <SelectItem
-                  key={cat + "-" + i}
-                  value={cat}
-                >
-                  {cat}
-                </SelectItem>
-              ))}
+            {filteredCategories.map((cat, i) => (
+              <SelectItem
+                key={cat + "-" + i}
+                value={cat}
+              >
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

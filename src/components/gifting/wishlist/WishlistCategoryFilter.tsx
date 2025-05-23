@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -45,6 +44,15 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
       ? categoryFilter
       : "";
 
+  // Filter categories to ensure NO empty or whitespace strings are rendered as SelectItem
+  const validRenderedCategories = selectableCategories.filter((cat) => {
+    const ok = typeof cat === "string" && cat.trim().length > 0;
+    if (!ok) {
+      console.warn("[WishlistCategoryFilter] Filtering out invalid category for SelectItem:", cat);
+    }
+    return ok;
+  });
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
       <div className="w-full sm:w-1/3">
@@ -63,7 +71,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {selectableCategories.map((cat, i) => (
+            {validRenderedCategories.map((cat, i) => (
               <SelectItem
                 key={cat + "-" + i}
                 value={cat}

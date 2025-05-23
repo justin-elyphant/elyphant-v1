@@ -71,7 +71,10 @@ const MyWishlists = () => {
 
   // Use the new utility to get only valid, trimmed, deduped categories
   const selectableCategories = React.useMemo(
-    () => getValidWishlistCategories(wishlists || []),
+    () =>
+      getValidWishlistCategories(wishlists || []).filter(
+        (cat) => typeof cat === "string" && cat.trim().length > 0
+      ),
     [wishlists]
   );
 
@@ -230,9 +233,12 @@ const MyWishlists = () => {
       </Alert>
 
       {/* Filter and search section */}
-      {wishlists && wishlists.length > 1 && (
+      {wishlists && wishlists.length > 1 && selectableCategories.length > 0 && (
         <WishlistCategoryFilter
-          selectableCategories={selectableCategories}
+          // Extra safeguard: do NOT pass empty categories
+          selectableCategories={selectableCategories.filter(
+            (cat) => typeof cat === "string" && cat.trim().length > 0
+          )}
           categoryFilter={categoryFilter}
           onCategoryFilterChange={setCategoryFilter}
           searchQuery={searchQuery}

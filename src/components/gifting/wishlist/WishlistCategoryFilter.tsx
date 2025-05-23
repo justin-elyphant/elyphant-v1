@@ -14,27 +14,17 @@ type WishlistCategoryFilterProps = {
   onClearFilters: () => void;
 };
 
-// Ensure only strictly valid, non-empty, trimmed unique strings
+// Strict utility to ensure only unique, non-empty, trimmed strings as category options
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
-  const arr = Array.from(
+  // Step 1: Filter only proper strings, trim, and skip empty results
+  return Array.from(
     new Set(
       categories
-        .filter((cat): cat is string => typeof cat === "string")
-        .map((cat) => cat.trim())
-        .filter((cat) => cat.length > 0)
+        .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
+        .filter((cat) => typeof cat === "string" && cat.length > 0 && cat !== "")
     )
   );
-  // DEV: log if invalid value slipped through
-  if (process.env.NODE_ENV === "development") {
-    arr.forEach((cat, idx) => {
-      if (!cat || cat === "" || typeof cat !== "string" || cat.trim().length === 0) {
-        // eslint-disable-next-line no-console
-        console.error("Invalid category produced for SelectItem:", cat, idx);
-      }
-    });
-  }
-  return arr;
 }
 
 const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
@@ -45,26 +35,28 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Use stricter util
+  // Always dedupe/validate categories before rendering options
   const filteredCategories = React.useMemo(() => getStrictValidCategories(selectableCategories), [selectableCategories]);
 
-  // DEV LOGGING: Also check selectableCategories
-  if (
-    process.env.NODE_ENV === "development" &&
-    Array.isArray(selectableCategories)
-  ) {
-    selectableCategories.forEach((cat, i) => {
-      if (
-        typeof cat !== "string" ||
-        cat.trim().length === 0
-      ) {
+  // DEVELOPMENT: log both input & output for categories if there is an odd value
+  if (process.env.NODE_ENV === "development") {
+    if (Array.isArray(selectableCategories)) {
+      selectableCategories.forEach((cat, i) => {
+        if (typeof cat !== "string" || cat.trim().length === 0) {
+          // eslint-disable-next-line no-console
+          console.error(`[WishlistCategoryFilter][DEV] Invalid category in selectableCategories at index ${i}:`, cat);
+        }
+      });
+    }
+    filteredCategories.forEach((cat, i) => {
+      if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
         // eslint-disable-next-line no-console
-        console.error(`[WishlistCategoryFilter][DEV] Invalid category in selectableCategories at index ${i}:`, cat);
+        console.error(`[WishlistCategoryFilter][DEV] Invalid filtered category at index ${i}:`, cat);
       }
     });
   }
 
-  // Select's value logic - only non-empty string matches allowed
+  // Select's value logic
   const currentValue =
     typeof categoryFilter === "string" &&
     filteredCategories.includes(categoryFilter) &&
@@ -89,10 +81,10 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* All Categories uses value="" */}
+            {/* The only allowed empty value */}
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories
-              .filter(cat => cat && cat.trim().length > 0)
+              .filter(cat => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
               .map((cat, i) => (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}

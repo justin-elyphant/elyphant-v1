@@ -24,14 +24,17 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Defensive: Ensure only non-empty, valid, non-blank category values
-  const validCategories = React.useMemo(
-    () =>
-      selectableCategories.filter(
-        (cat) => typeof cat === "string" && !!cat.trim()
-      ),
-    [selectableCategories]
-  );
+  // Defensive: Filter only non-empty, valid, non-blank category values
+  const validCategories = React.useMemo(() => {
+    return selectableCategories.filter(
+      (cat) => typeof cat === "string" && cat.trim().length > 0
+    );
+  }, [selectableCategories]);
+
+  // Debug: Log each value being mapped
+  React.useEffect(() => {
+    console.log("[WishlistCategoryFilter] validCategories for SelectItem:", validCategories);
+  }, [validCategories]);
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -53,7 +56,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
             {validCategories.map((cat, i) =>
-              cat && cat !== "" ? (
+              typeof cat === "string" && cat.trim().length > 0 ? (
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
                 </SelectItem>

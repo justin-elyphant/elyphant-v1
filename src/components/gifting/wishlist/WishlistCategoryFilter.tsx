@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     });
   }, [filteredCategories]);
 
+  // Final ironclad filter: don't let any empty/whitespace/invalid values render as SelectItem
+  const finalCategoryItems = React.useMemo(
+    () =>
+      filteredCategories.filter(
+        (cat): cat is string =>
+          typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+      ),
+    [filteredCategories]
+  );
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
       <div className="w-full sm:w-1/3">
@@ -95,7 +106,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           value={currentValue}
           onValueChange={(value) => {
             // Only "" is allowed for All Categories
-            if (!value || value === "" || !filteredCategories.includes(value)) {
+            if (!value || value === "" || !finalCategoryItems.includes(value)) {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -108,29 +119,27 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only this entry can use "" */}
             <SelectItem value="">All Categories</SelectItem>
-            {/* Final failsafe: only render non-empty string categories */}
-            {filteredCategories
-              .filter((cat): cat is string => typeof cat === "string" && cat.trim().length > 0 && cat !== "")
-              .map((cat, i) => {
-                // Defensive: should always pass, but in-dev logging extra guard
-                if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
-                  if (process.env.NODE_ENV === "development") {
-                    // eslint-disable-next-line no-console
-                    console.error(
-                      "[WishlistCategoryFilter] Refused to render <SelectItem> with invalid value! Index:",
-                      i,
-                      "Value:",
-                      cat
-                    );
-                  }
-                  return null;
+            {/* Only render non-empty, trimmed string categories */}
+            {finalCategoryItems.map((cat, i) => {
+              // Defensive: should always pass, but in-dev logging extra guard
+              if (typeof cat !== "string" || cat.trim().length === 0 || cat === "") {
+                if (process.env.NODE_ENV === "development") {
+                  // eslint-disable-next-line no-console
+                  console.error(
+                    "[WishlistCategoryFilter] Refused to render <SelectItem> with invalid value! Index:",
+                    i,
+                    "Value:",
+                    cat
+                  );
                 }
-                return (
-                  <SelectItem key={cat + "-" + i} value={cat}>
-                    {cat}
-                  </SelectItem>
-                );
-              })}
+                return null;
+              }
+              return (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
  */
 type WishlistCategoryFilterProps = {
   selectableCategories: string[];
-  categoryFilter: string | null;
+  categoryFilter: string | null | undefined;
   onCategoryFilterChange: (category: string | null) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
@@ -24,26 +24,36 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Defensive: Filter only non-empty, valid, non-blank category values
-  const validCategories = React.useMemo(() => {
-    return selectableCategories.filter(
-      (cat) => typeof cat === "string" && cat.trim().length > 0
-    );
-  }, [selectableCategories]);
+  // Always filter only valid, non-empty, trimmed string categories
+  const validCategories = React.useMemo(() =>
+    selectableCategories.filter(
+      (cat) => typeof cat === "string" && !!cat.trim()
+    ),
+    [selectableCategories]
+  );
 
-  // Debug: Log each value being mapped
+  // Warn (dev only) if there's invalid category
   React.useEffect(() => {
-    console.log("[WishlistCategoryFilter] validCategories for SelectItem:", validCategories);
+    validCategories.forEach((cat) => {
+      if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
+        console.warn("[WishlistCategoryFilter] Invalid category value in list:", cat);
+      }
+    });
   }, [validCategories]);
+
+  // Defensive: only allow "" for All Categories (clear)
+  const currentValue = categoryFilter && validCategories.includes(categoryFilter)
+    ? categoryFilter
+    : "";
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
       <div className="w-full sm:w-1/3">
         <Select
-          value={categoryFilter || ""}
+          value={currentValue}
           onValueChange={(value) => {
-            // Only assign a filter if valid, otherwise null out
-            if (!value || !validCategories.includes(value) || value.trim() === "") {
+            // If "All Categories" or invalid, clear the filter
+            if (!value || !validCategories.includes(value) || value === "") {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -55,13 +65,14 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {validCategories.map((cat, i) =>
-              typeof cat === "string" && cat.trim().length > 0 ? (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ) : null
-            )}
+            {validCategories.map((cat, i) => (
+              <SelectItem
+                key={cat + "-" + i}
+                value={cat}
+              >
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -90,4 +101,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

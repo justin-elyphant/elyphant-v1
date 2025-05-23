@@ -68,26 +68,23 @@ const MyWishlists = () => {
     removeFromWishlist,
   } = useWishlists();
 
-  // Compute unique, valid, non-empty, trimmed categories
+  // Compute list of unique, valid, non-empty, trimmed category strings (never "")
   const categories = React.useMemo(() => {
     if (!wishlists?.length) return [];
-    // Build, trim, filter out blank or whitespace-only values, and filter out empty strings
-    return Array.from(
-      new Set(
-        wishlists
-          .map(list =>
-            typeof list.category === "string"
-              ? list.category.trim()
-              : ""
-          )
-          .filter(cat => typeof cat === "string" && cat.trim().length > 0)
-      )
-    );
+    // Always trim and only keep non-empty strings
+    const validSet = new Set<string>();
+    wishlists.forEach(list => {
+      if (typeof list.category === "string") {
+        const trimmed = list.category.trim();
+        if (trimmed.length > 0) validSet.add(trimmed);
+      }
+    });
+    return Array.from(validSet);
   }, [wishlists]);
 
   // Ensure only valid strings in selectableCategories
   const selectableCategories = React.useMemo(
-    () => categories.filter(cat => typeof cat === "string" && cat.trim().length > 0),
+    () => categories.filter(isValidCategoryString),
     [categories]
   );
 

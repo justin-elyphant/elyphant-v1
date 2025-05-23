@@ -86,6 +86,18 @@ const MyWishlists = () => {
     [categories]
   );
 
+  // Filtered and sanitized categories for Select rendering - *do not* include any empty strings
+  const selectableCategories = React.useMemo(
+    () => filteredCategories.filter(cat => {
+      if (typeof cat !== "string" || cat.trim() === "") {
+        console.warn("[Wishlist Select] Dropping invalid category before SelectItem:", cat);
+        return false;
+      }
+      return true;
+    }),
+    [filteredCategories]
+  );
+
   useEffect(() => {
     filteredCategories.forEach((cat, idx) => {
       if (!isValidCategoryString(cat)) {
@@ -231,31 +243,17 @@ const MyWishlists = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                {filteredCategories.length === 0 && (
+                {selectableCategories.length === 0 && (
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
-                {filteredCategories.map((cat, i) => {
-                  // Defensive: ensure we only render non-empty, trimmed strings (not null/undefined/empty/"    ")
-                  if (typeof cat !== "string") {
-                    console.warn("[Wishlist Select] Category not a string, skipping:", cat);
-                    return null;
-                  }
-                  const trimmedValue = cat.trim();
-                  if (!trimmedValue) {
-                    // Don't render blank/whitespace categories
-                    console.warn("[Wishlist Select] Skipping empty/whitespace category for SelectItem", cat);
-                    return null;
-                  }
-                  // Only render categories that pass all checks
-                  return (
-                    <SelectItem
-                      key={trimmedValue + "-" + i}
-                      value={trimmedValue}
-                    >
-                      {trimmedValue}
-                    </SelectItem>
-                  );
-                })}
+                {selectableCategories.map((cat, i) => (
+                  <SelectItem
+                    key={cat + "-" + i}
+                    value={cat}
+                  >
+                    {cat}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

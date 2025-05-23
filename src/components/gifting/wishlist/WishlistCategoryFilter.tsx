@@ -21,7 +21,7 @@ function getStrictValidCategories(categories: unknown[]): string[] {
     new Set(
       categories
         .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-        .filter((cat) => !!cat && typeof cat === "string" && cat.length > 0)
+        .filter((cat) => !!cat && typeof cat === "string" && cat.length > 0 && cat !== "")
     )
   );
 }
@@ -34,7 +34,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Always dedupe/validate categories before rendering options
+  // Filter categories to ensure no empty strings
   const filteredCategories = React.useMemo(
     () => getStrictValidCategories(selectableCategories),
     [selectableCategories]
@@ -85,11 +85,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* The only empty value */}
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories.map((cat, i) => (
-              <SelectItem key={cat + "-" + i} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {filteredCategories
+              .filter((cat) => typeof cat === "string" && cat.length > 0 && cat !== "")
+              .map((cat, i) => (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

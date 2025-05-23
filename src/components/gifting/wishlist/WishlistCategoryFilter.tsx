@@ -22,66 +22,33 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Always filter categories up front, but ONLY render after final validation
-  const rawCategories = React.useMemo(
-    () => getValidCategories(selectableCategories),
-    [selectableCategories]
-  );
+  // Only valid string categories (non-empty, trimmed)
+  const validCategories = React.useMemo(() => {
+    return getValidCategories(selectableCategories).filter(
+      (cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+    );
+  }, [selectableCategories]);
 
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      logInvalidCategories(selectableCategories, "WishlistCategoryFilter selectableCategories");
-      logInvalidCategories(rawCategories, "WishlistCategoryFilter rawCategories");
-      // eslint-disable-next-line no-console
-      console.log("[WishlistCategoryFilter] Rendering categories:", rawCategories);
-    }
-  }, [selectableCategories, rawCategories]);
+  // Dedupe
+  const dedupedCategories = React.useMemo(() => {
+    return Array.from(new Set(validCategories));
+  }, [validCategories]);
 
-  // Only "" is allowed for "All Categories" (SelectItem value). All others must be valid.
+  // Current value pattern: only "" for "All"
   const currentValue =
-    typeof categoryFilter === "string" && rawCategories.includes(categoryFilter) && categoryFilter !== ""
+    typeof categoryFilter === "string" &&
+    dedupedCategories.includes(categoryFilter) &&
+    categoryFilter.trim().length > 0
       ? categoryFilter
       : "";
 
-  // Extra strict filter to guarantee all mapped values are valid
-  function getStrictFilteredCategories(categories: unknown[]): string[] {
-    return categories.filter(
-      (cat) =>
-        typeof cat === "string" &&
-        cat.trim().length > 0 &&
-        cat !== "" &&
-        cat !== undefined &&
-        cat !== null
-    ) as string[];
-  }
-
-  // Use only strictly valid, non-empty categories for select items (never include "")
-  const finalCategoryItems = React.useMemo(
-    () => getStrictFilteredCategories(rawCategories),
-    [rawCategories]
-  );
-
-  // For extra safety, dedupe and ensure no "" values ever make it to map!
-  const reallySafeCategoryItems = React.useMemo(
-    () => Array.from(new Set(finalCategoryItems.filter(
-      (cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
-    ))),
-    [finalCategoryItems]
-  );
-
-  // DEV: log any suspicious value right before mapping
+  // Log any suspicious entries (for dev)
   if (process.env.NODE_ENV === "development") {
-    reallySafeCategoryItems.forEach((cat, idx) => {
-      if (
-        typeof cat !== "string" ||
-        cat.trim().length === 0 ||
-        cat === "" ||
-        cat === undefined ||
-        cat === null
-      ) {
+    dedupedCategories.forEach((cat, i) => {
+      if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
         // eslint-disable-next-line no-console
-        console.error(`[WishlistCategoryFilter] <SelectItem /> (bridge filter) invalid value:`, {
-          idx,
+        console.error("[WishlistCategoryFilter] Invalid category value in dedupedCategories:", {
+          i,
           cat,
         });
       }
@@ -94,7 +61,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || value === "" || !reallySafeCategoryItems.includes(value)) {
+            if (!value || value === "" || !dedupedCategories.includes(value)) {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -105,14 +72,15 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* Only the special all-categories option can use value="" */}
+            {/* Only the all-categories option uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {reallySafeCategoryItems.map((cat, i) => (
-              // This will always be safe: cat is never ""
-              <SelectItem key={cat + "-" + i} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {dedupedCategories
+              .filter((cat) => !!cat && typeof cat === "string" && cat.trim().length > 0 && cat !== "")
+              .map((cat, i) => (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

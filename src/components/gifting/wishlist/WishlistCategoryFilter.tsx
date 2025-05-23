@@ -22,11 +22,11 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Ensure no empty or invalid category values!
+  // Clean up: filter out any empty, whitespace, or non-string values up-front
   const filteredCategories = React.useMemo(() => {
     if (!Array.isArray(selectableCategories)) return [];
     return selectableCategories
-      .map(cat => (typeof cat === "string" ? cat.trim() : "")) // always trim!
+      .map(cat => (typeof cat === "string" ? cat.trim() : ""))
       .filter(
         (cat): cat is string =>
           typeof cat === "string" && cat.length > 0
@@ -76,14 +76,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only the all-categories option uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories.map((cat, i) => (
-              <SelectItem
-                key={cat + "-" + i}
-                value={cat}
-              >
-                {cat}
-              </SelectItem>
-            ))}
+            {filteredCategories
+              .filter(cat => !!cat && cat !== "") // Never pass empty string to value!
+              .map((cat, i) => (
+                <SelectItem
+                  key={cat + "-" + i}
+                  value={cat}
+                >
+                  {cat}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

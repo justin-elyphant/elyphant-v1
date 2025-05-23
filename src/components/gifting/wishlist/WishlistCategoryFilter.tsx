@@ -22,22 +22,23 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Strictest: only valid string categories (non-empty, trimmed, no whitespace)
+  // Ensure no empty or invalid category values!
   const filteredCategories = React.useMemo(() => {
     if (!Array.isArray(selectableCategories)) return [];
     return selectableCategories
-      .filter((cat): cat is string =>
-        typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+      .map(cat => (typeof cat === "string" ? cat.trim() : "")) // always trim!
+      .filter(
+        (cat): cat is string =>
+          typeof cat === "string" && cat.length > 0
       )
-      .map(cat => cat.trim()) // optional, to be extra safe
       .filter((cat, idx, arr) => arr.indexOf(cat) === idx); // dedupe
   }, [selectableCategories]);
 
-  // DEV: warn about bad categories
+  // DEV: runtime warning if any bad categories sneak through
   if (process.env.NODE_ENV === "development") {
     if (
       Array.isArray(selectableCategories) &&
-      selectableCategories.some(cat => typeof cat !== "string" || cat.trim().length === 0 || cat === "")
+      selectableCategories.some(cat => typeof cat !== "string" || cat.trim().length === 0)
     ) {
       // eslint-disable-next-line no-console
       console.error("[WishlistCategoryFilter][DEV] Detected invalid category in selectableCategories:", selectableCategories);
@@ -73,15 +74,16 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* All Categories option (the ONLY one with value="") */}
+            {/* Only the all-categories option uses value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories
-              .filter(cat => cat && cat.trim().length > 0) // redundant but safest!
-              .map((cat, i) => (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
+            {filteredCategories.map((cat, i) => (
+              <SelectItem
+                key={cat + "-" + i}
+                value={cat}
+              >
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

@@ -237,18 +237,22 @@ const MyWishlists = () => {
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
                 {filteredCategories.map((cat, i) => {
-                  if (!isValidCategoryString(cat)) {
-                    // Warn for debugging bad categories (shouldn't happen)
-                    console.warn("Skipping invalid category in SelectItem", i, cat);
+                  // Strongest possible guard: skip if not string, blank, or whitespace
+                  if (typeof cat !== "string" || !cat.trim()) {
+                    console.warn("Skipping category in <SelectItem> with invalid or empty value", i, cat);
                     return null;
                   }
                   const trimmed = cat.trim();
-                  // Defensive: skip any blank or all-whitespace/empty after trim
+                  // At this point, trimmed is guaranteed non-empty string
+                  // For user safety, still guard (should never happen)
                   if (!trimmed) {
-                    console.warn("Skipping trimmed blank category in SelectItem", i, cat);
+                    console.warn("CRITICAL: Encountered blank value after trim at <SelectItem>", i, cat);
                     return null;
                   }
-                  // Only now is it safe to pass 'trimmed' as value!
+                  if (trimmed === "") {
+                    console.warn("CRITICAL: Attempt to use empty string for category value", i, cat);
+                    return null;
+                  }
                   return (
                     <SelectItem
                       key={`${trimmed}-${i}`}

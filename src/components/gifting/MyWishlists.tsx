@@ -69,14 +69,18 @@ const MyWishlists = () => {
     removeFromWishlist,
   } = useWishlists();
 
-  // Use the new utility to get only valid, trimmed, deduped categories
-  const selectableCategories = React.useMemo(
-    () =>
-      getValidWishlistCategories(wishlists || []).filter(
-        (cat) => typeof cat === "string" && cat.trim().length > 0
-      ),
-    [wishlists]
-  );
+  // Use the new utility to get only valid, trimmed, deduped categories PLUS extra runtime defense
+  const selectableCategories = React.useMemo(() => {
+    const cats = getValidWishlistCategories(wishlists || []).filter(
+      (cat) => typeof cat === "string" && cat.trim().length > 0
+    );
+    cats.forEach((cat) => {
+      if (cat === "" || !cat || typeof cat !== "string") {
+        console.error("[MyWishlists] Invalid category at build-time selectableCategories:", cat);
+      }
+    });
+    return cats;
+  }, [wishlists]);
 
   // Defensive: Ensure filter is always valid—if not, reset it to null
   React.useEffect(() => {
@@ -236,9 +240,7 @@ const MyWishlists = () => {
       {wishlists && wishlists.length > 1 && selectableCategories.length > 0 && (
         <WishlistCategoryFilter
           // Extra safeguard: do NOT pass empty categories
-          selectableCategories={selectableCategories.filter(
-            (cat) => typeof cat === "string" && cat.trim().length > 0
-          )}
+          selectableCategories={selectableCategories}
           categoryFilter={categoryFilter}
           onCategoryFilterChange={setCategoryFilter}
           searchQuery={searchQuery}

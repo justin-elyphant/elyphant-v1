@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -29,29 +30,38 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   onSearchQueryChange,
   onClearFilters,
 }) => {
-  // Defensive: selectableCategories must never include ""
+  // Defensive filter: Remove all falsy, whitespace, non-string values.
+  const validRenderedCategories = React.useMemo(
+    () =>
+      selectableCategories.filter((cat) => {
+        const ok = typeof cat === "string" && !!cat.trim();
+        if (!ok) {
+          console.error("[WishlistCategoryFilter] Filtering out invalid category for SelectItem:", cat);
+        }
+        return ok;
+      }),
+    [selectableCategories]
+  );
+
+  // Defensive: Check for any empty string leaking into SelectItem loop
   React.useEffect(() => {
-    selectableCategories.forEach(cat => {
-      if (!cat || typeof cat !== "string" || cat.trim().length === 0) {
-        console.warn("[WishlistCategoryFilter] Received invalid category in selectableCategories:", cat);
+    selectableCategories.forEach((cat) => {
+      if (!cat || typeof cat !== "string" || !cat.trim()) {
+        console.error("[WishlistCategoryFilter] Invalid 'selectableCategories' item detected at runtime:", cat);
       }
     });
-  }, [selectableCategories]);
+    validRenderedCategories.forEach((cat) => {
+      if (cat === "") {
+        console.error("[WishlistCategoryFilter] Empty string in validRenderedCategories:", cat);
+      }
+    });
+  }, [selectableCategories, validRenderedCategories]);
 
-  // Defensive: only allow "" for All Categories
+  // Defensive: only allow "" for All Categories as value
   const currentValue =
-    categoryFilter && selectableCategories.includes(categoryFilter)
+    categoryFilter && validRenderedCategories.includes(categoryFilter)
       ? categoryFilter
       : "";
-
-  // Filter categories to ensure NO empty or whitespace strings are rendered as SelectItem
-  const validRenderedCategories = selectableCategories.filter((cat) => {
-    const ok = typeof cat === "string" && cat.trim().length > 0;
-    if (!ok) {
-      console.warn("[WishlistCategoryFilter] Filtering out invalid category for SelectItem:", cat);
-    }
-    return ok;
-  });
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -59,7 +69,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || !selectableCategories.includes(value) || value === "") {
+            if (!value || !validRenderedCategories.includes(value) || value === "") {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -71,14 +81,17 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {validRenderedCategories.map((cat, i) => (
-              <SelectItem
-                key={cat + "-" + i}
-                value={cat}
-              >
-                {cat}
-              </SelectItem>
-            ))}
+            {validRenderedCategories.map((cat, i) =>
+              typeof cat === "string" && cat.trim() !== "" ? (
+                <SelectItem key={cat + "-" + i} value={cat}>
+                  {cat}
+                </SelectItem>
+              ) : (
+                <div key={"invalid-" + i} className="text-red-500">
+                  Invalid category value
+                </div>
+              )
+            )}
           </SelectContent>
         </Select>
       </div>

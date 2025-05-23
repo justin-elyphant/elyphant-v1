@@ -11,7 +11,10 @@ function getStrictValidCategories(categories: unknown[]): string[] {
     new Set(
       categories
         .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
-        .filter((cat): cat is string => typeof cat === "string" && cat.length > 0)
+        .filter(
+          (cat): cat is string =>
+            typeof cat === "string" && cat.length > 0 && cat !== ""
+        )
     )
   );
 }
@@ -84,9 +87,8 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             {/* Only ONE clear/placeholder item */}
             <SelectItem value="">All Categories</SelectItem>
             {filteredCategories
-              .filter((cat) => typeof cat === "string" && cat.trim() !== "")
+              // Only non-empty, non-whitespace strings (already enforced by getStrictValidCategories)
               .map((cat, i) => (
-                // Always guarantee value is non-empty string!
                 <SelectItem key={cat + "-" + i} value={cat}>
                   {cat}
                 </SelectItem>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -37,38 +36,33 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     }
   }, [selectableCategories, rawCategories]);
 
-  // Compute selected value - only allow "" for All Categories
+  // Only "" is allowed for "All Categories" (SelectItem value). All others must be valid.
   const currentValue =
     typeof categoryFilter === "string" && rawCategories.includes(categoryFilter) && categoryFilter !== ""
       ? categoryFilter
       : "";
 
-  // FINAL GUARD: Filter categories at render time for <SelectItem />, never include ""
+  // FINAL GUARD: Return only truly valid string categories (non-empty, no undefined/null/whitespace)
   function getFilteredCategoriesForSelect(categories: unknown[]): string[] {
     const filtered: string[] = [];
     categories.forEach((cat, idx) => {
       if (
         typeof cat === "string" &&
-        cat.trim().length > 0 &&
-        cat !== "" &&
-        cat !== undefined &&
-        cat !== null
+        cat.trim().length > 0
       ) {
         filtered.push(cat);
-      } else {
-        if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
-          console.error(
-            `[WishlistCategoryFilter] Invalid category excluded from <SelectItem /> at index ${idx}:`,
-            cat
-          );
-        }
+      } else if (process.env.NODE_ENV === "development") {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[WishlistCategoryFilter] Invalid category excluded from <SelectItem /> at index ${idx}:`,
+          cat
+        );
       }
     });
     return filtered;
   }
 
-  // Use only strictly valid, non-empty categories for select items
+  // Use only strictly valid, non-empty categories for select items (this will not include "")
   const finalCategoryItems = React.useMemo(
     () => getFilteredCategoriesForSelect(rawCategories),
     [rawCategories]
@@ -104,15 +98,13 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            {/* Only the 'All Categories' option gets value="" */}
+            {/* The only allowed empty value is for 'All Categories' */}
             <SelectItem value="">All Categories</SelectItem>
-            {finalCategoryItems.map((cat, i) =>
-              cat !== "" ? (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ) : null // extra guard, never render if blank
-            )}
+            {finalCategoryItems.map((cat, i) => (
+              <SelectItem key={cat + "-" + i} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

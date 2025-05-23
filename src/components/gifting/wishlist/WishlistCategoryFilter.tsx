@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getValidCategories, logInvalidCategories } from "./utils/validCategoryUtils";
 
-// Strong filter: dedupe, remove empty/whitespace, trim all, only valid strings
 function getStrictValidCategories(categories: unknown[]): string[] {
   if (!Array.isArray(categories)) return [];
   return Array.from(
@@ -43,31 +42,20 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
   // Defensive: avoid rendering if no valid categories
   if (!filteredCategories.length) {
     if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
       console.error("[WishlistCategoryFilter][DEV] No valid filteredCategories, nothing to render", { selectableCategories, filteredCategories });
     }
     return null;
   }
 
-  // DEV LOGGING
+  // Extra logging to catch any possible invalid categories
   if (process.env.NODE_ENV === "development") {
-    if (Array.isArray(selectableCategories)) {
-      selectableCategories.forEach((cat, i) => {
-        if (typeof cat !== "string" || !cat.trim()) {
-          // eslint-disable-next-line no-console
-          console.error(`[WishlistCategoryFilter][DEV] Invalid category in selectableCategories at index ${i}:`, cat);
-        }
-      });
-    }
     filteredCategories.forEach((cat, i) => {
-      if (typeof cat !== "string" || !cat.trim()) {
-        // eslint-disable-next-line no-console
-        console.error(`[WishlistCategoryFilter][DEV] Invalid filtered category at index ${i}:`, cat);
+      if (typeof cat !== "string" || !cat.trim() || cat === "") {
+        console.error(`[WishlistCategoryFilter][DEV] BAD: About to render invalid filtered category at index ${i}:`, `cat="${cat}"`);
       }
     });
   }
 
-  // "" for All Categories, else actual value for filtering
   const currentValue =
     typeof categoryFilter === "string" &&
     filteredCategories.includes(categoryFilter) &&
@@ -94,13 +82,21 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Categories</SelectItem>
-            {filteredCategories.map((cat, i) =>
-              typeof cat === "string" && cat.length > 0 ? (
-                <SelectItem key={cat + "-" + i} value={cat}>
-                  {cat}
-                </SelectItem>
-              ) : null
-            )}
+            {filteredCategories.map((cat, i) => {
+              // Only allow non-empty, non-whitespace strings as value
+              if (typeof cat === "string" && cat.trim().length > 0) {
+                return (
+                  <SelectItem key={cat + "-" + i} value={cat}>
+                    {cat}
+                  </SelectItem>
+                );
+              } else {
+                if (process.env.NODE_ENV === "development") {
+                  console.error(`[WishlistCategoryFilter][DEV] SKIPPING invalid category:`, cat);
+                }
+                return null;
+              }
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -129,4 +125,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

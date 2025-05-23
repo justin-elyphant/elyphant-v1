@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -60,19 +61,17 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     [rawCategories]
   );
 
-  // Extra guard: Only valid string categories allowed for SelectItem values
-  const safeCategoryItems = React.useMemo(
-    () =>
-      finalCategoryItems.filter(
-        (cat) =>
-          typeof cat === "string" && cat.trim().length > 0 && cat !== "" && cat !== undefined && cat !== null
-      ),
+  // For extra safety, dedupe and ensure no "" values ever make it to map!
+  const reallySafeCategoryItems = React.useMemo(
+    () => Array.from(new Set(finalCategoryItems.filter(
+      (cat) => typeof cat === "string" && cat.trim().length > 0 && cat !== ""
+    ))),
     [finalCategoryItems]
   );
 
-  // DEV: log if anything invalid would be rendered
+  // DEV: log any suspicious value right before mapping
   if (process.env.NODE_ENV === "development") {
-    safeCategoryItems.forEach((cat, idx) => {
+    reallySafeCategoryItems.forEach((cat, idx) => {
       if (
         typeof cat !== "string" ||
         cat.trim().length === 0 ||
@@ -81,7 +80,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         cat === null
       ) {
         // eslint-disable-next-line no-console
-        console.error(`[WishlistCategoryFilter] <SelectItem /> (final render guard) invalid value:`, {
+        console.error(`[WishlistCategoryFilter] <SelectItem /> (bridge filter) invalid value:`, {
           idx,
           cat,
         });
@@ -95,7 +94,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || value === "" || !safeCategoryItems.includes(value)) {
+            if (!value || value === "" || !reallySafeCategoryItems.includes(value)) {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -108,7 +107,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
           <SelectContent>
             {/* Only the special all-categories option can use value="" */}
             <SelectItem value="">All Categories</SelectItem>
-            {safeCategoryItems.map((cat, i) => (
+            {reallySafeCategoryItems.map((cat, i) => (
               // This will always be safe: cat is never ""
               <SelectItem key={cat + "-" + i} value={cat}>
                 {cat}

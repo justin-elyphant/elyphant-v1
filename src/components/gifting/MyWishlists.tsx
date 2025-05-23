@@ -76,18 +76,17 @@ const MyWishlists = () => {
           ? list.category.trim()
           : ""
       );
-    // Uniqueness
+    // Uniqueness only, don't filter yet
     return Array.from(new Set(allCategories));
   }, [wishlists]);
 
-  // Strict filtering before use (guaranteed all non-empty)
+  // SAFAEST: Only categories which are valid and non-empty get mapped to SelectItem
   const filteredCategories = React.useMemo(
     () => categories.filter(isValidCategoryString),
     [categories]
   );
 
-  React.useEffect(() => {
-    // Log problematic categories for debugging
+  useEffect(() => {
     filteredCategories.forEach((cat, idx) => {
       if (!isValidCategoryString(cat)) {
         console.warn(`Bad category in filteredCategories at index ${idx}:`, cat);
@@ -231,20 +230,21 @@ const MyWishlists = () => {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
+                {/* Only "All Categories" is allowed to be value="" */}
                 <SelectItem value="">All Categories</SelectItem>
+                {/* Guard against any invalid/empty category here */}
                 {filteredCategories.length === 0 && (
                   <div className="text-muted-foreground px-4 py-2">No categories</div>
                 )}
-                {/* Final protection before rendering: */}
                 {filteredCategories.map((cat, i) => {
-                  // Guaranteed by filter, but extra check for safety
                   if (!isValidCategoryString(cat)) {
+                    // Last resort: skip if not a valid string
                     console.warn("Skipping invalid category in SelectItem", i, cat);
                     return null;
                   }
                   const trimmed = cat.trim();
                   // Defensive: never allow empty string in value except for All Categories above
-                  if (trimmed === "") {
+                  if (!trimmed || trimmed === "") {
                     console.warn("Skipping trimmed blank category in SelectItem", i, cat);
                     return null;
                   }

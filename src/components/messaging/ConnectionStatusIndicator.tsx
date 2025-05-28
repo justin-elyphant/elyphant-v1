@@ -7,13 +7,15 @@ interface ConnectionStatusIndicatorProps {
   lastSeen?: string;
   className?: string;
   showText?: boolean;
+  size?: "sm" | "md" | "lg";
 }
 
 const ConnectionStatusIndicator = ({ 
   status, 
   lastSeen, 
   className, 
-  showText = false 
+  showText = false,
+  size = "sm"
 }: ConnectionStatusIndicatorProps) => {
   const getStatusColor = () => {
     switch (status) {
@@ -41,11 +43,25 @@ const ConnectionStatusIndicator = ({
     }
   };
 
+  const getSizeClasses = () => {
+    switch (size) {
+      case "sm":
+        return "w-2 h-2";
+      case "md":
+        return "w-3 h-3";
+      case "lg":
+        return "w-4 h-4";
+      default:
+        return "w-2 h-2";
+    }
+  };
+
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <div 
         className={cn(
-          "w-2 h-2 rounded-full", 
+          "rounded-full", 
+          getSizeClasses(),
           getStatusColor(),
           status === "online" && "animate-pulse"
         )} 

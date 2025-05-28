@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 import ProfileSetup from "./pages/ProfileSetup";
+import Messages from "./pages/Messages";
 import { AuthProvider } from "@/contexts/auth";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
@@ -40,6 +41,8 @@ function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/messages/:connectionId" element={<Messages />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/wishlists" element={<Wishlists />} />

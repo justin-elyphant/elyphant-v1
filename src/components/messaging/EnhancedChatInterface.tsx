@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Message, fetchMessages, sendMessage, markMessagesAsRead, subscribeToMessages } from "@/utils/messageService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Search, Phone, Video, MoreVertical } from "lucide-react";
+import { Send, Search, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ChatMessage from "./ChatMessage";
@@ -240,12 +239,6 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
               onClick={() => setShowSearch(!showSearch)}
             >
               <Search className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost">
-              <Phone className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost">
-              <Video className="h-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

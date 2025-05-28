@@ -21,6 +21,12 @@ const UserButton = () => {
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const handleProfileClick = () => {
+    if (user?.id) {
+      navigate(`/profile/${user.id}`);
+    }
+  };
   
   return (
     <DropdownMenu>
@@ -61,7 +67,7 @@ const UserButton = () => {
           <span>Dashboard</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={() => navigate("/profile")}>
+        <DropdownMenuItem onClick={handleProfileClick}>
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>

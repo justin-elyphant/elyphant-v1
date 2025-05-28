@@ -5,15 +5,30 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
+import MessageStatusIndicator from "./MessageStatusIndicator";
+import ProductSharePreview from "./ProductSharePreview";
 
 interface ChatMessageProps {
   message: Message;
   productDetails?: { name: string; id: number } | null;
+  showStatus?: boolean;
 }
 
-const ChatMessage = ({ message, productDetails }: ChatMessageProps) => {
+const ChatMessage = ({ message, productDetails, showStatus = true }: ChatMessageProps) => {
   const { user } = useAuth();
   const isOwn = user?.id === message.sender_id;
+
+  // Mock status for demo - in real app this would come from message data
+  const getMessageStatus = () => {
+    if (!isOwn) return "read";
+    
+    // Mock logic based on message age
+    const messageAge = Date.now() - new Date(message.created_at).getTime();
+    if (messageAge < 1000) return "sending";
+    if (messageAge < 5000) return "sent";
+    if (messageAge < 30000) return "delivered";
+    return "read";
+  };
 
   return (
     <div className={`flex items-start gap-2 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
@@ -33,17 +48,30 @@ const ChatMessage = ({ message, productDetails }: ChatMessageProps) => {
           <p className="text-sm">{message.content}</p>
           
           {message.product_link_id && productDetails && (
-            <Link 
-              to={`/marketplace?productId=${productDetails.id}`}
-              className="mt-2 text-xs underline block hover:opacity-80"
-            >
-              View product: {productDetails.name}
-            </Link>
+            <div className="mt-2">
+              <ProductSharePreview
+                productId={productDetails.id}
+                productName={productDetails.name}
+                productImage="/placeholder.svg"
+                productPrice={99.99}
+                productBrand="Demo Brand"
+                onViewProduct={() => {
+                  // Navigate to product in marketplace
+                  window.open(`/marketplace?productId=${productDetails.id}`, '_blank');
+                }}
+              />
+            </div>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-        </p>
+        
+        <div className={`flex items-center gap-2 mt-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
+          <p className="text-xs text-muted-foreground">
+            {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+          </p>
+          {isOwn && showStatus && (
+            <MessageStatusIndicator status={getMessageStatus()} />
+          )}
+        </div>
       </div>
     </div>
   );

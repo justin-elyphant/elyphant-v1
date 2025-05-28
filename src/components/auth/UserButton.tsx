@@ -28,6 +28,8 @@ const UserButton = () => {
       navigate(`/profile/${user.id}`);
     } else {
       console.error("No user ID available for profile navigation");
+      // Fallback to dashboard if no user ID
+      navigate("/dashboard");
     }
   };
   

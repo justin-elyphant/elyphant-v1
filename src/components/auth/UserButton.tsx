@@ -24,7 +24,10 @@ const UserButton = () => {
 
   const handleProfileClick = () => {
     if (user?.id) {
+      // Navigate to profile using user ID as identifier
       navigate(`/profile/${user.id}`);
+    } else {
+      console.error("No user ID available for profile navigation");
     }
   };
   

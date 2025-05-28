@@ -11,9 +11,9 @@ import SearchBar from "./components/SearchBar";
 import CategoriesDropdown from "./components/CategoriesDropdown";
 import { ProductProvider } from "@/contexts/ProductContext";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
-import UserAvatarMenu from "@/components/user/UserAvatarMenu";
+import UserButton from "@/components/auth/UserButton";
 import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
-import { useIsMobile } from "@/hooks/use-mobile"; // <-- NEW
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ const Header = () => {
                 <ShoppingCartButton />
                 <NotificationsDropdown />
                 {user ? (
-                  <UserAvatarMenu />
+                  <UserButton />
                 ) : (
                   <AuthButtons />
                 )}
@@ -140,4 +140,3 @@ const Header = () => {
 };
 
 export default Header;
-

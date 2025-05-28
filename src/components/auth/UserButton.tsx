@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut, Settings, Heart, Store } from "lucide-react";
+import { User, LogOut, Settings, Heart, Store, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
@@ -51,6 +51,11 @@ const UserButton = () => {
           <span>Marketplace</span>
         </DropdownMenuItem>
 
+        <DropdownMenuItem onClick={() => navigate("/messages")}>
+          <MessageSquare className="mr-2 h-4 w-4" />
+          <span>Messages</span>
+        </DropdownMenuItem>
+
         <DropdownMenuItem onClick={() => navigate("/profile")}>
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
@@ -78,4 +83,3 @@ const UserButton = () => {
 };
 
 export default UserButton;
-

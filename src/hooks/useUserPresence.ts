@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
+import type { RealtimePresenceState } from "@supabase/supabase-js";
 
 export type UserStatus = "online" | "offline" | "away";
 
@@ -14,7 +15,7 @@ interface PresenceState {
 
 export const useUserPresence = () => {
   const { user } = useAuth();
-  const [presenceStates, setPresenceStates] = useState<Record<string, PresenceState[]>>({});
+  const [presenceStates, setPresenceStates] = useState<RealtimePresenceState<PresenceState>>({});
   const [myStatus, setMyStatus] = useState<UserStatus>("online");
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export const useUserPresence = () => {
     // Listen for presence changes
     channel
       .on('presence', { event: 'sync' }, () => {
-        const newState = channel.presenceState();
+        const newState = channel.presenceState<PresenceState>();
         setPresenceStates(newState);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {

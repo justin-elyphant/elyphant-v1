@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut, Settings, Heart, Store, MessageSquare } from "lucide-react";
+import { User, LogOut, Settings, Heart, Store, MessageSquare, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 
@@ -35,7 +35,7 @@ const UserButton = () => {
         </button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-background z-50">
         <div className="flex items-center justify-start gap-2 p-2">
           <div className="flex flex-col space-y-1 leading-none">
             {user?.email && (
@@ -56,6 +56,11 @@ const UserButton = () => {
           <span>Messages</span>
         </DropdownMenuItem>
 
+        <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          <span>Dashboard</span>
+        </DropdownMenuItem>
+
         <DropdownMenuItem onClick={() => navigate("/profile")}>
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
@@ -70,10 +75,20 @@ const UserButton = () => {
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => navigate("/orders")}>
+          <span className="mr-2">🛒</span>
+          <span>Orders</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => navigate("/payments")}>
+          <span className="mr-2">💳</span>
+          <span>Payment</span>
+        </DropdownMenuItem>
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={handleSignOut}>
+        <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

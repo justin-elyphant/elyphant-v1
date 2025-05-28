@@ -4,7 +4,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotificationCenter from "../notifications/NotificationCenter";
 import NavigationLogo from "./components/NavigationLogo";
-import UserDropdownMenu from "./components/UserDropdownMenu";
+import UserButton from "../auth/UserButton";
 import MobileNavMenu from "./components/MobileNavMenu";
 import DesktopNav from "./components/DesktopNav";
 import AuthButtons from "./components/AuthButtons";
@@ -36,11 +36,7 @@ const NavigationBar = () => {
           {user ? (
             <>
               <NotificationCenter />
-              <UserDropdownMenu 
-                profile={profile} 
-                email={user.email} 
-                onSignOut={handleSignOut} 
-              />
+              <UserButton />
               
               <Button
                 variant="ghost"

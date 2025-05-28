@@ -155,7 +155,9 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>View Profile</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.open(`/profile/${connectionId}`, '_blank')}>
+                View Profile
+              </DropdownMenuItem>
               <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
               <DropdownMenuItem>Block User</DropdownMenuItem>
             </DropdownMenuContent>

@@ -1,66 +1,132 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import SignIn from "./pages/auth/SignIn";
-import SignUp from "./pages/SignUp";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import UserProfile from "./pages/UserProfile";
-import Notifications from "./pages/Notifications";
-import ProfileSetup from "./pages/ProfileSetup";
-import Messages from "./pages/Messages";
-import Connections from "./pages/Connections";
-import ConnectionDetails from "./pages/ConnectionDetails";
-import { AuthProvider } from "@/contexts/auth";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
-import { ThemeProvider } from './contexts/theme/ThemeProvider';
+import Index from "./pages/Index";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import EmailVerification from "./pages/EmailVerification";
+import Dashboard from "./pages/Dashboard";
+import ProfileSetup from "./pages/ProfileSetup";
+import Settings from "./pages/Settings";
+import Connections from "./pages/Connections";
+import Messages from "./pages/Messages";
 import Marketplace from "./pages/Marketplace";
-import { CartProvider } from "@/contexts/CartContext";
-import Wishlists from "./pages/Wishlists";
-import AboutUs from "./pages/AboutUs";
-import ScrollToTop from "@/components/layout/ScrollToTop";
-import OnboardingGiftorFlow from "@/components/onboarding/OnboardingGiftorFlow";
+import Checkout from "./pages/Checkout";
 import Gifting from "./pages/Gifting";
-import Cart from "./pages/Cart";
+import Profile from "./pages/Profile";
+// Remove UserProfile import as it's no longer needed
+import SharedWishlist from "./pages/SharedWishlist";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import NotFound from "./pages/NotFound";
+import GiftScheduling from "./pages/GiftScheduling";
+import Crowdfunding from "./pages/Crowdfunding";
+import ZincIntegration from "./pages/ZincIntegration";
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <AuthProvider>
-        <ProfileProvider>
-          <ThemeProvider>
-            <CartProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <AuthProvider>
+            <ProfileProvider>
               <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/signin" element={<SignIn />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/sign-in" element={<SignIn />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/profile/:userId" element={<UserProfile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/messages/:connectionId" element={<Messages />} />
-                <Route path="/connections" element={<Connections />} />
-                <Route path="/connection/:connectionId" element={<ConnectionDetails />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/wishlists" element={<Wishlists />} />
-                <Route path="/about-us" element={<AboutUs />} />
-                <Route path="/onboarding-gift" element={<OnboardingGiftorFlow />} />
-                <Route path="/gifting" element={<Gifting />} />
+                <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/email-verification" element={<EmailVerification />} />
+                
+                {/* Protected Routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/profile-setup" element={
+                  <ProtectedRoute>
+                    <ProfileSetup />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/connections" element={
+                  <ProtectedRoute>
+                    <Connections />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/messages" element={
+                  <ProtectedRoute>
+                    <Messages />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/messages/:connectionId" element={
+                  <ProtectedRoute>
+                    <Messages />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/marketplace" element={
+                  <ProtectedRoute>
+                    <Marketplace />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/checkout" element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/gifting" element={
+                  <ProtectedRoute>
+                    <Gifting />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Updated unified profile route - handles both username and userId */}
+                <Route path="/profile/:identifier" element={<Profile />} />
+                
+                <Route path="/shared-wishlist/:shareId" element={<SharedWishlist />} />
+                
+                <Route path="/gift-scheduling" element={
+                  <ProtectedRoute>
+                    <GiftScheduling />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/crowdfunding" element={
+                  <ProtectedRoute>
+                    <Crowdfunding />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/zinc-integration" element={
+                  <ProtectedRoute>
+                    <ZincIntegration />
+                  </ProtectedRoute>
+                } />
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </CartProvider>
-          </ThemeProvider>
-        </ProfileProvider>
-      </AuthProvider>
-    </Router>
+            </ProfileProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

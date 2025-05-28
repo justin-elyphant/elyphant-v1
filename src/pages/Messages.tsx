@@ -12,39 +12,45 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Search, Plus, Users } from "lucide-react";
 
-// Mock conversation data
-const mockConversations = {
-  '1': {
+// Mock conversation data with additional IDs to ensure some match
+const mockConversations = [
+  {
     connectionName: 'Alex Johnson',
     lastMessage: "Thanks for the gift recommendation! I'll definitely check it out.",
     lastMessageTime: '2024-01-15T10:30:00Z',
     unreadCount: 2
   },
-  '2': {
+  {
     connectionName: 'Jamie Smith',
     lastMessage: "Hey! How was your weekend?",
     lastMessageTime: '2024-01-15T09:15:00Z',
     unreadCount: 0
   },
-  '3': {
+  {
     connectionName: 'Taylor Wilson',
     lastMessage: "Perfect! I added that item to my wishlist.",
     lastMessageTime: '2024-01-14T16:45:00Z',
     unreadCount: 1
   },
-  '4': {
+  {
     connectionName: 'Jordan Parks',
     lastMessage: "Looking forward to catching up soon!",
     lastMessageTime: '2024-01-14T14:20:00Z',
     unreadCount: 0
   },
-  '5': {
+  {
     connectionName: 'Casey Morgan',
     lastMessage: "Thanks for thinking of me! ❤️",
     lastMessageTime: '2024-01-13T11:10:00Z',
     unreadCount: 0
+  },
+  {
+    connectionName: 'Sam Chen',
+    lastMessage: "That gift idea is perfect for mom's birthday!",
+    lastMessageTime: '2024-01-12T15:22:00Z',
+    unreadCount: 3
   }
-};
+];
 
 const Messages = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
@@ -54,35 +60,46 @@ const Messages = () => {
   const [selectedConnection, setSelectedConnection] = useState<string | null>(connectionId || null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Transform real connections into message threads format with mock conversation data
-  const messageThreads = connections.map(connection => {
-    const otherUser = connection.user_id === user?.id 
-      ? { 
-          id: connection.connected_user_id, 
-          name: `User ${connection.connected_user_id.slice(0, 8)}` 
-        }
-      : { 
-          id: connection.user_id, 
-          name: `User ${connection.user_id.slice(0, 8)}` 
+  // Create message threads - if no real connections, use mock data
+  const messageThreads = connections.length > 0 
+    ? connections.map((connection, index) => {
+        const otherUser = connection.user_id === user?.id 
+          ? { 
+              id: connection.connected_user_id, 
+              name: `User ${connection.connected_user_id.slice(0, 8)}` 
+            }
+          : { 
+              id: connection.user_id, 
+              name: `User ${connection.user_id.slice(0, 8)}` 
+            };
+        
+        // Use mock conversation data for display
+        const mockData = mockConversations[index % mockConversations.length];
+        
+        return {
+          threadId: otherUser.id,
+          connectionName: mockData.connectionName,
+          lastMessage: mockData.lastMessage,
+          lastMessageTime: mockData.lastMessageTime,
+          unreadCount: mockData.unreadCount,
+          relationshipType: connection.relationship_type,
+          status: connection.status
         };
-    
-    // Use mock conversation data if available, otherwise use defaults
-    const mockData = mockConversations[otherUser.id as keyof typeof mockConversations];
-    
-    return {
-      threadId: otherUser.id,
-      connectionName: mockData?.connectionName || otherUser.name,
-      lastMessage: mockData?.lastMessage || "Start a conversation...",
-      lastMessageTime: mockData?.lastMessageTime || connection.updated_at,
-      unreadCount: mockData?.unreadCount || 0,
-      relationshipType: connection.relationship_type,
-      status: connection.status
-    };
-  });
+      })
+    : // If no real connections, create mock threads for demo
+      mockConversations.map((mock, index) => ({
+        threadId: `mock-${index + 1}`,
+        connectionName: mock.connectionName,
+        lastMessage: mock.lastMessage,
+        lastMessageTime: mock.lastMessageTime,
+        unreadCount: mock.unreadCount,
+        relationshipType: 'friend' as const,
+        status: 'accepted' as const
+      }));
 
   const filteredThreads = messageThreads.filter(thread =>
     thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    thread.status === 'accepted' // Only show accepted connections
+    thread.status === 'accepted'
   );
 
   useEffect(() => {
@@ -205,7 +222,7 @@ const Messages = () => {
                   <p className="text-muted-foreground mb-4 max-w-md">
                     Select a conversation from the sidebar to start chatting, or create a new message to connect with friends and family.
                   </p>
-                  {connections.length === 0 && (
+                  {filteredThreads.length === 0 && (
                     <Button onClick={() => navigate('/connections')}>
                       Find connections
                     </Button>

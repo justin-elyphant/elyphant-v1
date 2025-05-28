@@ -58,9 +58,7 @@ const UserProfile = () => {
             },
             username: mockName.toLowerCase().replace(' ', '_'),
             recently_viewed: [],
-            interests: ['technology', 'books', 'travel'],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            interests: ['technology', 'books', 'travel']
           };
           
           setProfile(mockProfile);

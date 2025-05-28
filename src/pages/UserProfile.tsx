@@ -16,6 +16,7 @@ const UserProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMockProfile, setIsMockProfile] = useState<boolean>(false);
   
   useEffect(() => {
     const fetchProfile = async () => {
@@ -28,6 +29,46 @@ const UserProfile = () => {
           return;
         }
         
+        // Check if this is a mock ID (like "mock-1", "mock-2", etc.)
+        if (userId.startsWith('mock-')) {
+          // Create a mock profile for demo purposes
+          const mockName = userId === 'mock-1' ? 'Alex Johnson' : 
+                          userId === 'mock-2' ? 'Jamie Smith' :
+                          userId === 'mock-3' ? 'Taylor Wilson' :
+                          userId === 'mock-4' ? 'Jordan Parks' :
+                          userId === 'mock-5' ? 'Casey Morgan' :
+                          userId === 'mock-6' ? 'Sam Chen' :
+                          `User ${userId}`;
+          
+          const mockProfile: Profile = {
+            id: userId,
+            name: mockName,
+            email: `${mockName.toLowerCase().replace(' ', '.')}@example.com`,
+            profile_image: null,
+            bio: `This is a demo profile for ${mockName}. This user is part of your messaging connections.`,
+            dob: null,
+            shipping_address: null,
+            gift_preferences: [],
+            important_dates: [],
+            data_sharing_settings: {
+              dob: 'private',
+              shipping_address: 'private',
+              gift_preferences: 'friends',
+              email: 'private'
+            },
+            username: mockName.toLowerCase().replace(' ', '_'),
+            recently_viewed: [],
+            interests: ['technology', 'books', 'travel'],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          setProfile(mockProfile);
+          setIsMockProfile(true);
+          return;
+        }
+        
+        // Try to fetch real profile from database
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
@@ -81,10 +122,19 @@ const UserProfile = () => {
     <MainLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <h1 className="text-2xl font-bold">User Profile</h1>
+          <h1 className="text-2xl font-bold">
+            {profile.name || profile.username || "User Profile"}
+            {isMockProfile && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                (Demo Profile)
+              </span>
+            )}
+          </h1>
           <div className="flex items-center gap-2">
             <Button variant="outline">Connect</Button>
-            <Button>Message</Button>
+            <Button asChild>
+              <Link to={`/messages/${userId}`}>Message</Link>
+            </Button>
           </div>
         </div>
         
@@ -104,7 +154,10 @@ const UserProfile = () => {
               <TabsContent value="wishlists" className="mt-4">
                 <Card className="p-4">
                   <p className="text-sm text-muted-foreground text-center py-8">
-                    No public wishlists to display
+                    {isMockProfile 
+                      ? "This is a demo profile. Wishlists are not available for demo users."
+                      : "No public wishlists to display"
+                    }
                   </p>
                 </Card>
               </TabsContent>

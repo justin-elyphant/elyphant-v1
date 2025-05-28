@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Gift, Users, Heart, Baby, Plus } from "lucide-react";
+import { Gift, Users, Heart, Baby, Plus, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -105,19 +105,36 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
         <Button variant="outline" size="sm" asChild>
           <Link to={`/connection/${friend.id}`}>View Details</Link>
         </Button>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Gift className="h-4 w-4 mr-1" />
-                Gift
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Send a gift to {friend.name}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`/messages/${friend.id}`}>
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    Message
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Send a message to {friend.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Gift className="h-4 w-4 mr-1" />
+                  Gift
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Send a gift to {friend.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardFooter>
     </Card>
   );

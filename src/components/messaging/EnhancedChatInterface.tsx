@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Message, fetchMessages, sendMessage, markMessagesAsRead, subscribeToMessages } from "@/utils/messageService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ interface EnhancedChatInterfaceProps {
 }
 
 const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInterfaceProps) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -199,6 +201,18 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
     toast.success("Message reactions coming soon!");
   };
 
+  const handleViewProfile = () => {
+    navigate(`/profile/${connectionId}`);
+  };
+
+  const handleMuteNotifications = () => {
+    toast.success("Notifications muted (feature coming soon)");
+  };
+
+  const handleClearChat = () => {
+    toast.success("Chat cleared (feature coming soon)");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -247,9 +261,15 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>View Profile</DropdownMenuItem>
-                <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
-                <DropdownMenuItem>Clear Chat</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleViewProfile}>
+                  View Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMuteNotifications}>
+                  Mute Notifications
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleClearChat}>
+                  Clear Chat
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

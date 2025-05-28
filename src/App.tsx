@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import Index from "./pages/Index";
-import SignIn from "./pages/SignIn";
+import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/SignUp";
 import EmailVerification from "./pages/EmailVerification";
 import Dashboard from "./pages/Dashboard";
@@ -18,7 +18,6 @@ import Marketplace from "./pages/Marketplace";
 import Checkout from "./pages/Checkout";
 import Gifting from "./pages/Gifting";
 import Profile from "./pages/Profile";
-// Remove UserProfile import as it's no longer needed
 import SharedWishlist from "./pages/SharedWishlist";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import NotFound from "./pages/NotFound";

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +85,26 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
     toast.success("Reaction added!");
   };
 
+  const handleSearchResultClick = (messageId: string) => {
+    // Scroll to the message with the given ID
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handleAttachFile = (type: "file" | "image" | "camera") => {
+    toast.success("Attachment feature coming soon!");
+  };
+
+  const handleShareProduct = (product: any) => {
+    toast.success("Product sharing coming soon!");
+  };
+
+  const handleShareWishlist = (wishlist: any) => {
+    toast.success("Wishlist sharing coming soon!");
+  };
+
   const connectionInitials = connectionName
     .split(' ')
     .map(name => name[0])
@@ -93,7 +114,7 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
 
   return (
     <div className="flex flex-col h-full">
-      {/* Chat Header - Only place where we show status indicator */}
+      {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b bg-background">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
@@ -142,6 +163,7 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
         <MessageSearch 
           onClose={() => setShowSearch(false)}
           messages={messages}
+          onSearchResultClick={handleSearchResultClick}
         />
       )}
 
@@ -156,14 +178,14 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
               onReact={handleReact}
             />
           ))}
-          {isTyping && <TypingIndicator />}
+          {isTyping && <TypingIndicator userName={connectionName} />}
         </div>
       </ScrollArea>
 
       {/* Reply Preview */}
       {replyingTo && (
         <ReplyPreview
-          message={replyingTo}
+          replyingTo={replyingTo}
           onCancel={() => setReplyingTo(null)}
         />
       )}
@@ -172,9 +194,9 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
       <div className="p-4 border-t bg-background">
         <div className="flex items-end gap-2">
           <div className="flex items-center gap-1">
-            <AttachmentButton onAttach={() => toast.success("Attachment feature coming soon!")} />
-            <ProductShareButton onShare={() => toast.success("Product sharing coming soon!")} />
-            <WishlistShareButton onShare={() => toast.success("Wishlist sharing coming soon!")} />
+            <AttachmentButton onAttachFile={handleAttachFile} />
+            <ProductShareButton onShareProduct={handleShareProduct} />
+            <WishlistShareButton onShareWishlist={handleShareWishlist} />
           </div>
           
           <div className="flex-1">

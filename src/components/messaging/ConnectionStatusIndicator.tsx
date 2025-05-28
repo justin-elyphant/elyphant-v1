@@ -1,8 +1,9 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
-interface ConnectionStatusIndicatorProps {
+export interface ConnectionStatusIndicatorProps {
   status: "online" | "offline" | "away";
   lastSeen?: string;
   className?: string;
@@ -37,7 +38,15 @@ const ConnectionStatusIndicator = ({
       case "away":
         return "Away";
       case "offline":
-        return lastSeen ? `Last seen ${lastSeen}` : "Offline";
+        if (lastSeen) {
+          try {
+            const lastSeenDate = new Date(lastSeen);
+            return `Last seen ${formatDistanceToNow(lastSeenDate, { addSuffix: true })}`;
+          } catch {
+            return "Offline";
+          }
+        }
+        return "Offline";
       default:
         return "Unknown";
     }

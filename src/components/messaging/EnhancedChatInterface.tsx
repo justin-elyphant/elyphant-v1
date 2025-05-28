@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +16,7 @@ import AttachmentButton from "./AttachmentButton";
 import ReplyPreview from "./ReplyPreview";
 import ConnectionStatusIndicator from "./ConnectionStatusIndicator";
 import { toast } from "sonner";
+import { useUserPresence } from "@/hooks/useUserPresence";
 
 interface EnhancedChatInterfaceProps {
   connectionId: string;
@@ -25,6 +25,7 @@ interface EnhancedChatInterfaceProps {
 
 const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInterfaceProps) => {
   const { user } = useAuth();
+  const { getUserStatus } = useUserPresence();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -32,6 +33,9 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Get real-time status for the connection
+  const connectionStatus = getUserStatus(connectionId);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -126,7 +130,8 @@ const EnhancedChatInterface = ({ connectionId, connectionName }: EnhancedChatInt
           <div>
             <h3 className="font-semibold">{connectionName}</h3>
             <ConnectionStatusIndicator 
-              status="online" 
+              status={connectionStatus.status} 
+              lastSeen={connectionStatus.lastSeen}
               showText={true} 
               className="text-xs"
               size="sm"

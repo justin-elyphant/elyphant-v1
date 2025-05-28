@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useConnections } from "@/hooks/profile/useConnections";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Search, Plus, Users } from "lucide-react";
+import { useUserPresence } from "@/hooks/useUserPresence";
 
 // Mock conversation data with additional IDs to ensure some match
 const mockConversations = [
@@ -120,6 +120,9 @@ const Messages = () => {
   if (!user) {
     return null;
   }
+
+  // Initialize presence tracking
+  useUserPresence();
 
   const handleSelectConnection = (id: string) => {
     setSelectedConnection(id);

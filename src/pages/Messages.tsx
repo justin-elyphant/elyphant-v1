@@ -4,6 +4,7 @@ import { useConnections } from "@/hooks/useConnections";
 import { useAuth } from "@/contexts/AuthContext";
 import ChatInterface from "@/components/messaging/ChatInterface";
 import MessageThread from "@/components/messaging/MessageThread";
+import BackToDashboard from "@/components/shared/BackToDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -62,6 +63,8 @@ const Messages = () => {
 
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
+      <BackToDashboard />
+      
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Messages</h1>
         <Button>

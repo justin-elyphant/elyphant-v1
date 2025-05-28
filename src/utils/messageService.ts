@@ -8,6 +8,7 @@ export interface Message {
   recipient_id: string;
   content: string;
   product_link_id: number | null;
+  wishlist_link_id: string | null;
   is_read: boolean;
   created_at: string;
 }
@@ -16,6 +17,7 @@ export interface SendMessageParams {
   recipientId: string;
   content: string;
   productLinkId?: number;
+  wishlistLinkId?: string;
 }
 
 // Fetch messages between current user and another user
@@ -43,7 +45,7 @@ export const fetchMessages = async (otherUserId: string): Promise<Message[]> => 
 };
 
 // Send a new message
-export const sendMessage = async ({ recipientId, content, productLinkId }: SendMessageParams): Promise<Message | null> => {
+export const sendMessage = async ({ recipientId, content, productLinkId, wishlistLinkId }: SendMessageParams): Promise<Message | null> => {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) {
     toast.error("You must be logged in to send messages");
@@ -55,6 +57,7 @@ export const sendMessage = async ({ recipientId, content, productLinkId }: SendM
     recipient_id: recipientId,
     content,
     product_link_id: productLinkId || null,
+    wishlist_link_id: wishlistLinkId || null,
     is_read: false
   };
 

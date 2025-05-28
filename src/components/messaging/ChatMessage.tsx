@@ -4,17 +4,24 @@ import { Message } from "@/utils/messageService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
 import MessageStatusIndicator from "./MessageStatusIndicator";
 import ProductSharePreview from "./ProductSharePreview";
+import WishlistSharePreview from "./WishlistSharePreview";
+import { Wishlist } from "@/types/profile";
 
 interface ChatMessageProps {
   message: Message;
   productDetails?: { name: string; id: number } | null;
+  wishlistDetails?: Wishlist | null;
   showStatus?: boolean;
 }
 
-const ChatMessage = ({ message, productDetails, showStatus = true }: ChatMessageProps) => {
+const ChatMessage = ({ 
+  message, 
+  productDetails, 
+  wishlistDetails, 
+  showStatus = true 
+}: ChatMessageProps) => {
   const { user } = useAuth();
   const isOwn = user?.id === message.sender_id;
 
@@ -58,6 +65,18 @@ const ChatMessage = ({ message, productDetails, showStatus = true }: ChatMessage
                 onViewProduct={() => {
                   // Navigate to product in marketplace
                   window.open(`/marketplace?productId=${productDetails.id}`, '_blank');
+                }}
+              />
+            </div>
+          )}
+
+          {message.wishlist_link_id && wishlistDetails && (
+            <div className="mt-2">
+              <WishlistSharePreview
+                wishlist={wishlistDetails}
+                onViewWishlist={() => {
+                  // Navigate to wishlist
+                  window.open(`/wishlists`, '_blank');
                 }}
               />
             </div>

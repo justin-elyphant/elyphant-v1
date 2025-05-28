@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useConnections } from "@/hooks/useConnections";
+import { useConnections } from "@/hooks/profile/useConnections";
 import { useAuth } from "@/contexts/AuthContext";
 import ChatInterface from "@/components/messaging/ChatInterface";
 import MessageThread from "@/components/messaging/MessageThread";
@@ -9,26 +10,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Search, Plus } from "lucide-react";
+import { MessageSquare, Search, Plus, Users } from "lucide-react";
 
 const Messages = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { connections, filteredConnections } = useConnections();
+  const { connections, loading } = useConnections();
   const [selectedConnection, setSelectedConnection] = useState<string | null>(connectionId || null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Mock message threads data - in real app this would come from API
-  const mockThreads = filteredConnections.map(connection => ({
-    threadId: connection.id,
-    connectionName: connection.name,
-    lastMessage: "Hey! How are you doing?",
-    lastMessageTime: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-    unreadCount: Math.floor(Math.random() * 5),
-  }));
+  // Transform connections into message threads format
+  const messageThreads = connections.map(connection => {
+    // Determine the other user in the connection
+    const otherUser = connection.user_id === user?.id 
+      ? { id: connection.connected_user_id, name: `User ${connection.connected_user_id.slice(0, 8)}` }
+      : { id: connection.user_id, name: `User ${connection.user_id.slice(0, 8)}` };
+    
+    return {
+      threadId: otherUser.id,
+      connectionName: otherUser.name,
+      lastMessage: "Start a conversation...",
+      lastMessageTime: connection.updated_at,
+      unreadCount: 0,
+    };
+  });
 
-  const filteredThreads = mockThreads.filter(thread =>
+  const filteredThreads = messageThreads.filter(thread =>
     thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -36,12 +44,12 @@ const Messages = () => {
   useEffect(() => {
     if (connectionId) {
       setSelectedConnection(connectionId);
-    } else if (filteredConnections.length > 0 && !selectedConnection) {
+    } else if (filteredThreads.length > 0 && !selectedConnection) {
       // If no connection is selected but we have connections, select the first one
-      setSelectedConnection(filteredConnections[0].id);
-      navigate(`/messages/${filteredConnections[0].id}`);
+      setSelectedConnection(filteredThreads[0].threadId);
+      navigate(`/messages/${filteredThreads[0].threadId}`);
     }
-  }, [connectionId, filteredConnections, navigate, selectedConnection]);
+  }, [connectionId, filteredThreads, navigate, selectedConnection]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -59,7 +67,18 @@ const Messages = () => {
     navigate(`/messages/${id}`);
   };
 
-  const selectedConnectionData = filteredConnections.find(c => c.id === selectedConnection);
+  const selectedConnectionData = messageThreads.find(t => t.threadId === selectedConnection);
+
+  if (loading) {
+    return (
+      <div className="container max-w-7xl mx-auto py-8 px-4">
+        <BackToDashboard />
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading connections...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
@@ -67,7 +86,7 @@ const Messages = () => {
       
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Messages</h1>
-        <Button>
+        <Button onClick={() => navigate('/connections')}>
           <Plus className="h-4 w-4 mr-2" />
           New Message
         </Button>
@@ -107,8 +126,9 @@ const Messages = () => {
                   ))
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">
-                      {searchTerm ? "No conversations found" : "No conversations yet"}
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {searchTerm ? "No conversations found" : "No connections yet"}
                     </p>
                     {!searchTerm && (
                       <Button 
@@ -132,7 +152,7 @@ const Messages = () => {
             {selectedConnection && selectedConnectionData ? (
               <ChatInterface 
                 connectionId={selectedConnection}
-                connectionName={selectedConnectionData.name}
+                connectionName={selectedConnectionData.connectionName}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -141,7 +161,7 @@ const Messages = () => {
                 <p className="text-muted-foreground mb-4 max-w-md">
                   Select a conversation from the sidebar to start chatting, or create a new message to connect with friends and family.
                 </p>
-                {filteredConnections.length === 0 && (
+                {connections.length === 0 && (
                   <Button onClick={() => navigate('/connections')}>
                     Find connections
                   </Button>

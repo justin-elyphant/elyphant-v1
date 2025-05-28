@@ -12,6 +12,40 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Search, Plus, Users } from "lucide-react";
 
+// Mock conversation data
+const mockConversations = {
+  '1': {
+    connectionName: 'Alex Johnson',
+    lastMessage: "Thanks for the gift recommendation! I'll definitely check it out.",
+    lastMessageTime: '2024-01-15T10:30:00Z',
+    unreadCount: 2
+  },
+  '2': {
+    connectionName: 'Jamie Smith',
+    lastMessage: "Hey! How was your weekend?",
+    lastMessageTime: '2024-01-15T09:15:00Z',
+    unreadCount: 0
+  },
+  '3': {
+    connectionName: 'Taylor Wilson',
+    lastMessage: "Perfect! I added that item to my wishlist.",
+    lastMessageTime: '2024-01-14T16:45:00Z',
+    unreadCount: 1
+  },
+  '4': {
+    connectionName: 'Jordan Parks',
+    lastMessage: "Looking forward to catching up soon!",
+    lastMessageTime: '2024-01-14T14:20:00Z',
+    unreadCount: 0
+  },
+  '5': {
+    connectionName: 'Casey Morgan',
+    lastMessage: "Thanks for thinking of me! ❤️",
+    lastMessageTime: '2024-01-13T11:10:00Z',
+    unreadCount: 0
+  }
+};
+
 const Messages = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
   const navigate = useNavigate();
@@ -20,7 +54,7 @@ const Messages = () => {
   const [selectedConnection, setSelectedConnection] = useState<string | null>(connectionId || null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Transform real connections into message threads format
+  // Transform real connections into message threads format with mock conversation data
   const messageThreads = connections.map(connection => {
     const otherUser = connection.user_id === user?.id 
       ? { 
@@ -32,12 +66,15 @@ const Messages = () => {
           name: `User ${connection.user_id.slice(0, 8)}` 
         };
     
+    // Use mock conversation data if available, otherwise use defaults
+    const mockData = mockConversations[otherUser.id as keyof typeof mockConversations];
+    
     return {
       threadId: otherUser.id,
-      connectionName: otherUser.name,
-      lastMessage: "Start a conversation...",
-      lastMessageTime: connection.updated_at,
-      unreadCount: 0,
+      connectionName: mockData?.connectionName || otherUser.name,
+      lastMessage: mockData?.lastMessage || "Start a conversation...",
+      lastMessageTime: mockData?.lastMessageTime || connection.updated_at,
+      unreadCount: mockData?.unreadCount || 0,
       relationshipType: connection.relationship_type,
       status: connection.status
     };

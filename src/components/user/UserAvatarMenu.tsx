@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { User, Store, Settings, LogOut, LayoutDashboard } from "lucide-react"; // Updated icon import
+import { User, Store, Settings, LogOut, LayoutDashboard, MessageSquare } from "lucide-react"; // Added MessageSquare icon
 
 import { useAuth } from "@/contexts/auth";
 
@@ -40,6 +40,11 @@ const UserAvatarMenu = () => {
             <Store className="mr-2 h-4 w-4" />
             Marketplace
           </Link>
+        </DropdownMenuItem>
+        {/* Messages */}
+        <DropdownMenuItem onClick={() => navigate("/messages")}>
+          <MessageSquare className="mr-2 h-4 w-4" />
+          Messages
         </DropdownMenuItem>
         {/* Dashboard */}
         <DropdownMenuItem onClick={() => navigate("/dashboard")}>

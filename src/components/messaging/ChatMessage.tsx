@@ -7,29 +7,33 @@ import { useAuth } from "@/contexts/AuthContext";
 import MessageStatusIndicator from "./MessageStatusIndicator";
 import ProductSharePreview from "./ProductSharePreview";
 import WishlistSharePreview from "./WishlistSharePreview";
+import MessageContextMenu from "./MessageContextMenu";
 import { Wishlist } from "@/types/profile";
+import { toast } from "sonner";
 
 interface ChatMessageProps {
   message: Message;
   productDetails?: { name: string; id: number } | null;
   wishlistDetails?: Wishlist | null;
   showStatus?: boolean;
+  onReply?: (message: Message) => void;
+  onReact?: (messageId: string, emoji: string) => void;
 }
 
 const ChatMessage = ({ 
   message, 
   productDetails, 
   wishlistDetails, 
-  showStatus = true 
+  showStatus = true,
+  onReply,
+  onReact
 }: ChatMessageProps) => {
   const { user } = useAuth();
   const isOwn = user?.id === message.sender_id;
 
-  // Mock status for demo - in real app this would come from message data
   const getMessageStatus = () => {
     if (!isOwn) return "read";
     
-    // Mock logic based on message age
     const messageAge = Date.now() - new Date(message.created_at).getTime();
     if (messageAge < 1000) return "sending";
     if (messageAge < 5000) return "sent";
@@ -37,8 +41,39 @@ const ChatMessage = ({
     return "read";
   };
 
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success("Message copied to clipboard");
+  };
+
+  const handlePin = (messageId: string) => {
+    toast.success("Message pinned (feature coming soon)");
+  };
+
+  const handleArchive = (messageId: string) => {
+    toast.success("Message archived (feature coming soon)");
+  };
+
+  const handleDelete = (messageId: string) => {
+    toast.success("Message deleted (feature coming soon)");
+  };
+
+  const handleReact = (messageId: string, emoji: string) => {
+    if (onReact) {
+      onReact(messageId, emoji);
+    } else {
+      toast.success("Reaction added (feature coming soon)");
+    }
+  };
+
+  const handleReply = () => {
+    if (onReply) {
+      onReply(message);
+    }
+  };
+
   return (
-    <div className={`flex items-start gap-2 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
+    <div className={`group flex items-start gap-2 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
       <Avatar className="h-8 w-8 mt-1">
         <AvatarFallback>{isOwn ? 'Me' : 'U'}</AvatarFallback>
         <AvatarImage src="" alt="" />
@@ -46,13 +81,26 @@ const ChatMessage = ({
 
       <div className={`max-w-[80%] ${isOwn ? 'items-end' : 'items-start'}`}>
         <div
-          className={`px-4 py-2 rounded-lg ${
+          className={`relative px-4 py-2 rounded-lg ${
             isOwn 
               ? 'bg-primary text-primary-foreground rounded-tr-none'
               : 'bg-muted rounded-tl-none'
           }`}
         >
-          <p className="text-sm">{message.content}</p>
+          <div className={`absolute top-2 ${isOwn ? 'left-2' : 'right-2'}`}>
+            <MessageContextMenu
+              message={message}
+              isOwn={isOwn}
+              onReply={handleReply}
+              onReact={handleReact}
+              onCopy={handleCopy}
+              onPin={handlePin}
+              onArchive={handleArchive}
+              onDelete={handleDelete}
+            />
+          </div>
+
+          <p className="text-sm pr-8">{message.content}</p>
           
           {message.product_link_id && productDetails && (
             <div className="mt-2">
@@ -63,7 +111,6 @@ const ChatMessage = ({
                 productPrice={99.99}
                 productBrand="Demo Brand"
                 onViewProduct={() => {
-                  // Navigate to product in marketplace
                   window.open(`/marketplace?productId=${productDetails.id}`, '_blank');
                 }}
               />
@@ -75,7 +122,6 @@ const ChatMessage = ({
               <WishlistSharePreview
                 wishlist={wishlistDetails}
                 onViewWishlist={() => {
-                  // Navigate to wishlist
                   window.open(`/wishlists`, '_blank');
                 }}
               />

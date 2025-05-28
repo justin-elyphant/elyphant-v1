@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useConnections } from "@/hooks/profile/useConnections";
 import { useAuth } from "@/contexts/AuthContext";
-import ChatInterface from "@/components/messaging/ChatInterface";
+import EnhancedChatInterface from "@/components/messaging/EnhancedChatInterface";
 import MessageThread from "@/components/messaging/MessageThread";
 import BackToDashboard from "@/components/shared/BackToDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,12 +20,17 @@ const Messages = () => {
   const [selectedConnection, setSelectedConnection] = useState<string | null>(connectionId || null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Transform connections into message threads format
+  // Transform real connections into message threads format
   const messageThreads = connections.map(connection => {
-    // Determine the other user in the connection
     const otherUser = connection.user_id === user?.id 
-      ? { id: connection.connected_user_id, name: `User ${connection.connected_user_id.slice(0, 8)}` }
-      : { id: connection.user_id, name: `User ${connection.user_id.slice(0, 8)}` };
+      ? { 
+          id: connection.connected_user_id, 
+          name: `User ${connection.connected_user_id.slice(0, 8)}` 
+        }
+      : { 
+          id: connection.user_id, 
+          name: `User ${connection.user_id.slice(0, 8)}` 
+        };
     
     return {
       threadId: otherUser.id,
@@ -33,25 +38,25 @@ const Messages = () => {
       lastMessage: "Start a conversation...",
       lastMessageTime: connection.updated_at,
       unreadCount: 0,
+      relationshipType: connection.relationship_type,
+      status: connection.status
     };
   });
 
   const filteredThreads = messageThreads.filter(thread =>
-    thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase())
+    thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    thread.status === 'accepted' // Only show accepted connections
   );
 
-  // If we have a connectionId in the URL, use that
   useEffect(() => {
     if (connectionId) {
       setSelectedConnection(connectionId);
     } else if (filteredThreads.length > 0 && !selectedConnection) {
-      // If no connection is selected but we have connections, select the first one
       setSelectedConnection(filteredThreads[0].threadId);
       navigate(`/messages/${filteredThreads[0].threadId}`);
     }
   }, [connectionId, filteredThreads, navigate, selectedConnection]);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!user) {
       navigate("/sign-in");
@@ -59,7 +64,7 @@ const Messages = () => {
   }, [user, navigate]);
 
   if (!user) {
-    return null; // Don't render anything while redirecting
+    return null;
   }
 
   const handleSelectConnection = (id: string) => {
@@ -150,7 +155,7 @@ const Messages = () => {
         <Card className="lg:col-span-3">
           <CardContent className="p-0 h-full">
             {selectedConnection && selectedConnectionData ? (
-              <ChatInterface 
+              <EnhancedChatInterface 
                 connectionId={selectedConnection}
                 connectionName={selectedConnectionData.connectionName}
               />

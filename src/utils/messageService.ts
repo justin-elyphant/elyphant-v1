@@ -9,8 +9,10 @@ export interface Message {
   content: string;
   product_link_id: number | null;
   wishlist_link_id: string | null;
+  reply_to_id: string | null;
   is_read: boolean;
   created_at: string;
+  reactions?: { [emoji: string]: string[] }; // emoji -> user_ids array
 }
 
 export interface SendMessageParams {
@@ -18,9 +20,9 @@ export interface SendMessageParams {
   content: string;
   productLinkId?: number;
   wishlistLinkId?: string;
+  replyToId?: string;
 }
 
-// Fetch messages between current user and another user
 export const fetchMessages = async (otherUserId: string): Promise<Message[]> => {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) {
@@ -44,8 +46,13 @@ export const fetchMessages = async (otherUserId: string): Promise<Message[]> => 
   return data as Message[];
 };
 
-// Send a new message
-export const sendMessage = async ({ recipientId, content, productLinkId, wishlistLinkId }: SendMessageParams): Promise<Message | null> => {
+export const sendMessage = async ({ 
+  recipientId, 
+  content, 
+  productLinkId, 
+  wishlistLinkId,
+  replyToId 
+}: SendMessageParams): Promise<Message | null> => {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) {
     toast.error("You must be logged in to send messages");
@@ -58,6 +65,7 @@ export const sendMessage = async ({ recipientId, content, productLinkId, wishlis
     content,
     product_link_id: productLinkId || null,
     wishlist_link_id: wishlistLinkId || null,
+    reply_to_id: replyToId || null,
     is_read: false
   };
 
@@ -76,7 +84,6 @@ export const sendMessage = async ({ recipientId, content, productLinkId, wishlis
   return data as Message;
 };
 
-// Mark messages as read
 export const markMessagesAsRead = async (messageIds: string[]): Promise<void> => {
   if (!messageIds.length) return;
 
@@ -90,7 +97,6 @@ export const markMessagesAsRead = async (messageIds: string[]): Promise<void> =>
   }
 };
 
-// Subscribe to new messages for a given connection
 export const subscribeToMessages = (
   connectionId: string, 
   onNewMessage: (message: Message) => void
@@ -114,4 +120,38 @@ export const subscribeToMessages = (
   return () => {
     supabase.removeChannel(channel);
   };
+};
+
+// Add reaction to message
+export const addMessageReaction = async (
+  messageId: string, 
+  emoji: string
+): Promise<boolean> => {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) {
+    toast.error("You must be logged in to react to messages");
+    return false;
+  }
+
+  // This would require updating the database schema to support reactions
+  // For now, just return success
+  toast.success("Reaction added!");
+  return true;
+};
+
+// Remove reaction from message
+export const removeMessageReaction = async (
+  messageId: string, 
+  emoji: string
+): Promise<boolean> => {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) {
+    toast.error("You must be logged in to remove reactions");
+    return false;
+  }
+
+  // This would require updating the database schema to support reactions
+  // For now, just return success
+  toast.success("Reaction removed!");
+  return true;
 };

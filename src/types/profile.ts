@@ -1,4 +1,3 @@
-
 // This file defines all types related to user profiles
 
 export interface Profile {
@@ -19,6 +18,27 @@ export interface Profile {
   onboarding_completed?: boolean;
   updated_at?: string;
   recently_viewed?: RecentlyViewedItem[];  // Add recently_viewed field
+  // New gifting properties
+  gift_giving_preferences?: {
+    occasions?: string[];
+    budget_ranges?: {
+      preferred_min?: number;
+      preferred_max?: number;
+      last_budget?: { min: number; max: number };
+    };
+    recipient_types?: string[];
+    preferred_categories?: string[];
+  };
+  gifting_history?: {
+    searches?: any[];
+    successful_gifts?: any[];
+    ai_interactions?: any[];
+  };
+  ai_interaction_data?: {
+    preferred_flow?: string | null;
+    common_recipients?: any[];
+    learned_preferences?: any;
+  };
 }
 
 export interface ShippingAddress {

@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { UserPlus } from "lucide-react";
-import { useEvents } from "@/components/gifting/events/context/EventsContext";
+import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 
 const Events = () => {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
@@ -51,26 +51,20 @@ const Events = () => {
 
   return (
     <EventsProvider>
-      <EventsContent onAddEvent={handleAddEvent} />
-      <AddEventDialog 
-        open={isAddEventOpen} 
-        onOpenChange={setIsAddEventOpen} 
-      />
-    </EventsProvider>
-  );
-};
-
-const EventsProvider = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <BackToDashboard />
-      
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
+      <div className="container mx-auto py-8 px-4">
+        <BackToDashboard />
+        
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
+        </div>
+        
+        <EventsContent onAddEvent={handleAddEvent} />
+        <AddEventDialog 
+          open={isAddEventOpen} 
+          onOpenChange={setIsAddEventOpen} 
+        />
       </div>
-      
-      {children}
-    </div>
+    </EventsProvider>
   );
 };
 

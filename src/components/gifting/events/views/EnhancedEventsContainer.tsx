@@ -15,6 +15,7 @@ import { useEvents } from "../context/EventsContext";
 import { useEventHandlers } from "../hooks/useEventHandlers";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Download } from "lucide-react";
+import { FilterState, SortState } from "../enhanced/types";
 
 interface EnhancedEventsContainerProps {
   onAddEvent: () => void;
@@ -26,20 +27,22 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
     isLoading, 
     error, 
     viewMode, 
-    setViewMode
+    setViewMode,
+    selectedEventType,
+    setSelectedEventType
   } = useEvents();
   
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isExportImportOpen, setIsExportImportOpen] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterState>({
     search: '',
     eventTypes: [],
     dateRange: { from: null, to: null },
     autoGiftStatus: 'all',
     urgencyLevel: 'all',
   });
-  const [sortState, setSortState] = useState({
+  const [sortState, setSortState] = useState<SortState>({
     field: 'date',
     direction: 'asc',
   });
@@ -230,6 +233,9 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
               onEdit={handleEditEvent}
               onVerifyEvent={handleVerifyEvent}
               onDelete={handleDeleteEvent}
+              eventTypes={availableEventTypes}
+              selectedEventType={selectedEventType}
+              onEventTypeChange={setSelectedEventType}
             />
           ) : viewMode === "cards" ? (
             <EventCardsView

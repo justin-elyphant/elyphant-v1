@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { ExtendedEventData } from "../types";
 import { eventsService } from "@/services/eventsService";

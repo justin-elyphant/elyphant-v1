@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 
 interface EventViewToggleProps {
   viewMode: "cards" | "calendar";
-  setViewMode: (mode: "cards" | "calendar") => void;
+  onViewModeChange: (mode: "cards" | "calendar") => void;
 }
 
-const EventViewToggle = ({ viewMode, setViewMode }: EventViewToggleProps) => {
+const EventViewToggle = ({ viewMode, onViewModeChange }: EventViewToggleProps) => {
   return (
     <div className="flex justify-end mb-4">
       <div className="inline-flex rounded-md shadow-sm" role="group">
         <Button
           variant={viewMode === "cards" ? "default" : "outline"}
           size="sm"
-          onClick={() => setViewMode("cards")}
+          onClick={() => onViewModeChange("cards")}
           className="rounded-l-md rounded-r-none"
         >
           <LayoutGrid className="h-4 w-4 mr-2" />
@@ -24,7 +24,7 @@ const EventViewToggle = ({ viewMode, setViewMode }: EventViewToggleProps) => {
         <Button
           variant={viewMode === "calendar" ? "default" : "outline"}
           size="sm"
-          onClick={() => setViewMode("calendar")}
+          onClick={() => onViewModeChange("calendar")}
           className="rounded-r-md rounded-l-none"
         >
           <CalendarDays className="h-4 w-4 mr-2" />

@@ -1,105 +1,37 @@
 
-import React, { useState, useMemo } from "react";
-import { Calendar } from "@/components/ui/calendar";
-import { ExtendedEventData, FilterOption } from "../types";
-import { isToday } from "date-fns";
-import { parseDateString } from "../utils/dateUtils";
-import CalendarHeader from "../components/CalendarHeader";
-import CalendarDayContent from "../components/CalendarDayContent";
-import MonthEventsPanel from "../components/MonthEventsPanel";
-import { useCalendarEvents } from "../hooks/useCalendarEvents";
+import React from "react";
+import { ExtendedEventData } from "../types";
 
 interface EventCalendarViewProps {
   events: ExtendedEventData[];
+  onSendGift: (id: number) => void;
+  onToggleAutoGift: (id: number) => void;
+  onEdit: (id: number) => void;
+  onVerifyEvent: (id: number) => void;
   onEventClick: (event: ExtendedEventData) => void;
-  onSendGift?: (id: number) => void;
-  onToggleAutoGift?: (id: number) => void;
-  onVerifyEvent?: (id: number) => void;
-  selectedEventType: FilterOption;
-  onEventTypeChange: (type: FilterOption) => void;
 }
 
-const EventCalendarView = ({ 
-  events, 
-  onEventClick, 
+const CalendarView = ({
+  events,
   onSendGift,
   onToggleAutoGift,
+  onEdit,
   onVerifyEvent,
-  selectedEventType,
-  onEventTypeChange
+  onEventClick
 }: EventCalendarViewProps) => {
-  // Get unique event types for the filter
-  const eventTypes = Array.from(new Set(events.map(event => event.type)));
-  
-  const {
-    selectedDate,
-    setSelectedDate,
-    filteredEvents,
-    eventDates,
-    currentMonthEvents,
-    selectedDateEvents,
-    getEventsForDay,
-    goToPreviousMonth,
-    goToToday,
-    goToNextMonth
-  } = useCalendarEvents(events, selectedEventType);
-  
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
-      <CalendarHeader 
-        eventTypes={eventTypes}
-        selectedEventType={selectedEventType}
-        onEventTypeChange={onEventTypeChange}
-        selectedDate={selectedDate}
-        goToPreviousMonth={goToPreviousMonth}
-        goToToday={goToToday}
-        goToNextMonth={goToNextMonth}
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Calendar 
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            modifiers={{
-              hasEvent: (date) => getEventsForDay(date).length > 0,
-              today: (date) => isToday(date)
-            }}
-            modifiersClassNames={{
-              hasEvent: "font-bold text-primary bg-blue-50",
-              today: "ring-2 ring-blue-400"
-            }}
-            components={{
-              DayContent: (props) => (
-                <div className="relative">
-                  <div>{props.date.getDate()}</div>
-                  <CalendarDayContent 
-                    date={props.date}
-                    dayEvents={getEventsForDay(props.date)}
-                    onEventClick={onEventClick}
-                    onSendGift={onSendGift}
-                    onToggleAutoGift={onToggleAutoGift}
-                    onVerifyEvent={onVerifyEvent}
-                  />
-                </div>
-              ),
-            }}
-            className="rounded-md border pointer-events-auto"
-          />
-        </div>
-        
-        <MonthEventsPanel 
-          selectedDate={selectedDate}
-          currentMonthEvents={currentMonthEvents}
-          selectedDateEvents={selectedDateEvents}
-          onEventClick={onEventClick}
-          onSendGift={onSendGift}
-          onToggleAutoGift={onToggleAutoGift}
-        />
+    <div className="bg-white rounded-lg border p-6">
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium mb-2">Calendar View</h3>
+        <p className="text-muted-foreground mb-4">
+          Calendar view is under development. For now, please use the cards view.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {events.length} event{events.length !== 1 ? 's' : ''} available
+        </p>
       </div>
     </div>
   );
 };
 
-export default EventCalendarView;
+export default CalendarView;

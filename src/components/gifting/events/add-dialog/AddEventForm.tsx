@@ -13,7 +13,7 @@ import DateSelector from "./DateSelector";
 import PrivacySelector from "./PrivacySelector";
 import AutoGiftToggle from "./AutoGiftToggle";
 import GiftBudgetInput from "./GiftBudgetInput";
-import { AddEventFormValues, PersonContact } from "./types";
+import { AddEventFormValues, PersonContact, EventFormData } from "./types";
 
 // Event types definition
 const eventTypes = [
@@ -51,22 +51,40 @@ const formSchema = z.object({
 });
 
 interface AddEventFormProps {
-  onClose: () => void;
+  formData: EventFormData;
+  onFormDataChange: (data: EventFormData) => void;
 }
 
-const AddEventForm = ({ onClose }: AddEventFormProps) => {
+const AddEventForm = ({ formData, onFormDataChange }: AddEventFormProps) => {
   const form = useForm<AddEventFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      eventType: "",
-      personName: "",
+      eventType: formData.eventType,
+      personName: formData.personName,
       personId: undefined,
-      autoGift: false,
-      privacyLevel: "private",
+      date: formData.date || undefined,
+      autoGift: formData.autoGiftEnabled,
+      autoGiftAmount: formData.giftBudget,
+      privacyLevel: formData.privacyLevel,
     },
   });
 
   const watchAutoGift = form.watch("autoGift");
+
+  // Update form data when form values change
+  React.useEffect(() => {
+    const subscription = form.watch((value) => {
+      onFormDataChange({
+        eventType: value.eventType || "",
+        personName: value.personName || "",
+        date: value.date || null,
+        privacyLevel: value.privacyLevel || "private",
+        autoGiftEnabled: value.autoGift || false,
+        giftBudget: value.autoGiftAmount || 50,
+      });
+    });
+    return () => subscription.unsubscribe();
+  }, [form, onFormDataChange]);
 
   function onSubmit(data: AddEventFormValues) {
     console.log("Event data:", data);
@@ -78,7 +96,6 @@ const AddEventForm = ({ onClose }: AddEventFormProps) => {
       toast.success("Event added successfully");
     }
     
-    onClose();
     form.reset();
   }
 
@@ -94,10 +111,6 @@ const AddEventForm = ({ onClose }: AddEventFormProps) => {
         {watchAutoGift && (
           <GiftBudgetInput form={form} />
         )}
-        
-        <DialogFooter>
-          <Button type="submit">Add Event</Button>
-        </DialogFooter>
       </form>
     </Form>
   );

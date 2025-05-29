@@ -8,19 +8,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FilterOption } from "./types";
+import { FilterOption, ExtendedEventData } from "./types";
 
 interface EventTypeFilterProps {
-  eventTypes: string[];
   selectedType: FilterOption;
   onTypeChange: (type: FilterOption) => void;
+  events: ExtendedEventData[];
 }
 
 const EventTypeFilter = ({
-  eventTypes,
   selectedType,
   onTypeChange,
+  events,
 }: EventTypeFilterProps) => {
+  // Extract unique event types from events
+  const eventTypes = Array.from(new Set(events.map(event => event.type.toLowerCase())));
+
   return (
     <div className="flex items-center space-x-2 mb-4">
       <Filter className="h-4 w-4 text-muted-foreground" />
@@ -35,7 +38,7 @@ const EventTypeFilter = ({
           <SelectItem value="all">All Events</SelectItem>
           {eventTypes.map((type) => (
             <SelectItem key={type} value={type}>
-              {type}
+              {type.charAt(0).toUpperCase() + type.slice(1)}
             </SelectItem>
           ))}
         </SelectContent>

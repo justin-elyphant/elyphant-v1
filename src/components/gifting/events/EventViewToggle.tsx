@@ -10,25 +10,27 @@ interface EventViewToggleProps {
 
 const EventViewToggle = ({ viewMode, onViewModeChange }: EventViewToggleProps) => {
   return (
-    <div className="flex justify-end mb-4">
-      <div className="inline-flex rounded-md shadow-sm" role="group">
+    <div className="flex justify-center lg:justify-end mb-4 w-full lg:w-auto">
+      <div className="inline-flex rounded-md shadow-sm w-full sm:w-auto" role="group">
         <Button
           variant={viewMode === "cards" ? "default" : "outline"}
           size="sm"
           onClick={() => onViewModeChange("cards")}
-          className="rounded-l-md rounded-r-none"
+          className="rounded-l-md rounded-r-none flex-1 sm:flex-none min-h-[44px] touch-manipulation"
         >
           <LayoutGrid className="h-4 w-4 mr-2" />
-          Cards
+          <span className="hidden xs:inline">Cards</span>
+          <span className="xs:hidden">Cards</span>
         </Button>
         <Button
           variant={viewMode === "calendar" ? "default" : "outline"}
           size="sm"
           onClick={() => onViewModeChange("calendar")}
-          className="rounded-r-md rounded-l-none"
+          className="rounded-r-md rounded-l-none flex-1 sm:flex-none min-h-[44px] touch-manipulation"
         >
           <CalendarDays className="h-4 w-4 mr-2" />
-          Calendar
+          <span className="hidden xs:inline">Calendar</span>
+          <span className="xs:hidden">Cal</span>
         </Button>
       </div>
     </div>

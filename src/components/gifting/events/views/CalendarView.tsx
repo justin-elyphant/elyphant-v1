@@ -60,24 +60,26 @@ const CalendarView = ({
     <div className="space-y-4">
       {/* Calendar Header */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <CardHeader className="pb-3 sm:pb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => navigateMonth('prev')}
+                className="min-h-[44px] min-w-[44px] touch-manipulation"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                {format(currentDate, "MMMM yyyy")}
+              <CardTitle className="flex items-center text-lg sm:text-2xl">
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                <span className="truncate">{format(currentDate, "MMMM yyyy")}</span>
               </CardTitle>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => navigateMonth('next')}
+                className="min-h-[44px] min-w-[44px] touch-manipulation"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -87,7 +89,7 @@ const CalendarView = ({
             <select
               value={selectedEventType}
               onChange={(e) => onEventTypeChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm min-h-[44px] touch-manipulation"
             >
               <option value="all">All Events</option>
               {eventTypes.map(type => (
@@ -97,13 +99,16 @@ const CalendarView = ({
           </div>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-2 mb-4">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
             {/* Day headers */}
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="p-2 text-center font-medium text-sm text-gray-500">
-                {day}
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+              <div key={index} className="p-1 sm:p-2 text-center font-medium text-xs sm:text-sm text-gray-500">
+                <span className="hidden sm:inline">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index]}
+                </span>
+                <span className="sm:hidden">{day}</span>
               </div>
             ))}
             
@@ -116,12 +121,12 @@ const CalendarView = ({
                 <div
                   key={day.toISOString()}
                   className={`
-                    p-2 min-h-[80px] border border-gray-200 rounded-md
+                    p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] border border-gray-200 rounded-md touch-manipulation
                     ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white'}
                     ${!isSameMonth(day, currentDate) ? 'opacity-50' : ''}
                   `}
                 >
-                  <div className="text-sm font-medium text-center mb-1">
+                  <div className="text-xs sm:text-sm font-medium text-center mb-1">
                     {format(day, 'd')}
                   </div>
                   
@@ -130,14 +135,14 @@ const CalendarView = ({
                     {dayEvents.slice(0, 2).map(event => (
                       <div
                         key={event.id}
-                        className="text-xs p-1 bg-blue-100 text-blue-800 rounded cursor-pointer hover:bg-blue-200"
+                        className="text-xs p-1 bg-blue-100 text-blue-800 rounded cursor-pointer hover:bg-blue-200 touch-manipulation min-h-[32px] flex items-center justify-center"
                         onClick={() => onEventClick(event)}
                       >
-                        {event.person}
+                        <span className="truncate">{event.person}</span>
                       </div>
                     ))}
                     {dayEvents.length > 2 && (
-                      <div className="text-xs text-gray-500 text-center">
+                      <div className="text-xs text-gray-500 text-center touch-manipulation min-h-[32px] flex items-center justify-center">
                         +{dayEvents.length - 2} more
                       </div>
                     )}
@@ -150,8 +155,8 @@ const CalendarView = ({
           {/* Events list for selected day */}
           {filteredEvents.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-medium mb-4">All Events This Month</h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <h3 className="text-base sm:text-lg font-medium mb-4">All Events This Month</h3>
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                 {filteredEvents.map(event => (
                   <EventCard
                     key={event.id}

@@ -29,12 +29,12 @@ const EventTypeFilter = ({
 
   return (
     <div className="flex items-center space-x-2 mb-4">
-      <Filter className="h-4 w-4 text-muted-foreground" />
+      <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       <Select
         value={selectedType}
         onValueChange={(value) => onTypeChange(value)}
       >
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-full sm:w-[180px] min-h-[44px] touch-manipulation">
           <SelectValue placeholder="Filter by type" />
         </SelectTrigger>
         <SelectContent>

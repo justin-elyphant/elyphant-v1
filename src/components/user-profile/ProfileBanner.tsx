@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -15,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import ConnectionStatusIndicator from "@/components/messaging/ConnectionStatusIndicator";
 import ProfileImageUpload from "@/components/settings/ProfileImageUpload";
 import { formatDate } from "@/utils/date-formatting";
@@ -38,7 +37,7 @@ const ProfileBanner = ({
   onShare,
   userStatus
 }: ProfileBannerProps) => {
-  const { updateProfile } = useProfile();
+  const { updateProfile, refetchProfile } = useProfile();
   
   const getInitials = (name?: string): string => {
     if (!name) return "?";
@@ -53,6 +52,8 @@ const ProfileBanner = ({
   const handleImageUpdate = async (imageUrl: string | null) => {
     try {
       await updateProfile({ profile_image: imageUrl });
+      // Force a profile refresh to ensure the UI updates
+      await refetchProfile();
     } catch (error) {
       console.error("Failed to update profile image:", error);
     }
@@ -98,6 +99,7 @@ const ProfileBanner = ({
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
+                  <DialogTitle>Message Feature</DialogTitle>
                   <div className="p-4">
                     <h2 className="text-lg font-bold mb-2">Message Feature</h2>
                     <p>Messaging functionality coming soon!</p>
@@ -135,8 +137,8 @@ const ProfileBanner = ({
                     </div>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md">
+                    <DialogTitle>Change Profile Picture</DialogTitle>
                     <div className="p-4">
-                      <h2 className="text-lg font-semibold mb-4">Change Profile Picture</h2>
                       <ProfileImageUpload
                         currentImage={userData?.profile_image}
                         name={userData?.name || "User"}

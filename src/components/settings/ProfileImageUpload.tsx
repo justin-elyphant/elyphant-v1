@@ -23,8 +23,22 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
     const file = e.target.files?.[0];
     if (!file || !user) return;
     
+    // Validate file type and size
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please upload a valid image (JPEG, PNG, GIF, WEBP)");
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image is too large. Maximum size is 5MB");
+      return;
+    }
+    
     try {
-      // Create a preview
+      setUploading(true);
+      
+      // Create a preview immediately
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -33,25 +47,20 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       };
       reader.readAsDataURL(file);
       
-      // Upload to Supabase
-      setUploading(true);
-      
-      // Generate a unique file name to prevent overwrites
+      // Generate a unique file name
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `profile-images/${fileName}`;
       
-      // Check if storage bucket exists, if not we'll use base64 data
-      const { data: bucketData, error: bucketError } = await supabase
-        .storage
-        .listBuckets();
+      // Check if storage bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const avatarsBucketExists = buckets?.some(bucket => bucket.name === 'avatars');
       
-      let imageUrl = '';
+      let finalImageUrl = '';
       
-      // If the avatars bucket exists, upload to Supabase Storage
-      if (bucketData && bucketData.some(bucket => bucket.name === 'avatars')) {
-        const { data, error } = await supabase
-          .storage
+      if (avatarsBucketExists) {
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
           .from('avatars')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -59,43 +68,52 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
           });
         
         if (error) {
+          console.error("Storage upload error:", error);
           throw error;
         }
         
         // Get the public URL
-        const { data: publicUrlData } = supabase
-          .storage
+        const { data: publicUrlData } = supabase.storage
           .from('avatars')
           .getPublicUrl(filePath);
         
-        imageUrl = publicUrlData.publicUrl;
+        finalImageUrl = publicUrlData.publicUrl;
+        console.log("Image uploaded to storage, URL:", finalImageUrl);
       } else {
         // Fallback to base64 if storage not configured
-        imageUrl = preview || '';
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        
+        finalImageUrl = await base64Promise;
+        console.log("Using base64 fallback for image");
       }
       
-      // Update profile record
+      // Update profile in database
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          profile_image: imageUrl
-        })
+        .update({ profile_image: finalImageUrl })
         .eq('id', user.id);
       
       if (updateError) {
+        console.error("Database update error:", updateError);
         throw updateError;
       }
       
-      onImageUpdate(imageUrl);
+      console.log("Profile updated successfully with image URL:", finalImageUrl);
+      
+      // Update local state and notify parent
+      setPreview(finalImageUrl);
+      onImageUpdate(finalImageUrl);
       toast.success("Profile image updated successfully");
       
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
-      // Fallback to base64 data on error
-      if (preview) {
-        onImageUpdate(preview);
-      }
+      toast.error("Failed to upload image. Please try again.");
+      // Reset preview on error
+      setPreview(currentImage);
     } finally {
       setUploading(false);
     }
@@ -110,9 +128,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       // Update profile to remove image reference
       const { error } = await supabase
         .from('profiles')
-        .update({
-          profile_image: null
-        })
+        .update({ profile_image: null })
         .eq('id', user.id);
       
       if (error) {

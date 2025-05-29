@@ -21,6 +21,7 @@ import Checkout from "@/pages/Checkout";
 import Gifting from "@/pages/Gifting";
 import Profile from "@/pages/Profile";
 import SharedWishlist from "@/pages/SharedWishlist";
+import Wishlists from "@/pages/Wishlists";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import NotFound from "@/pages/NotFound";
 import GiftScheduling from "@/pages/GiftScheduling";
@@ -104,6 +105,12 @@ function App() {
                     <Route path="/gifting" element={
                       <ProtectedRoute>
                         <Gifting />
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/wishlists" element={
+                      <ProtectedRoute>
+                        <Wishlists />
                       </ProtectedRoute>
                     } />
                     

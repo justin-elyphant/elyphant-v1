@@ -67,25 +67,25 @@ const Settings = () => {
           <div className="flex flex-wrap gap-3 mb-4">
             <Link
               to="/dashboard"
-              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
             >
               Dashboard
             </Link>
             <Link
               to={`/profile/${user.id}`}
-              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
             >
               Profile
             </Link>
             <Link
               to="/connections"
-              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
             >
               Connections
             </Link>
             <Link
               to="/wishlists"
-              className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
             >
               Wishlists
             </Link>

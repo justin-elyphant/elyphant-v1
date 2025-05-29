@@ -17,8 +17,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import ConnectionStatusIndicator from "@/components/messaging/ConnectionStatusIndicator";
 import ProfileImageUpload from "@/components/settings/ProfileImageUpload";
+import ProfileSharingDialog from "./ProfileSharingDialog";
 import { formatDate } from "@/utils/date-formatting";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useProfileSharing } from "@/hooks/useProfileSharing";
 
 interface ProfileBannerProps {
   userData: any;
@@ -38,6 +40,16 @@ const ProfileBanner = ({
   userStatus
 }: ProfileBannerProps) => {
   const { updateProfile, refetchProfile } = useProfile();
+  const { 
+    profileUrl,
+    sharingDialogOpen,
+    openSharingDialog,
+    closeSharingDialog 
+  } = useProfileSharing({
+    profileId: userData?.id || '',
+    profileName: userData?.name || 'User',
+    profileUsername: userData?.username
+  });
   
   const getInitials = (name?: string): string => {
     if (!name) return "?";
@@ -67,6 +79,10 @@ const ProfileBanner = ({
     }
   };
 
+  const handleShareClick = () => {
+    openSharingDialog();
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
       {/* Cover Image */}
@@ -86,6 +102,9 @@ const ProfileBanner = ({
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </Link>
+              </Button>
+              <Button size="sm" variant="secondary" onClick={handleShareClick} className="backdrop-blur-sm bg-white/90">
+                <Share2 className="h-4 w-4" />
               </Button>
             </>
           ) : (
@@ -114,7 +133,7 @@ const ProfileBanner = ({
                   </div>
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="secondary" onClick={onShare} className="backdrop-blur-sm bg-white/90">
+              <Button size="sm" variant="secondary" onClick={handleShareClick} className="backdrop-blur-sm bg-white/90">
                 <Share2 className="h-4 w-4" />
               </Button>
             </>
@@ -248,6 +267,15 @@ const ProfileBanner = ({
           )}
         </div>
       </div>
+
+      {/* Profile Sharing Dialog */}
+      <ProfileSharingDialog
+        open={sharingDialogOpen}
+        onOpenChange={closeSharingDialog}
+        profileUrl={profileUrl}
+        profileName={userData?.name || 'User'}
+        profileUsername={userData?.username}
+      />
     </div>
   );
 };

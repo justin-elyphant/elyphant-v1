@@ -7,7 +7,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
-import PrivacySettings from "@/components/connections/PrivacySettings";
+import PrivacySecuritySettings from "@/components/settings/PrivacySecuritySettings";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -48,7 +48,7 @@ const Settings = () => {
       case "notifications":
         return <NotificationSettings />;
       case "privacy":
-        return <PrivacySettings />;
+        return <PrivacySecuritySettings />;
       default:
         return <GeneralSettings />;
     }

@@ -8,6 +8,7 @@ interface EventCardsViewProps {
   onSendGift: (id: string) => void;
   onToggleAutoGift: (id: string) => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   onVerifyEvent: (id: string) => void;
   onEventClick?: (event: ExtendedEventData) => void;
 }
@@ -17,6 +18,7 @@ const EventCardsView = ({
   onSendGift,
   onToggleAutoGift,
   onEdit,
+  onDelete,
   onVerifyEvent,
   onEventClick,
 }: EventCardsViewProps) => {
@@ -37,6 +39,7 @@ const EventCardsView = ({
             onSendGift={() => onSendGift(event.id)}
             onToggleAutoGift={() => onToggleAutoGift(event.id)}
             onEdit={() => onEdit(event.id)}
+            onDelete={() => onDelete(event.id)}
             onVerifyEvent={() => onVerifyEvent(event.id)}
             onClick={() => onEventClick && onEventClick(event)}
           />

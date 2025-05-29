@@ -1,7 +1,6 @@
 
 import React from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import EventCard from "../EventCard";
 import { ExtendedEventData } from "../types";
 
@@ -10,17 +9,19 @@ interface DraggableEventCardProps {
   onSendGift: () => void;
   onToggleAutoGift: () => void;
   onEdit: () => void;
+  onDelete: () => void;
   onVerifyEvent: () => void;
-  onClick?: () => void;
+  onClick: () => void;
 }
 
-const DraggableEventCard = ({ 
-  event, 
-  onSendGift, 
-  onToggleAutoGift, 
-  onEdit, 
-  onVerifyEvent, 
-  onClick 
+const DraggableEventCard = ({
+  event,
+  onSendGift,
+  onToggleAutoGift,
+  onEdit,
+  onDelete,
+  onVerifyEvent,
+  onClick,
 }: DraggableEventCardProps) => {
   const {
     attributes,
@@ -30,12 +31,16 @@ const DraggableEventCard = ({
     isDragging,
   } = useDraggable({
     id: event.id,
+    data: {
+      type: 'event',
+      event,
+    },
   });
 
-  const style = {
-    transform: CSS.Translate.toString(transform),
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
-  };
+  } : undefined;
 
   return (
     <div
@@ -50,6 +55,7 @@ const DraggableEventCard = ({
         onSendGift={onSendGift}
         onToggleAutoGift={onToggleAutoGift}
         onEdit={onEdit}
+        onDelete={onDelete}
         onVerifyEvent={onVerifyEvent}
         onClick={onClick}
       />

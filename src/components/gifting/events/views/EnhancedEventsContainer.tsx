@@ -1,172 +1,157 @@
 
 import React, { useState } from "react";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { Card, CardContent } from "@/components/ui/card";
+import EventsSearchAndFilter from "../enhanced/EventsSearchAndFilter";
+import EventsSorting from "../enhanced/EventsSorting";
+import EventViewToggle from "../EventViewToggle";
+import BulkActions from "../enhanced/BulkActions";
+import EnhancedEventsListView from "../enhanced/EnhancedEventsListView";
+import CalendarView from "./CalendarView";
+import EventCardsView from "../EventCardsView";
+import ExportImportDialog from "../export-import/ExportImportDialog";
+import AddEventDialog from "../add-dialog/AddEventDialog";
+import EmptyEventsState from "../components/EmptyEventsState";
 import { useEvents } from "../context/EventsContext";
 import { useEventHandlers } from "../hooks/useEventHandlers";
-import { useKeyboardNavigation } from "../hooks/useKeyboardNavigation";
-import EventHeader from "../EventHeader";
-import EventsLoadingState from "../components/EventsLoadingState";
-import EmptyEventsState from "../components/EmptyEventsState";
-import EventNotifications from "../notifications/EventNotifications";
-import ExportImportDialog from "../export-import/ExportImportDialog";
-import AccessibleEventCard from "../components/AccessibleEventCard";
-import CalendarView from "./CalendarView";
-import { FilterOption } from "../types";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Plus, Upload, Download } from "lucide-react";
 
 interface EnhancedEventsContainerProps {
   onAddEvent: () => void;
 }
 
 const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) => {
-  const [view, setView] = useState<"cards" | "calendar">("cards");
-  const [selectedEventType, setSelectedEventType] = useState<FilterOption>("all");
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [showExportImport, setShowExportImport] = useState(false);
-  
-  const { events, isLoading, updateEvent } = useEvents();
   const { 
-    handleSendGift, 
-    handleToggleAutoGift, 
-    handleEditEvent, 
+    events, 
+    isLoading, 
+    error, 
+    viewMode, 
+    selectedEventType,
+    setEditingEvent
+  } = useEvents();
+  
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  const [isExportImportOpen, setIsExportImportOpen] = useState(false);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  
+  const {
+    filteredEvents,
+    handleSendGift,
+    handleToggleAutoGift,
+    handleEdit,
+    handleDelete,
     handleVerifyEvent,
-    handleDeleteEvent 
+    handleEventClick
   } = useEventHandlers();
 
-  // Keyboard navigation
-  useKeyboardNavigation({
-    events,
-    selectedEventId,
-    onSelectEvent: setSelectedEventId,
-    onEditEvent: handleEditEvent,
-    onDeleteEvent: handleDeleteEvent,
-  });
-
-  // Filter events based on selected type
-  const filteredEvents = selectedEventType === "all" 
-    ? events 
-    : events.filter(event => event.type === selectedEventType);
-
-  // Get unique event types for filter
-  const eventTypes = Array.from(new Set(events.map(event => event.type)));
-
-  const handleEventClick = (event: any) => {
-    setSelectedEventId(event.id);
-    handleEditEvent(event.id);
+  const handleAddEvent = () => {
+    setIsAddEventOpen(true);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      // Handle event rescheduling
-      const eventId = active.id as string;
-      const newDate = new Date(over.id as string);
-      
-      console.log(`Rescheduling event ${eventId} to ${newDate}`);
-      // Here you would call updateEvent with the new date
-    }
+  const handleBulkDelete = () => {
+    // Implementation for bulk delete
+    console.log('Bulk delete:', selectedEvents);
+  };
+
+  const handleBulkEdit = () => {
+    // Implementation for bulk edit
+    console.log('Bulk edit:', selectedEvents);
   };
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <EventNotifications />
-        <EventsLoadingState />
-      </div>
-    );
+    return <div>Loading events...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading events: {error}</div>;
   }
 
   if (events.length === 0) {
-    return (
-      <div className="space-y-6">
-        <EmptyEventsState
-          title="No events yet"
-          description="Start building your gift calendar by adding important dates for friends and family."
-          actionLabel="Add Your First Event"
-          onAction={onAddEvent}
-        />
-      </div>
-    );
+    return <EmptyEventsState onAddEvent={handleAddEvent} />;
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <div className="space-y-6">
-        <EventNotifications />
-        
-        <div className="flex items-center justify-between">
-          <EventHeader 
-            view={view}
-            onViewChange={setView}
-            onAddEvent={onAddEvent}
-            eventTypes={eventTypes}
-            selectedEventType={selectedEventType}
-            onEventTypeChange={setSelectedEventType}
-          />
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setShowExportImport(true)}>
-                Export / Import Events
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+          <EventsSearchAndFilter />
+          <EventsSorting />
         </div>
         
-        {view === "cards" ? (
-          <div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            role="grid"
-            aria-label="Events grid"
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExportImportOpen(true)}
           >
-            {filteredEvents.map((event) => (
-              <div key={event.id} role="gridcell">
-                <AccessibleEventCard
-                  event={event}
-                  isSelected={selectedEventId === event.id}
-                  onSendGift={() => handleSendGift(event.id)}
-                  onToggleAutoGift={() => handleToggleAutoGift(event.id)}
-                  onEdit={() => handleEditEvent(event.id)}
-                  onVerifyEvent={() => handleVerifyEvent(event.id)}
-                  onClick={() => setSelectedEventId(event.id)}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <CalendarView
-            events={filteredEvents}
-            onSendGift={handleSendGift}
-            onToggleAutoGift={handleToggleAutoGift}
-            onEdit={handleEditEvent}
-            onVerifyEvent={handleVerifyEvent}
-            onEventClick={handleEventClick}
-            onDelete={handleDeleteEvent}
-            eventTypes={eventTypes}
-            selectedEventType={selectedEventType}
-            onEventTypeChange={setSelectedEventType}
+            <Upload className="h-4 w-4 mr-2" />
+            Import/Export
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleAddEvent}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Event
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <EventViewToggle />
+        
+        {selectedEvents.length > 0 && (
+          <BulkActions
+            selectedCount={selectedEvents.length}
+            onBulkDelete={handleBulkDelete}
+            onBulkEdit={handleBulkEdit}
+            onClearSelection={() => setSelectedEvents([])}
           />
         )}
-
-        <ExportImportDialog 
-          open={showExportImport}
-          onOpenChange={setShowExportImport}
-        />
       </div>
-    </DndContext>
+
+      <Card>
+        <CardContent className="p-6">
+          {viewMode === "calendar" ? (
+            <CalendarView 
+              events={filteredEvents}
+              onEventClick={handleEventClick}
+            />
+          ) : viewMode === "cards" ? (
+            <EventCardsView
+              events={filteredEvents}
+              onSendGift={handleSendGift}
+              onToggleAutoGift={handleToggleAutoGift}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onVerifyEvent={handleVerifyEvent}
+              onEventClick={handleEventClick}
+            />
+          ) : (
+            <EnhancedEventsListView
+              events={filteredEvents}
+              selectedEvents={selectedEvents}
+              onSelectionChange={setSelectedEvents}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onSendGift={handleSendGift}
+              onToggleAutoGift={handleToggleAutoGift}
+              onVerifyEvent={handleVerifyEvent}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <ExportImportDialog
+        open={isExportImportOpen}
+        onOpenChange={setIsExportImportOpen}
+      />
+
+      <AddEventDialog
+        open={isAddEventOpen}
+        onOpenChange={setIsAddEventOpen}
+      />
+    </div>
   );
 };
 

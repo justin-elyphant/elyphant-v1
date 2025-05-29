@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { ExtendedEventData, SeriesEditOptions, DeleteOptions } from "../types";
+import { ExtendedEventData, DeleteOptions, PrivacyLevel, RecurringType } from "../types";
 import EventFormSection from "./EventFormSection";
 import RecurringSection from "./RecurringSection";
 import PrivacySection from "./PrivacySection";
@@ -33,14 +33,14 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave, onDelete }: EventE
       type: "",
       person: "",
       date: new Date(),
-      privacyLevel: "private" as const,
+      privacyLevel: "private" as PrivacyLevel,
       autoGiftEnabled: false,
       autoGiftAmount: 0,
       isRecurring: false,
-      recurringType: "yearly" as const,
+      recurringType: "yearly" as RecurringType,
       endDate: null as Date | null,
       maxOccurrences: null as number | null,
-      editType: "this_only" as SeriesEditOptions['editType'],
+      editType: "this_only" as 'this_only' | 'this_and_future' | 'entire_series',
     },
   });
 

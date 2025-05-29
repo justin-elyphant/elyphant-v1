@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ExtendedEventData } from "@/components/gifting/events/types";
 
@@ -16,6 +15,7 @@ export interface EventCreateData {
 
 export interface EventUpdateData extends Partial<EventCreateData> {
   id: string;
+  is_modified?: boolean;
 }
 
 export interface SeriesUpdateData {

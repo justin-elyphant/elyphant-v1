@@ -52,7 +52,7 @@ const ProfileSharingDialog = ({
     }
   };
 
-  const shareText = `You've got to see ${profileName}'s wishlist on Elyphant - some serious gift inspiration here! 🎁`;
+  const shareText = `Join me on Elyphant so we can see each other's wishlists! Perfect for birthdays, holidays, or just because gifts 💝`;
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(profileUrl);
 
@@ -84,7 +84,7 @@ const ProfileSharingDialog = ({
     {
       name: "Email",
       icon: Mail,
-      url: `mailto:?subject=${encodeURIComponent(`Check out ${profileName}'s wishlist on Elyphant`)}&body=${encodedText}%20${encodedUrl}`,
+      url: `mailto:?subject=${encodeURIComponent(`Join me on Elyphant!`)}&body=${encodedText}%20${encodedUrl}`,
       color: "bg-gray-600 hover:bg-gray-700"
     }
   ];

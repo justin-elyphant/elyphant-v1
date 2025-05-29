@@ -6,10 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import ProfileTabs from "@/components/user-profile/ProfileTabs";
 import ProfileBanner from "@/components/user-profile/ProfileBanner";
 import ProfileInfo from "@/components/user-profile/ProfileInfo";
+import SignupCTA from "@/components/user-profile/SignupCTA";
 import LoadingState from "./profile-setup/LoadingState";
 import Header from "@/components/home/Header";
 import { Profile as ProfileType } from "@/types/profile";
 import { useUserPresence } from "@/hooks/useUserPresence";
+import { useSignupCTA } from "@/hooks/useSignupCTA";
 import { toast } from "sonner";
 
 const Profile = () => {
@@ -22,6 +24,14 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isMockProfile, setIsMockProfile] = useState(false);
   const { getUserStatus } = useUserPresence();
+
+  // Determine if this is a shared profile (not current user's profile)
+  const isSharedProfile = profileData && !isCurrentUser;
+  
+  const { shouldShowCTA, dismissCTA } = useSignupCTA({
+    profileName: profileData?.name || 'User',
+    isSharedProfile: !!isSharedProfile
+  });
 
   const fetchProfile = useCallback(async () => {
     setIsLoading(true);
@@ -210,6 +220,14 @@ const Profile = () => {
             />
           </div>
         </div>
+
+        {/* Signup CTA for non-authenticated users */}
+        {shouldShowCTA && (
+          <SignupCTA 
+            profileName={profileData.name || 'User'}
+            onDismiss={dismissCTA}
+          />
+        )}
       </div>
     </div>
   );

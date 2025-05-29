@@ -2,16 +2,12 @@
 import React from "react";
 import Hero from "../Hero";
 import GiftCountdown from "./GiftCountdown";
-
-// Sample upcoming event for the homepage hero countdown
-const nextOccasion = {
-  name: "Father's Day",
-  // Use a date in the near future for demonstration. Adjust as needed!
-  date: new Date(new Date().getFullYear(), 5, 16), // June 16th (0-based months)
-  type: "holiday",
-};
+import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
 
 const HeroSection: React.FC = () => {
+  // Get the next upcoming holiday dynamically
+  const nextOccasion = getNextHoliday();
+
   return (
     <section>
       {/* Gift Countdown Banner */}

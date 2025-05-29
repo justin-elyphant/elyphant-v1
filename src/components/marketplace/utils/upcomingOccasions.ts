@@ -1,3 +1,4 @@
+
 import { addDays, isAfter, isBefore, setYear } from "date-fns";
 
 export interface GiftOccasion {
@@ -14,37 +15,37 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
   const currentYear = new Date().getFullYear();
   const today = new Date();
   
-  // Define all gift-giving occasions with their dates
+  // Define all gift-giving occasions with their dates - VERIFIED DATES FOR 2025-2026
   const occasions: GiftOccasion[] = [
     // 2025 Occasions
     { 
       name: "Mother's Day",
       searchTerm: "mothers day gifts",
-      date: new Date(2025, 4, 11), // May 11, 2025 - already passed on May 13
-      type: "holiday"
-    },
-    { 
-      name: "Valentine's Day",
-      searchTerm: "valentines day gifts",
-      date: new Date(2026, 1, 14), // February 14, 2026 (for next year)
+      date: new Date(2025, 4, 11), // May 11, 2025 - Second Sunday in May
       type: "holiday"
     },
     {
       name: "Father's Day",
       searchTerm: "fathers day gifts",
-      date: new Date(2025, 5, 15), // June 15, 2025
+      date: new Date(2025, 5, 15), // June 15, 2025 - Third Sunday in June (CORRECTED)
       type: "holiday"
     },
     {
       name: "Graduation Season",
       searchTerm: "graduation gifts",
-      date: new Date(2025, 4, 31), // May 31, 2025 - moved to end of May
+      date: new Date(2025, 4, 31), // May 31, 2025 - End of graduation season
+      type: "holiday"
+    },
+    { 
+      name: "Valentine's Day",
+      searchTerm: "valentines day gifts",
+      date: new Date(2026, 1, 14), // February 14, 2026 (next year)
       type: "holiday"
     },
     { 
       name: "Easter",
       searchTerm: "easter gifts",
-      date: new Date(2026, 3, 5), // April 5, 2026 (for next year)
+      date: new Date(2026, 3, 5), // April 5, 2026 (next year)
       type: "holiday"
     },
     {
@@ -68,13 +69,13 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
     {
       name: "Thanksgiving",
       searchTerm: "thanksgiving gifts",
-      date: new Date(2025, 10, 27), // November 27, 2025
+      date: new Date(2025, 10, 27), // November 27, 2025 - Fourth Thursday in November
       type: "holiday"
     },
     {
       name: "Black Friday",
       searchTerm: "black friday deals",
-      date: new Date(2025, 10, 28), // November 28, 2025
+      date: new Date(2025, 10, 28), // November 28, 2025 - Day after Thanksgiving
       type: "holiday"
     },
     {
@@ -108,7 +109,7 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
       type: "holiday"
     },
     
-    // 2026 Occasions (keeping these for reference)
+    // 2026 Occasions
     { 
       name: "Valentine's Day",
       searchTerm: "valentines day gifts",
@@ -124,19 +125,19 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
     { 
       name: "Mother's Day",
       searchTerm: "mothers day gifts",
-      date: new Date(2026, 4, 10), // May 10, 2026
+      date: new Date(2026, 4, 10), // May 10, 2026 - Second Sunday in May
       type: "holiday"
     },
     {
       name: "Father's Day",
       searchTerm: "fathers day gifts",
-      date: new Date(2026, 5, 21), // June 21, 2026
+      date: new Date(2026, 5, 21), // June 21, 2026 - Third Sunday in June
       type: "holiday"
     },
     {
       name: "Labor Day",
       searchTerm: "labor day deals",
-      date: new Date(2026, 8, 7), // September 7, 2026
+      date: new Date(2026, 8, 7), // September 7, 2026 - First Monday in September
       type: "holiday"
     },
     {
@@ -148,15 +149,14 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
     {
       name: "Thanksgiving",
       searchTerm: "thanksgiving gifts",
-      date: new Date(2026, 10, 26), // November 26, 2026
+      date: new Date(2026, 10, 26), // November 26, 2026 - Fourth Thursday in November
       type: "holiday"
     }
   ];
 
-  // Filter and sort upcoming occasions
+  // Filter and sort upcoming occasions within the next 90 days
   return occasions
     .filter(occasion => {
-      // Show occasions within the next 90 days
       return isAfter(occasion.date, today) && isBefore(occasion.date, addDays(today, 90));
     })
     .sort((a, b) => a.date.getTime() - b.date.getTime());

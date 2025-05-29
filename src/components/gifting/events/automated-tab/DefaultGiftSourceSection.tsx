@@ -20,6 +20,10 @@ const DefaultGiftSourceSection = ({ settings, onUpdateSettings }: DefaultGiftSou
     });
   };
 
+  const handleGiftSourceChange = (value: string) => {
+    setGiftSource(value as "wishlist" | "ai" | "both" | "specific");
+  };
+
   const sourceOptions = [
     {
       value: "wishlist",
@@ -56,7 +60,7 @@ const DefaultGiftSourceSection = ({ settings, onUpdateSettings }: DefaultGiftSou
         </p>
       </div>
 
-      <RadioGroup value={giftSource} onValueChange={setGiftSource}>
+      <RadioGroup value={giftSource} onValueChange={handleGiftSourceChange}>
         <div className="space-y-3">
           {sourceOptions.map((option) => {
             const IconComponent = option.icon;

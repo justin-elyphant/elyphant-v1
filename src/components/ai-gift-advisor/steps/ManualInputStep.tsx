@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +25,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
   const [name, setName] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [gender, setGender] = useState("");
-  const [relationship, setRelationship] = useState<RecipientType>("friend");
+  const [relationship, setRelationship] = useState<RecipientType | "">("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [customInterest, setCustomInterest] = useState("");
 
@@ -53,7 +52,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
   };
 
   const handleContinue = () => {
-    if (!name.trim() || !ageRange || !gender || selectedInterests.length === 0) {
+    if (!name.trim() || !ageRange || !gender || !relationship || selectedInterests.length === 0) {
       return;
     }
 
@@ -61,7 +60,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
       name: name.trim(),
       ageRange,
       gender,
-      relationship,
+      relationship: relationship as RecipientType,
       interests: selectedInterests
     });
   };
@@ -72,7 +71,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
     ...selectedInterests.filter(interest => !commonInterests.includes(interest))
   ];
 
-  const isValid = name.trim() && ageRange && gender && selectedInterests.length > 0;
+  const isValid = name.trim() && ageRange && gender && relationship && selectedInterests.length > 0;
 
   return (
     <div className="flex flex-col h-full p-4 space-y-4 overflow-y-auto">

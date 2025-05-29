@@ -13,7 +13,7 @@ export const useEventHandlers = () => {
     refreshEvents 
   } = useEvents();
 
-  const handleSendGift = (id: number) => {
+  const handleSendGift = (id: string) => {
     console.log(`Send gift for event ${id}`);
     // Find the event to make sure it exists before showing the toast
     const event = events.find(e => e.id === id);
@@ -22,7 +22,7 @@ export const useEventHandlers = () => {
     }
   };
 
-  const handleToggleAutoGift = async (id: number) => {
+  const handleToggleAutoGift = async (id: string) => {
     console.log(`Toggle auto-gift for event ${id}`);
     
     // Create a new copy of the events array with the updated autoGiftEnabled value
@@ -50,7 +50,7 @@ export const useEventHandlers = () => {
     // TODO: Save auto-gift settings to auto_gifting_rules table in Phase 4
   };
   
-  const handleVerifyEvent = async (id: number) => {
+  const handleVerifyEvent = async (id: string) => {
     console.log(`Verify event ${id}`);
     // Create a new copy of the events array with the updated verification status
     const updatedEvents = events.map(event => 
@@ -64,7 +64,7 @@ export const useEventHandlers = () => {
     toast.success("Event verified successfully");
   };
 
-  const handleEditEvent = (id: number) => {
+  const handleEditEvent = (id: string) => {
     const eventToEdit = events.find(event => event.id === id);
     if (eventToEdit) {
       // Set the current event for editing
@@ -74,7 +74,7 @@ export const useEventHandlers = () => {
     }
   };
 
-  const handleSaveEvent = async (eventId: number, updatedEvent: Partial<ExtendedEventData>) => {
+  const handleSaveEvent = async (eventId: string, updatedEvent: Partial<ExtendedEventData>) => {
     console.log("Saving event with updates:", updatedEvent);
     
     try {
@@ -91,7 +91,7 @@ export const useEventHandlers = () => {
       // Convert to database format and save
       const dbEventData = transformExtendedEventToDatabase(mergedEvent);
       await eventsService.updateEvent({
-        id: originalEvent.id.toString(), // Convert number ID back to string for database
+        id: originalEvent.id, // Keep as UUID string
         ...dbEventData
       });
 
@@ -105,7 +105,7 @@ export const useEventHandlers = () => {
     }
   };
 
-  const handleDeleteEvent = async (eventId: number) => {
+  const handleDeleteEvent = async (eventId: string) => {
     try {
       const event = events.find(e => e.id === eventId);
       if (!event) {
@@ -113,7 +113,7 @@ export const useEventHandlers = () => {
         return;
       }
 
-      await eventsService.deleteEvent(eventId.toString());
+      await eventsService.deleteEvent(eventId); // Use string ID directly
       
       // Refresh events from database
       await refreshEvents();

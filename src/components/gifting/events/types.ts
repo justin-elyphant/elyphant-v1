@@ -1,6 +1,6 @@
 
 export interface EventData {
-  id: number;
+  id: string; // Changed from number to string for UUID compatibility
   type: string;
   person: string;
   date: string;

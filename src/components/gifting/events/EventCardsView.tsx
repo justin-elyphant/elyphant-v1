@@ -5,11 +5,11 @@ import { ExtendedEventData } from "./types";
 
 interface EventCardsViewProps {
   events: ExtendedEventData[];
-  onSendGift: (id: number) => void;
-  onToggleAutoGift: (id: number) => void;
-  onEdit: (id: number) => void;
-  onVerifyEvent: (id: number) => void;
-  onEventClick?: (event: ExtendedEventData) => void; // Add this prop
+  onSendGift: (id: string) => void;
+  onToggleAutoGift: (id: string) => void;
+  onEdit: (id: string) => void;
+  onVerifyEvent: (id: string) => void;
+  onEventClick?: (event: ExtendedEventData) => void;
 }
 
 const EventCardsView = ({
@@ -38,7 +38,7 @@ const EventCardsView = ({
             onToggleAutoGift={() => onToggleAutoGift(event.id)}
             onEdit={() => onEdit(event.id)}
             onVerifyEvent={() => onVerifyEvent(event.id)}
-            onClick={() => onEventClick && onEventClick(event)} // Add click handler to the card
+            onClick={() => onEventClick && onEventClick(event)}
           />
         ))
       )}

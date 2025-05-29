@@ -96,7 +96,7 @@ function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventData {
     : [dbEvent.date_type, 'Unknown Person'];
 
   return {
-    id: parseInt(dbEvent.id.replace(/-/g, '').substring(0, 8), 16), // Convert UUID to number for compatibility
+    id: dbEvent.id, // Keep as UUID string
     type: eventType,
     person: personName,
     date: eventDate.toLocaleDateString('en-US', { 

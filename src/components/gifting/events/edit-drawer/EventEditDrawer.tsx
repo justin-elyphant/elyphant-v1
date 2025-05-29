@@ -36,7 +36,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
 
   const handleSave = () => {
     if (event) {
-      onSave(event.id, {
+      onSave(event.id, { // event.id is now a string
         type,
         person,
         date,

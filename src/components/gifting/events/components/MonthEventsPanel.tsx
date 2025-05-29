@@ -11,8 +11,8 @@ interface MonthEventsPanelProps {
   currentMonthEvents: ExtendedEventData[];
   selectedDateEvents: ExtendedEventData[];
   onEventClick: (event: ExtendedEventData) => void;
-  onSendGift?: (id: number) => void;
-  onToggleAutoGift?: (id: number) => void;
+  onSendGift?: (id: string) => void;
+  onToggleAutoGift?: (id: string) => void;
 }
 
 const MonthEventsPanel = ({
@@ -24,7 +24,7 @@ const MonthEventsPanel = ({
   onToggleAutoGift
 }: MonthEventsPanelProps) => {
   // Handle send gift click
-  const handleSendGift = (id: number, e: React.MouseEvent) => {
+  const handleSendGift = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onSendGift) {
       onSendGift(id);
@@ -32,7 +32,7 @@ const MonthEventsPanel = ({
   };
 
   // Handle toggle auto-gift
-  const handleToggleAutoGift = (id: number, e: React.MouseEvent) => {
+  const handleToggleAutoGift = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onToggleAutoGift) {
       onToggleAutoGift(id);

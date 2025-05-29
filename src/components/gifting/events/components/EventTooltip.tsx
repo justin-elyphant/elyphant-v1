@@ -10,9 +10,9 @@ import { getUrgencyClass } from "../utils/dateUtils";
 interface EventTooltipProps {
   events: ExtendedEventData[];
   onEventClick: (event: ExtendedEventData) => void;
-  onSendGift?: (id: number) => void;
-  onToggleAutoGift?: (id: number) => void;
-  onVerifyEvent?: (id: number) => void;
+  onSendGift?: (id: string) => void;
+  onToggleAutoGift?: (id: string) => void;
+  onVerifyEvent?: (id: string) => void;
 }
 
 const EventTooltip = ({
@@ -23,7 +23,7 @@ const EventTooltip = ({
   onVerifyEvent
 }: EventTooltipProps) => {
   // Handle send gift click
-  const handleSendGift = (id: number, e: React.MouseEvent) => {
+  const handleSendGift = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onSendGift) {
       onSendGift(id);
@@ -31,7 +31,7 @@ const EventTooltip = ({
   };
 
   // Handle toggle auto-gift
-  const handleToggleAutoGift = (id: number, e: React.MouseEvent) => {
+  const handleToggleAutoGift = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onToggleAutoGift) {
       onToggleAutoGift(id);
@@ -39,7 +39,7 @@ const EventTooltip = ({
   };
 
   // Handle verify event
-  const handleVerifyEvent = (id: number, e: React.MouseEvent) => {
+  const handleVerifyEvent = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onVerifyEvent) {
       onVerifyEvent(id);

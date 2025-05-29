@@ -4,10 +4,10 @@ import { ExtendedEventData } from "../types";
 
 interface EventCalendarViewProps {
   events: ExtendedEventData[];
-  onSendGift: (id: number) => void;
-  onToggleAutoGift: (id: number) => void;
-  onEdit: (id: number) => void;
-  onVerifyEvent: (id: number) => void;
+  onSendGift: (id: string) => void;
+  onToggleAutoGift: (id: string) => void;
+  onEdit: (id: string) => void;
+  onVerifyEvent: (id: string) => void;
   onEventClick: (event: ExtendedEventData) => void;
 }
 

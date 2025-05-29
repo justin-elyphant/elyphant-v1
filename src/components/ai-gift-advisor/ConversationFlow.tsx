@@ -19,10 +19,20 @@ const ConversationFlow = (props: ConversationFlowProps) => {
   // Auto-scroll to top when step changes
   useEffect(() => {
     if (containerRef.current) {
+      // Scroll to top of the conversation flow
       containerRef.current.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
+      
+      // Also try to scroll the parent dialog content if it exists
+      const dialogContent = containerRef.current.closest('[role="dialog"]');
+      if (dialogContent) {
+        dialogContent.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
     }
   }, [botState.step]);
 

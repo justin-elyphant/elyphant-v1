@@ -93,23 +93,6 @@ const ProfileSharingDialog = ({
     window.open(url, '_blank', 'width=600,height=400');
   };
 
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${profileName}'s Profile`,
-          text: shareText,
-          url: profileUrl,
-        });
-      } catch (error) {
-        // User cancelled or error occurred
-        console.log('Share cancelled');
-      }
-    } else {
-      handleCopyLink();
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -167,23 +150,6 @@ const ProfileSharingDialog = ({
               ))}
             </div>
           </div>
-
-          <Separator />
-
-          {/* Native Share (mobile) */}
-          {navigator.share && (
-            <div className="space-y-2">
-              <Label>Quick Share</Label>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={handleNativeShare}
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Share via...
-              </Button>
-            </div>
-          )}
         </div>
         
         <div className="flex justify-end">

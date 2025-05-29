@@ -35,6 +35,7 @@ const GiftingPreferencesSection = () => {
     }
   };
 
+  // Safely access the properties with fallbacks
   const giftingPrefs = profile?.gift_giving_preferences || {};
   const aiData = profile?.ai_interaction_data || {};
 

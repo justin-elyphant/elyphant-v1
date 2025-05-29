@@ -10,10 +10,15 @@ interface UpcomingEventsProps {
 }
 
 const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
-  const { editingEvent, setEditingEvent, updateEvent } = useEvents();
+  const { editingEvent, setEditingEvent, updateEvent, deleteEvent } = useEvents();
 
   const handleSaveEvent = async (eventId: string, updates: any) => {
     await updateEvent(eventId, updates);
+    setEditingEvent(null);
+  };
+
+  const handleDeleteEvent = async (eventId: string, options: any) => {
+    await deleteEvent(eventId, options);
     setEditingEvent(null);
   };
 
@@ -25,6 +30,7 @@ const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
         open={!!editingEvent}
         onOpenChange={(open) => !open && setEditingEvent(null)}
         onSave={handleSaveEvent}
+        onDelete={handleDeleteEvent}
       />
     </div>
   );

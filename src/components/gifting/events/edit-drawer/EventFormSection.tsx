@@ -10,6 +10,8 @@ interface EventFormSectionProps {
 }
 
 const EventFormSection = ({ form }: EventFormSectionProps) => {
+  const isRecurring = form.watch("isRecurring");
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Event Details</h3>
@@ -75,6 +77,52 @@ const EventFormSection = ({ form }: EventFormSectionProps) => {
           </FormItem>
         )}
       />
+
+      {isRecurring && (
+        <>
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  End Date (Optional)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    {...field}
+                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                    onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="maxOccurrences"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Max Occurrences (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Leave empty for unlimited"
+                    min="1"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
     </div>
   );
 };

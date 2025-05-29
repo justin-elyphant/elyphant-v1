@@ -520,10 +520,15 @@ export type Database = {
           created_at: string | null
           date: string
           date_type: string
+          end_date: string | null
           id: string
+          is_modified: boolean | null
           is_recurring: boolean | null
+          max_occurrences: number | null
+          occurrence_number: number | null
           original_event_id: string | null
           recurring_type: string | null
+          series_id: string | null
           updated_at: string | null
           user_id: string
           visibility: string
@@ -532,10 +537,15 @@ export type Database = {
           created_at?: string | null
           date: string
           date_type: string
+          end_date?: string | null
           id?: string
+          is_modified?: boolean | null
           is_recurring?: boolean | null
+          max_occurrences?: number | null
+          occurrence_number?: number | null
           original_event_id?: string | null
           recurring_type?: string | null
+          series_id?: string | null
           updated_at?: string | null
           user_id: string
           visibility?: string
@@ -544,10 +554,15 @@ export type Database = {
           created_at?: string | null
           date?: string
           date_type?: string
+          end_date?: string | null
           id?: string
+          is_modified?: boolean | null
           is_recurring?: boolean | null
+          max_occurrences?: number | null
+          occurrence_number?: number | null
           original_event_id?: string | null
           recurring_type?: string | null
+          series_id?: string | null
           updated_at?: string | null
           user_id?: string
           visibility?: string

@@ -1,20 +1,11 @@
-import { PrivacyLevel } from "@/utils/privacyUtils";
 
-export interface PersonContact {
-  id: string;
-  name: string;
-  avatar?: string;
-  topGifter?: boolean;
-  events?: number;
-}
+export type FilterOption = "all" | "birthday" | "anniversary" | "holiday" | "other";
 
-export type FilterOption = "all" | "birthday" | "anniversary" | "holiday" | "graduation" | "wedding" | "other";
+export type PrivacyLevel = "private" | "shared" | "public";
 
-export interface Filter {
-  type: FilterOption;
-  date: Date | null;
-  privacy: PrivacyLevel | null;
-}
+export type GiftSource = "wishlist" | "marketplace" | "ai_selected";
+
+export type RecurringType = "yearly" | "monthly" | "custom";
 
 export interface ExtendedEventData {
   id: string;
@@ -24,36 +15,41 @@ export interface ExtendedEventData {
   daysAway: number;
   avatarUrl?: string;
   autoGiftEnabled: boolean;
-  autoGiftAmount: number;
-  privacyLevel: "private" | "shared" | "public";
-  isVerified: boolean;
-  needsVerification: boolean;
-  giftSource: "wishlist" | "marketplace";
+  autoGiftAmount?: number;
+  privacyLevel: PrivacyLevel;
+  isVerified?: boolean;
+  needsVerification?: boolean;
+  giftSource?: GiftSource;
   dateObj?: Date;
   isRecurring?: boolean;
-  recurringType?: "yearly" | "monthly" | "custom";
+  recurringType?: RecurringType;
   originalEventId?: string;
+  
+  // New series management fields
+  seriesId?: string;
+  endDate?: string;
+  maxOccurrences?: number;
+  isModified?: boolean;
+  occurrenceNumber?: number;
 }
 
-export interface AddEventFormValues {
-  eventType: string;
-  personName: string;
-  personId?: string;
+export interface EventEditData {
+  type: string;
+  person: string;
   date: Date;
-  autoGift: boolean;
+  privacyLevel: PrivacyLevel;
+  autoGiftEnabled: boolean;
   autoGiftAmount?: number;
-  privacyLevel: "private" | "shared" | "public";
   isRecurring: boolean;
-  recurringType?: "yearly" | "monthly" | "custom";
+  recurringType?: RecurringType;
+  endDate?: Date;
+  maxOccurrences?: number;
 }
 
-export interface EventFormData {
-  eventType: string;
-  personName: string;
-  date: Date | null;
-  privacyLevel: "private" | "shared" | "public";
-  autoGiftEnabled: boolean;
-  giftBudget: number;
-  isRecurring: boolean;
-  recurringType?: "yearly" | "monthly" | "custom";
+export interface SeriesEditOptions {
+  editType: 'this_only' | 'this_and_future' | 'entire_series';
+}
+
+export interface DeleteOptions {
+  deleteType: 'this_only' | 'all_future' | 'entire_series';
 }

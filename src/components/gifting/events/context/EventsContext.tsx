@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { ExtendedEventData, FilterOption } from "../types";
+import { ExtendedEventData, FilterOption, DeleteOptions } from "../types";
 import { eventsService } from "@/services/eventsService";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ type EventsContextProps = {
   error: string | null;
   refreshEvents: () => Promise<void>;
   updateEvent: (eventId: string, updates: any) => Promise<void>;
+  deleteEvent: (eventId: string, options: DeleteOptions) => Promise<void>;
 };
 
 const EventsContext = createContext<EventsContextProps | undefined>(undefined);
@@ -85,6 +86,21 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const deleteEvent = async (eventId: string, options: DeleteOptions) => {
+    try {
+      await eventsService.deleteEvent(eventId, options.deleteType);
+      
+      // Refresh events to get updated list after deletion
+      await refreshEvents();
+      
+      toast.success('Event deleted successfully');
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      toast.error('Failed to delete event');
+      throw err;
+    }
+  };
+
   return (
     <EventsContext.Provider
       value={{
@@ -104,6 +120,7 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         error,
         refreshEvents,
         updateEvent,
+        deleteEvent,
       }}
     >
       {children}

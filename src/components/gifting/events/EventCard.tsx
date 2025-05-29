@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, Gift, Settings, MoreVertical, Repeat, Clock } from "lucide-react";
+import { Calendar, Gift, Settings, MoreVertical, Repeat, Clock, Edit, Trash2 } from "lucide-react";
 import { ExtendedEventData } from "./types";
 import EventPrivacyBadge from "./EventPrivacyBadge";
 
@@ -14,6 +14,7 @@ interface EventCardProps {
   onSendGift: () => void;
   onToggleAutoGift: () => void;
   onEdit: () => void;
+  onDelete: () => void;
   onVerifyEvent: () => void;
   onClick?: () => void;
 }
@@ -23,6 +24,7 @@ const EventCard = ({
   onSendGift, 
   onToggleAutoGift, 
   onEdit, 
+  onDelete,
   onVerifyEvent,
   onClick 
 }: EventCardProps) => {
@@ -32,6 +34,21 @@ const EventCard = ({
       return;
     }
     onClick?.();
+  };
+
+  const getSeriesInfo = () => {
+    if (!event.isRecurring) return null;
+    
+    if (event.maxOccurrences) {
+      return `${event.occurrenceNumber || 1} of ${event.maxOccurrences}`;
+    }
+    
+    if (event.endDate) {
+      const endDate = new Date(event.endDate);
+      return `Until ${endDate.toLocaleDateString()}`;
+    }
+    
+    return "Ongoing";
   };
 
   return (
@@ -47,7 +64,7 @@ const EventCard = ({
               <AvatarFallback>{event.person.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold">{event.person}</h3>
                 {event.isRecurring && (
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 text-xs">
@@ -55,9 +72,20 @@ const EventCard = ({
                     {event.recurringType === 'yearly' ? 'Yearly' : 'Monthly'}
                   </Badge>
                 )}
+                {event.isModified && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 text-xs">
+                    <Edit className="h-3 w-3 mr-1" />
+                    Modified
+                  </Badge>
+                )}
                 <EventPrivacyBadge privacyLevel={event.privacyLevel} />
               </div>
               <p className="text-sm text-muted-foreground">{event.type}</p>
+              {event.isRecurring && getSeriesInfo() && (
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Series: {getSeriesInfo()}
+                </p>
+              )}
             </div>
           </div>
           
@@ -71,6 +99,10 @@ const EventCard = ({
               <DropdownMenuItem onClick={onEdit}>
                 <Settings className="h-4 w-4 mr-2" />
                 Edit Event
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDelete} className="text-red-600">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Event
               </DropdownMenuItem>
               {event.needsVerification && (
                 <DropdownMenuItem onClick={onVerifyEvent}>

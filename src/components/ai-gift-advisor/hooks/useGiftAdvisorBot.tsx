@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useConnections } from "@/hooks/profile/useConnections";
+import { useGiftingData } from "@/hooks/useGiftingData";
 import { toast } from "sonner";
 
 export type ConversationStep = 
@@ -38,6 +39,13 @@ export interface BotState {
 export const useGiftAdvisorBot = () => {
   const { user } = useAuth();
   const { connections } = useConnections();
+  const { 
+    saveRecipientProfile, 
+    saveAIGiftSearch, 
+    updateAIInteractionData,
+    updateGiftingPreferences 
+  } = useGiftingData();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [botState, setBotState] = useState<BotState>({
@@ -76,7 +84,7 @@ export const useGiftAdvisorBot = () => {
     }));
   };
 
-  const selectFriend = (friend: any) => {
+  const selectFriend = async (friend: any) => {
     // For non-authenticated users, redirect to signup prompt
     if (!user) {
       setBotState(prev => ({
@@ -87,6 +95,18 @@ export const useGiftAdvisorBot = () => {
       return;
     }
 
+    // Save friend selection to AI interaction data
+    if (user?.id) {
+      await updateAIInteractionData({
+        preferred_flow: "friend-based",
+        common_recipients: [friend],
+        learned_preferences: {
+          last_friend_selected: friend.id,
+          friend_selection_count: 1
+        }
+      });
+    }
+
     setBotState(prev => ({
       ...prev,
       selectedFriend: friend,
@@ -94,7 +114,21 @@ export const useGiftAdvisorBot = () => {
     }));
   };
 
-  const setRecipientDetails = (details: BotState['recipientDetails']) => {
+  const setRecipientDetails = async (details: BotState['recipientDetails']) => {
+    // Save recipient as a profile for future use
+    if (user?.id && details) {
+      await saveRecipientProfile({
+        name: details.name,
+        relationship: details.relationship,
+        age_range: details.ageRange,
+        interests: details.interests,
+        preferences: {
+          gender: details.gender,
+          source: "ai-manual-input"
+        }
+      });
+    }
+
     setBotState(prev => ({
       ...prev,
       recipientDetails: details,
@@ -102,7 +136,16 @@ export const useGiftAdvisorBot = () => {
     }));
   };
 
-  const setOccasion = (occasion: string) => {
+  const setOccasion = async (occasion: string) => {
+    // Update gifting preferences with occasion data
+    if (user?.id) {
+      const currentPrefs = await updateGiftingPreferences({
+        occasions: [occasion],
+        last_occasion: occasion,
+        occasion_frequency: { [occasion]: 1 }
+      });
+    }
+
     setBotState(prev => ({
       ...prev,
       occasion,
@@ -110,7 +153,18 @@ export const useGiftAdvisorBot = () => {
     }));
   };
 
-  const setBudget = (budget: { min: number; max: number }) => {
+  const setBudget = async (budget: { min: number; max: number }) => {
+    // Update gifting preferences with budget data
+    if (user?.id) {
+      await updateGiftingPreferences({
+        budget_ranges: {
+          preferred_min: budget.min,
+          preferred_max: budget.max,
+          last_budget: budget
+        }
+      });
+    }
+
     setBotState(prev => ({
       ...prev,
       budget,
@@ -142,6 +196,18 @@ export const useGiftAdvisorBot = () => {
 
       if (botState.budget) {
         query += ` under $${botState.budget.max}`;
+      }
+
+      // Save the AI search session
+      if (user?.id) {
+        await saveAIGiftSearch({
+          search_query: query,
+          recipient_data: botState.selectedFriend || botState.recipientDetails,
+          occasion: botState.occasion,
+          budget_range: botState.budget,
+          results: { query }, // This would contain actual results in real implementation
+          was_successful: true
+        });
       }
 
       // For non-authenticated users, show preview instead of full results

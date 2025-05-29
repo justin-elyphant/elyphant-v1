@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_gift_searches: {
+        Row: {
+          budget_range: Json | null
+          created_at: string | null
+          id: string
+          occasion: string | null
+          recipient_data: Json | null
+          results: Json | null
+          search_query: string | null
+          user_id: string
+          was_successful: boolean | null
+        }
+        Insert: {
+          budget_range?: Json | null
+          created_at?: string | null
+          id?: string
+          occasion?: string | null
+          recipient_data?: Json | null
+          results?: Json | null
+          search_query?: string | null
+          user_id: string
+          was_successful?: boolean | null
+        }
+        Update: {
+          budget_range?: Json | null
+          created_at?: string | null
+          id?: string
+          occasion?: string | null
+          recipient_data?: Json | null
+          results?: Json | null
+          search_query?: string | null
+          user_id?: string
+          was_successful?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_gift_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -371,15 +415,20 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_interaction_data: Json | null
           bio: string | null
           created_at: string | null
           data_sharing_settings: Json | null
           dob: string | null
           email: string | null
+          gift_giving_preferences: Json | null
           gift_preferences: Json | null
+          gifting_history: Json | null
           id: string
           important_dates: Json | null
+          interests: Json | null
           name: string | null
+          onboarding_completed: boolean | null
           profile_image: string | null
           profile_type: string | null
           shipping_address: Json | null
@@ -387,15 +436,20 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          ai_interaction_data?: Json | null
           bio?: string | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
           email?: string | null
+          gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
+          gifting_history?: Json | null
           id: string
           important_dates?: Json | null
+          interests?: Json | null
           name?: string | null
+          onboarding_completed?: boolean | null
           profile_image?: string | null
           profile_type?: string | null
           shipping_address?: Json | null
@@ -403,15 +457,20 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          ai_interaction_data?: Json | null
           bio?: string | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
           email?: string | null
+          gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
+          gifting_history?: Json | null
           id?: string
           important_dates?: Json | null
+          interests?: Json | null
           name?: string | null
+          onboarding_completed?: boolean | null
           profile_image?: string | null
           profile_type?: string | null
           shipping_address?: Json | null
@@ -419,6 +478,50 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      recipient_profiles: {
+        Row: {
+          age_range: string | null
+          created_at: string | null
+          id: string
+          interests: string[] | null
+          name: string
+          preferences: Json | null
+          relationship: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          age_range?: string | null
+          created_at?: string | null
+          id?: string
+          interests?: string[] | null
+          name: string
+          preferences?: Json | null
+          relationship: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          age_range?: string | null
+          created_at?: string | null
+          id?: string
+          interests?: string[] | null
+          name?: string
+          preferences?: Json | null
+          relationship?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipient_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_addresses: {
         Row: {

@@ -14,12 +14,15 @@ import ShoppingCartButton from "@/components/marketplace/components/ShoppingCart
 import UserButton from "@/components/auth/UserButton";
 import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 import { useIsMobile } from "@/hooks/use-mobile";
+import BotButton from "@/components/ai-gift-advisor/BotButton";
+import GiftAdvisorBot from "@/components/ai-gift-advisor/GiftAdvisorBot";
 
 const Header = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [botOpen, setBotOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Always show search and categories everywhere (including '/')
@@ -46,8 +49,9 @@ const Header = () => {
                   </div>
                 )}
               </div>
-              {/* Right: Cart + Notifications + Auth/Profile */}
+              {/* Right: AI Bot + Cart + Notifications + Auth/Profile */}
               <div className="flex items-center justify-end gap-2">
+                <BotButton onClick={() => setBotOpen(true)} />
                 <ShoppingCartButton />
                 <NotificationsDropdown />
                 {user ? (
@@ -71,6 +75,8 @@ const Header = () => {
                   </Link>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* AI Bot button on mobile */}
+                  <BotButton onClick={() => setBotOpen(true)} className="px-2" />
                   {/* Shopping cart icon on mobile */}
                   <ShoppingCartButton />
                   {/* Notifications bell on mobile */}
@@ -133,6 +139,12 @@ const Header = () => {
               )}
             </>
           )}
+
+          {/* AI Gift Advisor Bot Modal */}
+          <GiftAdvisorBot 
+            isOpen={botOpen} 
+            onClose={() => setBotOpen(false)} 
+          />
         </ProductProvider>
       </div>
     </header>

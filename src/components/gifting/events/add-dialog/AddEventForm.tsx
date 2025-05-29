@@ -10,6 +10,7 @@ import DateSelector from "./DateSelector";
 import PrivacySelector from "./PrivacySelector";
 import AutoGiftToggle from "./AutoGiftToggle";
 import GiftBudgetInput from "./GiftBudgetInput";
+import RecurringToggle from "./RecurringToggle";
 import { AddEventFormValues, PersonContact, EventFormData } from "./types";
 import { useConnections } from "@/hooks/useConnections";
 
@@ -37,6 +38,8 @@ const formSchema = z.object({
   autoGift: z.boolean().default(false),
   autoGiftAmount: z.coerce.number().min(0).optional(),
   privacyLevel: z.enum(["private", "shared", "public"]).default("private"),
+  isRecurring: z.boolean().default(false),
+  recurringType: z.enum(["yearly", "monthly", "custom"]).optional(),
 });
 
 interface AddEventFormProps {
@@ -70,6 +73,8 @@ const AddEventForm = ({ formData, onFormDataChange, validationErrors = {} }: Add
       autoGift: formData.autoGiftEnabled,
       autoGiftAmount: formData.giftBudget,
       privacyLevel: formData.privacyLevel,
+      isRecurring: formData.isRecurring,
+      recurringType: formData.recurringType,
     },
   });
 
@@ -85,6 +90,8 @@ const AddEventForm = ({ formData, onFormDataChange, validationErrors = {} }: Add
         privacyLevel: value.privacyLevel || "private",
         autoGiftEnabled: value.autoGift || false,
         giftBudget: value.autoGiftAmount || 50,
+        isRecurring: value.isRecurring || false,
+        recurringType: value.recurringType,
       });
     });
     return () => subscription.unsubscribe();
@@ -98,6 +105,8 @@ const AddEventForm = ({ formData, onFormDataChange, validationErrors = {} }: Add
     form.setValue("autoGift", formData.autoGiftEnabled);
     form.setValue("autoGiftAmount", formData.giftBudget);
     form.setValue("privacyLevel", formData.privacyLevel);
+    form.setValue("isRecurring", formData.isRecurring);
+    form.setValue("recurringType", formData.recurringType);
   }, [formData, form]);
 
   return (
@@ -107,6 +116,7 @@ const AddEventForm = ({ formData, onFormDataChange, validationErrors = {} }: Add
         <PersonSelector form={form} connectedPeople={connectedPeople} validationError={validationErrors.personName} />
         <DateSelector form={form} validationError={validationErrors.date} />
         <PrivacySelector form={form} />
+        <RecurringToggle form={form} validationError={validationErrors.recurringType} />
         <AutoGiftToggle form={form} />
         
         {watchAutoGift && (

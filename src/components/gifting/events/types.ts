@@ -1,36 +1,59 @@
+import { PrivacyLevel } from "@/utils/privacyUtils";
 
-export interface EventData {
-  id: string; // Changed from number to string for UUID compatibility
+export interface PersonContact {
+  id: string;
+  name: string;
+  avatar?: string;
+  topGifter?: boolean;
+  events?: number;
+}
+
+export type FilterOption = "all" | "birthday" | "anniversary" | "holiday" | "graduation" | "wedding" | "other";
+
+export interface Filter {
+  type: FilterOption;
+  date: Date | null;
+  privacy: PrivacyLevel | null;
+}
+
+export interface ExtendedEventData {
+  id: string;
   type: string;
   person: string;
   date: string;
   daysAway: number;
-  avatarUrl: string;
+  avatarUrl?: string;
   autoGiftEnabled: boolean;
-  autoGiftAmount?: number;
-  giftSource?: "wishlist" | "ai" | "both" | "specific";
-  paymentMethodId?: string;
-  selectedProductId?: string;
-}
-
-export interface ExtendedEventData extends EventData {
-  privacyLevel: string;
-  isVerified?: boolean;
-  needsVerification?: boolean;
-  giftSource?: "wishlist" | "ai" | "both" | "specific";
-  dateObj?: Date | null;
-  paymentMethodId?: string;
-  selectedProductId?: string;
-  isCompleted?: boolean;
-  completedAt?: string;
+  autoGiftAmount: number;
+  privacyLevel: "private" | "shared" | "public";
+  isVerified: boolean;
+  needsVerification: boolean;
+  giftSource: "wishlist" | "marketplace";
+  dateObj?: Date;
   isRecurring?: boolean;
   recurringType?: "yearly" | "monthly" | "custom";
-  giftHistory?: {
-    amount: number;
-    sentAt: string;
-    method: "auto" | "manual";
-    status: "sent" | "delivered" | "pending";
-  }[];
+  originalEventId?: string;
 }
 
-export type FilterOption = "all" | string;
+export interface AddEventFormValues {
+  eventType: string;
+  personName: string;
+  personId?: string;
+  date: Date;
+  autoGift: boolean;
+  autoGiftAmount?: number;
+  privacyLevel: "private" | "shared" | "public";
+  isRecurring: boolean;
+  recurringType?: "yearly" | "monthly" | "custom";
+}
+
+export interface EventFormData {
+  eventType: string;
+  personName: string;
+  date: Date | null;
+  privacyLevel: "private" | "shared" | "public";
+  autoGiftEnabled: boolean;
+  giftBudget: number;
+  isRecurring: boolean;
+  recurringType?: "yearly" | "monthly" | "custom";
+}

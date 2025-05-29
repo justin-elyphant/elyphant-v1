@@ -521,6 +521,9 @@ export type Database = {
           date: string
           date_type: string
           id: string
+          is_recurring: boolean | null
+          original_event_id: string | null
+          recurring_type: string | null
           updated_at: string | null
           user_id: string
           visibility: string
@@ -530,6 +533,9 @@ export type Database = {
           date: string
           date_type: string
           id?: string
+          is_recurring?: boolean | null
+          original_event_id?: string | null
+          recurring_type?: string | null
           updated_at?: string | null
           user_id: string
           visibility?: string
@@ -539,11 +545,21 @@ export type Database = {
           date?: string
           date_type?: string
           id?: string
+          is_recurring?: boolean | null
+          original_event_id?: string | null
+          recurring_type?: string | null
           updated_at?: string | null
           user_id?: string
           visibility?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_special_dates_original_event_id_fkey"
+            columns: ["original_event_id"]
+            isOneToOne: false
+            referencedRelation: "user_special_dates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_special_dates_user_id_fkey"
             columns: ["user_id"]

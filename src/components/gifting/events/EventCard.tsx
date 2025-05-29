@@ -1,11 +1,11 @@
 
 import React from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Gift, Calendar, Edit, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Calendar, Gift, Settings, MoreVertical, Repeat, Clock } from "lucide-react";
 import { ExtendedEventData } from "./types";
 import EventPrivacyBadge from "./EventPrivacyBadge";
 
@@ -18,100 +18,100 @@ interface EventCardProps {
   onClick?: () => void;
 }
 
-const EventCard = ({
-  event,
-  onSendGift,
-  onToggleAutoGift,
-  onEdit,
+const EventCard = ({ 
+  event, 
+  onSendGift, 
+  onToggleAutoGift, 
+  onEdit, 
   onVerifyEvent,
-  onClick,
+  onClick 
 }: EventCardProps) => {
-  // To prevent event bubbling from buttons to card
   const handleCardClick = (e: React.MouseEvent) => {
-    // Only trigger if click happened directly on card or card content elements
-    if (
-      (e.target as HTMLElement).closest('button') === null &&
-      onClick
-    ) {
-      onClick();
+    // Don't trigger card click if clicking on buttons or dropdowns
+    if ((e.target as Element).closest('button, [role="menuitem"]')) {
+      return;
     }
+    onClick?.();
   };
 
   return (
     <Card 
-      className="relative h-full cursor-pointer transition-all hover:shadow-md" 
+      className="hover:shadow-md transition-shadow cursor-pointer" 
       onClick={handleCardClick}
     >
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center space-x-2">
-            <Avatar className="h-8 w-8">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-10 w-10">
               <AvatarImage src={event.avatarUrl} alt={event.person} />
-              <AvatarFallback>{event.person[0]}</AvatarFallback>
+              <AvatarFallback>{event.person.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{event.person}</div>
-              <div className="text-sm text-muted-foreground">{event.type}</div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">{event.person}</h3>
+                {event.isRecurring && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 text-xs">
+                    <Repeat className="h-3 w-3 mr-1" />
+                    {event.recurringType === 'yearly' ? 'Yearly' : 'Monthly'}
+                  </Badge>
+                )}
+                <EventPrivacyBadge level={event.privacyLevel} />
+              </div>
+              <p className="text-sm text-muted-foreground">{event.type}</p>
             </div>
           </div>
-          <EventPrivacyBadge privacyLevel={event.privacyLevel} isVerified={event.isVerified} />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                <Settings className="h-4 w-4 mr-2" />
+                Edit Event
+              </DropdownMenuItem>
+              {event.needsVerification && (
+                <DropdownMenuItem onClick={onVerifyEvent}>
+                  Verify Event
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </CardHeader>
-      
-      <CardContent className="pb-2">
-        <div className="flex items-center space-x-2 text-sm">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span>{event.date}</span>
-          <Badge variant="outline" className="ml-auto">
-            {event.daysAway} days away
-          </Badge>
-        </div>
-        
-        {/* Auto-Gift Status */}
-        <div className="flex items-center justify-between mt-3">
-          <div className="text-sm">
-            <span>Auto-Gift: </span>
-            {event.autoGiftEnabled ? (
-              <span className="font-medium text-green-600">
-                ${event.autoGiftAmount || 0}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">Disabled</span>
+
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>{event.date}</span>
+            {event.daysAway <= 7 && event.daysAway >= 0 && (
+              <>
+                <span>•</span>
+                <span className="text-orange-600 dark:text-orange-400 font-medium flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {event.daysAway === 0 ? 'Today' : 
+                   event.daysAway === 1 ? 'Tomorrow' : 
+                   `${event.daysAway} days`}
+                </span>
+              </>
             )}
           </div>
-          <Switch
-            checked={event.autoGiftEnabled || false}
-            onCheckedChange={onToggleAutoGift}
-            aria-label="Toggle auto-gift"
-          />
         </div>
-        
-        {/* Verification indicator */}
-        {event.needsVerification && !event.isVerified && (
-          <div className="mt-3 rounded-sm bg-amber-50 p-2 text-xs text-amber-600 flex items-center space-x-1">
-            <span>Needs verification</span>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="h-6 px-2 text-xs text-amber-700" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onVerifyEvent();
-              }}
-            >
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Verify
-            </Button>
+
+        {event.autoGiftEnabled && (
+          <div className="mb-4 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
+            <div className="flex items-center text-sm text-green-700 dark:text-green-300">
+              <Gift className="h-4 w-4 mr-2" />
+              Auto-Gift enabled: ${event.autoGiftAmount}
+            </div>
           </div>
         )}
-      </CardContent>
-      
-      <CardFooter className="pt-2">
-        <div className="flex space-x-2 w-full">
+
+        <div className="flex gap-2">
           <Button 
-            className="flex-1" 
-            variant="outline" 
-            size="sm"
+            size="sm" 
+            className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
               onSendGift();
@@ -120,19 +120,19 @@ const EventCard = ({
             <Gift className="h-4 w-4 mr-2" />
             Send Gift
           </Button>
+          
           <Button 
-            variant="ghost" 
             size="sm" 
-            className="px-2"
+            variant={event.autoGiftEnabled ? "outline" : "default"}
             onClick={(e) => {
               e.stopPropagation();
-              onEdit();
+              onToggleAutoGift();
             }}
           >
-            <Edit className="h-4 w-4" />
+            {event.autoGiftEnabled ? "Manage" : "Auto-Gift"}
           </Button>
         </div>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 };

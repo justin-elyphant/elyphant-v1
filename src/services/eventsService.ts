@@ -6,6 +6,8 @@ export interface EventCreateData {
   date: string;
   date_type: string;
   visibility: string;
+  is_recurring?: boolean;
+  recurring_type?: string;
 }
 
 export interface EventUpdateData extends Partial<EventCreateData> {
@@ -67,47 +69,66 @@ export const eventsService = {
     return transformDatabaseEventToExtended(data);
   },
 
-  // Mark event as completed
+  // Mark event as completed and create next recurring instance if applicable
   async markEventCompleted(eventId: string): Promise<void> {
-    const { error } = await supabase
+    // Get the event details first
+    const { data: event, error: fetchError } = await supabase
+      .from('user_special_dates')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching event:', fetchError);
+      throw fetchError;
+    }
+
+    // Mark as completed (you could add a completed_at field if needed)
+    const { error: updateError } = await supabase
       .from('user_special_dates')
       .update({ 
-        completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString() 
       })
       .eq('id', eventId);
 
-    if (error) {
-      console.error('Error marking event as completed:', error);
-      throw error;
+    if (updateError) {
+      console.error('Error marking event as completed:', updateError);
+      throw updateError;
+    }
+
+    // If it's a recurring event, create the next instance
+    if (event.is_recurring && event.recurring_type) {
+      await this.createNextRecurringEvent(event);
     }
   },
 
-  // Create recurring event
-  async createRecurringEvent(originalEventId: string): Promise<ExtendedEventData> {
-    // Get the original event
-    const { data: originalEvent, error: fetchError } = await supabase
-      .from('user_special_dates')
-      .select('*')
-      .eq('id', originalEventId)
-      .single();
+  // Create the next recurring event instance
+  async createNextRecurringEvent(originalEvent: any): Promise<ExtendedEventData> {
+    const originalDate = new Date(originalEvent.date);
+    let nextDate = new Date(originalDate);
 
-    if (fetchError) {
-      console.error('Error fetching original event:', fetchError);
-      throw fetchError;
+    // Calculate next occurrence based on recurring type
+    switch (originalEvent.recurring_type) {
+      case 'yearly':
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        break;
+      case 'monthly':
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        break;
+      default:
+        // For custom or unspecified, default to yearly
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
     }
 
-    // Calculate next year's date
-    const originalDate = new Date(originalEvent.date);
-    const nextYear = new Date(originalDate);
-    nextYear.setFullYear(nextYear.getFullYear() + 1);
-
-    // Create new event for next year
+    // Create new event for next occurrence
     const newEventData = {
       user_id: originalEvent.user_id,
-      date: nextYear.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      date: nextDate.toISOString().split('T')[0],
       date_type: originalEvent.date_type,
       visibility: originalEvent.visibility,
+      is_recurring: true,
+      recurring_type: originalEvent.recurring_type,
+      original_event_id: originalEvent.original_event_id || originalEvent.id,
     };
 
     const { data, error } = await supabase
@@ -124,16 +145,39 @@ export const eventsService = {
     return transformDatabaseEventToExtended(data);
   },
 
-  // Delete an event
-  async deleteEvent(eventId: string): Promise<void> {
-    const { error } = await supabase
-      .from('user_special_dates')
-      .delete()
-      .eq('id', eventId);
+  // Delete an event and optionally all future recurring instances
+  async deleteEvent(eventId: string, deleteAllRecurring = false): Promise<void> {
+    if (deleteAllRecurring) {
+      // Get the original event ID
+      const { data: event } = await supabase
+        .from('user_special_dates')
+        .select('original_event_id, id')
+        .eq('id', eventId)
+        .single();
 
-    if (error) {
-      console.error('Error deleting event:', error);
-      throw error;
+      const originalId = event?.original_event_id || eventId;
+
+      // Delete all events in the recurring chain
+      const { error } = await supabase
+        .from('user_special_dates')
+        .delete()
+        .or(`id.eq.${originalId},original_event_id.eq.${originalId}`);
+
+      if (error) {
+        console.error('Error deleting recurring events:', error);
+        throw error;
+      }
+    } else {
+      // Delete just this event
+      const { error } = await supabase
+        .from('user_special_dates')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) {
+        console.error('Error deleting event:', error);
+        throw error;
+      }
     }
   }
 };
@@ -147,13 +191,12 @@ function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventData {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   // Extract person name and event type from date_type
-  // Format: "Birthday - John Doe" or just "Anniversary"
   const [eventType, personName] = dbEvent.date_type.includes(' - ') 
     ? dbEvent.date_type.split(' - ')
     : [dbEvent.date_type, 'Unknown Person'];
 
   return {
-    id: dbEvent.id, // Keep as UUID string
+    id: dbEvent.id,
     type: eventType,
     person: personName,
     date: eventDate.toLocaleDateString('en-US', { 
@@ -163,13 +206,16 @@ function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventData {
     }),
     daysAway: Math.max(0, diffDays),
     avatarUrl: "/placeholder.svg",
-    autoGiftEnabled: false, // Will be enhanced with auto_gifting_rules later
+    autoGiftEnabled: false,
     autoGiftAmount: 0,
     privacyLevel: dbEvent.visibility || 'private',
     isVerified: true,
     needsVerification: false,
     giftSource: "wishlist",
-    dateObj: eventDate
+    dateObj: eventDate,
+    isRecurring: dbEvent.is_recurring || false,
+    recurringType: dbEvent.recurring_type,
+    originalEventId: dbEvent.original_event_id
   };
 }
 
@@ -178,6 +224,8 @@ export function transformExtendedEventToDatabase(event: ExtendedEventData): Even
   return {
     date: event.dateObj?.toISOString() || new Date().toISOString(),
     date_type: `${event.type} - ${event.person}`,
-    visibility: event.privacyLevel
+    visibility: event.privacyLevel,
+    is_recurring: event.isRecurring,
+    recurring_type: event.recurringType
   };
 }

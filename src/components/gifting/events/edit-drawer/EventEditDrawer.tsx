@@ -1,282 +1,132 @@
 
-import React, { useState, useEffect } from "react";
-import { X, Trash2 } from "lucide-react";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
+import { ExtendedEventData } from "../types";
 import EventFormSection from "./EventFormSection";
-import AutoGiftSection from "./AutoGiftSection";
 import PrivacySection from "./PrivacySection";
+import AutoGiftSection from "./AutoGiftSection";
+import RecurringSection from "./RecurringSection";
 import NotificationPreferencesSection from "./NotificationPreferencesSection";
-import { EditDrawerProps, PrivacyLevel, GiftSource } from "./types";
-import { useEventHandlers } from "../hooks/useEventHandlers";
-import { useAutoGifting } from "@/hooks/useAutoGifting";
-import { useAuth } from "@/contexts/auth";
-import { toast } from "sonner";
 
-const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps) => {
-  const { user } = useAuth();
-  const { createRule, updateRule, rules } = useAutoGifting();
-  
-  // State for form fields
-  const [type, setType] = useState("");
-  const [person, setPerson] = useState("");
-  const [date, setDate] = useState("");
-  const [autoGiftEnabled, setAutoGiftEnabled] = useState(false);
-  const [autoGiftAmount, setAutoGiftAmount] = useState(0);
-  const [giftSource, setGiftSource] = useState<GiftSource>("wishlist");
-  const [privacyLevel, setPrivacyLevel] = useState<PrivacyLevel>("private");
-  const [notificationDays, setNotificationDays] = useState<number[]>([7, 3, 1]);
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+const editEventSchema = z.object({
+  person: z.string().min(1, "Person name is required"),
+  type: z.string().min(1, "Event type is required"),
+  date: z.date(),
+  privacyLevel: z.enum(["private", "shared", "public"]),
+  autoGiftEnabled: z.boolean(),
+  autoGiftAmount: z.number().min(0).optional(),
+  isRecurring: z.boolean(),
+  recurringType: z.enum(["yearly", "monthly", "custom"]).optional(),
+});
 
-  const { handleDeleteEvent } = useEventHandlers();
+type EditEventFormData = z.infer<typeof editEventSchema>;
 
-  // Initialize form when event changes
-  useEffect(() => {
+interface EventEditDrawerProps {
+  event: ExtendedEventData | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (eventId: string, updates: any) => Promise<void>;
+}
+
+const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EventEditDrawerProps) => {
+  const form = useForm<EditEventFormData>({
+    resolver: zodResolver(editEventSchema),
+    defaultValues: {
+      person: "",
+      type: "",
+      date: new Date(),
+      privacyLevel: "private",
+      autoGiftEnabled: false,
+      autoGiftAmount: 50,
+      isRecurring: false,
+      recurringType: "yearly",
+    },
+  });
+
+  // Update form when event changes
+  React.useEffect(() => {
     if (event) {
-      setType(event.type);
-      setPerson(event.person);
-      setDate(event.date);
-      setAutoGiftEnabled(event.autoGiftEnabled);
-      setAutoGiftAmount(event.autoGiftAmount || 0);
-      setGiftSource((event.giftSource || "wishlist") as GiftSource);
-      setPrivacyLevel((event.privacyLevel || "private") as PrivacyLevel);
-      
-      // Load existing auto-gifting rule if it exists
-      const existingRule = rules.find(rule => rule.event_id === event.id);
-      if (existingRule) {
-        setNotificationDays(existingRule.notification_preferences.days_before);
-        setEmailNotifications(existingRule.notification_preferences.email);
-        setPushNotifications(existingRule.notification_preferences.push);
-      }
-      
-      setValidationErrors({});
-    }
-  }, [event, rules]);
-
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    
-    if (!type.trim()) {
-      errors.type = "Event type is required";
-    }
-    
-    if (!person.trim()) {
-      errors.person = "Person name is required";
-    }
-    
-    if (!date.trim()) {
-      errors.date = "Date is required";
-    }
-    
-    if (autoGiftEnabled && autoGiftAmount <= 0) {
-      errors.autoGiftAmount = "Gift amount must be greater than 0";
-    }
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSave = async () => {
-    if (!event || !validateForm() || !user?.id) {
-      toast.error("Please fix the validation errors");
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      setValidationErrors({});
-      
-      // Update the event
-      await onSave(event.id, {
-        type: type.trim(),
-        person: person.trim(),
-        date: date.trim(),
-        autoGiftEnabled,
-        autoGiftAmount: autoGiftEnabled ? autoGiftAmount : undefined,
-        giftSource: autoGiftEnabled ? giftSource : undefined,
-        privacyLevel,
+      form.reset({
+        person: event.person,
+        type: event.type,
+        date: event.dateObj || new Date(),
+        privacyLevel: event.privacyLevel,
+        autoGiftEnabled: event.autoGiftEnabled,
+        autoGiftAmount: event.autoGiftAmount,
+        isRecurring: false, // Will be updated based on actual data
+        recurringType: "yearly",
       });
-
-      // Handle auto-gifting rule
-      if (autoGiftEnabled) {
-        const existingRule = rules.find(rule => rule.event_id === event.id);
-        const ruleData = {
-          recipient_id: user.id, // For now, using user.id - this would be the actual recipient in a real app
-          date_type: type,
-          event_id: event.id,
-          is_active: true,
-          budget_limit: autoGiftAmount,
-          notification_preferences: {
-            enabled: true,
-            days_before: notificationDays,
-            email: emailNotifications,
-            push: pushNotifications
-          },
-          gift_selection_criteria: {
-            source: giftSource,
-            max_price: autoGiftAmount,
-            min_price: null,
-            categories: [],
-            exclude_items: []
-          }
-        };
-
-        if (existingRule) {
-          await updateRule(existingRule.id, ruleData);
-        } else {
-          await createRule(ruleData);
-        }
-      }
-      
-      onOpenChange(false);
-      toast.success(`Updated ${person}'s ${type}`);
-    } catch (error) {
-      console.error("Error saving event:", error);
-      toast.error("Failed to save changes. Please try again.");
-    } finally {
-      setIsSaving(false);
     }
-  };
+  }, [event, form]);
 
-  const handleDelete = async () => {
+  const handleSave = async (data: EditEventFormData) => {
     if (!event) return;
 
     try {
-      setIsDeleting(true);
-      await handleDeleteEvent(event.id);
+      await onSave(event.id, {
+        date_type: `${data.type} - ${data.person}`,
+        date: data.date.toISOString().split('T')[0],
+        visibility: data.privacyLevel,
+        is_recurring: data.isRecurring,
+        recurring_type: data.recurringType,
+      });
       onOpenChange(false);
-      // Success toast is handled in the delete handler
     } catch (error) {
-      console.error("Error deleting event:", error);
-      toast.error("Failed to delete event. Please try again.");
-    } finally {
-      setIsDeleting(false);
+      console.error("Error saving event:", error);
     }
-  };
-
-  const handleCancel = () => {
-    setValidationErrors({});
-    onOpenChange(false);
   };
 
   if (!event) return null;
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] overflow-y-auto">
-        <DrawerHeader className="text-left">
-          <DrawerTitle>Edit Gift Occasion</DrawerTitle>
-          <DrawerDescription>
-            Update the details for {person}'s {type}
-          </DrawerDescription>
-        </DrawerHeader>
-        
-        <div className="px-4 py-2 space-y-6">
-          <EventFormSection 
-            type={type}
-            person={person}
-            date={date}
-            setType={setType}
-            setPerson={setPerson}
-            setDate={setDate}
-            validationErrors={validationErrors}
-          />
-          
-          <Separator />
-          
-          <AutoGiftSection 
-            autoGiftEnabled={autoGiftEnabled}
-            autoGiftAmount={autoGiftAmount}
-            giftSource={giftSource}
-            setAutoGiftEnabled={setAutoGiftEnabled}
-            setAutoGiftAmount={setAutoGiftAmount}
-            setGiftSource={setGiftSource}
-            validationErrors={validationErrors}
-          />
-          
-          {autoGiftEnabled && (
-            <>
-              <Separator />
-              <NotificationPreferencesSection
-                notificationDays={notificationDays}
-                emailNotifications={emailNotifications}
-                pushNotifications={pushNotifications}
-                setNotificationDays={setNotificationDays}
-                setEmailNotifications={setEmailNotifications}
-                setPushNotifications={setPushNotifications}
-              />
-            </>
-          )}
-          
-          <Separator />
-          
-          <PrivacySection 
-            privacyLevel={privacyLevel}
-            setPrivacyLevel={setPrivacyLevel}
-          />
-        </div>
-        
-        <DrawerFooter className="pt-2">
-          <div className="flex justify-between items-center">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isDeleting || isSaving}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Event
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Event</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete {person}'s {type}? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader className="pb-4">
+          <SheetTitle>Edit Event</SheetTitle>
+        </SheetHeader>
 
-            <div className="flex gap-2">
-              <DrawerClose asChild>
-                <Button variant="outline" onClick={handleCancel} disabled={isSaving || isDeleting}>
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-              </DrawerClose>
-              <Button onClick={handleSave} disabled={isSaving || isDeleting}>
-                {isSaving ? "Saving..." : "Save Changes"}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
+            <EventFormSection form={form} />
+            
+            <Separator />
+            
+            <PrivacySection form={form} />
+            
+            <Separator />
+            
+            <RecurringSection form={form} />
+            
+            <Separator />
+            
+            <AutoGiftSection form={form} />
+            
+            <Separator />
+            
+            <NotificationPreferencesSection form={form} />
+
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" className="flex-1">
+                Save Changes
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
               </Button>
             </div>
-          </div>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+          </form>
+        </Form>
+      </SheetContent>
+    </Sheet>
   );
 };
 

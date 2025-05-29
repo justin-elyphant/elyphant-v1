@@ -1,4 +1,3 @@
-
 export interface AddEventFormValues {
   eventType: string;
   personName: string;
@@ -7,6 +6,8 @@ export interface AddEventFormValues {
   autoGift: boolean;
   autoGiftAmount?: number;
   privacyLevel: "private" | "shared" | "public";
+  isRecurring: boolean;
+  recurringType?: "yearly" | "monthly" | "custom";
 }
 
 export interface EventFormData {
@@ -16,6 +17,8 @@ export interface EventFormData {
   privacyLevel: "private" | "shared" | "public";
   autoGiftEnabled: boolean;
   giftBudget: number;
+  isRecurring: boolean;
+  recurringType?: "yearly" | "monthly" | "custom";
 }
 
 export interface PersonContact {

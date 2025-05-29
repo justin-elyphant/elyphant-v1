@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { useGiftAdvisorBot, RecipientType } from "../hooks/useGiftAdvisorBot";
 
 type ManualInputStepProps = ReturnType<typeof useGiftAdvisorBot>;
@@ -28,6 +28,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
   const [gender, setGender] = useState("");
   const [relationship, setRelationship] = useState<RecipientType>("friend");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [customInterest, setCustomInterest] = useState("");
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests(prev => 
@@ -35,6 +36,20 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
         ? prev.filter(i => i !== interest)
         : [...prev, interest]
     );
+  };
+
+  const addCustomInterest = () => {
+    if (customInterest.trim() && !selectedInterests.includes(customInterest.trim())) {
+      setSelectedInterests(prev => [...prev, customInterest.trim()]);
+      setCustomInterest("");
+    }
+  };
+
+  const handleCustomInterestKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomInterest();
+    }
   };
 
   const handleContinue = () => {
@@ -142,6 +157,27 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
                 </Badge>
               );
             })}
+          </div>
+          
+          {/* Custom Interest Input */}
+          <div className="flex gap-2 mt-3">
+            <Input
+              value={customInterest}
+              onChange={(e) => setCustomInterest(e.target.value)}
+              onKeyPress={handleCustomInterestKeyPress}
+              placeholder="Search golf or brand names like Nike"
+              className="flex-1 text-sm"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addCustomInterest}
+              disabled={!customInterest.trim()}
+              className="px-3"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>

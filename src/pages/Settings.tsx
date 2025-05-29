@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -11,13 +12,6 @@ import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type SettingsTab = "general" | "notifications" | "privacy";
-
-const userLinks = [
-  { label: "Dashboard", path: "/dashboard" },
-  { label: "Profile", path: "/profile" },
-  { label: "Connections", path: "/connections" },
-  { label: "Wishlists", path: "/wishlists" },
-];
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
@@ -78,7 +72,7 @@ const Settings = () => {
               Dashboard
             </Link>
             <Link
-              to="/profile"
+              to={`/profile/${user.id}`}
               className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium text-sm shadow-sm transition"
             >
               Profile

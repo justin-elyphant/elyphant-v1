@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
   const [gender, setGender] = useState("");
   const [relationship, setRelationship] = useState<RecipientType>("friend");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests(prev => 
@@ -53,8 +54,23 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
 
   const isValid = name.trim() && ageRange && gender && selectedInterests.length > 0;
 
+  // Auto-scroll to bottom when form becomes valid
+  useEffect(() => {
+    if (isValid && containerRef.current) {
+      setTimeout(() => {
+        containerRef.current?.scrollTo({
+          top: containerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [isValid]);
+
   return (
-    <div className="flex flex-col h-full p-4 space-y-4 overflow-y-auto">
+    <div 
+      ref={containerRef}
+      className="flex flex-col h-full p-4 space-y-4 overflow-y-auto"
+    >
       <div className="text-center mb-2">
         <h3 className="text-lg font-semibold mb-1">Tell me about them</h3>
         <p className="text-sm text-gray-600">

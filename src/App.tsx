@@ -9,7 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { ThemeProvider } from "@/contexts/theme/ThemeProvider";
 import Index from "@/pages/Index";
 import SignIn from "@/pages/auth/SignIn";
-import SignUp from "@/pages/SignUp";
+import SignUp from "@/pages/auth/SignUp";
 import EmailVerification from "@/pages/EmailVerification";
 import Dashboard from "@/pages/Dashboard";
 import ProfileSetup from "@/pages/ProfileSetup";
@@ -45,8 +45,8 @@ function App() {
                 <CartProvider>
                   <Routes>
                     <Route path="/" element={<Index />} />
-                    <Route path="/sign-in" element={<SignIn />} />
-                    <Route path="/sign-up" element={<SignUp />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
                     <Route path="/email-verification" element={<EmailVerification />} />
                     <Route path="/about-us" element={<AboutUs />} />
                     

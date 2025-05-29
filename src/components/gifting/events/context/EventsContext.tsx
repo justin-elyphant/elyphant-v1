@@ -10,6 +10,8 @@ type EventsContextProps = {
   setEvents: React.Dispatch<React.SetStateAction<ExtendedEventData[]>>;
   currentEvent: ExtendedEventData | null;
   setCurrentEvent: React.Dispatch<React.SetStateAction<ExtendedEventData | null>>;
+  editingEvent: ExtendedEventData | null;
+  setEditingEvent: React.Dispatch<React.SetStateAction<ExtendedEventData | null>>;
   isEditDrawerOpen: boolean;
   setIsEditDrawerOpen: React.Dispatch<React.SetStateAction<boolean>>;
   viewMode: "cards" | "calendar";
@@ -19,6 +21,7 @@ type EventsContextProps = {
   isLoading: boolean;
   error: string | null;
   refreshEvents: () => Promise<void>;
+  updateEvent: (eventId: string, updates: any) => Promise<void>;
 };
 
 const EventsContext = createContext<EventsContextProps | undefined>(undefined);
@@ -27,6 +30,7 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [events, setEvents] = useState<ExtendedEventData[]>([]);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
+  const [editingEvent, setEditingEvent] = useState<ExtendedEventData | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
   const [selectedEventType, setSelectedEventType] = useState<FilterOption>("all");
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +69,22 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const updateEvent = async (eventId: string, updates: any) => {
+    try {
+      const updatedEvent = await eventsService.updateEvent({ id: eventId, ...updates });
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId ? updatedEvent : event
+        )
+      );
+      toast.success('Event updated successfully');
+    } catch (err) {
+      console.error('Error updating event:', err);
+      toast.error('Failed to update event');
+      throw err;
+    }
+  };
+
   return (
     <EventsContext.Provider
       value={{
@@ -72,6 +92,8 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setEvents,
         currentEvent,
         setCurrentEvent,
+        editingEvent,
+        setEditingEvent,
         isEditDrawerOpen,
         setIsEditDrawerOpen,
         viewMode,
@@ -81,6 +103,7 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isLoading,
         error,
         refreshEvents,
+        updateEvent,
       }}
     >
       {children}

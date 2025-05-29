@@ -1,53 +1,20 @@
 
 import React from "react";
-import EventHeader from "./events/EventHeader";
+import { EventsProvider } from "./events/context/EventsContext";
+import EnhancedEventsContainer from "./events/views/EnhancedEventsContainer";
 import EventEditDrawer from "./events/edit-drawer/EventEditDrawer";
-import EventsContainer from "./events/views/EventsContainer";
-import { EventsProvider, useEvents } from "./events/context/EventsContext";
-import { useEventHandlers } from "./events/hooks/useEventHandlers";
 
 interface UpcomingEventsProps {
-  onAddEvent?: () => void;
+  onAddEvent: () => void;
 }
 
-// Create a component to handle the drawer
-const EventEditDrawerContainer = () => {
-  const { currentEvent, isEditDrawerOpen, setIsEditDrawerOpen } = useEvents();
-  const { handleSaveEvent } = useEventHandlers();
-
-  return (
-    <EventEditDrawer 
-      event={currentEvent}
-      open={isEditDrawerOpen}
-      onOpenChange={setIsEditDrawerOpen}
-      onSave={handleSaveEvent}
-    />
-  );
-};
-
-const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
-  const handleAddEvent = () => {
-    if (onAddEvent) {
-      onAddEvent();
-    } else {
-      console.log("Add new event");
-      // Default implementation for adding a new event
-    }
-  };
-
-  return (
-    <div>
-      <EventsContainer onAddEvent={handleAddEvent} />
-      <EventEditDrawerContainer />
-    </div>
-  );
-};
-
-// Main component that provides the context
-const UpcomingEvents = (props: UpcomingEventsProps) => {
+const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
   return (
     <EventsProvider>
-      <UpcomingEventsContent {...props} />
+      <div className="space-y-6">
+        <EnhancedEventsContainer onAddEvent={onAddEvent} />
+        <EventEditDrawer />
+      </div>
     </EventsProvider>
   );
 };

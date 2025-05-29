@@ -108,7 +108,6 @@ const EnhancedEventCard = ({
             <Switch
               checked={event.autoGiftEnabled || false}
               onCheckedChange={onToggleAutoGift}
-              size="sm"
             />
           </div>
           

@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Gift, Edit, Trash2, Toggle, Calendar } from "lucide-react";
+import { Gift, Edit, Trash2, Calendar } from "lucide-react";
 import { ExtendedEventData } from "../types";
 
 interface BulkActionsProps {
@@ -38,8 +38,8 @@ const BulkActions = ({
       <div className="flex items-center space-x-2">
         <Checkbox
           checked={isAllSelected}
-          indeterminate={isPartialSelected}
           onCheckedChange={handleSelectAll}
+          className={isPartialSelected ? "data-[state=checked]:bg-primary/50" : ""}
         />
         <span className="text-sm text-muted-foreground">
           Select events for bulk actions
@@ -53,8 +53,8 @@ const BulkActions = ({
       <div className="flex items-center space-x-3">
         <Checkbox
           checked={isAllSelected}
-          indeterminate={isPartialSelected}
           onCheckedChange={handleSelectAll}
+          className={isPartialSelected ? "data-[state=checked]:bg-primary/50" : ""}
         />
         <span className="text-sm font-medium">
           {selectedEvents.length} event{selectedEvents.length !== 1 ? 's' : ''} selected

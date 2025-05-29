@@ -52,14 +52,10 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `profile-images/${fileName}`;
       
-      // Check if storage bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const avatarsBucketExists = buckets?.some(bucket => bucket.name === 'avatars');
-      
       let finalImageUrl = '';
       
-      if (avatarsBucketExists) {
-        // Upload to Supabase Storage
+      try {
+        // Try to upload to Supabase Storage first
         const { data, error } = await supabase.storage
           .from('avatars')
           .upload(filePath, file, {
@@ -68,28 +64,38 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
           });
         
         if (error) {
-          console.error("Storage upload error:", error);
-          throw error;
+          console.log("Storage upload failed, using base64 fallback:", error);
+          // Fallback to base64
+          const base64Promise = new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          
+          finalImageUrl = await base64Promise;
+          console.log("Using base64 fallback for image");
+        } else {
+          // Get the public URL
+          const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+          
+          finalImageUrl = publicUrlData.publicUrl;
+          console.log("Image uploaded to storage, URL:", finalImageUrl);
         }
-        
-        // Get the public URL
-        const { data: publicUrlData } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-        
-        finalImageUrl = publicUrlData.publicUrl;
-        console.log("Image uploaded to storage, URL:", finalImageUrl);
-      } else {
-        // Fallback to base64 if storage not configured
-        const reader = new FileReader();
+      } catch (storageError) {
+        console.log("Storage error, using base64 fallback:", storageError);
+        // Fallback to base64
         const base64Promise = new Promise<string>((resolve) => {
+          const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
         });
         
         finalImageUrl = await base64Promise;
-        console.log("Using base64 fallback for image");
       }
+      
+      console.log("Final image URL to save:", finalImageUrl);
       
       // Update profile in database
       const { error: updateError } = await supabase
@@ -102,7 +108,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
         throw updateError;
       }
       
-      console.log("Profile updated successfully with image URL:", finalImageUrl);
+      console.log("Profile updated successfully with image URL");
       
       // Update local state and notify parent
       setPreview(finalImageUrl);
@@ -125,6 +131,8 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
     try {
       setUploading(true);
       
+      console.log("Removing profile image for user:", user.id);
+      
       // Update profile to remove image reference
       const { error } = await supabase
         .from('profiles')
@@ -134,6 +142,8 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       if (error) {
         throw error;
       }
+      
+      console.log("Profile image removed successfully");
       
       setPreview(null);
       onImageUpdate(null);

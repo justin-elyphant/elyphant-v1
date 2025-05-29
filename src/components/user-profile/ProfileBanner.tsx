@@ -51,9 +51,17 @@ const ProfileBanner = ({
 
   const handleImageUpdate = async (imageUrl: string | null) => {
     try {
+      console.log("ProfileBanner handleImageUpdate called with:", imageUrl);
+      
+      // Update the profile through the context
       await updateProfile({ profile_image: imageUrl });
-      // Force a profile refresh to ensure the UI updates
+      
+      // Force a complete profile refresh to ensure the UI updates
       await refetchProfile();
+      
+      // Force a page reload to ensure all components get the new image
+      window.location.reload();
+      
     } catch (error) {
       console.error("Failed to update profile image:", error);
     }

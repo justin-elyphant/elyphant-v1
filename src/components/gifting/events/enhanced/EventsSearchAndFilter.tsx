@@ -174,7 +174,7 @@ const EventsSearchAndFilter = ({
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="urgent">Urgent (≤3 days)</SelectItem>
             <SelectItem value="soon">Soon (≤7 days)</SelectItem>
-            <SelectItem value="later">Later (>7 days)</SelectItem>
+            <SelectItem value="later">Later (7+ days)</SelectItem>
           </SelectContent>
         </Select>
 

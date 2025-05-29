@@ -1,6 +1,8 @@
 
 import React from "react";
 import { ExtendedEventData } from "../types";
+import ResponsiveCalendarView from "../components/ResponsiveCalendarView";
+import { FilterOption } from "../types";
 
 interface EventCalendarViewProps {
   events: ExtendedEventData[];
@@ -9,6 +11,10 @@ interface EventCalendarViewProps {
   onEdit: (id: string) => void;
   onVerifyEvent: (id: string) => void;
   onEventClick: (event: ExtendedEventData) => void;
+  onDelete?: (id: string) => void;
+  eventTypes: string[];
+  selectedEventType: FilterOption;
+  onEventTypeChange: (type: FilterOption) => void;
 }
 
 const CalendarView = ({
@@ -17,20 +23,25 @@ const CalendarView = ({
   onToggleAutoGift,
   onEdit,
   onVerifyEvent,
-  onEventClick
+  onEventClick,
+  onDelete,
+  eventTypes,
+  selectedEventType,
+  onEventTypeChange
 }: EventCalendarViewProps) => {
   return (
-    <div className="bg-white rounded-lg border p-6">
-      <div className="text-center py-12">
-        <h3 className="text-lg font-medium mb-2">Calendar View</h3>
-        <p className="text-muted-foreground mb-4">
-          Calendar view is under development. For now, please use the cards view.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {events.length} event{events.length !== 1 ? 's' : ''} available
-        </p>
-      </div>
-    </div>
+    <ResponsiveCalendarView
+      events={events}
+      onEventClick={onEventClick}
+      onSendGift={onSendGift}
+      onToggleAutoGift={onToggleAutoGift}
+      onVerifyEvent={onVerifyEvent}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      eventTypes={eventTypes}
+      selectedEventType={selectedEventType}
+      onEventTypeChange={onEventTypeChange}
+    />
   );
 };
 

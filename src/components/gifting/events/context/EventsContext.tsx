@@ -1,59 +1,9 @@
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { ExtendedEventData, FilterOption } from "../types";
-
-// Mock data for upcoming events (moved from UpcomingEvents.tsx)
-const upcomingEvents: ExtendedEventData[] = [
-  {
-    id: 1,
-    type: "Birthday",
-    person: "Alex Johnson",
-    date: "May 15, 2023",
-    daysAway: 14,
-    avatarUrl: "/placeholder.svg",
-    autoGiftEnabled: true,
-    autoGiftAmount: 75,
-    privacyLevel: "shared",
-    isVerified: true,
-    giftSource: "wishlist"
-  },
-  {
-    id: 2,
-    type: "Anniversary",
-    person: "Jamie Smith",
-    date: "June 22, 2023",
-    daysAway: 30,
-    avatarUrl: "/placeholder.svg",
-    autoGiftEnabled: false,
-    privacyLevel: "private",
-    giftSource: "wishlist"
-  },
-  {
-    id: 3,
-    type: "Christmas",
-    person: "Taylor Wilson",
-    date: "December 25, 2023",
-    daysAway: 90,
-    avatarUrl: "/placeholder.svg",
-    autoGiftEnabled: true,
-    autoGiftAmount: 100,
-    privacyLevel: "public",
-    giftSource: "both"
-  },
-  {
-    id: 4, 
-    type: "Wedding Anniversary",
-    person: "Chris & Robin",
-    date: "July 15, 2023",
-    daysAway: 45,
-    avatarUrl: "/placeholder.svg",
-    autoGiftEnabled: false,
-    privacyLevel: "shared",
-    isVerified: false,
-    needsVerification: true,
-    giftSource: "wishlist"
-  }
-];
+import { eventsService } from "@/services/eventsService";
+import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 
 type EventsContextProps = {
   events: ExtendedEventData[];
@@ -66,16 +16,54 @@ type EventsContextProps = {
   setViewMode: React.Dispatch<React.SetStateAction<"cards" | "calendar">>;
   selectedEventType: FilterOption;
   setSelectedEventType: React.Dispatch<React.SetStateAction<FilterOption>>;
+  isLoading: boolean;
+  error: string | null;
+  refreshEvents: () => Promise<void>;
 };
 
 const EventsContext = createContext<EventsContextProps | undefined>(undefined);
 
 export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [events, setEvents] = useState<ExtendedEventData[]>(upcomingEvents);
+  const [events, setEvents] = useState<ExtendedEventData[]>([]);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
   const [selectedEventType, setSelectedEventType] = useState<FilterOption>("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const { user } = useAuth();
+
+  // Fetch events when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      refreshEvents();
+    } else {
+      setEvents([]);
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const refreshEvents = async () => {
+    if (!user) {
+      setEvents([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const fetchedEvents = await eventsService.fetchUserEvents();
+      setEvents(fetchedEvents);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError('Failed to load events. Please try again.');
+      toast.error('Failed to load events');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <EventsContext.Provider
@@ -90,6 +78,9 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setViewMode,
         selectedEventType,
         setSelectedEventType,
+        isLoading,
+        error,
+        refreshEvents,
       }}
     >
       {children}

@@ -2,13 +2,15 @@
 import { toast } from "sonner";
 import { ExtendedEventData } from "../types";
 import { useEvents } from "../context/EventsContext";
+import { eventsService, transformExtendedEventToDatabase } from "@/services/eventsService";
 
 export const useEventHandlers = () => {
   const { 
     events, 
     setEvents, 
     setCurrentEvent, 
-    setIsEditDrawerOpen 
+    setIsEditDrawerOpen,
+    refreshEvents 
   } = useEvents();
 
   const handleSendGift = (id: number) => {
@@ -20,7 +22,7 @@ export const useEventHandlers = () => {
     }
   };
 
-  const handleToggleAutoGift = (id: number) => {
+  const handleToggleAutoGift = async (id: number) => {
     console.log(`Toggle auto-gift for event ${id}`);
     
     // Create a new copy of the events array with the updated autoGiftEnabled value
@@ -44,9 +46,11 @@ export const useEventHandlers = () => {
     if (event) {
       toast.success(`Auto-gift ${event.autoGiftEnabled ? 'disabled' : 'enabled'} for ${event.person}'s ${event.type}`);
     }
+
+    // TODO: Save auto-gift settings to auto_gifting_rules table in Phase 4
   };
   
-  const handleVerifyEvent = (id: number) => {
+  const handleVerifyEvent = async (id: number) => {
     console.log(`Verify event ${id}`);
     // Create a new copy of the events array with the updated verification status
     const updatedEvents = events.map(event => 
@@ -70,18 +74,75 @@ export const useEventHandlers = () => {
     }
   };
 
-  const handleSaveEvent = (eventId: number, updatedEvent: Partial<ExtendedEventData>) => {
+  const handleSaveEvent = async (eventId: number, updatedEvent: Partial<ExtendedEventData>) => {
     console.log("Saving event with updates:", updatedEvent);
     
-    const updatedEvents = events.map(event => 
-      event.id === eventId 
-        ? { ...event, ...updatedEvent } 
-        : event
-    );
-    
-    // Update the state with the new array
-    setEvents(updatedEvents);
-    toast.success("Event updated successfully");
+    try {
+      // Find the original event
+      const originalEvent = events.find(event => event.id === eventId);
+      if (!originalEvent) {
+        toast.error("Event not found");
+        return;
+      }
+
+      // Merge the updates with the original event
+      const mergedEvent = { ...originalEvent, ...updatedEvent };
+      
+      // Convert to database format and save
+      const dbEventData = transformExtendedEventToDatabase(mergedEvent);
+      await eventsService.updateEvent({
+        id: originalEvent.id.toString(), // Convert number ID back to string for database
+        ...dbEventData
+      });
+
+      // Refresh events from database to get the latest data
+      await refreshEvents();
+      
+      toast.success("Event updated successfully");
+    } catch (error) {
+      console.error("Error saving event:", error);
+      toast.error("Failed to save event changes");
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: number) => {
+    try {
+      const event = events.find(e => e.id === eventId);
+      if (!event) {
+        toast.error("Event not found");
+        return;
+      }
+
+      await eventsService.deleteEvent(eventId.toString());
+      
+      // Refresh events from database
+      await refreshEvents();
+      
+      toast.success(`Deleted ${event.person}'s ${event.type}`);
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Failed to delete event");
+    }
+  };
+
+  const handleCreateEvent = async (eventData: Partial<ExtendedEventData>) => {
+    try {
+      if (!eventData.type || !eventData.person || !eventData.dateObj) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
+      const dbEventData = transformExtendedEventToDatabase(eventData as ExtendedEventData);
+      await eventsService.createEvent(dbEventData);
+      
+      // Refresh events from database
+      await refreshEvents();
+      
+      toast.success(`Created ${eventData.person}'s ${eventData.type}`);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast.error("Failed to create event");
+    }
   };
 
   const handleEventClick = (event: ExtendedEventData) => {
@@ -96,6 +157,8 @@ export const useEventHandlers = () => {
     handleVerifyEvent,
     handleEditEvent,
     handleSaveEvent,
+    handleDeleteEvent,
+    handleCreateEvent,
     handleEventClick
   };
 };

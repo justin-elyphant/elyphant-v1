@@ -55,7 +55,7 @@ const EventCard = ({
                     {event.recurringType === 'yearly' ? 'Yearly' : 'Monthly'}
                   </Badge>
                 )}
-                <EventPrivacyBadge level={event.privacyLevel} />
+                <EventPrivacyBadge privacyLevel={event.privacyLevel} />
               </div>
               <p className="text-sm text-muted-foreground">{event.type}</p>
             </div>

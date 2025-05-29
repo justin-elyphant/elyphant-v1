@@ -88,9 +88,9 @@ const EventTooltip = ({
                   <span className="ml-1 text-xs text-muted-foreground">
                     ({event.giftSource === "wishlist" 
                       ? "From wishlist" 
-                      : event.giftSource === "ai" 
-                        ? "AI selected" 
-                        : "Wishlist + AI"})
+                      : event.giftSource === "marketplace"
+                        ? "From marketplace" 
+                        : "AI selected"})
                   </span>
                 )}
               </div>

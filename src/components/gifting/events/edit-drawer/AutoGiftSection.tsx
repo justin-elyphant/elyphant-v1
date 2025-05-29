@@ -1,85 +1,69 @@
 
 import React from "react";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Gift } from "lucide-react";
-import { GiftSource } from "./types";
+import { Gift, DollarSign } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
 
 interface AutoGiftSectionProps {
-  autoGiftEnabled: boolean;
-  autoGiftAmount: number;
-  giftSource: GiftSource;
-  setAutoGiftEnabled: (enabled: boolean) => void;
-  setAutoGiftAmount: (amount: number) => void;
-  setGiftSource: (source: GiftSource) => void;
-  validationErrors?: Record<string, string>;
+  form: UseFormReturn<any>;
 }
 
-const AutoGiftSection = ({
-  autoGiftEnabled,
-  autoGiftAmount,
-  giftSource,
-  setAutoGiftEnabled,
-  setAutoGiftAmount,
-  setGiftSource,
-  validationErrors = {},
-}: AutoGiftSectionProps) => {
+const AutoGiftSection = ({ form }: AutoGiftSectionProps) => {
+  const autoGiftEnabled = form.watch("autoGiftEnabled");
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <Label className="flex items-center text-sm font-medium">
-            <Gift className="h-4 w-4 mr-1.5" />
-            Auto-Gifting
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Automatically send a gift on this date
-          </p>
-        </div>
-        <Switch
-          checked={autoGiftEnabled}
-          onCheckedChange={setAutoGiftEnabled}
-        />
-      </div>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Auto-Gifting</h3>
       
+      <FormField
+        control={form.control}
+        name="autoGiftEnabled"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <FormLabel className="text-base flex items-center">
+                <Gift className="h-4 w-4 mr-2" />
+                Enable Auto-Gifting
+              </FormLabel>
+              <div className="text-sm text-muted-foreground">
+                Automatically send a gift on this date
+              </div>
+            </div>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+
       {autoGiftEnabled && (
-        <div className="space-y-3 pl-6">
-          <div className="space-y-1">
-            <Label htmlFor="gift-amount" className="flex items-center text-sm font-medium">
-              <DollarSign className="h-4 w-4 mr-1.5" />
-              Gift Budget
-            </Label>
-            <Input
-              id="gift-amount"
-              type="number"
-              value={autoGiftAmount}
-              onChange={(e) => setAutoGiftAmount(parseInt(e.target.value) || 0)}
-              placeholder="50"
-              min="1"
-              className={`h-9 ${validationErrors.autoGiftAmount ? 'border-red-500' : ''}`}
-            />
-            {validationErrors.autoGiftAmount && (
-              <p className="text-sm text-red-500">{validationErrors.autoGiftAmount}</p>
-            )}
-          </div>
-          
-          <div className="space-y-1">
-            <Label className="text-sm font-medium">Gift Source</Label>
-            <Select value={giftSource} onValueChange={(value: GiftSource) => setGiftSource(value)}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="wishlist">From Wishlist</SelectItem>
-                <SelectItem value="ai">AI Recommendation</SelectItem>
-                <SelectItem value="both">Wishlist + AI</SelectItem>
-                <SelectItem value="specific">Specific Product</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="autoGiftAmount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Gift Budget
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="50"
+                  min="1"
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       )}
     </div>
   );

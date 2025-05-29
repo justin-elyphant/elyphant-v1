@@ -13,16 +13,19 @@ import { FilterOption, ExtendedEventData } from "./types";
 interface EventTypeFilterProps {
   selectedType: FilterOption;
   onTypeChange: (type: FilterOption) => void;
-  events: ExtendedEventData[];
+  events?: ExtendedEventData[];
+  eventTypes?: string[];
 }
 
 const EventTypeFilter = ({
   selectedType,
   onTypeChange,
   events,
+  eventTypes,
 }: EventTypeFilterProps) => {
-  // Extract unique event types from events
-  const eventTypes = Array.from(new Set(events.map(event => event.type.toLowerCase())));
+  // Use provided eventTypes if available, otherwise extract from events
+  const availableEventTypes = eventTypes || 
+    (events ? Array.from(new Set(events.map(event => event.type.toLowerCase()))) : []);
 
   return (
     <div className="flex items-center space-x-2 mb-4">
@@ -36,7 +39,7 @@ const EventTypeFilter = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Events</SelectItem>
-          {eventTypes.map((type) => (
+          {availableEventTypes.map((type) => (
             <SelectItem key={type} value={type}>
               {type.charAt(0).toUpperCase() + type.slice(1)}
             </SelectItem>

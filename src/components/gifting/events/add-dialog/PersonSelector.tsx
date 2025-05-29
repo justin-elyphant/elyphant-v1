@@ -42,7 +42,9 @@ const PersonSelector = ({ form, connectedPeople, validationError }: PersonSelect
   const handleInputChange = (value: string) => {
     setSearchTerm(value);
     form.setValue("personName", value);
-    setIsOpen(true);
+    if (!isOpen && value.length > 0) {
+      setIsOpen(true);
+    }
   };
 
   const handleSelectPerson = (person: PersonContact) => {
@@ -53,8 +55,18 @@ const PersonSelector = ({ form, connectedPeople, validationError }: PersonSelect
   };
 
   const handleInputFocus = () => {
-    setSearchTerm(personName || "");
+    const currentValue = form.getValues("personName") || "";
+    setSearchTerm(currentValue);
     setIsOpen(true);
+  };
+
+  const handleInputBlur = (e: React.FocusEvent) => {
+    // Don't close if clicking on dropdown content
+    if (dropdownRef.current?.contains(e.relatedTarget as Node)) {
+      return;
+    }
+    // Small delay to allow for click events on dropdown items
+    setTimeout(() => setIsOpen(false), 150);
   };
 
   return (
@@ -73,9 +85,13 @@ const PersonSelector = ({ form, connectedPeople, validationError }: PersonSelect
                   value={searchTerm}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                   className={validationError ? 'border-red-500' : ''}
                 />
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <ChevronDown 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer" 
+                  onClick={() => setIsOpen(!isOpen)}
+                />
               </div>
             </FormControl>
             {validationError && (
@@ -95,7 +111,10 @@ const PersonSelector = ({ form, connectedPeople, validationError }: PersonSelect
                 <div
                   key={person.id}
                   className="flex items-center space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
-                  onClick={() => handleSelectPerson(person)}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent input blur
+                    handleSelectPerson(person);
+                  }}
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={person.avatar} alt={person.name} />

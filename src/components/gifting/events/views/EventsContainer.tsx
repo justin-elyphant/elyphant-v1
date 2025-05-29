@@ -64,6 +64,7 @@ const EventsContainer = ({ onAddEvent }: EventsContainerProps) => {
           onSendGift={handleSendGift}
           onToggleAutoGift={handleToggleAutoGift}
           onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
           onVerifyEvent={handleVerifyEvent}
           onEventClick={handleEventClick}
         />

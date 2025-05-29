@@ -10,6 +10,7 @@ interface EmptyEventsStateProps {
   actionLabel?: string;
   onAction?: () => void;
   icon?: React.ReactNode;
+  onAddEvent?: () => void; // Legacy prop for backward compatibility
 }
 
 const EmptyEventsState = ({ 
@@ -17,8 +18,11 @@ const EmptyEventsState = ({
   description, 
   actionLabel, 
   onAction, 
+  onAddEvent,
   icon 
 }: EmptyEventsStateProps) => {
+  const handleAction = onAction || onAddEvent;
+  
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-16">
@@ -29,10 +33,10 @@ const EmptyEventsState = ({
         <p className="text-muted-foreground text-center max-w-md mb-6">
           {description}
         </p>
-        {actionLabel && onAction && (
-          <Button onClick={onAction}>
+        {(actionLabel || handleAction) && (
+          <Button onClick={handleAction}>
             <Plus className="h-4 w-4 mr-2" />
-            {actionLabel}
+            {actionLabel || "Add Event"}
           </Button>
         )}
       </CardContent>

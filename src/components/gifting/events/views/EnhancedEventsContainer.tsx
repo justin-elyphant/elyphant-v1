@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import EventsSearchAndFilter from "../enhanced/EventsSearchAndFilter";
 import EventsSorting from "../enhanced/EventsSorting";
@@ -26,36 +26,117 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
     isLoading, 
     error, 
     viewMode, 
-    selectedEventType,
-    setEditingEvent
+    setViewMode
   } = useEvents();
   
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isExportImportOpen, setIsExportImportOpen] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    search: '',
+    eventTypes: [],
+    dateRange: { from: null, to: null },
+    autoGiftStatus: 'all',
+    urgencyLevel: 'all',
+  });
+  const [sortState, setSortState] = useState({
+    field: 'date',
+    direction: 'asc',
+  });
   
   const {
-    filteredEvents,
     handleSendGift,
     handleToggleAutoGift,
-    handleEdit,
-    handleDelete,
+    handleEditEvent,
+    handleDeleteEvent,
     handleVerifyEvent,
     handleEventClick
   } = useEventHandlers();
+
+  // Filter events based on current filters
+  const filteredEvents = useMemo(() => {
+    let filtered = events.filter(event => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesSearch = 
+          event.person.toLowerCase().includes(searchLower) ||
+          event.type.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Event type filter
+      if (filters.eventTypes.length > 0) {
+        if (!filters.eventTypes.includes(event.type)) return false;
+      }
+
+      // Auto-gift status filter
+      if (filters.autoGiftStatus !== 'all') {
+        const hasAutoGift = event.autoGiftEnabled;
+        if (filters.autoGiftStatus === 'enabled' && !hasAutoGift) return false;
+        if (filters.autoGiftStatus === 'disabled' && hasAutoGift) return false;
+      }
+
+      return true;
+    });
+
+    // Sort events
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortState.field) {
+        case 'date':
+          comparison = a.daysAway - b.daysAway;
+          break;
+        case 'person':
+          comparison = a.person.localeCompare(b.person);
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return sortState.direction === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [events, filters, sortState]);
+
+  const availableEventTypes = useMemo(() => {
+    return Array.from(new Set(events.map(event => event.type))).sort();
+  }, [events]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.search) count++;
+    if (filters.eventTypes.length > 0) count++;
+    if (filters.autoGiftStatus !== 'all') count++;
+    if (filters.urgencyLevel !== 'all') count++;
+    return count;
+  }, [filters]);
 
   const handleAddEvent = () => {
     setIsAddEventOpen(true);
   };
 
   const handleBulkDelete = () => {
-    // Implementation for bulk delete
     console.log('Bulk delete:', selectedEvents);
   };
 
   const handleBulkEdit = () => {
-    // Implementation for bulk edit
     console.log('Bulk edit:', selectedEvents);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      search: '',
+      eventTypes: [],
+      dateRange: { from: null, to: null },
+      autoGiftStatus: 'all',
+      urgencyLevel: 'all',
+    });
   };
 
   if (isLoading) {
@@ -67,15 +148,31 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
   }
 
   if (events.length === 0) {
-    return <EmptyEventsState onAddEvent={handleAddEvent} />;
+    return (
+      <EmptyEventsState 
+        title="No events yet"
+        description="Add your first event to start tracking important dates and occasions."
+        actionLabel="Add Event"
+        onAction={handleAddEvent}
+      />
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-          <EventsSearchAndFilter />
-          <EventsSorting />
+          <EventsSearchAndFilter 
+            filters={filters}
+            onFiltersChange={setFilters}
+            availableEventTypes={availableEventTypes}
+            onClearFilters={handleClearFilters}
+            activeFiltersCount={activeFiltersCount}
+          />
+          <EventsSorting 
+            sortState={sortState}
+            onSortChange={setSortState}
+          />
         </div>
         
         <div className="flex gap-2">
@@ -98,14 +195,26 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
       </div>
 
       <div className="flex justify-between items-center">
-        <EventViewToggle />
+        <EventViewToggle 
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
         
         {selectedEvents.length > 0 && (
           <BulkActions
-            selectedCount={selectedEvents.length}
-            onBulkDelete={handleBulkDelete}
-            onBulkEdit={handleBulkEdit}
+            selectedEvents={selectedEvents}
+            allEvents={filteredEvents}
+            onSelectAll={(selected) => {
+              if (selected) {
+                setSelectedEvents(filteredEvents.map(event => event.id));
+              } else {
+                setSelectedEvents([]);
+              }
+            }}
             onClearSelection={() => setSelectedEvents([])}
+            onBulkAction={(action) => {
+              console.log('Bulk action:', action);
+            }}
           />
         )}
       </div>
@@ -116,24 +225,26 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
             <CalendarView 
               events={filteredEvents}
               onEventClick={handleEventClick}
+              onSendGift={handleSendGift}
+              onToggleAutoGift={handleToggleAutoGift}
+              onEdit={handleEditEvent}
+              onVerifyEvent={handleVerifyEvent}
+              onDelete={handleDeleteEvent}
             />
           ) : viewMode === "cards" ? (
             <EventCardsView
               events={filteredEvents}
               onSendGift={handleSendGift}
               onToggleAutoGift={handleToggleAutoGift}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              onEdit={handleEditEvent}
+              onDelete={handleDeleteEvent}
               onVerifyEvent={handleVerifyEvent}
               onEventClick={handleEventClick}
             />
           ) : (
             <EnhancedEventsListView
               events={filteredEvents}
-              selectedEvents={selectedEvents}
-              onSelectionChange={setSelectedEvents}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              onEdit={handleEditEvent}
               onSendGift={handleSendGift}
               onToggleAutoGift={handleToggleAutoGift}
               onVerifyEvent={handleVerifyEvent}

@@ -23,14 +23,24 @@ const OccasionStep = ({ setOccasion }: OccasionStepProps) => {
   const [selectedOccasion, setSelectedOccasion] = useState("");
   const [customOccasion, setCustomOccasion] = useState("");
 
+  console.log("Selected occasion:", selectedOccasion);
+  console.log("Custom occasion:", customOccasion);
+
   const handleContinue = () => {
     const occasion = selectedOccasion === "other" ? customOccasion : selectedOccasion;
+    console.log("Continuing with occasion:", occasion);
     if (occasion.trim()) {
       setOccasion(occasion);
     }
   };
 
+  const handleOccasionSelect = (value: string) => {
+    console.log("Selecting occasion:", value);
+    setSelectedOccasion(value);
+  };
+
   const isValid = selectedOccasion && (selectedOccasion !== "other" || customOccasion.trim());
+  console.log("Is valid:", isValid);
 
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
@@ -50,8 +60,10 @@ const OccasionStep = ({ setOccasion }: OccasionStepProps) => {
             <Button
               key={occasion.value}
               variant={isSelected ? "default" : "outline"}
-              className="h-16 flex flex-col items-center justify-center gap-1 text-xs hover:bg-purple-50 hover:border-purple-300"
-              onClick={() => setSelectedOccasion(occasion.value)}
+              className={`h-16 flex flex-col items-center justify-center gap-1 text-xs hover:bg-purple-50 hover:border-purple-300 ${
+                isSelected ? "bg-purple-600 text-white" : ""
+              }`}
+              onClick={() => handleOccasionSelect(occasion.value)}
             >
               <Icon className="h-4 w-4" />
               <span>{occasion.label}</span>

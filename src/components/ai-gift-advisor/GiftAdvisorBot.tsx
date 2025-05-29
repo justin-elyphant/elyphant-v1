@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useGiftAdvisorBot } from "./hooks/useGiftAdvisorBot";
 import ConversationFlow from "./ConversationFlow";
 
@@ -70,14 +70,6 @@ const GiftAdvisorBot = ({ isOpen, onClose }: GiftAdvisorBotProps) => {
               🎁 AI Gift Advisor
             </DialogTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="p-1 h-8 w-8"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">

@@ -91,9 +91,9 @@ const OccasionStep = ({ setOccasion }: OccasionStepProps) => {
       <Button 
         onClick={handleContinue}
         disabled={!isValid}
-        className={`w-full transition-all ${
+        className={`w-full ${
           isValid 
-            ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 cursor-pointer" 
+            ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" 
             : "bg-gray-300 cursor-not-allowed opacity-50"
         }`}
       >

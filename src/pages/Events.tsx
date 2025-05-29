@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
+import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
 import BackToDashboard from "@/components/shared/BackToDashboard";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,38 +78,7 @@ const Events = () => {
         </TabsContent>
           
         <TabsContent value="automated">
-          <div className="bg-card p-6 rounded-md border shadow-sm">
-            <h3 className="text-xl font-semibold mb-4">Automated Gifting Settings</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Configure your preferences for automated gift-giving
-            </p>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-background rounded-md border">
-                <div>
-                  <h4 className="font-medium text-sm">Notification Preferences</h4>
-                  <p className="text-xs text-muted-foreground mt-1">Receive reminders before automated gifts are sent</p>
-                </div>
-                <Button variant="outline" size="sm">Configure</Button>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-background rounded-md border">
-                <div>
-                  <h4 className="font-medium text-sm">Budget Settings</h4>
-                  <p className="text-xs text-muted-foreground mt-1">Set default budgets for different types of events</p>
-                </div>
-                <Button variant="outline" size="sm">Manage Budgets</Button>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-background rounded-md border">
-                <div>
-                  <h4 className="font-medium text-sm">Payment Methods</h4>
-                  <p className="text-xs text-muted-foreground mt-1">Manage cards and payment options for auto-gifting</p>
-                </div>
-                <Button variant="outline" size="sm">Add Payment Method</Button>
-              </div>
-            </div>
-          </div>
+          <AutomatedGiftingTabContent />
         </TabsContent>
       </Tabs>
       

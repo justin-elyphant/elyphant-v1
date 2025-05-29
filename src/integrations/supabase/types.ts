@@ -32,9 +32,12 @@ export type Database = {
           budget_limit: number | null
           created_at: string | null
           date_type: string
+          event_id: string | null
           gift_preferences: Json | null
+          gift_selection_criteria: Json | null
           id: string
           is_active: boolean | null
+          notification_preferences: Json | null
           recipient_id: string
           updated_at: string | null
           user_id: string
@@ -43,9 +46,12 @@ export type Database = {
           budget_limit?: number | null
           created_at?: string | null
           date_type: string
+          event_id?: string | null
           gift_preferences?: Json | null
+          gift_selection_criteria?: Json | null
           id?: string
           is_active?: boolean | null
+          notification_preferences?: Json | null
           recipient_id: string
           updated_at?: string | null
           user_id: string
@@ -54,14 +60,24 @@ export type Database = {
           budget_limit?: number | null
           created_at?: string | null
           date_type?: string
+          event_id?: string | null
           gift_preferences?: Json | null
+          gift_selection_criteria?: Json | null
           id?: string
           is_active?: boolean | null
+          notification_preferences?: Json | null
           recipient_id?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "auto_gifting_rules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "user_special_dates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "auto_gifting_rules_recipient_id_fkey"
             columns: ["recipient_id"]
@@ -77,6 +93,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      auto_gifting_settings: {
+        Row: {
+          auto_approve_gifts: boolean | null
+          budget_tracking: Json | null
+          created_at: string | null
+          default_budget_limit: number | null
+          default_gift_source: string | null
+          default_notification_days: number[] | null
+          email_notifications: boolean | null
+          id: string
+          push_notifications: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_approve_gifts?: boolean | null
+          budget_tracking?: Json | null
+          created_at?: string | null
+          default_budget_limit?: number | null
+          default_gift_source?: string | null
+          default_notification_days?: number[] | null
+          email_notifications?: boolean | null
+          id?: string
+          push_notifications?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_approve_gifts?: boolean | null
+          budget_tracking?: Json | null
+          created_at?: string | null
+          default_budget_limit?: number | null
+          default_gift_source?: string | null
+          default_notification_days?: number[] | null
+          email_notifications?: boolean | null
+          id?: string
+          push_notifications?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       blocked_users: {
         Row: {

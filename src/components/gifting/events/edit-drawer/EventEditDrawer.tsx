@@ -19,11 +19,17 @@ import {
 import EventFormSection from "./EventFormSection";
 import AutoGiftSection from "./AutoGiftSection";
 import PrivacySection from "./PrivacySection";
+import NotificationPreferencesSection from "./NotificationPreferencesSection";
 import { EditDrawerProps, PrivacyLevel, GiftSource } from "./types";
 import { useEventHandlers } from "../hooks/useEventHandlers";
+import { useAutoGifting } from "@/hooks/useAutoGifting";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
 const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps) => {
+  const { user } = useAuth();
+  const { createRule, updateRule, rules } = useAutoGifting();
+  
   // State for form fields
   const [type, setType] = useState("");
   const [person, setPerson] = useState("");
@@ -32,6 +38,9 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
   const [autoGiftAmount, setAutoGiftAmount] = useState(0);
   const [giftSource, setGiftSource] = useState<GiftSource>("wishlist");
   const [privacyLevel, setPrivacyLevel] = useState<PrivacyLevel>("private");
+  const [notificationDays, setNotificationDays] = useState<number[]>([7, 3, 1]);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -48,9 +57,18 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
       setAutoGiftAmount(event.autoGiftAmount || 0);
       setGiftSource((event.giftSource || "wishlist") as GiftSource);
       setPrivacyLevel((event.privacyLevel || "private") as PrivacyLevel);
+      
+      // Load existing auto-gifting rule if it exists
+      const existingRule = rules.find(rule => rule.event_id === event.id);
+      if (existingRule) {
+        setNotificationDays(existingRule.notification_preferences.days_before);
+        setEmailNotifications(existingRule.notification_preferences.email);
+        setPushNotifications(existingRule.notification_preferences.push);
+      }
+      
       setValidationErrors({});
     }
-  }, [event]);
+  }, [event, rules]);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -76,7 +94,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
   };
 
   const handleSave = async () => {
-    if (!event || !validateForm()) {
+    if (!event || !validateForm() || !user?.id) {
       toast.error("Please fix the validation errors");
       return;
     }
@@ -85,6 +103,7 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
       setIsSaving(true);
       setValidationErrors({});
       
+      // Update the event
       await onSave(event.id, {
         type: type.trim(),
         person: person.trim(),
@@ -94,6 +113,37 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
         giftSource: autoGiftEnabled ? giftSource : undefined,
         privacyLevel,
       });
+
+      // Handle auto-gifting rule
+      if (autoGiftEnabled) {
+        const existingRule = rules.find(rule => rule.event_id === event.id);
+        const ruleData = {
+          recipient_id: user.id, // For now, using user.id - this would be the actual recipient in a real app
+          date_type: type,
+          event_id: event.id,
+          is_active: true,
+          budget_limit: autoGiftAmount,
+          notification_preferences: {
+            enabled: true,
+            days_before: notificationDays,
+            email: emailNotifications,
+            push: pushNotifications
+          },
+          gift_selection_criteria: {
+            source: giftSource,
+            max_price: autoGiftAmount,
+            min_price: null,
+            categories: [],
+            exclude_items: []
+          }
+        };
+
+        if (existingRule) {
+          await updateRule(existingRule.id, ruleData);
+        } else {
+          await createRule(ruleData);
+        }
+      }
       
       onOpenChange(false);
       toast.success(`Updated ${person}'s ${type}`);
@@ -160,6 +210,20 @@ const EventEditDrawer = ({ event, open, onOpenChange, onSave }: EditDrawerProps)
             setGiftSource={setGiftSource}
             validationErrors={validationErrors}
           />
+          
+          {autoGiftEnabled && (
+            <>
+              <Separator />
+              <NotificationPreferencesSection
+                notificationDays={notificationDays}
+                emailNotifications={emailNotifications}
+                pushNotifications={pushNotifications}
+                setNotificationDays={setNotificationDays}
+                setEmailNotifications={setEmailNotifications}
+                setPushNotifications={setPushNotifications}
+              />
+            </>
+          )}
           
           <Separator />
           

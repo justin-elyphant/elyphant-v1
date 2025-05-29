@@ -61,7 +61,7 @@ const OccasionStep = ({ setOccasion }: OccasionStepProps) => {
               key={occasion.value}
               variant={isSelected ? "default" : "outline"}
               className={`h-16 flex flex-col items-center justify-center gap-1 text-xs hover:bg-purple-50 hover:border-purple-300 ${
-                isSelected ? "bg-purple-600 text-white" : ""
+                isSelected ? "bg-purple-600 text-white hover:bg-purple-700" : ""
               }`}
               onClick={() => handleOccasionSelect(occasion.value)}
             >
@@ -91,7 +91,11 @@ const OccasionStep = ({ setOccasion }: OccasionStepProps) => {
       <Button 
         onClick={handleContinue}
         disabled={!isValid}
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50"
+        className={`w-full transition-all ${
+          isValid 
+            ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 cursor-pointer" 
+            : "bg-gray-300 cursor-not-allowed opacity-50"
+        }`}
       >
         Continue
       </Button>

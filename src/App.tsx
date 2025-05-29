@@ -23,6 +23,7 @@ import Events from "@/pages/Events";
 import Profile from "@/pages/Profile";
 import SharedWishlist from "@/pages/SharedWishlist";
 import Wishlists from "@/pages/Wishlists";
+import AboutUs from "@/pages/AboutUs";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import NotFound from "@/pages/NotFound";
 import GiftScheduling from "@/pages/GiftScheduling";
@@ -47,6 +48,7 @@ function App() {
                     <Route path="/sign-in" element={<SignIn />} />
                     <Route path="/sign-up" element={<SignUp />} />
                     <Route path="/email-verification" element={<EmailVerification />} />
+                    <Route path="/about-us" element={<AboutUs />} />
                     
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={

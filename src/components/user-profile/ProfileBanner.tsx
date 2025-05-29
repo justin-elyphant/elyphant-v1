@@ -9,14 +9,17 @@ import {
   Edit,
   MapPin,
   Calendar,
-  Users
+  Users,
+  Camera
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import ConnectionStatusIndicator from "@/components/messaging/ConnectionStatusIndicator";
+import ProfileImageUpload from "@/components/settings/ProfileImageUpload";
 import { formatDate } from "@/utils/date-formatting";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 interface ProfileBannerProps {
   userData: any;
@@ -35,6 +38,8 @@ const ProfileBanner = ({
   onShare,
   userStatus
 }: ProfileBannerProps) => {
+  const { updateProfile } = useProfile();
+  
   const getInitials = (name?: string): string => {
     if (!name) return "?";
     return name
@@ -43,6 +48,14 @@ const ProfileBanner = ({
       .join("")
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  const handleImageUpdate = async (imageUrl: string | null) => {
+    try {
+      await updateProfile({ profile_image: imageUrl });
+    } catch (error) {
+      console.error("Failed to update profile image:", error);
+    }
   };
 
   return (
@@ -104,15 +117,47 @@ const ProfileBanner = ({
         {/* Avatar and Basic Info */}
         <div className="flex items-end justify-between -mt-16 mb-4">
           <div className="relative">
-            <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
-              {userData?.profile_image ? (
-                <AvatarImage src={userData.profile_image} alt={userData?.name} />
-              ) : (
-                <AvatarFallback className="bg-purple-100 text-purple-600 text-3xl">
-                  {getInitials(userData?.name)}
-                </AvatarFallback>
-              )}
-            </Avatar>
+            {isCurrentUser ? (
+              <div className="relative group">
+                <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
+                  {userData?.profile_image ? (
+                    <AvatarImage src={userData.profile_image} alt={userData?.name} />
+                  ) : (
+                    <AvatarFallback className="bg-purple-100 text-purple-600 text-3xl">
+                      {getInitials(userData?.name)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
+                      <Camera className="h-8 w-8 text-white" />
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <div className="p-4">
+                      <h2 className="text-lg font-semibold mb-4">Change Profile Picture</h2>
+                      <ProfileImageUpload
+                        currentImage={userData?.profile_image}
+                        name={userData?.name || "User"}
+                        onImageUpdate={handleImageUpdate}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            ) : (
+              <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
+                {userData?.profile_image ? (
+                  <AvatarImage src={userData.profile_image} alt={userData?.name} />
+                ) : (
+                  <AvatarFallback className="bg-purple-100 text-purple-600 text-3xl">
+                    {getInitials(userData?.name)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+            )}
+            
             {/* Status indicator */}
             {userStatus && (
               <div className="absolute bottom-2 right-2">

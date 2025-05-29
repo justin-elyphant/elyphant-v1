@@ -35,9 +35,19 @@ const GiftingPreferencesSection = () => {
     }
   };
 
-  // Safely access the properties with fallbacks
-  const giftingPrefs = profile?.gift_giving_preferences || {};
-  const aiData = profile?.ai_interaction_data || {};
+  // Safely access the properties with fallbacks and proper type checking
+  const giftingPrefs = profile?.gift_giving_preferences || {
+    occasions: [],
+    budget_ranges: {},
+    recipient_types: [],
+    preferred_categories: []
+  };
+  
+  const aiData = profile?.ai_interaction_data || {
+    preferred_flow: null,
+    common_recipients: [],
+    learned_preferences: {}
+  };
 
   if (loading) {
     return (

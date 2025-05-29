@@ -11,6 +11,7 @@ import PrivacySelector from "./PrivacySelector";
 import AutoGiftToggle from "./AutoGiftToggle";
 import GiftBudgetInput from "./GiftBudgetInput";
 import { AddEventFormValues, PersonContact, EventFormData } from "./types";
+import { useConnections } from "@/hooks/useConnections";
 
 // Event types definition
 const eventTypes = [
@@ -20,15 +21,6 @@ const eventTypes = [
   { value: "graduation", label: "Graduation" },
   { value: "wedding", label: "Wedding" },
   { value: "other", label: "Other" }
-];
-
-// Mock data for connected people
-const connectedPeople: PersonContact[] = [
-  { id: "1", name: "Alex Johnson", avatar: "/placeholder.svg", topGifter: true, events: 5 },
-  { id: "2", name: "Jamie Smith", avatar: "/placeholder.svg", topGifter: true, events: 4 },
-  { id: "3", name: "Taylor Wilson", avatar: "/placeholder.svg", topGifter: false, events: 3 },
-  { id: "4", name: "Morgan Lee", avatar: "/placeholder.svg", topGifter: false, events: 2 },
-  { id: "5", name: "Casey Brown", avatar: "/placeholder.svg", topGifter: false, events: 1 }
 ];
 
 const formSchema = z.object({
@@ -54,6 +46,20 @@ interface AddEventFormProps {
 }
 
 const AddEventForm = ({ formData, onFormDataChange, validationErrors = {} }: AddEventFormProps) => {
+  const { friends, following } = useConnections();
+  
+  // Convert connections to PersonContact format
+  const connectedPeople: PersonContact[] = React.useMemo(() => {
+    const allConnections = [...friends, ...following];
+    return allConnections.map(conn => ({
+      id: conn.id,
+      name: conn.name,
+      avatar: conn.imageUrl,
+      topGifter: Math.random() > 0.7, // Random for now, could be based on actual data
+      events: Math.floor(Math.random() * 10) + 1 // Random for now
+    }));
+  }, [friends, following]);
+
   const form = useForm<AddEventFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {

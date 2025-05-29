@@ -19,6 +19,7 @@ import Messages from "@/pages/Messages";
 import Marketplace from "@/pages/Marketplace";
 import Checkout from "@/pages/Checkout";
 import Gifting from "@/pages/Gifting";
+import Events from "@/pages/Events";
 import Profile from "@/pages/Profile";
 import SharedWishlist from "@/pages/SharedWishlist";
 import Wishlists from "@/pages/Wishlists";
@@ -105,6 +106,12 @@ function App() {
                     <Route path="/gifting" element={
                       <ProtectedRoute>
                         <Gifting />
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/events" element={
+                      <ProtectedRoute>
+                        <Events />
                       </ProtectedRoute>
                     } />
                     

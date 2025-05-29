@@ -1,7 +1,6 @@
 
 import React from "react";
 import GiftsCard from "./GiftsCard";
-import EventsCard from "./EventsCard";
 import OrdersCard from "./OrdersCard";
 import FriendsCard from "./FriendsCard";
 import SettingsCard from "./SettingsCard";
@@ -16,12 +15,9 @@ const DashboardGrid = () => {
       </div>
 
       {/* Secondary cards - grid layout with consistent heights */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="flex flex-col h-full">
           <GiftsCard />
-        </div>
-        <div className="flex flex-col h-full">
-          <EventsCard />
         </div>
         <div className="flex flex-col h-full">
           <OrdersCard />

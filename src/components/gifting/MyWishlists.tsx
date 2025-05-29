@@ -81,7 +81,10 @@ const MyWishlists = () => {
     // getValidWishlistCategories yields raw category list (may contain bad/empty/whitespace)
     // sanitizeCategories guarantees deduped, trimmed, non-empty, sorted!
     const cats = getValidWishlistCategories(wishlists || []);
-    return sanitizeCategories(cats); // strict cleaning!
+    const sanitized = sanitizeCategories(cats);
+    
+    // Extra safety: filter out any categories that are still empty or invalid
+    return sanitized.filter(cat => cat && typeof cat === "string" && cat.trim().length > 0);
   }, [wishlists]);
 
   // Defensive: Ensure filter is always valid—if not, reset it to null
@@ -96,23 +99,6 @@ const MyWishlists = () => {
       setCategoryFilter(null);
     }
   }, [categoryFilter, selectableCategories]);
-
-  // Debug logging: Make sure there are no empty categories about to render
-  React.useEffect(() => {
-    selectableCategories.forEach((cat, i) => {
-      if (!cat || typeof cat !== "string" || !cat.trim()) {
-        console.error("[Wishlists] About to render invalid category for SelectItem:", cat, i);
-      }
-    });
-  }, [selectableCategories]);
-
-  // Add dev log of all categories and filters
-  React.useEffect(() => {
-    console.log("[Wishlists] selectableCategories", selectableCategories);
-    console.log("[Wishlists] current categoryFilter", categoryFilter);
-    console.log("[Wishlists] searchQuery", searchQuery);
-    console.log("[Wishlists] wishlists.length", wishlists?.length);
-  }, [selectableCategories, categoryFilter, searchQuery, wishlists]);
 
   // Filter wishlists based on category and search query
   const filteredWishlists = React.useMemo(() => {
@@ -241,7 +227,7 @@ const MyWishlists = () => {
         </AlertDescription>
       </Alert>
 
-      {/* Filter and search section */}
+      {/* Filter and search section - only show if we have valid categories */}
       {wishlists && wishlists.length > 1 && selectableCategories.length > 0 && (
         <WishlistCategoryFilter
           selectableCategories={selectableCategories}

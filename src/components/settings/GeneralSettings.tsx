@@ -38,6 +38,12 @@ const GeneralSettings = () => {
     );
   }
 
+  // Filter out any invalid important dates
+  const validImportantDates = (form.watch("importantDates") || []).filter(
+    (date): date is { date: Date; description: string } => 
+      date.date !== undefined && date.description !== undefined
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -67,7 +73,7 @@ const GeneralSettings = () => {
             
             <TabsContent value="dates" className="mt-6">
               <ImportantDatesFormSection
-                importantDates={form.watch("importantDates") || []}
+                importantDates={validImportantDates}
                 removeImportantDate={handleRemoveImportantDate}
                 newImportantDate={newImportantDate}
                 setNewImportantDate={setNewImportantDate}

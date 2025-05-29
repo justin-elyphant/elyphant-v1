@@ -25,7 +25,7 @@ export const useEventHandlers = () => {
   const handleToggleAutoGift = async (id: string) => {
     console.log(`Toggle auto-gift for event ${id}`);
     
-    // Create a new copy of the events array with the updated autoGiftEnabled value
+    // Optimistic update
     const updatedEvents = events.map(event => 
       event.id === id 
         ? { 
@@ -39,27 +39,30 @@ export const useEventHandlers = () => {
         : event
     );
     
-    // Update the state with the new array
+    // Update the state optimistically
     setEvents(updatedEvents);
     
     const event = events.find(e => e.id === id);
     if (event) {
-      toast.success(`Auto-gift ${event.autoGiftEnabled ? 'disabled' : 'enabled'} for ${event.person}'s ${event.type}`);
+      const newStatus = !event.autoGiftEnabled;
+      toast.success(`Auto-gift ${newStatus ? 'enabled' : 'disabled'} for ${event.person}'s ${event.type}`);
+      
+      // TODO: Save auto-gift settings to auto_gifting_rules table in Phase 4
+      // For now, just update the UI optimistically
     }
-
-    // TODO: Save auto-gift settings to auto_gifting_rules table in Phase 4
   };
   
   const handleVerifyEvent = async (id: string) => {
     console.log(`Verify event ${id}`);
-    // Create a new copy of the events array with the updated verification status
+    
+    // Optimistic update
     const updatedEvents = events.map(event => 
       event.id === id 
         ? { ...event, isVerified: true, needsVerification: false } 
         : event
     );
     
-    // Update the state with the new array
+    // Update the state optimistically
     setEvents(updatedEvents);
     toast.success("Event verified successfully");
   };
@@ -85,23 +88,35 @@ export const useEventHandlers = () => {
         return;
       }
 
+      // Optimistic update - immediately update the UI
+      const optimisticUpdatedEvents = events.map(event => 
+        event.id === eventId 
+          ? { ...event, ...updatedEvent }
+          : event
+      );
+      setEvents(optimisticUpdatedEvents);
+
       // Merge the updates with the original event
       const mergedEvent = { ...originalEvent, ...updatedEvent };
       
       // Convert to database format and save
       const dbEventData = transformExtendedEventToDatabase(mergedEvent);
       await eventsService.updateEvent({
-        id: originalEvent.id, // Keep as UUID string
+        id: originalEvent.id,
         ...dbEventData
       });
 
-      // Refresh events from database to get the latest data
+      // Refresh events from database to ensure consistency
       await refreshEvents();
       
-      toast.success("Event updated successfully");
+      // Success is handled in the component
     } catch (error) {
       console.error("Error saving event:", error);
-      toast.error("Failed to save event changes");
+      
+      // Revert optimistic update on error
+      await refreshEvents();
+      
+      throw error; // Re-throw to let the component handle the error message
     }
   };
 
@@ -113,15 +128,23 @@ export const useEventHandlers = () => {
         return;
       }
 
-      await eventsService.deleteEvent(eventId); // Use string ID directly
+      // Optimistic update - immediately remove from UI
+      const optimisticUpdatedEvents = events.filter(e => e.id !== eventId);
+      setEvents(optimisticUpdatedEvents);
+
+      await eventsService.deleteEvent(eventId);
       
-      // Refresh events from database
+      // Refresh events from database to ensure consistency
       await refreshEvents();
       
       toast.success(`Deleted ${event.person}'s ${event.type}`);
     } catch (error) {
       console.error("Error deleting event:", error);
-      toast.error("Failed to delete event");
+      
+      // Revert optimistic update on error
+      await refreshEvents();
+      
+      throw error; // Re-throw to let the component handle the error message
     }
   };
 
@@ -132,16 +155,44 @@ export const useEventHandlers = () => {
         return;
       }
 
+      // Create optimistic event for immediate UI feedback
+      const optimisticEvent: ExtendedEventData = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        type: eventData.type,
+        person: eventData.person,
+        date: eventData.dateObj.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        daysAway: Math.max(0, Math.ceil((eventData.dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))),
+        avatarUrl: "/placeholder.svg",
+        autoGiftEnabled: eventData.autoGiftEnabled || false,
+        autoGiftAmount: eventData.autoGiftAmount || 0,
+        privacyLevel: eventData.privacyLevel || "private",
+        isVerified: true,
+        needsVerification: false,
+        giftSource: eventData.giftSource || "wishlist",
+        dateObj: eventData.dateObj
+      };
+
+      // Optimistic update - immediately add to UI
+      setEvents(prevEvents => [...prevEvents, optimisticEvent]);
+
       const dbEventData = transformExtendedEventToDatabase(eventData as ExtendedEventData);
       await eventsService.createEvent(dbEventData);
       
-      // Refresh events from database
+      // Refresh events from database to get the real ID and ensure consistency
       await refreshEvents();
       
-      toast.success(`Created ${eventData.person}'s ${eventData.type}`);
+      // Success is handled in the component
     } catch (error) {
       console.error("Error creating event:", error);
-      toast.error("Failed to create event");
+      
+      // Revert optimistic update on error
+      await refreshEvents();
+      
+      throw error; // Re-throw to let the component handle the error message
     }
   };
 

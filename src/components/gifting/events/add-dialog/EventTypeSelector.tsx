@@ -7,10 +7,11 @@ import { AddEventFormValues } from "./types";
 
 interface EventTypeSelectorProps {
   form: UseFormReturn<AddEventFormValues>;
-  eventTypes: Array<{ value: string; label: string }>;
+  eventTypes: { value: string; label: string }[];
+  validationError?: string;
 }
 
-const EventTypeSelector = ({ form, eventTypes }: EventTypeSelectorProps) => {
+const EventTypeSelector = ({ form, eventTypes, validationError }: EventTypeSelectorProps) => {
   return (
     <FormField
       control={form.control}
@@ -20,7 +21,7 @@ const EventTypeSelector = ({ form, eventTypes }: EventTypeSelectorProps) => {
           <FormLabel>Event Type</FormLabel>
           <Select onValueChange={field.onChange} defaultValue={field.value}>
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className={validationError ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Select event type" />
               </SelectTrigger>
             </FormControl>
@@ -32,6 +33,9 @@ const EventTypeSelector = ({ form, eventTypes }: EventTypeSelectorProps) => {
               ))}
             </SelectContent>
           </Select>
+          {validationError && (
+            <p className="text-sm text-red-500">{validationError}</p>
+          )}
           <FormMessage />
         </FormItem>
       )}

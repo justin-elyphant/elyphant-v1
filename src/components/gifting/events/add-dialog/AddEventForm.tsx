@@ -4,9 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
-import { toast } from "sonner";
 import EventTypeSelector from "./EventTypeSelector";
 import PersonSelector from "./PersonSelector";
 import DateSelector from "./DateSelector";
@@ -53,9 +50,10 @@ const formSchema = z.object({
 interface AddEventFormProps {
   formData: EventFormData;
   onFormDataChange: (data: EventFormData) => void;
+  validationErrors?: Record<string, string>;
 }
 
-const AddEventForm = ({ formData, onFormDataChange }: AddEventFormProps) => {
+const AddEventForm = ({ formData, onFormDataChange, validationErrors = {} }: AddEventFormProps) => {
   const form = useForm<AddEventFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -86,32 +84,29 @@ const AddEventForm = ({ formData, onFormDataChange }: AddEventFormProps) => {
     return () => subscription.unsubscribe();
   }, [form, onFormDataChange]);
 
-  function onSubmit(data: AddEventFormValues) {
-    console.log("Event data:", data);
-    
-    // Display different messages based on privacy level
-    if (data.privacyLevel === "shared" || data.privacyLevel === "public") {
-      toast.success(`Event added with ${data.privacyLevel} visibility`);
-    } else {
-      toast.success("Event added successfully");
-    }
-    
-    form.reset();
-  }
+  // Update form values when external formData changes
+  React.useEffect(() => {
+    form.setValue("eventType", formData.eventType);
+    form.setValue("personName", formData.personName);
+    form.setValue("date", formData.date || undefined);
+    form.setValue("autoGift", formData.autoGiftEnabled);
+    form.setValue("autoGiftAmount", formData.giftBudget);
+    form.setValue("privacyLevel", formData.privacyLevel);
+  }, [formData, form]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <EventTypeSelector form={form} eventTypes={eventTypes} />
-        <PersonSelector form={form} connectedPeople={connectedPeople} />
-        <DateSelector form={form} />
+      <div className="space-y-4">
+        <EventTypeSelector form={form} eventTypes={eventTypes} validationError={validationErrors.eventType} />
+        <PersonSelector form={form} connectedPeople={connectedPeople} validationError={validationErrors.personName} />
+        <DateSelector form={form} validationError={validationErrors.date} />
         <PrivacySelector form={form} />
         <AutoGiftToggle form={form} />
         
         {watchAutoGift && (
-          <GiftBudgetInput form={form} />
+          <GiftBudgetInput form={form} validationError={validationErrors.giftBudget} />
         )}
-      </form>
+      </div>
     </Form>
   );
 };

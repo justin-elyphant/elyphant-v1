@@ -11,6 +11,7 @@ interface EventFormSectionProps {
   setType: (value: string) => void;
   setPerson: (value: string) => void;
   setDate: (value: string) => void;
+  validationErrors?: Record<string, string>;
 }
 
 const EventFormSection = ({
@@ -20,6 +21,7 @@ const EventFormSection = ({
   setType,
   setPerson,
   setDate,
+  validationErrors = {},
 }: EventFormSectionProps) => {
   return (
     <div className="space-y-3">
@@ -33,8 +35,11 @@ const EventFormSection = ({
           value={type}
           onChange={(e) => setType(e.target.value)}
           placeholder="Birthday, Anniversary, etc."
-          className="h-9"
+          className={`h-9 ${validationErrors.type ? 'border-red-500' : ''}`}
         />
+        {validationErrors.type && (
+          <p className="text-sm text-red-500">{validationErrors.type}</p>
+        )}
       </div>
       
       <div className="space-y-1">
@@ -47,8 +52,11 @@ const EventFormSection = ({
           value={person}
           onChange={(e) => setPerson(e.target.value)}
           placeholder="Name of the person"
-          className="h-9"
+          className={`h-9 ${validationErrors.person ? 'border-red-500' : ''}`}
         />
+        {validationErrors.person && (
+          <p className="text-sm text-red-500">{validationErrors.person}</p>
+        )}
       </div>
       
       <div className="space-y-1">
@@ -61,8 +69,11 @@ const EventFormSection = ({
           value={date}
           onChange={(e) => setDate(e.target.value)}
           placeholder="MM/DD/YYYY"
-          className="h-9"
+          className={`h-9 ${validationErrors.date ? 'border-red-500' : ''}`}
         />
+        {validationErrors.date && (
+          <p className="text-sm text-red-500">{validationErrors.date}</p>
+        )}
       </div>
     </div>
   );

@@ -177,7 +177,7 @@ export const useEventHandlers = () => {
       };
 
       // Optimistic update - immediately add to UI
-      setEvents((prevEvents: ExtendedEventData[]) => [...prevEvents, optimisticEvent]);
+      setEvents([...events, optimisticEvent]);
 
       const dbEventData = transformExtendedEventToDatabase(eventData as ExtendedEventData);
       await eventsService.createEvent(dbEventData);

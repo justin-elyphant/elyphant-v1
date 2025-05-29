@@ -15,7 +15,8 @@ import { useEvents } from "../context/EventsContext";
 import { useEventHandlers } from "../hooks/useEventHandlers";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Download } from "lucide-react";
-import { FilterState, SortState } from "../enhanced/types";
+import type { FilterState as EventsSearchFilterState } from "../enhanced/EventsSearchAndFilter";
+import type { SortState as EventsSortState } from "../enhanced/EventsSorting";
 
 interface EnhancedEventsContainerProps {
   onAddEvent: () => void;
@@ -35,14 +36,14 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isExportImportOpen, setIsExportImportOpen] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters, setFilters] = useState<EventsSearchFilterState>({
     search: '',
     eventTypes: [],
     dateRange: { from: null, to: null },
     autoGiftStatus: 'all',
     urgencyLevel: 'all',
   });
-  const [sortState, setSortState] = useState<SortState>({
+  const [sortState, setSortState] = useState<EventsSortState>({
     field: 'date',
     direction: 'asc',
   });
@@ -199,8 +200,8 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
 
       <div className="flex justify-between items-center">
         <EventViewToggle 
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          viewMode={viewMode as "cards" | "calendar"}
+          onViewModeChange={(mode) => setViewMode(mode as "cards" | "calendar" | "list")}
         />
         
         {selectedEvents.length > 0 && (

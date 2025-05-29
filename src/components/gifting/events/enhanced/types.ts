@@ -1,7 +1,7 @@
 
 export type AutoGiftStatus = "all" | "disabled" | "enabled";
-export type UrgencyLevel = "all" | "low" | "medium" | "high";
-export type SortField = "date" | "person" | "type";
+export type UrgencyLevel = "all" | "urgent" | "soon" | "later";
+export type SortField = "date" | "person" | "type" | "priority" | "created";
 export type SortDirection = "asc" | "desc";
 
 export interface FilterState {

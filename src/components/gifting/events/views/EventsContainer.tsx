@@ -5,7 +5,6 @@ import { useEventHandlers } from "../hooks/useEventHandlers";
 import EventHeader from "../EventHeader";
 import EventCardsView from "../EventCardsView";
 import CalendarView from "./CalendarView";
-import { FilterOption } from "../types";
 
 interface EventsContainerProps {
   onAddEvent: () => void;
@@ -13,7 +12,7 @@ interface EventsContainerProps {
 
 const EventsContainer = ({ onAddEvent }: EventsContainerProps) => {
   const [view, setView] = useState<"cards" | "calendar">("cards");
-  const [selectedEventType, setSelectedEventType] = useState<FilterOption>("all");
+  const [selectedEventType, setSelectedEventType] = useState<string>("all");
   
   const { events, isLoading } = useEvents();
   const { 

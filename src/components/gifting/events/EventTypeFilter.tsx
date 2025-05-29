@@ -8,11 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FilterOption, ExtendedEventData } from "./types";
+import { ExtendedEventData } from "./types";
 
 interface EventTypeFilterProps {
-  selectedType: FilterOption;
-  onTypeChange: (type: FilterOption) => void;
+  selectedType: string;
+  onTypeChange: (type: string) => void;
   events?: ExtendedEventData[];
   eventTypes?: string[];
 }
@@ -32,7 +32,7 @@ const EventTypeFilter = ({
       <Filter className="h-4 w-4 text-muted-foreground" />
       <Select
         value={selectedType}
-        onValueChange={(value) => onTypeChange(value as FilterOption)}
+        onValueChange={(value) => onTypeChange(value)}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Filter by type" />

@@ -4,15 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import EventViewToggle from "./EventViewToggle";
 import EventTypeFilter from "./EventTypeFilter";
-import { FilterOption } from "./types";
 
 interface EventHeaderProps {
   view: "cards" | "calendar";
   onViewChange: (mode: "cards" | "calendar") => void;
   onAddEvent: () => void;
   eventTypes: string[];
-  selectedEventType: FilterOption;
-  onEventTypeChange: (type: FilterOption) => void;
+  selectedEventType: string;
+  onEventTypeChange: (type: string) => void;
 }
 
 const EventHeader = ({ 

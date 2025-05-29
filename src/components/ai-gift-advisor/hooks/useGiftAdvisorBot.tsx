@@ -56,6 +56,7 @@ export const useGiftAdvisorBot = () => {
     setIsOpen(false);
   };
 
+  // Enhanced nextStep that preserves existing state
   const nextStep = (step: ConversationStep, updates?: Partial<BotState>) => {
     setBotState(prev => ({
       ...prev,

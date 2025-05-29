@@ -22,6 +22,7 @@ const ResultsStep = ({ botState, closeBot, resetBot }: ResultsStepProps) => {
   };
 
   const recipientName = botState.selectedFriend?.name || botState.recipientDetails?.name || "recipient";
+  const relationship = botState.selectedFriend ? "Friend" : botState.recipientDetails?.relationship || "";
 
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
@@ -40,6 +41,7 @@ const ResultsStep = ({ botState, closeBot, resetBot }: ResultsStepProps) => {
         <h4 className="font-semibold text-gray-900 mb-2">Search Summary</h4>
         <div className="space-y-2 text-sm text-gray-700">
           <div><strong>For:</strong> {recipientName}</div>
+          {relationship && <div><strong>Relationship:</strong> {relationship}</div>}
           <div><strong>Occasion:</strong> {botState.occasion}</div>
           <div><strong>Budget:</strong> ${botState.budget?.min} - ${botState.budget?.max}</div>
           {botState.selectedFriend && (

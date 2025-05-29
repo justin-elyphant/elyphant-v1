@@ -6,8 +6,8 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import MarketplaceHero from "./MarketplaceHero";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
-import { X } from "lucide-react"; // Import x icon
-import { useRecentSearches, addRecentSearch } from "./hooks/useRecentSearches";
+import { X } from "lucide-react";
+import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 
 // New: ResultsChip component
 const ResultsChip = ({
@@ -41,6 +41,7 @@ const MarketplaceWrapper = () => {
   const isMobile = useIsMobile();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addSearch } = useUserSearchHistory();
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
@@ -53,11 +54,8 @@ const MarketplaceWrapper = () => {
 
   // Improved filtering logic: use dynamic mock product generation (for testing mode)
   useEffect(() => {
-    // If Zinc API integration is enabled, skip mock generator (future: add feature flag/env check here)
-    // For now: always use mock generator for local/test/dev mode.
     let results = [];
     if (brandParam) {
-      // Combine brand and category/search if both present for more relevant mockups.
       if (categoryParam) {
         results = searchMockProducts(`${brandParam} ${categoryParam}`, 12);
       } else if (searchTerm) {
@@ -66,7 +64,6 @@ const MarketplaceWrapper = () => {
         results = searchMockProducts(brandParam, 12);
       }
     } else if (categoryParam) {
-      // If a search term is present along with category, combine them
       if (searchTerm) {
         results = searchMockProducts(`${categoryParam} ${searchTerm}`, 16);
       } else {
@@ -75,7 +72,6 @@ const MarketplaceWrapper = () => {
     } else if (searchTerm) {
       results = searchMockProducts(searchTerm, 16);
     } else {
-      // No filter, show a sample set
       results = searchMockProducts("Featured", 15);
     }
     setProducts(results);
@@ -84,7 +80,6 @@ const MarketplaceWrapper = () => {
   // Track product view analytics
   const handleProductView = (productId: string) => {
     console.log(`Product viewed: ${productId}`);
-    // ... could hook up analytics events here
   };
 
   // Collapse hero if user is searching or has selected a category or brand
@@ -93,14 +88,12 @@ const MarketplaceWrapper = () => {
   // Scroll to results section on search/category/brand change (UX improvement)
   useEffect(() => {
     if (shouldCollapseHero && resultsRef.current) {
-      // Only auto-scroll if user just searched (avoid on first render or param clears)
       if (
         lastSearchRef.current !== `${searchTerm}|${categoryParam}|${brandParam}`
       ) {
         setTimeout(() => {
-          // Smooth scroll so results are clear, both mobile/desktop
           resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 150); // Timeout allows hero to collapse first
+        }, 150);
         lastSearchRef.current = `${searchTerm}|${categoryParam}|${brandParam}`;
       }
     }
@@ -108,18 +101,17 @@ const MarketplaceWrapper = () => {
 
   // Handler to clear search and stay on same page (removes "search" query param)
   const handleClearSearch = () => {
-    // Remove the search parameter, but keep others untouched
     const newParams = new URLSearchParams(searchParams);
     newParams.delete("search");
     setSearchParams(newParams, { replace: true });
   };
 
-  // Add to recent searches IF the searchTerm changes and is non-empty
+  // Add to user-specific search history when searchTerm changes
   useEffect(() => {
     if (searchTerm && searchTerm.trim()) {
-      addRecentSearch(searchTerm.trim());
+      addSearch(searchTerm.trim());
     }
-  }, [searchTerm]);
+  }, [searchTerm, addSearch]);
 
   // Handler for clicking a recent search bubble - updates URL/search param
   const handleRecentSearchClick = (term: string) => {

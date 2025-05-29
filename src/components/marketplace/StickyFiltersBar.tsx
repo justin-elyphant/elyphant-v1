@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useRecentSearches, getRecentSearches } from "./hooks/useRecentSearches";
+import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 
 interface StickyFiltersBarProps {
   showFilters: boolean;
@@ -19,6 +20,7 @@ const StickyFiltersBar = ({
 }: StickyFiltersBarProps) => {
   const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
+  const { recentSearches } = useUserSearchHistory();
   
   // Track scroll position to apply sticky styling
   useEffect(() => {
@@ -29,9 +31,6 @@ const StickyFiltersBar = ({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
-  // New: Get last 5 recent searches; reloads on every render for simplicity
-  const recentSearches = getRecentSearches();
 
   return (
     <div 
@@ -59,14 +58,12 @@ const StickyFiltersBar = ({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Moved filter toggle button to product grid header */}
             {searchTerm && (
               <div className="hidden xs:flex text-sm">
                 Search results for: <span className="font-medium ml-1">"{searchTerm}"</span>
               </div>
             )}
           </div>
-          {/* Removed the item counter from here */}
         </div>
       </div>
     </div>

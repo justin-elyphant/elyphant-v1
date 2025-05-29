@@ -66,6 +66,12 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
     });
   };
 
+  // Create a combined list of all interests to display
+  const allInterestsToDisplay = [
+    ...commonInterests,
+    ...selectedInterests.filter(interest => !commonInterests.includes(interest))
+  ];
+
   const isValid = name.trim() && ageRange && gender && selectedInterests.length > 0;
 
   return (
@@ -143,7 +149,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
         <div>
           <Label className="text-sm font-medium">Interests (select at least one)</Label>
           <div className="flex flex-wrap gap-2 mt-2">
-            {commonInterests.map((interest) => {
+            {allInterestsToDisplay.map((interest) => {
               const isSelected = selectedInterests.includes(interest);
               return (
                 <Badge

@@ -19,11 +19,9 @@ interface EventsContextType {
   deleteEvent: (eventId: string, options: any) => Promise<void>;
   viewMode: "cards" | "calendar" | "list";
   setViewMode: (mode: "cards" | "calendar" | "list") => void;
-  selectedEventType: FilterOption;
-  setSelectedEventType: (type: FilterOption) => void;
+  selectedEventType: string;
+  setSelectedEventType: (type: string) => void;
 }
-
-export type FilterOption = "all" | "birthday" | "anniversary" | "holiday" | "other";
 
 const EventsContext = createContext<EventsContextType | undefined>(undefined);
 
@@ -35,7 +33,7 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "calendar" | "list">("cards");
-  const [selectedEventType, setSelectedEventType] = useState<FilterOption>("all");
+  const [selectedEventType, setSelectedEventType] = useState<string>("all");
 
   useEffect(() => {
     const fetchEvents = async () => {

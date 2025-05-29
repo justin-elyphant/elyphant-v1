@@ -19,7 +19,8 @@ import {
   MessageCircle,
   Mail,
   QrCode,
-  Check
+  Check,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,16 +64,22 @@ const ProfileSharingDialog = ({
       color: "bg-blue-600 hover:bg-blue-700"
     },
     {
-      name: "Twitter",
+      name: "X",
       icon: Twitter,
       url: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
-      color: "bg-sky-500 hover:bg-sky-600"
+      color: "bg-black hover:bg-gray-800"
     },
     {
       name: "WhatsApp",
       icon: MessageCircle,
       url: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
       color: "bg-green-600 hover:bg-green-700"
+    },
+    {
+      name: "Text",
+      icon: MessageSquare,
+      url: `sms:?body=${encodedText}%20${encodedUrl}`,
+      color: "bg-purple-600 hover:bg-purple-700"
     },
     {
       name: "Email",

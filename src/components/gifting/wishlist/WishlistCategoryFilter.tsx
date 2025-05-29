@@ -67,7 +67,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
     filteredCategories.includes(categoryFilter) &&
     !!categoryFilter.trim()
       ? categoryFilter
-      : "";
+      : "all_categories";
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -75,7 +75,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
         <Select
           value={currentValue}
           onValueChange={(value) => {
-            if (!value || value === "" || !filteredCategories.includes(value)) {
+            if (!value || value === "all_categories" || !filteredCategories.includes(value)) {
               onCategoryFilterChange(null);
             } else {
               onCategoryFilterChange(value);
@@ -86,7 +86,7 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all_categories">All Categories</SelectItem>
             {filteredCategories
               // FINAL FILTER: only use categories that are non-empty, trimmed, pure strings!
               .filter(
@@ -137,4 +137,3 @@ const WishlistCategoryFilter: React.FC<WishlistCategoryFilterProps> = ({
 };
 
 export default WishlistCategoryFilter;
-

@@ -13,9 +13,9 @@ interface CalendarDayContentProps {
   date: Date;
   dayEvents: ExtendedEventData[];
   onEventClick: (event: ExtendedEventData) => void;
-  onSendGift?: (id: number) => void;
-  onToggleAutoGift?: (id: number) => void;
-  onVerifyEvent?: (id: number) => void;
+  onSendGift?: (id: string) => void;
+  onToggleAutoGift?: (id: string) => void;
+  onVerifyEvent?: (id: string) => void;
 }
 
 const CalendarDayContent = ({

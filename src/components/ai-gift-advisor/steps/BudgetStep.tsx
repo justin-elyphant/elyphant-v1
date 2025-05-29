@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,7 +29,6 @@ const BudgetStep = ({ setBudget }: BudgetStepProps) => {
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <DollarSign className="h-5 w-5 text-green-600" />
             <span className="text-lg font-semibold text-gray-900">
               ${budgetRange[0]} - ${budgetRange[1]}
             </span>

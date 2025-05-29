@@ -9,7 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { ThemeProvider } from "@/contexts/theme/ThemeProvider";
 import Index from "@/pages/Index";
 import SignIn from "@/pages/auth/SignIn";
-import SignUp from "@/pages/auth/SignUp";
+import SignUp from "@/pages/SignUp";
 import EmailVerification from "@/pages/EmailVerification";
 import Dashboard from "@/pages/Dashboard";
 import ProfileSetup from "@/pages/ProfileSetup";
@@ -30,6 +30,8 @@ import GiftScheduling from "@/pages/GiftScheduling";
 import Crowdfunding from "@/pages/Crowdfunding";
 import ZincIntegration from "@/pages/ZincIntegration";
 import Cart from "@/pages/Cart";
+import OnboardingPage from "@/pages/OnboardingPage";
+import OnboardingGiftorFlow from "@/components/onboarding/OnboardingGiftorFlow";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,8 @@ function App() {
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/email-verification" element={<EmailVerification />} />
                     <Route path="/about-us" element={<AboutUs />} />
+                    <Route path="/onboarding" element={<OnboardingPage />} />
+                    <Route path="/onboarding-gift" element={<OnboardingGiftorFlow />} />
                     
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={

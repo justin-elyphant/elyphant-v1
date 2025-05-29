@@ -9,6 +9,8 @@ import OccasionStep from "./steps/OccasionStep";
 import BudgetStep from "./steps/BudgetStep";
 import GeneratingStep from "./steps/GeneratingStep";
 import ResultsStep from "./steps/ResultsStep";
+import ResultsPreviewStep from "./steps/ResultsPreviewStep";
+import SignUpPromptStep from "./steps/SignUpPromptStep";
 
 type ConversationFlowProps = ReturnType<typeof useGiftAdvisorBot>;
 
@@ -54,6 +56,10 @@ const ConversationFlow = (props: ConversationFlowProps) => {
         return <GeneratingStep {...props} />;
       case "results":
         return <ResultsStep {...props} />;
+      case "results-preview":
+        return <ResultsPreviewStep {...props} />;
+      case "signup-prompt":
+        return <SignUpPromptStep {...props} />;
       default:
         return <WelcomeStep {...props} />;
     }

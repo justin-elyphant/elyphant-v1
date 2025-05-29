@@ -12,7 +12,9 @@ export type ConversationStep =
   | "occasion" 
   | "budget" 
   | "generating" 
-  | "results";
+  | "results"
+  | "results-preview"
+  | "signup-prompt";
 
 export type RecipientType = "friend" | "family" | "coworker" | "other";
 
@@ -29,6 +31,8 @@ export interface BotState {
   occasion?: string;
   budget?: { min: number; max: number };
   searchQuery?: string;
+  isAuthenticated: boolean;
+  showSignupPrompt: boolean;
 }
 
 export const useGiftAdvisorBot = () => {
@@ -37,11 +41,17 @@ export const useGiftAdvisorBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [botState, setBotState] = useState<BotState>({
-    step: "welcome"
+    step: "welcome",
+    isAuthenticated: !!user,
+    showSignupPrompt: false
   });
 
   const resetBot = () => {
-    setBotState({ step: "welcome" });
+    setBotState({ 
+      step: "welcome",
+      isAuthenticated: !!user,
+      showSignupPrompt: false
+    });
     setIsLoading(false);
   };
 
@@ -61,11 +71,22 @@ export const useGiftAdvisorBot = () => {
     setBotState(prev => ({
       ...prev,
       step,
+      isAuthenticated: !!user,
       ...updates
     }));
   };
 
   const selectFriend = (friend: any) => {
+    // For non-authenticated users, redirect to signup prompt
+    if (!user) {
+      setBotState(prev => ({
+        ...prev,
+        step: "signup-prompt",
+        showSignupPrompt: true
+      }));
+      return;
+    }
+
     setBotState(prev => ({
       ...prev,
       selectedFriend: friend,
@@ -123,13 +144,16 @@ export const useGiftAdvisorBot = () => {
         query += ` under $${botState.budget.max}`;
       }
 
+      // For non-authenticated users, show preview instead of full results
+      const targetStep = user ? "results" : "results-preview";
+
       setBotState(prev => ({
         ...prev,
         searchQuery: query,
-        step: "results"
+        step: targetStep
       }));
 
-      toast.success("Gift recommendations generated!");
+      toast.success(user ? "Gift recommendations generated!" : "Preview generated!");
     } catch (error) {
       console.error("Error generating search query:", error);
       toast.error("Failed to generate recommendations");

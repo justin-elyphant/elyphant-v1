@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Gift, Users, Calendar, DollarSign, Trash2, Edit } from "lucide-react";
 import { useGiftingData, RecipientProfile } from "@/hooks/useGiftingData";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { Profile } from "@/types/profile";
 
 const GiftingPreferencesSection = () => {
   const { getRecipientProfiles, getAIGiftSearches } = useGiftingData();
@@ -35,15 +35,16 @@ const GiftingPreferencesSection = () => {
     }
   };
 
-  // Safely access the properties with fallbacks and proper type checking
-  const giftingPrefs = profile?.gift_giving_preferences || {
+  // Cast profile to the correct type and safely access the properties with fallbacks
+  const typedProfile = profile as Profile;
+  const giftingPrefs = typedProfile?.gift_giving_preferences || {
     occasions: [],
     budget_ranges: {},
     recipient_types: [],
     preferred_categories: []
   };
   
-  const aiData = profile?.ai_interaction_data || {
+  const aiData = typedProfile?.ai_interaction_data || {
     preferred_flow: null,
     common_recipients: [],
     learned_preferences: {}

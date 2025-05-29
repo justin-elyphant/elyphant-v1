@@ -67,6 +67,63 @@ export const eventsService = {
     return transformDatabaseEventToExtended(data);
   },
 
+  // Mark event as completed
+  async markEventCompleted(eventId: string): Promise<void> {
+    const { error } = await supabase
+      .from('user_special_dates')
+      .update({ 
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', eventId);
+
+    if (error) {
+      console.error('Error marking event as completed:', error);
+      throw error;
+    }
+  },
+
+  // Create recurring event
+  async createRecurringEvent(originalEventId: string): Promise<ExtendedEventData> {
+    // Get the original event
+    const { data: originalEvent, error: fetchError } = await supabase
+      .from('user_special_dates')
+      .select('*')
+      .eq('id', originalEventId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching original event:', fetchError);
+      throw fetchError;
+    }
+
+    // Calculate next year's date
+    const originalDate = new Date(originalEvent.date);
+    const nextYear = new Date(originalDate);
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+    // Create new event for next year
+    const newEventData = {
+      user_id: originalEvent.user_id,
+      date: nextYear.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      date_type: originalEvent.date_type,
+      visibility: originalEvent.visibility,
+    };
+
+    const { data, error } = await supabase
+      .from('user_special_dates')
+      .insert([newEventData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating recurring event:', error);
+      throw error;
+    }
+
+    return transformDatabaseEventToExtended(data);
+  },
+
   // Delete an event
   async deleteEvent(eventId: string): Promise<void> {
     const { error } = await supabase

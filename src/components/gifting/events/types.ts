@@ -21,6 +21,16 @@ export interface ExtendedEventData extends EventData {
   dateObj?: Date | null;
   paymentMethodId?: string;
   selectedProductId?: string;
+  isCompleted?: boolean;
+  completedAt?: string;
+  isRecurring?: boolean;
+  recurringType?: "yearly" | "monthly" | "custom";
+  giftHistory?: {
+    amount: number;
+    sentAt: string;
+    method: "auto" | "manual";
+    status: "sent" | "delivered" | "pending";
+  }[];
 }
 
 export type FilterOption = "all" | string;

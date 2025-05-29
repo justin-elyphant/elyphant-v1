@@ -78,6 +78,30 @@ export type Database = {
           },
         ]
       }
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string | null
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       contributions: {
         Row: {
           amount: number
@@ -248,6 +272,45 @@ export type Database = {
         }
         Relationships: []
       }
+      privacy_settings: {
+        Row: {
+          allow_follows_from: string
+          allow_message_requests: boolean | null
+          block_list_visibility: string
+          created_at: string | null
+          id: string
+          profile_visibility: string
+          show_follower_count: boolean | null
+          show_following_count: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allow_follows_from?: string
+          allow_message_requests?: boolean | null
+          block_list_visibility?: string
+          created_at?: string | null
+          id?: string
+          profile_visibility?: string
+          show_follower_count?: boolean | null
+          show_following_count?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allow_follows_from?: string
+          allow_message_requests?: boolean | null
+          block_list_visibility?: string
+          created_at?: string | null
+          id?: string
+          profile_visibility?: string
+          show_follower_count?: boolean | null
+          show_following_count?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bio: string | null
@@ -339,9 +402,12 @@ export type Database = {
       }
       user_connections: {
         Row: {
+          blocked_at: string | null
+          blocked_by: string | null
           connected_user_id: string
           created_at: string | null
           data_access_permissions: Json | null
+          follow_type: string | null
           id: string
           relationship_type: string
           status: string
@@ -349,9 +415,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
           connected_user_id: string
           created_at?: string | null
           data_access_permissions?: Json | null
+          follow_type?: string | null
           id?: string
           relationship_type: string
           status?: string
@@ -359,9 +428,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
           connected_user_id?: string
           created_at?: string | null
           data_access_permissions?: Json | null
+          follow_type?: string | null
           id?: string
           relationship_type?: string
           status?: string
@@ -524,6 +596,29 @@ export type Database = {
     Functions: {
       are_users_connected: {
         Args: { user_id_1: string; user_id_2: string }
+        Returns: boolean
+      }
+      can_user_follow: {
+        Args: { follower_id: string; target_id: string }
+        Returns: boolean
+      }
+      get_user_privacy_settings: {
+        Args: { target_user_id: string }
+        Returns: {
+          allow_follows_from: string
+          allow_message_requests: boolean | null
+          block_list_visibility: string
+          created_at: string | null
+          id: string
+          profile_visibility: string
+          show_follower_count: boolean | null
+          show_following_count: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+      }
+      is_user_blocked: {
+        Args: { user1_id: string; user2_id: string }
         Returns: boolean
       }
     }

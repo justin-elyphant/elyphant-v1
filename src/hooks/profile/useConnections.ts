@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserConnection } from "@/types/supabase";
@@ -9,6 +8,9 @@ export const useConnections = () => {
   const { user } = useAuth();
   const [connections, setConnections] = useState<UserConnection[]>([]);
   const [pendingRequests, setPendingRequests] = useState<UserConnection[]>([]);
+  const [followers, setFollowers] = useState<UserConnection[]>([]);
+  const [following, setFollowing] = useState<UserConnection[]>([]);
+  const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -20,20 +22,47 @@ export const useConnections = () => {
     
     try {
       // Get all connections where user is either the requester or receiver
-      const { data, error } = await supabase
+      const { data: connectionsData, error: connectionsError } = await supabase
         .from('user_connections')
         .select('*')
         .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
       
-      if (error) throw error;
+      if (connectionsError) throw connectionsError;
       
-      const accepted = data?.filter(conn => conn.status === 'accepted') || [];
-      const pending = data?.filter(conn => 
+      // Get blocked users
+      const { data: blockedData, error: blockedError } = await supabase
+        .from('blocked_users')
+        .select('*, blocked_id(*)')
+        .eq('blocker_id', user.id);
+      
+      if (blockedError) throw blockedError;
+      
+      const allConnections = connectionsData || [];
+      
+      // Separate different types of connections
+      const accepted = allConnections.filter(conn => conn.status === 'accepted');
+      const pending = allConnections.filter(conn => 
         conn.status === 'pending' && conn.connected_user_id === user.id
-      ) || [];
+      );
+      
+      // Separate followers and following for follow relationships
+      const followerConnections = allConnections.filter(conn => 
+        conn.connected_user_id === user.id && 
+        conn.relationship_type === 'follow' && 
+        conn.status === 'accepted'
+      );
+      
+      const followingConnections = allConnections.filter(conn => 
+        conn.user_id === user.id && 
+        conn.relationship_type === 'follow' && 
+        conn.status === 'accepted'
+      );
       
       setConnections(accepted);
       setPendingRequests(pending);
+      setFollowers(followerConnections);
+      setFollowing(followingConnections);
+      setBlockedUsers(blockedData || []);
     } catch (err) {
       console.error("Error fetching connections:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -53,13 +82,25 @@ export const useConnections = () => {
     }
     
     try {
+      // Check if user can follow first
+      const { data: canFollow } = await supabase
+        .rpc('can_user_follow', {
+          follower_id: user.id,
+          target_id: connectedUserId
+        });
+        
+      if (!canFollow) {
+        toast.error("Unable to connect with this user");
+        return null;
+      }
+      
       const { data, error } = await supabase
         .from('user_connections')
         .insert({
           user_id: user.id,
           connected_user_id: connectedUserId,
           relationship_type: relationshipType,
-          status: 'pending',
+          status: relationshipType === 'follow' ? 'accepted' : 'pending',
           data_access_permissions: {
             dob: false,
             shipping_address: false,
@@ -71,7 +112,15 @@ export const useConnections = () => {
       
       if (error) throw error;
       
-      toast.success("Connection request sent");
+      toast.success(
+        relationshipType === 'follow' 
+          ? "Successfully followed user" 
+          : "Connection request sent"
+      );
+      
+      // Refresh connections
+      await fetchConnections();
+      
       return data;
     } catch (err) {
       console.error("Error sending connection request:", err);
@@ -219,6 +268,9 @@ export const useConnections = () => {
   return {
     connections,
     pendingRequests,
+    followers,
+    following,
+    blockedUsers,
     loading,
     error,
     fetchConnections,

@@ -9,15 +9,25 @@ import {
   MapPin,
   Calendar,
   Users,
-  Camera
+  Camera,
+  MoreVertical
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import ConnectionStatusIndicator from "@/components/messaging/ConnectionStatusIndicator";
 import ProfileImageUpload from "@/components/settings/ProfileImageUpload";
 import ProfileSharingDialog from "./ProfileSharingDialog";
+import FollowButton from "./FollowButton";
+import BlockButton from "./BlockButton";
 import { formatDate } from "@/utils/date-formatting";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileSharing } from "@/hooks/useProfileSharing";
@@ -109,15 +119,11 @@ const ProfileBanner = ({
             </>
           ) : (
             <>
-              <Button 
-                size="sm" 
-                variant={isFollowing ? "secondary" : "default"}
-                onClick={onFollow}
-                className={isFollowing ? "backdrop-blur-sm bg-white/90" : "bg-purple-600 hover:bg-purple-700"}
-              >
-                <User className="h-4 w-4 mr-2" />
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
+              <FollowButton 
+                targetUserId={userData?.id}
+                size="sm"
+                className="backdrop-blur-sm bg-white/90"
+              />
               <Dialog>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="secondary" className="backdrop-blur-sm bg-white/90">
@@ -133,9 +139,30 @@ const ProfileBanner = ({
                   </div>
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="secondary" onClick={handleShareClick} className="backdrop-blur-sm bg-white/90">
-                <Share2 className="h-4 w-4" />
-              </Button>
+              
+              {/* More options dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="secondary" className="backdrop-blur-sm bg-white/90">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleShareClick}>
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <div className="w-full">
+                      <BlockButton 
+                        targetUserId={userData?.id} 
+                        targetName={userData?.name}
+                      />
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>

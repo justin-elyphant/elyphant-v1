@@ -374,6 +374,119 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string | null
+          product_id: string
+          product_image: string | null
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+          vendor: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id: string
+          product_image?: string | null
+          product_name: string
+          quantity?: number
+          total_price: number
+          unit_price: number
+          vendor?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          product_image?: string | null
+          product_name?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          currency: string
+          gift_options: Json | null
+          id: string
+          order_number: string
+          payment_status: string | null
+          shipping_cost: number
+          shipping_info: Json
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          tracking_number: string | null
+          updated_at: string
+          user_id: string | null
+          zinc_order_id: string | null
+          zinc_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          gift_options?: Json | null
+          id?: string
+          order_number: string
+          payment_status?: string | null
+          shipping_cost?: number
+          shipping_info: Json
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          subtotal: number
+          tax_amount?: number
+          total_amount: number
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zinc_order_id?: string | null
+          zinc_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          gift_options?: Json | null
+          id?: string
+          order_number?: string
+          payment_status?: string | null
+          shipping_cost?: number
+          shipping_info?: Json
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zinc_order_id?: string | null
+          zinc_status?: string | null
+        }
+        Relationships: []
+      }
       pricing_settings: {
         Row: {
           applies_to: string
@@ -860,6 +973,10 @@ export type Database = {
       delete_user_account: {
         Args: { target_user_id: string }
         Returns: Json
+      }
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_privacy_settings: {
         Args: { target_user_id: string }

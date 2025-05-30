@@ -36,6 +36,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     return giftOptions.isGift && giftOptions.giftWrapping ? 4.99 : 0;
   };
 
+  // Calculate tax (8.25% for demonstration)
+  const getTaxAmount = () => {
+    return cartTotal * 0.0825;
+  };
+
   return (
     <Card className="sticky top-20">
       <CardHeader className="pb-3">
@@ -81,18 +86,21 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           shippingCost={getShippingCost()}
         />
 
-        {/* Gift Wrapping Fee (separate from transparent pricing for now) */}
+        {/* Tax */}
+        <div className="flex justify-between text-sm">
+          <span>Tax</span>
+          <span>${getTaxAmount().toFixed(2)}</span>
+        </div>
+
+        {/* Gift Wrapping Fee */}
         {giftOptions.isGift && giftOptions.giftWrapping && (
-          <>
-            <Separator />
-            <div className="flex justify-between text-sm">
-              <span className="flex items-center">
-                Gift Wrapping
-                <Gift className="h-3 w-3 ml-1" />
-              </span>
-              <span>${getGiftWrappingCost().toFixed(2)}</span>
-            </div>
-          </>
+          <div className="flex justify-between text-sm">
+            <span className="flex items-center">
+              Gift Wrapping
+              <Gift className="h-3 w-3 ml-1" />
+            </span>
+            <span>${getGiftWrappingCost().toFixed(2)}</span>
+          </div>
         )}
         
         {giftOptions.isGift && (
@@ -110,7 +118,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           
           <div className="flex justify-between font-semibold text-lg">
             <span>Final Total</span>
-            <span>${(cartTotal + getShippingCost() + getGiftWrappingCost()).toFixed(2)}</span>
+            <span>${(cartTotal + getShippingCost() + getTaxAmount() + getGiftWrappingCost()).toFixed(2)}</span>
           </div>
         </div>
       </CardFooter>

@@ -1,103 +1,70 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { Product } from "@/contexts/ProductContext";
-import { toast } from "sonner";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Product } from '@/types/product';
 
-type CartItem = {
+export interface CartItem {
   product: Product;
   quantity: number;
-};
+}
 
-type CartContextType = {
+interface CartContextType {
   cartItems: CartItem[];
+  cartTotal: number;
   addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  cartTotal: number;
-  itemCount: number;
-};
+  getItemCount: () => number;
+}
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-function getProductId(product: Product) {
-  return product.product_id || product.id || "";
-}
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
 
-export const CartProvider = ({ children }: { children: ReactNode }) => {
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [cartTotal, setCartTotal] = useState(0);
-  const [itemCount, setItemCount] = useState(0);
 
+  // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        setCartItems(parsedCart);
-      } catch (e) {
-        console.error("Error parsing cart from localStorage:", e);
-      }
+      setCartItems(JSON.parse(savedCart));
     }
   }, []);
 
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
-    
-    const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-    const count = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    
-    setCartTotal(total);
-    setItemCount(count);
   }, [cartItems]);
 
-  const addToCart = (product: Product, quantity = 1) => {
-    // Always normalize product.id and product.product_id so both are available
-    const normalizedProduct: Product = {
-      ...product,
-      id: product.id || product.product_id,
-      product_id: product.product_id || product.id,
-      name: product.name || product.title,
-      title: product.title || product.name,
-    };
+  const cartTotal = cartItems.reduce((total, item) => {
+    return total + (item.product.price * item.quantity);
+  }, 0);
 
-    setCartItems(prevItems => {
-      const newId = getProductId(normalizedProduct);
-      const existingItem = prevItems.find(item => getProductId(item.product) === newId);
-
+  const addToCart = (product: Product, quantity: number = 1) => {
+    setCartItems(prev => {
+      const existingItem = prev.find(item => item.product.product_id === product.product_id);
+      
       if (existingItem) {
-        toast.success(`Updated ${normalizedProduct.name || normalizedProduct.title} quantity in your cart`);
-        return prevItems.map(item => 
-          getProductId(item.product) === newId
+        return prev.map(item =>
+          item.product.product_id === product.product_id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-      } else {
-        toast.success(`Added ${normalizedProduct.name || normalizedProduct.title} to your cart`);
-        return [
-          ...prevItems,
-          {
-            product: normalizedProduct,
-            quantity
-          }
-        ];
       }
+      
+      return [...prev, { product, quantity }];
     });
   };
 
   const removeFromCart = (productId: string) => {
-    setCartItems(prevItems => {
-      const itemToRemove = prevItems.find(item => getProductId(item.product) === productId);
-      if (itemToRemove) {
-        toast.info(`Removed ${itemToRemove.product.name || itemToRemove.product.title} from your cart`, {
-          action: {
-            label: "Continue Shopping",
-            onClick: () => window.location.href = "/marketplace"
-          }
-        });
-      }
-      return prevItems.filter(item => getProductId(item.product) !== productId);
-    });
+    setCartItems(prev => prev.filter(item => item.product.product_id !== productId));
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -105,10 +72,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       removeFromCart(productId);
       return;
     }
-
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        getProductId(item.product) === productId
+    
+    setCartItems(prev =>
+      prev.map(item =>
+        item.product.product_id === productId
           ? { ...item, quantity }
           : item
       )
@@ -117,30 +84,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => {
     setCartItems([]);
-    toast.info("Cart has been cleared");
+  };
+
+  const getItemCount = () => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
   return (
-    <CartContext.Provider 
-      value={{ 
-        cartItems, 
-        addToCart, 
-        removeFromCart, 
-        updateQuantity, 
-        clearCart,
+    <CartContext.Provider
+      value={{
+        cartItems,
         cartTotal,
-        itemCount
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        getItemCount,
       }}
     >
       {children}
     </CartContext.Provider>
   );
-};
-
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
-  return context;
 };

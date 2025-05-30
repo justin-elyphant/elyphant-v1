@@ -5,6 +5,8 @@ import { useCart } from "@/contexts/CartContext";
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { createOrder } from "@/services/orderService";
 
 // Import our newly created components
 import CheckoutHeader from "./CheckoutHeader";
@@ -20,7 +22,7 @@ import ShippingOptionsForm from "./ShippingOptionsForm";
 import GiftScheduling from "./GiftScheduling";
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal } = useCart();
+  const { cartItems, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const { 
     activeTab, 
@@ -37,26 +39,90 @@ const CheckoutPage = () => {
     canPlaceOrder
   } = useCheckoutState();
 
+  const getShippingCost = () => {
+    return checkoutData.shippingMethod === "express" ? 12.99 : 4.99;
+  };
+
+  const getTaxAmount = () => {
+    // Simple tax calculation - 8.25% for demonstration
+    return cartTotal * 0.0825;
+  };
+
+  const getGiftWrappingCost = () => {
+    return checkoutData.giftOptions.isGift && checkoutData.giftOptions.giftWrapping ? 4.99 : 0;
+  };
+
+  const getTotalAmount = () => {
+    return cartTotal + getShippingCost() + getTaxAmount() + getGiftWrappingCost();
+  };
+
   const handlePlaceOrder = async () => {
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
-      // Here we would integrate with the payment processor 
-      // and potentially the Zinc API for fulfillment
+      // Create payment intent
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+        'create-payment-intent',
+        {
+          body: {
+            amount: getTotalAmount(),
+            currency: 'usd',
+            metadata: {
+              order_type: 'marketplace',
+              items_count: cartItems.length
+            }
+          }
+        }
+      );
+
+      if (paymentError) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      // Create order in database
+      const order = await createOrder({
+        cartItems,
+        subtotal: cartTotal,
+        shippingCost: getShippingCost(),
+        taxAmount: getTaxAmount(),
+        totalAmount: getTotalAmount(),
+        shippingInfo: checkoutData.shippingInfo,
+        giftOptions: checkoutData.giftOptions,
+        paymentIntentId: paymentData.payment_intent_id
+      });
+
+      // For demo purposes, simulate successful payment
+      // In a real implementation, you would use Stripe Elements for payment
       
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For now, we'll just redirect to success page
+      // Clear cart and redirect to success page
+      clearCart();
       toast.success("Order placed successfully!");
-      navigate("/purchase-success?order_id=demo-" + Date.now());
+      navigate(`/order-confirmation/${order.id}`);
+      
     } catch (error) {
-      toast.error("Failed to process order. Please try again.");
       console.error("Checkout error:", error);
+      toast.error("Failed to process order. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
+
+  // Redirect if cart is empty
+  React.useEffect(() => {
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty");
+      navigate("/marketplace");
+    }
+  }, [cartItems.length, navigate]);
+
+  if (cartItems.length === 0) {
+    return null;
+  }
 
   // Make sure gift scheduling values are properly converted to boolean
   const formattedGiftScheduling = {

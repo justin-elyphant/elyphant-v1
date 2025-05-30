@@ -57,6 +57,16 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
     onDelete(wishlist.id);
   };
 
+  const handleStartShopping = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate('/marketplace');
+  };
+
+  const handleAddMoreItems = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate('/marketplace');
+  };
+
   // Determine badge styles based on priority
   const getPriorityBadge = () => {
     if (!wishlist.priority) return null;
@@ -177,11 +187,13 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
             <p className="text-muted-foreground text-center mb-4">
               This wishlist is empty. Start adding items!
             </p>
-            <Button asChild variant="default" className="w-full bg-purple-600 hover:bg-purple-700">
-              <Link to="/marketplace">
-                <ShoppingBag className="mr-2 h-4 w-4" />
-                Start Shopping
-              </Link>
+            <Button 
+              variant="default" 
+              className="w-full bg-purple-600 hover:bg-purple-700"
+              onClick={handleStartShopping}
+            >
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              Start Shopping
             </Button>
           </div>
         )}
@@ -205,11 +217,14 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
         </div>
         
         {wishlist.items.length > 0 && (
-          <Button asChild variant="default" size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
-            <Link to="/marketplace">
-              <ShoppingBag className="mr-2 h-3 w-3" />
-              Add More Items
-            </Link>
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="w-full bg-purple-600 hover:bg-purple-700"
+            onClick={handleAddMoreItems}
+          >
+            <ShoppingBag className="mr-2 h-3 w-3" />
+            Add More Items
           </Button>
         )}
       </CardFooter>

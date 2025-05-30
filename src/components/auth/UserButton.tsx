@@ -18,6 +18,31 @@ const UserButton = () => {
   
   const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
   
+  // Extract user's name with fallback logic
+  const getUserName = () => {
+    if (!user) return "My";
+    
+    // Try user metadata name fields
+    if (user.user_metadata?.name) return user.user_metadata.name;
+    if (user.user_metadata?.full_name) return user.user_metadata.full_name;
+    
+    // Try to extract from email
+    if (user.email) {
+      const emailName = user.email.split('@')[0];
+      // Capitalize first letter and replace dots/underscores with spaces
+      return emailName
+        .replace(/[._]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+    
+    return "My";
+  };
+
+  const userName = getUserName();
+  const wishlistsLabel = userName === "My" ? "My Wishlists" : `${userName}'s Wishlists`;
+  
   const handleSignOut = async () => {
     await signOut();
   };
@@ -79,7 +104,7 @@ const UserButton = () => {
         
         <DropdownMenuItem onClick={() => navigate("/wishlists")}>
           <Heart className="mr-2 h-4 w-4" />
-          <span>My Wishlists</span>
+          <span>{wishlistsLabel}</span>
         </DropdownMenuItem>
         
         <DropdownMenuItem onClick={() => navigate("/settings")}>

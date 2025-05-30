@@ -32,6 +32,8 @@ import ZincIntegration from "@/pages/ZincIntegration";
 import Cart from "@/pages/Cart";
 import OnboardingPage from "@/pages/OnboardingPage";
 import OnboardingGiftorFlow from "@/components/onboarding/OnboardingGiftorFlow";
+import TrunklineLoginPage from "@/pages/TrunklineLogin";
+import Trunkline from "@/pages/Trunkline";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +59,10 @@ function App() {
                     
                     {/* Public Marketplace - no authentication required */}
                     <Route path="/marketplace" element={<Marketplace />} />
+                    
+                    {/* Trunkline routes */}
+                    <Route path="/trunkline-login" element={<TrunklineLoginPage />} />
+                    <Route path="/trunkline" element={<Trunkline />} />
                     
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={

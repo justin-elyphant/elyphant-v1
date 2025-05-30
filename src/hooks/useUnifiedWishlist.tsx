@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,27 +21,41 @@ export const useUnifiedWishlist = () => {
 
     try {
       setLoading(true);
+      console.log('Loading wishlists for user:', user.id);
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('wishlists')
         .eq('id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error loading wishlists:', error);
-        // Only show toast error if it's not a "no rows found" error
-        if (error.code !== 'PGRST116') {
-          toast.error('Failed to load wishlists');
+        
+        // Handle different error cases appropriately
+        if (error.code === 'PGRST116') {
+          // No profile found - create one with empty wishlists
+          console.log('No profile found, creating default wishlist structure');
+          const defaultWishlist = createDefaultWishlist();
+          await syncWishlistsToProfile([defaultWishlist]);
+          setWishlists([defaultWishlist]);
+          setWishlistedProducts([]);
+        } else {
+          // Other database errors - log but don't show persistent toasts
+          console.warn('Database error while loading wishlists, using empty state:', error.message);
+          setWishlists([]);
+          setWishlistedProducts([]);
         }
         setLoading(false);
         return;
       }
 
-      // Handle case where profile exists but wishlists is null
+      // Handle successful response
       const userWishlists = Array.isArray(profile?.wishlists) 
         ? profile.wishlists.map(normalizeWishlist)
         : [];
 
+      console.log('Loaded wishlists successfully:', userWishlists.length);
       setWishlists(userWishlists);
 
       // Extract all wishlisted product IDs
@@ -50,14 +63,30 @@ export const useUnifiedWishlist = () => {
         list.items?.map(item => item.product_id) || []
       );
       setWishlistedProducts(productIds);
+
     } catch (error) {
-      console.error('Error loading wishlists:', error);
-      // Don't show persistent error toasts - just log them
-      console.warn('Wishlist loading failed, but continuing silently');
+      console.error('Unexpected error loading wishlists:', error);
+      // For unexpected errors, fail silently to avoid persistent toasts
+      setWishlists([]);
+      setWishlistedProducts([]);
     } finally {
       setLoading(false);
     }
   }, [user]);
+
+  // Helper function to create a default wishlist
+  const createDefaultWishlist = (): Wishlist => {
+    return normalizeWishlist({
+      id: crypto.randomUUID(),
+      user_id: user?.id || '',
+      title: 'My Wishlist',
+      description: 'My default wishlist',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      is_public: false,
+      items: []
+    });
+  };
 
   // Load wishlists on mount and when user changes
   useEffect(() => {

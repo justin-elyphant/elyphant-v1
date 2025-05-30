@@ -434,6 +434,7 @@ export type Database = {
           shipping_address: Json | null
           updated_at: string | null
           username: string | null
+          wishlists: Json | null
         }
         Insert: {
           ai_interaction_data?: Json | null
@@ -455,6 +456,7 @@ export type Database = {
           shipping_address?: Json | null
           updated_at?: string | null
           username?: string | null
+          wishlists?: Json | null
         }
         Update: {
           ai_interaction_data?: Json | null
@@ -476,6 +478,7 @@ export type Database = {
           shipping_address?: Json | null
           updated_at?: string | null
           username?: string | null
+          wishlists?: Json | null
         }
         Relationships: []
       }

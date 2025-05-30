@@ -1,10 +1,10 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import ProductImage from "@/components/marketplace/product-item/ProductImage";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
-import ProductRating from "@/components/shared/ProductRating";
 import { useNavigate } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
@@ -16,8 +16,6 @@ type Collection = {
   url?: string;
   category?: string;
   searchTerm?: string;
-  rating?: number;
-  reviewCount?: number;
   description?: string;
 };
 
@@ -83,7 +81,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     );
   }
 
-  // Add sample ratings to collections for display purposes, and inject luxury gift image & fallback description
+  // Add luxury gift image & fallback description
   const enhancedCollections = collections.map(collection => {
     let patchedImage = collection.image;
     if (collection.name && collection.name.toLowerCase().includes("luxury gifts")) {
@@ -95,8 +93,6 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     return {
       ...collection,
       image: patchedImage,
-      rating: collection.rating || 4.7 + (Math.random() * 0.3),
-      reviewCount: collection.reviewCount || Math.floor(100 + Math.random() * 900),
       description: fallbackDescription,
     };
   });
@@ -147,13 +143,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                 <p className="text-white text-xs md:text-sm mb-2 opacity-95 drop-shadow pointer-events-auto whitespace-pre-line">
                   {collection.description}
                 </p>
-                <div className="flex items-center">
-                  <ProductRating
-                    rating={collection.rating}
-                    reviewCount={collection.reviewCount ? String(collection.reviewCount) : undefined}
-                    size="md"
-                    className="text-white drop-shadow mr-2 pointer-events-auto"
-                  />
+                <div className="flex items-center justify-end">
                   <div className="flex items-center text-white font-medium ml-auto pointer-events-auto">
                     <span>
                       {loadingCollection === collection.id

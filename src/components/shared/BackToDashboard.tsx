@@ -4,10 +4,12 @@ import StandardBackButton from "./StandardBackButton";
 
 const BackToDashboard = () => {
   return (
-    <StandardBackButton 
-      to="/dashboard" 
-      text="Back to Dashboard" 
-    />
+    <div className="flex justify-start">
+      <StandardBackButton 
+        to="/dashboard" 
+        text="Back to Dashboard" 
+      />
+    </div>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -11,13 +12,15 @@ interface ProductDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userData: any;
+  onWishlistChange?: () => void;
 }
 
 const ProductDetailsDialog = ({
   product,
   open,
   onOpenChange,
-  userData
+  userData,
+  onWishlistChange
 }: ProductDetailsDialogProps) => {
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
@@ -33,18 +36,22 @@ const ProductDetailsDialog = ({
       list.items.some(item => item.product_id === (product.product_id || product.id))
     );
 
-  // Use loadWishlists instead of reloadWishlists
-  const reloadWishlists = loadWishlists;
+  // Handle wishlist changes and notify parent
+  const handleWishlistChange = async () => {
+    console.log('ProductDetailsDialog - Wishlist changed, reloading data');
+    await loadWishlists();
+    if (onWishlistChange) {
+      onWishlistChange();
+    }
+  };
 
-  // 1. Use the shared wishlist context:
-  // 2. Check if the product is in ANY wishlist
-  // 3. Update quantity
+  // Update quantity
   const increaseQuantity = () => setQuantity(prev => Math.min(prev + 1, 10));
   const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
 
   if (!product) return null;
 
-  // 4. Share function (unchanged)
+  // Share function
   const handleShareProduct = () => {
     if (navigator.share) {
       navigator.share({
@@ -55,7 +62,7 @@ const ProductDetailsDialog = ({
     }
   };
 
-  // 5. Product features extraction (unchanged)
+  // Product features extraction
   const productFeatures = Array.isArray(product.product_details)
     ? product.product_details.map(detail => detail?.value || detail?.toString())
     : [];
@@ -64,13 +71,13 @@ const ProductDetailsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden max-h-[90vh]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          {/* Pass isWishlisted to the image section */}
+          {/* Pass isWishlisted and callback to the image section */}
           <ProductDetailsImageSection
             product={product}
             isHeartAnimating={isHeartAnimating}
             onShare={handleShareProduct}
             isWishlisted={isWishlisted}
-            reloadWishlists={reloadWishlists}
+            reloadWishlists={handleWishlistChange}
           />
 
           {/* Product Details Section */}
@@ -109,7 +116,7 @@ const ProductDetailsDialog = ({
               onDecrease={decreaseQuantity}
               isHeartAnimating={isHeartAnimating}
               isWishlisted={isWishlisted}
-              reloadWishlists={reloadWishlists}
+              reloadWishlists={handleWishlistChange}
             />
           </div>
         </div>

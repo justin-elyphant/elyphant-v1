@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -161,7 +160,7 @@ export const useUnifiedWishlist = () => {
     }
   }, [user, wishlists, syncWishlistsToProfile]);
 
-  // Add product to wishlist
+  // Add product to wishlist with immediate state update
   const addToWishlist = useCallback(async (wishlistId: string, product: any): Promise<boolean> => {
     if (!user) {
       toast.error('You must be logged in to add to wishlists');
@@ -207,24 +206,23 @@ export const useUnifiedWishlist = () => {
 
       console.log('Adding item to wishlist:', newItem, 'Updated wishlists:', updatedWishlists);
 
-      // Sync to database first
-      await syncWishlistsToProfile(updatedWishlists);
-      
-      // Update local state only after successful sync
+      // Update local state immediately for instant UI feedback
       setWishlists(updatedWishlists);
       setWishlistedProducts(prev => [...prev, product.id]);
-      
-      // Force reload to ensure data consistency
-      await loadWishlists();
+
+      // Sync to database
+      await syncWishlistsToProfile(updatedWishlists);
       
       toast.success('Added to wishlist');
       return true;
     } catch (error) {
       console.error('Error adding to wishlist:', error);
+      // Revert state on error
+      await loadWishlists();
       toast.error('Failed to add to wishlist. Please try again.');
       return false;
     }
-  }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
+  }, [user, wishlists, syncWishlistsToProfile]);
 
   // Remove product from wishlist
   const removeFromWishlist = useCallback(async (wishlistId: string, itemId: string): Promise<boolean> => {

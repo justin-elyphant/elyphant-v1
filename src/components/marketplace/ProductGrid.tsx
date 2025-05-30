@@ -41,18 +41,26 @@ const ProductGrid = ({
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+  const [wishlistRefreshKey, setWishlistRefreshKey] = useState(0);
   const { addItem, recentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
   const [userData] = useLocalStorage("userData", null);
   const { user } = useAuth();
   
   // Use our unified wishlist system
-  const { isProductWishlisted, quickAddToWishlist } = useUnifiedWishlist();
+  const { isProductWishlisted, quickAddToWishlist, loadWishlists } = useUnifiedWishlist();
   
   // Update sorted products when products or sort option changes
   useEffect(() => {
     setSortedProducts(sortProducts(products, sortOption));
   }, [products, sortOption]);
+
+  // Handle wishlist state changes from modal
+  const handleWishlistChange = async () => {
+    console.log('ProductGrid - Wishlist changed, refreshing state');
+    await loadWishlists();
+    setWishlistRefreshKey(prev => prev + 1);
+  };
 
   // Generate product badges for visual indicators
   const getProductStatus = (product: Product): { badge: string; color: string } | null => {
@@ -137,6 +145,8 @@ const ProductGrid = ({
     };
 
     await quickAddToWishlist(productData);
+    // Trigger local state refresh
+    setWishlistRefreshKey(prev => prev + 1);
   };
 
   const isFavorited = (productId: string) => {
@@ -166,6 +176,7 @@ const ProductGrid = ({
         open={dlgOpen}
         onOpenChange={setDlgOpen}
         userData={userData}
+        onWishlistChange={handleWishlistChange}
       />
 
       <SignUpDialog

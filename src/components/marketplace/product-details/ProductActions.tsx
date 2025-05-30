@@ -15,6 +15,7 @@ interface ProductActionsProps {
   onAddToCart?: () => void;
   isInWishlist?: boolean;
   userData?: any;
+  onWishlistChange?: () => void;
 }
 
 const ProductActions = ({
@@ -23,6 +24,7 @@ const ProductActions = ({
   onAddToCart,
   isInWishlist = false,
   userData,
+  onWishlistChange,
 }: ProductActionsProps) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -37,6 +39,13 @@ const ProductActions = ({
   const handleWishlistClick = () => {
     if (!user) {
       setShowSignUpDialog(true);
+    }
+  };
+
+  const handleWishlistAdded = () => {
+    console.log('ProductActions - Wishlist added callback');
+    if (onWishlistChange) {
+      onWishlistChange();
     }
   };
 
@@ -67,7 +76,7 @@ const ProductActions = ({
                   ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
                   : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
                 }`}
-              onAdded={undefined}
+              onAdded={handleWishlistAdded}
             />
           ) : (
             <Button

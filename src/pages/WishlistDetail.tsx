@@ -29,7 +29,7 @@ import { Loader2 } from "lucide-react";
 const WishlistDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { wishlists, loading, deleteWishlist } = useUnifiedWishlist();
+  const { wishlists, loading, deleteWishlist, loadWishlists } = useUnifiedWishlist();
   const { removeFromWishlist, updateWishlistSharing } = useWishlist();
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -61,6 +61,8 @@ const WishlistDetail = () => {
       setRemovingItemId(item.id);
       const success = await removeFromWishlist(wishlist.id, item.id);
       if (success) {
+        // Force reload of wishlists to ensure UI updates immediately
+        await loadWishlists();
         toast.success("Item removed from wishlist");
       }
     } catch (error) {

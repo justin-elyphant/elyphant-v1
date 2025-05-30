@@ -23,7 +23,7 @@ type CollectionProps = {
   collections: Collection[];
 };
 
-const LUXURY_GIFTS_IMAGE = "/lovable-uploads/448b42d0-0ea9-433b-8d9b-ca8c143ed3dc.png";
+const LUXURY_GIFTS_IMAGE = "/lovable-uploads/cd5d3e79-a4b5-43b7-9931-7364da7e0326.png";
 const GIFTS_FOR_HIM_IMAGE = "/lovable-uploads/5bb40cf0-f40c-4629-8a3c-38deaf117a8c.png";
 
 // Default descriptions

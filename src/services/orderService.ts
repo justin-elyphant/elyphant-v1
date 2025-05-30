@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
+import { ShippingInfo } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
 
 export interface CreateOrderData {
@@ -10,7 +9,6 @@ export interface CreateOrderData {
   taxAmount: number;
   totalAmount: number;
   shippingInfo: ShippingInfo;
-  giftOptions: GiftOptions;
   paymentIntentId?: string;
 }
 
@@ -24,7 +22,6 @@ export interface Order {
   total_amount: number;
   currency: string;
   shipping_info: ShippingInfo;
-  gift_options: GiftOptions;
   stripe_payment_intent_id?: string;
   zinc_order_id?: string;
   tracking_number?: string;
@@ -61,7 +58,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       tax_amount: orderData.taxAmount,
       total_amount: orderData.totalAmount,
       shipping_info: orderData.shippingInfo,
-      gift_options: orderData.giftOptions,
+      gift_options: null, // Set gift options to null since we're removing gifting
       stripe_payment_intent_id: orderData.paymentIntentId,
       status: 'pending',
       payment_status: 'pending'

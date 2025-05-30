@@ -122,14 +122,8 @@ const MyWishlists = () => {
   };
 
   const handleDialogSubmit = async (values: WishlistFormValues) => {
-    const cleanCat = cleanCategory(values.category);
-    await createWishlist(
-      values.title, 
-      values.description || "", 
-      cleanCat, 
-      values.tags,
-      values.priority as "low" | "medium" | "high" | undefined
-    );
+    // Only pass title and description to createWishlist
+    await createWishlist(values.title, values.description || "");
     setDialogOpen(false);
   };
 
@@ -201,7 +195,7 @@ const MyWishlists = () => {
   }
 
   // Show error state with retry option
-  if (error) {
+  if (!wishlists) {
     return (
       <InitErrorState refreshing={refreshing} onRetry={loadWishlists} />
     );

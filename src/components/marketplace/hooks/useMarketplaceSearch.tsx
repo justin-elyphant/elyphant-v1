@@ -15,11 +15,12 @@ export const useMarketplaceSearch = () => {
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const lastSearchTermRef = useRef<string | null>(null);
   const searchInProgressRef = useRef<boolean>(false);
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
   
   // Get our custom hooks
   const { 
     searchZincProducts, 
-    isLoading, 
+    isLoading: searchIsLoading, 
     toastShownRef, 
     searchIdRef,
     RESULTS_LIMIT 
@@ -32,6 +33,9 @@ export const useMarketplaceSearch = () => {
   } = useFilterProducts(products, RESULTS_LIMIT);
   
   const { getPageInfo } = usePageInfo(currentCategory, filteredProducts);
+
+  // Combined loading state
+  const isLoading = isLocalLoading || searchIsLoading || searchInProgressRef.current;
 
   // Check for a stored product from search
   useEffect(() => {
@@ -69,6 +73,7 @@ export const useMarketplaceSearch = () => {
       searchIdRef.current = null;
       lastSearchTermRef.current = null;
       searchInProgressRef.current = false;
+      setIsLocalLoading(false);
       // Dismiss any remaining toasts on cleanup
       toast.dismiss();
     };
@@ -80,6 +85,8 @@ export const useMarketplaceSearch = () => {
     const searchParam = params.get("search");
     const brandParam = params.get("brand");
     
+    console.log('useMarketplaceSearch: URL params changed', { categoryParam, searchParam, brandParam });
+    
     // Prevent duplicate searches
     if (searchInProgressRef.current) {
       console.log('Search already in progress, skipping duplicate request');
@@ -88,6 +95,8 @@ export const useMarketplaceSearch = () => {
     
     // Only process if the search parameter has actually changed
     if (searchParam !== lastSearchTermRef.current) {
+      console.log('Search parameter changed from', lastSearchTermRef.current, 'to', searchParam);
+      
       // Update last search term
       lastSearchTermRef.current = searchParam;
       
@@ -105,37 +114,68 @@ export const useMarketplaceSearch = () => {
       
       // If there's a search term in the URL, search for products using Zinc API
       if (searchParam) {
-        // Set search in progress flag
+        console.log('Starting search for:', searchParam);
+        
+        // Set search in progress flag and local loading
         searchInProgressRef.current = true;
+        setIsLocalLoading(true);
         
         // Immediately dismiss any existing toasts
         toast.dismiss();
         
         searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
+          console.log('Search completed, filtering results');
           filterBySearch(searchParam, amazonProducts);
         }).catch(error => {
           console.error('Search error:', error);
+          toast.error("Search Error", {
+            description: "Error searching for products. Please try again.",
+            id: "search-error"
+          });
         }).finally(() => {
-          // Always clear the search in progress flag
+          console.log('Search finalized, clearing loading states');
+          // Always clear the search in progress flag and local loading
           searchInProgressRef.current = false;
+          setIsLocalLoading(false);
         });
       } else if (brandParam) {
         // If there's a brand parameter but no search, we'll handle it elsewhere
         console.log(`Using brand parameter: ${brandParam}`);
+        setIsLocalLoading(false);
+        searchInProgressRef.current = false;
       } else if (categoryParam) {
         // Filter by category if no search term or brand
+        console.log('Filtering by category:', categoryParam);
         filterByCategory(categoryParam);
+        setIsLocalLoading(false);
+        searchInProgressRef.current = false;
       } else {
         // No search term, brand, or category, show all products
+        console.log('Showing all products');
         filterByCategory(null);
+        setIsLocalLoading(false);
+        searchInProgressRef.current = false;
       }
+    } else if (categoryParam !== currentCategory) {
+      // Category changed but search term is the same
+      console.log('Category changed to:', categoryParam);
+      setCurrentCategory(categoryParam);
+      if (categoryParam && !searchParam) {
+        filterByCategory(categoryParam);
+      }
+      setIsLocalLoading(false);
+      searchInProgressRef.current = false;
+    } else {
+      // No changes, ensure loading is cleared
+      setIsLocalLoading(false);
+      searchInProgressRef.current = false;
     }
   }, [location.search, products, setProducts]);
 
   return {
     currentCategory,
     filteredProducts,
-    isLoading: isLoading || searchInProgressRef.current,
+    isLoading,
     getPageInfo
   };
 };

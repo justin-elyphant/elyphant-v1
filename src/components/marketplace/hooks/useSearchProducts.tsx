@@ -14,8 +14,11 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const searchZincProducts = async (searchParam: string, searchChanged: boolean) => {
+    console.log('searchZincProducts called with:', { searchParam, searchChanged });
+    
     // Cancel any previous search
     if (abortControllerRef.current) {
+      console.log('Aborting previous search');
       abortControllerRef.current.abort();
     }
     
@@ -32,6 +35,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
     toast.dismiss();
     
     setIsLoading(true);
+    console.log('Set isLoading to true');
     
     try {
       console.log(`Searching for products with term: "${searchParam}"`);
@@ -44,9 +48,11 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       });
       
       const results = await searchProducts(searchParam);
+      console.log('Search results received:', results.length);
       
       // Check if search was aborted
       if (abortControllerRef.current?.signal.aborted) {
+        console.log('Search was aborted');
         return [];
       }
       
@@ -102,6 +108,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
         
         return amazonProducts;
       } else {
+        console.log('No results found');
         // Dismiss loading toast
         toast.dismiss(loadingToastId);
         
@@ -144,6 +151,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       
       return [];
     } finally {
+      console.log('Search finally block - clearing loading state');
       // Always clear loading state
       setIsLoading(false);
       

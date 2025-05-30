@@ -28,10 +28,12 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   const isMobile = useIsMobile();
   const { isProductWishlisted } = useUnifiedWishlist();
 
-  // Always live-calculate wishlist state
+  // Always live-calculate wishlist state - this ensures we show the correct state
   const computedIsWishlisted = typeof isWishlisted === "boolean"
     ? isWishlisted
     : isProductWishlisted(product.id);
+
+  console.log('WishlistSelectionPopoverButton - Product:', product.id, 'isWishlisted:', computedIsWishlisted);
 
   const triggerNode = (
     <Button

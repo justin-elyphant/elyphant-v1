@@ -5,15 +5,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Loader2, PlusCircle, Heart } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import WishlistCategoryBadge from "../gifting/wishlist/categories/WishlistCategoryBadge";
+import { Separator } from "@/components/ui/separator";
+import { Check, Plus, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useWishlistPopoverLogic } from "./hooks/useWishlistPopoverLogic";
-import { toast } from "sonner";
 
 interface WishlistSelectionPopoverProps {
   productId: string;
@@ -21,25 +24,21 @@ interface WishlistSelectionPopoverProps {
   productImage?: string;
   productPrice?: number;
   productBrand?: string;
-  onClose?: () => void;
-  trigger?: React.ReactNode;
+  trigger: React.ReactNode;
   className?: string;
+  onClose?: () => void;
 }
 
-const WishlistSelectionPopover = ({
+const WishlistSelectionPopover: React.FC<WishlistSelectionPopoverProps> = ({
   productId,
   productName,
   productImage,
   productPrice,
   productBrand,
-  onClose,
   trigger,
-  className
-}: WishlistSelectionPopoverProps) => {
-  const isMobile = useIsMobile();
-  const navigate = useNavigate();
-
-  // --- HOOK handles all business logic and state ---
+  className,
+  onClose,
+}) => {
   const {
     wishlists,
     open,
@@ -59,144 +58,119 @@ const WishlistSelectionPopover = ({
     productImage,
     productPrice,
     productBrand,
-    onClose
+    onClose: () => {
+      if (onClose) onClose();
+      setOpen(false);
+    }
   });
-
-  const popoverContentClass = cn(
-    "p-0",
-    className,
-    isMobile ? "w-full max-w-none rounded-none border-t border-gray-200 fixed bottom-0 left-0 right-0 min-h-[240px] z-[120]" : "w-80"
-  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        {trigger || (
-          <Button 
-            size="sm" 
-            variant="outline"
-            className={cn("flex items-center gap-1", className)}
-          >
-            <Heart className="h-4 w-4" />
-            Add to Wishlist
-          </Button>
-        )}
+        {trigger}
       </PopoverTrigger>
-      <PopoverContent className={popoverContentClass} align={isMobile ? "center" : "end"} side={isMobile ? "top" : "bottom"}>
-        <div className="p-4 border-b flex items-center justify-between">
+      <PopoverContent className={`w-80 p-0 ${className}`} align="end">
+        <div className="p-3 border-b">
           <h4 className="font-medium">Add to Wishlist</h4>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setOpen(false)}
-            aria-label="Close"
-            className={isMobile ? "" : "hidden"}
-          >
-            <span className="text-xl">&times;</span>
-          </Button>
+          <p className="text-sm text-muted-foreground mt-1">{productName}</p>
         </div>
         
-        {/* Choose wishlist */}
-        <div className="max-h-60 overflow-y-auto divide-y">
-          {wishlists?.length > 0 ? (
+        <div className="max-h-60 overflow-y-auto">
+          {wishlists && wishlists.length > 0 ? (
             wishlists.map((wishlist) => {
-              const alreadyInWishlist = isInWishlist(wishlist.id);
-
+              const inThisWishlist = isInWishlist(wishlist.id);
+              const isAdding = addingToWishlist === wishlist.id;
+              
               return (
-                <div 
-                  key={wishlist.id} 
-                  className={cn(
-                    "p-3 hover:bg-muted/50",
-                    alreadyInWishlist && "bg-muted/30"
-                  )}
-                >
+                <div key={wishlist.id} className="px-3 py-2 hover:bg-muted/50">
                   <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1">
-                      <div className="font-medium text-sm">{wishlist.title}</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {wishlist.category && (
-                          <WishlistCategoryBadge 
-                            category={wishlist.category}
-                            size="sm"
-                          />
-                        )}
-                        {alreadyInWishlist && (
-                          <Badge variant="secondary" className="text-xs">
-                            Already added
-                          </Badge>
-                        )}
-                      </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{wishlist.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
+                        {wishlist.items?.length || 0} items
                       </p>
                     </div>
-                    <Button
-                      size="sm"
-                      variant={alreadyInWishlist ? "secondary" : "default"}
-                      disabled={alreadyInWishlist || addingToWishlist === wishlist.id}
-                      onClick={() => handleAddToWishlist(wishlist.id)}
-                    >
-                      {addingToWishlist === wishlist.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : alreadyInWishlist ? (
-                        "Added"
-                      ) : (
-                        "Add"
-                      )}
-                    </Button>
+                    {inThisWishlist ? (
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 mr-1 text-green-600" />
+                        Already added
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddToWishlist(wishlist.id)}
+                        disabled={isAdding}
+                        className="h-7"
+                      >
+                        {isAdding ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          "Add"
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                You don't have any wishlists yet.
-              </p>
+            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+              No wishlists yet. Create your first one!
             </div>
           )}
         </div>
-
-        {/* Create new wishlist inline */}
-        {!showNewDialog && (
-          <div className="p-3 border-t">
-            <Button 
-              variant="outline" 
-              className="w-full flex items-center justify-center"
-              onClick={() => setShowNewDialog(true)}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Create New Wishlist
-            </Button>
-          </div>
-        )}
-        {showNewDialog && (
-          <div className="p-3 border-t">
-            <input
-              type="text"
-              className="input input-bordered w-full mb-2 border-gray-300 rounded px-2 py-2 text-sm"
-              placeholder="Wishlist name..."
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              disabled={creating}
-            />
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="flex-1"
-                disabled={creating}
-                onClick={handleCreateWishlist}
-              >{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}</Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="flex-1"
-                onClick={() => setShowNewDialog(false)}
-                disabled={creating}
-              >Cancel</Button>
-            </div>
-          </div>
-        )}
+        
+        <Separator />
+        
+        <div className="p-3">
+          <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full">
+                <Plus className="mr-2 h-3 w-3" />
+                Create New Wishlist
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create New Wishlist</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Input
+                    placeholder="Enter wishlist name"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !creating) {
+                        handleCreateWishlist();
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowNewDialog(false)}
+                    className="flex-1"
+                    disabled={creating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateWishlist}
+                    className="flex-1"
+                    disabled={creating || !newName.trim()}
+                  >
+                    {creating ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Create & Add
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </PopoverContent>
     </Popover>
   );

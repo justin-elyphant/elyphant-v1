@@ -14,23 +14,8 @@ export interface ShippingInfo {
   country: string;
 }
 
-export interface GiftOptions {
-  isGift: boolean;
-  recipientName: string;
-  giftMessage: string;
-  giftWrapping: boolean;
-}
-
-export interface GiftSchedulingOptions {
-  scheduleDelivery: boolean;
-  sendGiftMessage: boolean;
-  isSurprise?: boolean;
-}
-
 export interface CheckoutData {
   shippingInfo: ShippingInfo;
-  giftOptions: GiftOptions;
-  giftScheduling: GiftSchedulingOptions;
   shippingMethod: string;
   paymentMethod: string;
 }
@@ -50,16 +35,6 @@ export const useCheckoutState = () => {
       state: "",
       zipCode: "",
       country: "United States"
-    },
-    giftOptions: {
-      isGift: false,
-      recipientName: "",
-      giftMessage: "",
-      giftWrapping: false
-    },
-    giftScheduling: {
-      scheduleDelivery: false,
-      sendGiftMessage: false
     },
     shippingMethod: "standard",
     paymentMethod: "card"
@@ -99,39 +74,6 @@ export const useCheckoutState = () => {
     }));
   };
 
-  const handleUpdateGiftOptions = (data: Partial<GiftOptions>) => {
-    setCheckoutData(prev => ({
-      ...prev,
-      giftOptions: {
-        ...prev.giftOptions,
-        ...data
-      }
-    }));
-  };
-
-  const handleUpdateGiftScheduling = (data: Partial<GiftSchedulingOptions>) => {
-    console.log("Updating gift scheduling with:", data);
-    
-    setCheckoutData(prev => {
-      const newGiftScheduling = { ...prev.giftScheduling };
-      
-      // Update only the fields that are provided
-      Object.keys(data).forEach(key => {
-        const typedKey = key as keyof GiftSchedulingOptions;
-        if (data[typedKey] !== undefined) {
-          newGiftScheduling[typedKey] = data[typedKey] as any;
-        }
-      });
-      
-      console.log("New gift scheduling state:", newGiftScheduling);
-      
-      return {
-        ...prev,
-        giftScheduling: newGiftScheduling
-      };
-    });
-  };
-
   const handleShippingMethodChange = (method: string) => {
     setCheckoutData(prev => ({
       ...prev,
@@ -162,8 +104,6 @@ export const useCheckoutState = () => {
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
-    handleUpdateGiftOptions,
-    handleUpdateGiftScheduling,
     handleShippingMethodChange,
     handlePaymentMethodChange,
     canProceedToPayment,

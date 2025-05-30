@@ -3,8 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Product } from "@/types/product";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, Gift } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import TransparentPriceBreakdown from "./TransparentPriceBreakdown";
 
 interface OrderSummaryProps {
@@ -23,17 +22,11 @@ interface OrderSummaryProps {
 const OrderSummary: React.FC<OrderSummaryProps> = ({
   cartItems,
   cartTotal,
-  shippingMethod,
-  giftOptions
+  shippingMethod
 }) => {
   // Calculate shipping cost based on method
   const getShippingCost = () => {
     return shippingMethod === "express" ? 12.99 : 4.99;
-  };
-  
-  // Calculate gift wrapping cost
-  const getGiftWrappingCost = () => {
-    return giftOptions.isGift && giftOptions.giftWrapping ? 4.99 : 0;
   };
 
   // Calculate tax (8.25% for demonstration)
@@ -91,25 +84,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           <span>Tax</span>
           <span>${getTaxAmount().toFixed(2)}</span>
         </div>
-
-        {/* Gift Wrapping Fee */}
-        {giftOptions.isGift && giftOptions.giftWrapping && (
-          <div className="flex justify-between text-sm">
-            <span className="flex items-center">
-              Gift Wrapping
-              <Gift className="h-3 w-3 ml-1" />
-            </span>
-            <span>${getGiftWrappingCost().toFixed(2)}</span>
-          </div>
-        )}
-        
-        {giftOptions.isGift && (
-          <div className="flex items-center">
-            <Badge variant="outline" className="bg-pink-50 text-pink-800 border-pink-200 text-xs px-1.5 py-0">
-              <Gift className="h-3 w-3 mr-1" /> Gift
-            </Badge>
-          </div>
-        )}
       </CardContent>
       
       <CardFooter className="pt-0">
@@ -118,7 +92,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           
           <div className="flex justify-between font-semibold text-lg">
             <span>Final Total</span>
-            <span>${(cartTotal + getShippingCost() + getTaxAmount() + getGiftWrappingCost()).toFixed(2)}</span>
+            <span>${(cartTotal + getShippingCost() + getTaxAmount()).toFixed(2)}</span>
           </div>
         </div>
       </CardFooter>

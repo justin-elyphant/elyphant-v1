@@ -17,9 +17,7 @@ import { useCheckoutState } from "./useCheckoutState";
 // Re-use existing components
 import CheckoutForm from "./CheckoutForm";
 import OrderSummary from "./OrderSummary";
-import GiftOptionsForm from "./GiftOptionsForm";
 import ShippingOptionsForm from "./ShippingOptionsForm";
-import GiftScheduling from "./GiftScheduling";
 
 const CheckoutPage = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -31,24 +29,11 @@ const CheckoutPage = () => {
     setIsProcessing,
     handleTabChange, 
     handleUpdateShippingInfo, 
-    handleUpdateGiftOptions, 
-    handleUpdateGiftScheduling, 
     handleShippingMethodChange, 
     handlePaymentMethodChange,
     canProceedToPayment,
     canPlaceOrder
   } = useCheckoutState();
-
-  // Memoize the formatted gift scheduling data to prevent unnecessary re-renders
-  const formattedGiftScheduling = React.useMemo(() => {
-    console.log("Formatting gift scheduling data:", checkoutData.giftScheduling);
-    return {
-      scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
-      sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
-      isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
-        Boolean(checkoutData.giftScheduling.isSurprise) : undefined
-    };
-  }, [checkoutData.giftScheduling]);
 
   const getShippingCost = () => {
     return checkoutData.shippingMethod === "express" ? 12.99 : 4.99;
@@ -59,12 +44,8 @@ const CheckoutPage = () => {
     return cartTotal * 0.0825;
   };
 
-  const getGiftWrappingCost = () => {
-    return checkoutData.giftOptions.isGift && checkoutData.giftOptions.giftWrapping ? 4.99 : 0;
-  };
-
   const getTotalAmount = () => {
-    return cartTotal + getShippingCost() + getTaxAmount() + getGiftWrappingCost();
+    return cartTotal + getShippingCost() + getTaxAmount();
   };
 
   const handlePlaceOrder = async () => {
@@ -103,7 +84,12 @@ const CheckoutPage = () => {
         taxAmount: getTaxAmount(),
         totalAmount: getTotalAmount(),
         shippingInfo: checkoutData.shippingInfo,
-        giftOptions: checkoutData.giftOptions,
+        giftOptions: {
+          isGift: false,
+          recipientName: "",
+          giftMessage: "",
+          giftWrapping: false
+        },
         paymentIntentId: paymentData.payment_intent_id
       });
 
@@ -159,41 +145,9 @@ const CheckoutPage = () => {
               
               <div className="flex justify-end mt-6">
                 <Button 
-                  onClick={() => handleTabChange("gift")} 
+                  onClick={() => handleTabChange("payment")} 
                   disabled={!canProceedToPayment()}
                 >
-                  Continue to Gift Options
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="gift" className="space-y-6">
-              <GiftOptionsForm 
-                giftOptions={checkoutData.giftOptions}
-                onUpdate={handleUpdateGiftOptions}
-              />
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => handleTabChange("shipping")}>
-                  Back to Shipping
-                </Button>
-                <Button onClick={() => handleTabChange("schedule")}>
-                  Continue to Scheduling
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="schedule" className="space-y-6">
-              <GiftScheduling
-                giftScheduling={formattedGiftScheduling}
-                onUpdate={handleUpdateGiftScheduling}
-              />
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => handleTabChange("gift")}>
-                  Back to Gift Options
-                </Button>
-                <Button onClick={() => handleTabChange("payment")}>
                   Continue to Payment
                 </Button>
               </div>
@@ -206,7 +160,7 @@ const CheckoutPage = () => {
                 onPlaceOrder={handlePlaceOrder}
                 isProcessing={Boolean(isProcessing)}
                 canPlaceOrder={Boolean(canPlaceOrder())}
-                onPrevious={() => handleTabChange("schedule")}
+                onPrevious={() => handleTabChange("shipping")}
               />
             </TabsContent>
           </CheckoutTabs>
@@ -217,7 +171,10 @@ const CheckoutPage = () => {
             cartItems={cartItems}
             cartTotal={cartTotal}
             shippingMethod={checkoutData.shippingMethod}
-            giftOptions={checkoutData.giftOptions}
+            giftOptions={{
+              isGift: false,
+              giftWrapping: false
+            }}
           />
         </div>
       </div>

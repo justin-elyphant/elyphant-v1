@@ -18,6 +18,8 @@ import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
 import ShareStatusBadge from "@/components/gifting/wishlist/ShareStatusBadge";
 import WishlistCategoryBadge from "@/components/gifting/wishlist/categories/WishlistCategoryBadge";
 import WishlistShareButton from "@/components/gifting/wishlist/share/WishlistShareButton";
+import StandardBackButton from "@/components/shared/StandardBackButton";
+import StandardBreadcrumb from "@/components/shared/StandardBreadcrumb";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import MainLayout from "@/components/layout/MainLayout";
@@ -53,6 +55,13 @@ const WishlistDetail = () => {
       </div>
     );
   }, [wishlist?.priority]);
+
+  // Breadcrumb items
+  const breadcrumbItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Wishlists", href: "/wishlists" },
+    { label: wishlist?.title || "Wishlist", isCurrentPage: true }
+  ];
 
   const handleRemoveItem = async (item: WishlistItem) => {
     if (!wishlist) return;
@@ -115,12 +124,10 @@ const WishlistDetail = () => {
     return (
       <MainLayout>
         <div className="container mx-auto py-8 px-4">
+          <StandardBreadcrumb items={breadcrumbItems} />
           <div className="flex items-center justify-center h-64 flex-col gap-4">
             <p className="text-muted-foreground">Wishlist not found</p>
-            <Button onClick={() => navigate('/wishlists')} variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Wishlists
-            </Button>
+            <StandardBackButton to="/wishlists" text="Back to Wishlists" />
           </div>
         </div>
       </MainLayout>
@@ -130,17 +137,11 @@ const WishlistDetail = () => {
   return (
     <MainLayout>
       <div className="container mx-auto py-8 px-4">
-        {/* Header with back button */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button 
-            onClick={() => navigate('/wishlists')} 
-            variant="outline" 
-            size="sm"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        </div>
+        {/* Breadcrumb navigation */}
+        <StandardBreadcrumb items={breadcrumbItems} />
+        
+        {/* Back button */}
+        <StandardBackButton to="/wishlists" text="Back to Wishlists" />
 
         {/* Wishlist header card */}
         <Card className="mb-6">

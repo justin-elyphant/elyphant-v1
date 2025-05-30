@@ -72,6 +72,9 @@ const TransparentPriceBreakdown = ({
                   <li>Curated shopping experience</li>
                   <li>Secure payment processing</li>
                   <li>Gift delivery coordination</li>
+                  <li>AI-powered gift recommendations and search</li>
+                  <li>Automated gifting features and scheduling</li>
+                  <li>Smart wishlist management and sharing</li>
                 </ul>
               </div>
             </DialogContent>

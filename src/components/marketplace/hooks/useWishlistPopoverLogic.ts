@@ -45,10 +45,15 @@ export const useWishlistPopoverLogic = ({
       });
 
       if (success) {
+        console.log('useWishlistPopoverLogic - Successfully added to wishlist, reloading data');
         // Reload wishlists to ensure fresh data
         await loadWishlists();
         toast.success(`Added to wishlist`);
-        if (onClose) onClose();
+        
+        // Close popover and trigger callback
+        if (onClose) {
+          onClose();
+        }
         setOpen(false);
       }
     } catch (error) {
@@ -71,6 +76,7 @@ export const useWishlistPopoverLogic = ({
       // Create wishlist
       const newWishlist = await createWishlist(newName.trim());
       if (newWishlist) {
+        console.log('useWishlistPopoverLogic - Created new wishlist, reloading data');
         // Reload wishlists to get fresh data
         await loadWishlists();
         

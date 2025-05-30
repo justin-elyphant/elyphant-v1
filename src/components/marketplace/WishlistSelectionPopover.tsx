@@ -59,6 +59,7 @@ const WishlistSelectionPopover: React.FC<WishlistSelectionPopoverProps> = ({
     productPrice,
     productBrand,
     onClose: () => {
+      console.log('WishlistSelectionPopover - onClose callback triggered');
       if (onClose) onClose();
       setOpen(false);
     }

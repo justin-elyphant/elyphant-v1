@@ -26,14 +26,25 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   isWishlisted,
 }) => {
   const isMobile = useIsMobile();
-  const { isProductWishlisted } = useUnifiedWishlist();
+  const { isProductWishlisted, wishlists } = useUnifiedWishlist();
 
   // Always live-calculate wishlist state - this ensures we show the correct state
   const computedIsWishlisted = typeof isWishlisted === "boolean"
     ? isWishlisted
     : isProductWishlisted(product.id);
 
-  console.log('WishlistSelectionPopoverButton - Product:', product.id, 'isWishlisted:', computedIsWishlisted);
+  console.log('WishlistSelectionPopoverButton - Product:', product.id, 'isWishlisted:', computedIsWishlisted, 'wishlists count:', wishlists.length);
+
+  const handleAdded = () => {
+    console.log('WishlistSelectionPopoverButton - Item added callback');
+    if (onAdded) {
+      onAdded();
+    }
+    // Force a small delay to ensure state propagation
+    setTimeout(() => {
+      console.log('WishlistSelectionPopoverButton - After delay, isWishlisted:', isProductWishlisted(product.id));
+    }, 100);
+  };
 
   const triggerNode = (
     <Button
@@ -60,7 +71,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
       productBrand={product.brand}
       trigger={triggerNode}
       className={isMobile ? "w-full" : ""}
-      onClose={onAdded}
+      onClose={handleAdded}
     />
   );
 };

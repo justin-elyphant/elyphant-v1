@@ -14,6 +14,7 @@ import WishlistButton from "./WishlistButton";
 import ProductPriceSection from "./ProductPriceSection";
 import ProductRatingSection from "./ProductRatingSection";
 import WishlistSelectionPopoverButton from "./wishlist/WishlistSelectionPopoverButton";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 
 interface ProductCardProps {
   product: any;
@@ -30,18 +31,23 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onToggleWishlist,
   onClick
 }) => {
+  const { addItem } = useRecentlyViewed();
+  const { trackProductView } = useProductDataSync();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const isMobile = useIsMobile();
+
+  // Use the unified wishlist system to determine if product is wishlisted
+  const actuallyWishlisted = isProductWishlisted(String(product.product_id || product.id));
+
   React.useEffect(() => {
     console.log("[ProductCard] Rendering product", {
       id: product.product_id || product.id,
       title: product.title || product.name,
+      isWishlisted: actuallyWishlisted,
       isMock: (product.retailer && typeof product.retailer === "string" && product.retailer.toLowerCase().includes("zinc")) ||
               (product.product_id && String(product.product_id).toUpperCase().startsWith("MOCK"))
     });
-  }, [product]);
-
-  const { addItem } = useRecentlyViewed();
-  const { trackProductView } = useProductDataSync();
-  const isMobile = useIsMobile();
+  }, [product, actuallyWishlisted]);
 
   const handleClick = () => {
     if (onClick) onClick();
@@ -52,6 +58,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
       price: product.price
     });
     trackProductView(product);
+  };
+
+  const handleWishlistAdded = () => {
+    console.log('[ProductCard] Wishlist added callback - reloading wishlists');
+    // Reload wishlists to ensure state consistency
+    loadWishlists();
+    if (onToggleWishlist) {
+      onToggleWishlist();
+    }
   };
 
   // Helpers
@@ -68,8 +83,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     <Card 
       className={cn(
         "overflow-hidden transition-all relative group hover:shadow-md cursor-pointer border-2",
-        isWishlisted && "border-pink-200 hover:border-pink-300",
-        !isWishlisted && "hover:border-gray-300"
+        actuallyWishlisted && "border-pink-200 hover:border-pink-300",
+        !actuallyWishlisted && "hover:border-gray-300"
       )}
       onClick={handleClick}
     >
@@ -98,11 +113,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
             }}
             triggerClassName={cn(
               "p-1.5 rounded-full transition-colors",
-              isWishlisted 
+              actuallyWishlisted 
                 ? "bg-pink-100 text-pink-500 hover:bg-pink-200" 
                 : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
             )}
-            onAdded={onToggleWishlist}
+            isWishlisted={actuallyWishlisted}
+            onAdded={handleWishlistAdded}
           />
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -223,6 +222,43 @@ export const useUnifiedWishlist = () => {
     }
   }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
 
+  // Delete wishlist with optimistic updates and error handling
+  const deleteWishlist = useCallback(async (wishlistId: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to delete wishlists');
+      return false;
+    }
+
+    try {
+      console.log('Deleting wishlist:', wishlistId);
+      
+      // Find the wishlist to delete
+      const wishlistToDelete = wishlists.find(w => w.id === wishlistId);
+      if (!wishlistToDelete) {
+        toast.error('Wishlist not found');
+        return false;
+      }
+
+      // Update local state immediately for optimistic UI
+      const updatedWishlists = wishlists.filter(w => w.id !== wishlistId);
+      setWishlists(updatedWishlists);
+
+      // Sync to database
+      await syncWishlistsToProfile(updatedWishlists);
+      
+      console.log('Wishlist deleted successfully:', wishlistId);
+      toast.success(`Wishlist "${wishlistToDelete.title}" deleted successfully`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting wishlist:', error);
+      // Revert state on error
+      await loadWishlists();
+      toast.error('Failed to delete wishlist. Please try again.');
+      return false;
+    }
+  }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
+
   // Add product to wishlist with optimistic updates and better error handling
   const addToWishlist = useCallback(async (wishlistId: string, product: any): Promise<boolean> => {
     if (!user) {
@@ -380,6 +416,7 @@ export const useUnifiedWishlist = () => {
     loadWishlists,
     createWishlist,
     createWishlistWithItem,
+    deleteWishlist,
     addToWishlist,
     removeFromWishlist,
     isProductWishlisted,

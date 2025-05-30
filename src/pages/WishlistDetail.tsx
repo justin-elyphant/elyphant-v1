@@ -1,10 +1,20 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, Share2, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
 import ShareStatusBadge from "@/components/gifting/wishlist/ShareStatusBadge";
 import WishlistCategoryBadge from "@/components/gifting/wishlist/categories/WishlistCategoryBadge";
@@ -15,12 +25,16 @@ import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
 import { WishlistItem } from "@/types/profile";
 import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 const WishlistDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { wishlists, loading } = useUnifiedWishlist();
+  const { wishlists, loading, deleteWishlist } = useUnifiedWishlist();
   const { removeFromWishlist, updateWishlistSharing } = useWishlist();
+  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Memoize wishlist lookup to prevent unnecessary re-renders
   const wishlist = useMemo(() => {
@@ -58,8 +72,26 @@ const WishlistDetail = () => {
     toast.info("Edit functionality coming soon!");
   };
 
-  const handleDelete = () => {
-    toast.info("Delete functionality coming soon!");
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!wishlist) return;
+    
+    try {
+      setDeleting(true);
+      const success = await deleteWishlist(wishlist.id);
+      if (success) {
+        // Navigate back to wishlists page after successful deletion
+        navigate('/wishlists');
+      }
+    } catch (error) {
+      console.error("Error deleting wishlist:", error);
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+    }
   };
 
   if (loading) {
@@ -162,7 +194,7 @@ const WishlistDetail = () => {
                   size="sm"
                   onShareSettingsChange={updateWishlistSharing}
                 />
-                <Button variant="outline" size="sm" onClick={handleDelete}>
+                <Button variant="outline" size="sm" onClick={handleDeleteClick}>
                   <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
               </div>
@@ -191,6 +223,36 @@ const WishlistDetail = () => {
             />
           </CardContent>
         </Card>
+
+        {/* Delete confirmation dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to delete this wishlist?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the wishlist "{wishlist.title}" and all items within it.
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteConfirm} 
+                className="bg-red-600 hover:bg-red-700"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );

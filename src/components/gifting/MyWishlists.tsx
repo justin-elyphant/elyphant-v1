@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
@@ -71,6 +70,7 @@ const MyWishlists = () => {
     loading: isLoading,
     loadWishlists,
     createWishlist,
+    deleteWishlist,
     removeFromWishlist,
   } = useUnifiedWishlist();
 
@@ -156,9 +156,11 @@ const MyWishlists = () => {
     if (currentWishlist) {
       try {
         setDeleting(true);
-        // For now, just close the dialog since delete functionality isn't implemented
-        toast.info("Wishlist deletion will be available soon!");
-        setDeleteDialogOpen(false);
+        const success = await deleteWishlist(currentWishlist.id);
+        if (success) {
+          setDeleteDialogOpen(false);
+          setCurrentWishlist(null);
+        }
       } catch (error) {
         console.error("Error deleting wishlist:", error);
       } finally {

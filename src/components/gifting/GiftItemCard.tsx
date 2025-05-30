@@ -96,14 +96,14 @@ const GiftItemCard = ({
             <Button 
               variant="destructive" 
               size="icon" 
-              className="h-8 w-8 rounded-full bg-red-500/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-8 w-8 rounded-full bg-red-500/90 backdrop-blur-sm opacity-80 hover:opacity-100 transition-opacity"
               onClick={handleDeleteClick}
               disabled={isRemoving}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm">
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm opacity-80 hover:opacity-100 transition-opacity">
             <Heart className="h-4 w-4" />
           </Button>
         </div>

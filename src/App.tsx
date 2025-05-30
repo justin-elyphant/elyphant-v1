@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -47,6 +46,7 @@ function App() {
                 <CartProvider>
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/sign-in" element={<SignIn />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/email-verification" element={<EmailVerification />} />

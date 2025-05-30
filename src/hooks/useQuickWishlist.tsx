@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
-import { useWishlists } from "@/components/gifting/hooks/useWishlists"; // <--- FIX: Use proper import!
-import { useAuth } from "@/contexts/auth"; // Use Supabase auth context!
+import { useWishlists } from "@/components/gifting/hooks/useWishlists";
+import { useAuth } from "@/contexts/auth";
 
 interface ProductInfo {
   id: string;
@@ -16,10 +17,8 @@ interface ProductInfo {
 
 export const useQuickWishlist = () => {
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  // ---- UPDATE: Use Supabase user from AuthContext ----
   const { user } = useAuth();
   const { handleFavoriteToggle, isFavorited } = useFavorites();
-  // Use the custom hook instead of require:
   const { wishlists, addToWishlist, fetchWishlists, createWishlist } = useWishlists();
   const navigate = useNavigate();
   
@@ -42,7 +41,7 @@ export const useQuickWishlist = () => {
   const toggleWishlist = async (e: React.MouseEvent, product: ProductInfo) => {
     e.stopPropagation();
 
-    // ---- Use Supabase user check! ----
+    // Show sign-up dialog for unauthenticated users
     if (!user) {
       setShowSignUpDialog(true);
       return;
@@ -53,9 +52,8 @@ export const useQuickWishlist = () => {
 
     handleFavoriteToggle(productId);
 
-    // Toasts remain the same
+    // Handle wishlist operations for authenticated users
     if (wasAlreadyFavorited) {
-      // (Optional: remove from DB wishlist_items by productId here, if you want)
       toast.success("Removed from wishlist", {
         description: product.name,
       });
@@ -77,7 +75,6 @@ export const useQuickWishlist = () => {
             title: product.name,
             name: product.name,
             price: product.price,
-            // Optional fields
             brand: product.brand,
             image_url: product.image
           });
@@ -102,7 +99,6 @@ export const useQuickWishlist = () => {
     isFavorited,
     showSignUpDialog,
     setShowSignUpDialog,
-    // ---- Expose this for possible conditional UI ----
     isLoggedIn: !!user
   };
 };

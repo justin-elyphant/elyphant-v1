@@ -34,6 +34,12 @@ const ProductActions = ({
     if (onAddToCart) onAddToCart();
   };
 
+  const handleWishlistClick = () => {
+    if (!user) {
+      setShowSignUpDialog(true);
+    }
+  };
+
   // Responsive: Popover will expand on mobile, be smaller on desktop
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
@@ -46,22 +52,35 @@ const ProductActions = ({
           <ShoppingBag className="h-4 w-4 mr-2" />
           Add to Cart
         </Button>
-        {/* Always use popover-based wishlist button */}
+        {/* Show wishlist button for authenticated users, sign-up prompt for others */}
         <div onClick={e => e.stopPropagation()}>
-          <WishlistSelectionPopoverButton
-            product={{
-              id: String(product.id),
-              name: product.title || product.name || "",
-              image: product.image || "",
-              price: product.price,
-              brand: product.brand || "",
-            }}
-            triggerClassName={`p-1.5 rounded-full transition-colors ${isInWishlist
-                ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
-                : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
-              }`}
-            onAdded={undefined}
-          />
+          {user ? (
+            <WishlistSelectionPopoverButton
+              product={{
+                id: String(product.id),
+                name: product.title || product.name || "",
+                image: product.image || "",
+                price: product.price,
+                brand: product.brand || "",
+              }}
+              triggerClassName={`p-1.5 rounded-full transition-colors ${isInWishlist
+                  ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
+                  : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+                }`}
+              onAdded={undefined}
+            />
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-1.5 rounded-full transition-colors bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+              onClick={handleWishlistClick}
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </Button>
+          )}
         </div>
       </div>
 

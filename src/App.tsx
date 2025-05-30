@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -54,6 +55,9 @@ function App() {
                     <Route path="/onboarding" element={<OnboardingPage />} />
                     <Route path="/onboarding-gift" element={<OnboardingGiftorFlow />} />
                     
+                    {/* Public Marketplace - no authentication required */}
+                    <Route path="/marketplace" element={<Marketplace />} />
+                    
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
@@ -88,12 +92,6 @@ function App() {
                     <Route path="/messages/:connectionId" element={
                       <ProtectedRoute>
                         <Messages />
-                      </ProtectedRoute>
-                    } />
-                    
-                    <Route path="/marketplace" element={
-                      <ProtectedRoute>
-                        <Marketplace />
                       </ProtectedRoute>
                     } />
                     

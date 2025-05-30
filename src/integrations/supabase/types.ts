@@ -374,6 +374,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_settings: {
+        Row: {
+          applies_to: string
+          created_at: string
+          fee_description: string | null
+          fee_display_name: string
+          id: string
+          is_active: boolean
+          markup_percentage: number
+          setting_name: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          fee_description?: string | null
+          fee_display_name?: string
+          id?: string
+          is_active?: boolean
+          markup_percentage?: number
+          setting_name: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          fee_description?: string | null
+          fee_display_name?: string
+          id?: string
+          is_active?: boolean
+          markup_percentage?: number
+          setting_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       privacy_settings: {
         Row: {
           allow_follows_from: string

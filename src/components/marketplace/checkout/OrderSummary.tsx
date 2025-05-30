@@ -5,6 +5,7 @@ import { Product } from "@/types/product";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, Gift } from "lucide-react";
+import TransparentPriceBreakdown from "./TransparentPriceBreakdown";
 
 interface OrderSummaryProps {
   cartItems: {
@@ -33,16 +34,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   // Calculate gift wrapping cost
   const getGiftWrappingCost = () => {
     return giftOptions.isGift && giftOptions.giftWrapping ? 4.99 : 0;
-  };
-  
-  // Calculate taxes (simplified - 8% for demo)
-  const getTaxes = () => {
-    return cartTotal * 0.08;
-  };
-  
-  // Calculate the full total
-  const getTotal = () => {
-    return cartTotal + getShippingCost() + getGiftWrappingCost() + getTaxes();
   };
 
   return (
@@ -84,18 +75,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         
         <Separator />
         
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Subtotal</span>
-            <span>${cartTotal.toFixed(2)}</span>
-          </div>
-          
-          <div className="flex justify-between text-sm">
-            <span>Shipping</span>
-            <span>${getShippingCost().toFixed(2)}</span>
-          </div>
-          
-          {giftOptions.isGift && giftOptions.giftWrapping && (
+        {/* Transparent Price Breakdown */}
+        <TransparentPriceBreakdown
+          basePrice={cartTotal}
+          shippingCost={getShippingCost()}
+        />
+
+        {/* Gift Wrapping Fee (separate from transparent pricing for now) */}
+        {giftOptions.isGift && giftOptions.giftWrapping && (
+          <>
+            <Separator />
             <div className="flex justify-between text-sm">
               <span className="flex items-center">
                 Gift Wrapping
@@ -103,30 +92,25 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               </span>
               <span>${getGiftWrappingCost().toFixed(2)}</span>
             </div>
-          )}
-          
-          <div className="flex justify-between text-sm">
-            <span>Taxes</span>
-            <span>${getTaxes().toFixed(2)}</span>
+          </>
+        )}
+        
+        {giftOptions.isGift && (
+          <div className="flex items-center">
+            <Badge variant="outline" className="bg-pink-50 text-pink-800 border-pink-200 text-xs px-1.5 py-0">
+              <Gift className="h-3 w-3 mr-1" /> Gift
+            </Badge>
           </div>
-          
-          {giftOptions.isGift && (
-            <div className="flex items-center">
-              <Badge variant="outline" className="bg-pink-50 text-pink-800 border-pink-200 text-xs px-1.5 py-0">
-                <Gift className="h-3 w-3 mr-1" /> Gift
-              </Badge>
-            </div>
-          )}
-        </div>
+        )}
       </CardContent>
       
       <CardFooter className="pt-0">
         <div className="w-full">
           <Separator className="my-2" />
           
-          <div className="flex justify-between font-semibold">
-            <span>Total</span>
-            <span>${getTotal().toFixed(2)}</span>
+          <div className="flex justify-between font-semibold text-lg">
+            <span>Final Total</span>
+            <span>${(cartTotal + getShippingCost() + getGiftWrappingCost()).toFixed(2)}</span>
           </div>
         </div>
       </CardFooter>

@@ -1,33 +1,54 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { usePricingSettings } from "@/hooks/usePricingSettings";
 
 const PricingControlsCard = () => {
-  const [autoAdjustPricing, setAutoAdjustPricing] = useState(true);
-  const [defaultPriceAdjustment, setDefaultPriceAdjustment] = useState(15);
+  const { settings, loading, updateSetting, getDefaultGiftingFee } = usePricingSettings();
+  const [markupPercentage, setMarkupPercentage] = useState(15);
+  const [feeDisplayName, setFeeDisplayName] = useState("Gifting Fee");
+  const [feeDescription, setFeeDescription] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    const defaultFee = getDefaultGiftingFee();
+    if (defaultFee) {
+      setMarkupPercentage(defaultFee.markup_percentage);
+      setFeeDisplayName(defaultFee.fee_display_name);
+      setFeeDescription(defaultFee.fee_description || "");
+      setIsActive(defaultFee.is_active);
+    }
+  }, [settings]);
   
   const handleSaveSettings = async () => {
+    const defaultFee = getDefaultGiftingFee();
+    if (!defaultFee) {
+      toast.error("Default fee setting not found");
+      return;
+    }
+
     setIsUpdating(true);
     
     try {
-      // In a real implementation, this would save to a backend
-      console.log("Saving pricing settings:", {
-        autoAdjustPricing,
-        defaultPriceAdjustment
+      const success = await updateSetting(defaultFee.id, {
+        markup_percentage: markupPercentage,
+        fee_display_name: feeDisplayName,
+        fee_description: feeDescription,
+        is_active: isActive
       });
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      toast.success("Pricing settings updated", {
-        description: "Your pricing settings have been saved successfully."
-      });
+
+      if (success) {
+        toast.success("Pricing settings updated", {
+          description: "Your pricing settings have been saved successfully."
+        });
+      }
     } catch (error) {
       console.error("Error saving pricing settings:", error);
       toast.error("Failed to update pricing settings", {
@@ -37,49 +58,115 @@ const PricingControlsCard = () => {
       setIsUpdating(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-muted-foreground">Loading pricing settings...</p>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Price Controls</CardTitle>
+        <CardTitle>Transparent Pricing Controls</CardTitle>
         <CardDescription>
-          Configure how product prices are managed in the marketplace
+          Configure transparent fee structure shown to customers at checkout
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label className="text-base">Auto-adjust pricing</Label>
+            <Label className="text-base">Enable transparent pricing</Label>
             <p className="text-sm text-muted-foreground">
-              Automatically adjust prices based on your default price adjustment
+              Show itemized fee breakdown at checkout
             </p>
           </div>
           <Switch
-            checked={autoAdjustPricing}
-            onCheckedChange={setAutoAdjustPricing}
+            checked={isActive}
+            onCheckedChange={setIsActive}
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="default-adjustment">Default price adjustment (%)</Label>
+          <Label htmlFor="fee-name">Fee Display Name</Label>
           <Input
-            id="default-adjustment"
+            id="fee-name"
+            value={feeDisplayName}
+            onChange={(e) => setFeeDisplayName(e.target.value)}
+            placeholder="e.g., Gifting Fee, Service Fee"
+            disabled={!isActive}
+          />
+          <p className="text-xs text-muted-foreground">
+            This is how the fee will appear to customers
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="fee-description">Fee Description</Label>
+          <Textarea
+            id="fee-description"
+            value={feeDescription}
+            onChange={(e) => setFeeDescription(e.target.value)}
+            placeholder="Explain what this fee covers..."
+            disabled={!isActive}
+            rows={3}
+          />
+          <p className="text-xs text-muted-foreground">
+            This explanation will be shown when customers click the info icon
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="markup-percentage">Fee Percentage (%)</Label>
+          <Input
+            id="markup-percentage"
             type="number"
             min="0"
             max="100"
-            value={defaultPriceAdjustment}
-            onChange={(e) => setDefaultPriceAdjustment(Number(e.target.value))}
-            disabled={!autoAdjustPricing}
+            step="0.1"
+            value={markupPercentage}
+            onChange={(e) => setMarkupPercentage(Number(e.target.value))}
+            disabled={!isActive}
             className="max-w-[180px]"
           />
           <p className="text-xs text-muted-foreground">
-            This percentage will be added to the base cost of all products
+            This percentage will be added to the base cost and shown as "{feeDisplayName}"
           </p>
+        </div>
+
+        <div className="p-4 bg-muted rounded-lg">
+          <h4 className="font-medium mb-2">Preview</h4>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span>Product Cost</span>
+              <span>$10.00</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Shipping</span>
+              <span>$4.99</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="flex items-center gap-1">
+                {feeDisplayName}
+                <span className="text-xs text-muted-foreground">ℹ️</span>
+              </span>
+              <span>${((10 * markupPercentage) / 100).toFixed(2)}</span>
+            </div>
+            <hr className="my-2" />
+            <div className="flex justify-between font-medium">
+              <span>Total</span>
+              <span>${(10 + 4.99 + (10 * markupPercentage) / 100).toFixed(2)}</span>
+            </div>
+          </div>
         </div>
         
         <Button 
           onClick={handleSaveSettings} 
-          disabled={isUpdating}
+          disabled={isUpdating || !isActive}
           className="mt-4"
         >
           {isUpdating ? "Updating..." : "Save Settings"}

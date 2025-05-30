@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, ShoppingBag, Trash2, Loader2 } from "lucide-react";
+import { Edit, ShoppingBag, Trash2, Loader2, Eye } from "lucide-react";
 import GiftItemCard from "../GiftItemCard";
 import { toast } from "sonner";
 import { Wishlist, WishlistItem } from "@/types/profile";
@@ -22,8 +23,11 @@ interface WishlistCardProps {
 const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const { removeFromWishlist, updateWishlistSharing } = useWishlist();
+  const navigate = useNavigate();
   
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = async (itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when removing item
+    
     try {
       setRemovingItemId(itemId);
       const success = await removeFromWishlist(wishlist.id, itemId);
@@ -37,6 +41,20 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
     } finally {
       setRemovingItemId(null);
     }
+  };
+
+  const handleCardClick = () => {
+    navigate(`/wishlist/${wishlist.id}`);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(wishlist.id);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(wishlist.id);
   };
 
   // Determine badge styles based on priority
@@ -59,7 +77,11 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
   };
 
   return (
-    <Card key={wishlist.id} className="relative overflow-hidden">
+    <Card 
+      key={wishlist.id} 
+      className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      onClick={handleCardClick}
+    >
       {/* Privacy status indicator at top corner */}
       <div className="absolute top-0 right-0">
         <ShareStatusBadge 
@@ -73,8 +95,8 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="absolute top-2 right-2 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-        onClick={() => onDelete(wishlist.id)}
+        className="absolute top-2 right-2 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 z-10"
+        onClick={handleDelete}
         aria-label={`Delete ${wishlist.title} wishlist`}
       >
         <Trash2 className="h-4 w-4" />
@@ -129,7 +151,7 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
                 </div>
               ) : (
                 <button
-                  onClick={() => handleRemoveItem(item.id)}
+                  onClick={(e) => handleRemoveItem(item.id, e)}
                   className="absolute top-1 right-1 bg-white/80 hover:bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                   aria-label={`Remove ${item.name} from wishlist`}
                 >
@@ -140,9 +162,14 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
           ))}
         </div>
         {wishlist.items.length > 4 && (
-          <p className="text-sm text-gray-500 mt-2">
-            +{wishlist.items.length - 4} more items
-          </p>
+          <div className="mt-2 text-center">
+            <button 
+              className="text-sm text-primary hover:text-primary/80 font-medium"
+              onClick={handleCardClick}
+            >
+              +{wishlist.items.length - 4} more items
+            </button>
+          </div>
         )}
         
         {wishlist.items.length === 0 && (
@@ -161,9 +188,13 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
       </CardContent>
       <CardFooter className="flex flex-col space-y-3">
         <div className="flex w-full justify-between gap-2">
-          <Button variant="outline" size="sm" onClick={() => onEdit(wishlist.id)}>
+          <Button variant="outline" size="sm" onClick={handleEdit}>
             <Edit className="mr-2 h-3 w-3" />
             Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCardClick}>
+            <Eye className="mr-2 h-3 w-3" />
+            View All
           </Button>
           <WishlistShareButton 
             wishlist={wishlist}

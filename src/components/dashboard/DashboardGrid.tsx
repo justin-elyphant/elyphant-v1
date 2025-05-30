@@ -1,10 +1,10 @@
 
 import React from "react";
-import GiftsCard from "./GiftsCard";
 import OrdersCard from "./OrdersCard";
 import FriendsCard from "./FriendsCard";
 import SettingsCard from "./SettingsCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
+import WishlistsCard from "./WishlistsCard";
 
 const DashboardGrid = () => {
   return (
@@ -15,7 +15,7 @@ const DashboardGrid = () => {
           <UpcomingEventsCard />
         </div>
         <div className="lg:col-span-2">
-          <GiftsCard />
+          <WishlistsCard />
         </div>
       </div>
 

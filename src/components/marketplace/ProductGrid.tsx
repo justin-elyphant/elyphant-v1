@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -36,40 +36,31 @@ const ProductGrid = ({
   savedFilters,
   onFilterChange
 }: ProductGridProps) => {
-  // Always initialize these hooks first, regardless of conditions
+  // State management
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
-  const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  const [wishlistRefreshKey, setWishlistRefreshKey] = useState(0);
+  const [wishlistRefreshTrigger, setWishlistRefreshTrigger] = useState(0);
+  
+  // Hooks
   const { addItem, recentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
   const [userData] = useLocalStorage("userData", null);
   const { user } = useAuth();
-  
-  // Use our unified wishlist system
   const { isProductWishlisted, quickAddToWishlist, loadWishlists } = useUnifiedWishlist();
   
-  // Update sorted products when products or sort option changes
-  useEffect(() => {
-    setSortedProducts(sortProducts(products, sortOption));
+  // Memoize sorted products to prevent unnecessary recalculations
+  const sortedProducts = useMemo(() => {
+    return sortProducts(products, sortOption);
   }, [products, sortOption]);
 
-  // Handle wishlist state changes from modal
-  const handleWishlistChange = async () => {
-    console.log('ProductGrid - Wishlist changed, refreshing state');
-    await loadWishlists();
-    setWishlistRefreshKey(prev => prev + 1);
-  };
-
-  // Generate product badges for visual indicators
-  const getProductStatus = (product: Product): { badge: string; color: string } | null => {
-    // Check if this is in the recently viewed items to add "Recently Viewed" badge
+  // Memoize product status function to prevent recreation on every render
+  const getProductStatus = useCallback((product: Product): { badge: string; color: string } | null => {
+    // Check if this is in the recently viewed items
     const isRecentlyViewed = recentlyViewed?.some(item => item.id === (product.product_id || product.id));
 
-    // --- NEW: Wishlist badge for friend event searches ---
+    // Wishlist badge for friend event searches
     if (product.fromWishlist && product.tags) {
-      // Find the friend's wishlist tag, e.g. "From Michael's Wishlist"
       const wishlistTag = product.tags.find(tag => tag.startsWith("From ") && tag.endsWith("Wishlist"));
       if (wishlistTag) {
         return { badge: wishlistTag, color: "bg-pink-100 text-pink-700 border-pink-200" };
@@ -97,9 +88,17 @@ const ProductGrid = ({
     }
     
     return null;
-  };
+  }, [recentlyViewed]);
 
-  const handleProductClick = (productId: string) => {
+  // Optimized wishlist state callback
+  const handleWishlistChange = useCallback(async () => {
+    console.log('ProductGrid - Wishlist changed, refreshing state');
+    await loadWishlists();
+    setWishlistRefreshTrigger(prev => prev + 1);
+  }, [loadWishlists]);
+
+  // Optimized product click handler
+  const handleProductClick = useCallback((productId: string) => {
     console.log("Product clicked:", productId);
     setSelectedProduct(productId);
     setDlgOpen(true);
@@ -120,9 +119,10 @@ const ProductGrid = ({
     if (onProductView) {
       onProductView(productId);
     }
-  };
+  }, [products, addItem, onProductView]);
 
-  const toggleWishlist = async (e: React.MouseEvent, productInfo: any) => {
+  // Optimized wishlist toggle with better error handling
+  const toggleWishlist = useCallback(async (e: React.MouseEvent, productInfo: any) => {
     e.stopPropagation();
 
     if (!user) {
@@ -146,12 +146,19 @@ const ProductGrid = ({
 
     await quickAddToWishlist(productData);
     // Trigger local state refresh
-    setWishlistRefreshKey(prev => prev + 1);
-  };
+    setWishlistRefreshTrigger(prev => prev + 1);
+  }, [user, products, quickAddToWishlist]);
 
-  const isFavorited = (productId: string) => {
+  // Memoize favorited status check for better performance
+  const isFavorited = useCallback((productId: string) => {
     return user ? isProductWishlisted(productId) : false;
-  };
+  }, [user, isProductWishlisted, wishlistRefreshTrigger]);
+
+  // Memoize selected product data
+  const selectedProductData = useMemo(() => {
+    if (!selectedProduct) return null;
+    return products.find(p => (p.product_id || p.id) === selectedProduct) || null;
+  }, [selectedProduct, products]);
 
   return (
     <>
@@ -166,13 +173,7 @@ const ProductGrid = ({
       />
 
       <ProductDetailsDialog
-        product={
-          selectedProduct
-            ? products.find(
-                (p) => (p.product_id || p.id) === selectedProduct
-              ) || null
-            : null
-        }
+        product={selectedProductData}
         open={dlgOpen}
         onOpenChange={setDlgOpen}
         userData={userData}
@@ -187,4 +188,4 @@ const ProductGrid = ({
   );
 };
 
-export default ProductGrid;
+export default React.memo(ProductGrid);

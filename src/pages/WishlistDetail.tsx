@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, Share2, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,23 @@ const WishlistDetail = () => {
   const { wishlists, loading } = useUnifiedWishlist();
   const { removeFromWishlist, updateWishlistSharing } = useWishlist();
 
-  // Find the wishlist by ID
-  const wishlist = wishlists.find(w => w.id === id);
+  // Memoize wishlist lookup to prevent unnecessary re-renders
+  const wishlist = useMemo(() => {
+    return wishlists.find(w => w.id === id);
+  }, [wishlists, id]);
+
+  // Memoize priority badge to prevent recalculation
+  const priorityBadge = useMemo(() => {
+    if (!wishlist?.priority) return null;
+
+    return (
+      <div className="flex items-center gap-1 text-sm">
+        <div className={`w-2 h-2 rounded-full ${wishlist.priority === 'high' ? 'bg-red-500' : 
+          wishlist.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+        <span className="capitalize">{wishlist.priority} priority</span>
+      </div>
+    );
+  }, [wishlist?.priority]);
 
   const handleRemoveItem = async (item: WishlistItem) => {
     if (!wishlist) return;
@@ -40,25 +55,11 @@ const WishlistDetail = () => {
   };
 
   const handleEdit = () => {
-    // Navigate to edit or show edit dialog
     toast.info("Edit functionality coming soon!");
   };
 
   const handleDelete = () => {
-    // Show delete confirmation
     toast.info("Delete functionality coming soon!");
-  };
-
-  const getPriorityBadge = () => {
-    if (!wishlist?.priority) return null;
-
-    return (
-      <div className="flex items-center gap-1 text-sm">
-        <div className={`w-2 h-2 rounded-full ${wishlist.priority === 'high' ? 'bg-red-500' : 
-          wishlist.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
-        <span className="capitalize">{wishlist.priority} priority</span>
-      </div>
-    );
   };
 
   if (loading) {
@@ -130,7 +131,7 @@ const WishlistDetail = () => {
                     <WishlistCategoryBadge category={wishlist.category} />
                   )}
                   
-                  {getPriorityBadge()}
+                  {priorityBadge}
 
                   {wishlist.tags?.map(tag => (
                     <Badge key={tag} variant="outline" className="text-xs bg-gray-50">

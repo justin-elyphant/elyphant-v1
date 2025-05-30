@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import WishlistHeader from "./wishlist/WishlistHeader";
@@ -7,7 +8,7 @@ import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist"; // Use unified system directly
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,7 +65,7 @@ const MyWishlists = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
   
-  // Use unified wishlist system directly for better sync
+  // Use unified wishlist system directly
   const {
     wishlists,
     loading: isLoading,

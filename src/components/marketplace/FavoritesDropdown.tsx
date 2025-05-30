@@ -10,7 +10,7 @@ import {
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist"; // Use unified system
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import ShareStatusBadge from "@/components/gifting/wishlist/ShareStatusBadge";
 
 interface FavoritesDropdownProps {
@@ -19,7 +19,7 @@ interface FavoritesDropdownProps {
 
 const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
   const { user } = useAuth();
-  const { wishlists } = useUnifiedWishlist(); // Use unified system directly
+  const { wishlists, loading } = useUnifiedWishlist();
   const navigate = useNavigate();
   
   // Count total items across all wishlists
@@ -74,7 +74,11 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
             </h4>
           </div>
           
-          {wishlists && wishlists.length > 0 ? (
+          {loading ? (
+            <div className="p-6 text-center">
+              <p className="text-sm text-muted-foreground">Loading wishlists...</p>
+            </div>
+          ) : wishlists && wishlists.length > 0 ? (
             <div className="max-h-60 overflow-y-auto divide-y">
               {wishlists.map((wishlist) => (
                 <div key={wishlist.id} className="p-3 hover:bg-muted/50">

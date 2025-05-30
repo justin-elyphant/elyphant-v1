@@ -4,7 +4,7 @@ import WishlistSelectionPopover from "@/components/marketplace/WishlistSelection
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useWishlist } from "@/components/gifting/hooks/useWishlist";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 
 interface WishlistSelectionPopoverButtonProps {
   product: {
@@ -26,14 +26,12 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   isWishlisted,
 }) => {
   const isMobile = useIsMobile();
-  const { wishlists } = useWishlist();
+  const { isProductWishlisted } = useUnifiedWishlist();
 
   // Always live-calculate wishlist state
   const computedIsWishlisted = typeof isWishlisted === "boolean"
     ? isWishlisted
-    : wishlists.some(list =>
-        Array.isArray(list.items) && list.items.some(item => item.product_id === product.id)
-      );
+    : isProductWishlisted(product.id);
 
   const triggerNode = (
     <Button
@@ -61,8 +59,8 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
       trigger={triggerNode}
       className={isMobile ? "w-full" : ""}
       onClose={onAdded}
-      // Removed key={computedIsWishlisted...} -- unnecessary, just use live context
     />
   );
 };
+
 export default WishlistSelectionPopoverButton;

@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, Share2, Trash2, Plus } from "lucide-react";
@@ -35,6 +34,7 @@ const WishlistDetail = () => {
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
 
   // Memoize wishlist lookup to prevent unnecessary re-renders
   const wishlist = useMemo(() => {
@@ -58,6 +58,7 @@ const WishlistDetail = () => {
     if (!wishlist) return;
     
     try {
+      setRemovingItemId(item.id);
       const success = await removeFromWishlist(wishlist.id, item.id);
       if (success) {
         toast.success("Item removed from wishlist");
@@ -65,6 +66,8 @@ const WishlistDetail = () => {
     } catch (error) {
       console.error("Error removing item:", error);
       toast.error("Failed to remove item");
+    } finally {
+      setRemovingItemId(null);
     }
   };
 
@@ -219,7 +222,7 @@ const WishlistDetail = () => {
             <WishlistItemsGrid
               items={wishlist.items || []}
               onSaveItem={handleRemoveItem}
-              savingItemId={null}
+              savingItemId={removingItemId}
             />
           </CardContent>
         </Card>

@@ -25,10 +25,12 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId }: WishlistItemsGri
       {items.map((item) => (
         <div key={item.id} className="relative">
           <GiftItemCard
-            name={item.name}
+            name={item.name || item.title || "Unknown Item"}
             price={item.price || 0}
             brand={item.brand || ""}
             imageUrl={item.image_url || "/placeholder.svg"}
+            onRemove={() => onSaveItem(item)}
+            isRemoving={savingItemId === item.id}
           />
         </div>
       ))}

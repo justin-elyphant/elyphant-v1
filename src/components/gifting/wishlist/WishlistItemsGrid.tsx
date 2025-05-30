@@ -1,7 +1,6 @@
 
 import React from "react";
-import { Clock, Gift, Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Gift } from "lucide-react";
 import GiftItemCard from "@/components/gifting/GiftItemCard";
 import { WishlistItem } from "@/types/profile";
 
@@ -24,27 +23,13 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId }: WishlistItemsGri
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {items.map((item) => (
-        <div key={item.id} className="relative group">
+        <div key={item.id} className="relative">
           <GiftItemCard
             name={item.name}
             price={item.price || 0}
             brand={item.brand || ""}
             imageUrl={item.image_url || "/placeholder.svg"}
           />
-          <Button
-            variant="secondary"
-            size="sm"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => onSaveItem(item)}
-            disabled={savingItemId === item.id}
-          >
-            {savingItemId === item.id ? (
-              <Clock className="h-4 w-4 animate-spin" />
-            ) : (
-              <Heart className="h-4 w-4 mr-1" />
-            )}
-            {savingItemId === item.id ? "Saving..." : "Save"}
-          </Button>
         </div>
       ))}
     </div>

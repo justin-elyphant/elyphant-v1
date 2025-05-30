@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useQuickWishlist } from "@/hooks/useQuickWishlist";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useAuth } from "@/contexts/auth";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 import ProductItem from "./product-item/ProductItem";
 import ProductDetailsDialog from "./ProductDetailsDialog";
@@ -39,17 +40,14 @@ const ProductGrid = ({
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [sortedProducts, setSortedProducts] = useState<Product[]>(products);
+  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const { addItem, recentlyViewed } = useRecentlyViewed();
   const isMobile = useIsMobile();
   const [userData] = useLocalStorage("userData", null);
+  const { user } = useAuth();
   
-  // Use our new hook for wishlist functionality
-  const { 
-    toggleWishlist, 
-    isFavorited, 
-    showSignUpDialog, 
-    setShowSignUpDialog 
-  } = useQuickWishlist();
+  // Use our unified wishlist system
+  const { isProductWishlisted, quickAddToWishlist } = useUnifiedWishlist();
   
   // Update sorted products when products or sort option changes
   useEffect(() => {
@@ -114,6 +112,35 @@ const ProductGrid = ({
     if (onProductView) {
       onProductView(productId);
     }
+  };
+
+  const toggleWishlist = async (e: React.MouseEvent, productInfo: any) => {
+    e.stopPropagation();
+
+    if (!user) {
+      setShowSignUpDialog(true);
+      return;
+    }
+
+    // Find the full product data
+    const product = products.find(p => (p.product_id || p.id) === productInfo.id);
+    if (!product) return;
+
+    // Convert to the format expected by the wishlist system
+    const productData = {
+      id: product.product_id || product.id || "",
+      title: product.title || product.name || "",
+      name: product.title || product.name || "",
+      image: product.image,
+      price: product.price,
+      brand: product.brand
+    };
+
+    await quickAddToWishlist(productData);
+  };
+
+  const isFavorited = (productId: string) => {
+    return user ? isProductWishlisted(productId) : false;
   };
 
   return (

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import SignUpDialog from "@/components/marketplace/SignUpDialog";
 
 interface QuickWishlistButtonProps {
@@ -28,9 +29,13 @@ const QuickWishlistButton = ({
   variant = "default",
 }: QuickWishlistButtonProps) => {
   const { user } = useAuth();
+  const { isProductWishlisted } = useUnifiedWishlist();
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  
+  // Use the unified wishlist system to check if product is wishlisted
+  const isActuallyFavorited = user ? isProductWishlisted(productId) : false;
   
   // Define sizes for different button variants
   const sizeClasses = {
@@ -41,16 +46,16 @@ const QuickWishlistButton = ({
   
   // Define style variants
   const variantClasses = {
-    default: isFavorited 
+    default: isActuallyFavorited 
       ? "bg-primary hover:bg-primary/90 text-primary-foreground rounded-full" 
       : "bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 shadow-sm rounded-full",
-    subtle: isFavorited 
+    subtle: isActuallyFavorited 
       ? "bg-primary/10 hover:bg-primary/20 text-primary rounded-full" 
       : "bg-gray-100/80 hover:bg-gray-200/80 text-gray-700 rounded-full",
-    outline: isFavorited 
+    outline: isActuallyFavorited 
       ? "border-primary bg-transparent hover:bg-primary/10 text-primary rounded-full"
       : "border border-gray-200 bg-transparent hover:bg-gray-100/80 text-gray-700 rounded-full",
-    floating: isFavorited
+    floating: isActuallyFavorited
       ? "bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-md"
       : "bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 shadow-md rounded-full",
   };
@@ -93,12 +98,12 @@ const QuickWishlistButton = ({
               onTouchStart={() => setIsPressed(true)}
               onTouchEnd={() => setIsPressed(false)}
               onClick={handleClick}
-              aria-label={user ? (isFavorited ? "Remove from wishlist" : "Add to wishlist") : "Sign up to add to wishlist"}
+              aria-label={user ? (isActuallyFavorited ? "Remove from wishlist" : "Add to wishlist") : "Sign up to add to wishlist"}
             >
               <Heart
                 className={cn(
                   "transition-all duration-200",
-                  user && isFavorited ? "fill-current" : (isHovering || isPressed ? "fill-current/20" : ""),
+                  user && isActuallyFavorited ? "fill-current" : (isHovering || isPressed ? "fill-current/20" : ""),
                   size === "sm" ? "h-3.5 w-3.5" : size === "md" ? "h-4 w-4" : "h-5 w-5"
                 )}
               />
@@ -108,7 +113,7 @@ const QuickWishlistButton = ({
             side="bottom"
             className="text-xs py-1 px-2"
           >
-            {user ? (isFavorited ? "Remove from wishlist" : "Add to wishlist") : "Sign up to add to wishlist"}
+            {user ? (isActuallyFavorited ? "Remove from wishlist" : "Add to wishlist") : "Sign up to add to wishlist"}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

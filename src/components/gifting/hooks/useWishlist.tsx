@@ -1,34 +1,31 @@
 
-import { useWishlistOperations } from "./useWishlistOperations";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 
 export function useWishlist() {
   const {
-    wishlistedProducts,
     wishlists,
-    isInitialized,
-    isLoading,
-    initError,
-    handleWishlistToggle,
+    loading,
+    wishlistedProducts,
+    loadWishlists,
     createWishlist,
     addToWishlist,
     removeFromWishlist,
-    deleteWishlist,
-    updateWishlistSharing,
-    reloadWishlists
-  } = useWishlistOperations();
+    isProductWishlisted,
+    quickAddToWishlist
+  } = useUnifiedWishlist();
 
   return {
     wishlistedProducts,
     wishlists,
-    isInitialized,
-    isLoading,
-    initError,
-    handleWishlistToggle,
+    isInitialized: !loading,
+    isLoading: loading,
+    initError: null,
+    handleWishlistToggle: quickAddToWishlist,
     createWishlist,
     addToWishlist,
     removeFromWishlist,
-    deleteWishlist,
-    updateWishlistSharing,
-    reloadWishlists
+    deleteWishlist: async () => false, // Placeholder
+    updateWishlistSharing: async () => false, // Placeholder
+    reloadWishlists: loadWishlists
   };
 }

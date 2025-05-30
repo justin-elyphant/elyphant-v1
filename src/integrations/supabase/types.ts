@@ -818,6 +818,10 @@ export type Database = {
         Args: { follower_id: string; target_id: string }
         Returns: boolean
       }
+      delete_user_account: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       get_user_privacy_settings: {
         Args: { target_user_id: string }
         Returns: {

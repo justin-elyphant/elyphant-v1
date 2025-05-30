@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Shield, Eye, Users, MessageSquare, Heart } from "lucide-react";
 import { usePrivacySettings } from "@/hooks/usePrivacySettings";
 import { Separator } from "@/components/ui/separator";
+import DeleteAccountSection from "./DeleteAccountSection";
 
 const PrivacySecuritySettings: React.FC = () => {
   const { settings, loading, updateSettings } = usePrivacySettings();
@@ -163,6 +163,8 @@ const PrivacySecuritySettings: React.FC = () => {
           </Button>
         </CardContent>
       </Card>
+
+      <DeleteAccountSection />
     </div>
   );
 };

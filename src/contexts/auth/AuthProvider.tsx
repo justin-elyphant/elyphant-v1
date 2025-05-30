@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [navigate]);
 
-  // Delete user account
+  // Delete user account (updated: now calls edge function)
   const deleteUser = useCallback(async () => {
     try {
       if (!state.user) {
@@ -166,16 +166,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // This is a placeholder - in a real app you'd likely need a secure server function
-      // to delete the user since the client doesn't have permission to delete auth.users
+      console.log("Initiating account deletion for user:", state.user.id);
       
-      toast.error("Account deletion is not implemented yet");
+      // Call the edge function to delete the account
+      const { data, error } = await supabase.functions.invoke('delete-user-account', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
+
+      if (error) {
+        console.error("Error deleting account:", error);
+        throw new Error(error.message || "Failed to delete account");
+      }
+
+      console.log("Account deletion successful:", data);
+      
+      // Clear all localStorage keys
+      const keysToClear = [
+        "userId", "userEmail", "userName", "newSignUp", "userIntent",
+        "onboardingComplete", "onboardingSkipped", "onboardingSkippedTime",
+        "bypassVerification", "profileSetupLoading", "emailVerified",
+        "verifiedEmail", "pendingVerificationEmail", "pendingVerificationName",
+        "verificationResendCount", "signupStep", "recent_marketplace_searches"
+      ];
+      keysToClear.forEach((key) => localStorage.removeItem(key));
+
+      // Update state
+      setState({
+        session: null,
+        user: null,
+        isLoading: false
+      });
+
+      toast.success("Account deleted successfully");
+      navigate('/');
       
     } catch (error) {
       console.error("Error deleting account:", error);
-      toast.error("Failed to delete account");
+      toast.error("Failed to delete account", {
+        description: error instanceof Error ? error.message : "Please try again"
+      });
+      throw error;
     }
-  }, [state.user]);
+  }, [state.user, navigate]);
 
   // Create context value
   const value: AuthContextProps = {

@@ -137,24 +137,38 @@ export const useMarketplaceSearch = () => {
           // Always clear the search in progress flag and local loading
           searchInProgressRef.current = false;
           setIsLocalLoading(false);
+          
+          // Dismiss any category or brand loading toasts that might be lingering
+          if (categoryParam) {
+            toast.dismiss(`category-search-${categoryParam}`);
+          }
+          if (brandParam) {
+            toast.dismiss(`brand-loading-${brandParam}`);
+          }
         });
       } else if (brandParam) {
         // If there's a brand parameter but no search, we'll handle it elsewhere
         console.log(`Using brand parameter: ${brandParam}`);
         setIsLocalLoading(false);
         searchInProgressRef.current = false;
+        // Dismiss brand loading toast
+        toast.dismiss(`brand-loading-${brandParam}`);
       } else if (categoryParam) {
         // Filter by category if no search term or brand
         console.log('Filtering by category:', categoryParam);
         filterByCategory(categoryParam);
         setIsLocalLoading(false);
         searchInProgressRef.current = false;
+        // Dismiss category loading toast
+        toast.dismiss(`category-search-${categoryParam}`);
       } else {
         // No search term, brand, or category, show all products
         console.log('Showing all products');
         filterByCategory(null);
         setIsLocalLoading(false);
         searchInProgressRef.current = false;
+        // Dismiss any lingering loading toasts
+        toast.dismiss();
       }
     } else if (categoryParam !== currentCategory) {
       // Category changed but search term is the same
@@ -162,6 +176,8 @@ export const useMarketplaceSearch = () => {
       setCurrentCategory(categoryParam);
       if (categoryParam && !searchParam) {
         filterByCategory(categoryParam);
+        // Dismiss category loading toast
+        toast.dismiss(`category-search-${categoryParam}`);
       }
       setIsLocalLoading(false);
       searchInProgressRef.current = false;
@@ -169,6 +185,8 @@ export const useMarketplaceSearch = () => {
       // No changes, ensure loading is cleared
       setIsLocalLoading(false);
       searchInProgressRef.current = false;
+      // Dismiss any lingering loading toasts
+      toast.dismiss();
     }
   }, [location.search, products, setProducts]);
 

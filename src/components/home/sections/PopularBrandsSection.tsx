@@ -38,14 +38,20 @@ const PopularBrandsSection = () => {
 
   const handleBrandClick = async (brandName: string) => {
     setLoadingBrand(brandName);
-    toast.loading(`Loading ${brandName} products ...`, { id: "brand-loading" });
+    const loadingToastId = `brand-loading-${brandName}`;
+    toast.loading(`Loading ${brandName} products...`, { id: loadingToastId });
+    
     try {
       await handleBrandProducts(brandName, products, setProducts);
+      // Dismiss the loading toast on success
+      toast.dismiss(loadingToastId);
     } catch (err) {
-      toast.error(`Failed to load ${brandName} products`, { id: "brand-loading" });
+      // Dismiss the loading toast and show error
+      toast.dismiss(loadingToastId);
+      toast.error(`Failed to load ${brandName} products`);
     } finally {
       setLoadingBrand(null);
-      // Now navigate to marketplace with ?search=brandName (not brand/pageTitle)
+      // Navigate to marketplace with search parameter
       navigate(`/marketplace?search=${encodeURIComponent(brandName)}`);
     }
   };
@@ -87,4 +93,3 @@ const PopularBrandsSection = () => {
 };
 
 export default PopularBrandsSection;
-

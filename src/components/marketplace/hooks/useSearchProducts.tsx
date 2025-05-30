@@ -158,6 +158,9 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       // Dismiss any remaining loading toasts
       toast.dismiss(`search-loading-${searchParam}`);
       
+      // Ensure category and brand loading toasts are also dismissed
+      toast.dismiss();
+      
       // Clear abort controller
       abortControllerRef.current = null;
     }

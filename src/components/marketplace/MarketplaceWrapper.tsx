@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
 import StickyFiltersBar from "./StickyFiltersBar";
@@ -8,6 +9,7 @@ import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { X } from "lucide-react";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
+import { toast } from "sonner";
 
 // New: ResultsChip component
 const ResultsChip = ({
@@ -75,6 +77,14 @@ const MarketplaceWrapper = () => {
       results = searchMockProducts("Featured", 15);
     }
     setProducts(results);
+    
+    // Dismiss any category or brand loading toasts when products are loaded
+    if (categoryParam) {
+      toast.dismiss(`category-search-${categoryParam}`);
+    }
+    if (brandParam) {
+      toast.dismiss(`brand-loading-${brandParam}`);
+    }
   }, [searchTerm, categoryParam, brandParam]);
   
   // Track product view analytics

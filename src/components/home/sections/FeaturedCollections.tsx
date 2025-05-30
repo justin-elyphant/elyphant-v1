@@ -24,6 +24,7 @@ type CollectionProps = {
 };
 
 const LUXURY_GIFTS_IMAGE = "/lovable-uploads/448b42d0-0ea9-433b-8d9b-ca8c143ed3dc.png";
+const GIFTS_FOR_HIM_IMAGE = "/lovable-uploads/5bb40cf0-f40c-4629-8a3c-38deaf117a8c.png";
 
 // Default descriptions
 const DEFAULT_DESCRIPTIONS: Record<string, string> = {
@@ -81,11 +82,13 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     );
   }
 
-  // Add luxury gift image & fallback description
+  // Add luxury gift image, gifts for him image & fallback description
   const enhancedCollections = collections.map(collection => {
     let patchedImage = collection.image;
     if (collection.name && collection.name.toLowerCase().includes("luxury gifts")) {
       patchedImage = LUXURY_GIFTS_IMAGE;
+    } else if (collection.name && collection.name.toLowerCase().includes("gifts for him")) {
+      patchedImage = GIFTS_FOR_HIM_IMAGE;
     }
     const fallbackDescription =
       collection.description || DEFAULT_DESCRIPTIONS[collection.name] || "Discover carefully curated gift ideas.";

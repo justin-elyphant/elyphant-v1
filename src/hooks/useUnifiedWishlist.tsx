@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,7 +56,7 @@ export const useUnifiedWishlist = () => {
         ? profile.wishlists.map(normalizeWishlist)
         : [];
 
-      console.log('Loaded wishlists successfully:', userWishlists.length);
+      console.log('Loaded wishlists successfully:', userWishlists.length, userWishlists);
       setWishlists(userWishlists);
 
       // Extract all wishlisted product IDs
@@ -100,6 +101,8 @@ export const useUnifiedWishlist = () => {
     }
 
     try {
+      console.log('Syncing wishlists to profile:', updatedWishlists.length, updatedWishlists);
+      
       const { error } = await supabase
         .from('profiles')
         .upsert({
@@ -115,6 +118,7 @@ export const useUnifiedWishlist = () => {
         throw error;
       }
 
+      console.log('Successfully synced wishlists to profile');
       return true;
     } catch (error) {
       console.error('Error in syncWishlistsToProfile:', error);
@@ -201,12 +205,18 @@ export const useUnifiedWishlist = () => {
         updated_at: new Date().toISOString()
       };
 
+      console.log('Adding item to wishlist:', newItem, 'Updated wishlists:', updatedWishlists);
+
       // Sync to database first
       await syncWishlistsToProfile(updatedWishlists);
       
       // Update local state only after successful sync
       setWishlists(updatedWishlists);
       setWishlistedProducts(prev => [...prev, product.id]);
+      
+      // Force reload to ensure data consistency
+      await loadWishlists();
+      
       toast.success('Added to wishlist');
       return true;
     } catch (error) {
@@ -214,7 +224,7 @@ export const useUnifiedWishlist = () => {
       toast.error('Failed to add to wishlist. Please try again.');
       return false;
     }
-  }, [user, wishlists, syncWishlistsToProfile]);
+  }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
 
   // Remove product from wishlist
   const removeFromWishlist = useCallback(async (wishlistId: string, itemId: string): Promise<boolean> => {
@@ -240,6 +250,10 @@ export const useUnifiedWishlist = () => {
       // Update local state only after successful sync
       setWishlists(updatedWishlists);
       setWishlistedProducts(prev => prev.filter(id => id !== itemToRemove.product_id));
+      
+      // Force reload to ensure data consistency
+      await loadWishlists();
+      
       toast.success('Removed from wishlist');
       return true;
     } catch (error) {
@@ -247,7 +261,7 @@ export const useUnifiedWishlist = () => {
       toast.error('Failed to remove from wishlist. Please try again.');
       return false;
     }
-  }, [user, wishlists, syncWishlistsToProfile]);
+  }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
 
   // Check if product is in any wishlist
   const isProductWishlisted = useCallback((productId: string): boolean => {

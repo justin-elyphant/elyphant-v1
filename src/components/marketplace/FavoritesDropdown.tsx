@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, ExternalLink, List, Share2 } from "lucide-react";
 import { 
@@ -19,8 +19,15 @@ interface FavoritesDropdownProps {
 
 const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
   const { user } = useAuth();
-  const { wishlists, loading } = useUnifiedWishlist();
+  const { wishlists, loading, loadWishlists } = useUnifiedWishlist();
   const navigate = useNavigate();
+  
+  // Reload wishlists when component mounts to ensure fresh data
+  useEffect(() => {
+    if (user) {
+      loadWishlists();
+    }
+  }, [user, loadWishlists]);
   
   // Count total items across all wishlists
   const totalItemsCount = wishlists?.reduce(
@@ -43,6 +50,12 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
     navigate(`/shared-wishlist/${wishlistId}`);
   };
 
+  const handleRefresh = async () => {
+    if (user) {
+      await loadWishlists();
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -62,7 +75,7 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
         </Button>
       </PopoverTrigger>
       {user && (
-        <PopoverContent className="w-80 p-0" align="end">
+        <PopoverContent className="w-80 p-0" align="end" onOpenAutoFocus={handleRefresh}>
           <div className="p-3 border-b">
             <h4 className="font-medium flex items-center justify-between">
               <span>Your Wishlists</span>

@@ -30,7 +30,10 @@ export const useUnifiedWishlist = () => {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error loading wishlists:', error);
-        toast.error('Failed to load wishlists');
+        // Only show toast error if it's not a "no rows found" error
+        if (error.code !== 'PGRST116') {
+          toast.error('Failed to load wishlists');
+        }
         setLoading(false);
         return;
       }
@@ -49,7 +52,8 @@ export const useUnifiedWishlist = () => {
       setWishlistedProducts(productIds);
     } catch (error) {
       console.error('Error loading wishlists:', error);
-      toast.error('Failed to load wishlists');
+      // Don't show persistent error toasts - just log them
+      console.warn('Wishlist loading failed, but continuing silently');
     } finally {
       setLoading(false);
     }
@@ -237,14 +241,14 @@ export const useUnifiedWishlist = () => {
     try {
       const defaultWishlist = await getOrCreateDefaultWishlist();
       if (!defaultWishlist) {
-        toast.error('Failed to create default wishlist');
+        console.error('Failed to create default wishlist');
         return false;
       }
       
       return await addToWishlist(defaultWishlist.id, product);
     } catch (error) {
       console.error('Error in quickAddToWishlist:', error);
-      toast.error('Failed to add to wishlist');
+      // Don't show toast error here as addToWishlist already handles it
       return false;
     }
   }, [getOrCreateDefaultWishlist, addToWishlist]);

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Share2, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
 import { WishlistItem } from "@/types/profile";
+import { Link } from "react-router-dom";
 
 const WishlistDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -171,7 +172,15 @@ const WishlistDetail = () => {
         {/* Items grid */}
         <Card>
           <CardHeader>
-            <CardTitle>Items ({wishlist.items?.length || 0})</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Items ({wishlist.items?.length || 0})</CardTitle>
+              <Button asChild>
+                <Link to="/marketplace">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add More Items
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <WishlistItemsGrid

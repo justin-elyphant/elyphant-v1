@@ -21,6 +21,7 @@ export const useUnifiedWishlist = () => {
     }
 
     try {
+      setLoading(true);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('wishlists')
@@ -29,10 +30,12 @@ export const useUnifiedWishlist = () => {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error loading wishlists:', error);
+        toast.error('Failed to load wishlists');
         setLoading(false);
         return;
       }
 
+      // Handle case where profile exists but wishlists is null
       const userWishlists = Array.isArray(profile?.wishlists) 
         ? profile.wishlists.map(normalizeWishlist)
         : [];
@@ -46,6 +49,7 @@ export const useUnifiedWishlist = () => {
       setWishlistedProducts(productIds);
     } catch (error) {
       console.error('Error loading wishlists:', error);
+      toast.error('Failed to load wishlists');
     } finally {
       setLoading(false);
     }
@@ -55,6 +59,35 @@ export const useUnifiedWishlist = () => {
   useEffect(() => {
     loadWishlists();
   }, [loadWishlists]);
+
+  // Sync wishlists to Supabase profile
+  const syncWishlistsToProfile = useCallback(async (updatedWishlists: Wishlist[]) => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          wishlists: updatedWishlists,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+
+      if (error) {
+        console.error('Error syncing wishlists:', error);
+        throw error;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in syncWishlistsToProfile:', error);
+      throw error;
+    }
+  }, [user]);
 
   // Create a new wishlist
   const createWishlist = useCallback(async (title: string, description?: string): Promise<Wishlist | null> => {
@@ -76,30 +109,20 @@ export const useUnifiedWishlist = () => {
       });
 
       const updatedWishlists = [...wishlists, newWishlist];
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          wishlists: updatedWishlists,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Error creating wishlist:', error);
-        toast.error('Failed to create wishlist');
-        return null;
-      }
-
+      
+      // Sync to database first
+      await syncWishlistsToProfile(updatedWishlists);
+      
+      // Update local state only after successful sync
       setWishlists(updatedWishlists);
       toast.success(`Wishlist "${title}" created successfully`);
       return newWishlist;
     } catch (error) {
       console.error('Error creating wishlist:', error);
-      toast.error('Failed to create wishlist');
+      toast.error('Failed to create wishlist. Please try again.');
       return null;
     }
-  }, [user, wishlists]);
+  }, [user, wishlists, syncWishlistsToProfile]);
 
   // Add product to wishlist
   const addToWishlist = useCallback(async (wishlistId: string, product: any): Promise<boolean> => {
@@ -145,30 +168,20 @@ export const useUnifiedWishlist = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          wishlists: updatedWishlists,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Error adding to wishlist:', error);
-        toast.error('Failed to add to wishlist');
-        return false;
-      }
-
+      // Sync to database first
+      await syncWishlistsToProfile(updatedWishlists);
+      
+      // Update local state only after successful sync
       setWishlists(updatedWishlists);
       setWishlistedProducts(prev => [...prev, product.id]);
       toast.success('Added to wishlist');
       return true;
     } catch (error) {
       console.error('Error adding to wishlist:', error);
-      toast.error('Failed to add to wishlist');
+      toast.error('Failed to add to wishlist. Please try again.');
       return false;
     }
-  }, [user, wishlists]);
+  }, [user, wishlists, syncWishlistsToProfile]);
 
   // Remove product from wishlist
   const removeFromWishlist = useCallback(async (wishlistId: string, itemId: string): Promise<boolean> => {
@@ -188,28 +201,20 @@ export const useUnifiedWishlist = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          wishlists: updatedWishlists,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Error removing from wishlist:', error);
-        return false;
-      }
-
+      // Sync to database first
+      await syncWishlistsToProfile(updatedWishlists);
+      
+      // Update local state only after successful sync
       setWishlists(updatedWishlists);
       setWishlistedProducts(prev => prev.filter(id => id !== itemToRemove.product_id));
       toast.success('Removed from wishlist');
       return true;
     } catch (error) {
       console.error('Error removing from wishlist:', error);
+      toast.error('Failed to remove from wishlist. Please try again.');
       return false;
     }
-  }, [user, wishlists]);
+  }, [user, wishlists, syncWishlistsToProfile]);
 
   // Check if product is in any wishlist
   const isProductWishlisted = useCallback((productId: string): boolean => {
@@ -229,10 +234,19 @@ export const useUnifiedWishlist = () => {
 
   // Quick add to default wishlist (for heart button)
   const quickAddToWishlist = useCallback(async (product: any): Promise<boolean> => {
-    const defaultWishlist = await getOrCreateDefaultWishlist();
-    if (!defaultWishlist) return false;
-    
-    return await addToWishlist(defaultWishlist.id, product);
+    try {
+      const defaultWishlist = await getOrCreateDefaultWishlist();
+      if (!defaultWishlist) {
+        toast.error('Failed to create default wishlist');
+        return false;
+      }
+      
+      return await addToWishlist(defaultWishlist.id, product);
+    } catch (error) {
+      console.error('Error in quickAddToWishlist:', error);
+      toast.error('Failed to add to wishlist');
+      return false;
+    }
   }, [getOrCreateDefaultWishlist, addToWishlist]);
 
   return {

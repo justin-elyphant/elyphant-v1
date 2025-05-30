@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/theme/ThemeProvider";
 import { AuthProvider } from "@/contexts/auth/AuthProvider";
 import { NotificationsProvider } from "@/contexts/notifications/NotificationsContext";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
+import { CartProvider } from "@/contexts/CartContext";
 import "./App.css";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 
@@ -40,26 +41,28 @@ function App() {
             <AuthProvider>
               <NotificationsProvider>
                 <ProfileProvider>
-                  <div className="min-h-screen bg-background font-sans antialiased">
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/signup" element={<SignUp />} />
-                      <Route path="/forgot-password" element={<ForgotPassword />} />
-                      <Route path="/marketplace" element={<Marketplace />} />
-                      <Route path="/shared-wishlist/:id" element={<SharedWishlist />} />
-                      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                      <Route path="/wishlists" element={<ProtectedRoute><Wishlists /></ProtectedRoute>} />
-                      <Route path="/wishlist/:id" element={<ProtectedRoute><WishlistDetail /></ProtectedRoute>} />
-                      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                      <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-                      <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-                      <Route path="/connections" element={<ProtectedRoute><Connections /></ProtectedRoute>} />
-                      <Route path="/vendor/login" element={<VendorLogin />} />
-                      <Route path="/about" element={<AboutUs />} />
-                      <Route path="/trunkline/login" element={<TrunklineLogin />} />
-                    </Routes>
-                  </div>
-                  <Toaster />
+                  <CartProvider>
+                    <div className="min-h-screen bg-background font-sans antialiased">
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/signup" element={<SignUp />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/marketplace" element={<Marketplace />} />
+                        <Route path="/shared-wishlist/:id" element={<SharedWishlist />} />
+                        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                        <Route path="/wishlists" element={<ProtectedRoute><Wishlists /></ProtectedRoute>} />
+                        <Route path="/wishlist/:id" element={<ProtectedRoute><WishlistDetail /></ProtectedRoute>} />
+                        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                        <Route path="/connections" element={<ProtectedRoute><Connections /></ProtectedRoute>} />
+                        <Route path="/vendor/login" element={<VendorLogin />} />
+                        <Route path="/about" element={<AboutUs />} />
+                        <Route path="/trunkline/login" element={<TrunklineLogin />} />
+                      </Routes>
+                    </div>
+                    <Toaster />
+                  </CartProvider>
                 </ProfileProvider>
               </NotificationsProvider>
             </AuthProvider>

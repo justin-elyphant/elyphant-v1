@@ -14,6 +14,7 @@ export const useMarketplaceSearch = () => {
   const { products, setProducts } = useProducts();
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const lastSearchTermRef = useRef<string | null>(null);
+  const searchInProgressRef = useRef<boolean>(false);
   
   // Get our custom hooks
   const { 
@@ -67,6 +68,7 @@ export const useMarketplaceSearch = () => {
       toastShownRef.current = false;
       searchIdRef.current = null;
       lastSearchTermRef.current = null;
+      searchInProgressRef.current = false;
       // Dismiss any remaining toasts on cleanup
       toast.dismiss();
     };
@@ -77,6 +79,12 @@ export const useMarketplaceSearch = () => {
     const categoryParam = params.get("category");
     const searchParam = params.get("search");
     const brandParam = params.get("brand");
+    
+    // Prevent duplicate searches
+    if (searchInProgressRef.current) {
+      console.log('Search already in progress, skipping duplicate request');
+      return;
+    }
     
     // Only process if the search parameter has actually changed
     if (searchParam !== lastSearchTermRef.current) {
@@ -97,6 +105,9 @@ export const useMarketplaceSearch = () => {
       
       // If there's a search term in the URL, search for products using Zinc API
       if (searchParam) {
+        // Set search in progress flag
+        searchInProgressRef.current = true;
+        
         // Immediately dismiss any existing toasts
         toast.dismiss();
         
@@ -104,6 +115,9 @@ export const useMarketplaceSearch = () => {
           filterBySearch(searchParam, amazonProducts);
         }).catch(error => {
           console.error('Search error:', error);
+        }).finally(() => {
+          // Always clear the search in progress flag
+          searchInProgressRef.current = false;
         });
       } else if (brandParam) {
         // If there's a brand parameter but no search, we'll handle it elsewhere
@@ -121,7 +135,7 @@ export const useMarketplaceSearch = () => {
   return {
     currentCategory,
     filteredProducts,
-    isLoading,
+    isLoading: isLoading || searchInProgressRef.current,
     getPageInfo
   };
 };

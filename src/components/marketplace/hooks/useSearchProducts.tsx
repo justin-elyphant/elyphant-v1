@@ -11,11 +11,21 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
   const searchIdRef = useRef<string | null>(null);
   const RESULTS_LIMIT = 100;
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const searchZincProducts = async (searchParam: string, searchChanged: boolean) => {
+    // Cancel any previous search
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this search
+    abortControllerRef.current = new AbortController();
+    
     // Clear any pending search timeouts to prevent race conditions
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
     }
     
     // Clear existing toasts to prevent accumulation
@@ -27,12 +37,18 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       console.log(`Searching for products with term: "${searchParam}"`);
       
       // Show a single loading toast with unique ID to prevent duplicates
+      const loadingToastId = `search-loading-${searchParam}`;
       toast.loading("Searching...", {
         description: `Looking for products matching "${searchParam}"`,
-        id: `search-loading-${searchParam}`, // Use consistent ID to prevent duplicates
+        id: loadingToastId,
       });
       
       const results = await searchProducts(searchParam);
+      
+      // Check if search was aborted
+      if (abortControllerRef.current?.signal.aborted) {
+        return [];
+      }
       
       if (results.length > 0) {
         // Convert to Product format and standardize
@@ -61,8 +77,8 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
         
         // Show only ONE toast notification with a summary if it's a new search
         if (!toastShownRef.current && searchChanged) {
-          // Dismiss any existing toasts first
-          toast.dismiss(`search-loading-${searchParam}`);
+          // Dismiss loading toast
+          toast.dismiss(loadingToastId);
           
           // Use a ref to avoid multiple toasts within the same search session
           toastShownRef.current = true;
@@ -71,7 +87,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
           searchTimeoutRef.current = setTimeout(() => {
             toast.success("Search Complete", {
               description: `Found ${Math.min(amazonProducts.length, RESULTS_LIMIT)} products matching "${searchParam}"`,
-              id: `search-success-${searchParam}`, // Use consistent ID to prevent duplicates
+              id: `search-success-${searchParam}`,
             });
             
             // Reset toast flag after a few seconds
@@ -79,20 +95,22 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
               toastShownRef.current = false;
             }, 3000);
           }, 300);
+        } else {
+          // Just dismiss loading toast for repeat searches
+          toast.dismiss(loadingToastId);
         }
         
         return amazonProducts;
       } else {
+        // Dismiss loading toast
+        toast.dismiss(loadingToastId);
+        
         // Show toast for no results
         if (!toastShownRef.current && searchChanged) {
-          // Dismiss loading toast
-          toast.dismiss(`search-loading-${searchParam}`);
-          
-          // Show no results toast
           toastShownRef.current = true;
           toast.error("No Results", {
             description: `No products found matching "${searchParam}"`,
-            id: `search-no-results-${searchParam}`, // Use consistent ID to prevent duplicates
+            id: `search-no-results-${searchParam}`,
           });
           
           // Reset toast flag after a few seconds
@@ -107,16 +125,15 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
     } catch (error) {
       console.error("Error searching for products:", error);
       
+      // Dismiss loading toast
+      toast.dismiss(`search-loading-${searchParam}`);
+      
       // Only show error toast once per search
-      if (!toastShownRef.current && searchChanged) {
-        // Dismiss loading toast
-        toast.dismiss(`search-loading-${searchParam}`);
-        
-        // Show error toast
+      if (!toastShownRef.current && searchChanged && !abortControllerRef.current?.signal.aborted) {
         toastShownRef.current = true;
         toast.error("Search Error", {
           description: "Error connecting to Amazon. Please try again later.",
-          id: `search-error-${searchParam}`, // Use consistent ID to prevent duplicates
+          id: `search-error-${searchParam}`,
         });
         
         // Reset toast flag after a few seconds
@@ -132,6 +149,9 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       
       // Dismiss any remaining loading toasts
       toast.dismiss(`search-loading-${searchParam}`);
+      
+      // Clear abort controller
+      abortControllerRef.current = null;
     }
   };
 

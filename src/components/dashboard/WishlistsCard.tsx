@@ -30,6 +30,12 @@ const WishlistsCard = () => {
     }))
   ) || [];
 
+  const handleProductClick = (item: any) => {
+    // Navigate to marketplace and potentially open product details
+    // For now, we'll navigate to marketplace - could be enhanced to open specific product
+    window.location.href = '/marketplace';
+  };
+
   return (
     <Card className="border-2 border-pink-100 h-full">
       <CardHeader className="pb-2">
@@ -82,7 +88,7 @@ const WishlistsCard = () => {
                         {wishlist.items?.length || 0} item{(wishlist.items?.length || 0) !== 1 ? 's' : ''}
                       </p>
                     </div>
-                    <Link to={`/wishlists/${wishlist.id}`}>
+                    <Link to={`/wishlist/${wishlist.id}`}>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -101,7 +107,11 @@ const WishlistsCard = () => {
                 {totalItems > 0 ? (
                   <div className="space-y-2">
                     {allItems.slice(0, 4).map((item, index) => (
-                      <div key={`${item.id}-${index}`} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
+                      <div 
+                        key={`${item.id}-${index}`} 
+                        className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                        onClick={() => handleProductClick(item)}
+                      >
                         {item.image_url && (
                           <img 
                             src={item.image_url} 

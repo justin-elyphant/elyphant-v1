@@ -24,7 +24,7 @@ export interface GiftOptions {
 export interface GiftSchedulingOptions {
   scheduleDelivery: boolean;
   sendGiftMessage: boolean;
-  isSurprise?: boolean; // Optional field to maintain compatibility
+  isSurprise?: boolean;
 }
 
 export interface CheckoutData {
@@ -85,6 +85,7 @@ export const useCheckoutState = () => {
   }, [cartItems.length, navigate, user]);
 
   const handleTabChange = (value: string) => {
+    console.log("Changing tab to:", value);
     setActiveTab(value);
   };
 
@@ -109,30 +110,26 @@ export const useCheckoutState = () => {
   };
 
   const handleUpdateGiftScheduling = (data: Partial<GiftSchedulingOptions>) => {
-    // Ensure all values are properly typed as booleans
-    const updatedData: Partial<GiftSchedulingOptions> = {};
+    console.log("Updating gift scheduling with:", data);
     
-    // Only include fields that are present in the input data
-    if ('scheduleDelivery' in data) {
-      updatedData.scheduleDelivery = Boolean(data.scheduleDelivery);
-    }
-    
-    if ('sendGiftMessage' in data) {
-      updatedData.sendGiftMessage = Boolean(data.sendGiftMessage);
-    }
-    
-    // Only include isSurprise if it exists in the input data
-    if (data.isSurprise !== undefined) {
-      updatedData.isSurprise = Boolean(data.isSurprise);
-    }
-    
-    setCheckoutData(prev => ({
-      ...prev,
-      giftScheduling: {
-        ...prev.giftScheduling,
-        ...updatedData
-      }
-    }));
+    setCheckoutData(prev => {
+      const newGiftScheduling = { ...prev.giftScheduling };
+      
+      // Update only the fields that are provided
+      Object.keys(data).forEach(key => {
+        const typedKey = key as keyof GiftSchedulingOptions;
+        if (data[typedKey] !== undefined) {
+          newGiftScheduling[typedKey] = data[typedKey] as any;
+        }
+      });
+      
+      console.log("New gift scheduling state:", newGiftScheduling);
+      
+      return {
+        ...prev,
+        giftScheduling: newGiftScheduling
+      };
+    });
   };
 
   const handleShippingMethodChange = (method: string) => {

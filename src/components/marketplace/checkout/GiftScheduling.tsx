@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 export interface GiftSchedulingOptions {
   scheduleDelivery: boolean;
   sendGiftMessage: boolean;
-  isSurprise?: boolean; // Optional field to maintain compatibility
+  isSurprise?: boolean;
 }
 
 interface GiftSchedulingProps {
@@ -18,13 +18,18 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
   giftScheduling, 
   onUpdate 
 }) => {
+  console.log("GiftScheduling component rendered with props:", giftScheduling);
+
   const handleCheckboxChange = (field: keyof GiftSchedulingOptions) => {
-    // Create a copy of the current options and toggle the selected field
-    const updatedOptions = {
-      ...giftScheduling,
+    console.log(`Toggling ${field} from ${giftScheduling[field]} to ${!giftScheduling[field]}`);
+    
+    // Create a simple update object with just the changed field
+    const updates = {
       [field]: !giftScheduling[field]
     };
-    onUpdate(updatedOptions);
+    
+    console.log("Sending updates:", updates);
+    onUpdate(updates);
   };
 
   return (

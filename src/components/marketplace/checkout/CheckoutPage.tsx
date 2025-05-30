@@ -39,6 +39,17 @@ const CheckoutPage = () => {
     canPlaceOrder
   } = useCheckoutState();
 
+  // Memoize the formatted gift scheduling data to prevent unnecessary re-renders
+  const formattedGiftScheduling = React.useMemo(() => {
+    console.log("Formatting gift scheduling data:", checkoutData.giftScheduling);
+    return {
+      scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
+      sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
+      isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
+        Boolean(checkoutData.giftScheduling.isSurprise) : undefined
+    };
+  }, [checkoutData.giftScheduling]);
+
   const getShippingCost = () => {
     return checkoutData.shippingMethod === "express" ? 12.99 : 4.99;
   };
@@ -123,14 +134,6 @@ const CheckoutPage = () => {
   if (cartItems.length === 0) {
     return null;
   }
-
-  // Make sure gift scheduling values are properly converted to boolean
-  const formattedGiftScheduling = {
-    scheduleDelivery: Boolean(checkoutData.giftScheduling.scheduleDelivery),
-    sendGiftMessage: Boolean(checkoutData.giftScheduling.sendGiftMessage),
-    isSurprise: checkoutData.giftScheduling.isSurprise !== undefined ? 
-      Boolean(checkoutData.giftScheduling.isSurprise) : undefined
-  };
 
   return (
     <div className="container mx-auto py-8 px-4">

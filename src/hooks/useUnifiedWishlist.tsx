@@ -162,6 +162,67 @@ export const useUnifiedWishlist = () => {
     }
   }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
 
+  // Create a new wishlist with an item included - atomic operation to avoid race conditions
+  const createWishlistWithItem = useCallback(async (title: string, product: any, description?: string): Promise<Wishlist | null> => {
+    if (!user) {
+      toast.error('You must be logged in to create wishlists');
+      return null;
+    }
+
+    try {
+      console.log('Creating wishlist with item:', title, product.id);
+      
+      // Create the wishlist item
+      const newItem: WishlistItem = normalizeWishlistItem({
+        id: crypto.randomUUID(),
+        wishlist_id: '', // Will be set below
+        product_id: product.id,
+        title: product.title || product.name || '',
+        name: product.title || product.name || '',
+        price: product.price,
+        image_url: product.image,
+        brand: product.brand,
+        added_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      });
+
+      const newWishlist: Wishlist = normalizeWishlist({
+        id: crypto.randomUUID(),
+        user_id: user.id,
+        title: title.trim(),
+        description: description?.trim() || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_public: false,
+        items: [{ ...newItem, wishlist_id: crypto.randomUUID() }] // Set the wishlist_id
+      });
+
+      // Update the item's wishlist_id to match the new wishlist
+      newWishlist.items[0].wishlist_id = newWishlist.id;
+
+      console.log('New wishlist with item created:', newWishlist);
+
+      const updatedWishlists = [...wishlists, newWishlist];
+      
+      // Update local state immediately for instant feedback
+      setWishlists(updatedWishlists);
+      
+      // Sync to database
+      await syncWishlistsToProfile(updatedWishlists);
+      
+      console.log('Wishlist with item created and synced successfully:', newWishlist.id);
+      
+      // Return the complete wishlist object for immediate use
+      return newWishlist;
+    } catch (error) {
+      console.error('Error creating wishlist with item:', error);
+      // Revert state on error
+      await loadWishlists();
+      toast.error('Failed to create wishlist. Please try again.');
+      return null;
+    }
+  }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
+
   // Add product to wishlist with optimistic updates and better error handling
   const addToWishlist = useCallback(async (wishlistId: string, product: any): Promise<boolean> => {
     if (!user) {
@@ -318,6 +379,7 @@ export const useUnifiedWishlist = () => {
     wishlistedProducts,
     loadWishlists,
     createWishlist,
+    createWishlistWithItem,
     addToWishlist,
     removeFromWishlist,
     isProductWishlisted,

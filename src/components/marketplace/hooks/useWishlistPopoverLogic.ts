@@ -19,7 +19,7 @@ export const useWishlistPopoverLogic = ({
   productBrand?: string;
   onClose?: () => void;
 }) => {
-  const { wishlists, addToWishlist, createWishlist, loadWishlists } = useUnifiedWishlist();
+  const { wishlists, addToWishlist, createWishlistWithItem, loadWishlists } = useUnifiedWishlist();
   const [open, setOpen] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
@@ -73,18 +73,9 @@ export const useWishlistPopoverLogic = ({
     try {
       setCreating(true);
       
-      console.log('Creating new wishlist:', newName.trim());
+      console.log('Creating new wishlist with product:', newName.trim());
       
-      // Create wishlist and get the returned object
-      const newWishlist = await createWishlist(newName.trim());
-      if (!newWishlist) {
-        toast.error("Failed to create wishlist");
-        return;
-      }
-
-      console.log('New wishlist created successfully:', newWishlist.id);
-      
-      // Use the returned wishlist object directly instead of reloading state
+      // Create wishlist with the product already included to avoid race condition
       const productData = {
         id: productId,
         title: productName,
@@ -94,13 +85,10 @@ export const useWishlistPopoverLogic = ({
         brand: productBrand
       };
 
-      console.log('Adding product to newly created wishlist:', newWishlist.id);
+      const newWishlist = await createWishlistWithItem(newName.trim(), productData);
       
-      // Add product directly to the new wishlist using its ID
-      const success = await addToWishlist(newWishlist.id, productData);
-      
-      if (success) {
-        console.log('Product added successfully to new wishlist');
+      if (newWishlist) {
+        console.log('New wishlist created successfully with product:', newWishlist.id);
         toast.success(`Created "${newName.trim()}" and added item`);
         
         // Close dialogs and trigger callback
@@ -112,8 +100,8 @@ export const useWishlistPopoverLogic = ({
         }
         setOpen(false);
       } else {
-        console.error('Failed to add product to new wishlist');
-        toast.error("Created wishlist but failed to add item");
+        console.error('Failed to create wishlist with product');
+        toast.error("Failed to create wishlist");
       }
     } catch (err) {
       console.error('Error in handleCreateWishlist:', err);

@@ -8,10 +8,9 @@ import {
   PopoverContent
 } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/auth";
-import { useFavorites } from "@/components/gifting/hooks/useFavorites";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useWishlist } from "@/components/gifting/hooks/useWishlist";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist"; // Use unified system
 import ShareStatusBadge from "@/components/gifting/wishlist/ShareStatusBadge";
 
 interface FavoritesDropdownProps {
@@ -20,15 +19,14 @@ interface FavoritesDropdownProps {
 
 const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
   const { user } = useAuth();
-  const { favorites = [] } = useFavorites();
-  const { wishlists, updateWishlistSharing } = useWishlist();
+  const { wishlists } = useUnifiedWishlist(); // Use unified system directly
   const navigate = useNavigate();
   
   // Count total items across all wishlists
   const totalItemsCount = wishlists?.reduce(
     (count, wishlist) => count + (wishlist.items?.length || 0), 
     0
-  ) || favorites.length;
+  ) || 0;
 
   const handleClick = () => {
     if (!user && onSignUpRequired) {
@@ -92,7 +90,7 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
                           />
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
+                          {wishlist.items?.length || 0} {(wishlist.items?.length || 0) === 1 ? 'item' : 'items'}
                         </p>
                       </div>
                     </div>
@@ -117,7 +115,7 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
                       </Button>
                     </div>
                   </div>
-                  {wishlist.items.length > 0 && (
+                  {wishlist.items && wishlist.items.length > 0 && (
                     <div className="flex gap-1 mt-2 overflow-x-auto pb-1">
                       {wishlist.items.slice(0, 4).map((item, idx) => (
                         <div 

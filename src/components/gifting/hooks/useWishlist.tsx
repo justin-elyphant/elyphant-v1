@@ -14,6 +14,7 @@ export function useWishlist() {
     quickAddToWishlist
   } = useUnifiedWishlist();
 
+  // Map the unified wishlist interface to the expected useWishlist interface
   return {
     wishlistedProducts,
     wishlists,
@@ -24,8 +25,11 @@ export function useWishlist() {
     createWishlist,
     addToWishlist,
     removeFromWishlist,
-    deleteWishlist: async () => false, // Placeholder
-    updateWishlistSharing: async () => false, // Placeholder
-    reloadWishlists: loadWishlists
+    deleteWishlist: async () => false, // Placeholder - will implement if needed
+    updateWishlistSharing: async () => false, // Placeholder - will implement if needed
+    reloadWishlists: loadWishlists,
+    // Add these to ensure proper sync
+    isProductWishlisted,
+    refreshWishlists: loadWishlists
   };
 }

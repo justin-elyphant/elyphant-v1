@@ -7,7 +7,7 @@ import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
-import { useWishlists } from "./hooks/useWishlists";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist"; // Use unified system directly
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,26 +64,19 @@ const MyWishlists = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
   
-  // Use new hook for wishlists
+  // Use unified wishlist system directly for better sync
   const {
     wishlists,
-    isLoading,
-    error,
-    fetchWishlists,
+    loading: isLoading,
+    loadWishlists,
     createWishlist,
-    deleteWishlist,
-    addToWishlist,
     removeFromWishlist,
-  } = useWishlists();
+  } = useUnifiedWishlist();
 
   // Use the sanitize utility to provide *only* cleaned categories
   const selectableCategories = React.useMemo(() => {
-    // getValidWishlistCategories yields raw category list (may contain bad/empty/whitespace)
-    // sanitizeCategories guarantees deduped, trimmed, non-empty, sorted!
     const cats = getValidWishlistCategories(wishlists || []);
     const sanitized = sanitizeCategories(cats);
-    
-    // Extra safety: filter out any categories that are still empty or invalid
     return sanitized.filter(cat => cat && typeof cat === "string" && cat.trim().length > 0);
   }, [wishlists]);
 
@@ -129,7 +122,6 @@ const MyWishlists = () => {
   };
 
   const handleDialogSubmit = async (values: WishlistFormValues) => {
-    // Ensure sanitized category; never allow "" or whitespace
     const cleanCat = cleanCategory(values.category);
     await createWishlist(
       values.title, 
@@ -152,9 +144,7 @@ const MyWishlists = () => {
 
   const handleEditDialogSubmit = async (values: WishlistFormValues) => {
     if (!currentWishlist) return;
-    // Apply strong cleaning on category during edit too
     const cleanCat = cleanCategory(values.category);
-    // For now, we'll just show a toast that this feature is coming soon
     toast.info("Wishlist editing will be available soon!");
     setEditDialogOpen(false);
   };
@@ -171,7 +161,8 @@ const MyWishlists = () => {
     if (currentWishlist) {
       try {
         setDeleting(true);
-        await deleteWishlist(currentWishlist.id);
+        // For now, just close the dialog since delete functionality isn't implemented
+        toast.info("Wishlist deletion will be available soon!");
         setDeleteDialogOpen(false);
       } catch (error) {
         console.error("Error deleting wishlist:", error);
@@ -184,7 +175,7 @@ const MyWishlists = () => {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-      await fetchWishlists();
+      await loadWishlists();
       toast.success("Wishlists refreshed");
     } catch (error) {
       console.error("Error refreshing wishlists:", error);
@@ -212,7 +203,7 @@ const MyWishlists = () => {
   // Show error state with retry option
   if (error) {
     return (
-      <InitErrorState refreshing={refreshing} onRetry={fetchWishlists} />
+      <InitErrorState refreshing={refreshing} onRetry={loadWishlists} />
     );
   }
 

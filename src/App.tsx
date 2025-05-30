@@ -7,14 +7,14 @@ import { AuthProvider } from "@/contexts/auth";
 import { CartProvider } from "@/contexts/CartContext";
 import Home from "./pages/Home";
 import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn";
+import SignIn from "./pages/auth/SignIn";
 import Dashboard from "./pages/Dashboard";
 import Marketplace from "./pages/Marketplace";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Profile from "./pages/Profile";
 import Gifting from "./pages/Gifting";
-import MyWishlists from "./pages/MyWishlists";
+import Wishlists from "./pages/Wishlists";
 import SharedWishlist from "./pages/SharedWishlist";
 import CreateWishlist from "./pages/CreateWishlist";
 import GiftScheduling from "./pages/GiftScheduling";
@@ -47,7 +47,7 @@ function App() {
                 <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/gifting" element={<Gifting />} />
-                <Route path="/wishlists" element={<MyWishlists />} />
+                <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/wishlist/:id" element={<SharedWishlist />} />
                 <Route path="/create-wishlist" element={<CreateWishlist />} />
                 <Route path="/gift-scheduling" element={<GiftScheduling />} />

@@ -33,7 +33,7 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
     {
       name: "Graduation Season",
       searchTerm: "graduation gifts",
-      date: new Date(2025, 4, 31), // May 31, 2025 - End of graduation season
+      date: new Date(2025, 4, 15), // May 15, 2025 - Earlier start of graduation season
       type: "holiday"
     },
     { 
@@ -155,9 +155,14 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
   ];
 
   // Filter and sort upcoming occasions within the next 90 days
+  // Add validation to ensure only future events are included
   return occasions
     .filter(occasion => {
-      return isAfter(occasion.date, today) && isBefore(occasion.date, addDays(today, 90));
+      const eventDate = new Date(occasion.date);
+      const now = new Date();
+      // Only include events that are today or in the future
+      return eventDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate()) && 
+             isBefore(eventDate, addDays(today, 90));
     })
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 };
@@ -173,7 +178,11 @@ export const mergeOccasions = (
   holidayOccasions: GiftOccasion[],
   friendOccasions: GiftOccasion[]
 ): GiftOccasion[] => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
   return [...holidayOccasions, ...friendOccasions]
+    .filter(occasion => new Date(occasion.date) >= today) // Filter out past events
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5); // Only take the 5 closest events
 };

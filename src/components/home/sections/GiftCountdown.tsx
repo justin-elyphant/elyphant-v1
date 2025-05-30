@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Gift, Calendar } from "lucide-react";
-import { differenceInDays, format } from "date-fns";
+import { differenceInCalendarDays, format, isToday, isTomorrow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -24,21 +24,35 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
   const navigate = useNavigate();
 
   if (!event) return null;
+  
   const now = new Date();
-  const days = Math.max(0, differenceInDays(event.date, now));
-  const dateLabel = format(event.date, "EEEE, MMMM d");
+  const eventDate = new Date(event.date);
+  
+  // Filter out past events
+  if (eventDate < now) return null;
+  
+  const days = differenceInCalendarDays(eventDate, now);
+  const dateLabel = format(eventDate, "EEEE, MMMM d");
 
-  // Text logic
+  // Improved text logic using date-fns helpers
   let daysDisplay = "";
-  if (days === 0) daysDisplay = "Today!";
-  else if (days === 1) daysDisplay = "Tomorrow!";
-  else daysDisplay = `${days} days away!`;
+  if (isToday(eventDate)) {
+    daysDisplay = "Today!";
+  } else if (isTomorrow(eventDate)) {
+    daysDisplay = "Tomorrow!";
+  } else {
+    daysDisplay = `${days} days away!`;
+  }
 
   // Friendly line per occasion
   let detailDisplay = "";
-  if (days === 0) detailDisplay = `${event.name} is Today!`;
-  else if (days === 1) detailDisplay = `${event.name} is Tomorrow (${dateLabel})`;
-  else detailDisplay = `${event.name} is ${dateLabel}`;
+  if (isToday(eventDate)) {
+    detailDisplay = `${event.name} is Today!`;
+  } else if (isTomorrow(eventDate)) {
+    detailDisplay = `${event.name} is Tomorrow (${dateLabel})`;
+  } else {
+    detailDisplay = `${event.name} is ${dateLabel}`;
+  }
 
   // Button: search for event gifts
   const handleShopGifts = () => {
@@ -74,4 +88,3 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
 };
 
 export default GiftCountdown;
-

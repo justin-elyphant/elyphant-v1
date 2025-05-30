@@ -13,6 +13,7 @@ import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
+import { WishlistItem } from "@/types/profile";
 
 const WishlistDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,11 +24,11 @@ const WishlistDetail = () => {
   // Find the wishlist by ID
   const wishlist = wishlists.find(w => w.id === id);
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = async (item: WishlistItem) => {
     if (!wishlist) return;
     
     try {
-      const success = await removeFromWishlist(wishlist.id, itemId);
+      const success = await removeFromWishlist(wishlist.id, item.id);
       if (success) {
         toast.success("Item removed from wishlist");
       }

@@ -117,7 +117,7 @@ export const useUnifiedWishlist = () => {
     }
   }, [user]);
 
-  // Create a new wishlist
+  // Create a new wishlist - improved to return the complete wishlist object
   const createWishlist = useCallback(async (title: string, description?: string): Promise<Wishlist | null> => {
     if (!user) {
       toast.error('You must be logged in to create wishlists');
@@ -125,6 +125,8 @@ export const useUnifiedWishlist = () => {
     }
 
     try {
+      console.log('Creating wishlist:', title);
+      
       const newWishlist: Wishlist = normalizeWishlist({
         id: crypto.randomUUID(),
         user_id: user.id,
@@ -136,15 +138,20 @@ export const useUnifiedWishlist = () => {
         items: []
       });
 
+      console.log('New wishlist object created:', newWishlist);
+
       const updatedWishlists = [...wishlists, newWishlist];
       
-      // Update local state immediately
+      // Update local state immediately for instant feedback
       setWishlists(updatedWishlists);
       
-      // Sync to database in background
+      // Sync to database
       await syncWishlistsToProfile(updatedWishlists);
       
+      console.log('Wishlist created and synced successfully:', newWishlist.id);
       toast.success(`Wishlist "${title}" created successfully`);
+      
+      // Return the complete wishlist object for immediate use
       return newWishlist;
     } catch (error) {
       console.error('Error creating wishlist:', error);
@@ -155,7 +162,7 @@ export const useUnifiedWishlist = () => {
     }
   }, [user, wishlists, syncWishlistsToProfile, loadWishlists]);
 
-  // Add product to wishlist with optimistic updates
+  // Add product to wishlist with optimistic updates and better error handling
   const addToWishlist = useCallback(async (wishlistId: string, product: any): Promise<boolean> => {
     if (!user) {
       toast.error('You must be logged in to add to wishlists');
@@ -163,14 +170,33 @@ export const useUnifiedWishlist = () => {
     }
 
     try {
+      console.log('Adding to wishlist:', wishlistId, 'product:', product.id);
+      
+      // Find wishlist in current state (including any newly created ones)
       const wishlistIndex = wishlists.findIndex(w => w.id === wishlistId);
       if (wishlistIndex === -1) {
-        toast.error('Wishlist not found');
-        return false;
+        console.error('Wishlist not found in current state:', wishlistId);
+        console.log('Available wishlists:', wishlists.map(w => ({ id: w.id, title: w.title })));
+        
+        // Try to reload wishlists and retry once
+        console.log('Reloading wishlists and retrying...');
+        await loadWishlists();
+        
+        // Wait a moment for state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Check again after reload
+        const updatedWishlistIndex = wishlists.findIndex(w => w.id === wishlistId);
+        if (updatedWishlistIndex === -1) {
+          toast.error('Wishlist not found. Please try again.');
+          return false;
+        }
       }
 
+      const currentWishlistIndex = wishlistIndex !== -1 ? wishlistIndex : wishlists.findIndex(w => w.id === wishlistId);
+      
       // Check if product already exists
-      const existingItem = wishlists[wishlistIndex].items?.find(
+      const existingItem = wishlists[currentWishlistIndex].items?.find(
         item => item.product_id === product.id
       );
 
@@ -193,9 +219,9 @@ export const useUnifiedWishlist = () => {
       });
 
       const updatedWishlists = [...wishlists];
-      updatedWishlists[wishlistIndex] = {
-        ...updatedWishlists[wishlistIndex],
-        items: [...(updatedWishlists[wishlistIndex].items || []), newItem],
+      updatedWishlists[currentWishlistIndex] = {
+        ...updatedWishlists[currentWishlistIndex],
+        items: [...(updatedWishlists[currentWishlistIndex].items || []), newItem],
         updated_at: new Date().toISOString()
       };
 
@@ -207,6 +233,7 @@ export const useUnifiedWishlist = () => {
       // Sync to database in background
       await syncWishlistsToProfile(updatedWishlists);
       
+      console.log('Item added to wishlist successfully');
       toast.success('Added to wishlist');
       return true;
     } catch (error) {

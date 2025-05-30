@@ -73,20 +73,50 @@ export const useWishlistPopoverLogic = ({
     try {
       setCreating(true);
       
-      // Create wishlist
+      console.log('Creating new wishlist:', newName.trim());
+      
+      // Create wishlist and get the returned object
       const newWishlist = await createWishlist(newName.trim());
-      if (newWishlist) {
-        console.log('useWishlistPopoverLogic - Created new wishlist, reloading data');
-        // Reload wishlists to get fresh data
-        await loadWishlists();
+      if (!newWishlist) {
+        toast.error("Failed to create wishlist");
+        return;
+      }
+
+      console.log('New wishlist created successfully:', newWishlist.id);
+      
+      // Use the returned wishlist object directly instead of reloading state
+      const productData = {
+        id: productId,
+        title: productName,
+        name: productName,
+        price: productPrice,
+        image: productImage,
+        brand: productBrand
+      };
+
+      console.log('Adding product to newly created wishlist:', newWishlist.id);
+      
+      // Add product directly to the new wishlist using its ID
+      const success = await addToWishlist(newWishlist.id, productData);
+      
+      if (success) {
+        console.log('Product added successfully to new wishlist');
+        toast.success(`Created "${newName.trim()}" and added item`);
         
-        // Add product to the new wishlist
-        await handleAddToWishlist(newWishlist.id);
-        
+        // Close dialogs and trigger callback
         setShowNewDialog(false);
         setNewName("");
+        
+        if (onClose) {
+          onClose();
+        }
+        setOpen(false);
+      } else {
+        console.error('Failed to add product to new wishlist');
+        toast.error("Created wishlist but failed to add item");
       }
     } catch (err) {
+      console.error('Error in handleCreateWishlist:', err);
       toast.error("Failed to create wishlist");
     } finally {
       setCreating(false);

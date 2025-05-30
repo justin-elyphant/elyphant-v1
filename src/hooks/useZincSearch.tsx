@@ -37,133 +37,93 @@ export const useZincSearch = (searchTerm: string) => {
 
   useEffect(() => {
     // Reset results if search term is empty
-    if (!searchTerm || typeof searchTerm !== 'string' || searchTerm.trim().length < 2) {
-      console.log('useZincSearch: Search term empty or too short, using default products');
-      const defaultProducts = getMockProducts(5);
-      setZincResults(defaultProducts);
-      setFilteredProducts(defaultProducts);
+    if (!searchTerm || searchTerm.trim() === '') {
       setLoading(false);
+      setZincResults([]);
+      setFilteredProducts([]);
+      lastSearchTermRef.current = "";
+      cleanup();
       return;
     }
 
-    // Don't search if term is identical to previous search
-    if (lastSearchTermRef.current === searchTerm) {
+    // Don't search if term hasn't changed
+    if (searchTerm === lastSearchTermRef.current) {
       return;
     }
-    
-    // Clear previous timeout to debounce searches
-    cleanup();
 
-    // Store current search term as the last one processed
+    console.log(`useZincSearch: Searching for "${searchTerm}"`);
     lastSearchTermRef.current = searchTerm;
-    console.log(`useZincSearch: Processing search term: "${searchTerm}"`);
     
-    // Set loading state
+    // Clear any existing timeout
+    cleanup();
+    
     setLoading(true);
     
-    // Use a timeout to simulate network delay and debounce searches
+    // Set a timeout to ensure loading state gets cleared
     searchTimeoutRef.current = window.setTimeout(() => {
       try {
-        // Filter local products first (faster response)
-        const term = searchTerm.toLowerCase().trim();
-        console.log(`useZincSearch: Filtering local products for "${term}"`);
-        
-        // Filter existing products
-        let filtered = products
-          .filter((product) => {
-            try {
-              if (!product) return false; // Skip null/undefined products
-              
-              const name = product.name ? product.name.toLowerCase() : "";
-              if (name.includes(term)) return true;
-              
-              const title = product.title ? product.title.toLowerCase() : "";
-              if (title.includes(term)) return true;
-              
-              const description = product.description ? product.description.toLowerCase() : "";
-              if (description.includes(term)) return true;
-              
-              const brand = product.brand ? product.brand.toLowerCase() : "";
-              if (brand.includes(term)) return true;
-              
-              // Also check for individual word matches
-              const words = term.split(" ");
-              if (words.length > 1) {
-                return words.some(word => 
-                  word.length > 2 && (
-                    name.includes(word) || 
-                    title.includes(word) || 
-                    description.includes(word) || 
-                    brand.includes(word)
-                  )
-                );
-              }
-              
-              return false;
-            } catch (err) {
-              console.error("Error filtering product:", err);
-              return false;
-            }
-          })
-          .slice(0, MAX_RESULTS);
-        
-        console.log(`useZincSearch: Found ${filtered.length} matching local products`);
-        
-        // Get mock search results - this is the key part for searching
-        console.log(`useZincSearch: Getting mock search results for "${searchTerm}"`);
+        // Use mock search for now
         const mockResults = searchMockProducts(searchTerm, MAX_RESULTS);
+        console.log(`useZincSearch: Found ${mockResults.length} results for "${searchTerm}"`);
         
-        // Process results
-        if (mockResults && mockResults.length > 0) {
-          console.log(`useZincSearch: Found ${mockResults.length} mock results`);
-          
-          // Ensure each product has valid images
-          const validatedResults = mockResults.map(product => {
-            // We'll let the ProductImage component handle fallback images
-            return product;
-          });
-          
-          setZincResults(validatedResults);
-          
-          // If we have mock results but no filtered results, use mock results as filtered
-          if (filtered.length === 0) {
-            console.log("useZincSearch: No local matches, using mock search results as filtered products");
-            setFilteredProducts(validatedResults);
-          } else {
-            setFilteredProducts(filtered);
-          }
-        } else {
-          console.log(`useZincSearch: No mock results found, using fallback`);
-          // Fallback to some default products
-          const fallbackProducts = getMockProducts(5);
-          setZincResults(fallbackProducts);
-          
-          if (filtered.length === 0) {
-            setFilteredProducts(fallbackProducts);
-          } else {
-            setFilteredProducts(filtered);
-          }
-        }
-        
+        setZincResults(mockResults);
+        setFilteredProducts(mockResults);
       } catch (error) {
-        console.error('useZincSearch: Error searching:', error);
-        // Fallback to default products on error
-        const fallbackProducts = getMockProducts(5);
-        setZincResults(fallbackProducts);
-        setFilteredProducts(fallbackProducts);
+        console.error('useZincSearch: Error in search:', error);
+        setZincResults([]);
+        setFilteredProducts([]);
       } finally {
         setLoading(false);
       }
-    }, 300); // Short delay for a smoother UX
+    }, 500); // Small delay to show loading state
+    
+    // Cleanup timeout after 3 seconds max to prevent stuck loading
+    const maxTimeout = window.setTimeout(() => {
+      console.log('useZincSearch: Force clearing loading state');
+      setLoading(false);
+    }, 3000);
+    
+    return () => {
+      cleanup();
+      window.clearTimeout(maxTimeout);
+    };
+  }, [searchTerm]);
 
-    // Clean up on unmount or when search term changes
+  // Filter products based on search term
+  useEffect(() => {
+    if (!searchTerm || searchTerm.trim() === '') {
+      setFilteredProducts(zincResults);
+      return;
+    }
+
+    const filtered = products.filter(product => {
+      const title = product.title || product.name || '';
+      const description = product.description || '';
+      const category = product.category || '';
+      
+      const searchLower = searchTerm.toLowerCase();
+      
+      return (
+        title.toLowerCase().includes(searchLower) ||
+        description.toLowerCase().includes(searchLower) ||
+        category.toLowerCase().includes(searchLower)
+      );
+    });
+    
+    setFilteredProducts(filtered.slice(0, MAX_RESULTS));
+  }, [searchTerm, products, zincResults]);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return cleanup;
-  }, [searchTerm, products]);
+  }, []);
+
+  const hasResults = zincResults.length > 0 || filteredProducts.length > 0;
 
   return {
     loading,
     zincResults,
     filteredProducts,
-    hasResults: (zincResults && zincResults.length > 0) || (filteredProducts && filteredProducts.length > 0)
+    hasResults
   };
 };

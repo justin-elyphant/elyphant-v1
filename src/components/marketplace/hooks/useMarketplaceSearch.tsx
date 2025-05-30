@@ -67,6 +67,8 @@ export const useMarketplaceSearch = () => {
       toastShownRef.current = false;
       searchIdRef.current = null;
       lastSearchTermRef.current = null;
+      // Dismiss any remaining toasts on cleanup
+      toast.dismiss();
     };
   }, []);
 
@@ -96,10 +98,12 @@ export const useMarketplaceSearch = () => {
       // If there's a search term in the URL, search for products using Zinc API
       if (searchParam) {
         // Immediately dismiss any existing toasts
-        toast.dismiss("search-in-progress");
+        toast.dismiss();
         
         searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
           filterBySearch(searchParam, amazonProducts);
+        }).catch(error => {
+          console.error('Search error:', error);
         });
       } else if (brandParam) {
         // If there's a brand parameter but no search, we'll handle it elsewhere

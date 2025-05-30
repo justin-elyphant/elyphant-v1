@@ -127,7 +127,11 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       
       return [];
     } finally {
+      // Always clear loading state
       setIsLoading(false);
+      
+      // Dismiss any remaining loading toasts
+      toast.dismiss(`search-loading-${searchParam}`);
     }
   };
 

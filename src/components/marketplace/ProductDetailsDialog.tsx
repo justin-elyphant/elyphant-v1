@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Product } from "@/types/product";
 import ProductDetailsImageSection from "./product-details/ProductDetailsImageSection";
 import ProductDetailsActionsSection from "./product-details/ProductDetailsActionsSection";
-import { useWishlist } from "@/components/gifting/hooks/useWishlist";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -22,8 +22,8 @@ const ProductDetailsDialog = ({
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
 
-  // Use context wishlists directly, do NOT memoize
-  const { wishlists, reloadWishlists } = useWishlist();
+  // Use unified wishlist system directly
+  const { wishlists, loadWishlists } = useUnifiedWishlist();
 
   // Always recalculate isWishlisted live
   const isWishlisted =
@@ -32,6 +32,9 @@ const ProductDetailsDialog = ({
       Array.isArray(list.items) &&
       list.items.some(item => item.product_id === (product.product_id || product.id))
     );
+
+  // Use loadWishlists instead of reloadWishlists
+  const reloadWishlists = loadWishlists;
 
   // 1. Use the shared wishlist context:
   // 2. Check if the product is in ANY wishlist

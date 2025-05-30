@@ -25,6 +25,7 @@ import OrderDetail from "./pages/OrderDetail";
 import OrderTracking from "./pages/OrderTracking";
 import Crowdfunding from "./pages/Crowdfunding";
 import Trunkline from "./pages/Trunkline";
+import TrunklineLoginPage from "./pages/TrunklineLogin";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ function App() {
                 <Route path="/order-tracking/:orderId?" element={<OrderTracking />} />
                 <Route path="/crowdfunding" element={<Crowdfunding />} />
                 <Route path="/trunkline" element={<Trunkline />} />
+                <Route path="/trunkline-login" element={<TrunklineLoginPage />} />
               </Routes>
             </CartProvider>
           </AuthProvider>

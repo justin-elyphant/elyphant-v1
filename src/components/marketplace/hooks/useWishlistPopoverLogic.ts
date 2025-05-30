@@ -19,12 +19,26 @@ export const useWishlistPopoverLogic = ({
   productBrand?: string;
   onClose?: () => void;
 }) => {
-  const { wishlists, addToWishlist, createWishlistWithItem, loadWishlists } = useUnifiedWishlist();
+  const { wishlists, addToWishlist, removeFromWishlist, createWishlistWithItem, loadWishlists } = useUnifiedWishlist();
   const [open, setOpen] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null);
+  const [removingFromWishlist, setRemovingFromWishlist] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [wishlistToRemoveFrom, setWishlistToRemoveFrom] = useState<{id: string, name: string} | null>(null);
+  const [showRemoveAllConfirm, setShowRemoveAllConfirm] = useState(false);
+
+  // Get wishlists that contain this product
+  const getWishlistsContainingProduct = () => {
+    return wishlists.filter(wishlist => 
+      wishlist.items?.some(item => item.product_id === productId)
+    );
+  };
+
+  const wishlistsContainingProduct = getWishlistsContainingProduct();
+  const productIsWishlisted = wishlistsContainingProduct.length > 0;
 
   const isInWishlist = (wishlistId: string) => {
     const wishlist = wishlists.find((w) => w.id === wishlistId);
@@ -46,11 +60,9 @@ export const useWishlistPopoverLogic = ({
 
       if (success) {
         console.log('useWishlistPopoverLogic - Successfully added to wishlist, reloading data');
-        // Reload wishlists to ensure fresh data
         await loadWishlists();
         toast.success(`Added to wishlist`);
         
-        // Close popover and trigger callback
         if (onClose) {
           onClose();
         }
@@ -61,6 +73,78 @@ export const useWishlistPopoverLogic = ({
       toast.error("Failed to add to wishlist");
     } finally {
       setAddingToWishlist(null);
+    }
+  };
+
+  const handleRemoveFromWishlist = async (wishlistId: string, wishlistName: string) => {
+    // Find the item in the wishlist to get its ID
+    const wishlist = wishlists.find(w => w.id === wishlistId);
+    const item = wishlist?.items?.find(item => item.product_id === productId);
+    
+    if (!item) {
+      toast.error("Item not found in wishlist");
+      return;
+    }
+
+    try {
+      setRemovingFromWishlist(wishlistId);
+      
+      const success = await removeFromWishlist(wishlistId, item.id);
+      
+      if (success) {
+        console.log('useWishlistPopoverLogic - Successfully removed from wishlist, reloading data');
+        await loadWishlists();
+        toast.success(`Removed from ${wishlistName}`);
+        
+        if (onClose) {
+          onClose();
+        }
+        setOpen(false);
+      }
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      toast.error("Failed to remove from wishlist");
+    } finally {
+      setRemovingFromWishlist(null);
+      setShowRemoveConfirm(false);
+      setWishlistToRemoveFrom(null);
+    }
+  };
+
+  const handleRemoveFromAllWishlists = async () => {
+    try {
+      setRemovingFromWishlist('all');
+      
+      // Remove from all wishlists that contain this product
+      const removalPromises = wishlistsContainingProduct.map(async (wishlist) => {
+        const item = wishlist.items?.find(item => item.product_id === productId);
+        if (item) {
+          return removeFromWishlist(wishlist.id, item.id);
+        }
+        return Promise.resolve(false);
+      });
+      
+      const results = await Promise.all(removalPromises);
+      const successCount = results.filter(Boolean).length;
+      
+      if (successCount > 0) {
+        console.log('useWishlistPopoverLogic - Successfully removed from all wishlists, reloading data');
+        await loadWishlists();
+        toast.success(`Removed from ${successCount} wishlist${successCount > 1 ? 's' : ''}`);
+        
+        if (onClose) {
+          onClose();
+        }
+        setOpen(false);
+      } else {
+        toast.error("Failed to remove from wishlists");
+      }
+    } catch (error) {
+      console.error("Error removing from all wishlists:", error);
+      toast.error("Failed to remove from wishlists");
+    } finally {
+      setRemovingFromWishlist(null);
+      setShowRemoveAllConfirm(false);
     }
   };
 
@@ -75,7 +159,6 @@ export const useWishlistPopoverLogic = ({
       
       console.log('Creating new wishlist with product:', newName.trim());
       
-      // Create wishlist with the product already included to avoid race condition
       const productData = {
         id: productId,
         title: productName,
@@ -91,7 +174,6 @@ export const useWishlistPopoverLogic = ({
         console.log('New wishlist created successfully with product:', newWishlist.id);
         toast.success(`Created "${newName.trim()}" and added item`);
         
-        // Close dialogs and trigger callback
         setShowNewDialog(false);
         setNewName("");
         
@@ -111,18 +193,39 @@ export const useWishlistPopoverLogic = ({
     }
   };
 
+  const confirmRemoveFromWishlist = (wishlistId: string, wishlistName: string) => {
+    setWishlistToRemoveFrom({ id: wishlistId, name: wishlistName });
+    setShowRemoveConfirm(true);
+  };
+
+  const confirmRemoveFromAllWishlists = () => {
+    setShowRemoveAllConfirm(true);
+  };
+
   return {
     wishlists,
     open,
     setOpen,
     addingToWishlist,
+    removingFromWishlist,
     showNewDialog,
     setShowNewDialog,
     newName,
     setNewName,
     creating,
+    showRemoveConfirm,
+    setShowRemoveConfirm,
+    wishlistToRemoveFrom,
+    showRemoveAllConfirm,
+    setShowRemoveAllConfirm,
+    wishlistsContainingProduct,
+    productIsWishlisted,
     isInWishlist,
     handleAddToWishlist,
-    handleCreateWishlist
+    handleRemoveFromWishlist,
+    handleRemoveFromAllWishlists,
+    handleCreateWishlist,
+    confirmRemoveFromWishlist,
+    confirmRemoveFromAllWishlists
   };
 };

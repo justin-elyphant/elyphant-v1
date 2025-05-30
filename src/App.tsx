@@ -33,7 +33,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider storageKey="vite-ui-theme">
+      <ThemeProvider>
         <TooltipProvider>
           <BrowserRouter>
             <ScrollToTop />

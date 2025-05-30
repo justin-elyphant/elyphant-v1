@@ -84,12 +84,6 @@ const CheckoutPage = () => {
         taxAmount: getTaxAmount(),
         totalAmount: getTotalAmount(),
         shippingInfo: checkoutData.shippingInfo,
-        giftOptions: {
-          isGift: false,
-          recipientName: "",
-          giftMessage: "",
-          giftWrapping: false
-        },
         paymentIntentId: paymentData.payment_intent_id
       });
 
@@ -171,10 +165,6 @@ const CheckoutPage = () => {
             cartItems={cartItems}
             cartTotal={cartTotal}
             shippingMethod={checkoutData.shippingMethod}
-            giftOptions={{
-              isGift: false,
-              giftWrapping: false
-            }}
           />
         </div>
       </div>

@@ -13,10 +13,6 @@ interface OrderSummaryProps {
   }[];
   cartTotal: number;
   shippingMethod: string;
-  giftOptions: {
-    isGift: boolean;
-    giftWrapping: boolean;
-  };
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({

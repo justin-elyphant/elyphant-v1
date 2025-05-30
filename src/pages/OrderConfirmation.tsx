@@ -138,19 +138,6 @@ const OrderConfirmation = () => {
                 <p>{order.shipping_info.country}</p>
               </div>
             </div>
-
-            {order.gift_options.isGift && (
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-2">Gift Options:</h4>
-                <div className="text-sm text-muted-foreground">
-                  <p>This is a gift order</p>
-                  {order.gift_options.giftWrapping && <p>Gift wrapping included</p>}
-                  {order.gift_options.giftMessage && (
-                    <p>Gift message: "{order.gift_options.giftMessage}"</p>
-                  )}
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 

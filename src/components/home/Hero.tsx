@@ -36,7 +36,7 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/lovable-uploads/55e3017b-43eb-4d9b-8332-0ad00b3c6387.png')`,
+          backgroundImage: `url('/lovable-uploads/b4e53c11-d422-4abb-9854-b0ac3908a96e.png')`,
           backgroundSize: '90%',
           backgroundPosition: 'center 20%',
         }}

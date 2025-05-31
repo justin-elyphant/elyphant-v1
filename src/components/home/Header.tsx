@@ -25,7 +25,6 @@ const Header = () => {
   const [botOpen, setBotOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  // Always show search and categories everywhere (including '/')
   const alwaysShowSearchAndCategories = true;
 
   return (
@@ -50,7 +49,7 @@ const Header = () => {
                 )}
               </div>
               {/* Right: AI Bot + Cart + Notifications + Auth/Profile */}
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-3">
                 <BotButton onClick={() => setBotOpen(true)} />
                 <ShoppingCartButton />
                 <NotificationsDropdown />
@@ -63,27 +62,35 @@ const Header = () => {
             </div>
           )}
 
-          {/* Mobile header */}
+          {/* Mobile header - Enhanced touch targets and spacing */}
           {isMobile && (
             <>
-              {/* Hamburger row */}
-              <div className="flex items-center justify-between">
+              {/* Hamburger row with improved spacing */}
+              <div className="flex items-center justify-between py-2">
                 {/* Logo (left) */}
                 <div className="flex items-center">
                   <Link to="/">
                     <Logo />
                   </Link>
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* AI Bot button on mobile */}
-                  <BotButton onClick={() => setBotOpen(true)} className="px-2" />
-                  {/* Shopping cart icon on mobile */}
-                  <ShoppingCartButton />
-                  {/* Notifications bell on mobile */}
-                  <NotificationsDropdown />
-                  {/* Hamburger */}
+                {/* Right side actions with better touch targets */}
+                <div className="flex items-center gap-3">
+                  {/* AI Bot button - enhanced for mobile */}
+                  <BotButton 
+                    onClick={() => setBotOpen(true)} 
+                    className="h-12 w-12 p-3 touch-manipulation" 
+                  />
+                  {/* Shopping cart - enhanced touch target */}
+                  <div className="h-12 w-12 flex items-center justify-center">
+                    <ShoppingCartButton />
+                  </div>
+                  {/* Notifications - enhanced touch target */}
+                  <div className="h-12 w-12 flex items-center justify-center">
+                    <NotificationsDropdown />
+                  </div>
+                  {/* Hamburger menu - enhanced touch target */}
                   <button
-                    className="flex items-center"
+                    className="h-12 w-12 flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-100 transition-colors"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                   >
@@ -96,15 +103,15 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Mobile Search Bar area with just ONE CategoriesDropdown */}
-              <div className="mt-3">
+              {/* Mobile Search Bar area with improved spacing */}
+              <div className="py-3">
                 <div className="flex w-full gap-3 items-center">
-                  {/* Prominently show the mobile search bar */}
-                  <div className="flex-1">
+                  {/* Enhanced mobile search bar */}
+                  <div className="flex-1 min-h-[48px]">
                     <SearchBar mobile />
                   </div>
-                  {/* Only one CategoriesDropdown on mobile */}
-                  <div className="flex-none">
+                  {/* Categories dropdown with proper touch target */}
+                  <div className="flex-none min-h-[48px] flex items-center">
                     <CategoriesDropdown
                       open={categoriesOpen}
                       onOpenChange={setCategoriesOpen}
@@ -113,22 +120,21 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Mobile Slide-down menu: Auth only, no search/categories */}
+              {/* Mobile Slide-down menu with enhanced touch targets */}
               {mobileMenuOpen && (
-                <div className="mt-4 py-4 border-t">
-                  {/* Auth on mobile */}
+                <div className="py-4 border-t">
                   {!user && (
-                    <div className="flex flex-col gap-2 pt-3 border-t mt-4">
+                    <div className="flex flex-col gap-3 pt-3 border-t mt-4">
                       <Button
                         variant="purple"
-                        className="w-full"
+                        className="w-full h-12 text-base touch-manipulation"
                         onClick={() => navigate("/signup")}
                       >
                         Sign Up
                       </Button>
                       <Button
                         variant="outline"
-                        className="w-full"
+                        className="w-full h-12 text-base touch-manipulation"
                         onClick={() => navigate("/login")}
                       >
                         Log In

@@ -4,6 +4,14 @@ import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lu
 import { toast } from "sonner";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 // Neutral, sophisticated icons (muted purple/dark gray)
 const occasions = [
@@ -74,6 +82,7 @@ const occasions = [
 
 const FeaturedOccasions = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
   const [fetchStatus, setFetchStatus] = useState<Record<number, string>>({});
   
@@ -106,14 +115,58 @@ const FeaturedOccasions = () => {
     }
   };
 
-  return (
-    <div className="mb-12">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-          Featured Occasions
-        </h2>
-      </div>
-      {/* Modern luxury grid: white, subtle border, shadow, clean spacing */}
+  // Render mobile carousel or desktop grid based on screen size
+  const renderOccasions = () => {
+    if (isMobile) {
+      return (
+        <Carousel
+          opts={{
+            align: "start",
+            loop: false,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-2 md:-ml-4">
+            {occasions.map((occasion) => (
+              <CarouselItem key={occasion.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3">
+                <div 
+                  onClick={() => handleOccasionClick(occasion.category, occasion.name, occasion.id, occasion.searchTerm)}
+                  className="cursor-pointer h-full"
+                >
+                  <Card className="h-full bg-white border border-gray-200 shadow-subtle rounded-lg 
+                    transition-transform transition-shadow duration-200 hover:shadow-lg hover:scale-[1.03]"
+                  >
+                    <CardContent className="p-4 flex flex-col items-center text-center min-h-[140px] justify-center touch-manipulation">
+                      <div className="rounded-full bg-gray-50 p-3 mb-2 shadow-sm">
+                        <span className="block">
+                          {React.cloneElement(occasion.icon, {
+                            className: "h-8 w-8 " + (occasion.icon.props.className || '')
+                          })}
+                        </span>
+                      </div>
+                      <h3 className="font-sans font-semibold text-base text-gray-900 tracking-tight mb-1">
+                        {occasion.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mb-2 text-center leading-relaxed">
+                        {occasion.description}
+                      </p>
+                      <span className="text-sm font-medium text-[#7E69AB] group-hover:underline underline-offset-2 transition-all">
+                        {loadingOccasion === occasion.id ? "Loading..." : occasion.cta}
+                      </span>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden sm:flex" />
+          <CarouselNext className="hidden sm:flex" />
+        </Carousel>
+      );
+    }
+
+    // Desktop grid layout (unchanged for desktop)
+    return (
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4">
         {occasions.map((occasion) => (
           <div 
@@ -121,8 +174,7 @@ const FeaturedOccasions = () => {
             onClick={() => handleOccasionClick(occasion.category, occasion.name, occasion.id, occasion.searchTerm)}
             className="cursor-pointer"
           >
-            <Card className="
-              h-full bg-white border border-gray-200 shadow-subtle rounded-lg 
+            <Card className="h-full bg-white border border-gray-200 shadow-subtle rounded-lg 
               transition-transform transition-shadow duration-200 hover:shadow-lg hover:scale-[1.03]"
             >
               <CardContent className="p-4 flex flex-col items-center text-center min-h-[120px] justify-center">
@@ -145,6 +197,17 @@ const FeaturedOccasions = () => {
           </div>
         ))}
       </div>
+    );
+  };
+
+  return (
+    <div className="mb-12">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+          Featured Occasions
+        </h2>
+      </div>
+      {renderOccasions()}
     </div>
   );
 };

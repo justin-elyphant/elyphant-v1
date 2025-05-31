@@ -1,33 +1,38 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Bot, Sparkles } from "lucide-react";
+import { Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BotButtonProps {
   onClick: () => void;
   className?: string;
+  variant?: "default" | "outline" | "ghost";
+  size?: "default" | "sm" | "lg" | "icon";
 }
 
-const BotButton = ({ onClick, className }: BotButtonProps) => {
+const BotButton: React.FC<BotButtonProps> = ({ 
+  onClick, 
+  className,
+  variant = "outline",
+  size = "default"
+}) => {
   return (
     <Button
+      variant={variant}
+      size={size}
       onClick={onClick}
-      size="sm"
       className={cn(
-        "relative bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300",
+        "relative transition-all duration-200 hover:scale-105 touch-manipulation",
+        "bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-0",
+        "hover:from-purple-600 hover:to-indigo-700",
+        "focus:ring-2 focus:ring-purple-500 focus:ring-offset-2",
         className
       )}
-      aria-label="AI Gift Advisor"
+      aria-label="Open AI Gift Advisor"
     >
-      <div className="flex items-center gap-2">
-        <Bot className="h-4 w-4" />
-        <span className="hidden sm:inline font-medium">AI Gift Helper</span>
-        <Sparkles className="h-3 w-3 opacity-80" />
-      </div>
-      
-      {/* Floating indicator */}
-      <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-bounce" />
+      <Bot className="h-5 w-5 mr-2" />
+      <span className="font-medium">AI Assistant</span>
     </Button>
   );
 };

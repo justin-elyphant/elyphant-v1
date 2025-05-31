@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -7,6 +6,14 @@ import ProductImage from "@/components/marketplace/product-item/ProductImage";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { useNavigate } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 type Collection = {
   id: number;
@@ -37,6 +44,7 @@ const DEFAULT_DESCRIPTIONS: Record<string, string> = {
 const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   const [loadingCollection, setLoadingCollection] = useState<number | null>(null);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleCollectionClick = async (collection: Collection) => {
     if (loadingCollection !== null) {
@@ -100,11 +108,79 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
     };
   });
 
-  return (
-    <div className="mb-12">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Featured Collections</h2>
-      </div>
+  const renderCollections = () => {
+    if (isMobile) {
+      return (
+        <Carousel
+          opts={{
+            align: "start",
+            loop: false,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-2 md:-ml-4">
+            {enhancedCollections.map((collection) => (
+              <CarouselItem key={collection.id} className="pl-2 md:pl-4 basis-4/5 sm:basis-1/2">
+                <div
+                  onClick={() => handleCollectionClick(collection)}
+                  className="cursor-pointer h-full group touch-manipulation"
+                >
+                  <Card className="relative overflow-hidden h-full p-0 flex flex-col justify-end bg-transparent border-0 shadow-none">
+                    <AspectRatio 
+                      ratio={4 / 5} 
+                      className="w-full h-full"
+                    >
+                      <img
+                        src={collection.image ?? undefined}
+                        alt={collection.name}
+                        className="absolute inset-0 w-full h-full object-cover object-center z-0 transition-all duration-300 
+                                   group-hover:scale-105"
+                        style={{ objectPosition: "center" }}
+                        draggable={false}
+                        loading="lazy"
+                      />
+                      {/* Subtle fade for text readability */}
+                      <div 
+                        className="absolute left-0 right-0 bottom-0 h-28 pointer-events-none z-10"
+                        style={{
+                          background: "linear-gradient(to top, rgba(0,0,0,0.48) 65%, rgba(0,0,0,0.10) 92%, rgba(0,0,0,0) 100%)"
+                        }}
+                      />
+                    </AspectRatio>
+                    {/* Enhanced mobile overlay content */}
+                    <div className="absolute bottom-0 left-0 w-full z-20 px-4 pb-4 pt-2 flex flex-col"
+                         style={{ pointerEvents: "none" }}>
+                      <h3 className="text-white font-semibold text-lg mb-0.5 drop-shadow pointer-events-auto">
+                        {collection.name}
+                      </h3>
+                      <p className="text-white text-sm mb-2 opacity-95 drop-shadow pointer-events-auto whitespace-pre-line">
+                        {collection.description}
+                      </p>
+                      <div className="flex items-center justify-end">
+                        <div className="flex items-center text-white font-medium ml-auto pointer-events-auto">
+                          <span>
+                            {loadingCollection === collection.id
+                              ? "Loading..."
+                              : (collection.callToAction || "Shop now")}
+                          </span>
+                          <ArrowRight className="h-5 w-5 ml-2" />
+                        </div>
+                      </div>
+                    </div>
+                    <span className="absolute inset-0" aria-label={`Open ${collection.name}`}></span>
+                  </Card>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden sm:flex" />
+          <CarouselNext className="hidden sm:flex" />
+        </Carousel>
+      );
+    }
+
+    // Desktop grid layout (unchanged)
+    return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {enhancedCollections.map((collection) => (
           <div
@@ -126,7 +202,6 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                   draggable={false}
                   loading="lazy"
                 />
-                {/* Subtle fade just at the bottom to improve text readability, not darkening the whole image */}
                 <div 
                   className="absolute left-0 right-0 bottom-0 h-28 pointer-events-none z-10"
                   style={{
@@ -134,12 +209,8 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                   }}
                 />
               </AspectRatio>
-              {/* Overlay content is positioned absolutely at the bottom, above the low fade */}
               <div className="absolute bottom-0 left-0 w-full z-20 px-6 pb-4 pt-2 flex flex-col"
-                   style={{
-                     pointerEvents: "none"
-                   }}>
-                {/* TITLE & DESCRIPTION with good contrast */}
+                   style={{ pointerEvents: "none" }}>
                 <h3 className="text-white font-semibold text-lg md:text-xl lg:text-2xl mb-0.5 drop-shadow pointer-events-auto">
                   {collection.name}
                 </h3>
@@ -157,12 +228,20 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
                   </div>
                 </div>
               </div>
-              {/* Ensure the Card remains clickable */}
               <span className="absolute inset-0" aria-label={`Open ${collection.name}`}></span>
             </Card>
           </div>
         ))}
       </div>
+    );
+  };
+
+  return (
+    <div className="mb-12">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Featured Collections</h2>
+      </div>
+      {renderCollections()}
     </div>
   );
 };

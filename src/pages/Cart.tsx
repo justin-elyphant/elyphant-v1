@@ -45,6 +45,14 @@ function Cart() {
         <Header />
         <main className="flex-1">
           <div className="container mx-auto py-16 px-4">
+            <div className="mb-4">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/marketplace" className="flex items-center gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Continue Shopping
+                </Link>
+              </Button>
+            </div>
             <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
             <div className="text-center py-16">
               <h2 className="text-2xl font-medium mb-4">Your cart is empty</h2>
@@ -65,15 +73,15 @@ function Cart() {
       <Header />
       <main className="flex-1">
         <div className="container mx-auto py-8 px-4">
-          <div className="flex items-center mb-8">
-            <Button variant="ghost" className="mr-4" asChild>
-              <Link to="/marketplace">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+          <div className="mb-4">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/marketplace" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
                 Continue Shopping
               </Link>
             </Button>
-            <h1 className="text-3xl font-bold">Your Cart</h1>
           </div>
+          <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">

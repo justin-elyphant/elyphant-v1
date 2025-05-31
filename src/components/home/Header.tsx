@@ -7,8 +7,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import Logo from "./components/Logo";
 import AuthButtons from "./components/AuthButtons";
-import SearchBar from "./components/SearchBar";
-import CategoriesDropdown from "./components/CategoriesDropdown";
+import EnhancedSearchBar from "./components/EnhancedSearchBar";
 import { ProductProvider } from "@/contexts/ProductContext";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
 import UserButton from "@/components/auth/UserButton";
@@ -21,11 +20,8 @@ const Header = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [botOpen, setBotOpen] = useState(false);
   const isMobile = useIsMobile();
-
-  const alwaysShowSearchAndCategories = true;
 
   return (
     <header className="sticky top-0 bg-white shadow-sm z-50">
@@ -34,22 +30,17 @@ const Header = () => {
           {/* Desktop header */}
           {!isMobile && (
             <div className="flex items-center justify-between">
-              {/* Left: Logo, Categories, SearchBar */}
-              <div className="flex items-center gap-4 flex-1">
-                <Link to="/" className="flex items-center mr-4">
+              {/* Left: Logo and Search */}
+              <div className="flex items-center gap-6 flex-1">
+                <Link to="/" className="flex items-center">
                   <Logo />
                 </Link>
-                {alwaysShowSearchAndCategories && (
-                  <div className="flex items-center gap-4 w-auto">
-                    <CategoriesDropdown open={categoriesOpen} onOpenChange={setCategoriesOpen} />
-                    <div className="w-[480px] max-w-full transition-all duration-200">
-                      <SearchBar />
-                    </div>
-                  </div>
-                )}
+                <div className="flex-1 max-w-2xl">
+                  <EnhancedSearchBar />
+                </div>
               </div>
               {/* Right: AI Bot + Cart + Notifications + Auth/Profile */}
-              <div className="flex items-center justify-end gap-3">
+              <div className="flex items-center gap-3">
                 <BotButton onClick={() => setBotOpen(true)} />
                 <ShoppingCartButton />
                 <NotificationsDropdown />
@@ -62,33 +53,34 @@ const Header = () => {
             </div>
           )}
 
-          {/* Mobile header - Enhanced touch targets and spacing */}
+          {/* Mobile header - Restructured */}
           {isMobile && (
             <>
-              {/* Hamburger row with improved spacing */}
-              <div className="flex items-center justify-between py-2">
+              {/* Top row: Logo + Action buttons */}
+              <div className="flex items-center justify-between mb-3">
                 {/* Logo (left) */}
                 <div className="flex items-center">
                   <Link to="/">
                     <Logo />
                   </Link>
                 </div>
-                {/* Right side actions with better touch targets */}
-                <div className="flex items-center gap-3">
-                  {/* AI Bot button - enhanced for mobile */}
-                  <BotButton 
-                    onClick={() => setBotOpen(true)} 
-                    className="h-12 w-12 p-3 touch-manipulation" 
-                  />
-                  {/* Shopping cart - enhanced touch target */}
+                
+                {/* Action buttons (right) - Properly spaced */}
+                <div className="flex items-center gap-2">
+                  {/* AI Bot - Icon only */}
+                  <BotButton onClick={() => setBotOpen(true)} />
+                  
+                  {/* Shopping cart */}
                   <div className="h-12 w-12 flex items-center justify-center">
                     <ShoppingCartButton />
                   </div>
-                  {/* Notifications - enhanced touch target */}
+                  
+                  {/* Notifications */}
                   <div className="h-12 w-12 flex items-center justify-center">
                     <NotificationsDropdown />
                   </div>
-                  {/* Hamburger menu - enhanced touch target */}
+                  
+                  {/* Hamburger menu */}
                   <button
                     className="h-12 w-12 flex items-center justify-center touch-manipulation rounded-lg hover:bg-gray-100 transition-colors"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -103,24 +95,12 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Mobile Search Bar area with improved spacing */}
-              <div className="py-3">
-                <div className="flex w-full gap-3 items-center">
-                  {/* Enhanced mobile search bar */}
-                  <div className="flex-1 min-h-[48px]">
-                    <SearchBar mobile />
-                  </div>
-                  {/* Categories dropdown with proper touch target */}
-                  <div className="flex-none min-h-[48px] flex items-center">
-                    <CategoriesDropdown
-                      open={categoriesOpen}
-                      onOpenChange={setCategoriesOpen}
-                    />
-                  </div>
-                </div>
+              {/* Search row - Enhanced with integrated categories */}
+              <div className="mb-2">
+                <EnhancedSearchBar mobile />
               </div>
 
-              {/* Mobile Slide-down menu with enhanced touch targets */}
+              {/* Mobile menu */}
               {mobileMenuOpen && (
                 <div className="py-4 border-t">
                   {!user && (

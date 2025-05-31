@@ -56,7 +56,7 @@ const Header = () => {
           {/* Mobile header - Restructured */}
           {isMobile && (
             <>
-              {/* Top row: Logo + Action buttons */}
+              {/* Top row: Logo + Action buttons (NO AI Bot here) */}
               <div className="flex items-center justify-between mb-3">
                 {/* Logo (left) */}
                 <div className="flex items-center">
@@ -65,11 +65,8 @@ const Header = () => {
                   </Link>
                 </div>
                 
-                {/* Action buttons (right) - Properly spaced */}
+                {/* Action buttons (right) - Cart + Notifications + Menu only */}
                 <div className="flex items-center gap-2">
-                  {/* AI Bot - Icon only */}
-                  <BotButton onClick={() => setBotOpen(true)} />
-                  
                   {/* Shopping cart */}
                   <div className="h-12 w-12 flex items-center justify-center">
                     <ShoppingCartButton />
@@ -95,9 +92,19 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Search row - Enhanced with integrated categories */}
-              <div className="mb-2">
-                <EnhancedSearchBar mobile />
+              {/* Search row - Search bar + AI Bot */}
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex-[3]">
+                  <EnhancedSearchBar mobile />
+                </div>
+                <div className="flex-[1] flex justify-end">
+                  <BotButton 
+                    onClick={() => setBotOpen(true)} 
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12 bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-0 hover:from-purple-600 hover:to-indigo-700"
+                  />
+                </div>
               </div>
 
               {/* Mobile menu */}

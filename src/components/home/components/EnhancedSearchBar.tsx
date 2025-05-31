@@ -83,7 +83,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
 
   return (
     <form
-      className={`relative flex items-center ${mobile ? "" : "w-full"}`}
+      className={`relative flex items-center w-full`}
       onSubmit={handleSubmit}
       autoComplete="off"
     >

@@ -54,10 +54,10 @@ const Hero = () => {
         </div>
       )}
 
-      {/* Mobile Countdown Banner */}
+      {/* Mobile Countdown Banner - Fixed positioning */}
       {nextHoliday && (
-        <div className="absolute top-0 left-0 right-0 z-20 md:hidden">
-          <div className="bg-white/95 backdrop-blur-sm border-b">
+        <div className="absolute top-6 left-0 right-0 z-20 md:hidden">
+          <div className="bg-white/95 backdrop-blur-sm border-b mx-4 rounded-lg shadow-sm">
             <ResponsiveContainer padding="minimal">
               <GiftCountdown event={nextHoliday} />
             </ResponsiveContainer>
@@ -67,7 +67,7 @@ const Hero = () => {
 
       {/* Hero Content */}
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
-        <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'}`}>
+        <ResponsiveContainer className={`${nextHoliday ? 'pt-32 md:pt-8' : 'pt-8'}`}>
           <div className="max-w-2xl text-white">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg">
               Connecting Through Gifting

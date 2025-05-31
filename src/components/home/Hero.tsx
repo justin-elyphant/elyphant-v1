@@ -37,10 +37,12 @@ const Hero = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('/lovable-uploads/55e3017b-43eb-4d9b-8332-0ad00b3c6387.png')`,
+          backgroundSize: '90%',
+          backgroundPosition: 'center 20%',
         }}
       >
-        {/* Enhanced Gradient Overlay for better text readability on bright image */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
+        {/* Lighter Gradient Overlay for better visibility of faces */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/30"></div>
       </div>
 
       {/* Holiday Countdown Overlay */}

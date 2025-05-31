@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ResponsiveText } from "@/components/ui/responsive-text";
 import { Gift, ArrowRight } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const SeasonalGiftGuide = () => {
   const navigate = useNavigate();
@@ -39,12 +46,58 @@ const SeasonalGiftGuide = () => {
   const season = getCurrentSeason();
   const holiday = getUpcomingHoliday();
   
-  const seasonalTitle = `${season} Gift Guide`;
-  const holidayTitle = `${holiday} Gift Ideas`;
-  
   const handleNavigate = (query: string) => {
     navigate(`/marketplace?search=${encodeURIComponent(query)}`);
   };
+  
+  // Create seasonal guides array for carousel
+  const seasonalGuides = [
+    {
+      id: 1,
+      title: `${season} Gift Guide`,
+      description: `Curated gifts perfect for ${season.toLowerCase()} celebrations`,
+      gradient: "from-purple-100 to-purple-200",
+      iconColor: "text-purple-600",
+      textColor: "text-purple-800",
+      buttonColor: "bg-purple-600 hover:bg-purple-700",
+      categories: [
+        { name: `${season} Fashion`, query: `${season} fashion` },
+        { name: "Home & Decor", query: `${season} home decor` },
+        { name: "Outdoor & Activities", query: `${season} outdoors` }
+      ],
+      mainQuery: `${season} gifts`
+    },
+    {
+      id: 2,
+      title: `${holiday} Gift Ideas`,
+      description: `Perfect gifts to celebrate ${holiday}`,
+      gradient: "from-blue-100 to-teal-100",
+      iconColor: "text-blue-600",
+      textColor: "text-blue-800",
+      buttonColor: "bg-blue-600 hover:bg-blue-700",
+      categories: [
+        { name: "Bestsellers", query: `${holiday} bestsellers` },
+        { name: "Special Editions", query: `${holiday} special` },
+        { name: "Gift Sets", query: `${holiday} gift sets` }
+      ],
+      mainQuery: `${holiday} gifts`
+    },
+    {
+      id: 3,
+      title: "Year-Round Favorites",
+      description: "Timeless gifts that are perfect for any occasion",
+      gradient: "from-green-100 to-emerald-100",
+      iconColor: "text-green-600",
+      textColor: "text-green-800",
+      buttonColor: "bg-green-600 hover:bg-green-700",
+      categories: [
+        { name: "Classic Gifts", query: "classic gifts" },
+        { name: "Trending Now", query: "trending gifts" },
+        { name: "Best Sellers", query: "best selling gifts" }
+      ],
+      mainQuery: "popular gifts"
+    }
+  ];
   
   return (
     <div className="mb-16">
@@ -61,103 +114,67 @@ const SeasonalGiftGuide = () => {
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Seasonal Gift Guide Card */}
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-          <div className="grid grid-cols-1 md:grid-cols-5 h-full">
-            <div className="md:col-span-3 relative">
-              <div className="h-48 md:h-full bg-gradient-to-r from-purple-100 to-purple-200 flex flex-col justify-center items-center p-6">
-                <Gift className="h-12 w-12 text-purple-600 mb-3" />
-                <ResponsiveText 
-                  as="h3" 
-                  className="font-bold text-center text-purple-800"
-                  mobileSize="xl"
-                  desktopSize="2xl"
-                >
-                  {seasonalTitle}
-                </ResponsiveText>
-                <p className="text-purple-700 text-center mt-2">
-                  Curated gifts perfect for {season.toLowerCase()} celebrations
-                </p>
-              </div>
-            </div>
-            <div className="md:col-span-2 p-6 flex flex-col justify-between">
-              <div>
-                <h4 className="font-medium text-lg mb-2">Top {season} Categories</h4>
-                <ul className="space-y-2 mb-6">
-                  <li className="text-gray-700 hover:text-purple-600 cursor-pointer" 
-                      onClick={() => handleNavigate(`${season} fashion`)}>
-                    {season} Fashion
-                  </li>
-                  <li className="text-gray-700 hover:text-purple-600 cursor-pointer"
-                      onClick={() => handleNavigate(`${season} home decor`)}>
-                    Home & Decor
-                  </li>
-                  <li className="text-gray-700 hover:text-purple-600 cursor-pointer"
-                      onClick={() => handleNavigate(`${season} outdoors`)}>
-                    Outdoor & Activities
-                  </li>
-                </ul>
-              </div>
-              
-              <Button 
-                onClick={() => handleNavigate(`${season} gifts`)}
-                className="w-full"
-              >
-                Explore {season} Gifts
-              </Button>
-            </div>
-          </div>
-        </Card>
-        
-        {/* Holiday Gift Guide Card */}
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-          <div className="grid grid-cols-1 md:grid-cols-5 h-full">
-            <div className="md:col-span-3 relative">
-              <div className="h-48 md:h-full bg-gradient-to-r from-blue-100 to-teal-100 flex flex-col justify-center items-center p-6">
-                <Gift className="h-12 w-12 text-blue-600 mb-3" />
-                <ResponsiveText 
-                  as="h3" 
-                  className="font-bold text-center text-blue-800"
-                  mobileSize="xl"
-                  desktopSize="2xl"
-                >
-                  {holidayTitle}
-                </ResponsiveText>
-                <p className="text-blue-700 text-center mt-2">
-                  Perfect gifts to celebrate {holiday}
-                </p>
-              </div>
-            </div>
-            <div className="md:col-span-2 p-6 flex flex-col justify-between">
-              <div>
-                <h4 className="font-medium text-lg mb-2">Popular for {holiday}</h4>
-                <ul className="space-y-2 mb-6">
-                  <li className="text-gray-700 hover:text-blue-600 cursor-pointer"
-                      onClick={() => handleNavigate(`${holiday} bestsellers`)}>
-                    Bestsellers
-                  </li>
-                  <li className="text-gray-700 hover:text-blue-600 cursor-pointer"
-                      onClick={() => handleNavigate(`${holiday} special`)}>
-                    Special Editions
-                  </li>
-                  <li className="text-gray-700 hover:text-blue-600 cursor-pointer"
-                      onClick={() => handleNavigate(`${holiday} gift sets`)}>
-                    Gift Sets
-                  </li>
-                </ul>
-              </div>
-              
-              <Button 
-                onClick={() => handleNavigate(`${holiday} gifts`)}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-              >
-                Shop {holiday} Gifts
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
+      <Carousel
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2 md:-ml-4">
+          {seasonalGuides.map((guide) => (
+            <CarouselItem key={guide.id} className="pl-2 md:pl-4 basis-full md:basis-1/2">
+              <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
+                <div className="grid grid-cols-1 md:grid-cols-5 h-full min-h-[280px]">
+                  <div className="md:col-span-3 relative">
+                    <div className={`h-48 md:h-full bg-gradient-to-r ${guide.gradient} flex flex-col justify-center items-center p-6`}>
+                      <Gift className={`h-12 w-12 ${guide.iconColor} mb-3`} />
+                      <ResponsiveText 
+                        as="h3" 
+                        className={`font-bold text-center ${guide.textColor}`}
+                        mobileSize="xl"
+                        desktopSize="2xl"
+                      >
+                        {guide.title}
+                      </ResponsiveText>
+                      <p className={`${guide.textColor.replace('800', '700')} text-center mt-2`}>
+                        {guide.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 p-6 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-medium text-lg mb-2">Top Categories</h4>
+                      <ul className="space-y-2 mb-6">
+                        {guide.categories.map((category, index) => (
+                          <li 
+                            key={index}
+                            className="text-gray-700 hover:text-purple-600 cursor-pointer transition-colors" 
+                            onClick={() => handleNavigate(category.query)}
+                          >
+                            {category.name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <Button 
+                      onClick={() => handleNavigate(guide.mainQuery)}
+                      className={`w-full ${guide.buttonColor}`}
+                    >
+                      Explore {guide.title.split(' ')[0]} Gifts
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <div className="hidden md:block">
+          <CarouselPrevious />
+          <CarouselNext />
+        </div>
+      </Carousel>
     </div>
   );
 };

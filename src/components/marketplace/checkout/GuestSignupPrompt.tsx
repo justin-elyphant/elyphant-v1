@@ -79,6 +79,10 @@ const GuestSignupPrompt: React.FC<GuestSignupPromptProps> = ({
     }
   };
 
+  const handleTermsChange = (checked: boolean | "indeterminate") => {
+    setAgreeToTerms(checked === true);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -161,7 +165,7 @@ const GuestSignupPrompt: React.FC<GuestSignupPromptProps> = ({
               <Checkbox 
                 id="terms"
                 checked={agreeToTerms}
-                onCheckedChange={setAgreeToTerms}
+                onCheckedChange={handleTermsChange}
               />
               <Label htmlFor="terms" className="text-sm cursor-pointer">
                 I agree to the Terms of Service and Privacy Policy

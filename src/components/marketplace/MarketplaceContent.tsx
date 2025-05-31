@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -11,6 +12,7 @@ import { AlertCircle } from "lucide-react";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -109,7 +111,7 @@ const MarketplaceContent = ({
   const displayProducts = showRecommendations ? recommendations : filteredProducts;
   
   return (
-    <div className="mt-6">
+    <ResponsiveContainer className="mt-6">
       <MarketplaceFilters 
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -120,7 +122,6 @@ const MarketplaceContent = ({
         savedFiltersCount={savedFilters.length}
         onSavedFiltersToggle={toggleSavedFilters}
         savedFiltersActive={savedFiltersActive}
-        // Pass filter toggle props down so button is available in header
         showFilters={showFilters}
         setShowFilters={setShowFilters}
       />
@@ -159,7 +160,7 @@ const MarketplaceContent = ({
           />
         </div>
       </div>
-    </div>
+    </ResponsiveContainer>
   );
 };
 

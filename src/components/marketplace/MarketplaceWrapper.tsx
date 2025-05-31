@@ -10,8 +10,10 @@ import { searchMockProducts } from "@/components/marketplace/services/mockProduc
 import { X } from "lucide-react";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { toast } from "sonner";
+import { FullWidthSection } from "@/components/layout/FullWidthSection";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 
-// New: ResultsChip component
+// Enhanced ResultsChip component for mobile
 const ResultsChip = ({
   query,
   onClear,
@@ -19,22 +21,26 @@ const ResultsChip = ({
   query: string;
   onClear?: () => void;
 }) => (
-  <div className="flex justify-center mt-1 mb-5">
-    <span className="inline-flex items-center rounded-full bg-purple-100 px-4 py-2 text-purple-700 font-semibold text-sm shadow-sm animate-fade-in border border-purple-200 relative">
-      Showing results for <span className="font-bold mx-1">"{query}"</span>
-      {onClear && (
-        <button
-          type="button"
-          aria-label="Clear search"
-          onClick={onClear}
-          className="ml-2 hover:bg-purple-200 rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-purple-400"
-          style={{ lineHeight: 0 }}
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
-    </span>
-  </div>
+  <FullWidthSection padding="minimal">
+    <ResponsiveContainer>
+      <div className="flex justify-center">
+        <span className="inline-flex items-center rounded-full bg-purple-100 px-4 py-2 text-purple-700 font-semibold text-sm shadow-sm animate-fade-in border border-purple-200 relative">
+          Showing results for <span className="font-bold mx-1">"{query}"</span>
+          {onClear && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={onClear}
+              className="ml-2 hover:bg-purple-200 rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              style={{ lineHeight: 0 }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </span>
+      </div>
+    </ResponsiveContainer>
+  </FullWidthSection>
 );
 
 const MarketplaceWrapper = () => {
@@ -132,18 +138,25 @@ const MarketplaceWrapper = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero banner with countdown - only show on main marketplace page */}
-      <MarketplaceHero isCollapsed={shouldCollapseHero} />
+      {/* Full-width hero banner */}
+      <FullWidthSection background="gradient">
+        <MarketplaceHero isCollapsed={Boolean(searchTerm || categoryParam || brandParam)} />
+      </FullWidthSection>
 
-      <StickyFiltersBar
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-        totalItems={products.length}
-        searchTerm={searchTerm}
-        onRecentSearchClick={handleRecentSearchClick}
-      />
+      {/* Full-width sticky filters bar */}
+      <FullWidthSection background="white" className="border-b border-gray-200 sticky top-0 z-40">
+        <ResponsiveContainer>
+          <StickyFiltersBar
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            totalItems={products.length}
+            searchTerm={searchTerm}
+            onRecentSearchClick={handleRecentSearchClick}
+          />
+        </ResponsiveContainer>
+      </FullWidthSection>
 
-      {/* Show a 'results for' chip if searching or category/brand filter is on */}
+      {/* Results chip */}
       {(searchTerm || categoryParam || brandParam) && (
         <ResultsChip
           query={searchTerm || categoryParam || brandParam || ""}
@@ -151,19 +164,22 @@ const MarketplaceWrapper = () => {
         />
       )}
 
-      <main
-        className={`container mx-auto px-4 ${isMobile ? "pb-20" : "pb-12"}`}
-        ref={resultsRef}
-      >
-        <MarketplaceContent
-          products={products}
-          isLoading={false}
-          searchTerm={searchTerm}
-          onProductView={handleProductView}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-        />
-      </main>
+      {/* Main content with full-width capability for mobile */}
+      <FullWidthSection className={isMobile ? "" : "container mx-auto"} padding={isMobile ? "none" : "standard"}>
+        <div
+          className={isMobile ? "pb-20" : "pb-12"}
+          ref={resultsRef}
+        >
+          <MarketplaceContent
+            products={products}
+            isLoading={false}
+            searchTerm={searchTerm}
+            onProductView={handleProductView}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+          />
+        </div>
+      </FullWidthSection>
     </div>
   );
 };

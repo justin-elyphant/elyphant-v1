@@ -2,17 +2,15 @@
 import React from "react";
 import { Product } from "@/types/product";
 import ProductItem from "./product-item/ProductItem";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductGridDisplayProps {
   products: Product[];
   viewMode: "grid" | "list" | "modern";
   getProductStatus: (product: Product) => { badge: string; color: string } | null;
   handleProductClick: (productId: string) => void;
-  toggleWishlist: (
-    e: React.MouseEvent<Element, MouseEvent>,
-    wishlistData: { id: string; name: string; image?: string; price?: number }
-  ) => void;
-  isFavorited: (id: string) => boolean;
+  toggleWishlist: (e: React.MouseEvent, productInfo: any) => void;
+  isFavorited: (productId: string) => boolean;
   isMobile: boolean;
 }
 
@@ -23,80 +21,46 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
   handleProductClick,
   toggleWishlist,
   isFavorited,
-  isMobile,
+  isMobile
 }) => {
-  // Modern view rendering function
-  const renderModernView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {products.map((product, index) => {
-        const status = getProductStatus(product);
-        const isLarge = index % 5 === 0;
-        return (
-          <div
-            key={product.product_id || product.id || ""}
-            className={`relative ${isLarge ? "md:col-span-2" : ""} transition-transform hover:scale-[1.01]`}
-          >
-            <ProductItem
-              product={product}
-              viewMode={isLarge ? "list" : "grid"}
-              onProductClick={handleProductClick}
-              onWishlistClick={(e) =>
-                toggleWishlist(e, {
-                  id: product.product_id || product.id || "",
-                  name: product.title || product.name || "",
-                  image: product.image,
-                  price: product.price,
-                })
-              }
-              isFavorited={isFavorited(product.product_id || product.id || "")}
-              statusBadge={status}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-lg font-medium">No products found</p>
-        <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
+        <p className="text-gray-500">No products found</p>
       </div>
     );
   }
 
-  if (viewMode === "modern") {
-    return renderModernView();
-  }
+  // Enhanced mobile grid layout for better visual impact
+  const getGridClasses = () => {
+    if (isMobile) {
+      // Mobile: Edge-to-edge with minimal gaps for maximum visual impact
+      return viewMode === "list" 
+        ? "grid grid-cols-1 gap-3" 
+        : "grid grid-cols-2 gap-2 px-2";
+    }
+    
+    // Desktop: Standard responsive grid
+    return viewMode === "list" 
+      ? "grid grid-cols-1 gap-4" 
+      : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4";
+  };
+
   return (
-    <div
-      className={
-        viewMode === "grid"
-          ? isMobile
-            ? "grid grid-cols-1 xs:grid-cols-2 gap-3"
-            : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
-          : "space-y-4"
-      }
-    >
+    <div className={getGridClasses()}>
       {products.map((product) => {
-        const status = getProductStatus(product);
+        const productId = String(product.product_id || product.id);
+        const statusBadge = getProductStatus(product);
+        
         return (
           <ProductItem
-            key={product.product_id || product.id || ""}
+            key={productId}
             product={product}
             viewMode={viewMode}
-            onProductClick={handleProductClick}
-            onWishlistClick={(e) =>
-              toggleWishlist(e, {
-                id: product.product_id || product.id || "",
-                name: product.title || product.name || "",
-                image: product.image,
-                price: product.price,
-              })
-            }
-            isFavorited={isFavorited(product.product_id || product.id || "")}
-            statusBadge={status}
+            onProductClick={() => handleProductClick(productId)}
+            onWishlistClick={(e) => toggleWishlist(e, { id: productId })}
+            isFavorited={isFavorited(productId)}
+            statusBadge={statusBadge}
           />
         );
       })}

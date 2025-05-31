@@ -1,9 +1,8 @@
+
 import React from "react";
 import Header from "@/components/home/Header";
-import { ResponsiveNavigation } from "./ResponsiveNavigation";
-import { ResponsiveContainer } from "./ResponsiveContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import Footer from "@/components/home/Footer"; // Import the detailed footer
+import Footer from "@/components/home/Footer";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -14,20 +13,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-gray-950">
-      {/* Always show the universal header with categories & search */}
+      {/* Full-width header */}
       <Header />
-      {/* Optionally keep navigation if needed - can comment out if you want single nav only */}
-      {/* <ResponsiveNavigation /> */}
       
+      {/* Full-width main content area */}
       <main className="flex-1">
-        <ResponsiveContainer 
-          className={isMobile ? "py-4" : "py-6"}
-        >
-          {children}
-        </ResponsiveContainer>
+        {children}
       </main>
       
-      <Footer /> {/* Use the detailed Footer component */}
+      {/* Full-width footer */}
+      <Footer />
     </div>
   );
 };

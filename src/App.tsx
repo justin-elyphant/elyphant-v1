@@ -14,7 +14,6 @@ import Marketplace from "./pages/Marketplace";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Profile from "./pages/Profile";
-import Gifting from "./pages/Gifting";
 import Wishlists from "./pages/Wishlists";
 import SharedWishlist from "./pages/SharedWishlist";
 import CreateWishlist from "./pages/CreateWishlist";
@@ -52,7 +51,6 @@ function App() {
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                   <Route path="/profile" element={<Profile />} />
-                  <Route path="/gifting" element={<Gifting />} />
                   <Route path="/wishlists" element={<Wishlists />} />
                   <Route path="/wishlist/:id" element={<SharedWishlist />} />
                   <Route path="/create-wishlist" element={<CreateWishlist />} />

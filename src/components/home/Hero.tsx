@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +19,7 @@ const Hero = () => {
     if (user) {
       // Authenticated user: go direct to feature page
       if (intent === "giftor") {
-        navigate("/gifting");
+        navigate("/marketplace");
       } else {
         navigate("/wishlists");
       }

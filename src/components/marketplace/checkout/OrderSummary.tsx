@@ -5,6 +5,7 @@ import { Product } from "@/types/product";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingBag, Gift, Calendar } from "lucide-react";
 import { GiftOptions } from "./useCheckoutState";
+import { ShippingOption } from "@/components/marketplace/zinc/services/shippingQuoteService";
 import TransparentPriceBreakdown from "./TransparentPriceBreakdown";
 
 interface OrderSummaryProps {
@@ -13,21 +14,18 @@ interface OrderSummaryProps {
     quantity: number;
   }[];
   cartTotal: number;
-  shippingMethod: string;
+  shippingCost: number;
+  selectedShippingOption: ShippingOption | null;
   giftOptions: GiftOptions;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
   cartItems,
   cartTotal,
-  shippingMethod,
+  shippingCost,
+  selectedShippingOption,
   giftOptions
 }) => {
-  // Calculate shipping cost based on method
-  const getShippingCost = () => {
-    return shippingMethod === "express" ? 12.99 : 4.99;
-  };
-
   // Calculate tax (8.25% for demonstration)
   const getTaxAmount = () => {
     return cartTotal * 0.0825;
@@ -72,6 +70,23 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         
         <Separator />
         
+        {/* Shipping Method Display */}
+        {selectedShippingOption && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <span>Shipping Method</span>
+            </div>
+            <div className="flex justify-between text-sm pl-6">
+              <span className="text-muted-foreground">{selectedShippingOption.name}</span>
+              <span>{selectedShippingOption.price === 0 ? "FREE" : `$${selectedShippingOption.price.toFixed(2)}`}</span>
+            </div>
+            <p className="text-xs text-muted-foreground pl-6">
+              {selectedShippingOption.delivery_time}
+            </p>
+            <Separator />
+          </div>
+        )}
+        
         {/* Gift Options Display */}
         {giftOptions.isGift && (
           <div className="space-y-2">
@@ -99,10 +114,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
         )}
         
-        {/* Transparent Price Breakdown */}
+        {/* Transparent Price Breakdown with Real Shipping */}
         <TransparentPriceBreakdown
           basePrice={cartTotal}
-          shippingCost={getShippingCost()}
+          shippingCost={shippingCost}
         />
 
         {/* Tax */}
@@ -118,7 +133,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           
           <div className="flex justify-between font-semibold text-lg">
             <span>Final Total</span>
-            <span>${(cartTotal + getShippingCost() + getTaxAmount()).toFixed(2)}</span>
+            <span>${(cartTotal + shippingCost + getTaxAmount()).toFixed(2)}</span>
           </div>
         </div>
       </CardFooter>

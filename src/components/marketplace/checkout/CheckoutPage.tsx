@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
 import { createZincOrderRequest, processOrder } from "@/components/marketplace/zinc/services/orderProcessingService";
+import { getTransparentPricing } from "@/utils/transparentPricing";
 
 // Import our components
 import CheckoutHeader from "./CheckoutHeader";
@@ -32,6 +34,7 @@ const CheckoutPage = () => {
   const { 
     activeTab, 
     isProcessing, 
+    isLoadingShipping,
     checkoutData, 
     setIsProcessing,
     handleTabChange, 
@@ -41,20 +44,23 @@ const CheckoutPage = () => {
     handleGiftOptionsChange,
     canProceedToPayment,
     canProceedToSchedule,
-    canPlaceOrder
+    canPlaceOrder,
+    getShippingCost
   } = useCheckoutState();
-
-  const getShippingCost = () => {
-    return checkoutData.shippingMethod === "express" ? 12.99 : 4.99;
-  };
 
   const getTaxAmount = () => {
     // Simple tax calculation - 8.25% for demonstration
     return cartTotal * 0.0825;
   };
 
-  const getTotalAmount = () => {
-    return cartTotal + getShippingCost() + getTaxAmount();
+  const getGiftingFee = async () => {
+    const pricing = await getTransparentPricing(cartTotal);
+    return pricing.giftingFee;
+  };
+
+  const getTotalAmount = async () => {
+    const giftingFee = await getGiftingFee();
+    return cartTotal + getShippingCost() + getTaxAmount() + giftingFee;
   };
 
   const handlePlaceOrder = async () => {
@@ -63,23 +69,33 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (!checkoutData.selectedShippingOption) {
+      toast.error("Please select a shipping method");
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
+      const giftingFee = await getGiftingFee();
+      const totalAmount = await getTotalAmount();
+      
       // Log gift options being processed
       console.log("Processing order with gift options:", checkoutData.giftOptions);
+      console.log("Using shipping option:", checkoutData.selectedShippingOption);
       
       // Create payment intent
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         'create-payment-intent',
         {
           body: {
-            amount: getTotalAmount(),
+            amount: totalAmount,
             currency: 'usd',
             metadata: {
               order_type: 'marketplace',
               items_count: cartItems.length,
-              is_gift: checkoutData.giftOptions.isGift
+              is_gift: checkoutData.giftOptions.isGift,
+              shipping_method: checkoutData.selectedShippingOption.id
             }
           }
         }
@@ -89,19 +105,19 @@ const CheckoutPage = () => {
         throw new Error('Failed to create payment intent');
       }
 
-      // Create order in database with gift options
+      // Create order in database with gift options and real shipping cost
       const order = await createOrder({
         cartItems,
         subtotal: cartTotal,
         shippingCost: getShippingCost(),
         taxAmount: getTaxAmount(),
-        totalAmount: getTotalAmount(),
+        totalAmount: totalAmount,
         shippingInfo: checkoutData.shippingInfo,
         giftOptions: checkoutData.giftOptions,
         paymentIntentId: paymentData.payment_intent_id
       });
 
-      // Process order through Zinc API with gift options
+      // Process order through Zinc API with gift options and selected shipping method
       const zincProducts = cartItems.map(item => ({
         product_id: item.product.product_id,
         quantity: item.quantity
@@ -117,7 +133,10 @@ const CheckoutPage = () => {
         true // is_test = true for demo
       );
 
-      console.log("Sending Zinc order request with gift options:", zincOrderRequest);
+      // Add shipping method to Zinc order request
+      zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
+
+      console.log("Sending Zinc order request with shipping method:", zincOrderRequest);
       
       const zincOrder = await processOrder(zincOrderRequest);
       
@@ -186,6 +205,8 @@ const CheckoutPage = () => {
               <ShippingOptionsForm
                 selectedMethod={checkoutData.shippingMethod}
                 onSelect={handleShippingMethodChange}
+                shippingOptions={checkoutData.shippingOptions}
+                isLoading={isLoadingShipping}
               />
               
               <div className="flex justify-end mt-6">
@@ -237,7 +258,8 @@ const CheckoutPage = () => {
           <OrderSummary 
             cartItems={cartItems}
             cartTotal={cartTotal}
-            shippingMethod={checkoutData.shippingMethod}
+            shippingCost={getShippingCost()}
+            selectedShippingOption={checkoutData.selectedShippingOption}
             giftOptions={checkoutData.giftOptions}
           />
         </div>

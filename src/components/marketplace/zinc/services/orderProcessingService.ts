@@ -1,11 +1,10 @@
-
 import { ZINC_API_BASE_URL, getZincHeaders } from '../zincCore';
 import { ZincOrderRequest, ZincOrder } from '../types';
 import { GiftOptions } from '../../checkout/useCheckoutState';
 import { toast } from "sonner";
 
 /**
- * Creates a Zinc order request with gift options and delivery scheduling
+ * Creates a Zinc order request with gift options, delivery scheduling, and shipping method
  */
 export const createZincOrderRequest = (
   products: { product_id: string; quantity: number }[],
@@ -14,7 +13,8 @@ export const createZincOrderRequest = (
   paymentMethod: any,
   giftOptions: GiftOptions,
   retailer: string = "amazon",
-  isTest: boolean = true
+  isTest: boolean = true,
+  shippingMethod?: string
 ): ZincOrderRequest => {
   const orderRequest: ZincOrderRequest = {
     retailer,
@@ -48,6 +48,12 @@ export const createZincOrderRequest = (
     },
     is_test: isTest
   };
+
+  // Add shipping method if specified
+  if (shippingMethod) {
+    orderRequest.shipping_method = shippingMethod;
+    console.log("Adding shipping method to order:", shippingMethod);
+  }
 
   // Add gift options if this is a gift
   if (giftOptions.isGift) {

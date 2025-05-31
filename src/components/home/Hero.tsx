@@ -31,14 +31,14 @@ const Hero = () => {
   };
 
   return (
-    <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] bg-gray-900 overflow-hidden">
+    <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] overflow-hidden">
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('/lovable-uploads/db80a3a5-8527-4c7e-b582-12370cac28dc.png')`,
-          backgroundSize: '85%',
-          backgroundPosition: 'center 25%',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 30%',
         }}
       >
         {/* Lighter Gradient Overlay for better visibility of faces */}

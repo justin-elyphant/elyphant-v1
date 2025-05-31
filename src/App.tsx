@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth";
 import { CartProvider } from "@/contexts/CartContext";
-import { ProfileProvider } from "@/contexts/profile";
+import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import Home from "./pages/Home";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/auth/SignIn";

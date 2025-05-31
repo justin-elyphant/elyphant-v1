@@ -9,14 +9,16 @@ interface CheckoutHeaderProps {
 
 const CheckoutHeader = ({ title }: CheckoutHeaderProps) => {
   return (
-    <div className="flex items-center mb-6">
-      <Button variant="ghost" className="mr-4" asChild>
-        <a href="/cart">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Cart
-        </a>
-      </Button>
-      <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
+    <div className="mb-6">
+      <div className="flex justify-start mb-4">
+        <Button variant="outline" size="sm" asChild>
+          <a href="/cart" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Cart
+          </a>
+        </Button>
+      </div>
+      <h1 className="text-2xl md:text-3xl font-bold text-left">{title}</h1>
     </div>
   );
 };

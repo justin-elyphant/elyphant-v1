@@ -14,10 +14,18 @@ export interface ShippingInfo {
   country: string;
 }
 
+export interface GiftOptions {
+  isGift: boolean;
+  giftMessage: string;
+  scheduledDeliveryDate?: string;
+  isSurpriseGift: boolean;
+}
+
 export interface CheckoutData {
   shippingInfo: ShippingInfo;
   shippingMethod: string;
   paymentMethod: string;
+  giftOptions: GiftOptions;
 }
 
 export const useCheckoutState = () => {
@@ -37,7 +45,12 @@ export const useCheckoutState = () => {
       country: "United States"
     },
     shippingMethod: "standard",
-    paymentMethod: "card"
+    paymentMethod: "card",
+    giftOptions: {
+      isGift: false,
+      giftMessage: "",
+      isSurpriseGift: false
+    }
   });
 
   // Redirect if cart is empty
@@ -87,14 +100,28 @@ export const useCheckoutState = () => {
       paymentMethod: method
     }));
   };
+
+  const handleGiftOptionsChange = (options: Partial<GiftOptions>) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      giftOptions: {
+        ...prev.giftOptions,
+        ...options
+      }
+    }));
+  };
   
   const canProceedToPayment = () => {
     const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
     return name && email && address && city && state && zipCode;
   };
 
-  const canPlaceOrder = () => {
+  const canProceedToSchedule = () => {
     return activeTab === "payment" && canProceedToPayment();
+  };
+
+  const canPlaceOrder = () => {
+    return activeTab === "schedule" && canProceedToPayment();
   };
 
   return {
@@ -106,7 +133,9 @@ export const useCheckoutState = () => {
     handleUpdateShippingInfo,
     handleShippingMethodChange,
     handlePaymentMethodChange,
+    handleGiftOptionsChange,
     canProceedToPayment,
+    canProceedToSchedule,
     canPlaceOrder
   };
 };

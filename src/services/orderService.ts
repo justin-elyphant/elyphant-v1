@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { ShippingInfo } from "@/components/marketplace/checkout/useCheckoutState";
+import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
 
 export interface CreateOrderData {
@@ -9,6 +9,7 @@ export interface CreateOrderData {
   taxAmount: number;
   totalAmount: number;
   shippingInfo: ShippingInfo;
+  giftOptions: GiftOptions;
   paymentIntentId?: string;
 }
 
@@ -22,6 +23,10 @@ export interface Order {
   total_amount: number;
   currency: string;
   shipping_info: ShippingInfo;
+  gift_message?: string;
+  is_gift: boolean;
+  scheduled_delivery_date?: string;
+  is_surprise_gift: boolean;
   stripe_payment_intent_id?: string;
   zinc_order_id?: string;
   tracking_number?: string;
@@ -48,7 +53,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
     throw new Error('User must be authenticated to create an order');
   }
 
-  // Create the order
+  // Create the order with gift options
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -58,7 +63,10 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       tax_amount: orderData.taxAmount,
       total_amount: orderData.totalAmount,
       shipping_info: orderData.shippingInfo,
-      gift_options: null, // Set gift options to null since we're removing gifting
+      gift_message: orderData.giftOptions.giftMessage || null,
+      is_gift: orderData.giftOptions.isGift,
+      scheduled_delivery_date: orderData.giftOptions.scheduledDeliveryDate || null,
+      is_surprise_gift: orderData.giftOptions.isSurpriseGift,
       stripe_payment_intent_id: orderData.paymentIntentId,
       status: 'pending',
       payment_status: 'pending'

@@ -3,7 +3,8 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Product } from "@/types/product";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Gift, Calendar } from "lucide-react";
+import { GiftOptions } from "./useCheckoutState";
 import TransparentPriceBreakdown from "./TransparentPriceBreakdown";
 
 interface OrderSummaryProps {
@@ -13,12 +14,14 @@ interface OrderSummaryProps {
   }[];
   cartTotal: number;
   shippingMethod: string;
+  giftOptions: GiftOptions;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
   cartItems,
   cartTotal,
-  shippingMethod
+  shippingMethod,
+  giftOptions
 }) => {
   // Calculate shipping cost based on method
   const getShippingCost = () => {
@@ -68,6 +71,33 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         </div>
         
         <Separator />
+        
+        {/* Gift Options Display */}
+        {giftOptions.isGift && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Gift className="h-4 w-4 text-green-600" />
+              <span>Gift Options</span>
+            </div>
+            {giftOptions.giftMessage && (
+              <p className="text-xs text-muted-foreground pl-6">
+                Message: "{giftOptions.giftMessage.substring(0, 50)}{giftOptions.giftMessage.length > 50 ? '...' : ''}"
+              </p>
+            )}
+            {giftOptions.scheduledDeliveryDate && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pl-6">
+                <Calendar className="h-3 w-3" />
+                <span>Scheduled: {new Date(giftOptions.scheduledDeliveryDate).toLocaleDateString()}</span>
+              </div>
+            )}
+            {giftOptions.isSurpriseGift && (
+              <p className="text-xs text-muted-foreground pl-6">
+                Surprise gift (no confirmation emails)
+              </p>
+            )}
+            <Separator />
+          </div>
+        )}
         
         {/* Transparent Price Breakdown */}
         <TransparentPriceBreakdown

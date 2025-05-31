@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, Mail, Home } from "lucide-react";
+import { CheckCircle, Package, Mail, Home, Gift, Calendar } from "lucide-react";
 import { getOrderById, Order } from "@/services/orderService";
 import { toast } from "sonner";
 import Header from "@/components/home/Header";
@@ -110,6 +110,31 @@ const OrderConfirmation = () => {
               </div>
             </div>
 
+            {/* Gift Information */}
+            {order.is_gift && (
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Gift className="h-4 w-4 text-green-600" />
+                  Gift Options
+                </h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>This order is marked as a gift</p>
+                  {order.gift_message && (
+                    <p>Gift message: "{order.gift_message}"</p>
+                  )}
+                  {order.scheduled_delivery_date && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3 w-3" />
+                      <span>Scheduled delivery: {new Date(order.scheduled_delivery_date).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {order.is_surprise_gift && (
+                    <p className="text-orange-600">Surprise gift - no confirmation emails sent to buyer</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="border-t pt-4">
               <h4 className="font-medium mb-2">Items Ordered:</h4>
               <div className="space-y-2">
@@ -160,6 +185,7 @@ const OrderConfirmation = () => {
                 <p className="font-medium">Email Confirmation Sent</p>
                 <p className="text-sm text-muted-foreground">
                   We've sent order details to {order.shipping_info.email}
+                  {order.is_surprise_gift && " (gift recipient will not receive notifications)"}
                 </p>
               </div>
             </div>

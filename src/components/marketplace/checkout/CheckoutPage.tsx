@@ -1,17 +1,20 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/auth";
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
 
-// Import our newly created components
+// Import our components
 import CheckoutHeader from "./CheckoutHeader";
 import CheckoutTabs from "./CheckoutTabs";
 import PaymentSection from "./PaymentSection";
+import GiftScheduleForm from "./GiftScheduleForm";
+import GuestSignupPrompt from "./GuestSignupPrompt";
 import { useCheckoutState } from "./useCheckoutState";
 
 // Re-use existing components
@@ -21,7 +24,11 @@ import ShippingOptionsForm from "./ShippingOptionsForm";
 
 const CheckoutPage = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [showGuestSignup, setShowGuestSignup] = useState(false);
+  const [completedOrderNumber, setCompletedOrderNumber] = useState("");
+  
   const { 
     activeTab, 
     isProcessing, 
@@ -31,7 +38,9 @@ const CheckoutPage = () => {
     handleUpdateShippingInfo, 
     handleShippingMethodChange, 
     handlePaymentMethodChange,
+    handleGiftOptionsChange,
     canProceedToPayment,
+    canProceedToSchedule,
     canPlaceOrder
   } = useCheckoutState();
 
@@ -66,7 +75,8 @@ const CheckoutPage = () => {
             currency: 'usd',
             metadata: {
               order_type: 'marketplace',
-              items_count: cartItems.length
+              items_count: cartItems.length,
+              is_gift: checkoutData.giftOptions.isGift
             }
           }
         }
@@ -76,7 +86,7 @@ const CheckoutPage = () => {
         throw new Error('Failed to create payment intent');
       }
 
-      // Create order in database
+      // Create order in database with gift options
       const order = await createOrder({
         cartItems,
         subtotal: cartTotal,
@@ -84,16 +94,25 @@ const CheckoutPage = () => {
         taxAmount: getTaxAmount(),
         totalAmount: getTotalAmount(),
         shippingInfo: checkoutData.shippingInfo,
+        giftOptions: checkoutData.giftOptions,
         paymentIntentId: paymentData.payment_intent_id
       });
 
-      // For demo purposes, simulate successful payment
-      // In a real implementation, you would use Stripe Elements for payment
-      
-      // Clear cart and redirect to success page
+      // Clear cart and handle post-purchase flow
       clearCart();
       toast.success("Order placed successfully!");
-      navigate(`/order-confirmation/${order.id}`);
+
+      // Show guest signup prompt if user is not logged in
+      if (!user) {
+        setCompletedOrderNumber(order.order_number);
+        setShowGuestSignup(true);
+        // Still navigate to confirmation page
+        setTimeout(() => {
+          navigate(`/order-confirmation/${order.id}`);
+        }, 500);
+      } else {
+        navigate(`/order-confirmation/${order.id}`);
+      }
       
     } catch (error) {
       console.error("Checkout error:", error);
@@ -125,6 +144,7 @@ const CheckoutPage = () => {
             activeTab={activeTab} 
             onTabChange={handleTabChange}
             canProceedToPayment={Boolean(canProceedToPayment())}
+            canProceedToSchedule={Boolean(canProceedToSchedule())}
           >
             <TabsContent value="shipping" className="space-y-6">
               <CheckoutForm 
@@ -151,11 +171,33 @@ const CheckoutPage = () => {
               <PaymentSection
                 paymentMethod={checkoutData.paymentMethod}
                 onPaymentMethodChange={handlePaymentMethodChange}
-                onPlaceOrder={handlePlaceOrder}
-                isProcessing={Boolean(isProcessing)}
-                canPlaceOrder={Boolean(canPlaceOrder())}
+                onPlaceOrder={() => handleTabChange("schedule")}
+                isProcessing={false}
+                canPlaceOrder={Boolean(canProceedToSchedule())}
                 onPrevious={() => handleTabChange("shipping")}
               />
+            </TabsContent>
+
+            <TabsContent value="schedule" className="space-y-6">
+              <GiftScheduleForm
+                giftOptions={checkoutData.giftOptions}
+                onUpdate={handleGiftOptionsChange}
+              />
+              
+              <div className="flex justify-between mt-6">
+                <Button 
+                  variant="outline"
+                  onClick={() => handleTabChange("payment")}
+                >
+                  Back to Payment
+                </Button>
+                <Button 
+                  onClick={handlePlaceOrder}
+                  disabled={Boolean(isProcessing) || !canPlaceOrder()}
+                >
+                  {isProcessing ? "Processing..." : "Place Order"}
+                </Button>
+              </div>
             </TabsContent>
           </CheckoutTabs>
         </div>
@@ -165,9 +207,18 @@ const CheckoutPage = () => {
             cartItems={cartItems}
             cartTotal={cartTotal}
             shippingMethod={checkoutData.shippingMethod}
+            giftOptions={checkoutData.giftOptions}
           />
         </div>
       </div>
+
+      {/* Guest Signup Prompt */}
+      <GuestSignupPrompt
+        isOpen={showGuestSignup}
+        onClose={() => setShowGuestSignup(false)}
+        shippingInfo={checkoutData.shippingInfo}
+        orderNumber={completedOrderNumber}
+      />
     </div>
   );
 };

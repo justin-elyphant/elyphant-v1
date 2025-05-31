@@ -425,10 +425,15 @@ export type Database = {
         Row: {
           created_at: string
           currency: string
+          gift_message: string | null
           gift_options: Json | null
+          gift_scheduling_options: Json | null
           id: string
+          is_gift: boolean | null
+          is_surprise_gift: boolean | null
           order_number: string
           payment_status: string | null
+          scheduled_delivery_date: string | null
           shipping_cost: number
           shipping_info: Json
           status: string
@@ -446,10 +451,15 @@ export type Database = {
         Insert: {
           created_at?: string
           currency?: string
+          gift_message?: string | null
           gift_options?: Json | null
+          gift_scheduling_options?: Json | null
           id?: string
+          is_gift?: boolean | null
+          is_surprise_gift?: boolean | null
           order_number: string
           payment_status?: string | null
+          scheduled_delivery_date?: string | null
           shipping_cost?: number
           shipping_info: Json
           status?: string
@@ -467,10 +477,15 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string
+          gift_message?: string | null
           gift_options?: Json | null
+          gift_scheduling_options?: Json | null
           id?: string
+          is_gift?: boolean | null
+          is_surprise_gift?: boolean | null
           order_number?: string
           payment_status?: string | null
+          scheduled_delivery_date?: string | null
           shipping_cost?: number
           shipping_info?: Json
           status?: string

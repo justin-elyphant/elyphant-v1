@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
@@ -128,6 +127,8 @@ const FeaturedOccasions = () => {
         opts={{
           align: "start",
           loop: false,
+          skipSnaps: false,
+          dragFree: true,
         }}
         className="w-full"
       >
@@ -164,10 +165,8 @@ const FeaturedOccasions = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="hidden md:block">
-          <CarouselPrevious />
-          <CarouselNext />
-        </div>
+        <CarouselPrevious className="hidden md:flex -left-6 disabled:opacity-0 disabled:pointer-events-none transition-opacity" />
+        <CarouselNext className="hidden md:flex -right-6 disabled:opacity-0 disabled:pointer-events-none transition-opacity" />
       </Carousel>
     </div>
   );

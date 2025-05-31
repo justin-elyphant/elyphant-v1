@@ -118,12 +118,14 @@ const SeasonalGiftGuide = () => {
         opts={{
           align: "start",
           loop: false,
+          skipSnaps: false,
+          dragFree: true,
         }}
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
           {seasonalGuides.map((guide) => (
-            <CarouselItem key={guide.id} className="pl-2 md:pl-4 basis-full md:basis-1/2">
+            <CarouselItem key={guide.id} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
               <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
                 <div className="grid grid-cols-1 md:grid-cols-5 h-full min-h-[280px]">
                   <div className="md:col-span-3 relative">
@@ -170,10 +172,8 @@ const SeasonalGiftGuide = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="hidden md:block">
-          <CarouselPrevious />
-          <CarouselNext />
-        </div>
+        <CarouselPrevious className="hidden lg:flex -left-6 disabled:opacity-0 disabled:pointer-events-none transition-opacity" />
+        <CarouselNext className="hidden lg:flex -right-6 disabled:opacity-0 disabled:pointer-events-none transition-opacity" />
       </Carousel>
     </div>
   );

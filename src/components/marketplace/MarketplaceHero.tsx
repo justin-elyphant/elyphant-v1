@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
 import GiftCountdown from "@/components/home/sections/GiftCountdown";
-import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
+import { getNextHoliday, getUpcomingOccasions } from "@/components/marketplace/utils/upcomingOccasions";
+import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
+import { useTargetEvent } from "@/components/marketplace/hero/useTargetEvent";
+import HeroContent from "@/components/marketplace/hero/HeroContent";
 import { Badge } from "@/components/ui/badge";
 import { Gift, Heart, Users } from "lucide-react";
 
@@ -16,6 +19,11 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const nextHoliday = getNextHoliday();
+  const upcomingHolidays = getUpcomingOccasions();
+  const { friendOccasions } = useConnectedFriendsSpecialDates();
+  
+  // Use the target event hook to determine what to show
+  const { targetEvent } = useTargetEvent(user, nextHoliday, upcomingHolidays, friendOccasions);
 
   if (isCollapsed) {
     return (
@@ -35,6 +43,34 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
     );
   }
 
+  // For logged-in users with target events, show the dynamic hero
+  if (user && targetEvent) {
+    return (
+      <div className="bg-gradient-to-r from-purple-100 to-purple-200 py-12 border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center">
+            <div className="md:w-1/2 mb-6 md:mb-0">
+              <HeroContent targetEvent={targetEvent} isMobile={false} />
+            </div>
+            <div className="md:w-1/2 flex justify-end">
+              <div className="relative">
+                <img 
+                  src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a" 
+                  alt="Person opening a gift" 
+                  className="rounded-lg shadow-lg max-w-full h-auto max-h-[220px] object-cover"
+                />
+                <div className="absolute bottom-4 right-4 bg-white bg-opacity-80 rounded-lg px-3 py-2 text-sm font-medium text-purple-800 shadow-sm">
+                  Personalized Gift Experiences
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default hero for non-authenticated users or users without upcoming events
   return (
     <div className="bg-gradient-to-r from-purple-50 to-pink-50 py-8 border-b">
       <div className="container mx-auto px-4 text-center">
@@ -66,7 +102,7 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
             <div className="flex gap-2 justify-center">
               <Button 
                 size="sm" 
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate("/sign-up")}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 Sign Up Free

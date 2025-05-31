@@ -6,21 +6,21 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import { Truck, CreditCard, Calendar } from "lucide-react";
+import { Truck, Calendar, CreditCard } from "lucide-react";
 
 interface CheckoutTabsProps {
   activeTab: string;
   onTabChange: (value: string) => void;
-  canProceedToPayment: boolean;
   canProceedToSchedule: boolean;
+  canProceedToPayment: boolean;
   children: React.ReactNode;
 }
 
 const CheckoutTabs = ({ 
   activeTab, 
   onTabChange, 
-  canProceedToPayment,
   canProceedToSchedule,
+  canProceedToPayment,
   children 
 }: CheckoutTabsProps) => {
   return (
@@ -30,13 +30,13 @@ const CheckoutTabs = ({
           <Truck className="h-4 w-4" />
           <span className="hidden sm:inline">Shipping</span>
         </TabsTrigger>
-        <TabsTrigger value="payment" className="flex items-center gap-2" disabled={!canProceedToPayment}>
-          <CreditCard className="h-4 w-4" />
-          <span className="hidden sm:inline">Payment</span>
-        </TabsTrigger>
         <TabsTrigger value="schedule" className="flex items-center gap-2" disabled={!canProceedToSchedule}>
           <Calendar className="h-4 w-4" />
           <span className="hidden sm:inline">Schedule</span>
+        </TabsTrigger>
+        <TabsTrigger value="payment" className="flex items-center gap-2" disabled={!canProceedToPayment}>
+          <CreditCard className="h-4 w-4" />
+          <span className="hidden sm:inline">Payment</span>
         </TabsTrigger>
       </TabsList>
       

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Info } from "lucide-react";
@@ -51,7 +50,7 @@ const PaymentSection = ({
       
       <div className="flex justify-between mt-6">
         <Button variant="outline" onClick={onPrevious}>
-          Back to Scheduling
+          Back to Schedule
         </Button>
         <Button 
           onClick={onPlaceOrder}

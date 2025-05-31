@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -143,8 +142,8 @@ const CheckoutPage = () => {
           <CheckoutTabs 
             activeTab={activeTab} 
             onTabChange={handleTabChange}
-            canProceedToPayment={Boolean(canProceedToPayment())}
             canProceedToSchedule={Boolean(canProceedToSchedule())}
+            canProceedToPayment={Boolean(canProceedToPayment())}
           >
             <TabsContent value="shipping" className="space-y-6">
               <CheckoutForm 
@@ -159,23 +158,12 @@ const CheckoutPage = () => {
               
               <div className="flex justify-end mt-6">
                 <Button 
-                  onClick={() => handleTabChange("payment")} 
-                  disabled={!canProceedToPayment()}
+                  onClick={() => handleTabChange("schedule")} 
+                  disabled={!canProceedToSchedule()}
                 >
-                  Continue to Payment
+                  Continue to Schedule
                 </Button>
               </div>
-            </TabsContent>
-
-            <TabsContent value="payment" className="space-y-6">
-              <PaymentSection
-                paymentMethod={checkoutData.paymentMethod}
-                onPaymentMethodChange={handlePaymentMethodChange}
-                onPlaceOrder={() => handleTabChange("schedule")}
-                isProcessing={false}
-                canPlaceOrder={Boolean(canProceedToSchedule())}
-                onPrevious={() => handleTabChange("shipping")}
-              />
             </TabsContent>
 
             <TabsContent value="schedule" className="space-y-6">
@@ -187,17 +175,28 @@ const CheckoutPage = () => {
               <div className="flex justify-between mt-6">
                 <Button 
                   variant="outline"
-                  onClick={() => handleTabChange("payment")}
+                  onClick={() => handleTabChange("shipping")}
                 >
-                  Back to Payment
+                  Back to Shipping
                 </Button>
                 <Button 
-                  onClick={handlePlaceOrder}
-                  disabled={Boolean(isProcessing) || !canPlaceOrder()}
+                  onClick={() => handleTabChange("payment")}
+                  disabled={!canProceedToSchedule()}
                 >
-                  {isProcessing ? "Processing..." : "Place Order"}
+                  Continue to Payment
                 </Button>
               </div>
+            </TabsContent>
+
+            <TabsContent value="payment" className="space-y-6">
+              <PaymentSection
+                paymentMethod={checkoutData.paymentMethod}
+                onPaymentMethodChange={handlePaymentMethodChange}
+                onPlaceOrder={handlePlaceOrder}
+                isProcessing={Boolean(isProcessing)}
+                canPlaceOrder={Boolean(canPlaceOrder())}
+                onPrevious={() => handleTabChange("schedule")}
+              />
             </TabsContent>
           </CheckoutTabs>
         </div>

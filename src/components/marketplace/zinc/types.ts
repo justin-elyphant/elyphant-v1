@@ -1,3 +1,4 @@
+
 // Zinc API product type
 export type ZincProduct = {
   product_id: string;
@@ -120,6 +121,9 @@ export type ZincOrderRequest = {
     phone_number: string;
   };
   is_gift?: boolean;
+  gift_message?: string; // New: Gift message (max 255 chars)
+  delivery_instructions?: string; // New: Special delivery instructions
+  delivery_date_preference?: string; // New: Preferred delivery date (ISO string)
   retailer_credentials?: {
     email: string;
     password: string;

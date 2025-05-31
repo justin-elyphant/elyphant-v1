@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
+import { createZincOrderRequest, processOrder } from "@/components/marketplace/zinc/services/orderProcessingService";
 
 // Import our components
 import CheckoutHeader from "./CheckoutHeader";
@@ -65,6 +66,9 @@ const CheckoutPage = () => {
     setIsProcessing(true);
     
     try {
+      // Log gift options being processed
+      console.log("Processing order with gift options:", checkoutData.giftOptions);
+      
       // Create payment intent
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         'create-payment-intent',
@@ -96,6 +100,34 @@ const CheckoutPage = () => {
         giftOptions: checkoutData.giftOptions,
         paymentIntentId: paymentData.payment_intent_id
       });
+
+      // Process order through Zinc API with gift options
+      const zincProducts = cartItems.map(item => ({
+        product_id: item.product.product_id,
+        quantity: item.quantity
+      }));
+
+      const zincOrderRequest = createZincOrderRequest(
+        zincProducts,
+        checkoutData.shippingInfo,
+        checkoutData.shippingInfo, // Using shipping as billing for demo
+        checkoutData.paymentMethod,
+        checkoutData.giftOptions,
+        "amazon",
+        true // is_test = true for demo
+      );
+
+      console.log("Sending Zinc order request with gift options:", zincOrderRequest);
+      
+      const zincOrder = await processOrder(zincOrderRequest);
+      
+      if (zincOrder) {
+        console.log("Zinc order processed successfully:", zincOrder);
+        toast.success("Order placed and sent to fulfillment!");
+      } else {
+        console.warn("Zinc order processing failed, but internal order was created");
+        toast.warning("Order placed but fulfillment may be delayed");
+      }
 
       // Clear cart and handle post-purchase flow
       clearCart();

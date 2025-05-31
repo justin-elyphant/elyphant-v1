@@ -1,6 +1,84 @@
+
 import { ZINC_API_BASE_URL, getZincHeaders } from '../zincCore';
 import { ZincOrderRequest, ZincOrder } from '../types';
+import { GiftOptions } from '../../checkout/useCheckoutState';
 import { toast } from "sonner";
+
+/**
+ * Creates a Zinc order request with gift options and delivery scheduling
+ */
+export const createZincOrderRequest = (
+  products: { product_id: string; quantity: number }[],
+  shippingAddress: any,
+  billingAddress: any,
+  paymentMethod: any,
+  giftOptions: GiftOptions,
+  retailer: string = "amazon",
+  isTest: boolean = true
+): ZincOrderRequest => {
+  const orderRequest: ZincOrderRequest = {
+    retailer,
+    products,
+    shipping_address: {
+      first_name: shippingAddress.name.split(' ')[0] || '',
+      last_name: shippingAddress.name.split(' ').slice(1).join(' ') || '',
+      address_line1: shippingAddress.address,
+      zip_code: shippingAddress.zipCode,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      country: shippingAddress.country,
+      phone_number: '555-0123' // Default phone for demo
+    },
+    payment_method: {
+      name_on_card: shippingAddress.name,
+      number: '4111111111111111', // Demo card
+      expiration_month: 12,
+      expiration_year: 2025,
+      security_code: '123'
+    },
+    billing_address: {
+      first_name: shippingAddress.name.split(' ')[0] || '',
+      last_name: shippingAddress.name.split(' ').slice(1).join(' ') || '',
+      address_line1: shippingAddress.address,
+      zip_code: shippingAddress.zipCode,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      country: shippingAddress.country,
+      phone_number: '555-0123'
+    },
+    is_test: isTest
+  };
+
+  // Add gift options if this is a gift
+  if (giftOptions.isGift) {
+    orderRequest.is_gift = true;
+    
+    // Add gift message (truncated to 255 chars for Amazon compliance)
+    if (giftOptions.giftMessage && giftOptions.giftMessage.trim()) {
+      orderRequest.gift_message = giftOptions.giftMessage.substring(0, 255);
+    }
+    
+    // Add delivery scheduling as delivery instructions
+    const deliveryInstructions = [];
+    
+    if (giftOptions.scheduledDeliveryDate) {
+      const deliveryDate = new Date(giftOptions.scheduledDeliveryDate);
+      const formattedDate = deliveryDate.toLocaleDateString();
+      deliveryInstructions.push(`Preferred delivery date: ${formattedDate}`);
+      orderRequest.delivery_date_preference = giftOptions.scheduledDeliveryDate;
+    }
+    
+    if (giftOptions.isSurpriseGift) {
+      deliveryInstructions.push('This is a surprise gift - please ensure discreet packaging');
+    }
+    
+    if (deliveryInstructions.length > 0) {
+      orderRequest.delivery_instructions = deliveryInstructions.join('. ');
+    }
+  }
+
+  return orderRequest;
+};
 
 /**
  * Process an order through the Zinc API
@@ -16,6 +94,15 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
     if (isTestOrder) {
       console.log("This is a TEST order - will not actually charge your card or place an Amazon order");
       toast.info("This is a TEST order - no actual Amazon order will be placed");
+    }
+    
+    // Log gift options being sent to Zinc
+    if (orderRequest.is_gift) {
+      console.log("Gift order details:", {
+        gift_message: orderRequest.gift_message,
+        delivery_instructions: orderRequest.delivery_instructions,
+        delivery_date_preference: orderRequest.delivery_date_preference
+      });
     }
     
     // Check for stored Amazon credentials
@@ -123,11 +210,6 @@ export const getOrderStatus = async (orderId: string): Promise<ZincOrder | null>
   }
 };
 
-/**
- * Cancel an order through the Zinc API
- * @param orderId The order ID
- * @returns Whether the cancellation was successful
- */
 export const cancelOrder = async (orderId: string): Promise<boolean> => {
   try {
     const response = await fetch(`${ZINC_API_BASE_URL}/orders/${orderId}/cancel`, {

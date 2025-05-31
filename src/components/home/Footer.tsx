@@ -10,7 +10,7 @@ const Footer = () => {
   return (
     <footer className="bg-gray-800 text-white py-8">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between">
+        <div className="flex flex-col md:flex-row justify-between items-start">
           <div className="mb-6 md:mb-0">
             <h3 className="text-lg font-semibold mb-2">Elyphant</h3>
             <p className="text-gray-400 text-sm max-w-md">
@@ -23,24 +23,23 @@ const Footer = () => {
             <div>
               <h4 className="font-medium mb-3">Platform</h4>
               <ul className="space-y-2">
-                {/* Removed Gifting link */}
-                <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm">Marketplace</Link></li>
-                <li><Link to="/trunkline-login" className="text-gray-400 hover:text-white text-sm">Trunkline</Link></li>
+                <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm transition-colors">Marketplace</Link></li>
+                <li><Link to="/trunkline-login" className="text-gray-400 hover:text-white text-sm transition-colors">Trunkline</Link></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-medium mb-3">Company</h4>
               <ul className="space-y-2">
-                <li><Link to="/about-us" className="text-gray-400 hover:text-white text-sm">About Us</Link></li>
+                <li><Link to="/about-us" className="text-gray-400 hover:text-white text-sm transition-colors">About Us</Link></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-medium mb-3">Vendors</h4>
               <ul className="space-y-2">
-                <li><Link to="/vendor-partner" className="text-gray-400 hover:text-white text-sm">Become a Vendor Partner</Link></li>
-                <li><Link to="/vendor-login" className="text-gray-400 hover:text-white text-sm">Vendor Portal Signin</Link></li>
+                <li><Link to="/vendor-partner" className="text-gray-400 hover:text-white text-sm transition-colors">Become a Vendor Partner</Link></li>
+                <li><Link to="/vendor-login" className="text-gray-400 hover:text-white text-sm transition-colors">Vendor Portal Signin</Link></li>
               </ul>
             </div>
           </div>
@@ -55,4 +54,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

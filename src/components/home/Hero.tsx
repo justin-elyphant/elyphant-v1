@@ -36,9 +36,9 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/lovable-uploads/b7c9e052-edc4-46f4-9298-bfe7d77fc42e.png')`,
-          backgroundSize: '90%',
-          backgroundPosition: 'center 20%',
+          backgroundImage: `url('/lovable-uploads/b584e7cc-4d51-4301-9ee7-d3ab9abaff56.png')`,
+          backgroundSize: '85%',
+          backgroundPosition: 'center 25%',
         }}
       >
         {/* Lighter Gradient Overlay for better visibility of faces */}

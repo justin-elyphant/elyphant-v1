@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -35,17 +36,17 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1513885535751-8b9238bd345a')`,
+          backgroundImage: `url('/lovable-uploads/fe5b27a8-a445-403e-8127-6de3b6ca8a45.png')`,
         }}
       >
-        {/* Gradient Overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent"></div>
+        {/* Enhanced Gradient Overlay for better text readability on bright image */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
       </div>
 
       {/* Holiday Countdown Overlay */}
       {nextHoliday && (
         <div className="absolute top-4 right-4 z-20 hidden md:block">
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4">
             <GiftCountdown event={nextHoliday} />
           </div>
         </div>
@@ -66,17 +67,17 @@ const Hero = () => {
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
         <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'}`}>
           <div className="max-w-2xl text-white">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg">
               Connecting Through Gifting
             </h1>
-            <p className="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed max-w-xl">
+            <p className="text-lg md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl text-shadow-md">
               Create wishlists, automate gift-giving, and never miss 
               an important celebration again. Our platform handles everything from selection to delivery.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4"
+                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftor");
@@ -88,7 +89,7 @@ const Hero = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 border-white/80 text-white hover:bg-white/10 hover:text-white text-lg px-8 py-4 bg-transparent"
+                className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftee");

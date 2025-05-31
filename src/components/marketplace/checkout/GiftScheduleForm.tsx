@@ -68,10 +68,10 @@ const GiftScheduleForm: React.FC<GiftScheduleFormProps> = ({
                   value={giftOptions.giftMessage}
                   onChange={(e) => handleMessageChange(e.target.value)}
                   className="mt-1"
-                  maxLength={500}
+                  maxLength={255}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {giftOptions.giftMessage.length}/500 characters
+                  {giftOptions.giftMessage.length}/255 characters
                 </p>
               </div>
 

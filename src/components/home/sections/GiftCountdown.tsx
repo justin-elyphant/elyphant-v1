@@ -51,15 +51,15 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center gap-3 animate-fade-in">
+    <div className="flex flex-col items-center md:flex-row md:items-center md:justify-between gap-4 animate-fade-in">
       <div className="flex items-center gap-3 flex-shrink-0">
         <span>{occasionIcon(event.type)}</span>
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 text-center md:text-left">
           <span className="text-[#7E69AB] font-extrabold text-lg md:text-xl leading-tight">
             {daysDisplay}
           </span>
           <span className="text-sm font-semibold text-gray-900 truncate">{event.name}</span>
-          <span className="text-xs text-gray-500 hidden md:block">{dateLabel}</span>
+          <span className="text-xs text-gray-500 md:block">{dateLabel}</span>
         </div>
       </div>
       <div className="flex justify-center md:justify-end">

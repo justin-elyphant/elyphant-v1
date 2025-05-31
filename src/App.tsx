@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth";
 import { CartProvider } from "@/contexts/CartContext";
+import { ProfileProvider } from "@/contexts/profile";
 import Home from "./pages/Home";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/auth/SignIn";
@@ -40,34 +41,36 @@ function App() {
         <Toaster />
         <BrowserRouter>
           <AuthProvider>
-            <CartProvider>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/sign-up" element={<SignUp />} />
-                <Route path="/sign-in" element={<SignIn />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/gifting" element={<Gifting />} />
-                <Route path="/wishlists" element={<Wishlists />} />
-                <Route path="/wishlist/:id" element={<SharedWishlist />} />
-                <Route path="/create-wishlist" element={<CreateWishlist />} />
-                <Route path="/gift-scheduling" element={<GiftScheduling />} />
-                <Route path="/connections" element={<Connections />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/orders/:orderId" element={<OrderDetail />} />
-                <Route path="/order-tracking/:orderId?" element={<OrderTracking />} />
-                <Route path="/crowdfunding" element={<Crowdfunding />} />
-                <Route path="/trunkline" element={<Trunkline />} />
-                <Route path="/trunkline-login" element={<TrunklineLoginPage />} />
-                <Route path="/about-us" element={<AboutUs />} />
-                <Route path="/vendor-partner" element={<VendorPartner />} />
-                <Route path="/vendor-login" element={<VendorLoginPage />} />
-              </Routes>
-            </CartProvider>
+            <ProfileProvider>
+              <CartProvider>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/sign-up" element={<SignUp />} />
+                  <Route path="/sign-in" element={<SignIn />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/gifting" element={<Gifting />} />
+                  <Route path="/wishlists" element={<Wishlists />} />
+                  <Route path="/wishlist/:id" element={<SharedWishlist />} />
+                  <Route path="/create-wishlist" element={<CreateWishlist />} />
+                  <Route path="/gift-scheduling" element={<GiftScheduling />} />
+                  <Route path="/connections" element={<Connections />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/orders/:orderId" element={<OrderDetail />} />
+                  <Route path="/order-tracking/:orderId?" element={<OrderTracking />} />
+                  <Route path="/crowdfunding" element={<Crowdfunding />} />
+                  <Route path="/trunkline" element={<Trunkline />} />
+                  <Route path="/trunkline-login" element={<TrunklineLoginPage />} />
+                  <Route path="/about-us" element={<AboutUs />} />
+                  <Route path="/vendor-partner" element={<VendorPartner />} />
+                  <Route path="/vendor-login" element={<VendorLoginPage />} />
+                </Routes>
+              </CartProvider>
+            </ProfileProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

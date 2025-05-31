@@ -15,9 +15,9 @@ interface GiftCountdownProps {
 
 const occasionIcon = (type: string) => {
   if (type === "birthday" || type === "anniversary")
-    return <Calendar className="h-7 w-7 text-[#7E69AB]" />;
+    return <Calendar className="h-5 w-5 text-[#7E69AB]" />;
   // Default for holidays or other types
-  return <Gift className="h-7 w-7 text-[#7E69AB]" />;
+  return <Gift className="h-5 w-5 text-[#7E69AB]" />;
 };
 
 const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
@@ -44,16 +44,6 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
     daysDisplay = `${days} days away!`;
   }
 
-  // Friendly line per occasion
-  let detailDisplay = "";
-  if (isToday(eventDate)) {
-    detailDisplay = `${event.name} is Today!`;
-  } else if (isTomorrow(eventDate)) {
-    detailDisplay = `${event.name} is Tomorrow (${dateLabel})`;
-  } else {
-    detailDisplay = `${event.name} is ${dateLabel}`;
-  }
-
   // Button: search for event gifts
   const handleShopGifts = () => {
     const query = encodeURIComponent(`${event.name} gifts`);
@@ -61,26 +51,25 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center gap-4 px-6 py-4 bg-white/80 border border-gray-200 rounded-xl shadow-sm mb-5 md:mb-6 animate-fade-in max-w-md mx-auto md:mx-0">
-      <div className="flex items-center md:items-start md:flex-col gap-3 md:gap-0 mr-2 flex-shrink-0">
+    <div className="flex flex-col md:flex-row md:items-center gap-3 animate-fade-in">
+      <div className="flex items-center gap-3 flex-shrink-0">
         <span>{occasionIcon(event.type)}</span>
+        <div className="flex flex-col min-w-0">
+          <span className="text-[#7E69AB] font-extrabold text-lg md:text-xl leading-tight">
+            {daysDisplay}
+          </span>
+          <span className="text-sm font-semibold text-gray-900 truncate">{event.name}</span>
+          <span className="text-xs text-gray-500 hidden md:block">{dateLabel}</span>
+        </div>
       </div>
-      <div className="flex flex-col flex-1 min-w-0 items-center md:items-start text-center md:text-left">
-        <span className="text-[#7E69AB] font-extrabold text-2xl md:text-3xl leading-tight drop-shadow-sm">
-          {daysDisplay}
-        </span>
-        <span className="mt-1 md:mt-2 text-base font-semibold text-gray-900 truncate">{event.name}</span>
-        <span className="text-xs text-gray-500">{dateLabel}</span>
-        <span className="mt-1 text-xs text-gray-400">Get ready to celebrate!</span>
-      </div>
-      <div className="flex mt-2 md:mt-0 md:ml-4 w-full md:w-auto justify-center md:justify-end">
+      <div className="flex justify-center md:justify-end">
         <Button
           variant="outline"
           size="sm"
-          className="whitespace-nowrap text-[#7E69AB] border-[#E6E0F5] hover:bg-[#F7F4FC]"
+          className="whitespace-nowrap text-[#7E69AB] border-[#E6E0F5] hover:bg-[#F7F4FC] text-xs"
           onClick={handleShopGifts}
         >
-          Shop {event.name} Gifts
+          Shop Gifts
         </Button>
       </div>
     </div>

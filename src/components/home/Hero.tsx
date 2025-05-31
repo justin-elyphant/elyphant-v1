@@ -4,10 +4,15 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Gift, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
+import { FullWidthSection } from "@/components/layout/FullWidthSection";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+import GiftCountdown from "./sections/GiftCountdown";
+import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
 
 const Hero = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const nextHoliday = getNextHoliday();
 
   // Enhanced handler for CTAs: sets intent and routes based on auth
   const handleCta = (intent: "giftor" | "giftee") => {
@@ -26,55 +31,78 @@ const Hero = () => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-100 to-purple-200 py-8">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center">
-          <div className="md:w-1/2 mb-6 md:mb-0">
-            <h2 className="text-3xl font-bold mb-3">Connecting Through Gifting</h2>
-            <p className="text-base text-gray-700 mb-4">
+    <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] bg-gray-900 overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1513885535751-8b9238bd345a')`,
+        }}
+      >
+        {/* Gradient Overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent"></div>
+      </div>
+
+      {/* Holiday Countdown Overlay */}
+      {nextHoliday && (
+        <div className="absolute top-4 right-4 z-20 hidden md:block">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4">
+            <GiftCountdown event={nextHoliday} />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Countdown Banner */}
+      {nextHoliday && (
+        <div className="absolute top-0 left-0 right-0 z-20 md:hidden">
+          <div className="bg-white/95 backdrop-blur-sm border-b">
+            <ResponsiveContainer padding="minimal">
+              <GiftCountdown event={nextHoliday} />
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Content */}
+      <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
+        <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'}`}>
+          <div className="max-w-2xl text-white">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+              Connecting Through Gifting
+            </h1>
+            <p className="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed max-w-xl">
               Create wishlists, automate gift-giving, and never miss 
               an important celebration again. Our platform handles everything from selection to delivery.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Button
-                size="default"
-                className="bg-purple-600 hover:bg-purple-700"
+                size="lg"
+                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftor");
                 }}
               >
-                <ShoppingBag className="mr-2 h-4 w-4" />
+                <ShoppingBag className="mr-2 h-5 w-5" />
                 Start Gifting
               </Button>
               <Button
                 variant="outline"
-                size="default"
+                size="lg"
+                className="border-2 border-white/80 text-white hover:bg-white/10 hover:text-white text-lg px-8 py-4 bg-transparent"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftee");
                 }}
               >
-                <Gift className="mr-2 h-4 w-4" />
+                <Gift className="mr-2 h-5 w-5" />
                 Create Wishlist
               </Button>
             </div>
           </div>
-          <div className="md:w-1/2 flex justify-end">
-            <div className="relative">
-              <img 
-                src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a" 
-                alt="Person opening a gift" 
-                className="rounded-lg shadow-lg max-w-full h-auto max-h-[220px] object-cover"
-              />
-              <div className="absolute bottom-4 right-4 bg-white bg-opacity-80 rounded-lg px-3 py-2 text-sm font-medium text-purple-800 shadow-sm">
-                Personalized Gift Experiences
-              </div>
-            </div>
-          </div>
-        </div>
+        </ResponsiveContainer>
       </div>
-    </div>
+    </FullWidthSection>
   );
 };
 

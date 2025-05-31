@@ -36,7 +36,7 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/lovable-uploads/fe5b27a8-a445-403e-8127-6de3b6ca8a45.png')`,
+          backgroundImage: `url('/lovable-uploads/2fcb4373-9419-49a2-bfd9-8f4b4f30bec9.png')`,
         }}
       >
         {/* Enhanced Gradient Overlay for better text readability on bright image */}

@@ -16,7 +16,7 @@ const BotButton: React.FC<BotButtonProps> = ({
   onClick, 
   className,
   variant = "outline",
-  size = "default"
+  size = "sm"
 }) => {
   const isMobile = useIsMobile();
 
@@ -30,13 +30,13 @@ const BotButton: React.FC<BotButtonProps> = ({
         "bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-0",
         "hover:from-purple-600 hover:to-indigo-700",
         "focus:ring-2 focus:ring-purple-500 focus:ring-offset-2",
-        isMobile ? "h-12 w-12 p-3" : "",
+        isMobile ? "h-8 w-8 p-2" : "px-3 py-2",
         className
       )}
-      aria-label="Open AI Gift Advisor"
+      aria-label="Open Nicole AI Assistant"
     >
-      <Bot className={cn("h-5 w-5", isMobile ? "" : "mr-2")} />
-      {!isMobile && <span className="font-medium">AI Assistant</span>}
+      <Bot className={cn("h-4 w-4", isMobile ? "" : "mr-2")} />
+      {!isMobile && <span className="font-medium text-sm">Nicole</span>}
     </Button>
   );
 };

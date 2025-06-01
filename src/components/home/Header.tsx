@@ -30,15 +30,18 @@ const Header = () => {
           {/* Desktop header */}
           {!isMobile && (
             <div className="flex items-center justify-between">
-              {/* Left: Logo and Search */}
-              <div className="flex items-center gap-6 flex-1">
+              {/* Left: Logo */}
+              <div className="flex items-center">
                 <Link to="/" className="flex items-center">
                   <Logo />
                 </Link>
-                <div className="flex-1 max-w-2xl">
-                  <EnhancedSearchBar />
-                </div>
               </div>
+              
+              {/* Center: Search Bar */}
+              <div className="flex-1 max-w-2xl mx-8">
+                <EnhancedSearchBar />
+              </div>
+              
               {/* Right: AI Bot + Cart + Notifications + Auth/Profile */}
               <div className="flex items-center gap-3">
                 <BotButton onClick={() => setBotOpen(true)} />

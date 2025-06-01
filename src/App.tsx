@@ -35,8 +35,8 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
+      <Router>
+        <AuthProvider>
           <ScrollToTop />
           <div className="min-h-screen bg-background font-sans antialiased">
             <Routes>
@@ -84,8 +84,8 @@ function App() {
             </Routes>
           </div>
           <Toaster position="top-center" />
-        </Router>
-      </AuthProvider>
+        </AuthProvider>
+      </Router>
     </QueryClientProvider>
   );
 }

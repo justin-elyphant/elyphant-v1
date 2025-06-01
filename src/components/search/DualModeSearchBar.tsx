@@ -166,7 +166,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
     ? "Ask Nicole anything about gifts..." 
     : "Search for gifts or products";
 
-  const searchIcon = isNicoleMode ? MessageCircle : Search;
+  const SearchIcon = isNicoleMode ? MessageCircle : Search;
 
   return (
     <div className={`relative w-full ${className}`}>
@@ -205,7 +205,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
       <form onSubmit={handleSubmit} className="relative flex items-center w-full" autoComplete="off">
         <div className="relative flex-1 flex items-center">
           <div className="absolute left-3 flex items-center">
-            <searchIcon className={`h-4 w-4 ${isNicoleMode ? 'text-purple-500' : 'text-gray-400'}`} />
+            <SearchIcon className={`h-4 w-4 ${isNicoleMode ? 'text-purple-500' : 'text-gray-400'}`} />
           </div>
           
           <Input

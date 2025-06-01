@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -31,6 +32,12 @@ const GENERIC_LABELS = [
   "coworker", "colleague", "boss", "teacher", "partner", "spouse"
 ];
 
+// Add missing constants
+const OCCASION_KEYWORDS = [
+  "birthday", "christmas", "holiday", "father-day", "mother-day", "valentine",
+  "anniversary", "graduation", "wedding", "baby-shower", "housewarming"
+];
+
 // Helper to try to extract a person's name from the search string
 function getPersonNameFromSearch(search: string): string | null {
   if (!search) return null;
@@ -42,6 +49,14 @@ function getPersonNameFromSearch(search: string): string | null {
     return match[1].trim();
   }
   return null;
+}
+
+// Add missing function
+function isOccasionPersonId(personId: string): boolean {
+  if (!personId) return false;
+  const normalized = personId.toLowerCase();
+  return GENERIC_LABELS.some(label => normalized.includes(label)) ||
+         OCCASION_KEYWORDS.some(keyword => normalized.includes(keyword));
 }
 
 // Utility: determines if a search string is an occasion/holiday, e.g. "Father's Day gifts"

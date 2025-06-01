@@ -183,7 +183,7 @@ const MobileFilterModal = ({
                 <Checkbox
                   id="mobile-free-shipping"
                   checked={activeFilters.freeShipping || false}
-                  onCheckedChange={(checked) => handleSpecialFilterChange('freeShipping', checked)}
+                  onCheckedChange={(checked) => handleSpecialFilterChange('freeShipping', Boolean(checked))}
                 />
                 <Label htmlFor="mobile-free-shipping" className="flex items-center">
                   <BadgeCheck className="h-4 w-4 mr-2 text-green-500" />
@@ -194,7 +194,7 @@ const MobileFilterModal = ({
                 <Checkbox
                   id="mobile-favorites"
                   checked={activeFilters.favoritesOnly || false}
-                  onCheckedChange={(checked) => handleSpecialFilterChange('favoritesOnly', checked)}
+                  onCheckedChange={(checked) => handleSpecialFilterChange('favoritesOnly', Boolean(checked))}
                 />
                 <Label htmlFor="mobile-favorites" className="flex items-center">
                   <Heart className="h-4 w-4 mr-2 text-red-500" />

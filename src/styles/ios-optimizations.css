@@ -1,0 +1,65 @@
+
+/* iOS-specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific styles */
+  .touch-manipulation {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Better button touch targets for iOS */
+  button, .touch-manipulation {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling for iOS */
+  .ios-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  
+  /* iOS modal backdrop styling */
+  .ios-modal-backdrop {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* Safe area handling for newer iPhones */
+@supports (padding: max(0px)) {
+  .safe-area-bottom {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-top {
+    padding-top: max(20px, env(safe-area-inset-top));
+  }
+}
+
+/* Animation optimizations for better performance */
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+}
+
+/* iOS switch styling enhancements */
+.ios-switch-glow {
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+/* Nicole mode glow effect */
+.nicole-mode-glow {
+  box-shadow: 
+    0 0 20px rgba(139, 92, 246, 0.1),
+    0 0 40px rgba(139, 92, 246, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}

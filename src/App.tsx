@@ -1,77 +1,107 @@
 
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth";
-import { CartProvider } from "@/contexts/CartContext";
-import { ProfileProvider } from "@/contexts/profile/ProfileContext";
-import Home from "./pages/Home";
-import SignUp from "./pages/SignUp";
-import SignIn from "./pages/auth/SignIn";
-import Dashboard from "./pages/Dashboard";
-import Marketplace from "./pages/Marketplace";
-import Checkout from "./pages/Checkout";
-import OrderConfirmation from "./pages/OrderConfirmation";
-import Profile from "./pages/Profile";
-import Wishlists from "./pages/Wishlists";
-import SharedWishlist from "./pages/SharedWishlist";
-import CreateWishlist from "./pages/CreateWishlist";
-import GiftScheduling from "./pages/GiftScheduling";
-import Connections from "./pages/Connections";
-import Cart from "./pages/Cart";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-import OrderTracking from "./pages/OrderTracking";
-import Crowdfunding from "./pages/Crowdfunding";
-import Trunkline from "./pages/Trunkline";
-import TrunklineLoginPage from "./pages/TrunklineLogin";
-import AboutUs from "./pages/AboutUs";
-import VendorPartner from "./pages/VendorPartner";
-import VendorLoginPage from "./pages/VendorLogin";
-import "./App.css";
+import { Toaster } from "sonner";
 
-const queryClient = new QueryClient();
+// Import pages
+import Home from "@/pages/Home";
+import Dashboard from "@/pages/Dashboard";
+import Marketplace from "@/pages/Marketplace";
+import Settings from "@/pages/Settings";
+import SignUp from "@/pages/SignUp";
+import Login from "@/pages/Login";
+import ProductDetails from "@/pages/ProductDetails";
+import Connections from "@/pages/Connections";
+import Gifting from "@/pages/Gifting";
+import SharedWishlist from "@/pages/SharedWishlist";
+import Returns from "@/pages/Returns";
+import Orders from "@/pages/Orders";
+import OrderDetail from "@/pages/OrderDetail";
+import TrunklineAccess from "@/pages/TrunklineAccess";
+import GiftScheduling from "@/pages/GiftScheduling";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ScrollToTop from "@/components/layout/ScrollToTop";
+
+// Import styles
+import "./App.css";
+import "./styles/ios-optimizations.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <AuthProvider>
-            <ProfileProvider>
-              <CartProvider>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/sign-up" element={<SignUp />} />
-                  <Route path="/sign-in" element={<SignIn />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/wishlists" element={<Wishlists />} />
-                  <Route path="/wishlist/:id" element={<SharedWishlist />} />
-                  <Route path="/create-wishlist" element={<CreateWishlist />} />
-                  <Route path="/gift-scheduling" element={<GiftScheduling />} />
-                  <Route path="/connections" element={<Connections />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/orders/:orderId" element={<OrderDetail />} />
-                  <Route path="/order-tracking/:orderId?" element={<OrderTracking />} />
-                  <Route path="/crowdfunding" element={<Crowdfunding />} />
-                  <Route path="/trunkline" element={<Trunkline />} />
-                  <Route path="/trunkline-login" element={<TrunklineLoginPage />} />
-                  <Route path="/about-us" element={<AboutUs />} />
-                  <Route path="/vendor-partner" element={<VendorPartner />} />
-                  <Route path="/vendor-login" element={<VendorLoginPage />} />
-                </Routes>
-              </CartProvider>
-            </ProfileProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <div className="min-h-screen bg-background font-sans antialiased">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/shared-wishlist/:shareToken" element={<SharedWishlist />} />
+              
+              {/* Protected routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/connections" element={
+                <ProtectedRoute>
+                  <Connections />
+                </ProtectedRoute>
+              } />
+              <Route path="/gifting" element={
+                <ProtectedRoute>
+                  <Gifting />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+              <Route path="/returns" element={
+                <ProtectedRoute>
+                  <Returns />
+                </ProtectedRoute>
+              } />
+              <Route path="/orders" element={
+                <ProtectedRoute>
+                  <Orders />
+                </ProtectedRoute>
+              } />
+              <Route path="/orders/:orderId" element={
+                <ProtectedRoute>
+                  <OrderDetail />
+                </ProtectedRoute>
+              } />
+              <Route path="/gift-scheduling" element={
+                <ProtectedRoute>
+                  <GiftScheduling />
+                </ProtectedRoute>
+              } />
+              <Route path="/trunkline" element={
+                <ProtectedRoute requiredRole="admin">
+                  <TrunklineAccess />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </div>
+          <Toaster position="top-center" />
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

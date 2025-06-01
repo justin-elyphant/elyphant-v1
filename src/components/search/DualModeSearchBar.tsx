@@ -3,10 +3,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, MessageCircle, Mic, Grid3X3, ChevronDown } from "lucide-react";
+import { Search, MessageCircle, Mic, Grid3X3, ChevronDown, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchMode } from "@/hooks/useSearchMode";
 import { Badge } from "@/components/ui/badge";
+import { IOSSwitch } from "@/components/ui/ios-switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import NicoleConversationEngine from "@/components/ai/NicoleConversationEngine";
+import MobileConversationModal from "@/components/ai/conversation/MobileConversationModal";
 
 interface DualModeSearchBarProps {
   mobile?: boolean;
@@ -45,12 +47,13 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showNicoleDropdown, setShowNicoleDropdown] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const nicoleDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Mock suggestions for demo - in real implementation, this would come from search history
+  // Mock suggestions for demo
   const mockSuggestions = [
     "Birthday gifts for mom",
     "Christmas presents under $50",
@@ -63,6 +66,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
     setShowSuggestions(false);
     setQuery("");
     setShowNicoleDropdown(false);
+    setShowMobileModal(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -82,7 +86,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isNicoleMode) {
-      setShowNicoleDropdown(true);
+      if (isMobile) {
+        setShowMobileModal(true);
+      } else {
+        setShowNicoleDropdown(true);
+      }
       return;
     }
 
@@ -98,7 +106,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
   const handleSuggestionClick = (suggestion: string) => {
     if (isNicoleMode) {
       setQuery(suggestion);
-      setShowNicoleDropdown(true);
+      if (isMobile) {
+        setShowMobileModal(true);
+      } else {
+        setShowNicoleDropdown(true);
+      }
       return;
     }
 
@@ -112,12 +124,13 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
     setShowSuggestions(false);
   };
 
-  const handleModeToggle = () => {
-    const newMode = isNicoleMode ? "search" : "nicole";
+  const handleModeToggle = (checked: boolean) => {
+    const newMode = checked ? "nicole" : "search";
     setMode(newMode);
     setQuery("");
     setShowSuggestions(false);
     setShowNicoleDropdown(false);
+    setShowMobileModal(false);
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -144,7 +157,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
       const transcript = event.results[0][0].transcript;
       setQuery(transcript);
       if (isNicoleMode) {
-        setShowNicoleDropdown(true);
+        if (isMobile) {
+          setShowMobileModal(true);
+        } else {
+          setShowNicoleDropdown(true);
+        }
       }
     };
 
@@ -170,50 +187,37 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
 
   return (
     <div className={`relative w-full ${className}`}>
-      {/* Mode Toggle */}
-      <div className="flex items-center gap-2 mb-3">
-        <Button
-          variant={!isNicoleMode ? "default" : "outline"}
-          size="sm"
-          onClick={handleModeToggle}
-          className={`flex items-center gap-2 transition-all duration-200 ${
-            !isNicoleMode 
-              ? "bg-blue-600 hover:bg-blue-700 text-white" 
-              : "hover:bg-gray-50"
-          }`}
-        >
-          <Search className="h-4 w-4" />
-          Search Products
-        </Button>
-        <Button
-          variant={isNicoleMode ? "default" : "outline"}
-          size="sm"
-          onClick={handleModeToggle}
-          className={`flex items-center gap-2 transition-all duration-200 ${
-            isNicoleMode 
-              ? "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white" 
-              : "hover:bg-gray-50"
-          }`}
-        >
-          <MessageCircle className="h-4 w-4" />
-          Ask Nicole
-          <Badge variant="secondary" className="ml-1 text-xs">AI</Badge>
-        </Button>
-      </div>
-
-      {/* Search Bar */}
+      {/* Search Bar with Integrated Toggle */}
       <form onSubmit={handleSubmit} className="relative flex items-center w-full" autoComplete="off">
-        <div className="relative flex-1 flex items-center">
-          <div className="absolute left-3 flex items-center">
-            <SearchIcon className={`h-4 w-4 ${isNicoleMode ? 'text-purple-500' : 'text-gray-400'}`} />
+        <div className={`relative flex-1 flex items-center transition-all duration-300 ${
+          isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
+        }`}>
+          {/* Mode Toggle Inside Search Bar */}
+          <div className="absolute left-3 flex items-center gap-2 z-10">
+            <SearchIcon className={`h-4 w-4 transition-colors duration-200 ${
+              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
+            }`} />
+            <IOSSwitch
+              size="sm"
+              checked={isNicoleMode}
+              onCheckedChange={handleModeToggle}
+              className="touch-manipulation"
+            />
+            {isNicoleMode && (
+              <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
+            )}
           </div>
           
           <Input
             ref={inputRef}
             type="search"
             placeholder={placeholderText}
-            className={`pl-10 pr-32 ${mobile ? "text-base py-3 h-12" : ""} rounded-full border-gray-300 transition-all duration-200 ${
-              isNicoleMode ? 'border-purple-300 focus:border-purple-500' : ''
+            className={`pl-20 pr-32 transition-all duration-300 ${
+              mobile ? "text-base py-3 h-12" : ""
+            } rounded-full border-gray-300 ${
+              isNicoleMode 
+                ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
+                : 'focus:border-blue-500'
             }`}
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -232,7 +236,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 px-2 text-gray-600 hover:text-gray-900"
+                    className="h-8 px-2 text-gray-600 hover:text-gray-900 touch-manipulation"
                     type="button"
                   >
                     <Grid3X3 className="h-4 w-4 mr-1" />
@@ -268,7 +272,9 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
               type="button"
               variant="ghost"
               size="sm"
-              className={`absolute right-12 h-8 w-8 p-0 ${isListening ? 'text-red-500' : 'text-gray-500'}`}
+              className={`absolute right-12 h-8 w-8 p-0 touch-manipulation ${
+                isListening ? 'text-red-500' : 'text-gray-500'
+              }`}
               onClick={handleVoiceInput}
             >
               <Mic className="h-4 w-4" />
@@ -277,16 +283,28 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
 
           <Button
             type="submit"
-            className={`absolute right-2 rounded-full px-3 py-1 text-xs font-semibold h-8 transition-all duration-200 ${
+            className={`absolute right-2 rounded-full px-3 py-1 text-xs font-semibold h-8 transition-all duration-300 touch-manipulation ${
               isNicoleMode 
-                ? "bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white"
+                ? "bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white shadow-lg"
                 : "bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white"
             }`}
           >
             {isNicoleMode ? "Ask" : "Search"}
+            {isNicoleMode && (
+              <Badge variant="secondary" className="ml-1 text-xs bg-white/20">AI</Badge>
+            )}
           </Button>
         </div>
       </form>
+
+      {/* Mode Description */}
+      {isNicoleMode && (
+        <div className="mt-2 text-center">
+          <p className="text-xs text-purple-600 font-medium">
+            AI Mode Active - Nicole will help find perfect gifts
+          </p>
+        </div>
+      )}
 
       {/* Product Search Suggestions */}
       {showSuggestions && suggestions.length > 0 && !isNicoleMode && (
@@ -294,7 +312,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           {suggestions.map((suggestion, idx) => (
             <li
               key={idx}
-              className="p-3 cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0"
+              className="p-3 cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0 touch-manipulation"
               onClick={() => handleSuggestionClick(suggestion)}
             >
               {suggestion}
@@ -303,11 +321,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
         </ul>
       )}
 
-      {/* Nicole Conversation Dropdown */}
-      {showNicoleDropdown && isNicoleMode && (
+      {/* Desktop Nicole Conversation Dropdown */}
+      {showNicoleDropdown && isNicoleMode && !isMobile && (
         <div 
           ref={nicoleDropdownRef}
-          className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-lg mt-1 max-h-96 overflow-hidden"
+          className="absolute top-full left-0 right-0 z-50 bg-white shadow-xl border rounded-lg mt-1 max-h-96 overflow-hidden"
         >
           <NicoleConversationEngine
             initialQuery={query}
@@ -319,6 +337,17 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           />
         </div>
       )}
+
+      {/* Mobile Nicole Conversation Modal */}
+      <MobileConversationModal
+        isOpen={showMobileModal}
+        onClose={() => setShowMobileModal(false)}
+        initialQuery={query}
+        onNavigateToResults={(searchQuery) => {
+          navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&mode=nicole`);
+          setShowMobileModal(false);
+        }}
+      />
     </div>
   );
 };

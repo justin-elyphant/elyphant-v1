@@ -10,6 +10,7 @@ import FeaturedCollections from "@/components/home/sections/FeaturedCollections"
 import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
+import NicoleIntroSection from "@/components/home/sections/NicoleIntroSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
 import MainLayout from "@/components/layout/MainLayout";
 import { useNavigate } from "react-router-dom";
@@ -50,34 +51,6 @@ const Home = () => {
       image: "/lovable-uploads/11e6a90d-fd1c-495d-91e3-6be61ea55a5f.png",
       callToAction: "Shop Luxury",
       searchTerm: "luxury gifts"
-    }
-  ];
-
-  // Sample brands data
-  const brands = [
-    {
-      id: 1,
-      name: "Nike",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1200px-Logo_NIKE.svg.png",
-      featured: true
-    },
-    {
-      id: 2,
-      name: "Lululemon",
-      logo: "/lovable-uploads/f0a52aa3-9dcd-4367-9a66-0724e97f2641.png",
-      featured: true
-    },
-    {
-      id: 3,
-      name: "Apple",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-      featured: true
-    },
-    {
-      id: 4,
-      name: "Made In",
-      logo: "/lovable-uploads/c8d47b72-d4ff-4269-81b0-e53a01164c71.png",
-      featured: true
     }
   ];
 
@@ -176,6 +149,9 @@ const Home = () => {
           {/* Popular Brands section moved above Featured Products */}
           <PopularBrandsSection />
 
+          {/* Nicole Introduction Section */}
+          <NicoleIntroSection />
+
           {/* Trending Products Carousel */}
           <FeaturedProductsSection />
 
@@ -194,4 +170,3 @@ const Home = () => {
 };
 
 export default Home;
-

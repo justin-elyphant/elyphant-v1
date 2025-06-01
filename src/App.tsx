@@ -10,15 +10,11 @@ import Dashboard from "@/pages/Dashboard";
 import Marketplace from "@/pages/Marketplace";
 import Settings from "@/pages/Settings";
 import SignUp from "@/pages/SignUp";
-import Login from "@/pages/Login";
-import ProductDetails from "@/pages/ProductDetails";
 import Connections from "@/pages/Connections";
-import Gifting from "@/pages/Gifting";
 import SharedWishlist from "@/pages/SharedWishlist";
 import Returns from "@/pages/Returns";
 import Orders from "@/pages/Orders";
 import OrderDetail from "@/pages/OrderDetail";
-import TrunklineAccess from "@/pages/TrunklineAccess";
 import GiftScheduling from "@/pages/GiftScheduling";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import ScrollToTop from "@/components/layout/ScrollToTop";
@@ -46,9 +42,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/signup" element={<SignUp />} />
-              <Route path="/login" element={<Login />} />
               <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/shared-wishlist/:shareToken" element={<SharedWishlist />} />
               
               {/* Protected routes */}
@@ -60,11 +54,6 @@ function App() {
               <Route path="/connections" element={
                 <ProtectedRoute>
                   <Connections />
-                </ProtectedRoute>
-              } />
-              <Route path="/gifting" element={
-                <ProtectedRoute>
-                  <Gifting />
                 </ProtectedRoute>
               } />
               <Route path="/settings" element={
@@ -90,11 +79,6 @@ function App() {
               <Route path="/gift-scheduling" element={
                 <ProtectedRoute>
                   <GiftScheduling />
-                </ProtectedRoute>
-              } />
-              <Route path="/trunkline" element={
-                <ProtectedRoute requiredRole="admin">
-                  <TrunklineAccess />
                 </ProtectedRoute>
               } />
             </Routes>

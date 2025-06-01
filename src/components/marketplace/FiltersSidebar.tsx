@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import FriendWishlistSelector from "./FriendWishlistSelector";
 import { supabase } from "@/integrations/supabase/client";
+import MobileFilterModal from "./MobileFilterModal";
+import MobileQuickFilters from "./MobileQuickFilters";
 
 interface FiltersSidebarProps {
   activeFilters: Record<string, any>;
@@ -21,14 +23,6 @@ interface FiltersSidebarProps {
   isMobile?: boolean;
 }
 
-const OCCASION_KEYWORDS = [
-  "fathers-day", "mothers-day", "valentines-day", "anniversary", "holiday",
-  "christmas", "thanksgiving", "hanukkah", "easter", "new-year", "birthday",
-  "wedding", "graduation", "baby-shower", "bridal-shower", "engagement",
-  "father", "mother", "dad", "mom", "child", "children", "kid", "kids", "baby",
-  "grandparent", "grandfather", "grandmother", "uncle", "aunt", "cousin"
-];
-
 // Helper: detect "generic" friend/family IDs like friend-1, uncle-3, dad-2, etc.
 const GENERIC_LABELS = [
   "friend", "uncle", "aunt", "cousin", "dad", "mom", "father", "mother", "brother",
@@ -36,28 +30,6 @@ const GENERIC_LABELS = [
   "grandparent", "grandfather", "grandmother",
   "coworker", "colleague", "boss", "teacher", "partner", "spouse"
 ];
-
-function isGenericPersonId(personId: string) {
-  if (!personId) return false;
-  // Matches e.g. "friend-3", "uncle-2", "mom-5"
-  const genericPattern = new RegExp(`^(${GENERIC_LABELS.join("|")})-\\d+$`, "i");
-  return genericPattern.test(personId);
-}
-
-const isOccasionPersonId = (personId: string) => {
-  if (!personId) return false;
-  // occasion/role keywords are often kebab-case or lowercased
-  const normalized = personId.toLowerCase().replace(/[^a-z\-]/g, "");
-  // strict match against list or "occasion" in id
-  const matchesOccasion = OCCASION_KEYWORDS.some((kw) =>
-    normalized === kw ||
-    normalized === `${kw}-id` ||
-    normalized.includes(kw) ||
-    normalized.startsWith(kw)
-  );
-  // Also treat generic-ids like friend-2, uncle-3 as occasions, so filter is hidden
-  return matchesOccasion || isGenericPersonId(personId);
-};
 
 // Helper to try to extract a person's name from the search string
 function getPersonNameFromSearch(search: string): string | null {
@@ -107,6 +79,7 @@ const FiltersSidebar = ({
     "savedFilters", []
   );
   const [filterProfileName, setFilterProfileName] = useState("");
+  const [showMobileModal, setShowMobileModal] = useState(false);
 
   // Wishlist selector state
   const [friendWishlists, setFriendWishlists] = useState<{ id: string; title: string }[]>([]);
@@ -303,6 +276,60 @@ const FiltersSidebar = ({
   
   const activeFilterCount = countActiveFilters();
   
+  // If mobile, render mobile components
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {/* Mobile Quick Filters */}
+        <MobileQuickFilters
+          activeFilters={activeFilters}
+          onFilterChange={onFilterChange}
+          onShowAllFilters={() => setShowMobileModal(true)}
+        />
+
+        {/* Mobile Filter Modal */}
+        <MobileFilterModal
+          activeFilters={activeFilters}
+          onFilterChange={onFilterChange}
+          categories={categories}
+          isOpen={showMobileModal}
+          onOpenChange={setShowMobileModal}
+        />
+
+        {/* Friend wishlist section for mobile */}
+        {friendWishlistName && (
+          <div className="bg-white border rounded-md p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-medium text-sm">
+                {showFullWishlist ? `Showing all of ${friendWishlistName}'s wishlist` : `Show ${friendWishlistName}'s wishlist`}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setShowFullWishlist(!showFullWishlist);
+                  onFilterChange({ ...activeFilters, showFullWishlist: !showFullWishlist });
+                }}
+              >
+                {showFullWishlist ? "Hide" : "Show All"}
+              </Button>
+            </div>
+            {shouldShowFriendWishlistSelector && (
+              <FriendWishlistSelector
+                wishlists={friendWishlists}
+                selectedWishlistId={selectedWishlistId}
+                onSelect={(wishlistId) => {
+                  setSelectedWishlistId(wishlistId);
+                  onFilterChange({ ...activeFilters, friendWishlistId: wishlistId });
+                }}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white border rounded-md overflow-hidden">
       <div className="p-4 border-b flex justify-between items-center">
@@ -337,7 +364,10 @@ const FiltersSidebar = ({
               size="sm"
               variant="outline"
               className="ml-2 border border-gray-200 text-base font-semibold"
-              onClick={handleShowFullWishlistToggle}
+              onClick={() => {
+                setShowFullWishlist(!showFullWishlist);
+                onFilterChange({ ...activeFilters, showFullWishlist: !showFullWishlist });
+              }}
             >
               <span className="text-primary font-semibold">
                 {showFullWishlist ? "Hide" : "Show All"}
@@ -355,7 +385,7 @@ const FiltersSidebar = ({
         </div>
       )}
 
-      <ScrollArea className={isMobile ? "h-[60vh]" : "max-h-[calc(100vh-200px)]"}>
+      <ScrollArea className="max-h-[calc(100vh-200px)]">
         <div className="p-4 space-y-5">
           {/* Category filter with responsive grid for mobile */}
           {categories.length > 0 && (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -33,9 +32,8 @@ const MarketplaceContent = ({
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">(
-    isMobile ? "list" : "grid"
-  );
+  // Default to grid view for both mobile and desktop
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [savedFiltersActive, setSavedFiltersActive] = useState(false);
   const [savedFilters] = useLocalStorage<{name: string, filters: SavedFilters}[]>(
     "savedFilters", []
@@ -53,13 +51,6 @@ const MarketplaceContent = ({
   
   // Get recommendations (will be used if we have few or no search results)
   const { recommendations } = useProductRecommendations();
-  
-  // Force list view on mobile devices when screen size changes
-  useEffect(() => {
-    if (isMobile && viewMode === "grid") {
-      setViewMode("list");
-    }
-  }, [isMobile]);
   
   // Initialize filters based on URL params
   useEffect(() => {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
 import StickyFiltersBar from "./StickyFiltersBar";
@@ -44,9 +43,10 @@ const ResultsChip = ({
 );
 
 const MarketplaceWrapper = () => {
-  const [showFilters, setShowFilters] = useState(true);
-  const [products, setProducts] = useState(allProducts);
   const isMobile = useIsMobile();
+  // Default filters to closed, especially on mobile
+  const [showFilters, setShowFilters] = useState(!isMobile);
+  const [products, setProducts] = useState(allProducts);
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addSearch } = useUserSearchHistory();
@@ -59,6 +59,13 @@ const MarketplaceWrapper = () => {
   const resultsRef = useRef<HTMLDivElement>(null);
   // We keep track if we just searched (to avoid repeat scrolls)
   const lastSearchRef = useRef<string | null>(null);
+
+  // Close filters on mobile when screen size changes
+  useEffect(() => {
+    if (isMobile) {
+      setShowFilters(false);
+    }
+  }, [isMobile]);
 
   // Improved filtering logic: use dynamic mock product generation (for testing mode)
   useEffect(() => {

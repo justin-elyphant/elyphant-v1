@@ -4,6 +4,7 @@ import { Gift, Calendar } from "lucide-react";
 import { differenceInCalendarDays, format, isToday, isTomorrow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import GlassCard from "./GlassCard";
 
 interface GiftCountdownProps {
   event: {
@@ -51,26 +52,28 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
   };
 
   return (
-    <div className="flex items-center justify-center gap-4 animate-fade-in p-4">
-      <div className="flex items-center gap-3">
-        <span>{occasionIcon(event.type)}</span>
-        <div className="flex flex-col">
-          <span className="text-[#7E69AB] font-extrabold text-lg md:text-xl leading-tight">
-            {daysDisplay}
-          </span>
-          <span className="text-sm font-semibold text-gray-900">{event.name}</span>
-          <span className="text-xs text-gray-500 hidden md:block">{dateLabel}</span>
+    <GlassCard className="p-4">
+      <div className="flex items-center justify-center gap-4 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <span>{occasionIcon(event.type)}</span>
+          <div className="flex flex-col">
+            <span className="text-[#7E69AB] font-extrabold text-lg md:text-xl leading-tight">
+              {daysDisplay}
+            </span>
+            <span className="text-sm font-semibold text-gray-900">{event.name}</span>
+            <span className="text-xs text-gray-500 hidden md:block">{dateLabel}</span>
+          </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="whitespace-nowrap text-[#7E69AB] border-[#E6E0F5] hover:bg-[#F7F4FC] text-xs"
+          onClick={handleShopGifts}
+        >
+          Shop Gifts
+        </Button>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="whitespace-nowrap text-[#7E69AB] border-[#E6E0F5] hover:bg-[#F7F4FC] text-xs"
-        onClick={handleShopGifts}
-      >
-        Shop Gifts
-      </Button>
-    </div>
+    </GlassCard>
   );
 };
 

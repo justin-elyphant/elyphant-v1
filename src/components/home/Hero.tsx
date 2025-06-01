@@ -48,16 +48,14 @@ const Hero = () => {
       {/* Holiday Countdown Overlay */}
       {nextHoliday && (
         <div className="absolute top-4 right-4 z-20 hidden md:block">
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4">
-            <GiftCountdown event={nextHoliday} />
-          </div>
+          <GiftCountdown event={nextHoliday} />
         </div>
       )}
 
       {/* Mobile Countdown Banner - Fixed positioning */}
       {nextHoliday && (
         <div className="absolute top-6 left-0 right-0 z-20 md:hidden">
-          <div className="bg-white/95 backdrop-blur-sm border-b mx-4 rounded-lg shadow-sm">
+          <div className="mx-4">
             <ResponsiveContainer padding="minimal">
               <GiftCountdown event={nextHoliday} />
             </ResponsiveContainer>

@@ -7,20 +7,17 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import Logo from "./components/Logo";
 import AuthButtons from "./components/AuthButtons";
-import EnhancedSearchBar from "./components/EnhancedSearchBar";
+import DualModeSearchBar from "@/components/search/DualModeSearchBar";
 import { ProductProvider } from "@/contexts/ProductContext";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
 import UserButton from "@/components/auth/UserButton";
 import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 import { useIsMobile } from "@/hooks/use-mobile";
-import BotButton from "@/components/ai-gift-advisor/BotButton";
-import GiftAdvisorBot from "@/components/ai-gift-advisor/GiftAdvisorBot";
 
 const Header = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [botOpen, setBotOpen] = useState(false);
   const isMobile = useIsMobile();
 
   return (
@@ -37,14 +34,13 @@ const Header = () => {
                 </Link>
               </div>
               
-              {/* Center: Search Bar */}
+              {/* Center: Dual Mode Search Bar */}
               <div className="flex-1 max-w-2xl mx-8">
-                <EnhancedSearchBar />
+                <DualModeSearchBar />
               </div>
               
-              {/* Right: AI Bot + Cart + Notifications + Auth/Profile */}
+              {/* Right: Cart + Notifications + Auth/Profile */}
               <div className="flex items-center gap-3">
-                <BotButton onClick={() => setBotOpen(true)} />
                 <ShoppingCartButton />
                 <NotificationsDropdown />
                 {user ? (
@@ -59,7 +55,7 @@ const Header = () => {
           {/* Mobile header - Restructured */}
           {isMobile && (
             <>
-              {/* Top row: Logo + Action buttons (NO AI Bot here) */}
+              {/* Top row: Logo + Action buttons */}
               <div className="flex items-center justify-between mb-3">
                 {/* Logo (left) */}
                 <div className="flex items-center">
@@ -68,7 +64,7 @@ const Header = () => {
                   </Link>
                 </div>
                 
-                {/* Action buttons (right) - Cart + Notifications + Menu only */}
+                {/* Action buttons (right) - Cart + Notifications + Menu */}
                 <div className="flex items-center gap-2">
                   {/* Shopping cart */}
                   <div className="h-12 w-12 flex items-center justify-center">
@@ -95,19 +91,9 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Search row - Search bar + AI Bot */}
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex-[3]">
-                  <EnhancedSearchBar mobile />
-                </div>
-                <div className="flex-[1] flex justify-end">
-                  <BotButton 
-                    onClick={() => setBotOpen(true)} 
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12 bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-0 hover:from-purple-600 hover:to-indigo-700"
-                  />
-                </div>
+              {/* Search row - Now using DualModeSearchBar */}
+              <div className="mb-2">
+                <DualModeSearchBar mobile />
               </div>
 
               {/* Mobile menu */}
@@ -135,12 +121,6 @@ const Header = () => {
               )}
             </>
           )}
-
-          {/* AI Gift Advisor Bot Modal */}
-          <GiftAdvisorBot 
-            isOpen={botOpen} 
-            onClose={() => setBotOpen(false)} 
-          />
         </ProductProvider>
       </div>
     </header>

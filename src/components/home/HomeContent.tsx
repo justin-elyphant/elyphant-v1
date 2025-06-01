@@ -10,6 +10,7 @@ import FeaturedCollections from "@/components/home/sections/FeaturedCollections"
 import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
+import NicoleIntroSection from "@/components/home/sections/NicoleIntroSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -145,6 +146,9 @@ const HomeContent = () => {
 
         {/* Popular Brands section moved above Featured Products */}
         <PopularBrandsSection />
+
+        {/* Nicole Introduction Section */}
+        <NicoleIntroSection />
 
         {/* Trending Products Carousel */}
         <FeaturedProductsSection />

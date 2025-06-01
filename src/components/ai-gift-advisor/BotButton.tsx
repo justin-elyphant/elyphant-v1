@@ -33,10 +33,10 @@ const BotButton: React.FC<BotButtonProps> = ({
         isMobile ? "h-8 w-8 p-2" : "px-3 py-2",
         className
       )}
-      aria-label="Open Nicole AI Assistant"
+      aria-label="Ask Nicole AI Assistant"
     >
       <Bot className={cn("h-4 w-4", isMobile ? "" : "mr-2")} />
-      {!isMobile && <span className="font-medium text-sm">Nicole</span>}
+      {!isMobile && <span className="font-medium text-sm">Ask Nicole</span>}
     </Button>
   );
 };

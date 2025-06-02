@@ -1,36 +1,23 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, MessageCircle, Mic, ChevronDown, Sparkles, Bot } from "lucide-react";
+import { MessageCircle, Search } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchMode } from "@/hooks/useSearchMode";
 import { Badge } from "@/components/ui/badge";
-import { IOSSwitch } from "@/components/ui/ios-switch";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import NicoleConversationEngine from "@/components/ai/NicoleConversationEngine";
 import MobileConversationModal from "@/components/ai/conversation/MobileConversationModal";
+import CategoryFilterBar from "./CategoryFilterBar";
+import VoiceInputButton from "./VoiceInputButton";
+import SearchSuggestions from "./SearchSuggestions";
+import SearchModeToggle from "./SearchModeToggle";
 
 interface DualModeSearchBarProps {
   mobile?: boolean;
   className?: string;
 }
-
-const categories = [
-  { name: "All Categories", value: "" },
-  { name: "Electronics", value: "electronics" },
-  { name: "Fashion", value: "fashion" },
-  { name: "Home & Garden", value: "home" },
-  { name: "Sports & Outdoors", value: "sports" },
-  { name: "Beauty & Personal Care", value: "beauty" },
-  { name: "Books & Media", value: "books" },
-  { name: "Toys & Games", value: "toys" },
-];
 
 const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({ 
   mobile = false, 
@@ -201,31 +188,10 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
         }`}>
           {/* Mode Toggle Inside Search Bar with Search Icon */}
-          <div className="absolute left-3 flex items-center gap-2 z-10">
-            <SearchIcon className={`h-4 w-4 transition-colors duration-200 ${
-              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-            }`} />
-            <div className="relative">
-              <IOSSwitch
-                size="sm"
-                checked={isNicoleMode}
-                onCheckedChange={handleModeToggle}
-                className="touch-manipulation"
-              />
-              {/* Mode indicator icons inside the switch */}
-              <div className="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
-                <Search className={`h-2.5 w-2.5 transition-opacity duration-200 ${
-                  !isNicoleMode ? 'opacity-100 text-white' : 'opacity-40 text-gray-500'
-                }`} />
-              </div>
-            </div>
-            <Bot className={`h-4 w-4 transition-colors duration-200 ${
-              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-            }`} />
-            {isNicoleMode && (
-              <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
-            )}
-          </div>
+          <SearchModeToggle
+            isNicoleMode={isNicoleMode}
+            onModeToggle={handleModeToggle}
+          />
           
           <Input
             ref={inputRef}
@@ -248,19 +214,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           />
 
           {/* Voice Input Button */}
-          {mobile && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={`absolute right-12 h-8 w-8 p-0 touch-manipulation min-h-[44px] min-w-[44px] ${
-                isListening ? 'text-red-500' : 'text-gray-500'
-              }`}
-              onClick={handleVoiceInput}
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
-          )}
+          <VoiceInputButton
+            isListening={isListening}
+            onVoiceInput={handleVoiceInput}
+            mobile={mobile}
+          />
 
           <Button
             type="submit"
@@ -282,26 +240,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
 
       {/* Category Filter Bar - Only show for product search mode */}
       {!isNicoleMode && (
-        <div className="mt-3">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <span className="text-sm text-gray-600 flex-shrink-0 mr-2">Categories:</span>
-            {categories.map((category) => (
-              <button
-                key={category.value}
-                onClick={() => handleCategorySelect(category.value)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 touch-manipulation ${
-                  mobile ? "min-h-[44px] px-4" : ""
-                } ${
-                  selectedCategory === category.value
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CategoryFilterBar
+          selectedCategory={selectedCategory}
+          onCategorySelect={handleCategorySelect}
+          mobile={mobile}
+        />
       )}
 
       {/* Mode Description */}
@@ -314,21 +257,12 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
       )}
 
       {/* Product Search Suggestions */}
-      {showSuggestions && suggestions.length > 0 && !isNicoleMode && (
-        <ul className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 text-sm">
-          {suggestions.map((suggestion, idx) => (
-            <li
-              key={idx}
-              className={`p-3 cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0 touch-manipulation ${
-                mobile ? "min-h-[44px] flex items-center" : ""
-              }`}
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              {suggestion}
-            </li>
-          ))}
-        </ul>
-      )}
+      <SearchSuggestions
+        suggestions={suggestions}
+        isVisible={showSuggestions && !isNicoleMode}
+        onSuggestionClick={handleSuggestionClick}
+        mobile={mobile}
+      />
 
       {/* Desktop Nicole Conversation Dropdown */}
       {showNicoleDropdown && isNicoleMode && !isMobile && (

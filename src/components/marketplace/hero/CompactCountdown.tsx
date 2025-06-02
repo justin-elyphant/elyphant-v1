@@ -19,12 +19,14 @@ const CompactCountdown: React.FC<CompactCountdownProps> = ({ event, className = 
 
   // Get display text
   let daysDisplay = "";
+  let subText = "";
   if (isToday(eventDate)) {
     daysDisplay = "Today!";
   } else if (isTomorrow(eventDate)) {
     daysDisplay = "Tomorrow!";
   } else {
     daysDisplay = `${days}`;
+    subText = "days to go!";
   }
 
   const occasionIcon = event.type === "birthday" || event.type === "anniversary" 
@@ -33,20 +35,18 @@ const CompactCountdown: React.FC<CompactCountdownProps> = ({ event, className = 
 
   return (
     <div className={`inline-flex items-center gap-3 bg-white/95 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg border border-white/20 ${className}`}>
-      {/* Circular countdown */}
+      {/* Circular countdown - made larger and adjusted text */}
       <div className="relative">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm animate-pulse">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex flex-col items-center justify-center text-white font-bold shadow-lg animate-pulse">
           {isToday(eventDate) || isTomorrow(eventDate) ? (
-            <Gift className="h-5 w-5" />
+            <Gift className="h-6 w-6" />
           ) : (
-            daysDisplay
+            <>
+              <span className="text-lg leading-none">{daysDisplay}</span>
+              {subText && <span className="text-xs leading-none">days</span>}
+            </>
           )}
         </div>
-        {!isToday(eventDate) && !isTomorrow(eventDate) && (
-          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-xs text-gray-600 font-medium">
-            days
-          </div>
-        )}
       </div>
 
       {/* Event info */}
@@ -54,7 +54,7 @@ const CompactCountdown: React.FC<CompactCountdownProps> = ({ event, className = 
         <div className="flex items-center gap-1 text-purple-700">
           {occasionIcon}
           <span className="font-semibold text-sm">
-            {isToday(eventDate) || isTomorrow(eventDate) ? daysDisplay : `${days} days to go!`}
+            {isToday(eventDate) || isTomorrow(eventDate) ? daysDisplay : subText}
           </span>
         </div>
         <span className="text-gray-800 font-medium text-sm">{event.name}</span>

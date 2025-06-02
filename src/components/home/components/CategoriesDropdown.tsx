@@ -50,7 +50,7 @@ const CategoriesDropdownWithoutProvider: React.FC<CategoriesDropdownProps> = ({
       id: loadingToastId,
     });
     
-    // Navigate to marketplace with category parameter
+    // Navigate to marketplace with both category and search parameters so it gets saved to recent searches
     navigate(`/marketplace?category=${category}&search=${encodeURIComponent(searchTerm)}`);
     onOpenChange(false);
     

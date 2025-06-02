@@ -103,7 +103,11 @@ const GiftingCategories = () => {
 
   const handleCategoryClick = (searchTerm: string) => {
     const params = new URLSearchParams(searchParams);
+    // Set both search and category parameters so the search term gets saved to recent searches
     params.set("search", searchTerm);
+    // Also set a category parameter that matches the search term for consistency
+    const categorySlug = searchTerm.toLowerCase().replace(/\s+/g, '-');
+    params.set("category", categorySlug);
     setSearchParams(params);
   };
 

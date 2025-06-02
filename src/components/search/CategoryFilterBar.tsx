@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface CategoryFilterBarProps {
   selectedCategory: string;
@@ -9,14 +9,14 @@ interface CategoryFilterBarProps {
 }
 
 const categories = [
-  { name: "All Categories", value: "" },
-  { name: "Electronics", value: "electronics" },
-  { name: "Fashion", value: "fashion" },
-  { name: "Home & Garden", value: "home" },
-  { name: "Sports & Outdoors", value: "sports" },
-  { name: "Beauty & Personal Care", value: "beauty" },
-  { name: "Books & Media", value: "books" },
-  { name: "Toys & Games", value: "toys" },
+  { name: "All Categories", value: "", searchTerm: "" },
+  { name: "Electronics", value: "electronics", searchTerm: "electronics" },
+  { name: "Fashion", value: "fashion", searchTerm: "fashion" },
+  { name: "Home & Garden", value: "home", searchTerm: "home garden" },
+  { name: "Sports & Outdoors", value: "sports", searchTerm: "sports outdoors" },
+  { name: "Beauty & Personal Care", value: "beauty", searchTerm: "beauty personal care" },
+  { name: "Books & Media", value: "books", searchTerm: "books media" },
+  { name: "Toys & Games", value: "toys", searchTerm: "toys games" },
 ];
 
 const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
@@ -24,6 +24,26 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   onCategorySelect,
   mobile = false
 }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const handleCategoryClick = (categoryValue: string, searchTerm: string) => {
+    onCategorySelect(categoryValue);
+    
+    // If there's a search term for this category, update the URL to include it
+    // so it gets saved to recent searches
+    if (searchTerm) {
+      const params = new URLSearchParams(searchParams);
+      params.set("search", searchTerm);
+      if (categoryValue) {
+        params.set("category", categoryValue);
+      } else {
+        params.delete("category");
+      }
+      navigate(`/marketplace?${params.toString()}`, { replace: true });
+    }
+  };
+
   return (
     <div className="mt-3">
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -31,7 +51,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
         {categories.map((category) => (
           <button
             key={category.value}
-            onClick={() => onCategorySelect(category.value)}
+            onClick={() => handleCategoryClick(category.value, category.searchTerm)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 touch-manipulation ${
               mobile ? "min-h-[44px] px-4" : ""
             } ${

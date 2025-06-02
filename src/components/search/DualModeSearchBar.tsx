@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, MessageCircle, Mic, Grid3X3, ChevronDown, Sparkles, Bot } from "lucide-react";
+import { Search, MessageCircle, Mic, ChevronDown, Sparkles, Bot } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchMode } from "@/hooks/useSearchMode";
 import { Badge } from "@/components/ui/badge";
@@ -177,7 +176,16 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
     recognition.start();
   };
 
-  const selectedCategoryName = categories.find(cat => cat.value === selectedCategory)?.name || "All Categories";
+  const handleCategorySelect = (categoryValue: string) => {
+    setSelectedCategory(categoryValue);
+    // If there's a current query, trigger search with new category
+    if (query || categoryValue) {
+      const searchParams = new URLSearchParams();
+      if (query) searchParams.set("search", query);
+      if (categoryValue) searchParams.set("category", categoryValue);
+      navigate(`/marketplace?${searchParams.toString()}`);
+    }
+  };
 
   const placeholderText = isNicoleMode 
     ? "Ask Nicole anything about gifts..." 
@@ -187,7 +195,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
 
   return (
     <div className={`relative w-full ${className}`}>
-      {/* Search Bar with Integrated Toggle */}
+      {/* Search Bar */}
       <form onSubmit={handleSubmit} className="relative flex items-center w-full" autoComplete="off">
         <div className={`relative flex-1 flex items-center transition-all duration-300 ${
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
@@ -223,7 +231,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
             ref={inputRef}
             type="search"
             placeholder={placeholderText}
-            className={`pl-32 pr-32 transition-all duration-300 ${
+            className={`pl-32 pr-20 transition-all duration-300 ${
               mobile ? "text-base py-3 h-12" : ""
             } rounded-full border-gray-300 ${
               isNicoleMode 
@@ -239,51 +247,13 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
             }}
           />
 
-          {/* Category selector for product search mode */}
-          {!isNicoleMode && (
-            <div className="absolute right-20 flex items-center border-l border-gray-300 pl-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 px-2 text-gray-600 hover:text-gray-900 touch-manipulation"
-                    type="button"
-                  >
-                    <Grid3X3 className="h-4 w-4 mr-1" />
-                    {!isMobile && (
-                      <>
-                        <span className="text-xs max-w-20 truncate">
-                          {selectedCategoryName.replace(" Categories", "")}
-                        </span>
-                        <ChevronDown className="h-3 w-3 ml-1" />
-                      </>
-                    )}
-                    {isMobile && <ChevronDown className="h-3 w-3 ml-1" />}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-white border shadow-lg z-50">
-                  {categories.map((category) => (
-                    <DropdownMenuItem
-                      key={category.value}
-                      onClick={() => setSelectedCategory(category.value)}
-                      className="cursor-pointer hover:bg-gray-100"
-                    >
-                      {category.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-
           {/* Voice Input Button */}
           {mobile && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className={`absolute right-12 h-8 w-8 p-0 touch-manipulation ${
+              className={`absolute right-12 h-8 w-8 p-0 touch-manipulation min-h-[44px] min-w-[44px] ${
                 isListening ? 'text-red-500' : 'text-gray-500'
               }`}
               onClick={handleVoiceInput}
@@ -295,6 +265,8 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           <Button
             type="submit"
             className={`absolute right-2 rounded-full px-3 py-1 text-xs font-semibold h-8 transition-all duration-300 touch-manipulation ${
+              mobile ? "min-h-[44px] min-w-[44px]" : ""
+            } ${
               isNicoleMode 
                 ? "bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white shadow-lg"
                 : "bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white"
@@ -307,6 +279,30 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           </Button>
         </div>
       </form>
+
+      {/* Category Filter Bar - Only show for product search mode */}
+      {!isNicoleMode && (
+        <div className="mt-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <span className="text-sm text-gray-600 flex-shrink-0 mr-2">Categories:</span>
+            {categories.map((category) => (
+              <button
+                key={category.value}
+                onClick={() => handleCategorySelect(category.value)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 touch-manipulation ${
+                  mobile ? "min-h-[44px] px-4" : ""
+                } ${
+                  selectedCategory === category.value
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Mode Description */}
       {isNicoleMode && (
@@ -323,7 +319,9 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           {suggestions.map((suggestion, idx) => (
             <li
               key={idx}
-              className="p-3 cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0 touch-manipulation"
+              className={`p-3 cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0 touch-manipulation ${
+                mobile ? "min-h-[44px] flex items-center" : ""
+              }`}
               onClick={() => handleSuggestionClick(suggestion)}
             >
               {suggestion}

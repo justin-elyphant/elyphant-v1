@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -190,27 +189,35 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
       {/* Search Bar with Integrated Toggle */}
       <form onSubmit={handleSubmit} className="relative flex items-center w-full" autoComplete="off">
         <div className={`relative flex-1 flex items-center transition-all duration-300 ${
-          isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
+          isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2 nicole-mode-glow' : ''
         }`}>
-          {/* Mode Toggle Inside Search Bar with Icons */}
+          {/* Enhanced Mode Toggle Inside Search Bar with Prominent Icons */}
           <div className="absolute left-3 flex items-center gap-2 z-10">
             <SearchIcon className={`h-4 w-4 transition-colors duration-200 ${
               isNicoleMode ? 'text-purple-500' : 'text-gray-400'
             }`} />
             <div className="relative">
               <IOSSwitch
-                size="sm"
+                size={isMobile ? "md" : "sm"}
                 checked={isNicoleMode}
                 onCheckedChange={handleModeToggle}
-                className="touch-manipulation"
+                className="touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
               />
-              {/* Mode indicator icons inside the switch */}
-              <div className="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
-                <Search className={`h-2.5 w-2.5 transition-opacity duration-200 ${
-                  !isNicoleMode ? 'opacity-100 text-white' : 'opacity-40 text-gray-500'
+              {/* Enhanced mode indicator icons inside the switch */}
+              <div className="absolute inset-0 flex items-center justify-between px-1.5 pointer-events-none">
+                <Search className={`transition-all duration-200 ${
+                  isMobile ? 'h-3.5 w-3.5' : 'h-3 w-3'
+                } ${
+                  !isNicoleMode 
+                    ? 'opacity-100 text-white drop-shadow-sm' 
+                    : 'opacity-30 text-gray-500'
                 }`} />
-                <Bot className={`h-2.5 w-2.5 transition-opacity duration-200 ${
-                  isNicoleMode ? 'opacity-100 text-white' : 'opacity-40 text-gray-500'
+                <Bot className={`transition-all duration-200 ${
+                  isMobile ? 'h-3.5 w-3.5' : 'h-3 w-3'
+                } ${
+                  isNicoleMode 
+                    ? 'opacity-100 text-white drop-shadow-sm animate-pulse' 
+                    : 'opacity-30 text-gray-500'
                 }`} />
               </div>
             </div>
@@ -223,9 +230,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
             ref={inputRef}
             type="search"
             placeholder={placeholderText}
-            className={`pl-24 pr-32 transition-all duration-300 ${
-              mobile ? "text-base py-3 h-12" : ""
-            } rounded-full border-gray-300 ${
+            className={`transition-all duration-300 rounded-full border-gray-300 ${
+              isMobile 
+                ? "pl-20 pr-28 text-base py-3 h-14 leading-relaxed" 
+                : "pl-24 pr-32 h-12"
+            } ${
               isNicoleMode 
                 ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
                 : 'focus:border-blue-500'
@@ -241,13 +250,19 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
 
           {/* Category selector for product search mode */}
           {!isNicoleMode && (
-            <div className="absolute right-20 flex items-center border-l border-gray-300 pl-2">
+            <div className={`absolute border-l border-gray-300 pl-2 ${
+              isMobile ? 'right-16' : 'right-20'
+            }`}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 px-2 text-gray-600 hover:text-gray-900 touch-manipulation"
+                    className={`text-gray-600 hover:text-gray-900 touch-manipulation ${
+                      isMobile 
+                        ? 'h-10 px-2 min-h-[44px] min-w-[44px]' 
+                        : 'h-8 px-2'
+                    }`}
                     type="button"
                   >
                     <Grid3X3 className="h-4 w-4 mr-1" />
@@ -277,14 +292,14 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
             </div>
           )}
 
-          {/* Voice Input Button */}
+          {/* Enhanced Voice Input Button for Mobile */}
           {mobile && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className={`absolute right-12 h-8 w-8 p-0 touch-manipulation ${
-                isListening ? 'text-red-500' : 'text-gray-500'
+              className={`absolute right-12 touch-manipulation min-h-[44px] min-w-[44px] p-0 ${
+                isListening ? 'text-red-500 animate-pulse' : 'text-gray-500'
               }`}
               onClick={handleVoiceInput}
             >
@@ -294,7 +309,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
 
           <Button
             type="submit"
-            className={`absolute right-2 rounded-full px-3 py-1 text-xs font-semibold h-8 transition-all duration-300 touch-manipulation ${
+            className={`absolute right-2 rounded-full px-3 py-1 text-xs font-semibold transition-all duration-300 touch-manipulation ${
+              isMobile 
+                ? 'h-10 min-h-[44px] min-w-[44px]' 
+                : 'h-8'
+            } ${
               isNicoleMode 
                 ? "bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white shadow-lg"
                 : "bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white"
@@ -308,10 +327,12 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
         </div>
       </form>
 
-      {/* Mode Description */}
+      {/* Enhanced Mode Description */}
       {isNicoleMode && (
         <div className="mt-2 text-center">
-          <p className="text-xs text-purple-600 font-medium">
+          <p className={`text-purple-600 font-medium ${
+            isMobile ? 'text-sm' : 'text-xs'
+          }`}>
             AI Mode Active - Nicole will help find perfect gifts
           </p>
         </div>
@@ -319,11 +340,15 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
 
       {/* Product Search Suggestions */}
       {showSuggestions && suggestions.length > 0 && !isNicoleMode && (
-        <ul className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 text-sm">
+        <ul className={`absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 ${
+          isMobile ? 'text-base' : 'text-sm'
+        }`}>
           {suggestions.map((suggestion, idx) => (
             <li
               key={idx}
-              className="p-3 cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0 touch-manipulation"
+              className={`cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0 touch-manipulation ${
+                isMobile ? 'p-4 min-h-[44px]' : 'p-3'
+              }`}
               onClick={() => handleSuggestionClick(suggestion)}
             >
               {suggestion}

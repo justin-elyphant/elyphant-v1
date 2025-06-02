@@ -9,7 +9,7 @@
     touch-action: manipulation;
   }
   
-  /* Better button touch targets for iOS */
+  /* Enhanced button touch targets for iOS ecommerce standards */
   button, .touch-manipulation {
     min-height: 44px;
     min-width: 44px;
@@ -21,7 +21,7 @@
     overflow-scrolling: touch;
   }
   
-  /* Prevent zoom on input focus */
+  /* Prevent zoom on input focus - critical for ecommerce */
   input, textarea, select {
     font-size: 16px !important;
   }
@@ -51,15 +51,65 @@
   will-change: transform;
 }
 
-/* iOS switch styling enhancements */
+/* Enhanced iOS switch styling */
 .ios-switch-glow {
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
 }
 
-/* Nicole mode glow effect */
+/* Enhanced Nicole mode glow effect for better CTA visibility */
 .nicole-mode-glow {
   box-shadow: 
-    0 0 20px rgba(139, 92, 246, 0.1),
-    0 0 40px rgba(139, 92, 246, 0.05),
+    0 0 20px rgba(139, 92, 246, 0.15),
+    0 0 40px rgba(139, 92, 246, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: gentle-pulse 3s ease-in-out infinite;
+}
+
+/* Subtle pulsing animation for Nicole mode */
+@keyframes gentle-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.15),
+      0 0 40px rgba(139, 92, 246, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 25px rgba(139, 92, 246, 0.2),
+      0 0 50px rgba(139, 92, 246, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Enhanced mobile search bar optimizations */
+@media (max-width: 768px) {
+  /* Better mobile input handling */
+  .mobile-search-input {
+    font-size: 16px !important;
+    line-height: 1.5;
+    padding: 12px 16px;
+  }
+  
+  /* Optimized mobile touch targets */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px;
+  }
+  
+  /* Mobile-optimized transitions */
+  .mobile-transition {
+    transition: all 0.2s ease-out;
+  }
+}
+
+/* Enhanced robot icon visibility */
+.robot-icon-enhanced {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  transition: all 0.2s ease-out;
+}
+
+.robot-icon-enhanced:hover {
+  filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3));
+  transform: scale(1.05);
 }

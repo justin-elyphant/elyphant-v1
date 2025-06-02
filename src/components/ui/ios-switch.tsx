@@ -12,15 +12,15 @@ const IOSSwitch = React.forwardRef<
   IOSSwitchProps
 >(({ className, size = "md", ...props }, ref) => {
   const sizeClasses = {
-    sm: "h-5 w-9",
-    md: "h-6 w-11", 
-    lg: "h-7 w-13"
+    sm: "h-4 w-7",
+    md: "h-5 w-9", 
+    lg: "h-6 w-11"
   }
   
   const thumbSizeClasses = {
-    sm: "h-4 w-4 data-[state=checked]:translate-x-4",
-    md: "h-5 w-5 data-[state=checked]:translate-x-5",
-    lg: "h-6 w-6 data-[state=checked]:translate-x-6"
+    sm: "h-3 w-3 data-[state=checked]:translate-x-3",
+    md: "h-4 w-4 data-[state=checked]:translate-x-4",
+    lg: "h-5 w-5 data-[state=checked]:translate-x-5"
   }
 
   return (

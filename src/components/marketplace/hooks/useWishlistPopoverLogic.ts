@@ -50,12 +50,13 @@ export const useWishlistPopoverLogic = ({
       setAddingToWishlist(wishlistId);
       
       const success = await addToWishlist(wishlistId, {
-        id: productId,
+        product_id: productId,
         title: productName,
         name: productName,
         price: productPrice,
-        image: productImage,
-        brand: productBrand
+        image_url: productImage,
+        brand: productBrand,
+        wishlist_id: wishlistId
       });
 
       if (success) {

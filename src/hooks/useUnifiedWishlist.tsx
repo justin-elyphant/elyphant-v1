@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useWishlists } from "@/components/gifting/hooks/useWishlists";
@@ -14,7 +15,7 @@ interface ProductInfo {
 
 export const useUnifiedWishlist = () => {
   const { user } = useAuth();
-  const { wishlists, addToWishlist, createWishlist, fetchWishlists } = useWishlists();
+  const { wishlists, addToWishlist, createWishlist: createWishlistBase, deleteWishlist: deleteWishlistBase, fetchWishlists } = useWishlists();
   const [loading, setLoading] = useState(false);
 
   // Load wishlists when user changes or component mounts
@@ -53,7 +54,7 @@ export const useUnifiedWishlist = () => {
     );
 
     if (!defaultWishlist) {
-      defaultWishlist = await createWishlist("My Wishlist", "My default wishlist");
+      defaultWishlist = await createWishlistBase("My Wishlist", "My default wishlist");
       if (defaultWishlist) {
         await fetchWishlists(); // Refresh the list
       }
@@ -64,7 +65,7 @@ export const useUnifiedWishlist = () => {
     }
 
     return defaultWishlist;
-  }, [user, wishlists, createWishlist, fetchWishlists]);
+  }, [user, wishlists, createWishlistBase, fetchWishlists]);
 
   // Quick add to default wishlist
   const quickAddToWishlist = useCallback(async (product: ProductInfo) => {
@@ -144,7 +145,7 @@ export const useUnifiedWishlist = () => {
     try {
       setLoading(true);
       
-      const newWishlist = await createWishlist(title, `Wishlist for ${title}`);
+      const newWishlist = await createWishlistBase(title, `Wishlist for ${title}`);
       
       if (newWishlist) {
         const wishlistItem = {
@@ -170,7 +171,41 @@ export const useUnifiedWishlist = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, createWishlist, addToWishlist, fetchWishlists]);
+  }, [user, createWishlistBase, addToWishlist, fetchWishlists]);
+
+  // Create wishlist (wrapper for compatibility)
+  const createWishlist = useCallback(async (title: string, description?: string) => {
+    return await createWishlistBase(title, description);
+  }, [createWishlistBase]);
+
+  // Delete wishlist (wrapper for compatibility)
+  const deleteWishlist = useCallback(async (wishlistId: string) => {
+    try {
+      await deleteWishlistBase(wishlistId);
+      return true;
+    } catch (error) {
+      console.error("Error deleting wishlist:", error);
+      return false;
+    }
+  }, [deleteWishlistBase]);
+
+  // Handle wishlist toggle (for compatibility with useProductManagement)
+  const handleWishlistToggle = useCallback(async (productId: string, product?: any) => {
+    const productInfo = product || { id: productId };
+    return await quickAddToWishlist(productInfo);
+  }, [quickAddToWishlist]);
+
+  // Get wishlisted products (for compatibility)
+  const wishlistedProducts = wishlists?.flatMap(wishlist => 
+    wishlist.items?.map(item => item.product_id) || []
+  ) || [];
+
+  // Update wishlist sharing
+  const updateWishlistSharing = useCallback(async (wishlistId: string, isPublic: boolean) => {
+    // Implementation placeholder - would need to be implemented in useWishlists
+    toast.info("Wishlist sharing will be available soon!");
+    return true;
+  }, []);
 
   return {
     wishlists: wishlists || [],
@@ -181,6 +216,11 @@ export const useUnifiedWishlist = () => {
     createWishlistWithItem,
     loadWishlists,
     addToWishlist,
-    ensureDefaultWishlist
+    ensureDefaultWishlist,
+    createWishlist,
+    deleteWishlist,
+    handleWishlistToggle,
+    wishlistedProducts,
+    updateWishlistSharing
   };
 };

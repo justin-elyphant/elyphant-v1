@@ -43,7 +43,7 @@ const Hero = () => {
         }}
       >
         {/* Lighter Gradient Overlay for better visibility of faces */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/25 to-black/15"></div>
       </div>
 
       {/* Holiday Countdown Overlay */}

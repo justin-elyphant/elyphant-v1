@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -209,8 +208,8 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
                 <Search className={`h-2.5 w-2.5 transition-opacity duration-200 ${
                   !isNicoleMode ? 'opacity-100 text-white' : 'opacity-40 text-gray-500'
                 }`} />
-                <Bot className={`h-2.5 w-2.5 transition-opacity duration-200 ${
-                  isNicoleMode ? 'opacity-100 text-white' : 'opacity-40 text-gray-500'
+                <Bot className={`h-3 w-3 transition-opacity duration-200 ${
+                  isNicoleMode ? 'opacity-100 text-purple-600' : 'opacity-40 text-gray-500'
                 }`} />
               </div>
             </div>

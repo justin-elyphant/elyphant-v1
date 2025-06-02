@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/auth";
 import { CartProvider } from "@/contexts/CartContext";
+import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import { Toaster } from "sonner";
 
 // Import pages
@@ -39,56 +40,58 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
-          <CartProvider>
-            <ScrollToTop />
-            <div className="min-h-screen bg-background font-sans antialiased">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/shared-wishlist/:shareToken" element={<SharedWishlist />} />
-                
-                {/* Protected routes */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/connections" element={
-                  <ProtectedRoute>
-                    <Connections />
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/returns" element={
-                  <ProtectedRoute>
-                    <Returns />
-                  </ProtectedRoute>
-                } />
-                <Route path="/orders" element={
-                  <ProtectedRoute>
-                    <Orders />
-                  </ProtectedRoute>
-                } />
-                <Route path="/orders/:orderId" element={
-                  <ProtectedRoute>
-                    <OrderDetail />
-                  </ProtectedRoute>
-                } />
-                <Route path="/gift-scheduling" element={
-                  <ProtectedRoute>
-                    <GiftScheduling />
-                  </ProtectedRoute>
-                } />
-              </Routes>
-            </div>
-            <Toaster position="top-center" />
-          </CartProvider>
+          <ProfileProvider>
+            <CartProvider>
+              <ScrollToTop />
+              <div className="min-h-screen bg-background font-sans antialiased">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/shared-wishlist/:shareToken" element={<SharedWishlist />} />
+                  
+                  {/* Protected routes */}
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/connections" element={
+                    <ProtectedRoute>
+                      <Connections />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/settings" element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/returns" element={
+                    <ProtectedRoute>
+                      <Returns />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/orders" element={
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/orders/:orderId" element={
+                    <ProtectedRoute>
+                      <OrderDetail />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/gift-scheduling" element={
+                    <ProtectedRoute>
+                      <GiftScheduling />
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+              </div>
+              <Toaster position="top-center" />
+            </CartProvider>
+          </ProfileProvider>
         </AuthProvider>
       </Router>
     </QueryClientProvider>

@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Gift, Heart, Users } from "lucide-react";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import { format } from "date-fns";
+import CompactCountdown from "@/components/marketplace/hero/CompactCountdown";
+import ModernCTA from "@/components/marketplace/hero/ModernCTA";
 
 interface MarketplaceHeroProps {
   isCollapsed?: boolean;
@@ -31,19 +33,13 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
     return (
       <ResponsiveContainer className="py-3">
         {targetEvent && (
-          <div className="mb-4">
-            <GiftCountdown event={targetEvent} />
-            <p className="text-center text-sm text-gray-600 mt-2">
-              {format(targetEvent.date, "EEEE, MMMM d, yyyy")}
-            </p>
+          <div className="mb-4 flex justify-center">
+            <CompactCountdown event={targetEvent} />
           </div>
         )}
         {nextHoliday && !targetEvent && (
-          <div className="mb-4">
-            <GiftCountdown event={nextHoliday} />
-            <p className="text-center text-sm text-gray-600 mt-2">
-              {format(nextHoliday.date, "EEEE, MMMM d, yyyy")}
-            </p>
+          <div className="mb-4 flex justify-center">
+            <CompactCountdown event={nextHoliday} />
           </div>
         )}
         {!user && (
@@ -88,9 +84,9 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
     );
   }
 
-  // Default hero for non-authenticated users or users without upcoming events
+  // Default hero for non-authenticated users with modern design
   return (
-    <div className="relative min-h-[400px] overflow-hidden">
+    <div className="relative min-h-[500px] overflow-hidden">
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -104,58 +100,29 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/25 to-black/15"></div>
       </div>
 
-      <ResponsiveContainer className="relative z-10 py-8 text-center">
-        <div className="text-white">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-shadow-lg">
-            Discover Perfect Gifts
-          </h1>
-          <p className="text-lg mb-6 max-w-2xl mx-auto text-shadow-md">
-            Browse thousands of thoughtful gifts for every occasion, interest, and relationship
-          </p>
-          
-          {nextHoliday && (
-            <div className="mb-4">
-              <GiftCountdown event={nextHoliday} />
-              <p className="text-center text-sm text-white/90 mt-2 text-shadow-sm">
-                {format(nextHoliday.date, "EEEE, MMMM d, yyyy")}
-              </p>
-            </div>
-          )}
-          
-          {!user && (
-            <div className="mt-6 p-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm max-w-md mx-auto">
-              <div className="flex items-center justify-center gap-4 mb-3">
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Heart className="h-4 w-4 text-pink-500" />
-                  Save favorites
-                </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Gift className="h-4 w-4 text-purple-500" />
-                  Get recommendations
-                </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Users className="h-4 w-4 text-blue-500" />
-                  Share with friends
-                </div>
+      <ResponsiveContainer className="relative z-10 py-8">
+        <div className="flex flex-col lg:flex-row items-center gap-8">
+          {/* Left side - Hero content */}
+          <div className="lg:w-1/2 text-white text-center lg:text-left">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-shadow-lg">
+              Discover Perfect Gifts
+            </h1>
+            <p className="text-lg mb-6 max-w-xl mx-auto lg:mx-0 text-shadow-md">
+              Browse thousands of thoughtful gifts for every occasion, interest, and relationship
+            </p>
+            
+            {/* Compact countdown positioned naturally in flow */}
+            {nextHoliday && (
+              <div className="mb-6 flex justify-center lg:justify-start">
+                <CompactCountdown event={nextHoliday} />
               </div>
-              <div className="flex gap-2 justify-center">
-                <Button 
-                  size="sm" 
-                  onClick={() => navigate("/sign-up")}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  Sign Up Free
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate("/sign-in")}
-                >
-                  Sign In
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
+          
+          {/* Right side - Modern CTA */}
+          <div className="lg:w-1/2 flex justify-center lg:justify-end">
+            <ModernCTA />
+          </div>
         </div>
       </ResponsiveContainer>
     </div>

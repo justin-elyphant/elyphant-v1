@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 interface Event {
   name: string;
@@ -54,6 +55,9 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
               {" is coming!"}
             </span>
           </h1>
+          <p className="text-lg text-gray-600 mb-4 font-medium">
+            {format(targetEvent.date, "EEEE, MMMM d, yyyy")}
+          </p>
           <CountdownTimer targetDate={targetEvent.date} eventName={targetEvent.name} />
         </>
       ) : (
@@ -77,4 +81,3 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
 };
 
 export default HeroContent;
-

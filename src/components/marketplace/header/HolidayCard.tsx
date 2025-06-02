@@ -3,6 +3,7 @@ import React from "react";
 import { GiftOccasion } from "../utils/upcomingOccasions";
 import CalendarDayCard from "./CalendarDayCard";
 import { Gift, GraduationCap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface HolidayCardProps {
   holiday: GiftOccasion | null;
@@ -35,12 +36,15 @@ export const HolidayCard: React.FC<HolidayCardProps> = ({
   onCardClick,
   compact = false,
 }) => {
+  const navigate = useNavigate();
+  
   const handleClick = () => {
-    if (holiday) {
-      onCardClick(holiday.searchTerm);
-    } else {
-      onCardClick(type === "holiday" ? "holiday gift" : "thank you gift");
-    }
+    const searchTerm = holiday ? holiday.searchTerm : (type === "holiday" ? "holiday gift" : "thank you gift");
+    
+    // Navigate directly to marketplace with the search term, marking it as from occasion
+    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, { 
+      state: { fromOccasion: true }
+    });
   };
 
   // If holiday data is missing, fake today
@@ -73,4 +77,3 @@ export const HolidayCard: React.FC<HolidayCardProps> = ({
 };
 
 export default HolidayCard;
-

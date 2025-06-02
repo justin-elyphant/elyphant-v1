@@ -131,11 +131,19 @@ const MarketplaceWrapper = () => {
   };
 
   // Add to user-specific search history when searchTerm changes
+  // Only add manual searches, not system-generated ones
   useEffect(() => {
     if (searchTerm && searchTerm.trim()) {
-      addSearch(searchTerm.trim());
+      // Check if this might be a system-generated search by looking at URL patterns
+      // or if it's coming from occasion/holiday navigation
+      const isFromOccasion = location.state?.fromOccasion || false;
+      
+      // Only add to search history if it's not from an occasion/holiday click
+      if (!isFromOccasion) {
+        addSearch(searchTerm.trim(), false); // false = not system-generated
+      }
     }
-  }, [searchTerm, addSearch]);
+  }, [searchTerm, addSearch, location.state]);
 
   // Handler for clicking a recent search bubble - updates URL/search param
   const handleRecentSearchClick = (term: string) => {

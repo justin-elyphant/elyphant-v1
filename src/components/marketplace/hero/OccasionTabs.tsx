@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OccasionHorizontalList from "./OccasionHorizontalList";
 import { GiftOccasion } from "../utils/upcomingOccasions";
 import { GraduationCap, Gift, Heart, Beer, Glasses } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface OccasionTabsProps {
   friendOccasions: GiftOccasion[];
@@ -27,6 +28,8 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
   upcomingHolidays,
   onCardClick,
 }) => {
+  const navigate = useNavigate();
+  
   // Upcoming and sorted
   const sortedFriends = [...friendOccasions]
     .filter(e => e && e.date instanceof Date && e.date.getTime() > Date.now())
@@ -37,6 +40,14 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
     .filter(e => e && e.date instanceof Date && e.date.getTime() > Date.now())
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 4);
+
+  // Updated holiday click handler to navigate directly and mark as system-generated
+  const handleHolidayClick = (searchTerm: string) => {
+    // Navigate directly to marketplace with the search term, marking it as from occasion
+    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, { 
+      state: { fromOccasion: true }
+    });
+  };
 
   return (
     <Tabs defaultValue="friends" className="w-full">
@@ -74,7 +85,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
               title: `Shop ${event.name}`,
               subtitle: "Upcoming Holiday",
               highlightColor: "#F8BC58",
-              onClick: () => onCardClick(event.searchTerm)
+              onClick: () => handleHolidayClick(event.searchTerm)
             }))}
             emptyMessage="No upcoming holidays"
           />

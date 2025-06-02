@@ -109,7 +109,10 @@ const FeaturedOccasions = () => {
     } catch (error) {
       setFetchStatus(prev => ({...prev, [occasionId]: "error fetching"}));
     } finally {
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+      // Navigate with state to indicate this is from an occasion click
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, {
+        state: { fromOccasion: true }
+      });
       setLoadingOccasion(null);
       setFetchStatus(prev => ({...prev, [occasionId]: "navigation complete"}));
     }

@@ -8,6 +8,7 @@ import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import GiftCountdown from "./sections/GiftCountdown";
 import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
+import { format } from "date-fns";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const Hero = () => {
         style={{
           backgroundImage: `url('/lovable-uploads/cfac6e52-ce8b-4b93-bf57-9067980a99ce.png')`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center 30%',
+          backgroundPosition: 'center 20%', // Adjusted to show more of the family's faces
         }}
       >
         {/* Lighter Gradient Overlay for better visibility of faces */}
@@ -52,12 +53,17 @@ const Hero = () => {
         </div>
       )}
 
-      {/* Mobile Countdown Banner - Fixed positioning */}
+      {/* Mobile Countdown Banner - Fixed positioning with date */}
       {nextHoliday && (
         <div className="absolute top-6 left-0 right-0 z-20 md:hidden">
           <div className="mx-4">
             <ResponsiveContainer padding="minimal">
-              <GiftCountdown event={nextHoliday} />
+              <div className="text-center">
+                <GiftCountdown event={nextHoliday} />
+                <p className="text-white text-sm mt-2 font-medium bg-black/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block">
+                  {format(nextHoliday.date, "EEEE, MMMM d, yyyy")}
+                </p>
+              </div>
             </ResponsiveContainer>
           </div>
         </div>
@@ -65,7 +71,7 @@ const Hero = () => {
 
       {/* Hero Content */}
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
-        <ResponsiveContainer className={`${nextHoliday ? 'pt-32 md:pt-8' : 'pt-8'}`}>
+        <ResponsiveContainer className={`${nextHoliday ? 'pt-40 md:pt-8' : 'pt-8'}`}>
           <div className="max-w-2xl text-white">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg">
               Connecting Through Gifting

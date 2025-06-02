@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
 import StickyFiltersBar from "./StickyFiltersBar";
@@ -105,12 +106,12 @@ const MarketplaceWrapper = () => {
     console.log(`Product viewed: ${productId}`);
   };
 
-  // Collapse hero if user is searching or has selected a category or brand
-  const shouldCollapseHero = Boolean(searchTerm || categoryParam || brandParam);
+  // Check if user is actively shopping (searching or browsing categories/brands)
+  const isActivelyShopping = Boolean(searchTerm || categoryParam || brandParam);
 
   // Scroll to results section on search/category/brand change (UX improvement)
   useEffect(() => {
-    if (shouldCollapseHero && resultsRef.current) {
+    if (isActivelyShopping && resultsRef.current) {
       if (
         lastSearchRef.current !== `${searchTerm}|${categoryParam}|${brandParam}`
       ) {
@@ -120,7 +121,7 @@ const MarketplaceWrapper = () => {
         lastSearchRef.current = `${searchTerm}|${categoryParam}|${brandParam}`;
       }
     }
-  }, [searchTerm, categoryParam, brandParam, shouldCollapseHero]);
+  }, [searchTerm, categoryParam, brandParam, isActivelyShopping]);
 
   // Handler to clear search and stay on same page (removes "search" query param)
   const handleClearSearch = () => {
@@ -145,10 +146,12 @@ const MarketplaceWrapper = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Full-width hero banner */}
-      <FullWidthSection background="gradient">
-        <MarketplaceHero isCollapsed={Boolean(searchTerm || categoryParam || brandParam)} />
-      </FullWidthSection>
+      {/* Only show hero banner when NOT actively shopping */}
+      {!isActivelyShopping && (
+        <FullWidthSection background="gradient">
+          <MarketplaceHero isCollapsed={false} />
+        </FullWidthSection>
+      )}
 
       {/* Full-width sticky filters bar */}
       <FullWidthSection background="white" className="border-b border-gray-200 sticky top-0 z-40">

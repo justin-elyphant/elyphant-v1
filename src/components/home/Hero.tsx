@@ -37,7 +37,7 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/lovable-uploads/cfac6e52-ce8b-4b93-bf57-9067980a99ce.png')`,
+          backgroundImage: `url('/lovable-uploads/71b54185-9bbb-41d9-a722-df038ac4de04.png')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center 20%', // Adjusted to show more of the family's faces
         }}

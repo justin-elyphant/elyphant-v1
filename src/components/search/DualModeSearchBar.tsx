@@ -182,8 +182,6 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
     ? "Ask Nicole anything about gifts..." 
     : "Search for gifts or products";
 
-  const SearchIcon = isNicoleMode ? MessageCircle : Search;
-
   return (
     <div className={`relative w-full ${className}`}>
       {/* Search Bar with Integrated Toggle */}
@@ -191,36 +189,29 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
         <div className={`relative flex-1 flex items-center transition-all duration-300 ${
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2 nicole-mode-glow' : ''
         }`}>
-          {/* Enhanced Mode Toggle Inside Search Bar with Prominent Icons */}
-          <div className="absolute left-3 flex items-center gap-2 z-10">
-            <SearchIcon className={`h-4 w-4 transition-colors duration-200 ${
-              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-            }`} />
+          {/* Enhanced Mode Toggle with Prominent Robot Icon */}
+          <div className="absolute left-3 flex items-center gap-3 z-10">
+            {/* Prominent Robot Icon for AI Mode CTA */}
             <div className="relative">
-              <IOSSwitch
-                size={isMobile ? "md" : "sm"}
-                checked={isNicoleMode}
-                onCheckedChange={handleModeToggle}
-                className="touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
-              />
-              {/* Enhanced mode indicator icons inside the switch */}
-              <div className="absolute inset-0 flex items-center justify-between px-1.5 pointer-events-none">
-                <Search className={`transition-all duration-200 ${
-                  isMobile ? 'h-3.5 w-3.5' : 'h-3 w-3'
-                } ${
-                  !isNicoleMode 
-                    ? 'opacity-100 text-white drop-shadow-sm' 
-                    : 'opacity-30 text-gray-500'
-                }`} />
-                <Bot className={`transition-all duration-200 ${
-                  isMobile ? 'h-3.5 w-3.5' : 'h-3 w-3'
-                } ${
-                  isNicoleMode 
-                    ? 'opacity-100 text-white drop-shadow-sm animate-pulse' 
-                    : 'opacity-30 text-gray-500'
-                }`} />
-              </div>
+              <Bot className={`transition-all duration-300 ${
+                isMobile ? 'h-6 w-6' : 'h-5 w-5'
+              } ${
+                isNicoleMode 
+                  ? 'text-purple-600 animate-pulse drop-shadow-md' 
+                  : 'text-gray-400 hover:text-purple-500'
+              }`} />
+              {isNicoleMode && (
+                <div className="absolute -top-1 -right-1 h-2 w-2 bg-purple-500 rounded-full animate-ping" />
+              )}
             </div>
+            
+            <IOSSwitch
+              size={isMobile ? "md" : "sm"}
+              checked={isNicoleMode}
+              onCheckedChange={handleModeToggle}
+              className="touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+            />
+            
             {isNicoleMode && (
               <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
             )}
@@ -233,7 +224,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
             className={`transition-all duration-300 rounded-full border-gray-300 ${
               isMobile 
                 ? "pl-20 pr-28 text-base py-3 h-14 leading-relaxed" 
-                : "pl-24 pr-32 h-12"
+                : "pl-20 pr-32 h-12"
             } ${
               isNicoleMode 
                 ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 

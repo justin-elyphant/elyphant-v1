@@ -47,23 +47,23 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
     <div className={`${isMobile ? 'mb-6 text-center' : 'text-left'} flex flex-col items-center md:items-start`}>
       {targetEvent ? (
         <>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 leading-tight">
-            <span className="inline-block bg-gradient-to-br from-purple-600 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 leading-tight text-shadow-lg">
+            <span className="inline-block bg-gradient-to-br from-purple-300 via-purple-200 to-indigo-300 bg-clip-text text-transparent animate-fade-in">
               {targetEvent.name}
             </span>
-            <span className="ml-2 text-black dark:text-white">
+            <span className="ml-2 text-white">
               {" is coming!"}
             </span>
           </h1>
-          <p className="text-lg text-gray-600 mb-4 font-medium">
+          <p className="text-lg text-white/90 mb-4 font-medium text-shadow-md">
             {format(targetEvent.date, "EEEE, MMMM d, yyyy")}
           </p>
           <CountdownTimer targetDate={targetEvent.date} eventName={targetEvent.name} />
         </>
       ) : (
         <>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 leading-tight">
-            <span className="inline-block bg-gradient-to-br from-purple-600 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 leading-tight text-shadow-lg">
+            <span className="inline-block bg-gradient-to-br from-purple-300 via-purple-200 to-indigo-300 bg-clip-text text-transparent animate-fade-in">
               Find the Perfect Gift
             </span>
           </h1>
@@ -71,7 +71,7 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
       )}
       
       <div className="flex space-x-4 justify-center md:justify-start">
-        <Button className="bg-white text-purple-700 hover:bg-gray-100" onClick={handleShopNowClick}>
+        <Button className="bg-white text-purple-700 hover:bg-gray-100 shadow-lg" onClick={handleShopNowClick}>
           <Gift className="mr-2 h-4 w-4" />
           {getShopNowText()}
         </Button>

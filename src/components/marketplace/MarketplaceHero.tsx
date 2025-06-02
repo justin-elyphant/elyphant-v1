@@ -11,6 +11,7 @@ import HeroContent from "@/components/marketplace/hero/HeroContent";
 import { Badge } from "@/components/ui/badge";
 import { Gift, Heart, Users } from "lucide-react";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+import { format } from "date-fns";
 
 interface MarketplaceHeroProps {
   isCollapsed?: boolean;
@@ -29,7 +30,22 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
   if (isCollapsed) {
     return (
       <ResponsiveContainer className="py-3">
-        {nextHoliday && <GiftCountdown event={nextHoliday} />}
+        {targetEvent && (
+          <div className="mb-4">
+            <GiftCountdown event={targetEvent} />
+            <p className="text-center text-sm text-gray-600 mt-2">
+              {format(targetEvent.date, "EEEE, MMMM d, yyyy")}
+            </p>
+          </div>
+        )}
+        {nextHoliday && !targetEvent && (
+          <div className="mb-4">
+            <GiftCountdown event={nextHoliday} />
+            <p className="text-center text-sm text-gray-600 mt-2">
+              {format(nextHoliday.date, "EEEE, MMMM d, yyyy")}
+            </p>
+          </div>
+        )}
         {!user && (
           <div className="mt-2 text-center">
             <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-200">
@@ -77,7 +93,14 @@ const MarketplaceHero = ({ isCollapsed = false }: MarketplaceHeroProps) => {
         Browse thousands of thoughtful gifts for every occasion, interest, and relationship
       </p>
       
-      {nextHoliday && <GiftCountdown event={nextHoliday} />}
+      {nextHoliday && (
+        <div className="mb-4">
+          <GiftCountdown event={nextHoliday} />
+          <p className="text-center text-sm text-gray-600 mt-2">
+            {format(nextHoliday.date, "EEEE, MMMM d, yyyy")}
+          </p>
+        </div>
+      )}
       
       {!user && (
         <div className="mt-6 p-4 bg-white/80 rounded-lg shadow-sm max-w-md mx-auto">

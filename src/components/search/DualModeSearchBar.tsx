@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -191,7 +192,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
         <div className={`relative flex-1 flex items-center transition-all duration-300 ${
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
         }`}>
-          {/* Mode Toggle Inside Search Bar with Icons */}
+          {/* Mode Toggle Inside Search Bar with Search Icon */}
           <div className="absolute left-3 flex items-center gap-2 z-10">
             <SearchIcon className={`h-4 w-4 transition-colors duration-200 ${
               isNicoleMode ? 'text-purple-500' : 'text-gray-400'
@@ -208,11 +209,11 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
                 <Search className={`h-2.5 w-2.5 transition-opacity duration-200 ${
                   !isNicoleMode ? 'opacity-100 text-white' : 'opacity-40 text-gray-500'
                 }`} />
-                <Bot className={`h-3 w-3 transition-opacity duration-200 ${
-                  isNicoleMode ? 'opacity-100 text-purple-600' : 'opacity-40 text-gray-500'
-                }`} />
               </div>
             </div>
+            <Bot className={`h-4 w-4 transition-colors duration-200 ${
+              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
+            }`} />
             {isNicoleMode && (
               <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
             )}
@@ -222,7 +223,7 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
             ref={inputRef}
             type="search"
             placeholder={placeholderText}
-            className={`pl-24 pr-32 transition-all duration-300 ${
+            className={`pl-32 pr-32 transition-all duration-300 ${
               mobile ? "text-base py-3 h-12" : ""
             } rounded-full border-gray-300 ${
               isNicoleMode 

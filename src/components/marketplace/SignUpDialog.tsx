@@ -15,7 +15,7 @@ const SignUpDialog = ({ open, onOpenChange }: SignUpDialogProps) => {
 
   const handleSignUp = () => {
     onOpenChange(false);
-    navigate("/sign-up");
+    navigate("/signup");
   };
 
   return (

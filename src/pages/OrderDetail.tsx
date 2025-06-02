@@ -37,7 +37,7 @@ const OrderDetail = () => {
   // Redirect to sign-up if not logged in
   useEffect(() => {
     if (!userData) {
-      navigate("/sign-up");
+      navigate("/signup");
     }
   }, [userData, navigate]);
 

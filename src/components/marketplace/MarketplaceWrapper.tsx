@@ -123,10 +123,14 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, brandParam, isActivelyShopping]);
 
-  // Handler to clear search and stay on same page (removes "search" query param)
-  const handleClearSearch = () => {
-    const newParams = new URLSearchParams(searchParams);
+  // Handler to clear all filters and return to general marketplace
+  const handleClearAll = () => {
+    const newParams = new URLSearchParams();
+    // Remove all filter params
     newParams.delete("search");
+    newParams.delete("category");
+    newParams.delete("brand");
+    newParams.delete("pageTitle");
     setSearchParams(newParams, { replace: true });
   };
 
@@ -152,6 +156,14 @@ const MarketplaceWrapper = () => {
     setSearchParams(newParams, { replace: true });
   };
 
+  // Determine what to show in the results chip
+  const getResultsDisplayText = () => {
+    if (searchTerm) return searchTerm;
+    if (categoryParam) return categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1);
+    if (brandParam) return brandParam;
+    return "";
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Only show hero banner when NOT actively shopping */}
@@ -175,10 +187,10 @@ const MarketplaceWrapper = () => {
       </FullWidthSection>
 
       {/* Results chip */}
-      {(searchTerm || categoryParam || brandParam) && (
+      {isActivelyShopping && (
         <ResultsChip
-          query={searchTerm || categoryParam || brandParam || ""}
-          onClear={searchTerm ? handleClearSearch : undefined}
+          query={getResultsDisplayText()}
+          onClear={handleClearAll}
         />
       )}
 

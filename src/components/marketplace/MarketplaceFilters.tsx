@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, Grid3X3, List, BookmarkPlus } from "lucide-react";
+import { SlidersHorizontal, Grid3X3, List, BookmarkPlus, Filter } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -62,8 +62,18 @@ const MarketplaceFilters = ({
           </Button>
         </div>
 
-        {/* Filter toggle button - Desktop Only */}
-        {!isMobile && (
+        {/* Filter toggle button - Mobile: Next to view toggle, Desktop: Separate */}
+        {isMobile ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 h-8"
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </Button>
+        ) : (
           <Button
             variant="default"
             size="sm"
@@ -75,8 +85,8 @@ const MarketplaceFilters = ({
           </Button>
         )}
 
-        {/* Saved filters toggle */}
-        {savedFiltersCount > 0 && (
+        {/* Saved filters toggle - Desktop only */}
+        {!isMobile && savedFiltersCount > 0 && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

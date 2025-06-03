@@ -154,22 +154,20 @@ const MarketplaceContent = ({
         
         {/* Mobile Filters Drawer */}
         {isMobile && (
-          <div className="px-4 mb-4">
-            <MobileFiltersDrawer
-              activeFilters={{
-                priceRange: filters.priceRange,
-                categories: filters.selectedCategories,
-                rating: filters.rating,
-                freeShipping: convertToBoolean(filters.freeShipping),
-                favoritesOnly: convertToBoolean(filters.favoritesOnly),
-                sortBy: filters.sortBy
-              }}
-              onFilterChange={handleLegacyFilterChange}
-              categories={filterOptions.categories}
-              showFilters={showFilters}
-              setShowFilters={setShowFilters}
-            />
-          </div>
+          <MobileFiltersDrawer
+            activeFilters={{
+              priceRange: filters.priceRange,
+              categories: filters.selectedCategories,
+              rating: filters.rating,
+              freeShipping: convertToBoolean(filters.freeShipping),
+              favoritesOnly: convertToBoolean(filters.favoritesOnly),
+              sortBy: filters.sortBy
+            }}
+            onFilterChange={handleLegacyFilterChange}
+            categories={filterOptions.categories}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+          />
         )}
         
         {/* Main Product Grid */}

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
@@ -9,8 +8,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 
 const PopularBrandsSection = () => {
@@ -103,8 +100,6 @@ const PopularBrandsSection = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="left-2 md:-left-12" />
-            <CarouselNext className="right-2 md:-right-12" />
           </Carousel>
         </div>
       </div>

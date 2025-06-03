@@ -5,6 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 
 interface Collection {
   id: number;
@@ -37,7 +42,8 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Desktop Grid View */}
+        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {collections.map((collection) => (
             <div
               key={collection.id}
@@ -65,6 +71,48 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Mobile Carousel View */}
+        <div className="md:hidden">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2">
+              {collections.map((collection) => (
+                <CarouselItem key={collection.id} className="pl-2 basis-4/5 sm:basis-1/2">
+                  <div
+                    className="group relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    onClick={() => handleCollectionClick(collection.searchTerm)}
+                  >
+                    <div className="aspect-square overflow-hidden">
+                      <img
+                        src={collection.image}
+                        alt={collection.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                      <h3 className="text-lg font-bold mb-2">{collection.name}</h3>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                      >
+                        {collection.callToAction}
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </div>
       </ResponsiveContainer>
     </FullWidthSection>

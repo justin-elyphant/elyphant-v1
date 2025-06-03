@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -9,8 +8,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 
 const occasions = [
@@ -138,8 +135,6 @@ const FeaturedOccasions: React.FC = () => {
                 );
               })}
             </CarouselContent>
-            <CarouselPrevious className="left-2 md:-left-12" />
-            <CarouselNext className="right-2 md:-right-12" />
           </Carousel>
         </div>
       </ResponsiveContainer>

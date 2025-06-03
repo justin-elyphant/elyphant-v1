@@ -116,8 +116,8 @@ const MarketplaceContent = ({
   const showRecommendations = filteredProducts.length === 0 && recommendations.length > 0;
   const displayProducts = showRecommendations ? recommendations : filteredProducts;
 
-  // Helper function to ensure boolean conversion
-  const ensureBoolean = (value: any): boolean => {
+  // Helper function to ensure boolean conversion for mobile filters
+  const convertToBoolean = (value: any): boolean => {
     if (typeof value === 'string') {
       return value === 'true';
     }
@@ -170,8 +170,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: ensureBoolean(filters.freeShipping),
-                favoritesOnly: ensureBoolean(filters.favoritesOnly),
+                freeShipping: convertToBoolean(filters.freeShipping),
+                favoritesOnly: convertToBoolean(filters.favoritesOnly),
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}
@@ -210,4 +210,3 @@ const MarketplaceContent = ({
 };
 
 export default MarketplaceContent;
-

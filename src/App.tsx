@@ -1,101 +1,32 @@
-
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/contexts/auth";
-import { CartProvider } from "@/contexts/CartContext";
-import { ProfileProvider } from "@/contexts/profile/ProfileContext";
-import { Toaster } from "sonner";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import Index from "./pages/Index";
+import Marketplace from "./pages/Marketplace";
+import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
-// Import pages
-import Home from "@/pages/Home";
-import Dashboard from "@/pages/Dashboard";
-import Marketplace from "@/pages/Marketplace";
-import Settings from "@/pages/Settings";
-import SignUp from "@/pages/SignUp";
-import Connections from "@/pages/Connections";
-import SharedWishlist from "@/pages/SharedWishlist";
-import Returns from "@/pages/Returns";
-import Orders from "@/pages/Orders";
-import OrderDetail from "@/pages/OrderDetail";
-import GiftScheduling from "@/pages/GiftScheduling";
-import Cart from "@/pages/Cart";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import ScrollToTop from "@/components/layout/ScrollToTop";
+const queryClient = new QueryClient();
 
-// Import styles
-import "./App.css";
-import "./styles/ios-optimizations.css";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <ProfileProvider>
-            <CartProvider>
-              <ScrollToTop />
-              <div className="min-h-screen bg-background font-sans antialiased">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/shared-wishlist/:shareToken" element={<SharedWishlist />} />
-                  
-                  {/* Protected routes */}
-                  <Route path="/dashboard" element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/connections" element={
-                    <ProtectedRoute>
-                      <Connections />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/settings" element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/returns" element={
-                    <ProtectedRoute>
-                      <Returns />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/orders" element={
-                    <ProtectedRoute>
-                      <Orders />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/orders/:orderId" element={
-                    <ProtectedRoute>
-                      <OrderDetail />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/gift-scheduling" element={
-                    <ProtectedRoute>
-                      <GiftScheduling />
-                    </ProtectedRoute>
-                  } />
-                </Routes>
-              </div>
-              <Toaster position="top-center" />
-            </CartProvider>
-          </ProfileProvider>
-        </AuthProvider>
-      </Router>
-    </QueryClientProvider>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            {/* Add other routes as needed */}
+          </Routes>
+        </BrowserRouter>
+        <SearchOptimizationMonitor />
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;

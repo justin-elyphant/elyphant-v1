@@ -2,6 +2,7 @@
 import { searchZincProducts, ZincSearchResult } from "@/services/api/zincApiService";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
+import { convertMockToZincProduct } from "@/components/marketplace/zinc/utils/productConverter";
 
 export interface SearchOptions {
   maxResults?: number;
@@ -70,9 +71,12 @@ export const searchProducts = async (
     console.log('Using mock data for search');
     const mockProducts = searchMockProducts(query, maxResults);
     
+    // Convert mock products to ZincProduct format
+    const products: ZincProduct[] = mockProducts.map(convertMockToZincProduct);
+    
     return {
-      products: mockProducts,
-      total: mockProducts.length,
+      products,
+      total: products.length,
       source: useRealAPI ? 'fallback' : 'mock',
       query
     };

@@ -3,7 +3,9 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NicoleChatBubble from "./NicoleChatBubble";
+import { format } from "date-fns";
 
 interface NicoleGifteeFlowProps {
   conversationHistory: any[];
@@ -37,31 +39,64 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
     }
   };
 
-  const handleWishlistPrefAdd = (pref: string) => {
-    if (pref && !collectedData.wishlist_preferences.includes(pref)) {
-      setCollectedData(prev => ({
-        ...prev,
-        wishlist_preferences: [...prev.wishlist_preferences, pref]
-      }));
+  const handleBirthdayChange = (month: string, day: string) => {
+    if (month && day) {
+      const birthday = `${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      setCollectedData(prev => ({ ...prev, birthday }));
     }
   };
 
   const handleComplete = () => {
     onAddMessage({
       role: 'assistant',
-      content: "Wonderful! Your wishlist setup is ready. Now let's connect you with friends and family so they know what you'd love!"
+      content: "Wonderful! Your wishlist profile is ready to go. I've set up everything so friends and family can easily find gifts you'll love. Now let's connect you with others so they know about your preferences and upcoming occasions!"
     });
 
-    // Store the collected data in localStorage for profile setup
-    localStorage.setItem("nicoleCollectedData", JSON.stringify(collectedData));
+    // Standardize the data structure for Profile Setup
+    const standardizedData = {
+      name: collectedData.name,
+      birthday: collectedData.birthday, // Format: MM-DD
+      interests: collectedData.interests,
+      userType: 'giftee',
+      wishlist_preferences: collectedData.wishlist_preferences,
+      profile_data: {
+        name: collectedData.name,
+        dob: collectedData.birthday,
+        gift_preferences: collectedData.interests.map(interest => ({
+          category: interest,
+          importance: 'medium'
+        }))
+      }
+    };
+
+    console.log("[Nicole Giftee] Collecting standardized data:", standardizedData);
+    localStorage.setItem("nicoleCollectedData", JSON.stringify(standardizedData));
     
     setTimeout(() => {
       onComplete({ 
         gifteeSetup: true,
-        userData: collectedData
+        userData: standardizedData
       });
     }, 1500);
   };
+
+  // Generate months
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(2000, i, 1);
+    return {
+      value: String(i + 1).padStart(2, '0'),
+      label: format(date, 'MMMM')
+    };
+  });
+
+  // Generate days
+  const days = Array.from({ length: 31 }, (_, i) => ({
+    value: String(i + 1).padStart(2, '0'),
+    label: String(i + 1)
+  }));
+
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedDay, setSelectedDay] = useState("");
 
   const renderStep = () => {
     switch (step) {
@@ -71,7 +106,7 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
             <NicoleChatBubble
               message={{
                 role: 'assistant',
-                content: "Perfect! Creating wishlists is such a thoughtful way to help others know what you'd truly appreciate. Let me get to know you better!"
+                content: "Excellent choice! Creating wishlists is such a thoughtful way to help others know what you'd truly appreciate. Let me get to know you better so I can help you build the perfect wishlist!"
               }}
             />
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -93,18 +128,49 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
             <NicoleChatBubble
               message={{
                 role: 'assistant',
-                content: `Nice to meet you, ${collectedData.name}! When's your birthday? This helps others know when special occasions are coming up.`
+                content: `Nice to meet you, ${collectedData.name}! When's your birthday? This helps others know when special occasions are coming up. I just need the month and day - no year required!`
               }}
             />
             <div className="bg-gray-50 p-4 rounded-lg">
-              <Label htmlFor="birthday">Your Birthday</Label>
-              <Input
-                id="birthday"
-                type="date"
-                value={collectedData.birthday}
-                onChange={(e) => setCollectedData(prev => ({ ...prev, birthday: e.target.value }))}
-                className="mt-2"
-              />
+              <Label>Your Birthday</Label>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <Label htmlFor="month">Month</Label>
+                  <Select value={selectedMonth} onValueChange={(value) => {
+                    setSelectedMonth(value);
+                    handleBirthdayChange(value, selectedDay);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>
+                          {month.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="day">Day</Label>
+                  <Select value={selectedDay} onValueChange={(value) => {
+                    setSelectedDay(value);
+                    handleBirthdayChange(selectedMonth, value);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {days.map((day) => (
+                        <SelectItem key={day.value} value={day.value}>
+                          {day.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
         );

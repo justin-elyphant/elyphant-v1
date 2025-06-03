@@ -34,7 +34,7 @@ export const useProfileData = () => {
   });
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const initializeProfileData = async () => {
       if (!user) return;
       
       try {
@@ -46,70 +46,98 @@ export const useProfileData = () => {
         if (nicoleDataStr) {
           try {
             nicoleData = JSON.parse(nicoleDataStr);
-            console.log("Found Nicole collected data:", nicoleData);
+            console.log("[Profile Setup] Found Nicole collected data:", nicoleData);
           } catch (e) {
-            console.error("Error parsing Nicole data:", e);
+            console.error("[Profile Setup] Error parsing Nicole data:", e);
           }
         }
         
-        const { data, error } = await supabase
+        // Try to load existing profile
+        const { data: existingProfile, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
           
         if (error && error.code !== 'PGRST116') {
-          console.error("Error loading profile:", error);
-          return;
+          console.error("[Profile Setup] Error loading profile:", error);
         }
         
-        // Ensure username is extracted, with fallback
-        const username = data?.username || 
-          (data?.email ? data.email.split('@')[0] : '') ||
+        // Generate username if not available
+        const username = existingProfile?.username || 
+          (user.email ? user.email.split('@')[0] : '') ||
           `user_${Date.now().toString(36)}`;
         
-        // Merge Nicole data with existing profile data
-        const mergedData = {
-          name: nicoleData?.name || data?.name || "",
+        // Initialize base profile data
+        let mergedData = {
+          name: existingProfile?.name || "",
           username: username,
-          bio: data?.bio || "",
-          email: data?.email || user.email || '',
-          profile_image: data?.profile_image || "",
-          dob: nicoleData?.birthday || data?.dob || "",
-          shipping_address: data?.shipping_address || {
+          bio: existingProfile?.bio || "",
+          email: existingProfile?.email || user.email || '',
+          profile_image: existingProfile?.profile_image || "",
+          dob: existingProfile?.dob || "",
+          shipping_address: existingProfile?.shipping_address || {
             address_line1: "",
             city: "",
             state: "",
             zip_code: "",
             country: ""
           },
-          gift_preferences: nicoleData?.interests ? 
-            nicoleData.interests.map((interest: string) => ({ category: interest, importance: "medium" })) :
-            data?.gift_preferences || [],
-          important_dates: data?.important_dates || [],
-          data_sharing_settings: data?.data_sharing_settings || getDefaultDataSharingSettings()
+          gift_preferences: existingProfile?.gift_preferences || [],
+          important_dates: existingProfile?.important_dates || [],
+          data_sharing_settings: existingProfile?.data_sharing_settings || getDefaultDataSharingSettings()
         };
 
-        console.log("Setting profile data with Nicole integration:", mergedData);
+        // If Nicole has data, use it to pre-populate empty fields
+        if (nicoleData) {
+          console.log("[Profile Setup] Pre-populating with Nicole data:", nicoleData);
+          
+          // Use Nicole's name if profile name is empty
+          if (!mergedData.name && nicoleData.name) {
+            mergedData.name = nicoleData.name;
+          }
+          
+          // Use Nicole's birthday if profile dob is empty
+          if (!mergedData.dob && nicoleData.birthday) {
+            mergedData.dob = nicoleData.birthday;
+          }
+          
+          // Use Nicole's interests if profile has no gift preferences
+          if ((!mergedData.gift_preferences || mergedData.gift_preferences.length === 0) && 
+              nicoleData.interests && Array.isArray(nicoleData.interests)) {
+            mergedData.gift_preferences = nicoleData.interests.map((interest: string) => ({ 
+              category: interest, 
+              importance: "medium" 
+            }));
+          }
+
+          // Generate a bio if none exists
+          if (!mergedData.bio && nicoleData.name) {
+            mergedData.bio = `Hi, I'm ${nicoleData.name}! I'm here to make gift giving and receiving easier.`;
+          }
+        }
+
+        console.log("[Profile Setup] Setting merged profile data:", mergedData);
         setProfileData(mergedData);
         
-        // Clear Nicole data after using it
+        // Clear Nicole data after using it to prevent re-use
         if (nicoleData) {
           localStorage.removeItem("nicoleCollectedData");
+          console.log("[Profile Setup] Cleared Nicole data after successful merge");
         }
       } catch (error) {
-        console.error("Error fetching profile data:", error);
+        console.error("[Profile Setup] Error initializing profile data:", error);
         toast.error("Failed to load profile data");
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchUserProfile();
+    initializeProfileData();
   }, [user]);
 
   const updateProfileData = (field: keyof ProfileData, value: any) => {
-    console.log(`Updating profile field "${field}" with value:`, value);
+    console.log(`[Profile Setup] Updating profile field "${field}" with value:`, value);
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
 

@@ -3,7 +3,9 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NicoleChatBubble from "./NicoleChatBubble";
+import { format } from "date-fns";
 
 interface NicoleGiftorFlowProps {
   conversationHistory: any[];
@@ -37,22 +39,64 @@ const NicoleGiftorFlow: React.FC<NicoleGiftorFlowProps> = ({
     }
   };
 
+  const handleBirthdayChange = (month: string, day: string) => {
+    if (month && day) {
+      const birthday = `${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      setCollectedData(prev => ({ ...prev, birthday }));
+    }
+  };
+
   const handleComplete = () => {
     onAddMessage({
       role: 'assistant',
-      content: "Perfect! I've got everything I need to help you find amazing gifts. Let's get you connected with others!"
+      content: "Perfect! I've gathered everything I need to help you become an amazing gift giver. Your preferences will help me suggest great gifts and connect you with friends and family who'll appreciate your thoughtful choices. Let's get you connected with others!"
     });
 
-    // Store the collected data in localStorage for profile setup
-    localStorage.setItem("nicoleCollectedData", JSON.stringify(collectedData));
+    // Standardize the data structure for Profile Setup
+    const standardizedData = {
+      name: collectedData.name,
+      birthday: collectedData.birthday, // Format: MM-DD
+      interests: collectedData.interests,
+      userType: 'giftor',
+      budget_preference: collectedData.budget_preference,
+      profile_data: {
+        name: collectedData.name,
+        dob: collectedData.birthday,
+        gift_preferences: collectedData.interests.map(interest => ({
+          category: interest,
+          importance: 'medium'
+        }))
+      }
+    };
+
+    console.log("[Nicole Giftor] Collecting standardized data:", standardizedData);
+    localStorage.setItem("nicoleCollectedData", JSON.stringify(standardizedData));
     
     setTimeout(() => {
       onComplete({ 
         giftorSetup: true,
-        userData: collectedData
+        userData: standardizedData
       });
     }, 1500);
   };
+
+  // Generate months
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(2000, i, 1);
+    return {
+      value: String(i + 1).padStart(2, '0'),
+      label: format(date, 'MMMM')
+    };
+  });
+
+  // Generate days
+  const days = Array.from({ length: 31 }, (_, i) => ({
+    value: String(i + 1).padStart(2, '0'),
+    label: String(i + 1)
+  }));
+
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedDay, setSelectedDay] = useState("");
 
   const renderStep = () => {
     switch (step) {
@@ -84,18 +128,49 @@ const NicoleGiftorFlow: React.FC<NicoleGiftorFlowProps> = ({
             <NicoleChatBubble
               message={{
                 role: 'assistant',
-                content: `Nice to meet you, ${collectedData.name}! When's your birthday? This helps me understand seasonal preferences and gift timing.`
+                content: `Nice to meet you, ${collectedData.name}! When's your birthday? This helps me understand seasonal preferences and gift timing. I just need the month and day - no year required!`
               }}
             />
             <div className="bg-gray-50 p-4 rounded-lg">
-              <Label htmlFor="birthday">Your Birthday</Label>
-              <Input
-                id="birthday"
-                type="date"
-                value={collectedData.birthday}
-                onChange={(e) => setCollectedData(prev => ({ ...prev, birthday: e.target.value }))}
-                className="mt-2"
-              />
+              <Label>Your Birthday</Label>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <Label htmlFor="month">Month</Label>
+                  <Select value={selectedMonth} onValueChange={(value) => {
+                    setSelectedMonth(value);
+                    handleBirthdayChange(value, selectedDay);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>
+                          {month.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="day">Day</Label>
+                  <Select value={selectedDay} onValueChange={(value) => {
+                    setSelectedDay(value);
+                    handleBirthdayChange(selectedMonth, value);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {days.map((day) => (
+                        <SelectItem key={day.value} value={day.value}>
+                          {day.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
         );

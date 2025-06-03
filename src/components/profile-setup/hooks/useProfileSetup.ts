@@ -29,7 +29,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const isCurrentStepValid = useCallback(() => {
     switch (activeStep) {
       case 0: // Basic Info
-        return profileData.name && profileData.username;
+        return profileData.name && profileData.name.trim().length > 0;
       case 1: // Birthday
         return true; // Optional
       case 2: // Address
@@ -65,63 +65,90 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
     try {
       setIsLoading(true);
-      console.log("Saving profile data:", profileData);
+      console.log("[Profile Setup] Starting profile save with data:", profileData);
 
-      // Format the data for Supabase
+      // Ensure we have a username
+      const username = profileData.username || 
+        (user.email ? user.email.split('@')[0] : '') ||
+        `user_${Date.now().toString(36)}`;
+
+      // Format the data for Supabase with proper structure
       const updateData = {
-        name: profileData.name,
-        username: profileData.username,
-        email: profileData.email,
-        bio: profileData.bio || `Hi, I'm ${profileData.name}`,
-        profile_image: profileData.profile_image,
+        id: user.id, // Ensure ID is included for RLS
+        name: profileData.name || '',
+        username: username,
+        email: profileData.email || user.email || '',
+        bio: profileData.bio || `Hi, I'm ${profileData.name || 'there'}!`,
+        profile_image: profileData.profile_image || null,
         dob: profileData.dob || null,
-        shipping_address: profileData.shipping_address,
-        gift_preferences: profileData.gift_preferences,
-        important_dates: profileData.important_dates,
-        data_sharing_settings: profileData.data_sharing_settings,
+        shipping_address: profileData.shipping_address || {
+          address_line1: "",
+          city: "",
+          state: "",
+          zip_code: "",
+          country: ""
+        },
+        gift_preferences: profileData.gift_preferences || [],
+        important_dates: profileData.important_dates || [],
+        data_sharing_settings: profileData.data_sharing_settings || {
+          dob: "friends",
+          shipping_address: "private",
+          gift_preferences: "public",
+          email: "private"
+        },
         onboarding_completed: true,
         updated_at: new Date().toISOString()
       };
 
-      console.log("Formatted data for save:", updateData);
+      console.log("[Profile Setup] Formatted data for save:", updateData);
 
+      // Use upsert to handle both insert and update cases
       const { data, error } = await supabase
         .from('profiles')
         .upsert(updateData, { 
           onConflict: 'id',
           ignoreDuplicates: false 
         })
-        .eq('id', user.id)
         .select();
 
       if (error) {
-        console.error("Error saving profile:", error);
-        toast.error("Failed to save profile");
+        console.error("[Profile Setup] Error saving profile:", error);
+        
+        // Try to provide more specific error message
+        if (error.code === '42501' || error.message.includes('policy')) {
+          toast.error("Permission error. Please try logging out and back in.");
+        } else if (error.code === '23505') {
+          toast.error("Username already exists. Please try a different one.");
+        } else {
+          toast.error(`Failed to save profile: ${error.message}`);
+        }
         return;
       }
 
-      console.log("Profile saved successfully:", data);
+      console.log("[Profile Setup] Profile saved successfully:", data);
       toast.success("Profile completed successfully!");
 
       // Clear any remaining onboarding flags
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileSetupLoading");
       localStorage.removeItem("onboardingComplete");
+      localStorage.removeItem("nicoleCollectedData"); // Ensure this is cleaned up
       localStorage.setItem("profileCompleted", "true");
 
       onComplete();
     } catch (error) {
-      console.error("Error completing profile setup:", error);
-      toast.error("Failed to complete profile setup");
+      console.error("[Profile Setup] Error completing profile setup:", error);
+      toast.error("Failed to complete profile setup. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }, [profileData, user, onComplete]);
 
   const handleSkip = useCallback(() => {
-    console.log("Profile setup skipped");
+    console.log("[Profile Setup] Profile setup skipped");
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("profileSetupLoading");
+    localStorage.removeItem("nicoleCollectedData"); // Clean this up too
     localStorage.setItem("profileSkipped", "true");
     
     if (onSkip) {

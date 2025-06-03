@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Gift, List, Sparkles, Send } from "lucide-react";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import NicoleChatBubble from "./NicoleChatBubble";
@@ -24,6 +25,7 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const quickResponses = [
     { text: "I want to buy a gift for someone", intent: "giftor", icon: Gift },
@@ -32,16 +34,24 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
   ];
 
   useEffect(() => {
-    // Auto-focus input on mobile after a brief delay
     setTimeout(() => {
       inputRef.current?.focus();
     }, 500);
   }, []);
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [conversationHistory, isAnalyzing]);
+
   const analyzeUserIntent = (message: string): "giftor" | "giftee" | "explorer" | null => {
     const lowerMessage = message.toLowerCase();
     
-    // Giftor keywords
     if (lowerMessage.includes("buy") || lowerMessage.includes("gift") || 
         lowerMessage.includes("present") || lowerMessage.includes("shopping") ||
         lowerMessage.includes("someone else") || lowerMessage.includes("friend") ||
@@ -49,14 +59,12 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
       return "giftor";
     }
     
-    // Giftee keywords
     if (lowerMessage.includes("wishlist") || lowerMessage.includes("want") ||
         lowerMessage.includes("receive") || lowerMessage.includes("list") ||
         lowerMessage.includes("myself") || lowerMessage.includes("my birthday")) {
       return "giftee";
     }
     
-    // Explorer keywords
     if (lowerMessage.includes("explore") || lowerMessage.includes("looking around") ||
         lowerMessage.includes("browsing") || lowerMessage.includes("checking out") ||
         lowerMessage.includes("new here")) {
@@ -71,7 +79,6 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
     
     triggerHapticFeedback('light');
     
-    // Add user message
     onAddMessage({
       role: 'user',
       content: message
@@ -81,10 +88,8 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
     setShowSuggestions(false);
     setIsAnalyzing(true);
     
-    // Analyze intent
     const detectedIntent = analyzeUserIntent(message);
     
-    // Simulate Nicole thinking
     setTimeout(() => {
       if (detectedIntent) {
         let nicoleResponse = "";
@@ -112,13 +117,11 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
         
         setIsAnalyzing(false);
         
-        // Trigger intent discovery after brief delay
         setTimeout(() => {
           onIntentDiscovered(detectedIntent, intentData);
         }, 1000);
         
       } else {
-        // Ask for clarification
         onAddMessage({
           role: 'assistant',
           content: "I'd love to help! Could you tell me a bit more? Are you looking to buy a gift for someone, create a wishlist for yourself, or just exploring what Elyphant offers?"
@@ -141,25 +144,29 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
 
   return (
     <div className="flex flex-col h-full">
-      {/* Chat History */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 ios-scroll">
-        {conversationHistory.map((message) => (
-          <NicoleChatBubble
-            key={message.id}
-            message={message}
-            isLoading={isAnalyzing && message === conversationHistory[conversationHistory.length - 1]}
-          />
-        ))}
-        
-        {isAnalyzing && (
-          <NicoleChatBubble
-            message={{
-              role: 'assistant',
-              content: 'Let me think about that...'
-            }}
-            isLoading={true}
-          />
-        )}
+      {/* Chat History with Proper Scrolling */}
+      <div className="flex-1 min-h-0">
+        <ScrollArea ref={scrollRef} className="h-full">
+          <div className="p-4 space-y-4">
+            {conversationHistory.map((message) => (
+              <NicoleChatBubble
+                key={message.id}
+                message={message}
+                isLoading={isAnalyzing && message === conversationHistory[conversationHistory.length - 1]}
+              />
+            ))}
+            
+            {isAnalyzing && (
+              <NicoleChatBubble
+                message={{
+                  role: 'assistant',
+                  content: 'Let me think about that...'
+                }}
+                isLoading={true}
+              />
+            )}
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Quick Response Suggestions */}
@@ -172,7 +179,7 @@ const ConversationalIntentDiscovery: React.FC<ConversationalIntentDiscoveryProps
       )}
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-100 safe-area-bottom">
+      <div className="p-4 border-t border-gray-100 safe-area-bottom bg-white">
         <form onSubmit={handleSubmit} className="flex gap-3">
           <Input
             ref={inputRef}

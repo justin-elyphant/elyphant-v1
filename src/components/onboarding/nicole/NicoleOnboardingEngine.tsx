@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import ConversationalIntentDiscovery from "./ConversationalIntentDiscovery";
 import NicoleGiftorFlow from "./NicoleGiftorFlow";
 import NicoleGifteeFlow from "./NicoleGifteeFlow";
@@ -40,31 +41,44 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   const [onboardingData, setOnboardingData] = useState<any>({});
   const [conversationHistory, setConversationHistory] = useState<any[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize onboarding with welcome message
+  // Debounced initialization to prevent rapid state changes
   useEffect(() => {
-    if (isOpen && !isInitialized) {
-      console.log("Initializing Nicole onboarding");
-      
-      triggerHapticFeedback('light');
-      setConversationHistory([{
-        id: 1,
-        role: 'assistant',
-        content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
-        timestamp: new Date()
-      }]);
-      setIsInitialized(true);
-    }
+    if (!isOpen) return;
+
+    const initializeTimer = setTimeout(() => {
+      if (!isInitialized) {
+        console.log("Initializing Nicole onboarding with delay");
+        
+        triggerHapticFeedback('light');
+        setConversationHistory([{
+          id: 1,
+          role: 'assistant',
+          content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
+          timestamp: new Date()
+        }]);
+        setIsInitialized(true);
+        setIsLoading(false);
+      }
+    }, 300); // Small delay to prevent rapid state changes
+
+    return () => clearTimeout(initializeTimer);
   }, [isOpen, isInitialized]);
 
-  // Reset when modal closes
+  // Stable cleanup when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setIsInitialized(false);
-      setCurrentStep("intent-discovery");
-      setUserIntent(null);
-      setOnboardingData({});
-      setConversationHistory([]);
+      const cleanupTimer = setTimeout(() => {
+        setIsInitialized(false);
+        setCurrentStep("intent-discovery");
+        setUserIntent(null);
+        setOnboardingData({});
+        setConversationHistory([]);
+        setIsLoading(true);
+      }, 100);
+
+      return () => clearTimeout(cleanupTimer);
     }
   }, [isOpen]);
 
@@ -77,7 +91,6 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     // Store intent in localStorage
     localStorage.setItem("userIntent", intent);
     
-    // Trigger haptic feedback for progression
     triggerHapticFeedback('selection');
     
     // Determine next step based on intent
@@ -96,7 +109,6 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     setOnboardingData(prev => ({ ...prev, ...flowData }));
     triggerHapticFeedback('medium');
     
-    // Move to connection discovery if not already there
     if (currentStep !== "connection-discovery") {
       setCurrentStep("connection-discovery");
     } else {
@@ -111,7 +123,6 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     setCurrentStep("completion");
     triggerHapticFeedback('heavy');
     
-    // Complete onboarding after a brief delay
     setTimeout(() => {
       onComplete();
     }, 1500);
@@ -135,6 +146,17 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   }, [onComplete]);
 
   const renderCurrentStep = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading Nicole...</p>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentStep) {
       case "intent-discovery":
         return (
@@ -203,10 +225,11 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     <NicoleOnboardingErrorBoundary onError={handleError}>
       <div className="fixed inset-0 bg-black/50 z-50 ios-modal-backdrop">
         <div className={`
-          absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl
-          ${isMobile ? 'h-[90vh]' : 'h-[80vh] max-w-md mx-auto mb-8 rounded-3xl'}
-          transition-transform duration-300 ease-out
-          safe-area-bottom
+          absolute bg-white shadow-2xl transition-transform duration-300 ease-out
+          ${isMobile 
+            ? 'bottom-0 left-0 right-0 h-[90vh] rounded-t-3xl safe-area-bottom' 
+            : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[700px] rounded-3xl'
+          }
         `}>
           {/* Progress Tracker */}
           <OnboardingProgressTracker
@@ -214,9 +237,13 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
             userIntent={userIntent}
           />
           
-          {/* Content */}
-          <div className="flex-1 overflow-hidden">
-            {renderCurrentStep()}
+          {/* Scrollable Content Container */}
+          <div className="flex-1 flex flex-col" style={{ height: 'calc(100% - 120px)' }}>
+            <ScrollArea className="flex-1 h-full">
+              <div className="h-full">
+                {renderCurrentStep()}
+              </div>
+            </ScrollArea>
           </div>
         </div>
       </div>

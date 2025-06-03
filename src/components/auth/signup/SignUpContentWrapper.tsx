@@ -33,27 +33,45 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true
 }) => {
   const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
+  const [isReadyForModal, setIsReadyForModal] = React.useState(false);
   const navigate = useNavigate();
 
-  // Memoize the intent check to prevent unnecessary re-renders
+  // Stable intent check with proper debouncing
   const shouldShowNicole = React.useMemo(() => {
-    if (step !== "verification" || !userEmail) return false;
+    if (step !== "verification" || !userEmail || !isReadyForModal) return false;
     
     const intent = localStorage.getItem("userIntent");
     const showingModal = localStorage.getItem("showingIntentModal");
     
-    console.log("Intent check:", { intent, showingModal, step, userEmail });
+    console.log("Intent check:", { intent, showingModal, step, userEmail, isReadyForModal });
     
     return !validIntent(intent) && showingModal !== "false";
+  }, [step, userEmail, isReadyForModal]);
+
+  // Delayed initialization to prevent race conditions
+  React.useEffect(() => {
+    if (step === "verification" && userEmail) {
+      const readyTimer = setTimeout(() => {
+        setIsReadyForModal(true);
+      }, 500); // Wait for auth state to stabilize
+
+      return () => clearTimeout(readyTimer);
+    } else {
+      setIsReadyForModal(false);
+    }
   }, [step, userEmail]);
 
-  // Initialize Nicole onboarding state
+  // Initialize Nicole onboarding state with proper timing
   React.useEffect(() => {
-    console.log("SignUpContentWrapper effect:", { step, userEmail, shouldShowNicole });
+    console.log("SignUpContentWrapper effect:", { step, userEmail, shouldShowNicole, isReadyForModal });
     
     if (shouldShowNicole) {
-      localStorage.setItem("showingIntentModal", "true");
-      setShowNicoleOnboarding(true);
+      const showTimer = setTimeout(() => {
+        localStorage.setItem("showingIntentModal", "true");
+        setShowNicoleOnboarding(true);
+      }, 200); // Small delay to ensure stable state
+
+      return () => clearTimeout(showTimer);
     } else {
       setShowNicoleOnboarding(false);
     }
@@ -69,24 +87,27 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     const finalIntent = localStorage.getItem("userIntent");
     console.log("Final intent:", finalIntent);
     
-    if (finalIntent === "giftor") {
-      navigate("/onboarding-gift", { replace: true });
-    } else {
-      navigate("/profile-setup", { replace: true });
-    }
+    const navigationTimer = setTimeout(() => {
+      if (finalIntent === "giftor") {
+        navigate("/onboarding-gift", { replace: true });
+      } else {
+        navigate("/profile-setup", { replace: true });
+      }
+    }, 100); // Small delay for smooth transition
+
+    return () => clearTimeout(navigationTimer);
   }, [navigate]);
 
   // Handle Nicole onboarding close
   const handleOnboardingClose = React.useCallback(() => {
     console.log("Nicole onboarding closed");
-    // Fallback if user somehow closes without completing
     localStorage.setItem("userIntent", "explorer");
     localStorage.setItem("showingIntentModal", "false");
     handleOnboardingComplete();
   }, [handleOnboardingComplete]);
 
   // Show Nicole onboarding if needed
-  if (showNicoleOnboarding) {
+  if (showNicoleOnboarding && isReadyForModal) {
     return (
       <NicoleOnboardingEngine
         isOpen={true}

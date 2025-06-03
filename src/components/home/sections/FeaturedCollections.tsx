@@ -82,7 +82,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   if (!collections || collections.length === 0) {
     return (
       <div className="mb-12 ml-4 md:ml-6">
-        <h2 className="text-2xl font-bold mb-6">Featured Collections</h2>
+        <h2 className="text-3xl font-bold mb-6">Featured Collections</h2>
         <div className="flex items-center justify-center p-8 bg-gray-50 rounded-md">
           <p className="text-muted-foreground">No collections available</p>
         </div>
@@ -239,7 +239,7 @@ const FeaturedCollections = ({ collections = [] }: CollectionProps) => {
   return (
     <div className="mb-12 ml-4 md:ml-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Featured Collections</h2>
+        <h2 className="text-3xl font-bold">Featured Collections</h2>
       </div>
       {renderCollections()}
     </div>

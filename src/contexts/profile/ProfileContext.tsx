@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useProfileFetch } from './useProfileFetch';
 import { useProfileUpdate } from './useProfileUpdate';
 import { Profile } from "@/types/supabase";
@@ -22,37 +22,49 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { updateProfile, isUpdating, updateError } = useProfileUpdate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
+  const fetchingRef = useRef(false);
 
   // Combined loading and error states
   const loading = isFetching || isUpdating;
   const error = fetchError || updateError;
 
-  // Fetch profile data when auth state changes
-  useEffect(() => {
-    const loadProfile = async () => {
+  // Debounced fetch to prevent multiple simultaneous calls
+  const debouncedFetchProfile = useCallback(async () => {
+    if (fetchingRef.current) {
+      console.log("Profile fetch already in progress, skipping");
+      return null;
+    }
+
+    fetchingRef.current = true;
+    try {
       const profileData = await fetchProfile();
       if (profileData) {
         console.log("Profile loaded from backend:", profileData);
         setProfile(profileData);
         setLastFetchTime(Date.now());
       }
-    };
-    
-    loadProfile();
-  }, [fetchProfile]);
-
-  // Also fetch profile data if we have localStorage flags indicating a new signup
-  useEffect(() => {
-    if (localStorage.getItem("newSignUp") === "true" || localStorage.getItem("profileSetupLoading") === "true") {
-      console.log("Detected new signup or profile setup, fetching profile data");
-      fetchProfile().then(profileData => {
-        if (profileData) {
-          setProfile(profileData);
-          setLastFetchTime(Date.now());
-        }
-      });
+      return profileData;
+    } finally {
+      fetchingRef.current = false;
     }
   }, [fetchProfile]);
+
+  // Fetch profile data when auth state changes - only once
+  useEffect(() => {
+    debouncedFetchProfile();
+  }, [debouncedFetchProfile]);
+
+  // Check for new signup flags - but only if we haven't fetched recently
+  useEffect(() => {
+    const isNewSignup = localStorage.getItem("newSignUp") === "true";
+    const isProfileSetupLoading = localStorage.getItem("profileSetupLoading") === "true";
+    const timeSinceLastFetch = lastFetchTime ? Date.now() - lastFetchTime : Infinity;
+    
+    if ((isNewSignup || isProfileSetupLoading) && timeSinceLastFetch > 5000) {
+      console.log("Detected new signup or profile setup, fetching profile data");
+      debouncedFetchProfile();
+    }
+  }, [debouncedFetchProfile, lastFetchTime]);
 
   // Wrapper for updating the profile that also updates local state
   const handleUpdateProfile = async (data: Partial<Profile>) => {
@@ -62,7 +74,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       
       if (result) {
         // Update the local profile state with the new data
-        const updatedProfile = await fetchProfile();
+        const updatedProfile = await debouncedFetchProfile();
         if (updatedProfile) {
           setProfile(updatedProfile);
           setLastFetchTime(Date.now());
@@ -81,11 +93,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const refetchProfile = useCallback(async () => {
     try {
       console.log("Manually refetching profile...");
-      const profileData = await fetchProfile();
+      const profileData = await debouncedFetchProfile();
       if (profileData) {
         console.log("Profile refetched successfully");
-        setProfile(profileData);
-        setLastFetchTime(Date.now());
       } else {
         console.log("No profile data returned when refetching");
       }
@@ -95,7 +105,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       toast.error("Failed to refresh your profile data");
       return null;
     }
-  }, [fetchProfile]);
+  }, [debouncedFetchProfile]);
   
   // Add refreshProfile as an alias of refetchProfile for backward compatibility
   const refreshProfile = refetchProfile;

@@ -18,19 +18,17 @@ const Settings = () => {
   const { profile, loading } = useProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [hasRedirected, setHasRedirected] = useState(false);
 
-  // Redirect if not logged in - but only once to prevent loops
+  // Redirect if not logged in
   React.useEffect(() => {
-    if (!user && !loading && !hasRedirected) {
+    if (!user && !loading) {
       console.log("No user found, redirecting to signin");
-      setHasRedirected(true);
       toast.error("You must be logged in to access settings");
       navigate("/signin", { replace: true });
     }
-  }, [user, loading, navigate, hasRedirected]);
+  }, [user, loading, navigate]);
 
-  // Show loading only if we're actually loading and have a user
+  // Show loading only while actually loading
   if (loading && user) {
     return (
       <div className="flex items-center justify-center min-h-screen">

@@ -77,8 +77,9 @@ const UserButton = () => {
 
   const handleSettingsClick = () => {
     try {
-      console.log("Navigating to settings");
-      navigate("/settings");
+      console.log("Navigating to settings - preventing multiple clicks");
+      // Use replace to prevent back navigation issues
+      navigate("/settings", { replace: true });
     } catch (error) {
       console.error("Error navigating to settings:", error);
     }

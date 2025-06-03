@@ -50,7 +50,7 @@ const SubtleCountdownBanner: React.FC<SubtleCountdownBannerProps> = ({ className
   }
 
   // Generate dynamic button text - truncate for mobile if needed
-  const friendName = upcomingFriendEvent?.friendName;
+  const friendName = upcomingFriendEvent?.personName;
   const fullButtonText = generateDynamicButtonText(targetEvent, !!user, friendName);
   const buttonText = isMobile && fullButtonText.length > 20 
     ? "Shop Gifts" 

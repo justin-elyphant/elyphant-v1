@@ -1,12 +1,9 @@
 
-import { useAuth } from "@/contexts/auth";
-import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
-
 interface Event {
   name: string;
   date: Date;
   type: string;
-  friendName?: string;
+  personName?: string;
 }
 
 export const generateDynamicButtonText = (
@@ -19,7 +16,7 @@ export const generateDynamicButtonText = (
   }
 
   // For friend events with authenticated users
-  if (isAuthenticated && friendName && targetEvent.friendName) {
+  if (isAuthenticated && friendName && targetEvent.personName) {
     return `Shop Gifts for ${friendName}`;
   }
 

@@ -43,7 +43,7 @@ const CountdownBanner: React.FC<CountdownBannerProps> = ({ className = "" }) => 
   }
 
   // Generate dynamic button text
-  const friendName = upcomingFriendEvent?.friendName;
+  const friendName = upcomingFriendEvent?.personName;
   const buttonText = generateDynamicButtonText(targetEvent, !!user, friendName);
 
   const handleShopClick = () => {

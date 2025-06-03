@@ -11,6 +11,7 @@ import ScrollToTop from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import SignUp from "./pages/SignUp";
+import SignIn from "./pages/SignIn";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/signup" element={<SignUp />} />
+                <Route path="/signin" element={<SignIn />} />
                 {/* Add other routes as needed */}
               </Routes>
               <SearchOptimizationMonitor />

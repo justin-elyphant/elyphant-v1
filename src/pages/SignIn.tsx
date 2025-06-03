@@ -11,11 +11,23 @@ const SignIn = () => {
 
   React.useEffect(() => {
     if (!isLoading && user) {
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     }
   }, [user, isLoading, navigate]);
 
-  const handleSignInSuccess = () => {};
+  const handleSignInSuccess = () => {
+    navigate("/", { replace: true });
+  };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+          <div>Loading...</div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

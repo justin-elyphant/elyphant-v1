@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Smartphone, Shirt, Home, Heart, Dumbbell, BookOpen, Gamepad2, Coffee, Palette, Pill } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import {
@@ -15,70 +15,70 @@ const categories = [
   {
     id: 1,
     name: "Electronics",
-    emoji: "📱",
+    icon: Smartphone,
     category: "electronics",
     description: "Latest tech and gadgets"
   },
   {
     id: 2,
     name: "Fashion",
-    emoji: "👕",
+    icon: Shirt,
     category: "fashion",
     description: "Clothing and accessories"
   },
   {
     id: 3,
     name: "Home & Living",
-    emoji: "🏠",
+    icon: Home,
     category: "home",
     description: "Decor and household items"
   },
   {
     id: 4,
     name: "Beauty",
-    emoji: "💄",
+    icon: Heart,
     category: "beauty",
     description: "Skincare and cosmetics"
   },
   {
     id: 5,
     name: "Sports",
-    emoji: "🏃‍♂️",
+    icon: Dumbbell,
     category: "sports",
     description: "Fitness and outdoor gear"
   },
   {
     id: 6,
     name: "Books",
-    emoji: "📚",
+    icon: BookOpen,
     category: "books",
     description: "Literature and educational"
   },
   {
     id: 7,
     name: "Toys & Games",
-    emoji: "🧸",
+    icon: Gamepad2,
     category: "toys",
     description: "Fun for all ages"
   },
   {
     id: 8,
     name: "Food & Drinks",
-    emoji: "🍷",
+    icon: Coffee,
     category: "food",
     description: "Gourmet and specialty items"
   },
   {
     id: 9,
     name: "Arts & Crafts",
-    emoji: "🎨",
+    icon: Palette,
     category: "arts",
     description: "Creative supplies and tools"
   },
   {
     id: 10,
     name: "Health",
-    emoji: "💊",
+    icon: Pill,
     category: "health",
     description: "Wellness and self-care"
   }
@@ -120,8 +120,8 @@ const FeaturedCategories: React.FC = () => {
                     onClick={() => handleCategoryClick(category.category)}
                   >
                     <div className="text-center">
-                      <div className="text-3xl md:text-4xl mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300">
-                        {category.emoji}
+                      <div className="text-gray-600 mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300 flex justify-center">
+                        <category.icon className="h-8 w-8 md:h-10 md:w-10" />
                       </div>
                       <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2">
                         {category.name}

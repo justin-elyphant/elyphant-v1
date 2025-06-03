@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
 import IntegratedSearchSection from "./IntegratedSearchSection";
 import SubtleCountdownBanner from "./SubtleCountdownBanner";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 
 const MarketplaceWrapper = () => {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [showFilters, setShowFilters] = useState(!isMobile);
   const [products, setProducts] = useState(allProducts);
@@ -26,6 +28,15 @@ const MarketplaceWrapper = () => {
 
   const resultsRef = useRef<HTMLDivElement>(null);
   const lastSearchRef = useRef<string | null>(null);
+
+  // Redirect to home if no search or category is present (no discovery mode)
+  useEffect(() => {
+    if (!searchTerm && !categoryParam && !brandParam) {
+      console.log('No search/category/brand params found, redirecting to home');
+      navigate('/', { replace: true });
+      return;
+    }
+  }, [searchTerm, categoryParam, brandParam, navigate]);
 
   // Close filters on mobile when screen size changes
   useEffect(() => {
@@ -70,9 +81,6 @@ const MarketplaceWrapper = () => {
       }
     } else if (categoryParam) {
       results = searchMockProducts(categoryParam, 16);
-    } else {
-      // When no search/filters, show featured products
-      results = searchMockProducts("Featured", 20);
     }
     
     setProducts(results);
@@ -123,6 +131,11 @@ const MarketplaceWrapper = () => {
     newParams.delete("category");
     setSearchParams(newParams, { replace: true });
   };
+
+  // Don't render if no search/category (will redirect)
+  if (!searchTerm && !categoryParam && !brandParam) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

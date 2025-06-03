@@ -21,7 +21,7 @@ const HomeContent = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  // Sample collections data
+  // Sample collections data - updated to use guided search approach
   const collections = [
     {
       id: 1,
@@ -105,14 +105,14 @@ const HomeContent = () => {
                   <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5">3</div>
                   <div>
                     <h3 className="font-semibold text-purple-800">Explore gift ideas</h3>
-                    <p className="text-purple-700 text-sm mb-2">Browse our curated marketplace for inspiration.</p>
+                    <p className="text-purple-700 text-sm mb-2">Browse our curated gift suggestions.</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       className="border-purple-300 text-purple-700 hover:bg-purple-100"
-                      onClick={() => navigate("/marketplace")}
+                      onClick={() => navigate("/marketplace?search=gift ideas")}
                     >
-                      Explore marketplace <ArrowRight className="ml-1 h-4 w-4" />
+                      Find gift ideas <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
                 </div>

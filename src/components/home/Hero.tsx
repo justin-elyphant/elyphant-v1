@@ -19,9 +19,10 @@ const Hero = () => {
   const handleCta = (intent: "giftor" | "giftee") => {
     localStorage.setItem("ctaIntent", intent);
     if (user) {
-      // Authenticated user: go direct to feature page
+      // Authenticated user: go to guided experience instead of marketplace
       if (intent === "giftor") {
-        navigate("/marketplace");
+        // Navigate to marketplace with search mode to encourage intentional shopping
+        navigate("/marketplace?search=gift ideas");
       } else {
         navigate("/wishlists");
       }
@@ -90,7 +91,7 @@ const Hero = () => {
                 }}
               >
                 <ShoppingBag className="mr-2 h-5 w-5" />
-                Start Gifting
+                Find Perfect Gifts
               </Button>
               <Button
                 variant="outline"

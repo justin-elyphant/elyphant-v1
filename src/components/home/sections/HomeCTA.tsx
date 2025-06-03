@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,9 +31,9 @@ const HomeCTA = () => {
                 size={isMobile ? "default" : "lg"}
                 className="bg-white text-purple-600 hover:bg-gray-100 font-semibold"
               >
-                <Link to="/marketplace">
+                <Link to="/marketplace?search=gift ideas">
                   <Gift className="mr-2 h-5 w-5" />
-                  Find the Perfect Gift
+                  Find Perfect Gifts
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>

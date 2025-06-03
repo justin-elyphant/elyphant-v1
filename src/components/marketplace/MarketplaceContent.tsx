@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -166,8 +167,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: filters.freeShipping,
-                favoritesOnly: filters.favoritesOnly,
+                freeShipping: convertToBoolean(filters.freeShipping),
+                favoritesOnly: convertToBoolean(filters.favoritesOnly),
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}

@@ -1,177 +1,105 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Gift, Calendar, Heart, GraduationCap, Baby, PartyPopper, Dog } from "lucide-react";
-import { toast } from "sonner";
-import { searchProducts } from "@/components/marketplace/zinc/zincService";
-import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 
-// Neutral, sophisticated icons (muted purple/dark gray)
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Heart, Cake, GraduationCap, Baby, ArrowRight } from "lucide-react";
+import { FullWidthSection } from "@/components/layout/FullWidthSection";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+
 const occasions = [
   {
     id: 1,
-    name: "Birthdays",
-    icon: <PartyPopper className="h-7 w-7 text-[#7E69AB]" />,
-    description: "Find the perfect birthday gifts",
-    category: "birthday",
-    cta: "Gifts for Birthdays",
-    searchTerm: "birthday gifts"
+    name: "Valentine's Day",
+    icon: Heart,
+    searchTerm: "valentines day gifts",
+    color: "bg-red-500",
+    description: "Show your love with romantic gifts"
   },
   {
     id: 2,
-    name: "Weddings",
-    icon: <Heart className="h-7 w-7 text-[#7E69AB]" />,
-    description: "Celebrate special unions",
-    category: "wedding",
-    cta: "Wedding Gift Ideas",
-    searchTerm: "wedding gifts"
+    name: "Birthdays",
+    icon: Cake,
+    searchTerm: "birthday gifts",
+    color: "bg-pink-500",
+    description: "Make their special day unforgettable"
   },
   {
     id: 3,
-    name: "Anniversaries",
-    icon: <Calendar className="h-7 w-7 text-[#7E69AB]" />,
-    description: "Commemorate years together",
-    category: "anniversary",
-    cta: "Anniversary Gifts",
-    searchTerm: "anniversary gifts"
+    name: "Graduation",
+    icon: GraduationCap,
+    searchTerm: "graduation gifts",
+    color: "bg-blue-500",
+    description: "Celebrate their achievements"
   },
   {
     id: 4,
-    name: "Graduations",
-    icon: <GraduationCap className="h-7 w-7 text-[#7E69AB]" />,
-    description: "Celebrate academic achievements",
-    category: "graduation",
-    cta: "Graduation Gift Ideas",
-    searchTerm: "graduation gifts"
+    name: "Baby Shower",
+    icon: Baby,
+    searchTerm: "baby shower gifts",
+    color: "bg-green-500",
+    description: "Welcome the new arrival"
   },
   {
     id: 5,
-    name: "Baby Showers",
-    icon: <Baby className="h-7 w-7 text-[#7E69AB]" />,
-    description: "Welcome new arrivals",
-    category: "baby_shower",
-    cta: "Baby Shower Gifts",
-    searchTerm: "baby shower gifts"
-  },
-  {
-    id: 6,
-    name: "Pet Gifts",
-    icon: <Dog className="h-7 w-7 text-[#7E69AB]" />,
-    description: "Spoil your furry friends",
-    category: "pets",
-    cta: "Gifts for Pets",
-    searchTerm: "pet gifts"
-  },
-  {
-    id: 7,
-    name: "All Occasions",
-    icon: <Gift className="h-7 w-7 text-[#7E69AB]" />,
-    description: "Explore gifts for any event",
-    category: "all",
-    cta: "Browse All Gift Ideas",
-    searchTerm: "popular gifts"
-  },
+    name: "Anniversaries",
+    icon: Calendar,
+    searchTerm: "anniversary gifts",
+    color: "bg-purple-500",
+    description: "Commemorate your journey together"
+  }
 ];
 
-const FeaturedOccasions = () => {
+const FeaturedOccasions: React.FC = () => {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [loadingOccasion, setLoadingOccasion] = useState<number | null>(null);
-  const [fetchStatus, setFetchStatus] = useState<Record<number, string>>({});
-  
-  useEffect(() => {
-    console.log("Fetch status updated:", fetchStatus);
-  }, [fetchStatus]);
-  
-  const handleOccasionClick = async (category: string, occasionName: string, occasionId: number, searchTerm: string) => {
-    if (loadingOccasion !== null) return;
 
-    setLoadingOccasion(occasionId);
-    setFetchStatus(prev => ({...prev, [occasionId]: "starting"}));
-    toast.success(`Exploring ${occasionName.toLowerCase()} gift ideas...`);
-    
-    try {
-      if (searchTerm) {
-        setFetchStatus(prev => ({...prev, [occasionId]: "fetching"}));
-        const results = await searchProducts(searchTerm, "50");
-        setFetchStatus(prev => ({...prev, [occasionId]: `fetched ${results.length} products`}));
-        if (results.length === 0) {
-          setFetchStatus(prev => ({...prev, [occasionId]: "no products found"}));
-        }
-      }
-    } catch (error) {
-      setFetchStatus(prev => ({...prev, [occasionId]: "error fetching"}));
-    } finally {
-      // Navigate with state to indicate this is from an occasion click
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, {
-        state: { fromOccasion: true }
-      });
-      setLoadingOccasion(null);
-      setFetchStatus(prev => ({...prev, [occasionId]: "navigation complete"}));
-    }
+  const handleOccasionClick = (searchTerm: string) => {
+    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
   };
 
   return (
-    <div className="mb-12 ml-4 md:ml-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-          Featured Occasions
-        </h2>
-      </div>
-      
-      <Carousel
-        opts={{
-          align: "start",
-          loop: false,
-          skipSnaps: false,
-          dragFree: true,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-2 md:-ml-4">
-          {occasions.map((occasion) => (
-            <CarouselItem key={occasion.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-              <div 
-                onClick={() => handleOccasionClick(occasion.category, occasion.name, occasion.id, occasion.searchTerm)}
-                className="cursor-pointer h-full"
+    <FullWidthSection className="py-16 bg-gradient-to-br from-purple-50 to-pink-50">
+      <ResponsiveContainer>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Shop by Occasion
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Find the perfect gift for every special moment and celebration
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          {occasions.map((occasion) => {
+            const IconComponent = occasion.icon;
+            return (
+              <div
+                key={occasion.id}
+                className="group relative p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100"
+                onClick={() => handleOccasionClick(occasion.searchTerm)}
               >
-                <Card className="h-full bg-white border border-gray-200 shadow-subtle rounded-lg 
-                  transition-transform transition-shadow duration-200 hover:shadow-lg hover:scale-[1.03]"
+                <div className={`${occasion.color} w-12 h-12 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <IconComponent className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {occasion.name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {occasion.description}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full group-hover:bg-gray-50"
                 >
-                  <CardContent className="p-4 flex flex-col items-center text-center min-h-[140px] justify-center touch-manipulation">
-                    <div className="rounded-full bg-gray-50 p-3 mb-2 shadow-sm">
-                      <span className="block">
-                        {React.cloneElement(occasion.icon, {
-                          className: "h-8 w-8 " + (occasion.icon.props.className || '')
-                        })}
-                      </span>
-                    </div>
-                    <h3 className="font-sans font-semibold text-base text-gray-900 tracking-tight mb-1">
-                      {occasion.name}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mb-2 text-center leading-relaxed">
-                      {occasion.description}
-                    </p>
-                    <span className="text-sm font-medium text-[#7E69AB] group-hover:underline underline-offset-2 transition-all">
-                      {loadingOccasion === occasion.id ? "Loading..." : occasion.cta}
-                    </span>
-                  </CardContent>
-                </Card>
+                  Shop Now
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                </Button>
               </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="hidden md:flex -left-6 disabled:opacity-0 disabled:pointer-events-none transition-opacity" />
-        <CarouselNext className="hidden md:flex -right-6 disabled:opacity-0 disabled:pointer-events-none transition-opacity" />
-      </Carousel>
-    </div>
+            );
+          })}
+        </div>
+      </ResponsiveContainer>
+    </FullWidthSection>
   );
 };
 

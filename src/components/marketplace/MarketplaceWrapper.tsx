@@ -6,14 +6,11 @@ import SubtleCountdownBanner from "./SubtleCountdownBanner";
 import ResultsSummaryBar from "./ResultsSummaryBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
-import MarketplaceHero from "./MarketplaceHero";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
-import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
-import { X } from "lucide-react";
 
 const MarketplaceWrapper = () => {
   const isMobile = useIsMobile();
@@ -57,7 +54,8 @@ const MarketplaceWrapper = () => {
     } else if (searchTerm) {
       results = searchMockProducts(searchTerm, 16);
     } else {
-      results = searchMockProducts("Featured", 15);
+      // When no search/filters, show featured products instead of hero
+      results = searchMockProducts("Featured", 20);
     }
     setProducts(results);
     
@@ -74,11 +72,11 @@ const MarketplaceWrapper = () => {
     console.log(`Product viewed: ${productId}`);
   };
 
-  const isActivelyShopping = Boolean(searchTerm || categoryParam || brandParam);
+  const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam);
 
   // Auto-scroll to results on search/filter changes
   useEffect(() => {
-    if (isActivelyShopping && resultsRef.current) {
+    if (hasActiveSearch && resultsRef.current) {
       if (
         lastSearchRef.current !== `${searchTerm}|${categoryParam}|${brandParam}`
       ) {
@@ -88,7 +86,7 @@ const MarketplaceWrapper = () => {
         lastSearchRef.current = `${searchTerm}|${categoryParam}|${brandParam}`;
       }
     }
-  }, [searchTerm, categoryParam, brandParam, isActivelyShopping]);
+  }, [searchTerm, categoryParam, brandParam, hasActiveSearch]);
 
   // Add to search history
   useEffect(() => {
@@ -109,13 +107,6 @@ const MarketplaceWrapper = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero section - only when not actively shopping */}
-      {!isActivelyShopping && (
-        <FullWidthSection background="gradient">
-          <MarketplaceHero isCollapsed={false} />
-        </FullWidthSection>
-      )}
-
       {/* Search and Categories - full width for better mobile experience */}
       <FullWidthSection>
         <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
@@ -124,7 +115,7 @@ const MarketplaceWrapper = () => {
       {/* Countdown Banner */}
       <SubtleCountdownBanner />
 
-      {/* Results Summary Bar - replaces the old condensed filters bar */}
+      {/* Results Summary Bar */}
       <ResultsSummaryBar totalItems={products.length} />
 
       {/* Main Content - full bleed layout */}

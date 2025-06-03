@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -9,6 +9,7 @@ import NicoleGiftorFlow from "./NicoleGiftorFlow";
 import NicoleGifteeFlow from "./NicoleGifteeFlow";
 import ConnectionDiscoveryFlow from "./ConnectionDiscoveryFlow";
 import OnboardingProgressTracker from "./OnboardingProgressTracker";
+import NicoleOnboardingErrorBoundary from "./NicoleOnboardingErrorBoundary";
 
 type OnboardingStep = 
   | "intent-discovery" 
@@ -38,10 +39,13 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   const [userIntent, setUserIntent] = useState<UserIntent | null>(null);
   const [onboardingData, setOnboardingData] = useState<any>({});
   const [conversationHistory, setConversationHistory] = useState<any[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize onboarding with welcome message
   useEffect(() => {
-    if (isOpen && conversationHistory.length === 0) {
+    if (isOpen && !isInitialized) {
+      console.log("Initializing Nicole onboarding");
+      
       triggerHapticFeedback('light');
       setConversationHistory([{
         id: 1,
@@ -49,12 +53,29 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
         content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
         timestamp: new Date()
       }]);
+      setIsInitialized(true);
     }
-  }, [isOpen, conversationHistory.length]);
+  }, [isOpen, isInitialized]);
 
-  const handleIntentDiscovered = (intent: UserIntent, data: any) => {
+  // Reset when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsInitialized(false);
+      setCurrentStep("intent-discovery");
+      setUserIntent(null);
+      setOnboardingData({});
+      setConversationHistory([]);
+    }
+  }, [isOpen]);
+
+  const handleIntentDiscovered = useCallback((intent: UserIntent, data: any) => {
+    console.log("Intent discovered:", intent, data);
+    
     setUserIntent(intent);
     setOnboardingData(prev => ({ ...prev, ...data }));
+    
+    // Store intent in localStorage
+    localStorage.setItem("userIntent", intent);
     
     // Trigger haptic feedback for progression
     triggerHapticFeedback('selection');
@@ -67,9 +88,11 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     } else {
       setCurrentStep("connection-discovery");
     }
-  };
+  }, []);
 
-  const handleFlowComplete = (flowData: any) => {
+  const handleFlowComplete = useCallback((flowData: any) => {
+    console.log("Flow completed:", flowData);
+    
     setOnboardingData(prev => ({ ...prev, ...flowData }));
     triggerHapticFeedback('medium');
     
@@ -79,9 +102,11 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     } else {
       setCurrentStep("completion");
     }
-  };
+  }, [currentStep]);
 
-  const handleConnectionsComplete = (connectionData: any) => {
+  const handleConnectionsComplete = useCallback((connectionData: any) => {
+    console.log("Connections completed:", connectionData);
+    
     setOnboardingData(prev => ({ ...prev, ...connectionData }));
     setCurrentStep("completion");
     triggerHapticFeedback('heavy');
@@ -90,16 +115,24 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     setTimeout(() => {
       onComplete();
     }, 1500);
-  };
+  }, [onComplete]);
 
-  const handleSkip = () => {
+  const handleSkip = useCallback(() => {
+    console.log("Skipping Nicole onboarding");
+    
     triggerHapticFeedback('light');
+    localStorage.setItem("userIntent", "explorer");
     onComplete();
-  };
+  }, [onComplete]);
 
-  const addToConversation = (message: any) => {
+  const addToConversation = useCallback((message: any) => {
     setConversationHistory(prev => [...prev, { ...message, id: Date.now(), timestamp: new Date() }]);
-  };
+  }, []);
+
+  const handleError = useCallback(() => {
+    console.log("Error in Nicole onboarding, completing");
+    onComplete();
+  }, [onComplete]);
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -167,25 +200,27 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 ios-modal-backdrop">
-      <div className={`
-        absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl
-        ${isMobile ? 'h-[90vh]' : 'h-[80vh] max-w-md mx-auto mb-8 rounded-3xl'}
-        transition-transform duration-300 ease-out
-        safe-area-bottom
-      `}>
-        {/* Progress Tracker */}
-        <OnboardingProgressTracker
-          currentStep={currentStep}
-          userIntent={userIntent}
-        />
-        
-        {/* Content */}
-        <div className="flex-1 overflow-hidden">
-          {renderCurrentStep()}
+    <NicoleOnboardingErrorBoundary onError={handleError}>
+      <div className="fixed inset-0 bg-black/50 z-50 ios-modal-backdrop">
+        <div className={`
+          absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl
+          ${isMobile ? 'h-[90vh]' : 'h-[80vh] max-w-md mx-auto mb-8 rounded-3xl'}
+          transition-transform duration-300 ease-out
+          safe-area-bottom
+        `}>
+          {/* Progress Tracker */}
+          <OnboardingProgressTracker
+            currentStep={currentStep}
+            userIntent={userIntent}
+          />
+          
+          {/* Content */}
+          <div className="flex-1 overflow-hidden">
+            {renderCurrentStep()}
+          </div>
         </div>
       </div>
-    </div>
+    </NicoleOnboardingErrorBoundary>
   );
 };
 

@@ -33,54 +33,60 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true
 }) => {
   const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
-  const [intentHandled, setIntentHandled] = React.useState(false);
   const navigate = useNavigate();
 
-  React.useEffect(() => {
-    if (step !== "verification" || !userEmail) {
-      if (showNicoleOnboarding) setShowNicoleOnboarding(false);
-      if (intentHandled) setIntentHandled(false);
-      return;
-    }
-
+  // Memoize the intent check to prevent unnecessary re-renders
+  const shouldShowNicole = React.useMemo(() => {
+    if (step !== "verification" || !userEmail) return false;
+    
     const intent = localStorage.getItem("userIntent");
-    // Always show Nicole onboarding if no valid intent is found
-    if (!validIntent(intent)) {
+    const showingModal = localStorage.getItem("showingIntentModal");
+    
+    console.log("Intent check:", { intent, showingModal, step, userEmail });
+    
+    return !validIntent(intent) && showingModal !== "false";
+  }, [step, userEmail]);
+
+  // Initialize Nicole onboarding state
+  React.useEffect(() => {
+    console.log("SignUpContentWrapper effect:", { step, userEmail, shouldShowNicole });
+    
+    if (shouldShowNicole) {
       localStorage.setItem("showingIntentModal", "true");
       setShowNicoleOnboarding(true);
-      setIntentHandled(false);
     } else {
       setShowNicoleOnboarding(false);
-      setIntentHandled(true);
     }
-  }, [step, userEmail, intentHandled, showNicoleOnboarding]);
+  }, [shouldShowNicole]);
 
-  // -- EARLY BLOCKER: If we should show Nicole onboarding, render ONLY the onboarding --
-  if (
-    step === "verification" &&
-    userEmail &&
-    !validIntent(localStorage.getItem("userIntent"))
-  ) {
-    const handleOnboardingComplete = () => {
-      localStorage.removeItem("showingIntentModal");
-      setShowNicoleOnboarding(false);
-      setIntentHandled(true);
+  // Handle Nicole onboarding completion
+  const handleOnboardingComplete = React.useCallback(() => {
+    console.log("Nicole onboarding completed");
+    localStorage.removeItem("showingIntentModal");
+    setShowNicoleOnboarding(false);
 
-      // Navigate based on user intent (which Nicole will have set)
-      const finalIntent = localStorage.getItem("userIntent");
-      if (finalIntent === "giftor") {
-        navigate("/onboarding-gift", { replace: true });
-      } else {
-        navigate("/profile-setup", { replace: true });
-      }
-    };
+    // Navigate based on user intent (which Nicole will have set)
+    const finalIntent = localStorage.getItem("userIntent");
+    console.log("Final intent:", finalIntent);
+    
+    if (finalIntent === "giftor") {
+      navigate("/onboarding-gift", { replace: true });
+    } else {
+      navigate("/profile-setup", { replace: true });
+    }
+  }, [navigate]);
 
-    const handleOnboardingClose = () => {
-      // Fallback if user somehow closes without completing
-      localStorage.setItem("userIntent", "explorer");
-      handleOnboardingComplete();
-    };
+  // Handle Nicole onboarding close
+  const handleOnboardingClose = React.useCallback(() => {
+    console.log("Nicole onboarding closed");
+    // Fallback if user somehow closes without completing
+    localStorage.setItem("userIntent", "explorer");
+    localStorage.setItem("showingIntentModal", "false");
+    handleOnboardingComplete();
+  }, [handleOnboardingComplete]);
 
+  // Show Nicole onboarding if needed
+  if (showNicoleOnboarding) {
     return (
       <NicoleOnboardingEngine
         isOpen={true}

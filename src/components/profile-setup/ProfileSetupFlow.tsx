@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -33,13 +32,15 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({
     updateProfileData
   } = useProfileSetup({ onComplete, onSkip });
 
+  const [selectedNextStep, setSelectedNextStep] = React.useState("");
+
   const renderStep = () => {
     switch (activeStep) {
       case 0:
         return (
           <BasicInfoStep
-            profileData={profileData}
-            updateProfileData={updateProfileData}
+            value={profileData.name}
+            onChange={(name) => updateProfileData("name", name)}
           />
         );
       case 1:
@@ -73,8 +74,8 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({
       case 5:
         return (
           <NextStepsStep
-            profileData={profileData}
-            updateProfileData={updateProfileData}
+            onSelectOption={setSelectedNextStep}
+            selectedOption={selectedNextStep}
           />
         );
       default:

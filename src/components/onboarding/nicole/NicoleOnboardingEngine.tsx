@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -40,17 +39,16 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   const [userIntent, setUserIntent] = useState<UserIntent | null>(null);
   const [onboardingData, setOnboardingData] = useState<any>({});
   const [conversationHistory, setConversationHistory] = useState<any[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
-  // Enhanced initialization with better error handling and logging
+  // Simplified initialization with better error handling
   useEffect(() => {
     if (!isOpen) return;
 
     console.log("Nicole initialization starting...");
 
-    const initializeTimer = setTimeout(() => {
+    const initializeNicole = () => {
       try {
         console.log("Initializing Nicole conversation...");
         
@@ -61,7 +59,7 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
           content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
           timestamp: new Date()
         }]);
-        setIsInitialized(true);
+        
         setIsLoading(false);
         setInitializationError(null);
         
@@ -77,38 +75,21 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
           onClose();
         }, 2000);
       }
-    }, 500); // Increased delay for stability
-
-    // Safety timeout for initialization
-    const safetyTimer = setTimeout(() => {
-      if (!isInitialized && isLoading) {
-        console.warn("Nicole initialization timeout - auto-closing");
-        setInitializationError("Nicole is taking too long to load.");
-        setIsLoading(false);
-        onClose();
-      }
-    }, 8000); // Increased timeout
-
-    return () => {
-      clearTimeout(initializeTimer);
-      clearTimeout(safetyTimer);
     };
-  }, [isOpen, isInitialized, isLoading, onClose]);
 
-  // Enhanced cleanup when modal closes
+    // Initialize immediately, no complex timers
+    initializeNicole();
+  }, [isOpen, onClose]);
+
+  // Cleanup when modal closes
   useEffect(() => {
     if (!isOpen) {
-      const cleanupTimer = setTimeout(() => {
-        setIsInitialized(false);
-        setCurrentStep("intent-discovery");
-        setUserIntent(null);
-        setOnboardingData({});
-        setConversationHistory([]);
-        setIsLoading(true);
-        setInitializationError(null);
-      }, 100);
-
-      return () => clearTimeout(cleanupTimer);
+      setCurrentStep("intent-discovery");
+      setUserIntent(null);
+      setOnboardingData({});
+      setConversationHistory([]);
+      setIsLoading(true);
+      setInitializationError(null);
     }
   }, [isOpen]);
 
@@ -181,7 +162,7 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading Nicole...</p>
+            <p className="text-gray-600">Initializing Nicole...</p>
             {initializationError && (
               <p className="text-red-500 text-sm mt-2">{initializationError}</p>
             )}

@@ -18,9 +18,6 @@ interface SignUpContentWrapperProps {
   bypassVerification?: boolean;
 }
 
-// Helper to check valid intent
-const validIntent = (intent: string | null) => intent === "giftor" || intent === "giftee";
-
 const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   step,
   userEmail,
@@ -33,108 +30,80 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true
 }) => {
   const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
-  const [isReadyForModal, setIsReadyForModal] = React.useState(false);
-  const [nicoleLoadingTimeout, setNicoleLoadingTimeout] = React.useState(false);
-  const [showFallbackContent, setShowFallbackContent] = React.useState(false);
+  const [nicoleInitialized, setNicoleInitialized] = React.useState(false);
   const navigate = useNavigate();
 
-  // Stable intent check with proper debouncing
+  // Simplified logic: Show Nicole for new signups in verification step
   const shouldShowNicole = React.useMemo(() => {
-    if (step !== "verification" || !userEmail || !isReadyForModal) return false;
+    if (step !== "verification" || !userEmail) return false;
     
-    const intent = localStorage.getItem("userIntent");
-    const showingModal = localStorage.getItem("showingIntentModal");
+    const newSignUp = localStorage.getItem("newSignUp") === "true";
+    const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
     
-    console.log("Intent check:", { intent, showingModal, step, userEmail, isReadyForModal });
+    console.log("Nicole trigger check:", { step, userEmail, newSignUp, onboardingComplete });
     
-    return !validIntent(intent) && showingModal !== "false";
-  }, [step, userEmail, isReadyForModal]);
-
-  // Delayed initialization to prevent race conditions
-  React.useEffect(() => {
-    if (step === "verification" && userEmail) {
-      const readyTimer = setTimeout(() => {
-        setIsReadyForModal(true);
-      }, 500); // Wait for auth state to stabilize
-
-      // Safety timeout to show fallback content if Nicole doesn't load
-      const fallbackTimer = setTimeout(() => {
-        console.log("Nicole loading timeout - showing fallback content");
-        setNicoleLoadingTimeout(true);
-        setShowFallbackContent(true);
-      }, 3000); // 3 second timeout
-
-      return () => {
-        clearTimeout(readyTimer);
-        clearTimeout(fallbackTimer);
-      };
-    } else {
-      setIsReadyForModal(false);
-      setNicoleLoadingTimeout(false);
-      setShowFallbackContent(false);
-    }
+    // Show Nicole for new signups that haven't completed onboarding
+    return newSignUp && !onboardingComplete;
   }, [step, userEmail]);
 
-  // Initialize Nicole onboarding state with proper timing and error handling
+  // Initialize Nicole when conditions are met
   React.useEffect(() => {
-    console.log("SignUpContentWrapper effect:", { step, userEmail, shouldShowNicole, isReadyForModal });
-    
-    if (shouldShowNicole && !nicoleLoadingTimeout) {
-      const showTimer = setTimeout(() => {
-        try {
-          localStorage.setItem("showingIntentModal", "true");
-          setShowNicoleOnboarding(true);
-          console.log("Nicole onboarding initialized successfully");
-        } catch (error) {
-          console.error("Error initializing Nicole onboarding:", error);
-          setShowFallbackContent(true);
-        }
-      }, 200); // Small delay to ensure stable state
+    if (shouldShowNicole && !nicoleInitialized) {
+      console.log("Initializing Nicole onboarding...");
+      
+      // Clear any existing intent to let Nicole set it
+      localStorage.removeItem("userIntent");
+      localStorage.setItem("showingIntentModal", "true");
+      
+      const initTimer = setTimeout(() => {
+        setNicoleInitialized(true);
+        setShowNicoleOnboarding(true);
+        console.log("Nicole onboarding initialized successfully");
+      }, 500);
 
-      return () => clearTimeout(showTimer);
-    } else if (shouldShowNicole && nicoleLoadingTimeout) {
-      // Nicole should show but timed out, show fallback
-      console.log("Nicole timed out, showing fallback content");
-      setShowFallbackContent(true);
-      setShowNicoleOnboarding(false);
-    } else {
+      return () => clearTimeout(initTimer);
+    }
+  }, [shouldShowNicole, nicoleInitialized]);
+
+  // Cleanup when modal closes
+  React.useEffect(() => {
+    if (!shouldShowNicole) {
+      setNicoleInitialized(false);
       setShowNicoleOnboarding(false);
     }
-  }, [shouldShowNicole, nicoleLoadingTimeout]);
+  }, [shouldShowNicole]);
 
   // Handle Nicole onboarding completion
   const handleOnboardingComplete = React.useCallback(() => {
     console.log("Nicole onboarding completed");
     localStorage.removeItem("showingIntentModal");
+    localStorage.setItem("onboardingComplete", "true");
     setShowNicoleOnboarding(false);
-    setShowFallbackContent(false);
 
     // Navigate based on user intent (which Nicole will have set)
     const finalIntent = localStorage.getItem("userIntent");
     console.log("Final intent:", finalIntent);
     
-    const navigationTimer = setTimeout(() => {
+    setTimeout(() => {
       if (finalIntent === "giftor") {
         navigate("/onboarding-gift", { replace: true });
       } else {
         navigate("/profile-setup", { replace: true });
       }
-    }, 100); // Small delay for smooth transition
-
-    return () => clearTimeout(navigationTimer);
+    }, 100);
   }, [navigate]);
 
   // Handle Nicole onboarding close or error
   const handleOnboardingClose = React.useCallback(() => {
     console.log("Nicole onboarding closed or failed");
     localStorage.setItem("userIntent", "explorer");
+    localStorage.setItem("onboardingComplete", "true");
     localStorage.setItem("showingIntentModal", "false");
     setShowNicoleOnboarding(false);
-    setShowFallbackContent(false);
     handleOnboardingComplete();
   }, [handleOnboardingComplete]);
 
-  // Always render the base content first
+  // Render base content
   const renderBaseContent = () => {
     if (step === "signup") {
       return (
@@ -159,11 +128,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 
   return (
     <div className="relative">
-      {/* Always show base content to prevent white page */}
+      {/* Always show base content */}
       {renderBaseContent()}
 
-      {/* Nicole onboarding as overlay when ready and not timed out */}
-      {showNicoleOnboarding && isReadyForModal && !nicoleLoadingTimeout && (
+      {/* Nicole onboarding overlay */}
+      {showNicoleOnboarding && (
         <div className="fixed inset-0 z-50">
           <NicoleOnboardingEngine
             isOpen={true}
@@ -175,11 +144,10 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 
       {/* Debug info in development */}
       {process.env.NODE_ENV === 'development' && step === "verification" && (
-        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-50 pointer-events-none">
+        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-75 pointer-events-none">
           Nicole: {showNicoleOnboarding ? 'showing' : 'hidden'} | 
-          Ready: {isReadyForModal ? 'yes' : 'no'} | 
-          Timeout: {nicoleLoadingTimeout ? 'yes' : 'no'} |
-          Fallback: {showFallbackContent ? 'yes' : 'no'}
+          Should show: {shouldShowNicole ? 'yes' : 'no'} |
+          Init: {nicoleInitialized ? 'yes' : 'no'}
         </div>
       )}
     </div>

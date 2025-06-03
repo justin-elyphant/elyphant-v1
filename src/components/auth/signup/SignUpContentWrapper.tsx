@@ -1,4 +1,3 @@
-
 import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
@@ -31,78 +30,89 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 }) => {
   const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
   const [isNavigating, setIsNavigating] = React.useState(false);
+  const [formData, setFormData] = React.useState<SignUpFormValues | null>(null);
   const navigate = useNavigate();
 
-  // Determine if Nicole should show with more stable conditions
-  const shouldShowNicole = React.useMemo(() => {
-    if (step !== "verification" || !userEmail || isNavigating) return false;
+  // Enhanced form submission that stores data and shows Nicole immediately
+  const handleFormSubmit = React.useCallback(async (values: SignUpFormValues) => {
+    console.log("Form submission starting for:", values.email);
     
-    const newSignUp = localStorage.getItem("newSignUp") === "true";
-    const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
+    // Store form data temporarily
+    setFormData(values);
     
-    console.log("Nicole trigger check:", { step, userEmail, newSignUp, onboardingComplete, isNavigating });
+    // Show Nicole immediately before account creation
+    localStorage.setItem("tempUserData", JSON.stringify(values));
+    localStorage.setItem("showingIntentModal", "true");
+    setShowNicoleOnboarding(true);
     
-    return newSignUp && !onboardingComplete;
-  }, [step, userEmail, isNavigating]);
+    console.log("Showing Nicole onboarding before account creation");
+  }, []);
 
-  // Show Nicole with delay to prevent flashing
-  React.useEffect(() => {
-    if (shouldShowNicole && !showNicoleOnboarding) {
-      console.log("Triggering Nicole onboarding...");
+  // Handle Nicole onboarding completion - create account after Nicole
+  const handleOnboardingComplete = React.useCallback(async () => {
+    console.log("Nicole onboarding completed, creating account...");
+    
+    if (!formData) {
+      console.error("No form data available for account creation");
+      return;
+    }
+    
+    try {
+      setIsNavigating(true);
+      localStorage.removeItem("showingIntentModal");
+      localStorage.setItem("onboardingComplete", "true");
+      setShowNicoleOnboarding(false);
+
+      // Now create the account with collected data
+      await onSignUpSubmit(formData);
       
-      // Add small delay to prevent flash
-      const timer = setTimeout(() => {
-        localStorage.removeItem("userIntent");
-        localStorage.setItem("showingIntentModal", "true");
-        setShowNicoleOnboarding(true);
-        console.log("Nicole onboarding triggered");
-      }, 500);
-
-      return () => clearTimeout(timer);
-    } else if (!shouldShowNicole && showNicoleOnboarding) {
+      const finalIntent = localStorage.getItem("userIntent");
+      console.log("Account created, final intent:", finalIntent);
+      
+      setTimeout(() => {
+        navigate("/profile-setup", { replace: true });
+      }, 100);
+    } catch (error) {
+      console.error("Error creating account after Nicole:", error);
+      setIsNavigating(false);
+      // Show error to user but keep Nicole closed
       setShowNicoleOnboarding(false);
     }
-  }, [shouldShowNicole, showNicoleOnboarding]);
-
-  // Handle Nicole onboarding completion
-  const handleOnboardingComplete = React.useCallback(() => {
-    console.log("Nicole onboarding completed");
-    setIsNavigating(true);
-    localStorage.removeItem("showingIntentModal");
-    localStorage.setItem("onboardingComplete", "true");
-    setShowNicoleOnboarding(false);
-
-    const finalIntent = localStorage.getItem("userIntent");
-    console.log("Final intent:", finalIntent);
-    
-    setTimeout(() => {
-      // Always navigate to profile-setup after onboarding completion
-      // regardless of intent - users can customize their profile first
-      navigate("/profile-setup", { replace: true });
-    }, 100);
-  }, [navigate]);
+  }, [formData, navigate, onSignUpSubmit]);
 
   // Handle Nicole onboarding close or error
   const handleOnboardingClose = React.useCallback(() => {
-    console.log("Nicole onboarding closed or failed");
+    console.log("Nicole onboarding closed, creating account without onboarding...");
+    
+    if (!formData) {
+      console.error("No form data available for account creation");
+      return;
+    }
+    
     setIsNavigating(true);
     localStorage.setItem("userIntent", "explorer");
     localStorage.setItem("onboardingComplete", "true");
-    localStorage.setItem("showingIntentModal", "false");
+    localStorage.removeItem("showingIntentModal");
     setShowNicoleOnboarding(false);
     
-    setTimeout(() => {
-      navigate("/dashboard", { replace: true });
-    }, 100);
-  }, [navigate]);
+    // Create account anyway
+    onSignUpSubmit(formData).then(() => {
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 100);
+    }).catch((error) => {
+      console.error("Error creating account:", error);
+      setIsNavigating(false);
+    });
+  }, [formData, navigate, onSignUpSubmit]);
 
   // Render base content
   const renderBaseContent = () => {
     if (step === "signup") {
       return (
         <SignUpView 
-          onSubmit={onSignUpSubmit} 
-          isSubmitting={isSubmitting} 
+          onSubmit={handleFormSubmit} 
+          isSubmitting={isSubmitting || showNicoleOnboarding} 
         />
       );
     }
@@ -125,7 +135,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       <div className="flex items-center justify-center p-8 min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Completing signup...</p>
+          <p className="text-gray-600">Creating your account...</p>
         </div>
       </div>
     );
@@ -136,7 +146,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       {/* Always show base content first to prevent flash */}
       {renderBaseContent()}
 
-      {/* Nicole onboarding overlay - only show when ready and not navigating */}
+      {/* Nicole onboarding overlay - show when triggered from signup form */}
       <NicoleOnboardingEngine
         isOpen={showNicoleOnboarding && !isNavigating}
         onComplete={handleOnboardingComplete}
@@ -144,11 +154,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       />
 
       {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && step === "verification" && (
+      {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-75 pointer-events-none z-40">
           Nicole: {showNicoleOnboarding ? 'showing' : 'hidden'} | 
-          Should show: {shouldShowNicole ? 'yes' : 'no'} |
-          Navigating: {isNavigating ? 'yes' : 'no'}
+          Navigating: {isNavigating ? 'yes' : 'no'} |
+          Form Data: {formData ? 'stored' : 'none'}
         </div>
       )}
     </div>

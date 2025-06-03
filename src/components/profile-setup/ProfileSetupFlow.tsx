@@ -1,18 +1,14 @@
 
-import React, { useCallback, useMemo, useEffect } from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import StepNavigation from "./components/StepNavigation";
-import ProfileStepperHeader from "./components/ProfileStepperHeader";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useProfileSetup } from "./hooks/useProfileSetup";
-
-// Import the step components
-import ProfileCombinedStep from "./steps/ProfileCombinedStep";
-import DateOfBirthStep from "./steps/DateOfBirthStep";
-import ShippingAddressStep from "./steps/ShippingAddressStep";
-import GiftPreferencesStep from "./steps/GiftPreferencesStep";
-import DataSharingStep from "./steps/DataSharingStep";
+import BasicInfoStep from "./steps/BasicInfoStep";
+import BirthdayStep from "./steps/BirthdayStep";
+import AddressStep from "./steps/AddressStep";
+import PreferencesStep from "./steps/PreferencesStep";
+import PrivacyStep from "./steps/PrivacyStep";
 import NextStepsStep from "./steps/NextStepsStep";
 
 interface ProfileSetupFlowProps {
@@ -20,38 +16,10 @@ interface ProfileSetupFlowProps {
   onSkip?: () => void;
 }
 
-const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip }) => {
-  // Clear any stale loading flags and rate limit flags on component mount
-  useEffect(() => {
-    // Clear any stuck loading states
-    localStorage.removeItem("profileSetupLoading");
-    localStorage.removeItem("signupRateLimited");
-    
-    console.log("ProfileSetupFlow: Component mounted, cleared loading flags");
-    
-    // Check if we have a newSignUp flag in localStorage - debugging info
-    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
-    const userEmail = localStorage.getItem("userEmail");
-    const userName = localStorage.getItem("userName");
-    console.log("ProfileSetupFlow: User data from localStorage:", { 
-      isNewSignUp, 
-      userEmail, 
-      userName 
-    });
-  }, []);
-
-  const handleCompleteWrapper = useCallback(() => {
-    console.log("ProfileSetupFlow: onComplete wrapper triggered");
-    // Ensure all loading and rate limit flags are cleared
-    localStorage.removeItem("profileSetupLoading");
-    localStorage.removeItem("signupRateLimited");
-    
-    // Ensure we invoke the parent's onComplete
-    setTimeout(() => {
-      onComplete();
-    }, 50);
-  }, [onComplete]);
-
+const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({
+  onComplete,
+  onSkip
+}) => {
   const {
     activeStep,
     profileData,
@@ -63,62 +31,41 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     handleComplete,
     handleSkip,
     updateProfileData
-  } = useProfileSetup({ 
-    onComplete: handleCompleteWrapper,
-    onSkip 
-  });
+  } = useProfileSetup({ onComplete, onSkip });
 
-  useEffect(() => {
-    console.log("ProfileSetupFlow: Current state", {
-      activeStep,
-      isLoading,
-      isCurrentStepValid,
-      rateLimitFlag: localStorage.getItem("signupRateLimited"),
-      profileData
-    });
-  }, [activeStep, isLoading, isCurrentStepValid, profileData]);
-
-  // Define step rendering as a memoized function
-  const renderCurrentStep = useMemo(() => {
+  const renderStep = () => {
     switch (activeStep) {
       case 0:
         return (
-          <ProfileCombinedStep
-            name={profileData.name}
-            username={profileData.username}
-            email={profileData.email || ''}
-            profileImage={profileData.profile_image}
-            onNameChange={(name) => updateProfileData('name', name)}
-            onUsernameChange={(username) => updateProfileData('username', username)}
-            onProfileImageChange={(image) => updateProfileData('profile_image', image)}
+          <BasicInfoStep
+            profileData={profileData}
+            updateProfileData={updateProfileData}
           />
         );
       case 1:
         return (
-          <DateOfBirthStep
-            value={profileData.dob}
-            onChange={(dob) => updateProfileData('dob', dob)}
+          <BirthdayStep
+            profileData={profileData}
+            updateProfileData={updateProfileData}
           />
         );
       case 2:
         return (
-          <ShippingAddressStep
-            value={profileData.shipping_address}
-            onChange={(address) => updateProfileData('shipping_address', address)}
+          <AddressStep
+            profileData={profileData}
+            updateProfileData={updateProfileData}
           />
         );
       case 3:
         return (
-          <GiftPreferencesStep
-            preferences={profileData.gift_preferences}
-            onPreferencesChange={(preferences) => updateProfileData('gift_preferences', preferences)}
-            onNext={handleNext}
-            onBack={handleBack}
+          <PreferencesStep
+            profileData={profileData}
+            updateProfileData={updateProfileData}
           />
         );
       case 4:
         return (
-          <DataSharingStep
+          <PrivacyStep
             profileData={profileData}
             updateProfileData={updateProfileData}
           />
@@ -126,62 +73,88 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       case 5:
         return (
           <NextStepsStep
-            onSelectOption={(option) => updateProfileData('next_steps_option' as keyof typeof profileData, option)}
-            selectedOption={profileData.next_steps_option}
+            profileData={profileData}
+            updateProfileData={updateProfileData}
           />
         );
       default:
         return null;
     }
-  }, [activeStep, profileData, updateProfileData, handleNext, handleBack]);
+  };
 
-  // Create memoized complete handler with additional safety
-  const handleCompleteClick = useCallback(() => {
-    console.log("Complete button clicked in ProfileSetupFlow");
-    
-    // Safety check - clear rate limit flag before completing
-    localStorage.removeItem("signupRateLimited");
-    
-    // Directly attempt to complete without complex checks
-    try {
-      handleComplete();
-    } catch (error) {
-      console.error("Error during completion:", error);
-      toast.error("Error completing profile setup, continuing anyway");
-      
-      // Force completion even if there's an error
-      localStorage.removeItem("profileSetupLoading");
-      localStorage.removeItem("signupRateLimited");
-      
-      // Then complete
-      onComplete();
-    }
-  }, [handleComplete, onComplete]);
+  const getStepTitle = (step: { title: string; description: string }) => step.title;
+  const getStepDescription = (step: { title: string; description: string }) => step.description;
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-lg">
-      <CardHeader>
-        <ProfileStepperHeader activeStep={activeStep} steps={steps} />
-      </CardHeader>
-      
-      <CardContent>
-        <Separator className="mb-6" />
-        {renderCurrentStep}
-      </CardContent>
-      
-      <CardFooter>
-        <StepNavigation 
-          activeStep={activeStep}
-          totalSteps={steps.length}
-          isLoading={isLoading}
-          isCurrentStepValid={isCurrentStepValid}
-          onBack={handleBack}
-          onNext={handleNext}
-          onComplete={handleCompleteClick}
-          onSkip={handleSkip}
-        />
-      </CardFooter>
-    </Card>
+    <div className="max-w-2xl mx-auto p-6">
+      <Card>
+        <CardHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-bold">Complete Your Profile</CardTitle>
+            <Badge variant="outline">
+              Step {activeStep + 1} of {steps.length}
+            </Badge>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{getStepTitle(steps[activeStep])}</span>
+              <span>{Math.round(((activeStep + 1) / steps.length) * 100)}%</span>
+            </div>
+            <Progress value={((activeStep + 1) / steps.length) * 100} />
+            <p className="text-sm text-gray-500">{getStepDescription(steps[activeStep])}</p>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          {renderStep()}
+          
+          <div className="flex justify-between pt-4">
+            <div>
+              {activeStep > 0 && (
+                <button
+                  onClick={handleBack}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  disabled={isLoading}
+                >
+                  ← Back
+                </button>
+              )}
+            </div>
+            
+            <div className="flex gap-3">
+              {onSkip && (
+                <button
+                  onClick={handleSkip}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  disabled={isLoading}
+                >
+                  Skip for now
+                </button>
+              )}
+              
+              {activeStep < steps.length - 1 ? (
+                <button
+                  onClick={handleNext}
+                  disabled={!isCurrentStepValid || isLoading}
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoading ? "Saving..." : "Continue"}
+                </button>
+              ) : (
+                <button
+                  onClick={handleComplete}
+                  disabled={isLoading}
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoading ? "Completing..." : "Complete Profile"}
+                </button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

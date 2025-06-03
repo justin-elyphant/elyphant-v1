@@ -155,10 +155,10 @@ export const useGeneralSettingsForm = () => {
         
         // Safely extract data sharing settings
         const dataSharing = {
-          dob: profile.data_sharing_settings?.dob || "private",
-          shipping_address: profile.data_sharing_settings?.shipping_address || "private",
-          gift_preferences: profile.data_sharing_settings?.gift_preferences || "friends",
-          email: profile.data_sharing_settings?.email || "private",
+          dob: (profile.data_sharing_settings?.dob as "private" | "friends" | "public") || "private",
+          shipping_address: (profile.data_sharing_settings?.shipping_address as "private" | "friends" | "public") || "private",
+          gift_preferences: (profile.data_sharing_settings?.gift_preferences as "private" | "friends" | "public") || "friends",
+          email: (profile.data_sharing_settings?.email as "private" | "friends" | "public") || "private",
         };
         console.log("[Settings] Parsed data sharing settings:", dataSharing);
         
@@ -215,7 +215,7 @@ export const useGeneralSettingsForm = () => {
         interests: data.interests,
         gift_preferences: data.interests.map(interest => ({
           category: interest,
-          importance: "medium"
+          importance: "medium" as const
         })),
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),

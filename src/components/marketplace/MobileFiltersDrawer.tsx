@@ -1,13 +1,10 @@
 
 import React from "react";
-import { Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import FiltersSidebar from "./FiltersSidebar";
 
@@ -28,16 +25,6 @@ const MobileFiltersDrawer: React.FC<MobileFiltersDrawerProps> = ({
 }) => {
   return (
     <Drawer open={showFilters} onOpenChange={setShowFilters}>
-      <DrawerTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 h-8"
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-        </Button>
-      </DrawerTrigger>
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader>
           <DrawerTitle>Filter Products</DrawerTitle>

@@ -72,7 +72,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         (user.email ? user.email.split('@')[0] : '') ||
         `user_${Date.now().toString(36)}`;
 
-      // Enhanced data formatting for Supabase with proper date and important dates handling
+      // Enhanced data formatting for Supabase with proper handling
       const updateData = {
         id: user.id,
         name: profileData.name || '',
@@ -80,17 +80,17 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         email: profileData.email || user.email || '',
         bio: profileData.bio || `Hi, I'm ${profileData.name || 'there'}!`,
         profile_image: profileData.profile_image || null,
-        // Enhanced birthday handling - ensure it's properly formatted or null
-        dob: profileData.dob ? (profileData.dob.includes('-') ? profileData.dob : null) : null,
+        // Enhanced birthday handling
+        dob: profileData.dob || null,
         shipping_address: profileData.shipping_address || {
           address_line1: "",
           city: "",
           state: "",
           zip_code: "",
-          country: ""
+          country: "US"
         },
         gift_preferences: profileData.gift_preferences || [],
-        // Enhanced important dates handling - ensure they're properly formatted
+        // Enhanced important dates handling
         important_dates: profileData.important_dates ? profileData.important_dates.map(date => ({
           title: date.title || date.description || "Important Date",
           date: date.date,
@@ -102,6 +102,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
           gift_preferences: "public",
           email: "private"
         },
+        // Use the correct column name that exists in the database
         onboarding_completed: true,
         updated_at: new Date().toISOString()
       };
@@ -133,13 +134,18 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       console.log("[Profile Setup] Profile saved successfully:", data);
       toast.success("Profile completed successfully!");
 
-      // Clear any remaining onboarding flags
+      // Clear any remaining onboarding flags and set completion flag
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileSetupLoading");
       localStorage.removeItem("onboardingComplete");
       localStorage.removeItem("nicoleCollectedData");
+      localStorage.removeItem("nicoleGifteeData");
       localStorage.removeItem("nicoleDataReady");
+      localStorage.removeItem("nicoleDataTimestamp");
       localStorage.setItem("profileCompleted", "true");
+      localStorage.setItem("profileCompletedTimestamp", Date.now().toString());
+
+      console.log("[Profile Setup] Profile completion flags set");
 
       onComplete();
     } catch (error) {
@@ -155,7 +161,9 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("profileSetupLoading");
     localStorage.removeItem("nicoleCollectedData");
+    localStorage.removeItem("nicoleGifteeData");
     localStorage.removeItem("nicoleDataReady");
+    localStorage.removeItem("nicoleDataTimestamp");
     localStorage.setItem("profileSkipped", "true");
     
     if (onSkip) {

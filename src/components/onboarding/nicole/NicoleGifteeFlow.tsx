@@ -49,37 +49,59 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
       content: "Wonderful! Your wishlist profile is ready to go. I've set up everything so friends and family can easily find gifts you'll love. Now let's connect you with others so they know about your preferences and upcoming occasions!"
     });
 
-    // Enhanced data structure for Profile Setup with proper formatting
+    console.log("[Nicole Giftee] Raw collected data:", collectedData);
+
+    // Enhanced data structure with proper formatting for Profile Setup
     const standardizedData = {
       name: collectedData.name,
       birthday: collectedData.birthday, // Format: MM-DD
       interests: collectedData.interests,
       userType: 'giftee',
       wishlist_preferences: collectedData.wishlist_preferences,
-      // Add profile data in the exact format Profile Setup expects
+      // Enhanced profile data structure for better integration
       profile_data: {
         name: collectedData.name,
-        dob: collectedData.birthday, // This should match the dob field in Profile Setup
+        // Convert MM-DD to proper date format for profile setup
+        dob: collectedData.birthday ? `2024-${collectedData.birthday}` : null,
+        bio: collectedData.name ? `Hi, I'm ${collectedData.name}! I love thoughtful gifts.` : "",
         gift_preferences: collectedData.interests.map(interest => ({
           category: interest,
           importance: 'medium'
         })),
+        interests: collectedData.interests,
         // Add important dates if birthday is provided
         important_dates: collectedData.birthday ? [{
           title: "Birthday",
-          date: `2024-${collectedData.birthday}`, // Add year for proper date format
+          date: `2024-${collectedData.birthday}`,
           type: "birthday"
-        }] : []
+        }] : [],
+        // Add shipping address placeholder
+        shipping_address: {
+          address_line1: "",
+          city: "",
+          state: "",
+          zip_code: "",
+          country: "US"
+        },
+        // Add data sharing settings
+        data_sharing_settings: {
+          dob: "friends",
+          shipping_address: "private",
+          gift_preferences: "public",
+          email: "private"
+        }
       }
     };
 
-    console.log("[Nicole Giftee] Collecting enhanced data for Profile Setup:", standardizedData);
+    console.log("[Nicole Giftee] Enhanced standardized data for Profile Setup:", JSON.stringify(standardizedData, null, 2));
     
-    // Store in localStorage with clear naming
+    // Store with multiple keys for better reliability
     localStorage.setItem("nicoleCollectedData", JSON.stringify(standardizedData));
-    
-    // Also store a flag to indicate Nicole completed
+    localStorage.setItem("nicoleGifteeData", JSON.stringify(standardizedData));
     localStorage.setItem("nicoleDataReady", "true");
+    localStorage.setItem("nicoleDataTimestamp", Date.now().toString());
+    
+    console.log("[Nicole Giftee] Data stored in localStorage with keys: nicoleCollectedData, nicoleGifteeData, nicoleDataReady, nicoleDataTimestamp");
     
     setTimeout(() => {
       onComplete({ 
@@ -95,7 +117,10 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
         return (
           <NameInputStep
             name={collectedData.name}
-            onNameChange={(name) => setCollectedData(prev => ({ ...prev, name }))}
+            onNameChange={(name) => {
+              console.log("[Nicole Giftee] Name changed:", name);
+              setCollectedData(prev => ({ ...prev, name }));
+            }}
             onContinue={() => setStep(1)}
             onBack={onBack}
             conversationHistory={conversationHistory}

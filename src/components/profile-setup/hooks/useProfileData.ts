@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
@@ -42,19 +41,24 @@ export const useProfileData = () => {
         
         console.log("[Profile Setup] Initializing profile data...");
         
-        // Enhanced Nicole data loading with better error handling
-        const nicoleDataStr = localStorage.getItem("nicoleCollectedData");
+        // Enhanced Nicole data loading with multiple sources
+        const nicoleDataStr = localStorage.getItem("nicoleCollectedData") || localStorage.getItem("nicoleGifteeData");
         const nicoleDataReady = localStorage.getItem("nicoleDataReady") === "true";
+        const nicoleTimestamp = localStorage.getItem("nicoleDataTimestamp");
         
         let nicoleData = null;
         if (nicoleDataStr && nicoleDataReady) {
           try {
             nicoleData = JSON.parse(nicoleDataStr);
             console.log("[Profile Setup] Found Nicole collected data:", nicoleData);
+            console.log("[Profile Setup] Nicole data timestamp:", nicoleTimestamp);
           } catch (e) {
             console.error("[Profile Setup] Error parsing Nicole data:", e);
+            // Clear corrupted data
             localStorage.removeItem("nicoleCollectedData");
+            localStorage.removeItem("nicoleGifteeData");
             localStorage.removeItem("nicoleDataReady");
+            localStorage.removeItem("nicoleDataTimestamp");
           }
         }
         
@@ -69,12 +73,14 @@ export const useProfileData = () => {
           console.error("[Profile Setup] Error loading profile:", error);
         }
         
+        console.log("[Profile Setup] Existing profile:", existingProfile);
+        
         // Generate username if not available
         const username = existingProfile?.username || 
           (user.email ? user.email.split('@')[0] : '') ||
           `user_${Date.now().toString(36)}`;
         
-        // Initialize base profile data
+        // Initialize base profile data from existing profile
         let mergedData: ProfileData = {
           name: existingProfile?.name || "",
           username: username,
@@ -94,51 +100,77 @@ export const useProfileData = () => {
           data_sharing_settings: existingProfile?.data_sharing_settings || getDefaultDataSharingSettings()
         };
 
-        // Enhanced Nicole data integration
+        // Enhanced Nicole data integration with priority to Nicole data
         if (nicoleData && nicoleData.profile_data) {
-          console.log("[Profile Setup] Merging Nicole data into profile...");
+          console.log("[Profile Setup] Merging Nicole data with priority...");
           const profileData = nicoleData.profile_data;
           
-          // Use Nicole's name if profile name is empty
-          if (!mergedData.name && profileData.name) {
+          // Apply Nicole data with higher priority
+          if (profileData.name) {
             mergedData.name = profileData.name;
-            console.log("[Profile Setup] Set name from Nicole:", profileData.name);
+            console.log("[Profile Setup] Applied name from Nicole:", profileData.name);
           }
           
-          // Use Nicole's birthday if profile dob is empty - convert MM-DD to proper format
-          if (!mergedData.dob && profileData.dob) {
-            mergedData.dob = profileData.dob;
-            console.log("[Profile Setup] Set birthday from Nicole:", profileData.dob);
+          if (profileData.dob) {
+            // Handle different date formats from Nicole
+            let formattedDob = profileData.dob;
+            if (profileData.dob.includes('-') && profileData.dob.length > 5) {
+              // If it's in YYYY-MM-DD format, keep as is
+              formattedDob = profileData.dob;
+            } else if (profileData.dob.match(/^\d{2}-\d{2}$/)) {
+              // If it's MM-DD format, add current year
+              formattedDob = `${new Date().getFullYear()}-${profileData.dob}`;
+            }
+            mergedData.dob = formattedDob;
+            console.log("[Profile Setup] Applied birthday from Nicole:", formattedDob);
           }
           
-          // Use Nicole's gift preferences if profile has none
-          if ((!mergedData.gift_preferences || mergedData.gift_preferences.length === 0) && 
-              profileData.gift_preferences && Array.isArray(profileData.gift_preferences)) {
+          if (profileData.bio) {
+            mergedData.bio = profileData.bio;
+            console.log("[Profile Setup] Applied bio from Nicole:", profileData.bio);
+          }
+          
+          if (profileData.gift_preferences && Array.isArray(profileData.gift_preferences)) {
             mergedData.gift_preferences = profileData.gift_preferences;
-            console.log("[Profile Setup] Set gift preferences from Nicole:", profileData.gift_preferences);
+            console.log("[Profile Setup] Applied gift preferences from Nicole:", profileData.gift_preferences);
           }
 
-          // Use Nicole's important dates if profile has none
-          if ((!mergedData.important_dates || mergedData.important_dates.length === 0) && 
-              profileData.important_dates && Array.isArray(profileData.important_dates)) {
+          if (profileData.interests && Array.isArray(profileData.interests)) {
+            // Convert interests to gift preferences if needed
+            if (!mergedData.gift_preferences || mergedData.gift_preferences.length === 0) {
+              mergedData.gift_preferences = profileData.interests.map(interest => ({
+                category: interest,
+                importance: 'medium'
+              }));
+              console.log("[Profile Setup] Converted interests to gift preferences:", mergedData.gift_preferences);
+            }
+          }
+
+          if (profileData.important_dates && Array.isArray(profileData.important_dates)) {
             mergedData.important_dates = profileData.important_dates;
-            console.log("[Profile Setup] Set important dates from Nicole:", profileData.important_dates);
+            console.log("[Profile Setup] Applied important dates from Nicole:", profileData.important_dates);
           }
 
-          // Generate a bio if none exists
-          if (!mergedData.bio && profileData.name) {
-            mergedData.bio = `Hi, I'm ${profileData.name}! I'm here to make gift giving and receiving easier.`;
-            console.log("[Profile Setup] Generated bio for Nicole user");
+          if (profileData.shipping_address) {
+            mergedData.shipping_address = { ...mergedData.shipping_address, ...profileData.shipping_address };
+            console.log("[Profile Setup] Applied shipping address from Nicole");
+          }
+
+          if (profileData.data_sharing_settings) {
+            mergedData.data_sharing_settings = { ...mergedData.data_sharing_settings, ...profileData.data_sharing_settings };
+            console.log("[Profile Setup] Applied data sharing settings from Nicole");
           }
         }
 
         console.log("[Profile Setup] Final merged profile data:", mergedData);
         setProfileData(mergedData);
         
-        // Clear Nicole data after successful merge
+        // Clear Nicole data after successful merge to prevent reuse
         if (nicoleData) {
           localStorage.removeItem("nicoleCollectedData");
+          localStorage.removeItem("nicoleGifteeData");
           localStorage.removeItem("nicoleDataReady");
+          localStorage.removeItem("nicoleDataTimestamp");
           console.log("[Profile Setup] Cleared Nicole data after successful merge");
         }
       } catch (error) {

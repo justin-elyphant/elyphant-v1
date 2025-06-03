@@ -16,7 +16,7 @@ type SettingsTab = "general" | "notifications" | "privacy";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
-  const { profile, loading } = useProfile();
+  const { profile, loading, refreshProfile } = useProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -28,6 +28,24 @@ const Settings = () => {
       navigate("/signin", { replace: true });
     }
   }, [user, loading, navigate]);
+
+  // Refresh profile data when settings page loads
+  React.useEffect(() => {
+    const profileCompleted = localStorage.getItem("profileCompleted") === "true";
+    const profileCompletedTimestamp = localStorage.getItem("profileCompletedTimestamp");
+    
+    if (user && (profileCompleted || profileCompletedTimestamp)) {
+      console.log("[Settings] Profile completion detected, refreshing profile data");
+      refreshProfile().then(() => {
+        // Clear completion flags after refresh
+        localStorage.removeItem("profileCompleted");
+        localStorage.removeItem("profileCompletedTimestamp");
+      });
+    } else if (user && !profile && !loading) {
+      console.log("[Settings] No profile data loaded, triggering refresh");
+      refreshProfile();
+    }
+  }, [user, profile, loading, refreshProfile]);
 
   // Show loading with timeout
   if (loading && user) {

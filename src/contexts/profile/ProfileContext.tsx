@@ -78,17 +78,44 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   }, [debouncedFetchProfile]);
 
+  // Enhanced profile completion detection
+  useEffect(() => {
+    const profileCompleted = localStorage.getItem("profileCompleted") === "true";
+    const profileCompletedTimestamp = localStorage.getItem("profileCompletedTimestamp");
+    const timeSinceLastFetch = lastFetchTime ? Date.now() - lastFetchTime : Infinity;
+    const isInSignupFlow = window.location.pathname.includes('/signup');
+    
+    // If profile was just completed and enough time has passed, refresh the data
+    if (profileCompleted && 
+        profileCompletedTimestamp && 
+        timeSinceLastFetch > 5000 && 
+        !fetchingRef.current &&
+        !isInSignupFlow) {
+      const completedTime = parseInt(profileCompletedTimestamp);
+      const timeSinceCompletion = Date.now() - completedTime;
+      
+      // If completion was recent (within 30 seconds), refresh
+      if (timeSinceCompletion < 30000) {
+        console.log("[ProfileContext] Profile recently completed, refreshing data");
+        debouncedFetchProfile().then(() => {
+          // Clear the completion flag after refresh
+          localStorage.removeItem("profileCompleted");
+          localStorage.removeItem("profileCompletedTimestamp");
+        });
+      }
+    }
+  }, [debouncedFetchProfile, lastFetchTime]);
+
   // Handle onboarding completion signals with more careful timing
   useEffect(() => {
     const isNewSignup = localStorage.getItem("newSignUp") === "true";
     const isProfileSetupLoading = localStorage.getItem("profileSetupLoading") === "true";
     const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
-    const profileCompleted = localStorage.getItem("profileCompleted") === "true";
     const timeSinceLastFetch = lastFetchTime ? Date.now() - lastFetchTime : Infinity;
     const isInSignupFlow = window.location.pathname.includes('/signup');
     
     // Only fetch if there's a clear signal AND enough time has passed AND no profile yet AND not in signup flow
-    if ((isProfileSetupLoading || onboardingComplete || profileCompleted) && 
+    if ((isProfileSetupLoading || onboardingComplete) && 
         timeSinceLastFetch > 15000 && 
         !profile && 
         !fetchingRef.current &&

@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 
-const ProfileSetup = () => {
+const ProfileSetup: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const {

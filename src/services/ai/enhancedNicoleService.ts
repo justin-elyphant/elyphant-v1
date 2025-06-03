@@ -70,15 +70,20 @@ export class EnhancedNicoleService {
         return [];
       }
 
-      return (connections || []).map(conn => ({
-        id: conn.connected_user_id,
-        name: conn.profiles?.name || 'Unknown',
-        email: conn.profiles?.email,
-        interests: conn.profiles?.interests || [],
-        wishlists: conn.profiles?.wishlists || [],
-        relationship_type: conn.relationship_type,
-        upcoming_occasions: this.extractUpcomingOccasions(conn.profiles?.important_dates)
-      }));
+      return (connections || []).map(conn => {
+        // Handle the case where profiles might be an array or single object
+        const profile = Array.isArray(conn.profiles) ? conn.profiles[0] : conn.profiles;
+        
+        return {
+          id: conn.connected_user_id,
+          name: profile?.name || 'Unknown',
+          email: profile?.email,
+          interests: profile?.interests || [],
+          wishlists: profile?.wishlists || [],
+          relationship_type: conn.relationship_type,
+          upcoming_occasions: this.extractUpcomingOccasions(profile?.important_dates)
+        };
+      });
     } catch (error) {
       console.error('Error in getUserConnections:', error);
       return [];

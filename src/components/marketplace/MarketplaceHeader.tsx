@@ -22,32 +22,13 @@ const MarketplaceHeader = ({
   const searchParam = searchParams.get("search");
   const categoryParam = searchParams.get("category") || currentCategory;
   
-  // Determine what to display based on current state
-  const getDisplayInfo = () => {
-    // Prioritize search over category if both exist
-    if (searchParam) {
-      return {
-        pageTitle: `Search results for "${searchParam}"`,
-        subtitle: `Found ${filteredProducts.length} items matching your search`
-      };
-    }
-    
-    if (categoryParam) {
-      const categoryName = getCategoryName(categoryParam);
-      return {
-        pageTitle: categoryName,
-        subtitle: `Browse our collection of ${categoryName.toLowerCase()}`
-      };
-    }
-    
-    // Default state
-    return {
-      pageTitle: "Gift Marketplace",
-      subtitle: "Discover the perfect gifts for every occasion"
-    };
-  };
-
-  const { pageTitle, subtitle } = getDisplayInfo();
+  // Only show header content when there's no active search or category
+  // since we have the "Showing results for: x" section that handles this
+  const shouldShowHeader = !searchParam && !categoryParam;
+  
+  if (!shouldShowHeader) {
+    return null;
+  }
 
   return (
     <div className="mb-6">
@@ -56,7 +37,7 @@ const MarketplaceHeader = ({
           className={`font-sans font-semibold text-gray-900
             ${isMobile ? 'mb-2 text-lg text-center w-full' : 'text-xl md:text-2xl'}`}
         >
-          {pageTitle}
+          Gift Marketplace
         </h1>
         {totalResults !== undefined && (
           <div className="text-sm text-muted-foreground">
@@ -64,11 +45,9 @@ const MarketplaceHeader = ({
           </div>
         )}
       </div>
-      {subtitle && (
-        <p className={`text-sm text-muted-foreground ${isMobile ? "text-center" : ""}`}>
-          {subtitle}
-        </p>
-      )}
+      <p className={`text-sm text-muted-foreground ${isMobile ? "text-center" : ""}`}>
+        Discover the perfect gifts for every occasion
+      </p>
     </div>
   );
 };

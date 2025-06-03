@@ -9,19 +9,18 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { Smartphone, Home, Shirt, Dumbbell, Gamepad2, Heart, Baby, Coffee, Book, Music } from "lucide-react";
 
 const categories = [
-  { name: "Tech", icon: Smartphone, param: "electronics" },
-  { name: "Home", icon: Home, param: "home" },
-  { name: "Fashion", icon: Shirt, param: "fashion" },
-  { name: "Sports", icon: Dumbbell, param: "sports" },
-  { name: "Gaming", icon: Gamepad2, param: "gaming" },
-  { name: "Beauty", icon: Heart, param: "beauty" },
-  { name: "Baby", icon: Baby, param: "baby" },
-  { name: "Kitchen", icon: Coffee, param: "kitchen" },
-  { name: "Books", icon: Book, param: "books" },
-  { name: "Music", icon: Music, param: "music" },
+  { name: "Tech", emoji: "📱", param: "electronics" },
+  { name: "Home", emoji: "🏠", param: "home" },
+  { name: "Fashion", emoji: "👕", param: "fashion" },
+  { name: "Sports", emoji: "🏃‍♂️", param: "sports" },
+  { name: "Gaming", emoji: "🎮", param: "gaming" },
+  { name: "Beauty", emoji: "💄", param: "beauty" },
+  { name: "Baby", emoji: "👶", param: "baby" },
+  { name: "Kitchen", emoji: "☕", param: "kitchen" },
+  { name: "Books", emoji: "📚", param: "books" },
+  { name: "Music", emoji: "🎵", param: "music" },
 ];
 
 interface IntegratedSearchSectionProps {
@@ -98,7 +97,7 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
                       className="whitespace-nowrap h-8 px-3 flex items-center gap-1.5 text-xs"
                       onClick={() => handleCategoryClick(category.param)}
                     >
-                      <category.icon className="h-3.5 w-3.5" />
+                      <span className="text-sm">{category.emoji}</span>
                       {category.name}
                     </Button>
                   </CarouselItem>
@@ -115,7 +114,7 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
                   className="h-8 px-3 flex items-center gap-1.5 text-xs"
                   onClick={() => handleCategoryClick(category.param)}
                 >
-                  <category.icon className="h-3.5 w-3.5" />
+                  <span className="text-sm">{category.emoji}</span>
                   {category.name}
                 </Button>
               ))}

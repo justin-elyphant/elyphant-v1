@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,11 +118,11 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
             <NicoleChatBubble
               message={{
                 role: 'assistant',
-                content: "Excellent choice! Creating wishlists is such a thoughtful way to help others know what you'd truly appreciate. Let me get to know you better so I can help you build the perfect wishlist!"
+                content: "Wonderful! Creating a wishlist is such a thoughtful way to help others know what you'd truly appreciate. Let me get to know you better so I can help you build the perfect wishlist! What's your name?"
               }}
             />
             <div className="bg-gray-50 p-4 rounded-lg">
-              <Label htmlFor="name">What's your name?</Label>
+              <Label htmlFor="name">Your name</Label>
               <Input
                 id="name"
                 value={collectedData.name}

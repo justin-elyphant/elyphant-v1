@@ -7,7 +7,6 @@ import MarketplaceLoading from "./MarketplaceLoading";
 import DynamicFiltersSidebar from "./DynamicFiltersSidebar";
 import MobileFiltersDrawer from "./MobileFiltersDrawer";
 import BleedFirstLayout from "./BleedFirstLayout";
-import ResultsSummaryBar from "./ResultsSummaryBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDynamicFilters } from "@/hooks/useDynamicFilters";
 import { useProductRecommendations } from "@/hooks/useProductRecommendations";
@@ -118,12 +117,6 @@ const MarketplaceContent = ({
   
   return (
     <BleedFirstLayout className="mt-6">
-      {/* Results Summary Bar - now with search term */}
-      <ResultsSummaryBar 
-        totalItems={filteredProducts.length}
-        searchTerm={searchTerm}
-      />
-      
       {/* Top controls bar with responsive container for readability */}
       <div className="container mx-auto px-4 mb-4">
         <MarketplaceFilters 

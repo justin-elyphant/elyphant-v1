@@ -1,29 +1,39 @@
 
 import { useState, useCallback } from "react";
-import { chatWithNicole, generateSearchQuery, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
+import { useAuth } from "@/contexts/auth";
+import { EnhancedNicoleService, EnhancedNicoleContext, WishlistRecommendation } from "@/services/ai/enhancedNicoleService";
+import { chatWithNicole, generateSearchQuery, NicoleMessage } from "@/services/ai/nicoleAiService";
 
-export interface ConversationMessage {
-  type: "nicole" | "user";
+export interface EnhancedConversationMessage {
+  type: "nicole" | "user" | "wishlist_display" | "product_suggestions";
   content: string;
   timestamp: Date;
+  data?: {
+    wishlists?: any[];
+    recommendations?: WishlistRecommendation[];
+    searchSuggestions?: string[];
+  };
 }
 
-export type ConversationStep = "greeting" | "chatting" | "generating" | "complete";
+export type EnhancedConversationStep = "greeting" | "discovery" | "wishlist_review" | "alternatives" | "generating" | "complete";
 
 export const useEnhancedNicoleConversation = () => {
-  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
-  const [currentStep, setCurrentStep] = useState<ConversationStep>("greeting");
-  const [context, setContext] = useState<NicoleContext>({});
+  const { user } = useAuth();
+  const [conversation, setConversation] = useState<EnhancedConversationMessage[]>([]);
+  const [currentStep, setCurrentStep] = useState<EnhancedConversationStep>("greeting");
+  const [context, setContext] = useState<EnhancedNicoleContext>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<NicoleMessage[]>([]);
 
-  const addMessage = useCallback((message: ConversationMessage) => {
+  const addMessage = useCallback((message: EnhancedConversationMessage) => {
     setConversation(prev => [...prev, message]);
   }, []);
 
   const sendMessage = useCallback(async (userMessage: string) => {
+    if (!user) return;
+
     // Add user message to conversation
-    const userConversationMessage: ConversationMessage = {
+    const userConversationMessage: EnhancedConversationMessage = {
       type: "user",
       content: userMessage,
       timestamp: new Date()
@@ -38,19 +48,67 @@ export const useEnhancedNicoleConversation = () => {
     setConversationHistory(prev => [...prev, userAiMessage]);
 
     setIsGenerating(true);
-    setCurrentStep("chatting");
 
     try {
-      // Get AI response
-      const aiResponse = await chatWithNicole(userMessage, conversationHistory, context);
+      // Enhanced conversation analysis
+      const analysis = await EnhancedNicoleService.analyzeConversation(
+        userMessage,
+        context,
+        user.id
+      );
+
+      // Update context with new information
+      setContext(prev => ({ ...prev, conversationPhase: analysis.phase as any }));
+
+      // Get AI response with enhanced context
+      const enhancedContext = {
+        ...context,
+        connections: context.connections,
+        recipientWishlists: context.recipientWishlists,
+        recommendations: analysis.recommendations
+      };
+
+      const aiResponse = await chatWithNicole(userMessage, conversationHistory, enhancedContext);
       
       // Add Nicole's response to conversation
-      const nicoleConversationMessage: ConversationMessage = {
+      const nicoleConversationMessage: EnhancedConversationMessage = {
         type: "nicole",
         content: aiResponse.response,
         timestamp: new Date()
       };
       addMessage(nicoleConversationMessage);
+
+      // Show wishlist items if applicable
+      if (analysis.shouldShowWishlist && analysis.recommendations.length > 0) {
+        const wishlistMessage: EnhancedConversationMessage = {
+          type: "wishlist_display",
+          content: "Here are the best matches from their wishlist:",
+          timestamp: new Date(),
+          data: {
+            recommendations: analysis.recommendations.slice(0, 5) // Show top 5
+          }
+        };
+        addMessage(wishlistMessage);
+      }
+
+      // Generate product suggestions if needed
+      if (analysis.shouldSearchProducts && context.recipientProfile) {
+        const searchSuggestions = await EnhancedNicoleService.generateGPTSuggestions(
+          context.recipientProfile,
+          enhancedContext,
+          context.recipientWishlists || []
+        );
+
+        const suggestionsMessage: EnhancedConversationMessage = {
+          type: "product_suggestions",
+          content: "Based on their interests, here are some thoughtful alternatives:",
+          timestamp: new Date(),
+          data: {
+            searchSuggestions
+          }
+        };
+        addMessage(suggestionsMessage);
+      }
 
       // Add to conversation history
       const nicoleAiMessage: NicoleMessage = {
@@ -59,31 +117,47 @@ export const useEnhancedNicoleConversation = () => {
       };
       setConversationHistory(prev => [...prev, nicoleAiMessage]);
 
-      // Update step based on AI response
-      if (aiResponse.shouldGenerateSearch) {
-        setCurrentStep("complete");
-      } else if (aiResponse.conversationContinues) {
-        setCurrentStep("chatting");
+      // Update step based on analysis
+      switch (analysis.phase) {
+        case 'discovery':
+          setCurrentStep("discovery");
+          break;
+        case 'wishlist_review':
+          setCurrentStep("wishlist_review");
+          break;
+        case 'alternatives':
+          setCurrentStep("alternatives");
+          break;
+        default:
+          setCurrentStep("discovery");
       }
 
     } catch (error) {
-      console.error("Error getting AI response:", error);
+      console.error("Error in enhanced conversation:", error);
       
       // Add fallback message
-      const fallbackMessage: ConversationMessage = {
+      const fallbackMessage: EnhancedConversationMessage = {
         type: "nicole",
         content: "I'm having trouble right now. Let me help you with a basic search instead. What are you looking for?",
         timestamp: new Date()
       };
       addMessage(fallbackMessage);
       
-      setCurrentStep("chatting");
+      setCurrentStep("discovery");
     } finally {
       setIsGenerating(false);
     }
-  }, [conversationHistory, context, addMessage]);
+  }, [user, conversationHistory, context, addMessage]);
 
   const generateSearchQueryFromContext = useCallback(async (): Promise<string> => {
+    if (context.recipientProfile && context.recipientWishlists) {
+      const suggestions = await EnhancedNicoleService.generateGPTSuggestions(
+        context.recipientProfile,
+        context,
+        context.recipientWishlists || []
+      );
+      return suggestions[0] || generateSearchQuery(context);
+    }
     return generateSearchQuery(context);
   }, [context]);
 
@@ -96,19 +170,53 @@ export const useEnhancedNicoleConversation = () => {
   }, []);
 
   const startConversation = useCallback(async (initialQuery?: string) => {
+    if (!user) return;
+
+    // Load user connections at the start
+    const connections = await EnhancedNicoleService.getUserConnections(user.id);
+    setContext(prev => ({ ...prev, connections }));
+
     if (initialQuery) {
       await sendMessage(initialQuery);
     } else {
-      // Add initial greeting
-      const greetingMessage: ConversationMessage = {
+      // Enhanced greeting with connection awareness
+      let greetingContent = "Hi! I'm Nicole, your AI gift assistant. I'll help you find the perfect gift.";
+      
+      if (connections.length > 0) {
+        greetingContent += ` I can see you're connected to ${connections.length} people. Who are you shopping for today?`;
+      } else {
+        greetingContent += " What can I help you find today?";
+      }
+
+      const greetingMessage: EnhancedConversationMessage = {
         type: "nicole",
-        content: "Hi! I'm Nicole, your AI gift assistant. I'll help you find the perfect gift. What can I help you find today?",
+        content: greetingContent,
         timestamp: new Date()
       };
       addMessage(greetingMessage);
-      setCurrentStep("chatting");
+      setCurrentStep("discovery");
     }
-  }, [sendMessage, addMessage]);
+  }, [user, sendMessage, addMessage]);
+
+  const selectWishlistItem = useCallback((recommendation: WishlistRecommendation) => {
+    const message: EnhancedConversationMessage = {
+      type: "nicole",
+      content: `Great choice! "${recommendation.item.title}" ${recommendation.reasoning}. Would you like me to help you find this item or look for similar alternatives?`,
+      timestamp: new Date()
+    };
+    addMessage(message);
+    setCurrentStep("generating");
+  }, [addMessage]);
+
+  const searchByQuery = useCallback((query: string) => {
+    const message: EnhancedConversationMessage = {
+      type: "nicole",
+      content: `Perfect! Let me search for "${query}" and find the best options for you.`,
+      timestamp: new Date()
+    };
+    addMessage(message);
+    setCurrentStep("generating");
+  }, [addMessage]);
 
   return {
     conversation,
@@ -118,6 +226,8 @@ export const useEnhancedNicoleConversation = () => {
     sendMessage,
     generateSearchQuery: generateSearchQueryFromContext,
     resetConversation,
-    startConversation
+    startConversation,
+    selectWishlistItem,
+    searchByQuery
   };
 };

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Gift, Calendar } from "lucide-react";
 import { differenceInCalendarDays, format, isToday, isTomorrow } from "date-fns";
@@ -45,9 +44,23 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
     daysDisplay = `${days} days away!`;
   }
 
-  // Button: search for event gifts
+  // Generate specific button text and search query for the holiday
+  const getButtonText = () => {
+    // For holidays, use the specific holiday name
+    if (event.type === "holiday") {
+      return `Shop ${event.name} Gifts`;
+    }
+    // For other events like birthdays, keep generic
+    return "Shop Gifts";
+  };
+
   const handleShopGifts = () => {
-    const query = encodeURIComponent(`${event.name} gifts`);
+    // Create search query specific to the holiday
+    const searchQuery = event.type === "holiday" 
+      ? `${event.name} gifts`
+      : `${event.name} gifts`;
+    
+    const query = encodeURIComponent(searchQuery);
     navigate(`/marketplace?search=${query}`);
   };
 
@@ -70,7 +83,7 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
           className="whitespace-nowrap text-[#7E69AB] border-[#E6E0F5] hover:bg-[#F7F4FC] text-xs"
           onClick={handleShopGifts}
         >
-          Shop Gifts
+          {getButtonText()}
         </Button>
       </div>
     </GlassCard>

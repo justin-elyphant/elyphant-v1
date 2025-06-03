@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -43,28 +44,28 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
-  // Enhanced initialization with error handling and timeout protection
+  // Enhanced initialization with better error handling and logging
   useEffect(() => {
     if (!isOpen) return;
 
+    console.log("Nicole initialization starting...");
+
     const initializeTimer = setTimeout(() => {
       try {
-        if (!isInitialized) {
-          console.log("Initializing Nicole onboarding with enhanced error handling");
-          
-          triggerHapticFeedback('light');
-          setConversationHistory([{
-            id: 1,
-            role: 'assistant',
-            content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
-            timestamp: new Date()
-          }]);
-          setIsInitialized(true);
-          setIsLoading(false);
-          setInitializationError(null);
-          
-          console.log("Nicole onboarding initialized successfully");
-        }
+        console.log("Initializing Nicole conversation...");
+        
+        triggerHapticFeedback('light');
+        setConversationHistory([{
+          id: 1,
+          role: 'assistant',
+          content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
+          timestamp: new Date()
+        }]);
+        setIsInitialized(true);
+        setIsLoading(false);
+        setInitializationError(null);
+        
+        console.log("Nicole onboarding initialized successfully");
       } catch (error) {
         console.error("Error initializing Nicole onboarding:", error);
         setInitializationError("Failed to initialize Nicole. Please try again.");
@@ -72,19 +73,21 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
         
         // Auto-fallback after error
         setTimeout(() => {
+          console.log("Auto-closing Nicole due to initialization error");
           onClose();
         }, 2000);
       }
-    }, 300);
+    }, 500); // Increased delay for stability
 
     // Safety timeout for initialization
     const safetyTimer = setTimeout(() => {
       if (!isInitialized && isLoading) {
         console.warn("Nicole initialization timeout - auto-closing");
         setInitializationError("Nicole is taking too long to load.");
+        setIsLoading(false);
         onClose();
       }
-    }, 5000);
+    }, 8000); // Increased timeout
 
     return () => {
       clearTimeout(initializeTimer);
@@ -203,65 +206,90 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
       );
     }
 
-    switch (currentStep) {
-      case "intent-discovery":
-        return (
-          <ConversationalIntentDiscovery
-            conversationHistory={conversationHistory}
-            onIntentDiscovered={handleIntentDiscovered}
-            onAddMessage={addToConversation}
-            onSkip={handleSkip}
-          />
-        );
-      
-      case "giftor-flow":
-        return (
-          <NicoleGiftorFlow
-            conversationHistory={conversationHistory}
-            initialData={onboardingData}
-            onComplete={handleFlowComplete}
-            onAddMessage={addToConversation}
-            onBack={() => setCurrentStep("intent-discovery")}
-          />
-        );
-      
-      case "giftee-flow":
-        return (
-          <NicoleGifteeFlow
-            conversationHistory={conversationHistory}
-            initialData={onboardingData}
-            onComplete={handleFlowComplete}
-            onAddMessage={addToConversation}
-            onBack={() => setCurrentStep("intent-discovery")}
-          />
-        );
-      
-      case "connection-discovery":
-        return (
-          <ConnectionDiscoveryFlow
-            conversationHistory={conversationHistory}
-            userIntent={userIntent}
-            onComplete={handleConnectionsComplete}
-            onAddMessage={addToConversation}
-            onSkip={() => handleConnectionsComplete({})}
-          />
-        );
-      
-      case "completion":
-        return (
-          <div className="text-center p-6">
-            <div className="text-4xl mb-4">🎉</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Welcome to Elyphant!
-            </h3>
-            <p className="text-gray-600">
-              Nicole has everything set up for you. Let's start your gifting journey!
-            </p>
-          </div>
-        );
-      
-      default:
-        return null;
+    try {
+      switch (currentStep) {
+        case "intent-discovery":
+          return (
+            <ConversationalIntentDiscovery
+              conversationHistory={conversationHistory}
+              onIntentDiscovered={handleIntentDiscovered}
+              onAddMessage={addToConversation}
+              onSkip={handleSkip}
+            />
+          );
+        
+        case "giftor-flow":
+          return (
+            <NicoleGiftorFlow
+              conversationHistory={conversationHistory}
+              initialData={onboardingData}
+              onComplete={handleFlowComplete}
+              onAddMessage={addToConversation}
+              onBack={() => setCurrentStep("intent-discovery")}
+            />
+          );
+        
+        case "giftee-flow":
+          return (
+            <NicoleGifteeFlow
+              conversationHistory={conversationHistory}
+              initialData={onboardingData}
+              onComplete={handleFlowComplete}
+              onAddMessage={addToConversation}
+              onBack={() => setCurrentStep("intent-discovery")}
+            />
+          );
+        
+        case "connection-discovery":
+          return (
+            <ConnectionDiscoveryFlow
+              conversationHistory={conversationHistory}
+              userIntent={userIntent}
+              onComplete={handleConnectionsComplete}
+              onAddMessage={addToConversation}
+              onSkip={() => handleConnectionsComplete({})}
+            />
+          );
+        
+        case "completion":
+          return (
+            <div className="text-center p-6">
+              <div className="text-4xl mb-4">🎉</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Welcome to Elyphant!
+              </h3>
+              <p className="text-gray-600">
+                Nicole has everything set up for you. Let's start your gifting journey!
+              </p>
+            </div>
+          );
+        
+        default:
+          return (
+            <div className="text-center p-8">
+              <p className="text-gray-600">Unknown step: {currentStep}</p>
+              <button 
+                onClick={() => setCurrentStep("intent-discovery")}
+                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+              >
+                Restart
+              </button>
+            </div>
+          );
+      }
+    } catch (error) {
+      console.error("Error rendering step:", error);
+      return (
+        <div className="text-center p-8">
+          <p className="text-red-500 mb-4">Something went wrong</p>
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+          >
+            Continue without Nicole
+          </button>
+        </div>
+      );
     }
   };
 

@@ -89,10 +89,18 @@ const MarketplaceContent = ({
       updateFilter('rating', legacyFilters.rating);
     }
     if (legacyFilters.freeShipping !== undefined) {
-      updateFilter('freeShipping', Boolean(legacyFilters.freeShipping));
+      // Properly convert to boolean - handle both string and boolean values
+      const freeShippingValue = typeof legacyFilters.freeShipping === 'string' 
+        ? legacyFilters.freeShipping === 'true' 
+        : Boolean(legacyFilters.freeShipping);
+      updateFilter('freeShipping', freeShippingValue);
     }
     if (legacyFilters.favoritesOnly !== undefined) {
-      updateFilter('favoritesOnly', Boolean(legacyFilters.favoritesOnly));
+      // Properly convert to boolean - handle both string and boolean values
+      const favoritesOnlyValue = typeof legacyFilters.favoritesOnly === 'string'
+        ? legacyFilters.favoritesOnly === 'true'
+        : Boolean(legacyFilters.favoritesOnly);
+      updateFilter('favoritesOnly', favoritesOnlyValue);
     }
     if (legacyFilters.sortBy) {
       updateFilter('sortBy', legacyFilters.sortBy);
@@ -153,8 +161,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: Boolean(filters.freeShipping),
-                favoritesOnly: Boolean(filters.favoritesOnly),
+                freeShipping: filters.freeShipping,
+                favoritesOnly: filters.favoritesOnly,
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}

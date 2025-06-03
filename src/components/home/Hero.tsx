@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +21,8 @@ const Hero = () => {
       // Authenticated user: go to guided experience instead of marketplace
       if (intent === "giftor") {
         // Navigate to marketplace with search mode to encourage intentional shopping
-        navigate("/marketplace?search=gift ideas");
+        // Pass fromHome state to ensure clean filters
+        navigate("/marketplace?search=gift ideas", { state: { fromHome: true } });
       } else {
         navigate("/wishlists");
       }

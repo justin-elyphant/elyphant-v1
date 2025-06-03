@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Gift, Calendar } from "lucide-react";
 import { differenceInCalendarDays, format, isToday, isTomorrow } from "date-fns";
@@ -61,7 +62,8 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
       : `${event.name} gifts`;
     
     const query = encodeURIComponent(searchQuery);
-    navigate(`/marketplace?search=${query}`);
+    // Pass fromHome state to ensure clean filters
+    navigate(`/marketplace?search=${query}`, { state: { fromHome: true } });
   };
 
   return (

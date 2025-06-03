@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceFilters from "./MarketplaceFilters";
 import FiltersSidebar from "./FiltersSidebar";
@@ -34,11 +33,16 @@ const MarketplaceContent = ({
   setShowFilters: propSetShowFilters
 }: MarketplaceContentProps) => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const query = searchParams.get("q") || propSearchTerm || "";
   
-  // Initialize state with proper boolean conversion, but use props if provided
+  // Check if this is a fresh navigation from home page
+  const isFromHomePage = location.state?.fromHome || false;
+  
+  // Initialize state with proper boolean conversion, but reset if coming from home
   const [internalShowFilters, setInternalShowFilters] = useState(() => {
+    if (isFromHomePage) return false; // Always start with filters closed from home
     const saved = localStorage.getItem('showFilters');
     return saved === 'true';
   });
@@ -47,6 +51,7 @@ const MarketplaceContent = ({
   const setShowFilters = propSetShowFilters || setInternalShowFilters;
   
   const [savedFiltersActive, setSavedFiltersActive] = useState(() => {
+    if (isFromHomePage) return false; // Don't use saved filters from home
     const saved = localStorage.getItem('savedFiltersActive');
     return saved === 'true';
   });
@@ -55,16 +60,33 @@ const MarketplaceContent = ({
   const [sortOption, setSortOption] = useState("relevance");
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   
-  // Active filters state
-  const [activeFilters, setActiveFilters] = useState({
-    categories: [] as string[],
-    priceRange: [0, 1000] as [number, number],
-    rating: 0,
-    inStock: false,
-    onSale: false,
-    freeShipping: false,
-    brands: [] as string[],
-    occasion: "",
+  // Active filters state - reset to defaults if coming from home
+  const [activeFilters, setActiveFilters] = useState(() => {
+    if (isFromHomePage) {
+      // Always start with clean filters from home page
+      return {
+        categories: [] as string[],
+        priceRange: [0, 1000] as [number, number],
+        rating: 0,
+        inStock: false,
+        onSale: false,
+        freeShipping: false,
+        brands: [] as string[],
+        occasion: "",
+      };
+    }
+    
+    // Otherwise use saved state
+    return {
+      categories: [] as string[],
+      priceRange: [0, 1000] as [number, number],
+      rating: 0,
+      inStock: false,
+      onSale: false,
+      freeShipping: false,
+      brands: [] as string[],
+      occasion: "",
+    };
   });
 
   // Use optimized search hook
@@ -109,16 +131,26 @@ const MarketplaceContent = ({
     }
   }, [query, optimizedSearch]);
 
-  // Save filter state to localStorage (only for internal state)
+  // Save filter state to localStorage (only for internal state and not from home)
   useEffect(() => {
-    if (propShowFilters === undefined) {
+    if (propShowFilters === undefined && !isFromHomePage) {
       localStorage.setItem('showFilters', internalShowFilters.toString());
     }
-  }, [internalShowFilters, propShowFilters]);
+  }, [internalShowFilters, propShowFilters, isFromHomePage]);
 
   useEffect(() => {
-    localStorage.setItem('savedFiltersActive', savedFiltersActive.toString());
-  }, [savedFiltersActive]);
+    if (!isFromHomePage) {
+      localStorage.setItem('savedFiltersActive', savedFiltersActive.toString());
+    }
+  }, [savedFiltersActive, isFromHomePage]);
+
+  // Clear the fromHome state after initial load to allow normal behavior
+  useEffect(() => {
+    if (isFromHomePage) {
+      // Replace the current history entry to remove the fromHome state
+      window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    }
+  }, [isFromHomePage]);
 
   const handleFilterChange = (newFilters: typeof activeFilters) => {
     setActiveFilters(newFilters);

@@ -27,7 +27,8 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
   const navigate = useNavigate();
 
   const handleCollectionClick = (searchTerm: string) => {
-    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+    // Pass fromHome state to ensure clean filters
+    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, { state: { fromHome: true } });
   };
 
   return (

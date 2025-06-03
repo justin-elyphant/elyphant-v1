@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -81,7 +82,8 @@ const FeaturedOccasions: React.FC = () => {
   const navigate = useNavigate();
 
   const handleOccasionClick = (searchTerm: string) => {
-    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+    // Pass fromHome state to ensure clean filters
+    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, { state: { fromHome: true } });
   };
 
   return (

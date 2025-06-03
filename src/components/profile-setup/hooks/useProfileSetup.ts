@@ -72,15 +72,16 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         (user.email ? user.email.split('@')[0] : '') ||
         `user_${Date.now().toString(36)}`;
 
-      // Format the data for Supabase with proper structure
+      // Enhanced data formatting for Supabase with proper date and important dates handling
       const updateData = {
-        id: user.id, // Ensure ID is included for RLS
+        id: user.id,
         name: profileData.name || '',
         username: username,
         email: profileData.email || user.email || '',
         bio: profileData.bio || `Hi, I'm ${profileData.name || 'there'}!`,
         profile_image: profileData.profile_image || null,
-        dob: profileData.dob || null,
+        // Enhanced birthday handling - ensure it's properly formatted or null
+        dob: profileData.dob ? (profileData.dob.includes('-') ? profileData.dob : null) : null,
         shipping_address: profileData.shipping_address || {
           address_line1: "",
           city: "",
@@ -89,7 +90,12 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
           country: ""
         },
         gift_preferences: profileData.gift_preferences || [],
-        important_dates: profileData.important_dates || [],
+        // Enhanced important dates handling - ensure they're properly formatted
+        important_dates: profileData.important_dates ? profileData.important_dates.map(date => ({
+          title: date.title || date.description || "Important Date",
+          date: date.date,
+          type: date.type || "custom"
+        })) : [],
         data_sharing_settings: profileData.data_sharing_settings || {
           dob: "friends",
           shipping_address: "private",
@@ -114,7 +120,6 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       if (error) {
         console.error("[Profile Setup] Error saving profile:", error);
         
-        // Try to provide more specific error message
         if (error.code === '42501' || error.message.includes('policy')) {
           toast.error("Permission error. Please try logging out and back in.");
         } else if (error.code === '23505') {
@@ -132,7 +137,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileSetupLoading");
       localStorage.removeItem("onboardingComplete");
-      localStorage.removeItem("nicoleCollectedData"); // Ensure this is cleaned up
+      localStorage.removeItem("nicoleCollectedData");
+      localStorage.removeItem("nicoleDataReady");
       localStorage.setItem("profileCompleted", "true");
 
       onComplete();
@@ -148,7 +154,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     console.log("[Profile Setup] Profile setup skipped");
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("profileSetupLoading");
-    localStorage.removeItem("nicoleCollectedData"); // Clean this up too
+    localStorage.removeItem("nicoleCollectedData");
+    localStorage.removeItem("nicoleDataReady");
     localStorage.setItem("profileSkipped", "true");
     
     if (onSkip) {

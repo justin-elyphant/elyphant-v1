@@ -52,25 +52,37 @@ const NicoleGiftorFlow: React.FC<NicoleGiftorFlowProps> = ({
       content: "Perfect! I've gathered everything I need to help you become an amazing gift giver. Your preferences will help me suggest great gifts and connect you with friends and family who'll appreciate your thoughtful choices. Let's get you connected with others!"
     });
 
-    // Standardize the data structure for Profile Setup
+    // Enhanced data structure for Profile Setup with proper formatting
     const standardizedData = {
       name: collectedData.name,
       birthday: collectedData.birthday, // Format: MM-DD
       interests: collectedData.interests,
       userType: 'giftor',
       budget_preference: collectedData.budget_preference,
+      // Add profile data in the exact format Profile Setup expects
       profile_data: {
         name: collectedData.name,
-        dob: collectedData.birthday,
+        dob: collectedData.birthday, // This should match the dob field in Profile Setup
         gift_preferences: collectedData.interests.map(interest => ({
           category: interest,
           importance: 'medium'
-        }))
+        })),
+        // Add important dates if birthday is provided
+        important_dates: collectedData.birthday ? [{
+          title: "Birthday",
+          date: `2024-${collectedData.birthday}`, // Add year for proper date format
+          type: "birthday"
+        }] : []
       }
     };
 
-    console.log("[Nicole Giftor] Collecting standardized data:", standardizedData);
+    console.log("[Nicole Giftor] Collecting enhanced data for Profile Setup:", standardizedData);
+    
+    // Store in localStorage with clear naming
     localStorage.setItem("nicoleCollectedData", JSON.stringify(standardizedData));
+    
+    // Also store a flag to indicate Nicole completed
+    localStorage.setItem("nicoleDataReady", "true");
     
     setTimeout(() => {
       onComplete({ 
@@ -89,7 +101,6 @@ const NicoleGiftorFlow: React.FC<NicoleGiftorFlowProps> = ({
     };
   });
 
-  // Generate days
   const days = Array.from({ length: 31 }, (_, i) => ({
     value: String(i + 1).padStart(2, '0'),
     label: String(i + 1)

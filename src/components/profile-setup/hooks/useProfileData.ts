@@ -40,15 +40,21 @@ export const useProfileData = () => {
       try {
         setIsLoading(true);
         
-        // First check if Nicole collected any data
+        console.log("[Profile Setup] Initializing profile data...");
+        
+        // Enhanced Nicole data loading with better error handling
         const nicoleDataStr = localStorage.getItem("nicoleCollectedData");
+        const nicoleDataReady = localStorage.getItem("nicoleDataReady") === "true";
+        
         let nicoleData = null;
-        if (nicoleDataStr) {
+        if (nicoleDataStr && nicoleDataReady) {
           try {
             nicoleData = JSON.parse(nicoleDataStr);
             console.log("[Profile Setup] Found Nicole collected data:", nicoleData);
           } catch (e) {
             console.error("[Profile Setup] Error parsing Nicole data:", e);
+            localStorage.removeItem("nicoleCollectedData");
+            localStorage.removeItem("nicoleDataReady");
           }
         }
         
@@ -69,7 +75,7 @@ export const useProfileData = () => {
           `user_${Date.now().toString(36)}`;
         
         // Initialize base profile data
-        let mergedData = {
+        let mergedData: ProfileData = {
           name: existingProfile?.name || "",
           username: username,
           bio: existingProfile?.bio || "",
@@ -88,41 +94,51 @@ export const useProfileData = () => {
           data_sharing_settings: existingProfile?.data_sharing_settings || getDefaultDataSharingSettings()
         };
 
-        // If Nicole has data, use it to pre-populate empty fields
-        if (nicoleData) {
-          console.log("[Profile Setup] Pre-populating with Nicole data:", nicoleData);
+        // Enhanced Nicole data integration
+        if (nicoleData && nicoleData.profile_data) {
+          console.log("[Profile Setup] Merging Nicole data into profile...");
+          const profileData = nicoleData.profile_data;
           
           // Use Nicole's name if profile name is empty
-          if (!mergedData.name && nicoleData.name) {
-            mergedData.name = nicoleData.name;
+          if (!mergedData.name && profileData.name) {
+            mergedData.name = profileData.name;
+            console.log("[Profile Setup] Set name from Nicole:", profileData.name);
           }
           
-          // Use Nicole's birthday if profile dob is empty
-          if (!mergedData.dob && nicoleData.birthday) {
-            mergedData.dob = nicoleData.birthday;
+          // Use Nicole's birthday if profile dob is empty - convert MM-DD to proper format
+          if (!mergedData.dob && profileData.dob) {
+            mergedData.dob = profileData.dob;
+            console.log("[Profile Setup] Set birthday from Nicole:", profileData.dob);
           }
           
-          // Use Nicole's interests if profile has no gift preferences
+          // Use Nicole's gift preferences if profile has none
           if ((!mergedData.gift_preferences || mergedData.gift_preferences.length === 0) && 
-              nicoleData.interests && Array.isArray(nicoleData.interests)) {
-            mergedData.gift_preferences = nicoleData.interests.map((interest: string) => ({ 
-              category: interest, 
-              importance: "medium" 
-            }));
+              profileData.gift_preferences && Array.isArray(profileData.gift_preferences)) {
+            mergedData.gift_preferences = profileData.gift_preferences;
+            console.log("[Profile Setup] Set gift preferences from Nicole:", profileData.gift_preferences);
+          }
+
+          // Use Nicole's important dates if profile has none
+          if ((!mergedData.important_dates || mergedData.important_dates.length === 0) && 
+              profileData.important_dates && Array.isArray(profileData.important_dates)) {
+            mergedData.important_dates = profileData.important_dates;
+            console.log("[Profile Setup] Set important dates from Nicole:", profileData.important_dates);
           }
 
           // Generate a bio if none exists
-          if (!mergedData.bio && nicoleData.name) {
-            mergedData.bio = `Hi, I'm ${nicoleData.name}! I'm here to make gift giving and receiving easier.`;
+          if (!mergedData.bio && profileData.name) {
+            mergedData.bio = `Hi, I'm ${profileData.name}! I'm here to make gift giving and receiving easier.`;
+            console.log("[Profile Setup] Generated bio for Nicole user");
           }
         }
 
-        console.log("[Profile Setup] Setting merged profile data:", mergedData);
+        console.log("[Profile Setup] Final merged profile data:", mergedData);
         setProfileData(mergedData);
         
-        // Clear Nicole data after using it to prevent re-use
+        // Clear Nicole data after successful merge
         if (nicoleData) {
           localStorage.removeItem("nicoleCollectedData");
+          localStorage.removeItem("nicoleDataReady");
           console.log("[Profile Setup] Cleared Nicole data after successful merge");
         }
       } catch (error) {

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,25 +51,37 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
       content: "Wonderful! Your wishlist profile is ready to go. I've set up everything so friends and family can easily find gifts you'll love. Now let's connect you with others so they know about your preferences and upcoming occasions!"
     });
 
-    // Standardize the data structure for Profile Setup
+    // Enhanced data structure for Profile Setup with proper formatting
     const standardizedData = {
       name: collectedData.name,
       birthday: collectedData.birthday, // Format: MM-DD
       interests: collectedData.interests,
       userType: 'giftee',
       wishlist_preferences: collectedData.wishlist_preferences,
+      // Add profile data in the exact format Profile Setup expects
       profile_data: {
         name: collectedData.name,
-        dob: collectedData.birthday,
+        dob: collectedData.birthday, // This should match the dob field in Profile Setup
         gift_preferences: collectedData.interests.map(interest => ({
           category: interest,
           importance: 'medium'
-        }))
+        })),
+        // Add important dates if birthday is provided
+        important_dates: collectedData.birthday ? [{
+          title: "Birthday",
+          date: `2024-${collectedData.birthday}`, // Add year for proper date format
+          type: "birthday"
+        }] : []
       }
     };
 
-    console.log("[Nicole Giftee] Collecting standardized data:", standardizedData);
+    console.log("[Nicole Giftee] Collecting enhanced data for Profile Setup:", standardizedData);
+    
+    // Store in localStorage with clear naming
     localStorage.setItem("nicoleCollectedData", JSON.stringify(standardizedData));
+    
+    // Also store a flag to indicate Nicole completed
+    localStorage.setItem("nicoleDataReady", "true");
     
     setTimeout(() => {
       onComplete({ 

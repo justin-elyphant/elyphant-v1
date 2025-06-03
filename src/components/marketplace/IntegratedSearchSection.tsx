@@ -35,6 +35,7 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
   const isMobile = useIsMobile();
   const { recentSearches } = useUserSearchHistory();
   const selectedCategory = searchParams.get("category");
+  const currentSearch = searchParams.get("search");
 
   const handleCategoryClick = (categoryParam: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -44,12 +45,27 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
       newParams.delete("category");
     } else {
       newParams.set("category", categoryParam);
-      // Clear search when selecting a category
+      // Clear search when selecting a category to avoid conflicts
       newParams.delete("search");
     }
     
     setSearchParams(newParams, { replace: true });
   };
+
+  const handleRecentSearchClick = (term: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("search", term);
+    // Clear category when performing a search to avoid conflicts
+    newParams.delete("category");
+    setSearchParams(newParams, { replace: true });
+    
+    if (onRecentSearchClick) {
+      onRecentSearchClick(term);
+    }
+  };
+
+  // Only show recent searches if there's no active category or search
+  const shouldShowRecentSearches = recentSearches.length > 0 && !currentSearch;
 
   return (
     <div className="bg-white border-b border-gray-100">
@@ -58,6 +74,11 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm font-medium text-gray-700">Categories:</span>
+            {selectedCategory && (
+              <span className="text-xs text-gray-500">
+                (Clear to see other options)
+              </span>
+            )}
           </div>
           
           {isMobile ? (
@@ -102,8 +123,8 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
           )}
         </div>
 
-        {/* Recent Searches Section */}
-        {recentSearches.length > 0 && (
+        {/* Recent Searches Section - only show when appropriate */}
+        {shouldShowRecentSearches && (
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-medium text-gray-700">Recent:</span>
@@ -122,7 +143,7 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
                     <button
                       className="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-purple-700 font-medium text-xs shadow-sm border border-purple-200 hover:bg-purple-100 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 whitespace-nowrap"
                       type="button"
-                      onClick={() => onRecentSearchClick?.(term)}
+                      onClick={() => handleRecentSearchClick(term)}
                       aria-label={`Search again for ${term}`}
                     >
                       {term}

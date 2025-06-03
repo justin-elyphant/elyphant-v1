@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import SignUpDialog from "./SignUpDialog";
 import { useOptimizedSearch } from "@/hooks/useOptimizedSearch";
 import { Product } from "@/types/product";
+import BleedFirstLayout from "./BleedFirstLayout";
 
 interface MarketplaceContentProps {
   products?: Product[];
@@ -144,44 +145,46 @@ const MarketplaceContent = ({
   return (
     <>
       <div className="min-h-screen bg-background">
-        <MarketplaceHeader />
-        
-        <div className="container mx-auto px-4 py-6">
-          <MarketplaceFilters
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            sortOption={sortOption}
-            onSortChange={setSortOption}
-            isMobile={isMobile}
-            savedFiltersCount={0}
-            onSavedFiltersToggle={handleSavedFiltersToggle}
-            savedFiltersActive={savedFiltersActive}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          />
+        <BleedFirstLayout>
+          <MarketplaceHeader />
           
-          <div className="flex gap-6">
-            {/* Desktop Filters Sidebar */}
-            {!isMobile && showFilters && (
-              <div className="w-64 flex-shrink-0">
-                <FiltersSidebar
-                  activeFilters={activeFilters}
-                  onFilterChange={handleFilterChange}
-                  categories={categories}
+          <div className="py-6">
+            <MarketplaceFilters
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+              isMobile={isMobile}
+              savedFiltersCount={0}
+              onSavedFiltersToggle={handleSavedFiltersToggle}
+              savedFiltersActive={savedFiltersActive}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+            />
+            
+            <div className="flex gap-6">
+              {/* Desktop Filters Sidebar */}
+              {!isMobile && showFilters && (
+                <div className="w-64 flex-shrink-0">
+                  <FiltersSidebar
+                    activeFilters={activeFilters}
+                    onFilterChange={handleFilterChange}
+                    categories={categories}
+                  />
+                </div>
+              )}
+              
+              {/* Product Grid */}
+              <div className="flex-1">
+                <ProductGrid 
+                  products={filteredProducts} 
+                  viewMode={viewMode}
+                  onProductView={handleProductView}
                 />
               </div>
-            )}
-            
-            {/* Product Grid */}
-            <div className="flex-1">
-              <ProductGrid 
-                products={filteredProducts} 
-                viewMode={viewMode}
-                onProductView={handleProductView}
-              />
             </div>
           </div>
-        </div>
+        </BleedFirstLayout>
         
         {/* Mobile Filters Drawer */}
         <MobileFiltersDrawer

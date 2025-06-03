@@ -34,33 +34,51 @@ const MarketplaceWrapper = () => {
     }
   }, [isMobile]);
 
+  // Clean up conflicting URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    let shouldUpdate = false;
+
+    // If both search and category exist, prioritize search and clear category
+    if (searchTerm && categoryParam) {
+      console.log('Detected conflicting search and category params, prioritizing search');
+      params.delete("category");
+      shouldUpdate = true;
+    }
+
+    if (shouldUpdate) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [searchTerm, categoryParam, setSearchParams]);
+
   // Product filtering and search logic
   useEffect(() => {
     let results = [];
-    if (brandParam) {
+    
+    // Prioritize search over category
+    if (searchTerm) {
+      if (brandParam) {
+        results = searchMockProducts(`${brandParam} ${searchTerm}`, 12);
+      } else {
+        results = searchMockProducts(searchTerm, 16);
+      }
+    } else if (brandParam) {
       if (categoryParam) {
         results = searchMockProducts(`${brandParam} ${categoryParam}`, 12);
-      } else if (searchTerm) {
-        results = searchMockProducts(`${brandParam} ${searchTerm}`, 12);
       } else {
         results = searchMockProducts(brandParam, 12);
       }
     } else if (categoryParam) {
-      if (searchTerm) {
-        results = searchMockProducts(`${categoryParam} ${searchTerm}`, 16);
-      } else {
-        results = searchMockProducts(categoryParam, 16);
-      }
-    } else if (searchTerm) {
-      results = searchMockProducts(searchTerm, 16);
+      results = searchMockProducts(categoryParam, 16);
     } else {
-      // When no search/filters, show featured products instead of hero
+      // When no search/filters, show featured products
       results = searchMockProducts("Featured", 20);
     }
+    
     setProducts(results);
     
     // Dismiss loading toasts
-    if (categoryParam) {
+    if (categoryParam && !searchTerm) {
       toast.dismiss(`category-search-${categoryParam}`);
     }
     if (brandParam) {
@@ -77,18 +95,17 @@ const MarketplaceWrapper = () => {
   // Auto-scroll to results on search/filter changes
   useEffect(() => {
     if (hasActiveSearch && resultsRef.current) {
-      if (
-        lastSearchRef.current !== `${searchTerm}|${categoryParam}|${brandParam}`
-      ) {
+      const currentSearchKey = `${searchTerm}|${categoryParam}|${brandParam}`;
+      if (lastSearchRef.current !== currentSearchKey) {
         setTimeout(() => {
           resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 150);
-        lastSearchRef.current = `${searchTerm}|${categoryParam}|${brandParam}`;
+        lastSearchRef.current = currentSearchKey;
       }
     }
   }, [searchTerm, categoryParam, brandParam, hasActiveSearch]);
 
-  // Add to search history
+  // Add to search history (only for actual searches, not category selections)
   useEffect(() => {
     if (searchTerm && searchTerm.trim()) {
       const isFromOccasion = location.state?.fromOccasion || false;
@@ -102,6 +119,8 @@ const MarketplaceWrapper = () => {
   const handleRecentSearchClick = (term: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("search", term);
+    // Clear category when doing a search
+    newParams.delete("category");
     setSearchParams(newParams, { replace: true });
   };
 

@@ -1,89 +1,105 @@
 
 import { Product } from "@/types/product";
+import { allProducts } from "./zinc/data/mockProducts";
 
-// Helper function: get random placeholder image
-const getRandomImage = (idx: number) => {
-  const urls = [
-    "https://images.unsplash.com/photo-1649972904349-6e44c42644a7", // woman sitting on bed, laptop
-    "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b", // gray laptop
-    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158", // woman in white shirt, laptop
-    "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5", // Matrix movie still
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb", // Water/trees
-    "https://images.unsplash.com/photo-1582562124811-c09040d0a901", // Cat
-  ];
-  return urls[idx % urls.length];
+// Common search term mappings to improve search results
+const searchMappings: Record<string, string[]> = {
+  "airpods": ["headphones", "earbuds", "wireless", "apple"],
+  "apple airpods": ["headphones", "earbuds", "wireless", "apple"],
+  "iphone": ["phone", "smartphone", "mobile", "apple"],
+  "macbook": ["laptop", "computer", "apple"],
+  "ipad": ["tablet", "apple"],
+  "watch": ["smartwatch", "fitness", "wearable"],
+  "headphones": ["audio", "music", "wireless", "earbuds"],
+  "laptop": ["computer", "macbook", "notebook"],
+  "phone": ["smartphone", "mobile", "iphone"],
 };
 
-// Robust category mapping, to match slugs to readable names.
-const slugToCategory = (slug: string) => {
-  // Convert slug-like string (e.g. 'art-collectibles') to 'Art & Collectibles'
-  const mapping: Record<string, string> = {
-    "art-collectibles": "Art & Collectibles",
-    "bath-beauty": "Bath & Beauty",
-    "bags-purses": "Bags & Purses",
-    "books-movies-music": "Books, Movies & Music",
-    "craft-supplies": "Craft Supplies & Tools",
-    "home-living": "Home & Living",
-    "toys-games": "Toys & Games",
-    "wedding-party": "Wedding & Party",
-    // fallback
-  };
-  if (mapping[slug]) return mapping[slug];
-  // Replace dashes with spaces and capitalize
-  return slug
-    .split("-")
-    .map((word) => word[0]?.toUpperCase() + word.slice(1))
-    .join(" ");
-};
-
-export function searchMockProducts(
-  query: string,
-  maxResults: number = 10
-): Product[] {
-  // Fallback logic: turn dash-slugs into display names
-  let displayCategory = query;
-  if (query.includes("-") && !query.includes(" ")) {
-    displayCategory = slugToCategory(query);
+/**
+ * Enhanced search function that uses fuzzy matching and search mappings
+ */
+export const searchMockProducts = (query: string, limit: number = 12): Product[] => {
+  if (!query || query.trim() === "") {
+    return allProducts.slice(0, limit);
   }
-  // Generate a consistent set of mock products.
-  const now = Date.now();
-  const products: Product[] = [];
-  const categories = [
-    "Electronics", "Home", "Gadgets", "Fashion", "Fitness",
-    "Books", "Outdoors", "Toys", "Art & Collectibles"
-  ];
 
-  // Always ensure at least one mock category matches the search
-  const mainCategory = categories
-    .find((cat) =>
-      displayCategory.toLowerCase().replace(/[^a-z]/g, "") // ignore non-letters
-        .includes(cat.toLowerCase().replace(/[^a-z]/g, ""))
-    ) || displayCategory || "Gifts";
+  const normalizedQuery = query.toLowerCase().trim();
+  console.log(`Mock search for: "${normalizedQuery}"`);
 
-  for (let i = 0; i < maxResults; i++) {
-    // FIX: price must be a number type
-    const price = Math.round((Math.random() * 90 + 10) * 100) / 100;
-    products.push({
-      product_id: `MOCK-${now}-${i}`,
-      title: `${displayCategory ? displayCategory : 'Sample'} Product ${i + 1}`,
-      price: price, // number
-      image: getRandomImage(i),
-      description: `This is a sample description for ${displayCategory || "a mock"} product (No. ${i + 1}) for testing wishlists, cart actions, and shopping experience.`,
-      brand: i % 2 === 0 ? "TestBrand" : "BrandX",
-      category: mainCategory,
-      retailer: "Amazon via Zinc",
-      rating: 4 + Math.random(),
-      reviewCount: 100 + i * 13,
-      isBestSeller: i === 0,
-      features: [`Feature ${i + 1}A`, `Feature ${i + 1}B`],
-      images: [getRandomImage(i)],
+  // Get additional search terms from mappings
+  const additionalTerms: string[] = [];
+  for (const [key, terms] of Object.entries(searchMappings)) {
+    if (normalizedQuery.includes(key)) {
+      additionalTerms.push(...terms);
+    }
+  }
+
+  const allSearchTerms = [normalizedQuery, ...additionalTerms];
+  console.log(`Searching with terms: ${allSearchTerms.join(", ")}`);
+
+  const results = allProducts.filter(product => {
+    const searchableText = [
+      product.name || product.title || "",
+      product.description || "",
+      product.category || "",
+      product.brand || "",
+      ...(product.tags || [])
+    ].join(" ").toLowerCase();
+
+    // Check if any search term matches
+    return allSearchTerms.some(term => {
+      // Split multi-word terms and check if all words are present
+      const words = term.split(" ");
+      return words.every(word => searchableText.includes(word));
     });
-  }
-  return products;
-}
+  });
 
-// Quick generic getter for fallback tests
-export function getMockProducts(count: number = 8): Product[] {
-  return searchMockProducts("Mock", count);
-}
+  console.log(`Mock search found ${results.length} products for "${normalizedQuery}"`);
+  return results.slice(0, limit);
+};
 
+/**
+ * Get mock products without search filtering
+ */
+export const getMockProducts = (limit: number = 12): Product[] => {
+  return allProducts.slice(0, limit);
+};
+
+/**
+ * Get a specific product by ID
+ */
+export const getMockProductById = (id: string): Product | null => {
+  return allProducts.find(product => 
+    product.id === id || 
+    product.product_id === id
+  ) || null;
+};
+
+/**
+ * Get products by category
+ */
+export const getMockProductsByCategory = (category: string, limit: number = 12): Product[] => {
+  const normalizedCategory = category.toLowerCase();
+  
+  const results = allProducts.filter(product => {
+    const productCategory = (product.category || "").toLowerCase();
+    return productCategory.includes(normalizedCategory) || 
+           normalizedCategory.includes(productCategory);
+  });
+  
+  return results.slice(0, limit);
+};
+
+/**
+ * Get featured/recommended products
+ */
+export const getFeaturedProducts = (limit: number = 8): Product[] => {
+  // Return products with high ratings or marked as featured
+  const featured = allProducts.filter(product => 
+    (product.rating && product.rating >= 4.5) || 
+    product.isBestSeller || 
+    product.isPopular
+  );
+  
+  return featured.slice(0, limit);
+};

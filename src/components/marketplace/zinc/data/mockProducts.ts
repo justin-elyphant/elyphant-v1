@@ -1,176 +1,186 @@
+import { Product } from "@/types/product";
 
-import { ZincProduct } from '../types';
-
-// Base set of products
-export const allProducts: ZincProduct[] = [
+export const allProducts: Product[] = [
+  // Apple Products
   {
-    product_id: "B08N5KWB9H",
-    title: "Echo Dot (4th Gen) Smart Speaker",
-    price: 49.99,
-    image: "/placeholder.svg",
-    description: "Smart speaker with Alexa | Charcoal",
+    id: "apple-airpods-pro",
+    product_id: "apple-airpods-pro",
+    title: "Apple AirPods Pro (2nd Generation)",
+    name: "Apple AirPods Pro (2nd Generation)",
+    description: "Active Noise Cancellation, Transparency mode, Spatial audio, and up to 6 hours of listening time",
+    price: 249.00,
     category: "Electronics",
-    retailer: "Amazon via Zinc"
+    brand: "Apple",
+    image: "https://images.unsplash.com/photo-1603351154351-5e2d0600bb77?auto=format&fit=crop&q=80&w=600",
+    rating: 4.8,
+    reviewCount: 15420,
+    vendor: "Amazon",
+    tags: ["wireless", "earbuds", "noise cancellation", "apple", "bluetooth"],
+    isBestSeller: true
   },
   {
-    product_id: "B08DFPV5HL",
-    title: "Kindle Paperwhite (8GB)",
-    price: 139.99,
-    image: "/placeholder.svg", 
-    description: "Waterproof, high-resolution display",
+    id: "apple-airpods-3",
+    product_id: "apple-airpods-3",
+    title: "Apple AirPods (3rd Generation)",
+    name: "Apple AirPods (3rd Generation)",
+    description: "Spatial audio, sweat and water resistant, up to 6 hours of listening time",
+    price: 179.00,
     category: "Electronics",
-    retailer: "Amazon via Zinc"
+    brand: "Apple",
+    image: "https://images.unsplash.com/photo-1588423771073-b8903fbb85b5?auto=format&fit=crop&q=80&w=600",
+    rating: 4.6,
+    reviewCount: 8934,
+    vendor: "Amazon",
+    tags: ["wireless", "earbuds", "apple", "bluetooth", "spatial audio"]
   },
   {
-    product_id: "B07PVCVBN7",
-    title: "Fire TV Stick 4K",
-    price: 49.99,
-    image: "/placeholder.svg",
-    description: "Streaming device with Alexa Voice Remote",
+    id: "apple-airpods-max",
+    product_id: "apple-airpods-max",
+    title: "Apple AirPods Max",
+    name: "Apple AirPods Max",
+    description: "High-fidelity audio, Adaptive EQ, Active Noise Cancellation, and spatial audio",
+    price: 549.00,
     category: "Electronics",
-    retailer: "Amazon via Zinc"
+    brand: "Apple",
+    image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&q=80&w=600",
+    rating: 4.7,
+    reviewCount: 3456,
+    vendor: "Amazon",
+    tags: ["headphones", "wireless", "noise cancellation", "apple", "premium"]
   },
   {
-    product_id: "B095DVPT6N",
-    title: "MacBook Pro 14-inch",
-    price: 1999.99,
-    image: "/placeholder.svg",
-    description: "Apple MacBook Pro with M1 Pro chip",
+    id: "wireless-headphones",
+    product_id: "wireless-headphones",
+    title: "Premium Wireless Headphones",
+    name: "Premium Wireless Headphones",
+    description: "High-quality sound with noise cancellation and 30-hour battery life",
+    price: 199.99,
     category: "Electronics",
-    retailer: "Amazon via Zinc"
+    brand: "SoundMaster",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=600",
+    rating: 4.5,
+    reviewCount: 1245,
+    vendor: "Amazon",
+    tags: ["headphones", "wireless", "noise cancellation", "bluetooth"]
   },
   {
-    product_id: "B09B9KGVDZ",
-    title: "AirPods Pro (2nd Generation)",
-    price: 249.99,
-    image: "/placeholder.svg",
-    description: "Active Noise Cancellation, Transparency mode",
+    id: "smartphone-flagship",
+    product_id: "smartphone-flagship",
+    title: "Flagship Smartphone 256GB",
+    name: "Flagship Smartphone 256GB",
+    description: "Latest processor, triple camera system, 6.7-inch display, 5G connectivity",
+    price: 899.99,
     category: "Electronics",
-    retailer: "Amazon via Zinc"
+    brand: "TechFlow",
+    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=600",
+    rating: 4.6,
+    reviewCount: 2156,
+    vendor: "Amazon",
+    tags: ["smartphone", "5g", "camera", "mobile", "phone"]
   },
   {
-    product_id: "B07FZ8S74R",
-    title: "Echo Show 10",
-    price: 249.99,
-    image: "/placeholder.svg",
-    description: "HD smart display with motion and Alexa",
+    id: "fitness-tracker",
+    product_id: "fitness-tracker",
+    title: "Advanced Fitness Tracker",
+    name: "Advanced Fitness Tracker",
+    description: "Heart rate monitoring, GPS tracking, sleep analysis, 7-day battery life",
+    price: 149.99,
     category: "Electronics",
-    retailer: "Amazon via Zinc"
+    brand: "FitTech",
+    image: "https://images.unsplash.com/photo-1557825835-70d97c4aa567?auto=format&fit=crop&q=80&w=600",
+    rating: 4.4,
+    reviewCount: 856,
+    vendor: "Amazon",
+    tags: ["fitness", "tracker", "health", "smartwatch", "wearable"]
   },
   {
-    product_id: "B07V4KC6D8",
-    title: "Bose QuietComfort 45 Headphones",
-    price: 329.00,
-    image: "/placeholder.svg",
-    description: "Wireless Noise Cancelling Bluetooth Headphones",
+    id: "bluetooth-speaker",
+    product_id: "bluetooth-speaker",
+    title: "Portable Bluetooth Speaker",
+    name: "Portable Bluetooth Speaker",
+    description: "360-degree sound, waterproof design, 12-hour battery, voice assistant",
+    price: 79.99,
     category: "Electronics",
-    retailer: "Amazon via Zinc"
+    brand: "SoundWave",
+    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&q=80&w=600",
+    rating: 4.3,
+    reviewCount: 642,
+    vendor: "Amazon",
+    tags: ["speaker", "bluetooth", "portable", "waterproof", "wireless"]
   },
   {
-    product_id: "B07ZGLLWBT",
-    title: "Nintendo Switch OLED Model",
-    price: 349.99,
-    image: "/placeholder.svg",
-    description: "OLED Model with White Joy-Con",
-    category: "Gaming",
-    retailer: "Amazon via Zinc"
+    id: "gaming-mouse",
+    product_id: "gaming-mouse",
+    title: "RGB Gaming Mouse",
+    name: "RGB Gaming Mouse",
+    description: "High precision sensor, customizable RGB lighting, ergonomic design",
+    price: 59.99,
+    category: "Electronics",
+    brand: "GamePro",
+    image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&q=80&w=600",
+    rating: 4.5,
+    reviewCount: 423,
+    vendor: "Amazon",
+    tags: ["gaming", "mouse", "rgb", "precision", "computer"]
   },
   {
-    product_id: "B09DL17CQC",
-    title: "PlayStation 5 Console",
-    price: 499.99,
-    image: "/placeholder.svg",
-    description: "Sony PlayStation 5 Digital Edition",
-    category: "Gaming",
-    retailer: "Amazon via Zinc"
+    id: "wireless-charger",
+    product_id: "wireless-charger",
+    title: "Fast Wireless Charging Pad",
+    name: "Fast Wireless Charging Pad",
+    description: "15W fast charging, compatible with iPhone and Android, LED indicator",
+    price: 34.99,
+    category: "Electronics",
+    brand: "ChargeFast",
+    image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&q=80&w=600",
+    rating: 4.2,
+    reviewCount: 734,
+    vendor: "Amazon",
+    tags: ["charger", "wireless", "fast charging", "phone", "pad"]
   },
   {
-    product_id: "B08K9GLGN8",
-    title: "Oculus Quest 2",
-    price: 299.99,
-    image: "/placeholder.svg",
-    description: "Advanced All-In-One Virtual Reality Headset",
-    category: "Gaming",
-    retailer: "Amazon via Zinc"
+    id: "coffee-maker",
+    product_id: "coffee-maker",
+    title: "Smart Coffee Maker",
+    name: "Smart Coffee Maker",
+    description: "Programmable brewing, built-in grinder, app control, thermal carafe",
+    price: 199.99,
+    category: "Home & Kitchen",
+    brand: "BrewMaster",
+    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=600",
+    rating: 4.6,
+    reviewCount: 1023,
+    vendor: "Amazon",
+    tags: ["coffee", "maker", "smart", "programmable", "kitchen"]
+  },
+  {
+    id: "yoga-mat",
+    product_id: "yoga-mat",
+    title: "Eco-Friendly Yoga Mat",
+    name: "Eco-Friendly Yoga Mat",
+    description: "Non-slip surface, extra thick cushioning, made from natural rubber",
+    price: 48.99,
+    category: "Sports & Outdoors",
+    brand: "ZenFit",
+    image: "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&q=80&w=600",
+    rating: 4.4,
+    reviewCount: 567,
+    vendor: "Amazon",
+    tags: ["yoga", "mat", "fitness", "exercise", "eco-friendly"]
+  },
+  {
+    id: "desk-lamp",
+    product_id: "desk-lamp",
+    title: "LED Desk Lamp with USB Charging",
+    name: "LED Desk Lamp with USB Charging",
+    description: "Adjustable brightness, color temperature control, USB charging port",
+    price: 42.99,
+    category: "Home & Kitchen",
+    brand: "BrightDesk",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
+    rating: 4.3,
+    reviewCount: 892,
+    vendor: "Amazon",
+    tags: ["lamp", "led", "desk", "usb", "adjustable"]
   }
 ];
-
-// Specific products for targeted searches
-export const specificProducts: Record<string, ZincProduct[]> = {
-  'nike shoes': [
-    {
-      product_id: "B0BQWPKHGS",
-      title: "Nike Men's Revolution 6 Running Shoes",
-      price: 69.99,
-      image: "/placeholder.svg",
-      description: "Lightweight, breathable mesh upper with cushioned midsole for comfort",
-      category: "Shoes",
-      brand: "Nike",
-      retailer: "Amazon via Zinc"
-    },
-    {
-      product_id: "B0BV28XZ5S",
-      title: "Nike Women's Air Zoom Pegasus 39 Running Shoes",
-      price: 119.99,
-      image: "/placeholder.svg",
-      description: "Responsive cushioning and secure support for running",
-      category: "Shoes",
-      brand: "Nike",
-      retailer: "Amazon via Zinc"
-    },
-    {
-      product_id: "B09MVZKNXZ",
-      title: "Nike Kids' Team Hustle D 10 Basketball Shoe",
-      price: 65.00,
-      image: "/placeholder.svg",
-      description: "Durable leather upper with foam midsole for youth athletes",
-      category: "Shoes",
-      brand: "Nike",
-      retailer: "Amazon via Zinc"
-    }
-  ],
-  'running shoes': [
-    {
-      product_id: "B0BQWPKHGS",
-      title: "Nike Men's Revolution 6 Running Shoes",
-      price: 69.99,
-      image: "/placeholder.svg",
-      description: "Lightweight, breathable mesh upper with cushioned midsole for comfort",
-      category: "Shoes",
-      brand: "Nike",
-      retailer: "Amazon via Zinc"
-    },
-    {
-      product_id: "B08KYLSQZC",
-      title: "ASICS Men's Gel-Venture 8 Running Shoes",
-      price: 64.95,
-      image: "/placeholder.svg",
-      description: "Trail running shoes with GEL technology cushioning system",
-      category: "Shoes",
-      brand: "ASICS",
-      retailer: "Amazon via Zinc"
-    }
-  ],
-  'bluetooth headphones': [
-    {
-      product_id: "B07V4KC6D8",
-      title: "Bose QuietComfort 45 Headphones",
-      price: 329.00,
-      image: "/placeholder.svg",
-      description: "Wireless Noise Cancelling Bluetooth Headphones",
-      category: "Electronics",
-      brand: "Bose",
-      retailer: "Amazon via Zinc"
-    },
-    {
-      product_id: "B09BJZ3NPX",
-      title: "Sony WH-1000XM4 Wireless Headphones",
-      price: 348.00,
-      image: "/placeholder.svg",
-      description: "Industry Leading Noise Cancelling Bluetooth Headphones",
-      category: "Electronics",
-      brand: "Sony",
-      retailer: "Amazon via Zinc"
-    }
-  ]
-};

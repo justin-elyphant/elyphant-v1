@@ -67,6 +67,11 @@ const UserButton = () => {
       navigate("/dashboard");
     }
   };
+
+  const handleMarketplaceClick = () => {
+    console.log("Navigating to marketplace");
+    navigate("/marketplace");
+  };
   
   return (
     <DropdownMenu>
@@ -92,7 +97,7 @@ const UserButton = () => {
         
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => navigate("/marketplace")}>
+        <DropdownMenuItem onClick={handleMarketplaceClick}>
           <Store className="mr-2 h-4 w-4" />
           <span>Marketplace</span>
         </DropdownMenuItem>

@@ -1,199 +1,170 @@
 
-import React, { useState, useEffect } from "react";
-import { Product } from "@/types/product";
-import MarketplaceFilters from "./MarketplaceFilters";
-import ProductGrid, { SavedFilters } from "./ProductGrid";
-import MarketplaceLoading from "./MarketplaceLoading";
-import DynamicFiltersSidebar from "./DynamicFiltersSidebar";
-import MobileFiltersDrawer from "./MobileFiltersDrawer";
-import BleedFirstLayout from "./BleedFirstLayout";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useDynamicFilters } from "@/hooks/useDynamicFilters";
-import { useProductRecommendations } from "@/hooks/useProductRecommendations";
-import { AlertCircle } from "lucide-react";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { toast } from "sonner";
+import React, { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import MarketplaceHeader from "./MarketplaceHeader";
+import MarketplaceFilters from "./MarketplaceFilters";
+import FiltersSidebar from "./FiltersSidebar";
+import ProductGrid from "./ProductGrid";
+import MarketplaceLoading from "./MarketplaceLoading";
+import { useFilteredProducts } from "./hooks/useFilteredProducts";
+import { useMarketplaceProducts } from "./hooks/useMarketplaceProducts";
+import MobileFiltersDrawer from "./MobileFiltersDrawer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import SignUpDialog from "./SignUpDialog";
+import { useOptimizedSearch } from "@/hooks/useOptimizedSearch";
 
-interface MarketplaceContentProps {
-  products: Product[];
-  isLoading: boolean;
-  searchTerm?: string;
-  onProductView?: (productId: string) => void;
-  showFilters: boolean;
-  setShowFilters: (show: boolean) => void;
-}
-
-// Helper function to ensure boolean conversion
-const convertToBoolean = (value: any): boolean => {
-  if (typeof value === 'string') {
-    return value === 'true';
-  }
-  return Boolean(value);
-};
-
-const MarketplaceContent = ({ 
-  products, 
-  isLoading, 
-  searchTerm = "", 
-  onProductView,
-  showFilters,
-  setShowFilters
-}: MarketplaceContentProps) => {
-  const isMobile = useIsMobile();
+const MarketplaceContent = () => {
   const [searchParams] = useSearchParams();
+  const isMobile = useIsMobile();
+  const query = searchParams.get("q") || "";
+  
+  // Initialize state with proper boolean conversion
+  const [showFilters, setShowFilters] = useState(() => {
+    const saved = localStorage.getItem('showFilters');
+    return saved === 'true';
+  });
+  const [savedFiltersActive, setSavedFiltersActive] = useState(() => {
+    const saved = localStorage.getItem('savedFiltersActive');
+    return saved === 'true';
+  });
+  
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
-  const [savedFiltersActive, setSavedFiltersActive] = useState(false);
-  const [savedFilters] = useLocalStorage<{name: string, filters: SavedFilters}[]>(
-    "savedFilters", []
-  );
+  const [sortOption, setSortOption] = useState("relevance");
+  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   
-  // Use our new dynamic filters hook
-  const {
-    filters,
-    filteredProducts,
-    filterOptions,
-    searchContext,
-    updateFilter,
-    resetFilters,
-    shouldShowBrandFilters,
-    shouldShowDemographicFilters,
-    shouldShowOccasionFilters,
-    shouldShowAttributeFilters
-  } = useDynamicFilters(products, searchTerm);
-  
-  // Get recommendations (will be used if we have few or no search results)
-  const { recommendations } = useProductRecommendations();
-  
-  const toggleSavedFilters = () => {
-    // If activating saved filters and we have at least one saved filter
-    if (!savedFiltersActive && savedFilters.length > 0) {
-      // Apply the first saved filter (this would need to be adapted for new filter structure)
-      const firstSavedFilter = savedFilters[0];
-      // For now, just reset filters since the structure is different
-      resetFilters();
-      
-      toast.success(`Applied filter: ${firstSavedFilter.name}`, {
-        description: "Your saved filter has been applied"
-      });
-    } else if (savedFiltersActive) {
-      // Reset filters when turning off
-      resetFilters();
+  // Active filters state
+  const [activeFilters, setActiveFilters] = useState({
+    categories: [] as string[],
+    priceRange: [0, 1000] as [number, number],
+    rating: 0,
+    inStock: false,
+    onSale: false,
+    freeShipping: false,
+    brands: [] as string[],
+    occasion: "",
+  });
+
+  // Use optimized search hook
+  const { search: optimizedSearch, isLoading: searchLoading, results: searchResults, error: searchError } = useOptimizedSearch();
+
+  // Regular product fetching (when no search query)
+  const { data: regularProducts, isLoading: regularLoading } = useMarketplaceProducts(!query);
+
+  // Determine which products to use
+  const products = useMemo(() => {
+    if (query && searchResults.length > 0) {
+      return searchResults;
     }
-    
+    return regularProducts || [];
+  }, [query, searchResults, regularProducts]);
+
+  // Filter products based on active filters
+  const filteredProducts = useFilteredProducts(products, activeFilters, sortOption);
+
+  // Categories for filters
+  const categories = useMemo(() => {
+    const categorySet = new Set<string>();
+    products.forEach((product) => {
+      if (product.category) {
+        categorySet.add(product.category);
+      }
+    });
+    return Array.from(categorySet);
+  }, [products]);
+
+  // Handle search when query changes
+  useEffect(() => {
+    if (query.trim()) {
+      console.log(`MarketplaceContent: Triggering optimized search for "${query}"`);
+      optimizedSearch(query, 50);
+    }
+  }, [query, optimizedSearch]);
+
+  // Save filter state to localStorage
+  useEffect(() => {
+    localStorage.setItem('showFilters', showFilters.toString());
+  }, [showFilters]);
+
+  useEffect(() => {
+    localStorage.setItem('savedFiltersActive', savedFiltersActive.toString());
+  }, [savedFiltersActive]);
+
+  const handleFilterChange = (newFilters: typeof activeFilters) => {
+    setActiveFilters(newFilters);
+  };
+
+  const handleSavedFiltersToggle = () => {
     setSavedFiltersActive(!savedFiltersActive);
   };
-  
-  // Legacy filter change handler for compatibility with existing components
-  const handleLegacyFilterChange = (legacyFilters: Record<string, any>) => {
-    // Map legacy filter format to new dynamic filter format
-    if (legacyFilters.priceRange) {
-      updateFilter('priceRange', legacyFilters.priceRange);
-    }
-    if (legacyFilters.categories) {
-      updateFilter('selectedCategories', legacyFilters.categories);
-    }
-    if (legacyFilters.rating !== undefined) {
-      updateFilter('rating', legacyFilters.rating);
-    }
-    if (legacyFilters.freeShipping !== undefined) {
-      updateFilter('freeShipping', legacyFilters.freeShipping);
-    }
-    if (legacyFilters.favoritesOnly !== undefined) {
-      updateFilter('favoritesOnly', legacyFilters.favoritesOnly);
-    }
-    if (legacyFilters.sortBy) {
-      updateFilter('sortBy', legacyFilters.sortBy);
-    }
-  };
-  
+
+  const isLoading = query ? searchLoading : regularLoading;
+
   if (isLoading) {
     return <MarketplaceLoading />;
   }
-  
-  // Decide whether to show recommendations
-  const showRecommendations = filteredProducts.length === 0 && recommendations.length > 0;
-  const displayProducts = showRecommendations ? recommendations : filteredProducts;
-  
+
+  if (searchError) {
+    console.error('Search error:', searchError);
+  }
+
   return (
-    <BleedFirstLayout className="mt-6">
-      {/* Top controls bar with responsive container for readability */}
-      <div className="container mx-auto px-4 mb-4">
-        <MarketplaceFilters 
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          sortOption={filters.sortBy}
-          onSortChange={(option) => updateFilter('sortBy', option)}
-          isMobile={isMobile}
-          savedFiltersCount={savedFilters.length}
-          onSavedFiltersToggle={toggleSavedFilters}
-          savedFiltersActive={savedFiltersActive}
+    <>
+      <div className="min-h-screen bg-background">
+        <MarketplaceHeader onSignUpRequired={() => setShowSignUpDialog(true)} />
+        
+        <div className="container mx-auto px-4 py-6">
+          <MarketplaceFilters
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
+            isMobile={isMobile}
+            savedFiltersCount={0}
+            onSavedFiltersToggle={handleSavedFiltersToggle}
+            savedFiltersActive={savedFiltersActive}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+          />
+          
+          <div className="flex gap-6">
+            {/* Desktop Filters Sidebar */}
+            {!isMobile && showFilters && (
+              <div className="w-64 flex-shrink-0">
+                <FiltersSidebar
+                  activeFilters={activeFilters}
+                  onFilterChange={handleFilterChange}
+                  categories={categories}
+                />
+              </div>
+            )}
+            
+            {/* Product Grid */}
+            <div className="flex-1">
+              <ProductGrid 
+                products={filteredProducts} 
+                viewMode={viewMode}
+                onSignUpRequired={() => setShowSignUpDialog(true)}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Filters Drawer */}
+        <MobileFiltersDrawer
+          activeFilters={activeFilters}
+          onFilterChange={handleFilterChange}
+          categories={categories}
           showFilters={showFilters}
           setShowFilters={setShowFilters}
         />
       </div>
       
-      <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6`}>
-        {/* Desktop Dynamic Sidebar Filters */}
-        {!isMobile && showFilters && (
-          <div className="w-full md:w-72 flex-shrink-0 px-4">
-            <DynamicFiltersSidebar
-              filters={filters}
-              filterOptions={filterOptions}
-              searchContext={searchContext}
-              onFilterChange={updateFilter}
-              onResetFilters={resetFilters}
-              shouldShowBrandFilters={shouldShowBrandFilters}
-              shouldShowDemographicFilters={shouldShowDemographicFilters}
-              shouldShowOccasionFilters={shouldShowOccasionFilters}
-              shouldShowAttributeFilters={shouldShowAttributeFilters}
-              isMobile={false}
-            />
-          </div>
-        )}
-        
-        {/* Mobile Filters Drawer */}
-        {isMobile && (
-          <MobileFiltersDrawer
-            activeFilters={{
-              priceRange: filters.priceRange,
-              categories: filters.selectedCategories,
-              rating: filters.rating,
-              freeShipping: convertToBoolean(filters.freeShipping),
-              favoritesOnly: convertToBoolean(filters.favoritesOnly),
-              sortBy: filters.sortBy
-            }}
-            onFilterChange={handleLegacyFilterChange}
-            categories={filterOptions.categories}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          />
-        )}
-        
-        {/* Main Product Grid */}
-        <div className="flex-1 min-w-0">
-          {showRecommendations && (
-            <div className="px-4 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-blue-900 mb-1">
-                  No products found for your current filters
-                </p>
-                <p className="text-blue-700">
-                  Here are some recommendations based on your search for "{searchTerm}"
-                </p>
-              </div>
-            </div>
-          )}
-          
-          <ProductGrid
-            products={displayProducts}
-            viewMode={viewMode}
-            onProductView={onProductView}
-          />
-        </div>
-      </div>
-    </BleedFirstLayout>
+      <SignUpDialog 
+        open={showSignUpDialog} 
+        onOpenChange={setShowSignUpDialog} 
+      />
+    </>
   );
 };
 

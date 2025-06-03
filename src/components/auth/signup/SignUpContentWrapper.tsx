@@ -30,10 +30,9 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true
 }) => {
   const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
-  const [nicoleInitialized, setNicoleInitialized] = React.useState(false);
   const navigate = useNavigate();
 
-  // Simplified logic: Show Nicole for new signups in verification step
+  // Determine if Nicole should show based on current conditions
   const shouldShowNicole = React.useMemo(() => {
     if (step !== "verification" || !userEmail) return false;
     
@@ -42,36 +41,26 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     
     console.log("Nicole trigger check:", { step, userEmail, newSignUp, onboardingComplete });
     
-    // Show Nicole for new signups that haven't completed onboarding
     return newSignUp && !onboardingComplete;
   }, [step, userEmail]);
 
-  // Initialize Nicole when conditions are met
+  // Show Nicole immediately when conditions are met
   React.useEffect(() => {
-    if (shouldShowNicole && !nicoleInitialized) {
-      console.log("Initializing Nicole onboarding...");
+    if (shouldShowNicole && !showNicoleOnboarding) {
+      console.log("Triggering Nicole onboarding...");
       
       // Clear any existing intent to let Nicole set it
       localStorage.removeItem("userIntent");
       localStorage.setItem("showingIntentModal", "true");
       
-      const initTimer = setTimeout(() => {
-        setNicoleInitialized(true);
-        setShowNicoleOnboarding(true);
-        console.log("Nicole onboarding initialized successfully");
-      }, 500);
-
-      return () => clearTimeout(initTimer);
-    }
-  }, [shouldShowNicole, nicoleInitialized]);
-
-  // Cleanup when modal closes
-  React.useEffect(() => {
-    if (!shouldShowNicole) {
-      setNicoleInitialized(false);
+      // Show Nicole immediately
+      setShowNicoleOnboarding(true);
+      console.log("Nicole onboarding triggered");
+    } else if (!shouldShowNicole && showNicoleOnboarding) {
+      // Hide Nicole if conditions no longer met
       setShowNicoleOnboarding(false);
     }
-  }, [shouldShowNicole]);
+  }, [shouldShowNicole, showNicoleOnboarding]);
 
   // Handle Nicole onboarding completion
   const handleOnboardingComplete = React.useCallback(() => {
@@ -128,26 +117,21 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 
   return (
     <div className="relative">
-      {/* Always show base content */}
+      {/* Always show base content first to prevent flash */}
       {renderBaseContent()}
 
-      {/* Nicole onboarding overlay */}
-      {showNicoleOnboarding && (
-        <div className="fixed inset-0 z-50">
-          <NicoleOnboardingEngine
-            isOpen={true}
-            onComplete={handleOnboardingComplete}
-            onClose={handleOnboardingClose}
-          />
-        </div>
-      )}
+      {/* Nicole onboarding overlay - only show when ready */}
+      <NicoleOnboardingEngine
+        isOpen={showNicoleOnboarding}
+        onComplete={handleOnboardingComplete}
+        onClose={handleOnboardingClose}
+      />
 
       {/* Debug info in development */}
       {process.env.NODE_ENV === 'development' && step === "verification" && (
-        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-75 pointer-events-none">
+        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-75 pointer-events-none z-40">
           Nicole: {showNicoleOnboarding ? 'showing' : 'hidden'} | 
-          Should show: {shouldShowNicole ? 'yes' : 'no'} |
-          Init: {nicoleInitialized ? 'yes' : 'no'}
+          Should show: {shouldShowNicole ? 'yes' : 'no'}
         </div>
       )}
     </div>

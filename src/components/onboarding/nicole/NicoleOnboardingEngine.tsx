@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -39,58 +40,46 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   const [userIntent, setUserIntent] = useState<UserIntent | null>(null);
   const [onboardingData, setOnboardingData] = useState<any>({});
   const [conversationHistory, setConversationHistory] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  // Simplified initialization with better error handling
-  useEffect(() => {
-    if (!isOpen) return;
-
-    console.log("Nicole initialization starting...");
-
-    const initializeNicole = () => {
-      try {
-        console.log("Initializing Nicole conversation...");
-        
-        triggerHapticFeedback('light');
-        setConversationHistory([{
-          id: 1,
-          role: 'assistant',
-          content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
-          timestamp: new Date()
-        }]);
-        
-        setIsLoading(false);
-        setInitializationError(null);
-        
-        console.log("Nicole onboarding initialized successfully");
-      } catch (error) {
-        console.error("Error initializing Nicole onboarding:", error);
-        setInitializationError("Failed to initialize Nicole. Please try again.");
-        setIsLoading(false);
-        
-        // Auto-fallback after error
-        setTimeout(() => {
-          console.log("Auto-closing Nicole due to initialization error");
-          onClose();
-        }, 2000);
-      }
-    };
-
-    // Initialize immediately, no complex timers
-    initializeNicole();
-  }, [isOpen, onClose]);
-
-  // Cleanup when modal closes
+  // Initialize Nicole immediately when modal opens
   useEffect(() => {
     if (!isOpen) {
+      // Reset state when modal closes
       setCurrentStep("intent-discovery");
       setUserIntent(null);
       setOnboardingData({});
       setConversationHistory([]);
-      setIsLoading(true);
-      setInitializationError(null);
+      setIsLoading(false);
+      setIsReady(false);
+      return;
     }
+
+    // Initialize Nicole conversation immediately
+    console.log("Nicole initialization starting...");
+    
+    setIsLoading(true);
+    
+    // Set initial conversation immediately
+    const initialMessage = {
+      id: 1,
+      role: 'assistant',
+      content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
+      timestamp: new Date()
+    };
+    
+    setConversationHistory([initialMessage]);
+    
+    // Small delay to ensure smooth rendering
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      setIsReady(true);
+      triggerHapticFeedback('light');
+      console.log("Nicole onboarding initialized successfully");
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   const handleIntentDiscovered = useCallback((intent: UserIntent, data: any) => {
@@ -157,31 +146,13 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   }, [onComplete]);
 
   const renderCurrentStep = () => {
-    if (isLoading) {
+    // Show loading only briefly during initialization
+    if (isLoading || !isReady) {
       return (
-        <div className="flex items-center justify-center p-8">
+        <div className="flex items-center justify-center p-8 min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Initializing Nicole...</p>
-            {initializationError && (
-              <p className="text-red-500 text-sm mt-2">{initializationError}</p>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    if (initializationError) {
-      return (
-        <div className="flex items-center justify-center p-8">
-          <div className="text-center">
-            <p className="text-red-500 mb-4">{initializationError}</p>
-            <button 
-              onClick={onClose}
-              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-            >
-              Continue without Nicole
-            </button>
+            <p className="text-gray-600">Starting conversation with Nicole...</p>
           </div>
         </div>
       );
@@ -234,7 +205,7 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
         
         case "completion":
           return (
-            <div className="text-center p-6">
+            <div className="text-center p-6 min-h-[400px] flex flex-col justify-center">
               <div className="text-4xl mb-4">🎉</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Welcome to Elyphant!
@@ -247,11 +218,11 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
         
         default:
           return (
-            <div className="text-center p-8">
-              <p className="text-gray-600">Unknown step: {currentStep}</p>
+            <div className="text-center p-8 min-h-[400px] flex flex-col justify-center">
+              <p className="text-gray-600 mb-4">Unknown step: {currentStep}</p>
               <button 
                 onClick={() => setCurrentStep("intent-discovery")}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
               >
                 Restart
               </button>
@@ -261,7 +232,7 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
     } catch (error) {
       console.error("Error rendering step:", error);
       return (
-        <div className="text-center p-8">
+        <div className="text-center p-8 min-h-[400px] flex flex-col justify-center">
           <p className="text-red-500 mb-4">Something went wrong</p>
           <button 
             onClick={onClose}
@@ -292,9 +263,9 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
             userIntent={userIntent}
           />
           
-          {/* Enhanced Scrollable Content Container */}
-          <div className="flex-1 flex flex-col" style={{ height: 'calc(100% - 120px)' }}>
-            <ScrollArea className="flex-1 h-full">
+          {/* Content Container */}
+          <div className="flex-1 flex flex-col h-[calc(100%-120px)]">
+            <ScrollArea className="flex-1">
               <div className="h-full min-h-0">
                 {renderCurrentStep()}
               </div>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { 
   DropdownMenu, 
@@ -68,9 +67,13 @@ const UserButton = () => {
     }
   };
 
-  const handleMarketplaceClick = () => {
-    console.log("Navigating to marketplace");
+  const handleMarketplaceClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Marketplace button clicked - attempting navigation to /marketplace");
+    console.log("Current location:", window.location.pathname);
     navigate("/marketplace");
+    console.log("Navigate function called");
   };
   
   return (

@@ -17,6 +17,14 @@ export interface DynamicFilterState {
   sortBy: string;
 }
 
+// Helper function to ensure boolean conversion
+const convertToBoolean = (value: any): boolean => {
+  if (typeof value === 'string') {
+    return value === 'true';
+  }
+  return Boolean(value);
+};
+
 export const useDynamicFilters = (products: Product[], searchTerm: string = "") => {
   const isMobile = useIsMobile();
   
@@ -133,10 +141,18 @@ export const useDynamicFilters = (products: Product[], searchTerm: string = "") 
     filterType: K, 
     value: DynamicFilterState[K]
   ) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
+    setFilters(prev => {
+      const newFilters = { ...prev };
+      
+      // Ensure boolean types for specific properties
+      if (filterType === 'freeShipping' || filterType === 'favoritesOnly') {
+        newFilters[filterType] = convertToBoolean(value) as DynamicFilterState[K];
+      } else {
+        newFilters[filterType] = value;
+      }
+      
+      return newFilters;
+    });
   };
   
   const resetFilters = () => {

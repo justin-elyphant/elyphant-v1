@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -98,14 +97,10 @@ const MarketplaceContent = ({
       updateFilter('rating', legacyFilters.rating);
     }
     if (legacyFilters.freeShipping !== undefined) {
-      // Properly convert to boolean - handle both string and boolean values
-      const freeShippingValue = convertToBoolean(legacyFilters.freeShipping);
-      updateFilter('freeShipping', freeShippingValue);
+      updateFilter('freeShipping', legacyFilters.freeShipping);
     }
     if (legacyFilters.favoritesOnly !== undefined) {
-      // Properly convert to boolean - handle both string and boolean values
-      const favoritesOnlyValue = convertToBoolean(legacyFilters.favoritesOnly);
-      updateFilter('favoritesOnly', favoritesOnlyValue);
+      updateFilter('favoritesOnly', legacyFilters.favoritesOnly);
     }
     if (legacyFilters.sortBy) {
       updateFilter('sortBy', legacyFilters.sortBy);
@@ -171,8 +166,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: convertToBoolean(filters.freeShipping),
-                favoritesOnly: convertToBoolean(filters.favoritesOnly),
+                freeShipping: filters.freeShipping,
+                favoritesOnly: filters.favoritesOnly,
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}

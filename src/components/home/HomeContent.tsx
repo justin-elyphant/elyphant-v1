@@ -7,6 +7,7 @@ import HeroSection from "@/components/home/sections/HeroSection";
 import FeaturesSection from "@/components/home/sections/FeaturesSection";
 import HomeCTA from "@/components/home/sections/HomeCTA";
 import FeaturedCollections from "@/components/home/sections/FeaturedCollections";
+import FeaturedCategories from "@/components/home/sections/FeaturedCategories";
 import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
 import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
@@ -140,6 +141,9 @@ const HomeContent = () => {
         <div className="mt-8">
           <FeaturedCollections collections={collections} />
         </div>
+
+        {/* Categories section - NEW */}
+        <FeaturedCategories />
 
         {/* Occasions-Based Gift Collections */}
         <FeaturedOccasions />

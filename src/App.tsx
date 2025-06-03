@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
@@ -19,6 +20,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <AuthProvider>
           <ProfileProvider>
             <CartProvider>

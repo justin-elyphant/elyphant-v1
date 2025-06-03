@@ -30,6 +30,7 @@ const MarketplaceWrapper = () => {
   });
   
   const [products, setProducts] = useState(allProducts);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
@@ -54,6 +55,14 @@ const MarketplaceWrapper = () => {
       window.history.replaceState({}, '', window.location.pathname + window.location.search);
     }
   }, [isFromHomePage]);
+
+  // Mark as no longer initial load after first render
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Close filters on mobile when screen size changes
   useEffect(() => {
@@ -117,9 +126,9 @@ const MarketplaceWrapper = () => {
 
   const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam);
 
-  // Auto-scroll to results on search/filter changes
+  // Auto-scroll to results on search/filter changes (but not on initial load from external navigation)
   useEffect(() => {
-    if (hasActiveSearch && resultsRef.current) {
+    if (hasActiveSearch && resultsRef.current && !isInitialLoad) {
       const currentSearchKey = `${searchTerm}|${categoryParam}|${brandParam}`;
       if (lastSearchRef.current !== currentSearchKey) {
         setTimeout(() => {
@@ -128,7 +137,7 @@ const MarketplaceWrapper = () => {
         lastSearchRef.current = currentSearchKey;
       }
     }
-  }, [searchTerm, categoryParam, brandParam, hasActiveSearch]);
+  }, [searchTerm, categoryParam, brandParam, hasActiveSearch, isInitialLoad]);
 
   // Add to search history (only for actual searches, not category selections)
   useEffect(() => {

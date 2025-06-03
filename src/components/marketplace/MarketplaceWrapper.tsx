@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -23,11 +22,8 @@ const MarketplaceWrapper = () => {
   // Check if this is a fresh navigation from home page
   const isFromHomePage = location.state?.fromHome || false;
 
-  // Initialize showFilters state - always false if coming from home
-  const [showFilters, setShowFilters] = useState(() => {
-    if (isFromHomePage) return false;
-    return !isMobile;
-  });
+  // Initialize showFilters state - always default to false
+  const [showFilters, setShowFilters] = useState(false);
   
   const [products, setProducts] = useState(allProducts);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -61,6 +57,19 @@ const MarketplaceWrapper = () => {
       setShowFilters(false);
     }
   }, [isMobile]);
+
+  // Only show filters automatically on desktop when there are active search parameters
+  useEffect(() => {
+    const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam);
+    
+    // Only auto-show filters on desktop when there are active search parameters
+    if (!isMobile && hasActiveSearch && !isInitialLoad) {
+      setShowFilters(true);
+    } else if (!hasActiveSearch) {
+      // Hide filters when there are no search parameters
+      setShowFilters(false);
+    }
+  }, [searchTerm, categoryParam, brandParam, isMobile, isInitialLoad]);
 
   // Clean up conflicting URL parameters
   useEffect(() => {

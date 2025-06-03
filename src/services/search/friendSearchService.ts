@@ -17,7 +17,7 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
   try {
     console.log(`Searching for friends with query: "${query}"`);
     
-    // Search by name, username, or email with more flexible matching
+    // Search by name, username, or email with corrected syntax
     const searchTerm = `%${query.toLowerCase()}%`;
     
     const { data: profiles, error } = await supabase

@@ -8,6 +8,7 @@ import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import { differenceInCalendarDays, format, isToday, isTomorrow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { generateDynamicButtonText, generateSearchQuery } from "./utils/buttonTextUtils";
 
 interface CountdownBannerProps {
   className?: string;
@@ -41,8 +42,12 @@ const CountdownBanner: React.FC<CountdownBannerProps> = ({ className = "" }) => 
     daysDisplay = `${days} days`;
   }
 
+  // Generate dynamic button text
+  const friendName = upcomingFriendEvent?.friendName;
+  const buttonText = generateDynamicButtonText(targetEvent, !!user, friendName);
+
   const handleShopClick = () => {
-    const query = encodeURIComponent(`${targetEvent.name} gifts`);
+    const query = encodeURIComponent(generateSearchQuery(targetEvent, friendName));
     navigate(`/marketplace?search=${query}`);
   };
 
@@ -84,7 +89,7 @@ const CountdownBanner: React.FC<CountdownBannerProps> = ({ className = "" }) => 
               onClick={handleShopClick}
             >
               <Gift className="h-4 w-4 mr-1" />
-              Shop Gifts
+              {buttonText}
             </Button>
             <Button
               variant="ghost"

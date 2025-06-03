@@ -8,6 +8,7 @@ import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions
 import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
 import { differenceInCalendarDays, format, isToday, isTomorrow } from "date-fns";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { generateDynamicButtonText, generateSearchQuery } from "./utils/buttonTextUtils";
 
 interface SubtleCountdownBannerProps {
   className?: string;
@@ -48,8 +49,15 @@ const SubtleCountdownBanner: React.FC<SubtleCountdownBannerProps> = ({ className
     daysDisplay = `${days} days`;
   }
 
+  // Generate dynamic button text - truncate for mobile if needed
+  const friendName = upcomingFriendEvent?.friendName;
+  const fullButtonText = generateDynamicButtonText(targetEvent, !!user, friendName);
+  const buttonText = isMobile && fullButtonText.length > 20 
+    ? "Shop Gifts" 
+    : fullButtonText;
+
   const handleShopClick = () => {
-    const query = encodeURIComponent(`${targetEvent.name} gifts`);
+    const query = encodeURIComponent(generateSearchQuery(targetEvent, friendName));
     navigate(`/marketplace?search=${query}`);
   };
 
@@ -86,7 +94,7 @@ const SubtleCountdownBanner: React.FC<SubtleCountdownBannerProps> = ({ className
               onClick={handleShopClick}
             >
               <Gift className="h-3 w-3 mr-1" />
-              Shop Gifts
+              {buttonText}
             </Button>
             <Button
               variant="ghost"

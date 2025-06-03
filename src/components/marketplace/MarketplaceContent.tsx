@@ -89,10 +89,10 @@ const MarketplaceContent = ({
       updateFilter('rating', legacyFilters.rating);
     }
     if (legacyFilters.freeShipping !== undefined) {
-      updateFilter('freeShipping', legacyFilters.freeShipping);
+      updateFilter('freeShipping', Boolean(legacyFilters.freeShipping));
     }
     if (legacyFilters.favoritesOnly !== undefined) {
-      updateFilter('favoritesOnly', legacyFilters.favoritesOnly);
+      updateFilter('favoritesOnly', Boolean(legacyFilters.favoritesOnly));
     }
     if (legacyFilters.sortBy) {
       updateFilter('sortBy', legacyFilters.sortBy);
@@ -153,8 +153,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: filters.freeShipping,
-                favoritesOnly: filters.favoritesOnly,
+                freeShipping: Boolean(filters.freeShipping),
+                favoritesOnly: Boolean(filters.favoritesOnly),
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}
@@ -185,7 +185,6 @@ const MarketplaceContent = ({
             products={displayProducts}
             viewMode={viewMode}
             onProductView={onProductView}
-            isLoading={isLoading}
           />
         </div>
       </div>

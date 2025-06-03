@@ -1,6 +1,5 @@
-
 import { Product } from "@/types/product";
-import { allProducts } from "./zinc/data/mockProducts";
+import { allProducts } from "../zinc/data/mockProducts";
 
 // Common search term mappings to improve search results
 const searchMappings: Record<string, string[]> = {

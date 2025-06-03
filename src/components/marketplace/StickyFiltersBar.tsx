@@ -44,18 +44,20 @@ const StickyFiltersBar = ({
       className={`sticky top-0 z-30 bg-white border-b py-4 transition-shadow mb-6 ${isScrolled ? "shadow-md" : ""}`}
     >
       <div className="container mx-auto flex flex-col gap-2">
-        {/* Filter Toggle */}
-        <div className="flex items-center justify-between gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
-          >
-            <Filter className="h-4 w-4" />
-            {showFilters ? "Hide Filters" : "Show Filters"}
-          </Button>
-        </div>
+        {/* Filter Toggle - only show if not in recent searches area */}
+        {recentSearches.length === 0 && (
+          <div className="flex items-center justify-between gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Hide Filters" : "Show Filters"}
+            </Button>
+          </div>
+        )}
 
         {/* Recent searches - separate from filter toggle */}
         {recentSearches.length > 0 && (

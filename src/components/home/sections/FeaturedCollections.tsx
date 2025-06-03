@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Gift } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 
@@ -25,10 +25,6 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
     navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
   };
 
-  const handleBrowseAll = () => {
-    navigate('/marketplace');
-  };
-
   return (
     <FullWidthSection className="py-16 bg-white">
       <ResponsiveContainer>
@@ -36,19 +32,9 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Discover Perfect Gifts
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Explore our curated collections to find the perfect gift for any occasion or person in your life
           </p>
-          <Button 
-            onClick={handleBrowseAll}
-            variant="outline"
-            size="lg"
-            className="mb-8"
-          >
-            <Gift className="mr-2 h-5 w-5" />
-            Browse All Products
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

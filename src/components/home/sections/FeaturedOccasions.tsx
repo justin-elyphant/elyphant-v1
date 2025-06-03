@@ -5,6 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, Heart, Cake, GraduationCap, Baby, ArrowRight } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const occasions = [
   {
@@ -46,6 +53,30 @@ const occasions = [
     searchTerm: "anniversary gifts",
     color: "bg-purple-500",
     description: "Commemorate your journey together"
+  },
+  {
+    id: 6,
+    name: "Mother's Day",
+    icon: Heart,
+    searchTerm: "mothers day gifts",
+    color: "bg-rose-500",
+    description: "Honor the special mom in your life"
+  },
+  {
+    id: 7,
+    name: "Father's Day",
+    icon: Calendar,
+    searchTerm: "fathers day gifts",
+    color: "bg-indigo-500",
+    description: "Celebrate dad with thoughtful gifts"
+  },
+  {
+    id: 8,
+    name: "Christmas",
+    icon: Calendar,
+    searchTerm: "christmas gifts",
+    color: "bg-emerald-500",
+    description: "Spread holiday joy and cheer"
   }
 ];
 
@@ -68,35 +99,48 @@ const FeaturedOccasions: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          {occasions.map((occasion) => {
-            const IconComponent = occasion.icon;
-            return (
-              <div
-                key={occasion.id}
-                className="group relative p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100"
-                onClick={() => handleOccasionClick(occasion.searchTerm)}
-              >
-                <div className={`${occasion.color} w-12 h-12 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <IconComponent className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {occasion.name}
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {occasion.description}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full group-hover:bg-gray-50"
-                >
-                  Shop Now
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                </Button>
-              </div>
-            );
-          })}
+        <div className="relative">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {occasions.map((occasion) => {
+                const IconComponent = occasion.icon;
+                return (
+                  <CarouselItem key={occasion.id} className="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                    <div
+                      className="group relative p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 h-full"
+                      onClick={() => handleOccasionClick(occasion.searchTerm)}
+                    >
+                      <div className={`${occasion.color} w-12 h-12 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                        <IconComponent className="h-6 w-6 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {occasion.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {occasion.description}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full group-hover:bg-gray-50"
+                      >
+                        Shop Now
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                      </Button>
+                    </div>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
         </div>
       </ResponsiveContainer>
     </FullWidthSection>

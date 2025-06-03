@@ -82,9 +82,9 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
             }}
             className="w-full"
           >
-            <CarouselContent className="-ml-2">
+            <CarouselContent className="-ml-3">
               {collections.map((collection) => (
-                <CarouselItem key={collection.id} className="pl-2 basis-4/5 sm:basis-1/2">
+                <CarouselItem key={collection.id} className="pl-3 basis-2/3 sm:basis-1/2">
                   <div
                     className="group relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
                     onClick={() => handleCollectionClick(collection.searchTerm)}

@@ -28,11 +28,14 @@ const Settings = () => {
     }
   }, [user, loading, navigate]);
 
-  // Show loading only while actually loading
+  // Show loading with timeout
   if (loading && user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-gray-600">Loading your settings...</p>
+        </div>
       </div>
     );
   }
@@ -65,6 +68,12 @@ const Settings = () => {
       return (
         <div className="text-center p-4">
           <p className="text-red-500">Error loading settings. Please try refreshing the page.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded"
+          >
+            Refresh
+          </button>
         </div>
       );
     }

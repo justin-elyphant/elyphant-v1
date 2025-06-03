@@ -23,6 +23,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
   const fetchingRef = useRef(false);
+  const initialLoadRef = useRef(false);
 
   // Combined loading and error states
   const loading = isFetching || isUpdating;
@@ -42,6 +43,13 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         console.log("Profile loaded from backend:", profileData);
         setProfile(profileData);
         setLastFetchTime(Date.now());
+        
+        // Clear onboarding flags after successful profile load
+        if (localStorage.getItem("newSignUp") === "true") {
+          localStorage.removeItem("newSignUp");
+          localStorage.removeItem("profileSetupLoading");
+          console.log("Cleared onboarding flags after profile load");
+        }
       }
       return profileData;
     } finally {
@@ -49,22 +57,30 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchProfile]);
 
-  // Fetch profile data when auth state changes - only once
+  // Initial profile fetch - only once
   useEffect(() => {
-    debouncedFetchProfile();
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      debouncedFetchProfile();
+    }
   }, [debouncedFetchProfile]);
 
-  // Check for new signup flags - but only if we haven't fetched recently
+  // Handle onboarding completion signals - but with strict conditions
   useEffect(() => {
     const isNewSignup = localStorage.getItem("newSignUp") === "true";
     const isProfileSetupLoading = localStorage.getItem("profileSetupLoading") === "true";
+    const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
     const timeSinceLastFetch = lastFetchTime ? Date.now() - lastFetchTime : Infinity;
     
-    if ((isNewSignup || isProfileSetupLoading) && timeSinceLastFetch > 5000) {
-      console.log("Detected new signup or profile setup, fetching profile data");
+    // Only fetch if there's a clear signal AND enough time has passed AND no profile yet
+    if ((isNewSignup || isProfileSetupLoading || onboardingComplete) && 
+        timeSinceLastFetch > 10000 && 
+        !profile && 
+        !fetchingRef.current) {
+      console.log("Detected onboarding completion, fetching profile data");
       debouncedFetchProfile();
     }
-  }, [debouncedFetchProfile, lastFetchTime]);
+  }, [debouncedFetchProfile, lastFetchTime, profile]);
 
   // Wrapper for updating the profile that also updates local state
   const handleUpdateProfile = async (data: Partial<Profile>) => {

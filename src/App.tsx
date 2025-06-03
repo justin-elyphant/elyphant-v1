@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
@@ -19,14 +20,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CartProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              {/* Add other routes as needed */}
-            </Routes>
-            <SearchOptimizationMonitor />
-          </CartProvider>
+          <ProfileProvider>
+            <CartProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                {/* Add other routes as needed */}
+              </Routes>
+              <SearchOptimizationMonitor />
+            </CartProvider>
+          </ProfileProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

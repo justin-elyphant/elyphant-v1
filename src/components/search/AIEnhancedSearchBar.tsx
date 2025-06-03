@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -87,11 +88,19 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   useEffect(() => {
     const searchUnified = async () => {
       if (query.length > 1 && !isNicoleMode) {
+        console.log(`Starting unified search for: "${query}"`);
         setSearchLoading(true);
         try {
           const results = await unifiedSearch(query, {
             maxResults: 10,
             currentUserId: user?.id
+          });
+          
+          console.log('Unified search results:', {
+            friends: results.friends.length,
+            products: results.products.length,
+            brands: results.brands.length,
+            total: results.total
           });
           
           setUnifiedResults({
@@ -101,6 +110,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           });
           
           const hasResults = results.friends.length > 0 || results.products.length > 0 || results.brands.length > 0;
+          console.log('Has unified results:', hasResults);
           setShowSuggestions(hasResults);
         } catch (error) {
           console.error('Unified search error:', error);
@@ -251,6 +261,22 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     ? "Ask Nicole anything about gifts..." 
     : "Search friends, products, or brands";
 
+  // Show unified search results when not in Nicole mode and have query
+  const shouldShowUnifiedSuggestions = !isNicoleMode && showSuggestions && (
+    unifiedResults.friends.length > 0 || 
+    unifiedResults.products.length > 0 || 
+    unifiedResults.brands.length > 0
+  );
+
+  // Show Nicole suggestions when in Nicole mode
+  const shouldShowNicoleSuggestions = isNicoleMode && showSuggestions && suggestions.length > 0;
+
+  // Show no results message when query exists but no results
+  const shouldShowNoResults = !isNicoleMode && query.length > 1 && !searchLoading && 
+    unifiedResults.friends.length === 0 && 
+    unifiedResults.products.length === 0 && 
+    unifiedResults.brands.length === 0;
+
   return (
     <div className={`relative w-full ${className}`}>
       {/* Search Bar */}
@@ -290,11 +316,6 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             }`}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            onFocus={() => {
-              if (!isNicoleMode && (unifiedResults.friends.length > 0 || unifiedResults.products.length > 0 || unifiedResults.brands.length > 0)) {
-                setShowSuggestions(true);
-              }
-            }}
           />
 
           {/* Voice Input Button */}
@@ -331,13 +352,27 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         </div>
       )}
 
+      {/* Loading indicator */}
+      {searchLoading && query.length > 1 && !isNicoleMode && (
+        <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 p-3 text-center text-sm text-gray-600">
+          Searching...
+        </div>
+      )}
+
+      {/* No results message */}
+      {shouldShowNoResults && (
+        <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 p-3 text-center text-sm text-gray-500">
+          No results found for "{query}"
+        </div>
+      )}
+
       {/* Unified Search Suggestions */}
-      {!isNicoleMode && (
+      {shouldShowUnifiedSuggestions && (
         <UnifiedSearchSuggestions
           friends={unifiedResults.friends}
           products={unifiedResults.products}
           brands={unifiedResults.brands}
-          isVisible={showSuggestions}
+          isVisible={true}
           onFriendSelect={handleFriendSelect}
           onProductSelect={handleProductSelect}
           onBrandSelect={handleBrandSelect}
@@ -347,10 +382,10 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       )}
 
       {/* Nicole Mode Traditional Suggestions */}
-      {isNicoleMode && (
+      {shouldShowNicoleSuggestions && (
         <SearchSuggestions
           suggestions={suggestions}
-          isVisible={showSuggestions}
+          isVisible={true}
           onSuggestionClick={handleSuggestionClick}
           mobile={mobile}
         />

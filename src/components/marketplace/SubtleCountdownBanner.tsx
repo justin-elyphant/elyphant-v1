@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { X, Calendar, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,12 +48,37 @@ const SubtleCountdownBanner: React.FC<SubtleCountdownBannerProps> = ({ className
     daysDisplay = `${days} days`;
   }
 
-  // Generate dynamic button text - truncate for mobile if needed
+  // Generate dynamic button text with smarter mobile truncation
   const friendName = upcomingFriendEvent?.personName;
   const fullButtonText = generateDynamicButtonText(targetEvent, !!user, friendName);
-  const buttonText = isMobile && fullButtonText.length > 20 
-    ? "Shop Gifts" 
-    : fullButtonText;
+  
+  // Smarter mobile text logic - keep meaningful holiday names
+  const getMobileButtonText = () => {
+    if (!isMobile) return fullButtonText;
+    
+    // For Father's Day and other major holidays, keep the specific text
+    if (fullButtonText.includes("Father's Day")) {
+      return "Shop Father's Day";
+    }
+    if (fullButtonText.includes("Mother's Day")) {
+      return "Shop Mother's Day";
+    }
+    if (fullButtonText.includes("Christmas")) {
+      return "Shop Christmas";
+    }
+    if (fullButtonText.includes("Valentine")) {
+      return "Shop Valentine's";
+    }
+    
+    // For very long text or friend names, use generic
+    if (fullButtonText.length > 25) {
+      return "Shop Gifts";
+    }
+    
+    return fullButtonText;
+  };
+
+  const buttonText = getMobileButtonText();
 
   const handleShopClick = () => {
     const query = encodeURIComponent(generateSearchQuery(targetEvent, friendName));

@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
-import StickyFiltersBar from "./StickyFiltersBar";
-import CategoryCarousel from "./CategoryCarousel";
-import CountdownBanner from "./CountdownBanner";
+import IntegratedSearchSection from "./IntegratedSearchSection";
+import SubtleCountdownBanner from "./SubtleCountdownBanner";
+import CondensedFiltersBar from "./CondensedFiltersBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import MarketplaceHero from "./MarketplaceHero";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
-import { X } from "lucide-react";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
@@ -43,6 +42,8 @@ const ResultsChip = ({
     </ResponsiveContainer>
   </FullWidthSection>
 );
+
+import { X } from "lucide-react";
 
 const MarketplaceWrapper = () => {
   const isMobile = useIsMobile();
@@ -174,36 +175,18 @@ const MarketplaceWrapper = () => {
         </FullWidthSection>
       )}
 
-      {/* Full-width sticky filters bar */}
-      <FullWidthSection background="white" className="border-b border-gray-200 sticky top-0 z-40">
-        <ResponsiveContainer>
-          <StickyFiltersBar
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-            totalItems={products.length}
-            searchTerm={searchTerm}
-            onRecentSearchClick={handleRecentSearchClick}
-          />
-        </ResponsiveContainer>
-      </FullWidthSection>
+      {/* Integrated Search Section - combines categories and recent searches */}
+      <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
 
-      {/* Category Carousel - positioned below sticky filters */}
-      <FullWidthSection background="white" className="border-b border-gray-100">
-        <ResponsiveContainer>
-          <CategoryCarousel className="py-4" />
-        </ResponsiveContainer>
-      </FullWidthSection>
+      {/* Subtle Countdown Banner - only shows when contextually relevant */}
+      <SubtleCountdownBanner />
 
-      {/* Countdown Banner - positioned below category carousel */}
-      <CountdownBanner />
-
-      {/* Results chip */}
-      {isActivelyShopping && (
-        <ResultsChip
-          query={getResultsDisplayText()}
-          onClear={handleClearAll}
-        />
-      )}
+      {/* Condensed Filters Bar - minimal, focused on active filters */}
+      <CondensedFiltersBar
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        totalItems={products.length}
+      />
 
       {/* Main content with full-width capability for mobile */}
       <FullWidthSection className={isMobile ? "" : "container mx-auto"} padding={isMobile ? "none" : "standard"}>

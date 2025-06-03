@@ -161,8 +161,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: filters.freeShipping,
-                favoritesOnly: filters.favoritesOnly,
+                freeShipping: Boolean(filters.freeShipping),
+                favoritesOnly: Boolean(filters.favoritesOnly),
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}

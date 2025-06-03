@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import MainLayout from "@/components/layout/MainLayout";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
@@ -31,12 +32,14 @@ const Settings = () => {
   // Show loading with timeout
   if (loading && user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-600">Loading your settings...</p>
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-gray-600">Loading your settings...</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
@@ -80,42 +83,44 @@ const Settings = () => {
   };
 
   return (
-    <SettingsLayout
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
-    >
-      <div className="mb-6">
-        <h2 className="font-semibold text-lg mb-3">Your Quick Links</h2>
-        <div className="flex flex-wrap gap-3 mb-4">
-          <Link
-            to="/dashboard"
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-          >
-            Dashboard
-          </Link>
-          <Link
-            to={`/profile/${user.id}`}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-          >
-            Profile
-          </Link>
-          <Link
-            to="/connections"
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-          >
-            Connections
-          </Link>
-          <Link
-            to="/wishlists"
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-          >
-            Wishlists
-          </Link>
+    <MainLayout>
+      <SettingsLayout
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
+      >
+        <div className="mb-6">
+          <h2 className="font-semibold text-lg mb-3">Your Quick Links</h2>
+          <div className="flex flex-wrap gap-3 mb-4">
+            <Link
+              to="/dashboard"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
+            >
+              Dashboard
+            </Link>
+            <Link
+              to={`/profile/${user.id}`}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
+            >
+              Profile
+            </Link>
+            <Link
+              to="/connections"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
+            >
+              Connections
+            </Link>
+            <Link
+              to="/wishlists"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
+            >
+              Wishlists
+            </Link>
+          </div>
         </div>
-      </div>
-      {renderTabContent()}
-    </SettingsLayout>
+        {renderTabContent()}
+      </SettingsLayout>
+    </MainLayout>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import { Product } from "@/types/product";
 import { allProducts } from "../zinc/data/mockProducts";
 
@@ -96,8 +97,7 @@ export const getFeaturedProducts = (limit: number = 8): Product[] => {
   // Return products with high ratings or marked as featured
   const featured = allProducts.filter(product => 
     (product.rating && product.rating >= 4.5) || 
-    product.isBestSeller || 
-    product.isPopular
+    product.isBestSeller
   );
   
   return featured.slice(0, limit);

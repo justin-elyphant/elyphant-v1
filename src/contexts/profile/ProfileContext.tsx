@@ -32,15 +32,16 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Debounced fetch to prevent multiple simultaneous calls
   const debouncedFetchProfile = useCallback(async () => {
     if (fetchingRef.current) {
-      console.log("Profile fetch already in progress, skipping");
+      console.log("[ProfileContext] Profile fetch already in progress, skipping");
       return null;
     }
 
     fetchingRef.current = true;
     try {
+      console.log("[ProfileContext] Fetching profile data...");
       const profileData = await fetchProfile();
       if (profileData) {
-        console.log("Profile loaded from backend:", profileData);
+        console.log("[ProfileContext] Profile loaded from backend:", profileData);
         setProfile(profileData);
         setLastFetchTime(Date.now());
         
@@ -51,8 +52,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         if (localStorage.getItem("newSignUp") === "true" && !isInSignupFlow) {
           localStorage.removeItem("newSignUp");
           localStorage.removeItem("profileSetupLoading");
-          console.log("Cleared onboarding flags after profile load");
+          console.log("[ProfileContext] Cleared onboarding flags after profile load");
         }
+      } else {
+        console.log("[ProfileContext] No profile data returned");
       }
       return profileData;
     } finally {
@@ -66,8 +69,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       const isInSignupFlow = window.location.pathname.includes('/signup');
       
       if (!isInSignupFlow) {
+        console.log("[ProfileContext] Initial profile fetch starting...");
         initialLoadRef.current = true;
         debouncedFetchProfile();
+      } else {
+        console.log("[ProfileContext] Skipping initial fetch - in signup flow");
       }
     }
   }, [debouncedFetchProfile]);
@@ -77,16 +83,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     const isNewSignup = localStorage.getItem("newSignUp") === "true";
     const isProfileSetupLoading = localStorage.getItem("profileSetupLoading") === "true";
     const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
+    const profileCompleted = localStorage.getItem("profileCompleted") === "true";
     const timeSinceLastFetch = lastFetchTime ? Date.now() - lastFetchTime : Infinity;
     const isInSignupFlow = window.location.pathname.includes('/signup');
     
     // Only fetch if there's a clear signal AND enough time has passed AND no profile yet AND not in signup flow
-    if ((isProfileSetupLoading || onboardingComplete) && 
+    if ((isProfileSetupLoading || onboardingComplete || profileCompleted) && 
         timeSinceLastFetch > 15000 && 
         !profile && 
         !fetchingRef.current &&
         !isInSignupFlow) {
-      console.log("Detected onboarding completion, fetching profile data");
+      console.log("[ProfileContext] Detected onboarding completion, fetching profile data");
       debouncedFetchProfile();
     }
   }, [debouncedFetchProfile, lastFetchTime, profile]);
@@ -94,21 +101,23 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Wrapper for updating the profile that also updates local state
   const handleUpdateProfile = async (data: Partial<Profile>) => {
     try {
-      console.log("Updating profile with data:", JSON.stringify(data, null, 2));
+      console.log("[ProfileContext] Updating profile with data:", JSON.stringify(data, null, 2));
       const result = await updateProfile(data);
       
       if (result) {
+        console.log("[ProfileContext] Profile update successful, refetching...");
         // Update the local profile state with the new data
         const updatedProfile = await debouncedFetchProfile();
         if (updatedProfile) {
           setProfile(updatedProfile);
           setLastFetchTime(Date.now());
+          console.log("[ProfileContext] Profile state updated with fresh data");
         }
       }
       
       return result;
     } catch (error) {
-      console.error("Profile update failed:", error);
+      console.error("[ProfileContext] Profile update failed:", error);
       toast.error("Failed to update profile");
       throw error;
     }
@@ -117,16 +126,16 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Wrapper for refetching the profile
   const refetchProfile = useCallback(async () => {
     try {
-      console.log("Manually refetching profile...");
+      console.log("[ProfileContext] Manually refetching profile...");
       const profileData = await debouncedFetchProfile();
       if (profileData) {
-        console.log("Profile refetched successfully");
+        console.log("[ProfileContext] Profile refetched successfully");
       } else {
-        console.log("No profile data returned when refetching");
+        console.log("[ProfileContext] No profile data returned when refetching");
       }
       return profileData;
     } catch (error) {
-      console.error("Error refetching profile:", error);
+      console.error("[ProfileContext] Error refetching profile:", error);
       toast.error("Failed to refresh your profile data");
       return null;
     }

@@ -39,38 +39,63 @@ export const useProfileData = () => {
       
       try {
         setIsLoading(true);
+        
+        // First check if Nicole collected any data
+        const nicoleDataStr = localStorage.getItem("nicoleCollectedData");
+        let nicoleData = null;
+        if (nicoleDataStr) {
+          try {
+            nicoleData = JSON.parse(nicoleDataStr);
+            console.log("Found Nicole collected data:", nicoleData);
+          } catch (e) {
+            console.error("Error parsing Nicole data:", e);
+          }
+        }
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
           
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           console.error("Error loading profile:", error);
           return;
         }
         
-        if (data) {
-          console.log("Loaded initial profile data:", data);
-          
-          // Ensure username is extracted, with fallback
-          const username = data.username || 
-            (data.email ? data.email.split('@')[0] : '') ||
-            `user_${Date.now().toString(36)}`;
-          
-          setProfileData(prevData => ({
-            ...prevData,
-            name: data.name || prevData.name,
-            username: username,
-            bio: data.bio || prevData.bio,
-            email: data.email || user.email || '',
-            profile_image: data.profile_image || prevData.profile_image,
-            dob: data.dob || prevData.dob,
-            shipping_address: data.shipping_address || prevData.shipping_address,
-            gift_preferences: data.gift_preferences || [],
-            important_dates: data.important_dates || [],
-            data_sharing_settings: data.data_sharing_settings || getDefaultDataSharingSettings()
-          }));
+        // Ensure username is extracted, with fallback
+        const username = data?.username || 
+          (data?.email ? data.email.split('@')[0] : '') ||
+          `user_${Date.now().toString(36)}`;
+        
+        // Merge Nicole data with existing profile data
+        const mergedData = {
+          name: nicoleData?.name || data?.name || "",
+          username: username,
+          bio: data?.bio || "",
+          email: data?.email || user.email || '',
+          profile_image: data?.profile_image || "",
+          dob: nicoleData?.birthday || data?.dob || "",
+          shipping_address: data?.shipping_address || {
+            address_line1: "",
+            city: "",
+            state: "",
+            zip_code: "",
+            country: ""
+          },
+          gift_preferences: nicoleData?.interests ? 
+            nicoleData.interests.map((interest: string) => ({ category: interest, importance: "medium" })) :
+            data?.gift_preferences || [],
+          important_dates: data?.important_dates || [],
+          data_sharing_settings: data?.data_sharing_settings || getDefaultDataSharingSettings()
+        };
+
+        console.log("Setting profile data with Nicole integration:", mergedData);
+        setProfileData(mergedData);
+        
+        // Clear Nicole data after using it
+        if (nicoleData) {
+          localStorage.removeItem("nicoleCollectedData");
         }
       } catch (error) {
         console.error("Error fetching profile data:", error);

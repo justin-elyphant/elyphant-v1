@@ -79,11 +79,11 @@ export const useGeneralSettingsForm = () => {
     },
   });
 
-  // Load profile data with error handling
+  // Load profile data with error handling and better debugging
   useEffect(() => {
     if (profile && !profileLoading) {
       try {
-        console.log("Loading profile data into settings form:", profile);
+        console.log("[Settings] Loading profile data into form:", profile);
         
         // Safely extract birthday
         let birthdayDate = undefined;
@@ -91,16 +91,18 @@ export const useGeneralSettingsForm = () => {
           try {
             birthdayDate = new Date(profile.dob);
             if (isNaN(birthdayDate.getTime())) {
-              console.warn("Invalid birthday date format:", profile.dob);
+              console.warn("[Settings] Invalid birthday date format:", profile.dob);
               birthdayDate = undefined;
+            } else {
+              console.log("[Settings] Parsed birthday:", birthdayDate);
             }
           } catch (e) {
-            console.error("Error parsing birthday:", e);
+            console.error("[Settings] Error parsing birthday:", e);
             birthdayDate = undefined;
           }
         }
         
-        // Safely extract address
+        // Safely extract address with better mapping
         const address = {
           street: profile.shipping_address?.address_line1 || profile.shipping_address?.street || "",
           city: profile.shipping_address?.city || "",
@@ -108,15 +110,26 @@ export const useGeneralSettingsForm = () => {
           zipCode: profile.shipping_address?.zip_code || profile.shipping_address?.zipCode || "",
           country: profile.shipping_address?.country || "",
         };
+        console.log("[Settings] Parsed address:", address);
         
-        // Safely extract interests
+        // Extract interests from multiple possible sources
         let interests: string[] = [];
+        
+        // First try the interests field
         if (Array.isArray(profile.interests)) {
           interests = profile.interests.filter(Boolean);
-        } else if (Array.isArray(profile.gift_preferences)) {
+          console.log("[Settings] Found interests in interests field:", interests);
+        }
+        // Then try gift_preferences
+        else if (Array.isArray(profile.gift_preferences)) {
           interests = profile.gift_preferences
-            .map((pref: any) => typeof pref === 'string' ? pref : pref?.category)
+            .map((pref: any) => {
+              if (typeof pref === 'string') return pref;
+              if (pref && typeof pref === 'object' && pref.category) return pref.category;
+              return null;
+            })
             .filter(Boolean);
+          console.log("[Settings] Found interests in gift_preferences:", interests);
         }
         
         // Safely extract important dates
@@ -133,14 +146,24 @@ export const useGeneralSettingsForm = () => {
                   });
                 }
               } catch (e) {
-                console.error("Error parsing important date:", e);
+                console.error("[Settings] Error parsing important date:", e);
               }
             }
           });
         }
+        console.log("[Settings] Parsed important dates:", importantDates);
+        
+        // Safely extract data sharing settings
+        const dataSharing = {
+          dob: profile.data_sharing_settings?.dob || "private",
+          shipping_address: profile.data_sharing_settings?.shipping_address || "private",
+          gift_preferences: profile.data_sharing_settings?.gift_preferences || "friends",
+          email: profile.data_sharing_settings?.email || "private",
+        };
+        console.log("[Settings] Parsed data sharing settings:", dataSharing);
         
         // Reset form with safe data
-        form.reset({
+        const formData = {
           name: profile.name || "",
           email: profile.email || user?.email || "",
           bio: profile.bio || "",
@@ -148,23 +171,23 @@ export const useGeneralSettingsForm = () => {
           address,
           interests,
           importantDates,
-          data_sharing_settings: {
-            dob: profile.data_sharing_settings?.dob || "private",
-            shipping_address: profile.data_sharing_settings?.shipping_address || "private",
-            gift_preferences: profile.data_sharing_settings?.gift_preferences || "friends",
-            email: profile.data_sharing_settings?.email || "private",
-          },
-        });
+          data_sharing_settings: dataSharing,
+        };
         
-        console.log("Profile data loaded successfully into form");
+        console.log("[Settings] Setting form data:", formData);
+        form.reset(formData);
+        
+        console.log("[Settings] Profile data loaded successfully into form");
       } catch (error) {
-        console.error("Error loading profile data:", error);
+        console.error("[Settings] Error loading profile data:", error);
         toast.error("Error loading profile data");
       }
+    } else if (!profile && !profileLoading) {
+      console.log("[Settings] No profile data found, using defaults");
     }
   }, [profile, profileLoading, form, user?.email]);
 
-  // Form submission
+  // Form submission with better error handling
   const onSubmit = async (data: SettingsFormValues) => {
     if (!user) {
       toast.error("You must be logged in to update your profile");
@@ -173,6 +196,7 @@ export const useGeneralSettingsForm = () => {
 
     try {
       setIsSaving(true);
+      console.log("[Settings] Submitting form data:", data);
       
       const updateData = {
         name: data.name,
@@ -189,6 +213,10 @@ export const useGeneralSettingsForm = () => {
           zipCode: data.address.zipCode,
         },
         interests: data.interests,
+        gift_preferences: data.interests.map(interest => ({
+          category: interest,
+          importance: "medium"
+        })),
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),
           description: date.description,
@@ -199,10 +227,11 @@ export const useGeneralSettingsForm = () => {
         updated_at: new Date().toISOString(),
       };
 
+      console.log("[Settings] Formatted update data:", updateData);
       await updateProfile(updateData);
       toast.success("Profile updated successfully");
     } catch (error) {
-      console.error("Failed to update profile:", error);
+      console.error("[Settings] Failed to update profile:", error);
       toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);

@@ -1,10 +1,10 @@
-import { useProfileSteps } from "./useProfileSteps";
+
+import { useState, useCallback, useEffect } from "react";
 import { useProfileData } from "./useProfileData";
-import { useProfileValidation } from "./useProfileValidation";
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useProfileSubmit } from "@/hooks/profile/useProfileSubmit";
+import { ProfileData } from "./types";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 interface UseProfileSetupProps {
   onComplete: () => void;
@@ -12,199 +12,135 @@ interface UseProfileSetupProps {
 }
 
 export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) => {
-  const { activeStep, steps, handleNext, handleBack } = useProfileSteps();
-  const { profileData, updateProfileData, isLoading: isDataLoading } = useProfileData();
-  const { isCurrentStepValid } = useProfileValidation(activeStep, profileData);
-  const { isSubmitting, submitProfile, submitError } = useProfileSubmit({
-    onSuccess: () => {
-      // Handle success if needed
-    },
-    onComplete
-  });
-  
-  const [isCompleting, setIsCompleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 5000; // Increase timeout to 5 seconds
+  const { user } = useAuth();
+  const { profileData, updateProfileData, isLoading: dataLoading } = useProfileData();
+  const [activeStep, setActiveStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // More reliable loading state checking
-  const isLoading = isSubmitting || isCompleting || isDataLoading;
+  const steps = [
+    { title: "Basic Info", description: "Tell us about yourself" },
+    { title: "Birthday", description: "When is your birthday?" },
+    { title: "Address", description: "Where should gifts be delivered?" },
+    { title: "Preferences", description: "What do you like?" },
+    { title: "Privacy", description: "Control your data sharing" },
+    { title: "Next Steps", description: "What would you like to do?" }
+  ];
 
-  // Ensure data_sharing_settings has all required fields
-  useEffect(() => {
-    if (profileData && (!profileData.data_sharing_settings || 
-        Object.keys(profileData.data_sharing_settings).length === 0 ||
-        !profileData.data_sharing_settings.email)) {
-      
-      // Get complete default settings to ensure consistent initialization
-      const defaultSettings = getDefaultDataSharingSettings();
-      
-      // Update profile data with complete settings
-      updateProfileData('data_sharing_settings', {
-        ...defaultSettings,
-        ...(profileData.data_sharing_settings || {})
-      });
-      
-      console.log("Profile setup: Initialized complete data sharing settings:", defaultSettings);
+  const isCurrentStepValid = useCallback(() => {
+    switch (activeStep) {
+      case 0: // Basic Info
+        return profileData.name && profileData.username;
+      case 1: // Birthday
+        return true; // Optional
+      case 2: // Address
+        return true; // Optional for now
+      case 3: // Preferences
+        return true; // Optional
+      case 4: // Privacy
+        return true; // Has defaults
+      case 5: // Next Steps
+        return true;
+      default:
+        return false;
     }
-  }, [profileData, updateProfileData]);
+  }, [activeStep, profileData]);
 
-  // Clear all loading flags when component mounts
-  useEffect(() => {
-    // Clear any stale loading flags
-    localStorage.removeItem("profileSetupLoading");
-    setError(null);
-    console.log("useProfileSetup: Initialized and cleared loading flags");
-    
-    // Also clear when component unmounts
-    return () => {
-      if (completionTimeoutRef.current) {
-        clearTimeout(completionTimeoutRef.current);
-        completionTimeoutRef.current = null;
-      }
-      localStorage.removeItem("profileSetupLoading");
-    };
-  }, []);
-
-  // Enhanced logging for debugging
-  useEffect(() => {
-    console.log("useProfileSetup state:", {
-      isDataLoading,
-      isSubmitting,
-      isCompleting,
-      totalLoading: isLoading,
-      nextStepsOption: profileData.next_steps_option,
-      activeStep,
-      hasCompletedRef: hasCompletedRef.current,
-      error,
-      data_sharing_settings: profileData.data_sharing_settings
-    });
-  }, [isDataLoading, isSubmitting, isCompleting, isLoading, profileData.next_steps_option, activeStep, error, profileData.data_sharing_settings]);
-
-  // Force completion after a timeout - with additional safeguards
-  useEffect(() => {
-    if (isCompleting && !completionTimeoutRef.current) {
-      console.log("Setting up safety timeout for profile completion");
-      completionTimeoutRef.current = setTimeout(() => {
-        console.warn("Forcing profile setup completion due to timeout");
-        if (isCompleting) { // Double-check we're still completing
-          setIsCompleting(false);
-          // Remove loading flags from localStorage
-          localStorage.removeItem("profileSetupLoading");
-          localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
-          toast.success("Setup complete!");
-          onComplete();
-        }
-      }, maxCompletionTime);
+  const handleNext = useCallback(() => {
+    if (activeStep < steps.length - 1) {
+      setActiveStep(prev => prev + 1);
     }
-    
-    return () => {
-      if (completionTimeoutRef.current) {
-        clearTimeout(completionTimeoutRef.current);
-        completionTimeoutRef.current = null;
-      }
-    };
-  }, [isCompleting, onComplete]);
+  }, [activeStep, steps.length]);
 
-  // Safe cleanup function for timeouts
-  const cleanupTimeouts = useCallback(() => {
-    if (completionTimeoutRef.current) {
-      clearTimeout(completionTimeoutRef.current);
-      completionTimeoutRef.current = null;
+  const handleBack = useCallback(() => {
+    if (activeStep > 0) {
+      setActiveStep(prev => prev - 1);
     }
-    // Remove loading flag
-    localStorage.removeItem("profileSetupLoading");
-    localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
-  }, []);
+  }, [activeStep]);
 
-  // Handle skip action
-  const handleSkip = useCallback(() => {
-    console.log("Skipping profile setup");
-    cleanupTimeouts();
-    if (onSkip) {
-      onSkip();
-    }
-  }, [onSkip, cleanupTimeouts]);
-
-  // Handle completion with better preparation for privacy settings
   const handleComplete = useCallback(async () => {
-    if (hasCompletedRef.current || isCompleting) {
-      console.log("Completion already in progress, ignoring duplicate request");
+    if (!user) {
+      toast.error("User not authenticated");
       return;
     }
 
-    console.log("Completing profile setup with data:", profileData);
-    
-    // Always ensure data_sharing_settings is complete before submission
-    const completeSettings = {
-      ...getDefaultDataSharingSettings(),
-      ...(profileData.data_sharing_settings || {})
-    };
-    
-    // Update with complete settings
-    updateProfileData('data_sharing_settings', completeSettings);
-    console.log("Updated data sharing settings before completion:", completeSettings);
-    
-    hasCompletedRef.current = true;
-    setIsCompleting(true);
-    setError(null);
-    
-    // Set loading flag in localStorage
-    localStorage.setItem("profileSetupLoading", "true");
-    
     try {
-      // Ensure we have the latest data with all sharing settings
-      const finalProfileData = {
-        ...profileData,
-        data_sharing_settings: completeSettings
+      setIsLoading(true);
+      console.log("Saving profile data:", profileData);
+
+      // Format the data for Supabase
+      const updateData = {
+        name: profileData.name,
+        username: profileData.username,
+        email: profileData.email,
+        bio: profileData.bio || `Hi, I'm ${profileData.name}`,
+        profile_image: profileData.profile_image,
+        dob: profileData.dob || null,
+        shipping_address: profileData.shipping_address,
+        gift_preferences: profileData.gift_preferences,
+        important_dates: profileData.important_dates,
+        data_sharing_settings: profileData.data_sharing_settings,
+        onboarding_completed: true,
+        updated_at: new Date().toISOString()
       };
-      
-      await submitProfile(finalProfileData);
-      
-      // Clear completion flags and redirect
+
+      console.log("Formatted data for save:", updateData);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert(updateData, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        })
+        .eq('id', user.id)
+        .select();
+
+      if (error) {
+        console.error("Error saving profile:", error);
+        toast.error("Failed to save profile");
+        return;
+      }
+
+      console.log("Profile saved successfully:", data);
+      toast.success("Profile completed successfully!");
+
+      // Clear any remaining onboarding flags
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileSetupLoading");
-      localStorage.removeItem("signupRateLimited");
-      setIsCompleting(false);
-      cleanupTimeouts();
-      
-      // Short timeout before completing to ensure state updates
-      setTimeout(() => {
-        onComplete();
-      }, 100);
-    } catch (error: any) {
-      console.error("Error in handleComplete:", error);
-      setError(error.message || "An error occurred, continuing anyway");
-      toast.error("Setup completed with some errors. Your data may be incomplete.");
-      
-      // Clear loading states and force completion
-      setIsCompleting(false);
-      localStorage.removeItem("profileSetupLoading");
-      localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
-      cleanupTimeouts();
-      
-      // Even on error, we still want to complete the flow to prevent users getting stuck
-      setTimeout(() => {
-        onComplete();
-      }, 100);
+      localStorage.removeItem("onboardingComplete");
+      localStorage.setItem("profileCompleted", "true");
+
+      onComplete();
+    } catch (error) {
+      console.error("Error completing profile setup:", error);
+      toast.error("Failed to complete profile setup");
+    } finally {
+      setIsLoading(false);
     }
-  }, [profileData, submitProfile, onComplete, isCompleting, cleanupTimeouts, updateProfileData]);
+  }, [profileData, user, onComplete]);
+
+  const handleSkip = useCallback(() => {
+    console.log("Profile setup skipped");
+    localStorage.removeItem("newSignUp");
+    localStorage.removeItem("profileSetupLoading");
+    localStorage.setItem("profileSkipped", "true");
+    
+    if (onSkip) {
+      onSkip();
+    } else {
+      onComplete();
+    }
+  }, [onSkip, onComplete]);
 
   return {
     activeStep,
+    profileData,
     steps,
+    isLoading: isLoading || dataLoading,
+    isCurrentStepValid: isCurrentStepValid(),
     handleNext,
     handleBack,
-    
-    profileData,
-    updateProfileData,
-    
-    isCurrentStepValid,
-    
-    isLoading,
-    error,
     handleComplete,
-    handleSkip
+    handleSkip,
+    updateProfileData
   };
 };

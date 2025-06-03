@@ -1,0 +1,43 @@
+
+import { useState, useRef } from "react";
+import { FriendSearchResult } from "@/services/search/friendSearchService";
+import { ZincProduct } from "@/components/marketplace/zinc/types";
+
+export const useSearchState = () => {
+  const [query, setQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [unifiedResults, setUnifiedResults] = useState<{
+    friends: FriendSearchResult[];
+    products: ZincProduct[];
+    brands: string[];
+  }>({ friends: [], products: [], brands: [] });
+  const [showNicoleDropdown, setShowNicoleDropdown] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  
+  const inputRef = useRef<HTMLInputElement>(null);
+  const nicoleDropdownRef = useRef<HTMLDivElement>(null);
+
+  return {
+    query,
+    setQuery,
+    showSuggestions,
+    setShowSuggestions,
+    suggestions,
+    setSuggestions,
+    unifiedResults,
+    setUnifiedResults,
+    showNicoleDropdown,
+    setShowNicoleDropdown,
+    showMobileModal,
+    setShowMobileModal,
+    isListening,
+    setIsListening,
+    searchLoading,
+    setSearchLoading,
+    inputRef,
+    nicoleDropdownRef
+  };
+};

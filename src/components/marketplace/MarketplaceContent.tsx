@@ -13,17 +13,38 @@ import MobileFiltersDrawer from "./MobileFiltersDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SignUpDialog from "./SignUpDialog";
 import { useOptimizedSearch } from "@/hooks/useOptimizedSearch";
+import { Product } from "@/types/product";
 
-const MarketplaceContent = () => {
+interface MarketplaceContentProps {
+  products?: Product[];
+  isLoading?: boolean;
+  searchTerm?: string;
+  onProductView?: (productId: string) => void;
+  showFilters?: boolean;
+  setShowFilters?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const MarketplaceContent = ({ 
+  products: propProducts,
+  isLoading: propIsLoading,
+  searchTerm: propSearchTerm,
+  onProductView,
+  showFilters: propShowFilters,
+  setShowFilters: propSetShowFilters
+}: MarketplaceContentProps) => {
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
-  const query = searchParams.get("q") || "";
+  const query = searchParams.get("q") || propSearchTerm || "";
   
-  // Initialize state with proper boolean conversion
-  const [showFilters, setShowFilters] = useState(() => {
+  // Initialize state with proper boolean conversion, but use props if provided
+  const [internalShowFilters, setInternalShowFilters] = useState(() => {
     const saved = localStorage.getItem('showFilters');
     return saved === 'true';
   });
+  
+  const showFilters = propShowFilters !== undefined ? propShowFilters : internalShowFilters;
+  const setShowFilters = propSetShowFilters || setInternalShowFilters;
+  
   const [savedFiltersActive, setSavedFiltersActive] = useState(() => {
     const saved = localStorage.getItem('savedFiltersActive');
     return saved === 'true';
@@ -48,16 +69,22 @@ const MarketplaceContent = () => {
   // Use optimized search hook
   const { search: optimizedSearch, isLoading: searchLoading, results: searchResults, error: searchError } = useOptimizedSearch();
 
-  // Regular product fetching (when no search query)
+  // Regular product fetching (when no search query and no props provided)
   const { products: regularProducts, isLoading: regularLoading } = useMarketplaceProducts();
 
-  // Determine which products to use
+  // Determine which products to use - prioritize props, then search results, then regular products
   const products = useMemo(() => {
+    if (propProducts) {
+      return propProducts;
+    }
     if (query && searchResults.length > 0) {
       return searchResults;
     }
     return regularProducts || [];
-  }, [query, searchResults, regularProducts]);
+  }, [propProducts, query, searchResults, regularProducts]);
+
+  // Determine loading state
+  const isLoading = propIsLoading !== undefined ? propIsLoading : (query ? searchLoading : regularLoading);
 
   // Filter products based on active filters
   const filteredProducts = useFilteredProducts(products, activeFilters, sortOption);
@@ -81,10 +108,12 @@ const MarketplaceContent = () => {
     }
   }, [query, optimizedSearch]);
 
-  // Save filter state to localStorage
+  // Save filter state to localStorage (only for internal state)
   useEffect(() => {
-    localStorage.setItem('showFilters', showFilters.toString());
-  }, [showFilters]);
+    if (propShowFilters === undefined) {
+      localStorage.setItem('showFilters', internalShowFilters.toString());
+    }
+  }, [internalShowFilters, propShowFilters]);
 
   useEffect(() => {
     localStorage.setItem('savedFiltersActive', savedFiltersActive.toString());
@@ -98,7 +127,11 @@ const MarketplaceContent = () => {
     setSavedFiltersActive(!savedFiltersActive);
   };
 
-  const isLoading = query ? searchLoading : regularLoading;
+  const handleProductView = (productId: string) => {
+    if (onProductView) {
+      onProductView(productId);
+    }
+  };
 
   if (isLoading) {
     return <MarketplaceLoading />;
@@ -144,6 +177,7 @@ const MarketplaceContent = () => {
               <ProductGrid 
                 products={filteredProducts} 
                 viewMode={viewMode}
+                onProductView={handleProductView}
               />
             </div>
           </div>

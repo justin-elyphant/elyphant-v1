@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
 import StickyFiltersBar from "./StickyFiltersBar";
+import CategoryCarousel from "./CategoryCarousel";
+import CountdownBanner from "./CountdownBanner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import MarketplaceHero from "./MarketplaceHero";
@@ -184,6 +186,16 @@ const MarketplaceWrapper = () => {
           />
         </ResponsiveContainer>
       </FullWidthSection>
+
+      {/* Category Carousel - positioned below sticky filters */}
+      <FullWidthSection background="white" className="border-b border-gray-100">
+        <ResponsiveContainer>
+          <CategoryCarousel className="py-4" />
+        </ResponsiveContainer>
+      </FullWidthSection>
+
+      {/* Countdown Banner - positioned below category carousel */}
+      <CountdownBanner />
 
       {/* Results chip */}
       {isActivelyShopping && (

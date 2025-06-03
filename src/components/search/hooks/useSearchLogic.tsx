@@ -1,6 +1,5 @@
+
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
 import { unifiedSearch } from "@/services/search/unifiedSearchService";
 
 interface SearchLogicProps {
@@ -30,15 +29,6 @@ export const useSearchLogic = ({
   setShowSuggestions,
   setSuggestions
 }: SearchLogicProps) => {
-  const location = useLocation();
-
-  useEffect(() => {
-    setShowSuggestions(false);
-    setQuery("");
-    setShowNicoleDropdown(false);
-    setShowMobileModal(false);
-  }, [location.pathname]);
-
   useEffect(() => {
     const searchUnified = async () => {
       if (query.length > 1 && !isNicoleMode) {

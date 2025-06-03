@@ -49,6 +49,14 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     nicoleDropdownRef
   } = useSearchState();
 
+  // Handle location changes - clear state when navigating
+  useEffect(() => {
+    setShowSuggestions(false);
+    setQuery("");
+    setShowNicoleDropdown(false);
+    setShowMobileModal(false);
+  }, [location.pathname]);
+
   // Use search logic hook
   useSearchLogic({
     query,

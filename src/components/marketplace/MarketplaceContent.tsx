@@ -24,6 +24,14 @@ interface MarketplaceContentProps {
   setShowFilters: (show: boolean) => void;
 }
 
+// Helper function to ensure boolean conversion
+const convertToBoolean = (value: any): boolean => {
+  if (typeof value === 'string') {
+    return value === 'true';
+  }
+  return Boolean(value);
+};
+
 const MarketplaceContent = ({ 
   products, 
   isLoading, 
@@ -90,16 +98,12 @@ const MarketplaceContent = ({
     }
     if (legacyFilters.freeShipping !== undefined) {
       // Properly convert to boolean - handle both string and boolean values
-      const freeShippingValue = typeof legacyFilters.freeShipping === 'string' 
-        ? legacyFilters.freeShipping === 'true' 
-        : Boolean(legacyFilters.freeShipping);
+      const freeShippingValue = convertToBoolean(legacyFilters.freeShipping);
       updateFilter('freeShipping', freeShippingValue);
     }
     if (legacyFilters.favoritesOnly !== undefined) {
       // Properly convert to boolean - handle both string and boolean values
-      const favoritesOnlyValue = typeof legacyFilters.favoritesOnly === 'string'
-        ? legacyFilters.favoritesOnly === 'true'
-        : Boolean(legacyFilters.favoritesOnly);
+      const favoritesOnlyValue = convertToBoolean(legacyFilters.favoritesOnly);
       updateFilter('favoritesOnly', favoritesOnlyValue);
     }
     if (legacyFilters.sortBy) {
@@ -114,14 +118,6 @@ const MarketplaceContent = ({
   // Decide whether to show recommendations
   const showRecommendations = filteredProducts.length === 0 && recommendations.length > 0;
   const displayProducts = showRecommendations ? recommendations : filteredProducts;
-
-  // Helper function to ensure boolean conversion for mobile filters
-  const convertToBoolean = (value: any): boolean => {
-    if (typeof value === 'string') {
-      return value === 'true';
-    }
-    return Boolean(value);
-  };
   
   return (
     <BleedFirstLayout className="mt-6">

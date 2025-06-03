@@ -1,9 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Minus, Plus } from "lucide-react";
-import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
+import { Heart, Minus, Plus, ShoppingBag } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth";
+import SignUpDialog from "../SignUpDialog";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 
 interface ProductDetailsActionsSectionProps {
@@ -16,63 +18,108 @@ interface ProductDetailsActionsSectionProps {
   reloadWishlists?: () => void;
 }
 
-const ProductDetailsActionsSection: React.FC<ProductDetailsActionsSectionProps> = ({
+const ProductDetailsActionsSection = ({
   product,
   quantity,
   onIncrease,
   onDecrease,
   isHeartAnimating,
-  isWishlisted,
-  reloadWishlists
-}) => {
-  const productId = product.product_id || product.id || "";
+  isWishlisted = false,
+  reloadWishlists,
+}: ProductDetailsActionsSectionProps) => {
+  const { addToCart } = useCart();
+  const { user } = useAuth();
+  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+
+  const handleAddToCart = () => {
+    for (let i = 0; i < quantity; i++) {
+      addToCart(product);
+    }
+    toast.success(`Added ${quantity} ${product.title || product.name}(s) to cart`);
+  };
+
+  const handleWishlistClick = () => {
+    if (!user) {
+      setShowSignUpDialog(true);
+      return;
+    }
+  };
+
+  const handleWishlistAdded = () => {
+    if (reloadWishlists) {
+      reloadWishlists();
+    }
+  };
 
   return (
-    <div className="mt-6">
-      <div className="flex items-center justify-between mb-4">
-        <Label htmlFor="quantity">Quantity</Label>
-        <div className="flex items-center border rounded-md">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-r-none"
-            onClick={onDecrease}
-            disabled={quantity <= 1}
-          >
-            <Minus className="h-3 w-3" />
+    <>
+      <div className="space-y-4">
+        {/* Quantity Selector */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium">Quantity:</span>
+          <div className="flex items-center border rounded-md">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDecrease}
+              disabled={quantity <= 1}
+              className="h-8 w-8 p-0"
+            >
+              <Minus className="h-3 w-3" />
+            </Button>
+            <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
+              {quantity}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onIncrease}
+              disabled={quantity >= 10}
+              className="h-8 w-8 p-0"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button onClick={handleAddToCart} className="flex-1">
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Add to Cart
           </Button>
-          <div className="w-8 text-center">{quantity}</div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-l-none"
-            onClick={onIncrease}
-            disabled={quantity >= 10}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
+
+          {/* Wishlist Button */}
+          {user ? (
+            <WishlistSelectionPopoverButton
+              product={{
+                id: String(product.product_id || product.id),
+                name: product.title || product.name || "",
+                image: product.image || "",
+                price: product.price,
+                brand: product.brand || "",
+              }}
+              triggerClassName="p-2"
+              onAdded={handleWishlistAdded}
+            />
+          ) : (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleWishlistClick}
+              className="flex-shrink-0"
+            >
+              <Heart className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
-      <div className="flex gap-2">
-        <AddToCartButton
-          product={product}
-          className="flex-1"
-          quantity={quantity}
-        />
-        <WishlistSelectionPopoverButton
-          product={{
-            id: productId,
-            name: product.title || product.name || "",
-            image: product.image || "",
-            price: product.price,
-            brand: product.brand || "",
-          }}
-          triggerClassName={`flex-1 flex justify-center items-center px-4 py-2 rounded-md transition-colors ${isHeartAnimating ? "scale-105" : ""} ${"bg-pink-50"}`}
-          onAdded={reloadWishlists}
-          isWishlisted={isWishlisted}
-        />
-      </div>
-    </div>
+
+      <SignUpDialog 
+        open={showSignUpDialog} 
+        onOpenChange={setShowSignUpDialog} 
+      />
+    </>
   );
 };
 

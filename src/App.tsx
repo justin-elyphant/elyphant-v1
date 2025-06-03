@@ -10,6 +10,7 @@ import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
+import SignUp from "./pages/SignUp";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/signup" element={<SignUp />} />
                 {/* Add other routes as needed */}
               </Routes>
               <SearchOptimizationMonitor />

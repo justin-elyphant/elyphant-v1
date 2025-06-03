@@ -1,11 +1,8 @@
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import NicoleChatBubble from "./NicoleChatBubble";
-import { format } from "date-fns";
+import NameInputStep from "./steps/NameInputStep";
+import BirthdayInputStep from "./steps/BirthdayInputStep";
+import InterestsInputStep from "./steps/InterestsInputStep";
 
 interface NicoleGifteeFlowProps {
   conversationHistory: any[];
@@ -92,142 +89,40 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
     }, 1500);
   };
 
-  // Generate months
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date(2000, i, 1);
-    return {
-      value: String(i + 1).padStart(2, '0'),
-      label: format(date, 'MMMM')
-    };
-  });
-
-  // Generate days
-  const days = Array.from({ length: 31 }, (_, i) => ({
-    value: String(i + 1).padStart(2, '0'),
-    label: String(i + 1)
-  }));
-
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedDay, setSelectedDay] = useState("");
-
-  // Check if there's already a recent Nicole message about wishlist creation
-  const hasRecentWishlistMessage = conversationHistory.some(msg => 
-    msg.role === 'assistant' && 
-    msg.content.toLowerCase().includes('wonderful') && 
-    msg.content.toLowerCase().includes('wishlist')
-  );
-
   const renderStep = () => {
     switch (step) {
       case 0:
         return (
-          <div className="space-y-4">
-            {!hasRecentWishlistMessage && (
-              <NicoleChatBubble
-                message={{
-                  role: 'assistant',
-                  content: "Wonderful! Creating a wishlist is such a thoughtful way to help others know what you'd truly appreciate. Let me get to know you better so I can help you build the perfect wishlist! What's your name?"
-                }}
-              />
-            )}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <Label htmlFor="name">Your name</Label>
-              <Input
-                id="name"
-                value={collectedData.name}
-                onChange={(e) => setCollectedData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Your name"
-                className="mt-2"
-              />
-            </div>
-          </div>
+          <NameInputStep
+            name={collectedData.name}
+            onNameChange={(name) => setCollectedData(prev => ({ ...prev, name }))}
+            onContinue={() => setStep(1)}
+            onBack={onBack}
+            conversationHistory={conversationHistory}
+          />
         );
       
       case 1:
         return (
-          <div className="space-y-4">
-            <NicoleChatBubble
-              message={{
-                role: 'assistant',
-                content: `Nice to meet you, ${collectedData.name}! When's your birthday? This helps others know when special occasions are coming up. I just need the month and day - no year required!`
-              }}
-            />
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <Label>Your Birthday</Label>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div>
-                  <Label htmlFor="month">Month</Label>
-                  <Select value={selectedMonth} onValueChange={(value) => {
-                    setSelectedMonth(value);
-                    handleBirthdayChange(value, selectedDay);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map((month) => (
-                        <SelectItem key={month.value} value={month.value}>
-                          {month.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="day">Day</Label>
-                  <Select value={selectedDay} onValueChange={(value) => {
-                    setSelectedDay(value);
-                    handleBirthdayChange(selectedMonth, value);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Day" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {days.map((day) => (
-                        <SelectItem key={day.value} value={day.value}>
-                          {day.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
+          <BirthdayInputStep
+            name={collectedData.name}
+            birthday={collectedData.birthday}
+            onBirthdayChange={handleBirthdayChange}
+            onContinue={() => setStep(2)}
+            onBack={() => setStep(0)}
+            conversationHistory={conversationHistory}
+          />
         );
 
       case 2:
         return (
-          <div className="space-y-4">
-            <NicoleChatBubble
-              message={{
-                role: 'assistant',
-                content: "What are some of your interests and hobbies? This helps me suggest great wishlist categories for you."
-              }}
-            />
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <Label>Your Interests</Label>
-              <div className="flex flex-wrap gap-2 mt-2 mb-3">
-                {collectedData.interests.map((interest, index) => (
-                  <span key={index} className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
-                    {interest}
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add an interest"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleInterestAdd((e.target as HTMLInputElement).value);
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }}
-                />
-              </div>
-              <div className="mt-2 text-sm text-gray-500">Press Enter to add each interest</div>
-            </div>
-          </div>
+          <InterestsInputStep
+            interests={collectedData.interests}
+            onInterestAdd={handleInterestAdd}
+            onComplete={handleComplete}
+            onBack={() => setStep(1)}
+            conversationHistory={conversationHistory}
+          />
         );
 
       default:
@@ -235,48 +130,7 @@ const NicoleGifteeFlow: React.FC<NicoleGifteeFlowProps> = ({
     }
   };
 
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {conversationHistory.map((message) => (
-          <NicoleChatBubble key={message.id} message={message} />
-        ))}
-        
-        {renderStep()}
-      </div>
-
-      <div className="p-4 border-t border-gray-100">
-        <div className="space-y-3">
-          {step < 2 ? (
-            <Button
-              onClick={() => setStep(step + 1)}
-              className="w-full bg-purple-600 hover:bg-purple-700"
-              disabled={
-                (step === 0 && !collectedData.name) ||
-                (step === 1 && !collectedData.birthday)
-              }
-            >
-              Continue
-            </Button>
-          ) : (
-            <Button
-              onClick={handleComplete}
-              className="w-full bg-purple-600 hover:bg-purple-700"
-            >
-              Create my wishlist profile
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={onBack}
-            className="w-full"
-          >
-            Go back
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  return renderStep();
 };
 
 export default NicoleGifteeFlow;

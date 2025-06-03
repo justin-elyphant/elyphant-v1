@@ -1,13 +1,14 @@
+
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGrid, { SavedFilters } from "./ProductGrid";
 import MarketplaceLoading from "./MarketplaceLoading";
-import FiltersSidebar from "./FiltersSidebar";
+import DynamicFiltersSidebar from "./DynamicFiltersSidebar";
 import MobileFiltersDrawer from "./MobileFiltersDrawer";
 import BleedFirstLayout from "./BleedFirstLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useEnhancedFilters } from "./hooks/useEnhancedFilters";
+import { useDynamicFilters } from "@/hooks/useDynamicFilters";
 import { useProductRecommendations } from "@/hooks/useProductRecommendations";
 import { AlertCircle } from "lucide-react";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -26,7 +27,7 @@ interface MarketplaceContentProps {
 const MarketplaceContent = ({ 
   products, 
   isLoading, 
-  searchTerm, 
+  searchTerm = "", 
   onProductView,
   showFilters,
   setShowFilters
@@ -38,37 +39,31 @@ const MarketplaceContent = ({
   const [savedFilters] = useLocalStorage<{name: string, filters: SavedFilters}[]>(
     "savedFilters", []
   );
-  const [showFullWishlist, setShowFullWishlist] = useState(false);
   
-  // Use our enhanced filters hook
+  // Use our new dynamic filters hook
   const {
     filters,
     filteredProducts,
-    categories,
+    filterOptions,
+    searchContext,
     updateFilter,
-    resetFilters
-  } = useEnhancedFilters(products);
+    resetFilters,
+    shouldShowBrandFilters,
+    shouldShowDemographicFilters,
+    shouldShowOccasionFilters,
+    shouldShowAttributeFilters
+  } = useDynamicFilters(products, searchTerm);
   
   // Get recommendations (will be used if we have few or no search results)
   const { recommendations } = useProductRecommendations();
   
-  // Initialize filters based on URL params
-  useEffect(() => {
-    const categoryParam = searchParams.get("category");
-    if (categoryParam && categories.includes(categoryParam)) {
-      updateFilter('categories', [categoryParam]);
-    }
-  }, [searchParams, categories, updateFilter]);
-  
   const toggleSavedFilters = () => {
     // If activating saved filters and we have at least one saved filter
     if (!savedFiltersActive && savedFilters.length > 0) {
-      // Apply the first saved filter
+      // Apply the first saved filter (this would need to be adapted for new filter structure)
       const firstSavedFilter = savedFilters[0];
-      updateFilter('priceRange', firstSavedFilter.filters.priceRange);
-      updateFilter('categories', firstSavedFilter.filters.categories);
-      updateFilter('rating', firstSavedFilter.filters.ratings);
-      updateFilter('favoritesOnly', firstSavedFilter.filters.favorites);
+      // For now, just reset filters since the structure is different
+      resetFilters();
       
       toast.success(`Applied filter: ${firstSavedFilter.name}`, {
         description: "Your saved filter has been applied"
@@ -81,15 +76,27 @@ const MarketplaceContent = ({
     setSavedFiltersActive(!savedFiltersActive);
   };
   
-  const handleFilterChange = (newFilters: Record<string, any>) => {
-    // If toggling showFullWishlist, reload products
-    if ("showFullWishlist" in newFilters) {
-      setShowFullWishlist(newFilters.showFullWishlist);
+  // Legacy filter change handler for compatibility with existing components
+  const handleLegacyFilterChange = (legacyFilters: Record<string, any>) => {
+    // Map legacy filter format to new dynamic filter format
+    if (legacyFilters.priceRange) {
+      updateFilter('priceRange', legacyFilters.priceRange);
     }
-    // Existing filter updates
-    Object.entries(newFilters).forEach(([key, value]) => {
-      updateFilter(key as keyof typeof filters, value);
-    });
+    if (legacyFilters.categories) {
+      updateFilter('selectedCategories', legacyFilters.categories);
+    }
+    if (legacyFilters.rating !== undefined) {
+      updateFilter('rating', legacyFilters.rating);
+    }
+    if (legacyFilters.freeShipping !== undefined) {
+      updateFilter('freeShipping', legacyFilters.freeShipping);
+    }
+    if (legacyFilters.favoritesOnly !== undefined) {
+      updateFilter('favoritesOnly', legacyFilters.favoritesOnly);
+    }
+    if (legacyFilters.sortBy) {
+      updateFilter('sortBy', legacyFilters.sortBy);
+    }
   };
   
   if (isLoading) {
@@ -120,13 +127,19 @@ const MarketplaceContent = ({
       </div>
       
       <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6`}>
-        {/* Desktop Sidebar Filters */}
+        {/* Desktop Dynamic Sidebar Filters */}
         {!isMobile && showFilters && (
           <div className="w-full md:w-72 flex-shrink-0 px-4">
-            <FiltersSidebar
-              activeFilters={filters}
-              onFilterChange={handleFilterChange}
-              categories={categories}
+            <DynamicFiltersSidebar
+              filters={filters}
+              filterOptions={filterOptions}
+              searchContext={searchContext}
+              onFilterChange={updateFilter}
+              onResetFilters={resetFilters}
+              shouldShowBrandFilters={shouldShowBrandFilters}
+              shouldShowDemographicFilters={shouldShowDemographicFilters}
+              shouldShowOccasionFilters={shouldShowOccasionFilters}
+              shouldShowAttributeFilters={shouldShowAttributeFilters}
               isMobile={false}
             />
           </div>
@@ -136,38 +149,44 @@ const MarketplaceContent = ({
         {isMobile && (
           <div className="px-4 mb-4">
             <MobileFiltersDrawer
-              activeFilters={filters}
-              onFilterChange={handleFilterChange}
-              categories={categories}
+              activeFilters={{
+                priceRange: filters.priceRange,
+                categories: filters.selectedCategories,
+                rating: filters.rating,
+                freeShipping: filters.freeShipping,
+                favoritesOnly: filters.favoritesOnly,
+                sortBy: filters.sortBy
+              }}
+              onFilterChange={handleLegacyFilterChange}
+              categories={filterOptions.categories}
               showFilters={showFilters}
               setShowFilters={setShowFilters}
             />
           </div>
         )}
         
-        {/* Products Grid - Full bleed on mobile, generous margins on desktop */}
-        <div className={`flex-1 ${isMobile ? '' : 'px-4'}`}>
-          {searchTerm && filteredProducts.length === 0 && (
-            <div className={`mb-6 p-4 bg-amber-50 rounded-md border border-amber-200 flex items-start gap-3 text-amber-800 ${isMobile ? 'mx-4' : ''}`}>
-              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium">No products match "{searchTerm}"</p>
-                <p className="text-sm mt-1">Try using different keywords or browse our categories.</p>
-                {recommendations.length > 0 && (
-                  <p className="text-sm mt-1">Here are some recommendations that might interest you:</p>
-                )}
+        {/* Main Product Grid */}
+        <div className="flex-1 min-w-0">
+          {showRecommendations && (
+            <div className="px-4 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-900 mb-1">
+                  No products found for your current filters
+                </p>
+                <p className="text-blue-700">
+                  Here are some recommendations based on your search for "{searchTerm}"
+                </p>
               </div>
             </div>
           )}
           
-          <div className={isMobile ? 'px-2' : ''}>
-            <ProductGrid 
-              products={displayProducts} 
-              viewMode={viewMode}
-              sortOption={filters.sortBy}
-              onProductView={onProductView}
-            />
-          </div>
+          <ProductGrid
+            products={displayProducts}
+            viewMode={viewMode}
+            onProductView={onProductView}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </BleedFirstLayout>

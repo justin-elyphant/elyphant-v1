@@ -133,7 +133,6 @@ const MarketplaceContent = ({
         <MarketplaceFilters 
           viewMode={viewMode}
           setViewMode={setViewMode}
-          totalItems={filteredProducts.length}
           sortOption={filters.sortBy}
           onSortChange={(option) => updateFilter('sortBy', option)}
           isMobile={isMobile}
@@ -172,8 +171,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: convertToBoolean(filters.freeShipping),
-                favoritesOnly: convertToBoolean(filters.favoritesOnly),
+                freeShipping: Boolean(filters.freeShipping),
+                favoritesOnly: Boolean(filters.favoritesOnly),
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}

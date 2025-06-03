@@ -9,7 +9,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface MarketplaceFiltersProps {
   viewMode: "grid" | "list" | "modern";
   setViewMode: (mode: "grid" | "list" | "modern") => void;
-  totalItems: number;
   sortOption: string;
   onSortChange: (option: string) => void;
   isMobile: boolean;
@@ -23,7 +22,6 @@ interface MarketplaceFiltersProps {
 const MarketplaceFilters = ({
   viewMode,
   setViewMode,
-  totalItems,
   sortOption,
   onSortChange,
   isMobile,
@@ -125,8 +123,6 @@ const MarketplaceFilters = ({
             </SelectContent>
           </Select>
         </div>
-
-        {/* Removed duplicate item count since ResultsSummaryBar now handles it */}
       </div>
     </div>
   );

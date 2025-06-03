@@ -39,15 +39,6 @@ const MarketplaceWrapper = () => {
   const resultsRef = useRef<HTMLDivElement>(null);
   const lastSearchRef = useRef<string | null>(null);
 
-  // Redirect to home if no search or category is present (no discovery mode)
-  useEffect(() => {
-    if (!searchTerm && !categoryParam && !brandParam) {
-      console.log('No search/category/brand params found, redirecting to home');
-      navigate('/', { replace: true });
-      return;
-    }
-  }, [searchTerm, categoryParam, brandParam, navigate]);
-
   // Clear the fromHome state after initial load to allow normal behavior
   useEffect(() => {
     if (isFromHomePage) {
@@ -107,6 +98,9 @@ const MarketplaceWrapper = () => {
       }
     } else if (categoryParam) {
       results = searchMockProducts(categoryParam, 16);
+    } else {
+      // Default: show all products when no search parameters are present
+      results = allProducts.slice(0, 20); // Show first 20 products as default
     }
     
     setProducts(results);
@@ -157,11 +151,6 @@ const MarketplaceWrapper = () => {
     newParams.delete("category");
     setSearchParams(newParams, { replace: true });
   };
-
-  // Don't render if no search/category (will redirect)
-  if (!searchTerm && !categoryParam && !brandParam) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

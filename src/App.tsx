@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
+import Wishlists from "./pages/Wishlists";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />
+                <Route path="/wishlists" element={<Wishlists />} />
                 {/* Add other routes as needed */}
               </Routes>
               <SearchOptimizationMonitor />

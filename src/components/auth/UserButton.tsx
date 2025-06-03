@@ -1,3 +1,4 @@
+
 import React from "react";
 import { 
   DropdownMenu, 
@@ -53,27 +54,45 @@ const UserButton = () => {
   const wishlistsLabel = userName === "My" ? "My Wishlists" : `${userName}'s Wishlists`;
   
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   const handleProfileClick = () => {
-    if (user?.id) {
-      // Navigate to profile using user ID as identifier
-      navigate(`/profile/${user.id}`);
-    } else {
-      console.error("No user ID available for profile navigation");
-      // Fallback to dashboard if no user ID
-      navigate("/dashboard");
+    try {
+      if (user?.id) {
+        console.log("Navigating to profile:", user.id);
+        navigate(`/profile/${user.id}`);
+      } else {
+        console.error("No user ID available for profile navigation");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error navigating to profile:", error);
+    }
+  };
+
+  const handleSettingsClick = () => {
+    try {
+      console.log("Navigating to settings");
+      navigate("/settings");
+    } catch (error) {
+      console.error("Error navigating to settings:", error);
     }
   };
 
   const handleMarketplaceClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Marketplace button clicked - attempting navigation to /marketplace");
-    console.log("Current location:", window.location.pathname);
-    navigate("/marketplace");
-    console.log("Navigate function called");
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("Navigating to marketplace");
+      navigate("/marketplace");
+    } catch (error) {
+      console.error("Error navigating to marketplace:", error);
+    }
   };
   
   return (
@@ -125,7 +144,7 @@ const UserButton = () => {
           <span>{wishlistsLabel}</span>
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={() => navigate("/settings")}>
+        <DropdownMenuItem onClick={handleSettingsClick}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

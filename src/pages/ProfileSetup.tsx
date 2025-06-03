@@ -8,10 +8,12 @@ import LoadingState from "./profile-setup/LoadingState";
 import { useProfileSetupState } from "./profile-setup/hooks/useProfileSetupState";
 import { useProfileCompletion } from "@/hooks/profile/useProfileCompletion";
 import { useAuth } from "@/contexts/auth";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 
 const ProfileSetup = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     isInitializing,
     isNewSignUp,
@@ -27,8 +29,24 @@ const ProfileSetup = () => {
 
   const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
   
+  // Redirect to signup if no user and not in onboarding flow
+  React.useEffect(() => {
+    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
+    
+    if (!user && !authLoading && !isNewSignUp && !onboardingComplete) {
+      console.log("No user found and not in signup flow, redirecting to signup");
+      navigate("/signup", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+  
   if (showingIntentModal || authLoading || isManuallyLoading || isInitializing) {
     return <LoadingState message="Preparing your profile setup..." />;
+  }
+
+  // Show loading if we don't have a user yet but we're in a valid signup flow
+  if (!user && (isNewSignUp || localStorage.getItem("onboardingComplete") === "true")) {
+    return <LoadingState message="Setting up your account..." />;
   }
 
   if (isNewSignUp && !isInitializing) {

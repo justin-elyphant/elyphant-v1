@@ -76,11 +76,9 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     console.log("Final intent:", finalIntent);
     
     setTimeout(() => {
-      if (finalIntent === "giftor") {
-        navigate("/onboarding-gift", { replace: true });
-      } else {
-        navigate("/profile-setup", { replace: true });
-      }
+      // Always navigate to profile-setup after onboarding completion
+      // regardless of intent - users can customize their profile first
+      navigate("/profile-setup", { replace: true });
     }, 100);
   }, [navigate]);
 

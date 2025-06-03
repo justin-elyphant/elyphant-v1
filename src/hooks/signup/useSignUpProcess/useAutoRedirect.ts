@@ -45,14 +45,10 @@ export const useAutoRedirect = ({
         });
       }
 
-      // If 'giftor', go to marketplace, else profile-setup
-      if (userIntent === "giftor") {
-        console.log("[useAutoRedirect] Navigating to /marketplace (userIntent = giftor)");
-        navigate('/marketplace', { replace: true });
-      } else if (userIntent === "giftee") {
-        console.log("[useAutoRedirect] Navigating to /profile-setup (userIntent = giftee)");
-        navigate('/profile-setup', { replace: true });
-      }
+      // Always go to profile-setup first, regardless of intent
+      // The user can complete their profile before being directed to their intended destination
+      console.log("[useAutoRedirect] Navigating to /profile-setup after onboarding completion");
+      navigate('/profile-setup', { replace: true });
     }
   }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
   

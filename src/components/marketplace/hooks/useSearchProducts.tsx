@@ -1,82 +1,64 @@
 
 import { useState, useRef } from "react";
 import { Product } from "@/contexts/ProductContext";
-import { useOptimizedSearch } from "@/hooks/useOptimizedSearch";
-import { optimizedSearchService } from "@/services/search/optimizedSearchService";
-import { convertZincProductToProduct } from "../zinc/utils/productConverter";
-import { normalizeProduct } from "@/contexts/ProductContext";
+import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { toast } from "sonner";
+import { normalizeProduct } from "@/contexts/ProductContext";
 
 export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateAction<Product[]>>) => {
   const [isLoading, setIsLoading] = useState(false);
   const toastShownRef = useRef(false);
   const searchIdRef = useRef<string | null>(null);
   const RESULTS_LIMIT = 100;
-
-  // Use our optimized search hook
-  const {
-    search: optimizedSearch,
-    results: searchResults,
-    isLoading: hookIsLoading,
-    error: searchError,
-    getStats
-  } = useOptimizedSearch(
-    // Search function that calls our optimized service
-    async (query: string) => {
-      return optimizedSearchService.searchProducts(query, { maxResults: RESULTS_LIMIT });
-    },
-    {
-      debounceMs: 500,
-      minQueryLength: 3,
-      maxSearchesPerSession: 50,
-      onSearchStart: () => {
-        console.log('Optimized search started');
-      },
-      onSearchComplete: (results, fromCache) => {
-        const stats = getStats();
-        console.log(`Optimized search completed: ${results.length} results ${fromCache ? '(cached)' : '(API)'}`);
-        console.log('Search stats:', stats);
-        
-        // Show cache savings info
-        if (fromCache && stats.costSaved > 0) {
-          toast.success("Search Complete (Cached)", {
-            description: `Found ${results.length} products instantly. Saved $${stats.costSaved.toFixed(3)} in API costs.`,
-            duration: 2000
-          });
-        }
-      },
-      onSearchError: (error) => {
-        console.error('Optimized search error:', error);
-      }
-    }
-  );
-
-  // Update loading state
-  const combinedIsLoading = isLoading || hookIsLoading;
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const searchZincProducts = async (searchParam: string, searchChanged: boolean) => {
-    console.log('Optimized searchZincProducts called with:', { searchParam, searchChanged });
+    console.log('searchZincProducts called with:', { searchParam, searchChanged });
     
-    if (!searchParam || searchParam.trim().length < 3) {
-      console.log('Query too short, skipping search');
-      return [];
+    // Cancel any previous search
+    if (abortControllerRef.current) {
+      console.log('Aborting previous search');
+      abortControllerRef.current.abort();
     }
-
-    // Reset toast flag for new searches
-    if (searchChanged) {
-      toastShownRef.current = false;
-      searchIdRef.current = `search-${Date.now()}`;
+    
+    // Create new abort controller for this search
+    abortControllerRef.current = new AbortController();
+    
+    // Clear any pending search timeouts to prevent race conditions
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
     }
-
+    
+    // Clear existing toasts to prevent accumulation
+    toast.dismiss();
+    
     setIsLoading(true);
+    console.log('Set isLoading to true');
     
     try {
-      // Use the optimized search
-      await optimizedSearch(searchParam);
+      console.log(`Searching for products with term: "${searchParam}"`);
       
-      // Convert results to Product format
-      if (searchResults && searchResults.length > 0) {
-        const amazonProducts = searchResults.map((product) => {
+      // Show a single loading toast with unique ID to prevent duplicates
+      const loadingToastId = `search-loading-${searchParam}`;
+      toast.loading("Searching...", {
+        description: `Looking for products matching "${searchParam}"`,
+        id: loadingToastId,
+      });
+      
+      const results = await searchProducts(searchParam);
+      console.log('Search results received:', results.length);
+      
+      // Check if search was aborted
+      if (abortControllerRef.current?.signal.aborted) {
+        console.log('Search was aborted');
+        return [];
+      }
+      
+      if (results.length > 0) {
+        // Convert to Product format and standardize
+        const amazonProducts = results.map((product) => {
           return normalizeProduct({
             id: product.product_id,
             product_id: product.product_id,
@@ -93,41 +75,52 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
         
         // Update products in context
         setProducts(prevProducts => {
-          const nonAmazonProducts = prevProducts.filter(p => 
-            p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant"
-          );
+          // Filter out any existing Amazon products
+          const nonAmazonProducts = prevProducts.filter(p => p.vendor !== "Amazon via Zinc" && p.vendor !== "Elyphant");
+          // Add the new Amazon products, limit to RESULTS_LIMIT
           return [...nonAmazonProducts, ...amazonProducts.slice(0, RESULTS_LIMIT)];
         });
         
-        // Show success toast with optimization info
+        // Show only ONE toast notification with a summary if it's a new search
         if (!toastShownRef.current && searchChanged) {
+          // Dismiss loading toast
+          toast.dismiss(loadingToastId);
+          
+          // Use a ref to avoid multiple toasts within the same search session
           toastShownRef.current = true;
           
-          const stats = getStats();
-          const savingsMessage = stats.costSaved > 0 
-            ? ` • Saved $${stats.costSaved.toFixed(2)} (${stats.apiCallsSaved} cached searches)`
-            : '';
-          
-          toast.success("Search Complete", {
-            description: `Found ${amazonProducts.length} products${savingsMessage}`,
-            duration: 3000
-          });
-          
-          // Reset toast flag
-          setTimeout(() => {
-            toastShownRef.current = false;
-          }, 3000);
+          // Show a single success toast with a slight delay
+          searchTimeoutRef.current = setTimeout(() => {
+            toast.success("Search Complete", {
+              description: `Found ${Math.min(amazonProducts.length, RESULTS_LIMIT)} products matching "${searchParam}"`,
+              id: `search-success-${searchParam}`,
+            });
+            
+            // Reset toast flag after a few seconds
+            setTimeout(() => {
+              toastShownRef.current = false;
+            }, 3000);
+          }, 300);
+        } else {
+          // Just dismiss loading toast for repeat searches
+          toast.dismiss(loadingToastId);
         }
         
         return amazonProducts;
       } else {
-        // No results
+        console.log('No results found');
+        // Dismiss loading toast
+        toast.dismiss(loadingToastId);
+        
+        // Show toast for no results
         if (!toastShownRef.current && searchChanged) {
           toastShownRef.current = true;
           toast.error("No Results", {
             description: `No products found matching "${searchParam}"`,
+            id: `search-no-results-${searchParam}`,
           });
           
+          // Reset toast flag after a few seconds
           setTimeout(() => {
             toastShownRef.current = false;
           }, 3000);
@@ -137,14 +130,20 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       }
       
     } catch (error) {
-      console.error("Optimized search error:", error);
+      console.error("Error searching for products:", error);
       
-      if (!toastShownRef.current && searchChanged) {
+      // Dismiss loading toast
+      toast.dismiss(`search-loading-${searchParam}`);
+      
+      // Only show error toast once per search
+      if (!toastShownRef.current && searchChanged && !abortControllerRef.current?.signal.aborted) {
         toastShownRef.current = true;
         toast.error("Search Error", {
-          description: "Error connecting to product search. Please try again.",
+          description: "Error connecting to Amazon. Please try again later.",
+          id: `search-error-${searchParam}`,
         });
         
+        // Reset toast flag after a few seconds
         setTimeout(() => {
           toastShownRef.current = false;
         }, 3000);
@@ -152,21 +151,26 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
       
       return [];
     } finally {
+      console.log('Search finally block - clearing loading state');
+      // Always clear loading state
       setIsLoading(false);
+      
+      // Dismiss any remaining loading toasts
+      toast.dismiss(`search-loading-${searchParam}`);
+      
+      // Ensure category and brand loading toasts are also dismissed
+      toast.dismiss();
+      
+      // Clear abort controller
+      abortControllerRef.current = null;
     }
-  };
-
-  // Get optimization statistics
-  const getOptimizationStats = () => {
-    return getStats();
   };
 
   return {
     searchZincProducts,
-    isLoading: combinedIsLoading,
+    isLoading,
     toastShownRef,
     searchIdRef,
-    RESULTS_LIMIT,
-    getOptimizationStats
+    RESULTS_LIMIT
   };
 };

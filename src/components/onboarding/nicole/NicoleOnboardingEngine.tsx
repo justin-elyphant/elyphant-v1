@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -42,31 +41,58 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   const [conversationHistory, setConversationHistory] = useState<any[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
 
-  // Debounced initialization to prevent rapid state changes
+  // Enhanced initialization with error handling and timeout protection
   useEffect(() => {
     if (!isOpen) return;
 
     const initializeTimer = setTimeout(() => {
-      if (!isInitialized) {
-        console.log("Initializing Nicole onboarding with delay");
-        
-        triggerHapticFeedback('light');
-        setConversationHistory([{
-          id: 1,
-          role: 'assistant',
-          content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
-          timestamp: new Date()
-        }]);
-        setIsInitialized(true);
+      try {
+        if (!isInitialized) {
+          console.log("Initializing Nicole onboarding with enhanced error handling");
+          
+          triggerHapticFeedback('light');
+          setConversationHistory([{
+            id: 1,
+            role: 'assistant',
+            content: "Hi! I'm Nicole, your AI gift assistant. I'm here to help you get the most out of Elyphant. What brings you here today?",
+            timestamp: new Date()
+          }]);
+          setIsInitialized(true);
+          setIsLoading(false);
+          setInitializationError(null);
+          
+          console.log("Nicole onboarding initialized successfully");
+        }
+      } catch (error) {
+        console.error("Error initializing Nicole onboarding:", error);
+        setInitializationError("Failed to initialize Nicole. Please try again.");
         setIsLoading(false);
+        
+        // Auto-fallback after error
+        setTimeout(() => {
+          onClose();
+        }, 2000);
       }
-    }, 300); // Small delay to prevent rapid state changes
+    }, 300);
 
-    return () => clearTimeout(initializeTimer);
-  }, [isOpen, isInitialized]);
+    // Safety timeout for initialization
+    const safetyTimer = setTimeout(() => {
+      if (!isInitialized && isLoading) {
+        console.warn("Nicole initialization timeout - auto-closing");
+        setInitializationError("Nicole is taking too long to load.");
+        onClose();
+      }
+    }, 5000);
 
-  // Stable cleanup when modal closes
+    return () => {
+      clearTimeout(initializeTimer);
+      clearTimeout(safetyTimer);
+    };
+  }, [isOpen, isInitialized, isLoading, onClose]);
+
+  // Enhanced cleanup when modal closes
   useEffect(() => {
     if (!isOpen) {
       const cleanupTimer = setTimeout(() => {
@@ -76,6 +102,7 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
         setOnboardingData({});
         setConversationHistory([]);
         setIsLoading(true);
+        setInitializationError(null);
       }, 100);
 
       return () => clearTimeout(cleanupTimer);
@@ -141,7 +168,7 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
   }, []);
 
   const handleError = useCallback(() => {
-    console.log("Error in Nicole onboarding, completing");
+    console.log("Error in Nicole onboarding, completing gracefully");
     onComplete();
   }, [onComplete]);
 
@@ -152,6 +179,25 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading Nicole...</p>
+            {initializationError && (
+              <p className="text-red-500 text-sm mt-2">{initializationError}</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (initializationError) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{initializationError}</p>
+            <button 
+              onClick={onClose}
+              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+            >
+              Continue without Nicole
+            </button>
           </div>
         </div>
       );
@@ -237,10 +283,10 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
             userIntent={userIntent}
           />
           
-          {/* Scrollable Content Container */}
+          {/* Enhanced Scrollable Content Container */}
           <div className="flex-1 flex flex-col" style={{ height: 'calc(100% - 120px)' }}>
             <ScrollArea className="flex-1 h-full">
-              <div className="h-full">
+              <div className="h-full min-h-0">
                 {renderCurrentStep()}
               </div>
             </ScrollArea>

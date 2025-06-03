@@ -23,17 +23,21 @@ class NicoleOnboardingErrorBoundary extends React.Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    console.error("Nicole Error Boundary caught error:", error);
     return { hasError: true, error, retryCount: 0 };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Nicole Onboarding Error:", error, errorInfo);
+    console.error("Nicole Onboarding Error Details:", error, errorInfo);
     
     // Auto-retry once for transient errors
     if (this.state.retryCount === 0) {
+      console.log("Attempting auto-retry for Nicole onboarding error");
       this.retryTimer = setTimeout(() => {
         this.handleRetry();
-      }, 2000);
+      }, 1500);
+    } else {
+      console.log("Max retries reached, showing error UI");
     }
   }
 
@@ -68,8 +72,9 @@ class NicoleOnboardingErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      const { retryCount } = this.state;
+      const { retryCount, error } = this.state;
       const isRecurringError = retryCount > 1;
+      const isInitializationError = error?.message?.includes('initialize') || error?.name === 'InitializationError';
 
       return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -77,12 +82,15 @@ class NicoleOnboardingErrorBoundary extends React.Component<Props, State> {
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="h-6 w-6 text-red-500" />
               <h3 className="text-lg font-semibold">
-                {isRecurringError ? "Persistent Issue Detected" : "Something went wrong"}
+                {isInitializationError ? "Nicole Failed to Load" : 
+                 isRecurringError ? "Persistent Issue Detected" : "Something went wrong"}
               </h3>
             </div>
             
             <p className="text-gray-600 mb-6">
-              {isRecurringError 
+              {isInitializationError 
+                ? "Nicole couldn't start properly. You can continue with the regular signup process or try again."
+                : isRecurringError 
                 ? "Nicole is having trouble loading. You can continue to your dashboard or try one more time."
                 : "Nicole encountered an issue during setup. This usually resolves quickly."
               }
@@ -120,10 +128,19 @@ class NicoleOnboardingErrorBoundary extends React.Component<Props, State> {
               )}
             </div>
             
-            {isRecurringError && (
+            {(isRecurringError || isInitializationError) && (
               <p className="text-xs text-gray-500 mt-4 text-center">
                 You can always access Nicole later from your dashboard
               </p>
+            )}
+            
+            {process.env.NODE_ENV === 'development' && error && (
+              <details className="mt-4 text-xs">
+                <summary className="cursor-pointer text-gray-500">Debug Info</summary>
+                <pre className="mt-2 p-2 bg-gray-100 rounded text-red-600 overflow-auto">
+                  {error.message}
+                </pre>
+              </details>
             )}
           </div>
         </div>

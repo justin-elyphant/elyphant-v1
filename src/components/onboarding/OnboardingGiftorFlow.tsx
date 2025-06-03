@@ -1,9 +1,26 @@
 
-import React from "react";
+import React, { useState } from "react";
 import SimplifiedGiftorOnboarding from "./SimplifiedGiftorOnboarding";
+import NicoleOnboardingEngine from "./nicole/NicoleOnboardingEngine";
 import MainLayout from "@/components/layout/MainLayout";
 
 const OnboardingGiftorFlow = () => {
+  const [showNicoleFlow, setShowNicoleFlow] = useState(false);
+
+  // Check if user came from Nicole onboarding
+  React.useEffect(() => {
+    const fromNicole = localStorage.getItem("nicoleOnboardingCompleted") === "true";
+    if (fromNicole) {
+      setShowNicoleFlow(false);
+      localStorage.removeItem("nicoleOnboardingCompleted");
+    }
+  }, []);
+
+  const handleNicoleComplete = () => {
+    localStorage.setItem("nicoleOnboardingCompleted", "true");
+    setShowNicoleFlow(false);
+  };
+
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4 flex flex-col">
@@ -25,6 +42,13 @@ const OnboardingGiftorFlow = () => {
           </div>
         </div>
       </div>
+
+      {/* Nicole Onboarding Engine for enhanced experience */}
+      <NicoleOnboardingEngine
+        isOpen={showNicoleFlow}
+        onComplete={handleNicoleComplete}
+        onClose={handleNicoleComplete}
+      />
     </MainLayout>
   );
 };

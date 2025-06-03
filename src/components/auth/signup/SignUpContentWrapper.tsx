@@ -1,8 +1,9 @@
+
 import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
 import { SignUpFormValues } from "./SignUpForm";
-import OnboardingIntentModal from "./OnboardingIntentModal";
+import NicoleOnboardingEngine from "@/components/onboarding/nicole/NicoleOnboardingEngine";
 import { useNavigate } from "react-router-dom";
 
 interface SignUpContentWrapperProps {
@@ -31,69 +32,60 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   resendCount = 0,
   bypassVerification = true
 }) => {
-  const [showIntentModal, setShowIntentModal] = React.useState(false);
+  const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
   const [intentHandled, setIntentHandled] = React.useState(false);
   const navigate = useNavigate();
 
-  // Pickup intended CTA intent (set on homepage) and clear after referencing
-  const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
-
   React.useEffect(() => {
     if (step !== "verification" || !userEmail) {
-      if (showIntentModal) setShowIntentModal(false);
+      if (showNicoleOnboarding) setShowNicoleOnboarding(false);
       if (intentHandled) setIntentHandled(false);
       return;
     }
 
-    // Retrieve suggested intent only ONCE on modal show, then clear the value for next visits
-    if (!intentHandled && !showIntentModal) {
-      const ctaIntent = localStorage.getItem("ctaIntent");
-      if (ctaIntent === "giftor" || ctaIntent === "giftee") {
-        setSuggestedIntent(ctaIntent);
-        // Clear so it only applies on first modal show after signup
-        localStorage.removeItem("ctaIntent");
-      }
-    }
-
     const intent = localStorage.getItem("userIntent");
-    // Always show modal if no valid intent is found
+    // Always show Nicole onboarding if no valid intent is found
     if (!validIntent(intent)) {
       localStorage.setItem("showingIntentModal", "true");
-      setShowIntentModal(true);
+      setShowNicoleOnboarding(true);
       setIntentHandled(false);
     } else {
-      setShowIntentModal(false);
+      setShowNicoleOnboarding(false);
       setIntentHandled(true);
     }
-  }, [step, userEmail, intentHandled, showIntentModal]);
+  }, [step, userEmail, intentHandled, showNicoleOnboarding]);
 
-  // -- EARLY BLOCKER: If we should show the intent modal, render ONLY the modal --
+  // -- EARLY BLOCKER: If we should show Nicole onboarding, render ONLY the onboarding --
   if (
     step === "verification" &&
     userEmail &&
     !validIntent(localStorage.getItem("userIntent"))
   ) {
-    const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
-      localStorage.setItem("userIntent", userIntent);
+    const handleOnboardingComplete = () => {
       localStorage.removeItem("showingIntentModal");
-      setShowIntentModal(false);
+      setShowNicoleOnboarding(false);
       setIntentHandled(true);
 
-      if (userIntent === "giftor") {
-        // Instead of marketplace, route to new onboarding wizard for giftors
+      // Navigate based on user intent (which Nicole will have set)
+      const finalIntent = localStorage.getItem("userIntent");
+      if (finalIntent === "giftor") {
         navigate("/onboarding-gift", { replace: true });
       } else {
         navigate("/profile-setup", { replace: true });
       }
     };
 
+    const handleOnboardingClose = () => {
+      // Fallback if user somehow closes without completing
+      localStorage.setItem("userIntent", "explorer");
+      handleOnboardingComplete();
+    };
+
     return (
-      <OnboardingIntentModal
-        open={true}
-        onSelect={handleSelectIntent}
-        onSkip={() => {/* Not used */}
-        }
-        suggestedIntent={suggestedIntent}
+      <NicoleOnboardingEngine
+        isOpen={true}
+        onComplete={handleOnboardingComplete}
+        onClose={handleOnboardingClose}
       />
     );
   }

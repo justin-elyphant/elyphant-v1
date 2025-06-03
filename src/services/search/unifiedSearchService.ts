@@ -1,6 +1,6 @@
 
-import { searchProducts as searchZincProducts } from "@/services/search/unifiedSearchService";
 import { searchFriends, FriendSearchResult } from "./friendSearchService";
+import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 
 export interface UnifiedSearchResult {
@@ -72,15 +72,12 @@ export const unifiedSearch = async (
 
   if (includeProducts) {
     searchPromises.push(
-      // Import and use the existing product search
-      import("@/components/marketplace/zinc/services/productSearchService")
-        .then(({ searchProducts }) => searchProducts(query, maxResults.toString()))
-        .then(products => {
-          result.products = products.slice(0, maxResults);
-        }).catch(error => {
-          console.error('Product search failed:', error);
-          result.products = [];
-        })
+      searchProducts(query, maxResults.toString()).then(products => {
+        result.products = products.slice(0, maxResults);
+      }).catch(error => {
+        console.error('Product search failed:', error);
+        result.products = [];
+      })
     );
   }
 

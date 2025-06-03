@@ -15,17 +15,24 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
   if (!query || query.length < 2) return [];
   
   try {
-    // Search by name, username, or email
+    console.log(`Searching for friends with query: "${query}"`);
+    
+    // Search by name, username, or email with more flexible matching
+    const searchTerm = `%${query.toLowerCase()}%`;
+    
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select('id, name, username, email, profile_image, bio')
-      .or(`name.ilike.%${query}%,username.ilike.%${query}%,email.ilike.%${query}%`)
+      .or(`name.ilike.${searchTerm},username.ilike.${searchTerm},email.ilike.${searchTerm}`)
       .limit(10);
 
     if (error) {
       console.error('Error searching friends:', error);
       return [];
     }
+
+    console.log(`Found ${profiles?.length || 0} profile matches for query: "${query}"`);
+    console.log('Profiles found:', profiles);
 
     if (!profiles || profiles.length === 0) return [];
 
@@ -40,42 +47,45 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
         .in('connected_user_id', profileIds.concat([currentUserId]))
         .in('user_id', profileIds.concat([currentUserId]));
 
-      return profiles.map(profile => {
-        // Skip current user
-        if (profile.id === currentUserId) return null;
-        
-        const connection = connections?.find(conn => 
-          (conn.user_id === currentUserId && conn.connected_user_id === profile.id) ||
-          (conn.connected_user_id === currentUserId && conn.user_id === profile.id)
-        );
+      console.log('Connection data:', connections);
 
-        let connectionStatus: FriendSearchResult['connectionStatus'] = 'none';
-        if (connection) {
-          connectionStatus = connection.status === 'accepted' ? 'connected' : 'pending';
-        }
+      return profiles
+        .filter(profile => profile.id !== currentUserId) // Exclude current user
+        .map(profile => {
+          const connection = connections?.find(conn => 
+            (conn.user_id === currentUserId && conn.connected_user_id === profile.id) ||
+            (conn.connected_user_id === currentUserId && conn.user_id === profile.id)
+          );
 
-        return {
-          id: profile.id,
-          name: profile.name || 'Unknown User',
-          username: profile.username || '',
-          email: profile.email || '',
-          profile_image: profile.profile_image,
-          bio: profile.bio,
-          connectionStatus
-        };
-      }).filter(Boolean) as FriendSearchResult[];
+          let connectionStatus: FriendSearchResult['connectionStatus'] = 'none';
+          if (connection) {
+            connectionStatus = connection.status === 'accepted' ? 'connected' : 'pending';
+          }
+
+          return {
+            id: profile.id,
+            name: profile.name || 'Unknown User',
+            username: profile.username || '',
+            email: profile.email || '',
+            profile_image: profile.profile_image,
+            bio: profile.bio,
+            connectionStatus
+          };
+        });
     }
 
-    // For non-authenticated users, return basic info
-    return profiles.map(profile => ({
-      id: profile.id,
-      name: profile.name || 'Unknown User',
-      username: profile.username || '',
-      email: profile.email || '',
-      profile_image: profile.profile_image,
-      bio: profile.bio,
-      connectionStatus: 'none' as const
-    }));
+    // For non-authenticated users, return basic info (excluding current user)
+    return profiles
+      .filter(profile => profile.id !== currentUserId)
+      .map(profile => ({
+        id: profile.id,
+        name: profile.name || 'Unknown User',
+        username: profile.username || '',
+        email: profile.email || '',
+        profile_image: profile.profile_image,
+        bio: profile.bio,
+        connectionStatus: 'none' as const
+      }));
 
   } catch (error) {
     console.error('Error in friend search:', error);

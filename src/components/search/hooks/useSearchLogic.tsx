@@ -47,6 +47,13 @@ export const useSearchLogic = ({
             total: results.total
           });
           
+          // Log the actual friend results for debugging
+          if (results.friends.length > 0) {
+            console.log('Friend results found:', results.friends);
+          } else {
+            console.log('No friend results found for query:', query);
+          }
+          
           setUnifiedResults({
             friends: results.friends,
             products: results.products,
@@ -79,5 +86,5 @@ export const useSearchLogic = ({
 
     const debounceTimer = setTimeout(searchUnified, 300);
     return () => clearTimeout(debounceTimer);
-  }, [query, isNicoleMode, user?.id]);
+  }, [query, isNicoleMode, user?.id, setSearchLoading, setUnifiedResults, setShowSuggestions, setSuggestions]);
 };

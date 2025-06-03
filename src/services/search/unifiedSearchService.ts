@@ -46,7 +46,7 @@ export const unifiedSearch = async (
     currentUserId
   } = options;
 
-  console.log(`Unified search for: "${query}"`);
+  console.log(`Unified search for: "${query}" with userId: ${currentUserId}`);
 
   const result: UnifiedSearchResult = {
     friends: [],
@@ -60,8 +60,10 @@ export const unifiedSearch = async (
   const searchPromises: Promise<any>[] = [];
 
   if (includeFriends) {
+    console.log(`Starting friend search for: "${query}"`);
     searchPromises.push(
       searchFriends(query, currentUserId).then(friends => {
+        console.log(`Friend search completed. Found ${friends.length} friends:`, friends);
         result.friends = friends.slice(0, Math.min(maxResults, 5));
       }).catch(error => {
         console.error('Friend search failed:', error);
@@ -71,8 +73,10 @@ export const unifiedSearch = async (
   }
 
   if (includeProducts) {
+    console.log(`Starting product search for: "${query}"`);
     searchPromises.push(
       searchProducts(query, maxResults.toString()).then(products => {
+        console.log(`Product search completed. Found ${products.length} products`);
         result.products = products.slice(0, maxResults);
       }).catch(error => {
         console.error('Product search failed:', error);
@@ -85,6 +89,7 @@ export const unifiedSearch = async (
     searchPromises.push(
       Promise.resolve().then(() => {
         result.brands = searchBrands(query, 3);
+        console.log(`Brand search completed. Found ${result.brands.length} brands:`, result.brands);
       })
     );
   }
@@ -92,6 +97,14 @@ export const unifiedSearch = async (
   await Promise.all(searchPromises);
 
   result.total = result.friends.length + result.products.length + result.brands.length;
+
+  console.log('Final unified search results:', {
+    query,
+    friends: result.friends.length,
+    products: result.products.length,
+    brands: result.brands.length,
+    total: result.total
+  });
 
   return result;
 };

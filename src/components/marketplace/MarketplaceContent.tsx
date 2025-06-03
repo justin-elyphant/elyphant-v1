@@ -4,6 +4,8 @@ import MarketplaceFilters from "./MarketplaceFilters";
 import ProductGrid, { SavedFilters } from "./ProductGrid";
 import MarketplaceLoading from "./MarketplaceLoading";
 import FiltersSidebar from "./FiltersSidebar";
+import MobileFiltersDrawer from "./MobileFiltersDrawer";
+import BleedFirstLayout from "./BleedFirstLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEnhancedFilters } from "./hooks/useEnhancedFilters";
 import { useProductRecommendations } from "@/hooks/useProductRecommendations";
@@ -11,7 +13,6 @@ import { AlertCircle } from "lucide-react";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
-import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 
 interface MarketplaceContentProps {
   products: Product[];
@@ -32,7 +33,6 @@ const MarketplaceContent = ({
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
-  // Default to grid view for both mobile and desktop
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [savedFiltersActive, setSavedFiltersActive] = useState(false);
   const [savedFilters] = useLocalStorage<{name: string, filters: SavedFilters}[]>(
@@ -85,7 +85,6 @@ const MarketplaceContent = ({
     // If toggling showFullWishlist, reload products
     if ("showFullWishlist" in newFilters) {
       setShowFullWishlist(newFilters.showFullWishlist);
-      // (MarketplaceWrapper handles actual search. If needed, you might call handleSearch here.)
     }
     // Existing filter updates
     Object.entries(newFilters).forEach(([key, value]) => {
@@ -102,36 +101,54 @@ const MarketplaceContent = ({
   const displayProducts = showRecommendations ? recommendations : filteredProducts;
   
   return (
-    <ResponsiveContainer className="mt-6">
-      <MarketplaceFilters 
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        totalItems={filteredProducts.length}
-        sortOption={filters.sortBy}
-        onSortChange={(option) => updateFilter('sortBy', option)}
-        isMobile={isMobile}
-        savedFiltersCount={savedFilters.length}
-        onSavedFiltersToggle={toggleSavedFilters}
-        savedFiltersActive={savedFiltersActive}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-      />
+    <BleedFirstLayout className="mt-6">
+      {/* Top controls bar with responsive container for readability */}
+      <div className="container mx-auto px-4 mb-4">
+        <MarketplaceFilters 
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          totalItems={filteredProducts.length}
+          sortOption={filters.sortBy}
+          onSortChange={(option) => updateFilter('sortBy', option)}
+          isMobile={isMobile}
+          savedFiltersCount={savedFilters.length}
+          onSavedFiltersToggle={toggleSavedFilters}
+          savedFiltersActive={savedFiltersActive}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+        />
+      </div>
       
-      <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6 mt-4`}>
-        {showFilters && (
-          <div className={`${isMobile ? "w-full" : "w-full md:w-72"} flex-shrink-0 ${isMobile ? "mb-4" : ""}`}>
+      <div className={`flex ${isMobile ? "flex-col" : "flex-col md:flex-row"} gap-6`}>
+        {/* Desktop Sidebar Filters */}
+        {!isMobile && showFilters && (
+          <div className="w-full md:w-72 flex-shrink-0 px-4">
             <FiltersSidebar
               activeFilters={filters}
               onFilterChange={handleFilterChange}
               categories={categories}
-              isMobile={isMobile}
+              isMobile={false}
             />
           </div>
         )}
         
-        <div className="flex-1">
+        {/* Mobile Filters Drawer */}
+        {isMobile && (
+          <div className="px-4 mb-4">
+            <MobileFiltersDrawer
+              activeFilters={filters}
+              onFilterChange={handleFilterChange}
+              categories={categories}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+            />
+          </div>
+        )}
+        
+        {/* Products Grid - Full bleed on mobile, generous margins on desktop */}
+        <div className={`flex-1 ${isMobile ? '' : 'px-4'}`}>
           {searchTerm && filteredProducts.length === 0 && (
-            <div className="mb-6 p-4 bg-amber-50 rounded-md border border-amber-200 flex items-start gap-3 text-amber-800">
+            <div className={`mb-6 p-4 bg-amber-50 rounded-md border border-amber-200 flex items-start gap-3 text-amber-800 ${isMobile ? 'mx-4' : ''}`}>
               <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium">No products match "{searchTerm}"</p>
@@ -143,15 +160,17 @@ const MarketplaceContent = ({
             </div>
           )}
           
-          <ProductGrid 
-            products={displayProducts} 
-            viewMode={viewMode}
-            sortOption={filters.sortBy}
-            onProductView={onProductView}
-          />
+          <div className={isMobile ? 'px-2' : ''}>
+            <ProductGrid 
+              products={displayProducts} 
+              viewMode={viewMode}
+              sortOption={filters.sortBy}
+              onProductView={onProductView}
+            />
+          </div>
         </div>
       </div>
-    </ResponsiveContainer>
+    </BleedFirstLayout>
   );
 };
 

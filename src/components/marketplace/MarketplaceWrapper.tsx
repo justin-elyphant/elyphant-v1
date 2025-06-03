@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
 import IntegratedSearchSection from "./IntegratedSearchSection";
 import SubtleCountdownBanner from "./SubtleCountdownBanner";
-import CondensedFiltersBar from "./CondensedFiltersBar";
+import ResultsSummaryBar from "./ResultsSummaryBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import MarketplaceHero from "./MarketplaceHero";
@@ -12,42 +13,10 @@ import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
-
-// Enhanced ResultsChip component for mobile
-const ResultsChip = ({
-  query,
-  onClear,
-}: {
-  query: string;
-  onClear?: () => void;
-}) => (
-  <FullWidthSection padding="minimal">
-    <ResponsiveContainer>
-      <div className="flex justify-center">
-        <span className="inline-flex items-center rounded-full bg-purple-100 px-4 py-2 text-purple-700 font-semibold text-sm shadow-sm animate-fade-in border border-purple-200 relative">
-          Showing results for <span className="font-bold mx-1">"{query}"</span>
-          {onClear && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={onClear}
-              className="ml-2 hover:bg-purple-200 rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              style={{ lineHeight: 0 }}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </span>
-      </div>
-    </ResponsiveContainer>
-  </FullWidthSection>
-);
-
 import { X } from "lucide-react";
 
 const MarketplaceWrapper = () => {
   const isMobile = useIsMobile();
-  // Default filters to closed, especially on mobile
   const [showFilters, setShowFilters] = useState(!isMobile);
   const [products, setProducts] = useState(allProducts);
   const location = useLocation();
@@ -58,9 +27,7 @@ const MarketplaceWrapper = () => {
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
 
-  // Used for auto-scroll
   const resultsRef = useRef<HTMLDivElement>(null);
-  // We keep track if we just searched (to avoid repeat scrolls)
   const lastSearchRef = useRef<string | null>(null);
 
   // Close filters on mobile when screen size changes
@@ -70,7 +37,7 @@ const MarketplaceWrapper = () => {
     }
   }, [isMobile]);
 
-  // Improved filtering logic: use dynamic mock product generation (for testing mode)
+  // Product filtering and search logic
   useEffect(() => {
     let results = [];
     if (brandParam) {
@@ -94,7 +61,7 @@ const MarketplaceWrapper = () => {
     }
     setProducts(results);
     
-    // Dismiss any category or brand loading toasts when products are loaded
+    // Dismiss loading toasts
     if (categoryParam) {
       toast.dismiss(`category-search-${categoryParam}`);
     }
@@ -103,15 +70,13 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, brandParam]);
   
-  // Track product view analytics
   const handleProductView = (productId: string) => {
     console.log(`Product viewed: ${productId}`);
   };
 
-  // Check if user is actively shopping (searching or browsing categories/brands)
   const isActivelyShopping = Boolean(searchTerm || categoryParam || brandParam);
 
-  // Scroll to results section on search/category/brand change (UX improvement)
+  // Auto-scroll to results on search/filter changes
   useEffect(() => {
     if (isActivelyShopping && resultsRef.current) {
       if (
@@ -125,75 +90,46 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, brandParam, isActivelyShopping]);
 
-  // Handler to clear all filters and return to general marketplace
-  const handleClearAll = () => {
-    const newParams = new URLSearchParams();
-    // Remove all filter params
-    newParams.delete("search");
-    newParams.delete("category");
-    newParams.delete("brand");
-    newParams.delete("pageTitle");
-    setSearchParams(newParams, { replace: true });
-  };
-
-  // Add to user-specific search history when searchTerm changes
-  // Only add manual searches, not system-generated ones
+  // Add to search history
   useEffect(() => {
     if (searchTerm && searchTerm.trim()) {
-      // Check if this might be a system-generated search by looking at URL patterns
-      // or if it's coming from occasion/holiday navigation
       const isFromOccasion = location.state?.fromOccasion || false;
       
-      // Only add to search history if it's not from an occasion/holiday click
       if (!isFromOccasion) {
-        addSearch(searchTerm.trim(), false); // false = not system-generated
+        addSearch(searchTerm.trim(), false);
       }
     }
   }, [searchTerm, addSearch, location.state]);
 
-  // Handler for clicking a recent search bubble - updates URL/search param
   const handleRecentSearchClick = (term: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("search", term);
     setSearchParams(newParams, { replace: true });
   };
 
-  // Determine what to show in the results chip
-  const getResultsDisplayText = () => {
-    if (searchTerm) return searchTerm;
-    if (categoryParam) return categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1);
-    if (brandParam) return brandParam;
-    return "";
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Only show hero banner when NOT actively shopping */}
+      {/* Hero section - only when not actively shopping */}
       {!isActivelyShopping && (
         <FullWidthSection background="gradient">
           <MarketplaceHero isCollapsed={false} />
         </FullWidthSection>
       )}
 
-      {/* Integrated Search Section - combines categories and recent searches */}
-      <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
+      {/* Search and Categories - full width for better mobile experience */}
+      <FullWidthSection>
+        <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
+      </FullWidthSection>
 
-      {/* Subtle Countdown Banner - only shows when contextually relevant */}
+      {/* Countdown Banner */}
       <SubtleCountdownBanner />
 
-      {/* Condensed Filters Bar - minimal, focused on active filters */}
-      <CondensedFiltersBar
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-        totalItems={products.length}
-      />
+      {/* Results Summary Bar - replaces the old condensed filters bar */}
+      <ResultsSummaryBar totalItems={products.length} />
 
-      {/* Main content with full-width capability for mobile */}
-      <FullWidthSection className={isMobile ? "" : "container mx-auto"} padding={isMobile ? "none" : "standard"}>
-        <div
-          className={isMobile ? "pb-20" : "pb-12"}
-          ref={resultsRef}
-        >
+      {/* Main Content - full bleed layout */}
+      <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">
+        <div ref={resultsRef}>
           <MarketplaceContent
             products={products}
             isLoading={false}

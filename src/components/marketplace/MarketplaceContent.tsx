@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from "react";
 import { Product } from "@/types/product";
 import MarketplaceFilters from "./MarketplaceFilters";
@@ -114,6 +115,14 @@ const MarketplaceContent = ({
   // Decide whether to show recommendations
   const showRecommendations = filteredProducts.length === 0 && recommendations.length > 0;
   const displayProducts = showRecommendations ? recommendations : filteredProducts;
+
+  // Helper function to ensure boolean conversion
+  const ensureBoolean = (value: any): boolean => {
+    if (typeof value === 'string') {
+      return value === 'true';
+    }
+    return Boolean(value);
+  };
   
   return (
     <BleedFirstLayout className="mt-6">
@@ -161,12 +170,8 @@ const MarketplaceContent = ({
                 priceRange: filters.priceRange,
                 categories: filters.selectedCategories,
                 rating: filters.rating,
-                freeShipping: typeof filters.freeShipping === 'string' 
-                  ? filters.freeShipping === 'true' 
-                  : Boolean(filters.freeShipping),
-                favoritesOnly: typeof filters.favoritesOnly === 'string'
-                  ? filters.favoritesOnly === 'true'
-                  : Boolean(filters.favoritesOnly),
+                freeShipping: ensureBoolean(filters.freeShipping),
+                favoritesOnly: ensureBoolean(filters.favoritesOnly),
                 sortBy: filters.sortBy
               }}
               onFilterChange={handleLegacyFilterChange}
@@ -205,3 +210,4 @@ const MarketplaceContent = ({
 };
 
 export default MarketplaceContent;
+

@@ -26,20 +26,25 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   isWishlisted,
 }) => {
   const isMobile = useIsMobile();
-  const { isProductWishlisted, wishlists } = useUnifiedWishlist();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
 
   // Always live-calculate wishlist state - this ensures we show the correct state
   const computedIsWishlisted = typeof isWishlisted === "boolean"
     ? isWishlisted
     : isProductWishlisted(product.id);
 
-  console.log('WishlistSelectionPopoverButton - Product:', product.id, 'isWishlisted:', computedIsWishlisted, 'wishlists count:', wishlists.length);
+  console.log('WishlistSelectionPopoverButton - Product:', product.id, 'isWishlisted:', computedIsWishlisted);
 
-  const handleAdded = () => {
+  const handleAdded = async () => {
     console.log('WishlistSelectionPopoverButton - Item added callback');
+    
+    // Refresh the wishlist state first
+    await loadWishlists();
+    
     if (onAdded) {
       onAdded();
     }
+    
     // Force a small delay to ensure state propagation
     setTimeout(() => {
       console.log('WishlistSelectionPopoverButton - After delay, isWishlisted:', isProductWishlisted(product.id));

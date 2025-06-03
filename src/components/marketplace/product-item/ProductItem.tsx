@@ -3,8 +3,10 @@ import React from "react";
 import { Product } from "@/types/product";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth";
-import { useQuickWishlist } from "@/hooks/useQuickWishlist";
-import QuickWishlistButton from "./QuickWishlistButton";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
+import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import SignUpDialog from "../SignUpDialog";
 
 interface ProductItemProps {
@@ -25,32 +27,29 @@ const ProductItem = ({
   statusBadge,
 }: ProductItemProps) => {
   const { user } = useAuth();
-  const { toggleWishlist, showSignUpDialog, setShowSignUpDialog } = useQuickWishlist();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
 
   const productId = String(product.product_id || product.id);
   const productName = product.title || product.name || "";
   const productPrice = product.price || 0;
 
-  const handleWishlistClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Use the unified wishlist system to check if product is wishlisted
+  const isActuallyWishlisted = user ? isProductWishlisted(productId) : false;
+
+  const handleWishlistAdded = async () => {
+    console.log('ProductItem - Item added to wishlist, refreshing state');
+    await loadWishlists();
     
+    if (onWishlistClick) {
+      onWishlistClick({} as React.MouseEvent);
+    }
+  };
+
+  const handleWishlistClick = () => {
     if (!user) {
       setShowSignUpDialog(true);
       return;
-    }
-
-    const productInfo = {
-      id: productId,
-      name: productName,
-      image: product.image,
-      price: productPrice,
-      brand: product.brand
-    };
-
-    await toggleWishlist(e, productInfo);
-    
-    if (onWishlistClick) {
-      onWishlistClick(e);
     }
   };
 
@@ -84,13 +83,32 @@ const ProductItem = ({
 
         {/* Wishlist Button */}
         <div className="absolute top-2 right-2 z-10">
-          <QuickWishlistButton
-            productId={productId}
-            isFavorited={isFavorited}
-            onClick={handleWishlistClick}
-            size="md"
-            variant="floating"
-          />
+          {user ? (
+            <WishlistSelectionPopoverButton
+              product={{
+                id: productId,
+                name: productName,
+                image: product.image,
+                price: productPrice,
+                brand: product.brand,
+              }}
+              triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-1.5 rounded-full transition-colors shadow-sm"
+              onAdded={handleWishlistAdded}
+              isWishlisted={isActuallyWishlisted}
+            />
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 rounded-full p-1.5 shadow-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleWishlistClick();
+              }}
+            >
+              <Heart className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Product Image */}

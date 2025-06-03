@@ -2,7 +2,7 @@
 import React from "react";
 import { Product } from "@/types/product";
 import ProductItem from "./product-item/ProductItem";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 
 interface ProductGridDisplayProps {
   products: Product[];
@@ -23,6 +23,8 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
   isFavorited,
   isMobile
 }) => {
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
@@ -46,6 +48,11 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
       : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4";
   };
 
+  const handleWishlistUpdate = async () => {
+    // Refresh wishlist state when items are added/removed
+    await loadWishlists();
+  };
+
   return (
     <div className={getGridClasses()}>
       {products.map((product) => {
@@ -58,8 +65,8 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
             product={product}
             viewMode={viewMode}
             onProductClick={() => handleProductClick(productId)}
-            onWishlistClick={(e) => toggleWishlist(e, { id: productId })}
-            isFavorited={isFavorited(productId)}
+            onWishlistClick={handleWishlistUpdate}
+            isFavorited={isProductWishlisted(productId)}
             statusBadge={statusBadge}
           />
         );

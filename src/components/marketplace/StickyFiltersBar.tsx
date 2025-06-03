@@ -8,8 +8,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 
 interface StickyFiltersBarProps {
@@ -88,14 +86,6 @@ const StickyFiltersBar = ({
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                
-                {/* Show navigation arrows only on desktop and when there are enough items */}
-                {!isMobile && recentSearches.length > 3 && (
-                  <>
-                    <CarouselPrevious className="left-0 -translate-x-1/2" />
-                    <CarouselNext className="right-0 translate-x-1/2" />
-                  </>
-                )}
               </Carousel>
             </div>
           )}

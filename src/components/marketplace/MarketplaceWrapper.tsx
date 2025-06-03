@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import MarketplaceContent from "./MarketplaceContent";
 import StickyFiltersBar from "./StickyFiltersBar";
@@ -12,8 +11,6 @@ import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
-import NicoleConversationEngine from "@/components/ai/NicoleConversationEngine";
-import { useSearchMode } from "@/hooks/useSearchMode";
 
 // Enhanced ResultsChip component for mobile
 const ResultsChip = ({
@@ -53,24 +50,15 @@ const MarketplaceWrapper = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addSearch } = useUserSearchHistory();
-  const { mode, setMode, isNicoleMode } = useSearchMode();
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
-  const nicoleOpen = searchParams.get("open") === "true";
 
   // Used for auto-scroll
   const resultsRef = useRef<HTMLDivElement>(null);
   // We keep track if we just searched (to avoid repeat scrolls)
   const lastSearchRef = useRef<string | null>(null);
-
-  // Auto-open Nicole if URL indicates it should be opened
-  useEffect(() => {
-    if (nicoleOpen && isNicoleMode) {
-      // Nicole will be shown in the sticky filters bar
-    }
-  }, [nicoleOpen, isNicoleMode]);
 
   // Close filters on mobile when screen size changes
   useEffect(() => {
@@ -142,10 +130,7 @@ const MarketplaceWrapper = () => {
     newParams.delete("category");
     newParams.delete("brand");
     newParams.delete("pageTitle");
-    newParams.delete("mode");
-    newParams.delete("open");
     setSearchParams(newParams, { replace: true });
-    setMode("search");
   };
 
   // Add to user-specific search history when searchTerm changes
@@ -170,25 +155,6 @@ const MarketplaceWrapper = () => {
     setSearchParams(newParams, { replace: true });
   };
 
-  // Handle Nicole navigation to results
-  const handleNicoleNavigateToResults = (searchQuery: string) => {
-    const newParams = new URLSearchParams();
-    newParams.set("search", searchQuery);
-    newParams.delete("mode");
-    newParams.delete("open");
-    setSearchParams(newParams, { replace: true });
-    setMode("search");
-  };
-
-  // Handle closing Nicole
-  const handleCloseNicole = () => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete("mode");
-    newParams.delete("open");
-    setSearchParams(newParams, { replace: true });
-    setMode("search");
-  };
-
   // Determine what to show in the results chip
   const getResultsDisplayText = () => {
     if (searchTerm) return searchTerm;
@@ -199,8 +165,8 @@ const MarketplaceWrapper = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Only show hero banner when NOT actively shopping and NOT in Nicole mode */}
-      {!isActivelyShopping && !isNicoleMode && (
+      {/* Only show hero banner when NOT actively shopping */}
+      {!isActivelyShopping && (
         <FullWidthSection background="gradient">
           <MarketplaceHero isCollapsed={false} />
         </FullWidthSection>
@@ -219,22 +185,8 @@ const MarketplaceWrapper = () => {
         </ResponsiveContainer>
       </FullWidthSection>
 
-      {/* Nicole Conversation Engine - Show when in Nicole mode */}
-      {isNicoleMode && nicoleOpen && (
-        <FullWidthSection background="white" className="border-b border-gray-200">
-          <ResponsiveContainer>
-            <div className="py-4">
-              <NicoleConversationEngine
-                onClose={handleCloseNicole}
-                onNavigateToResults={handleNicoleNavigateToResults}
-              />
-            </div>
-          </ResponsiveContainer>
-        </FullWidthSection>
-      )}
-
       {/* Results chip */}
-      {isActivelyShopping && !isNicoleMode && (
+      {isActivelyShopping && (
         <ResultsChip
           query={getResultsDisplayText()}
           onClear={handleClearAll}

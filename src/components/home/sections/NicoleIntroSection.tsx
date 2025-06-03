@@ -23,7 +23,11 @@ const NicoleIntroSection = () => {
   ];
 
   const handleStartShopping = () => {
-    navigate("/marketplace?mode=nicole&open=true");
+    // Scroll to top to ensure header search is visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Add URL params to activate Nicole mode in header search
+    navigate("/?mode=nicole&open=true");
   };
 
   return (

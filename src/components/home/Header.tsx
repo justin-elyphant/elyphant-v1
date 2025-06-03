@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import Logo from "./components/Logo";
 import AuthButtons from "./components/AuthButtons";
-import DualModeSearchBar from "@/components/search/DualModeSearchBar";
+import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import { ProductProvider } from "@/contexts/ProductContext";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
 import UserButton from "@/components/auth/UserButton";
@@ -34,9 +34,9 @@ const Header = () => {
                 </Link>
               </div>
               
-              {/* Center: Dual Mode Search Bar */}
+              {/* Center: AI Enhanced Search Bar */}
               <div className="flex-1 max-w-2xl mx-8">
-                <DualModeSearchBar />
+                <AIEnhancedSearchBar />
               </div>
               
               {/* Right: Cart + Notifications + Auth/Profile */}
@@ -52,7 +52,7 @@ const Header = () => {
             </div>
           )}
 
-          {/* Mobile header - Restructured */}
+          {/* Mobile header */}
           {isMobile && (
             <>
               {/* Top row: Logo + Action buttons */}
@@ -91,9 +91,9 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Search row - Now using DualModeSearchBar */}
+              {/* Search row - Now using AIEnhancedSearchBar */}
               <div className="mb-2">
-                <DualModeSearchBar mobile />
+                <AIEnhancedSearchBar mobile />
               </div>
 
               {/* Mobile menu */}

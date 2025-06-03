@@ -49,7 +49,7 @@ const MarketplaceContent = () => {
   const { search: optimizedSearch, isLoading: searchLoading, results: searchResults, error: searchError } = useOptimizedSearch();
 
   // Regular product fetching (when no search query)
-  const { data: regularProducts, isLoading: regularLoading } = useMarketplaceProducts(!query);
+  const { products: regularProducts, isLoading: regularLoading } = useMarketplaceProducts();
 
   // Determine which products to use
   const products = useMemo(() => {
@@ -111,7 +111,7 @@ const MarketplaceContent = () => {
   return (
     <>
       <div className="min-h-screen bg-background">
-        <MarketplaceHeader onSignUpRequired={() => setShowSignUpDialog(true)} />
+        <MarketplaceHeader />
         
         <div className="container mx-auto px-4 py-6">
           <MarketplaceFilters
@@ -144,7 +144,6 @@ const MarketplaceContent = () => {
               <ProductGrid 
                 products={filteredProducts} 
                 viewMode={viewMode}
-                onSignUpRequired={() => setShowSignUpDialog(true)}
               />
             </div>
           </div>

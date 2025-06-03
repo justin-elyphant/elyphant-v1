@@ -16,11 +16,20 @@ import { FullWidthSection } from "@/components/layout/FullWidthSection";
 const MarketplaceWrapper = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [showFilters, setShowFilters] = useState(!isMobile);
-  const [products, setProducts] = useState(allProducts);
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addSearch } = useUserSearchHistory();
+
+  // Check if this is a fresh navigation from home page
+  const isFromHomePage = location.state?.fromHome || false;
+
+  // Initialize showFilters state - always false if coming from home
+  const [showFilters, setShowFilters] = useState(() => {
+    if (isFromHomePage) return false;
+    return !isMobile;
+  });
+  
+  const [products, setProducts] = useState(allProducts);
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
@@ -37,6 +46,14 @@ const MarketplaceWrapper = () => {
       return;
     }
   }, [searchTerm, categoryParam, brandParam, navigate]);
+
+  // Clear the fromHome state after initial load to allow normal behavior
+  useEffect(() => {
+    if (isFromHomePage) {
+      // Replace the current history entry to remove the fromHome state
+      window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    }
+  }, [isFromHomePage]);
 
   // Close filters on mobile when screen size changes
   useEffect(() => {

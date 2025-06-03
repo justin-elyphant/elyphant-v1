@@ -126,12 +126,7 @@ const MarketplaceFilters = ({
           </Select>
         </div>
 
-        {/* Item count */}
-        {!isMobile && (
-          <div className="text-sm text-muted-foreground ml-2">
-            {totalItems} {totalItems === 1 ? "item" : "items"}
-          </div>
-        )}
+        {/* Removed duplicate item count since ResultsSummaryBar now handles it */}
       </div>
     </div>
   );

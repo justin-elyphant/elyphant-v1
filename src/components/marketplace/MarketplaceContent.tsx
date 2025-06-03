@@ -122,8 +122,11 @@ const MarketplaceContent = ({
   
   return (
     <BleedFirstLayout className="mt-6">
-      {/* Results Summary Bar */}
-      <ResultsSummaryBar totalItems={filteredProducts.length} />
+      {/* Results Summary Bar - now with search term */}
+      <ResultsSummaryBar 
+        totalItems={filteredProducts.length}
+        searchTerm={searchTerm}
+      />
       
       {/* Top controls bar with responsive container for readability */}
       <div className="container mx-auto px-4 mb-4">

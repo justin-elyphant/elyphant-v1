@@ -7,15 +7,16 @@ import { useSearchParams } from "react-router-dom";
 
 interface ResultsSummaryBarProps {
   totalItems?: number;
+  searchTerm?: string;
 }
 
 const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
   totalItems = 0,
+  searchTerm = "",
 }) => {
   const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const searchTerm = searchParams.get("search");
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
 
@@ -34,6 +35,24 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
     return filters.join(", ");
   };
 
+  const getDisplayText = () => {
+    if (isMobile) {
+      // On mobile, show the search term or "Filtered" if other filters are active
+      if (searchTerm) {
+        return searchTerm;
+      } else if (categoryParam || brandParam) {
+        return "Filtered results";
+      }
+      return "";
+    } else {
+      // On desktop, show full "Showing results for:" text
+      if (hasActiveFilters) {
+        return `Showing results for: ${getActiveFiltersText()}`;
+      }
+      return "";
+    }
+  };
+
   return (
     <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="w-full px-4 py-2">
@@ -42,7 +61,7 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
             {hasActiveFilters && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600 truncate">
-                  {isMobile ? "Filtered" : `Showing results for: ${getActiveFiltersText()}`}
+                  {getDisplayText()}
                 </span>
                 <Button
                   variant="ghost"

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, Grid3X3, List, BookmarkPlus } from "lucide-react";
@@ -63,16 +64,18 @@ const MarketplaceFilters = ({
           </Button>
         </div>
 
-        {/* Filter toggle button (moved here) */}
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <SlidersHorizontal className="h-4 w-4 mr-2" />
-          {showFilters ? "Hide Filters" : "Show Filters"}
-        </Button>
+        {/* Filter toggle button - Desktop Only */}
+        {!isMobile && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+        )}
 
         {/* Saved filters toggle */}
         {savedFiltersCount > 0 && (

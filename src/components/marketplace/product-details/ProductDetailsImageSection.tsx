@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
-import QuickWishlistButton from "../product-item/QuickWishlistButton";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import SignUpDialog from "../SignUpDialog";
 
 interface ProductDetailsImageSectionProps {
@@ -24,15 +24,14 @@ const ProductDetailsImageSection = ({
   const { user } = useAuth();
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
 
-  const handleWishlistClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
+  const handleWishlistClick = () => {
     if (!user) {
       setShowSignUpDialog(true);
       return;
     }
+  };
 
-    // If user is authenticated, this will be handled by QuickWishlistButton
+  const handleWishlistAdded = () => {
     if (reloadWishlists) {
       reloadWishlists();
     }
@@ -66,14 +65,18 @@ const ProductDetailsImageSection = ({
             <Share2 className="h-4 w-4" />
           </Button>
 
-          {/* Wishlist Button - Show SignUp dialog for unauthenticated users */}
+          {/* Wishlist Button - Always use the popover version for authenticated users */}
           {user ? (
-            <QuickWishlistButton
-              productId={String(product.product_id || product.id)}
-              isFavorited={isWishlisted}
-              onClick={handleWishlistClick}
-              size="md"
-              variant="floating"
+            <WishlistSelectionPopoverButton
+              product={{
+                id: String(product.product_id || product.id),
+                name: product.title || product.name || "",
+                image: product.image || "",
+                price: product.price,
+                brand: product.brand || "",
+              }}
+              triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-2"
+              onAdded={handleWishlistAdded}
             />
           ) : (
             <Button

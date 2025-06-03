@@ -6,8 +6,7 @@ import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/product";
 import { useAuth } from "@/contexts/auth";
-import { useQuickWishlist } from "@/hooks/useQuickWishlist";
-import QuickWishlistButton from "../product-item/QuickWishlistButton";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import SignUpDialog from "../SignUpDialog";
 
 interface ModernProductCardProps {
@@ -26,29 +25,20 @@ const ModernProductCard = ({
   onClick,
 }: ModernProductCardProps) => {
   const { user } = useAuth();
-  const { toggleWishlist, showSignUpDialog, setShowSignUpDialog } = useQuickWishlist();
+  const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
 
   const productId = String(product.product_id || product.id);
   const productName = product.title || product.name || "";
 
-  const handleWishlistClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
+  const handleWishlistClick = () => {
     if (!user) {
       setShowSignUpDialog(true);
       return;
     }
+  };
 
-    const productInfo = {
-      id: productId,
-      name: productName,
-      image: product.image,
-      price: product.price,
-      brand: product.brand
-    };
-
-    await toggleWishlist(e, productInfo);
-    onToggleFavorite(e);
+  const handleWishlistAdded = () => {
+    onToggleFavorite({} as React.MouseEvent);
   };
 
   return (
@@ -77,13 +67,33 @@ const ModernProductCard = ({
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300">
             {/* Wishlist Button */}
             <div className="absolute top-3 right-3">
-              <QuickWishlistButton
-                productId={productId}
-                isFavorited={isFavorited}
-                onClick={handleWishlistClick}
-                size="md"
-                variant="floating"
-              />
+              {user ? (
+                <WishlistSelectionPopoverButton
+                  product={{
+                    id: productId,
+                    name: productName,
+                    image: product.image,
+                    price: product.price,
+                    brand: product.brand
+                  }}
+                  triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-1.5 rounded-full transition-colors"
+                  onAdded={handleWishlistAdded}
+                />
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWishlistClick();
+                  }}
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </Button>
+              )}
             </div>
 
             {/* Quick Add to Cart */}

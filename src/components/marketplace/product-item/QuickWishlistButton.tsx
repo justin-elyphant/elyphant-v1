@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import SignUpDialog from "@/components/marketplace/SignUpDialog";
+import WishlistSelectionPopover from "@/components/marketplace/WishlistSelectionPopover";
 
 interface QuickWishlistButtonProps {
   productId: string;
@@ -68,12 +69,77 @@ const QuickWishlistButton = ({
       return;
     }
     
+    // For authenticated users, this will be handled by the popover
     onClick(e);
+    
     // Add a little animation effect
     setIsPressed(true);
     setTimeout(() => setIsPressed(false), 200);
   };
-  
+
+  // If user is authenticated, show the full wishlist popover
+  if (user) {
+    const triggerButton = (
+      <Button
+        type="button"
+        className={cn(
+          "p-0 flex items-center justify-center transition-all",
+          sizeClasses[size],
+          variantClasses[variant],
+          isPressed ? "scale-90" : "hover:scale-105",
+          "touch-manipulation"
+        )}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => {
+          setIsHovering(false);
+          setIsPressed(false);
+        }}
+        onMouseDown={() => setIsPressed(true)}
+        onMouseUp={() => setIsPressed(false)}
+        onTouchStart={() => setIsPressed(true)}
+        onTouchEnd={() => setIsPressed(false)}
+        aria-label={isActuallyFavorited ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        <Heart
+          className={cn(
+            "transition-all duration-200",
+            isActuallyFavorited ? "fill-current" : (isHovering || isPressed ? "fill-current/20" : ""),
+            size === "sm" ? "h-3.5 w-3.5" : size === "md" ? "h-4 w-4" : "h-5 w-5"
+          )}
+        />
+      </Button>
+    );
+
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <div>
+              <WishlistSelectionPopover
+                productId={productId}
+                productName="" // Will be populated by the parent component
+                trigger={triggerButton}
+                onClose={() => {
+                  // Callback when popover closes
+                  if (onClick) {
+                    onClick({} as React.MouseEvent);
+                  }
+                }}
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="bottom"
+            className="text-xs py-1 px-2"
+          >
+            {isActuallyFavorited ? "Manage wishlist" : "Add to wishlist"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // For non-authenticated users, show the simple button with sign-up dialog
   return (
     <>
       <TooltipProvider>
@@ -86,7 +152,7 @@ const QuickWishlistButton = ({
                 sizeClasses[size],
                 variantClasses[variant],
                 isPressed ? "scale-90" : "hover:scale-105",
-                "touch-manipulation" // Improves touch events on mobile
+                "touch-manipulation"
               )}
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => {
@@ -98,12 +164,12 @@ const QuickWishlistButton = ({
               onTouchStart={() => setIsPressed(true)}
               onTouchEnd={() => setIsPressed(false)}
               onClick={handleClick}
-              aria-label={user ? (isActuallyFavorited ? "Remove from wishlist" : "Add to wishlist") : "Sign up to add to wishlist"}
+              aria-label="Sign up to add to wishlist"
             >
               <Heart
                 className={cn(
                   "transition-all duration-200",
-                  user && isActuallyFavorited ? "fill-current" : (isHovering || isPressed ? "fill-current/20" : ""),
+                  isHovering || isPressed ? "fill-current/20" : "",
                   size === "sm" ? "h-3.5 w-3.5" : size === "md" ? "h-4 w-4" : "h-5 w-5"
                 )}
               />
@@ -113,7 +179,7 @@ const QuickWishlistButton = ({
             side="bottom"
             className="text-xs py-1 px-2"
           >
-            {user ? (isActuallyFavorited ? "Remove from wishlist" : "Add to wishlist") : "Sign up to add to wishlist"}
+            Sign up to add to wishlist
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

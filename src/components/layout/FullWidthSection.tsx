@@ -30,9 +30,9 @@ export const FullWidthSection: React.FC<FullWidthSectionProps> = ({
   
   const paddingClasses = {
     none: "",
-    minimal: isMobile ? "py-2" : "py-4",
-    standard: isMobile ? "py-4" : "py-8",
-    large: isMobile ? "py-6" : "py-12"
+    minimal: isMobile ? "py-6" : "py-4", // Increased mobile padding for better section separation
+    standard: isMobile ? "py-12" : "py-8", // Increased mobile padding
+    large: isMobile ? "py-16" : "py-12" // Increased mobile padding
   };
   
   return (

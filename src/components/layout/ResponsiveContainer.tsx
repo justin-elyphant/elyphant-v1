@@ -35,9 +35,9 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   
   const paddingClasses = {
     none: "",
-    minimal: isMobile ? "px-2" : "px-4",
-    standard: isMobile ? "px-4" : "px-6",
-    large: isMobile ? "px-6" : "px-8"
+    minimal: isMobile ? "px-4" : "px-4",
+    standard: isMobile ? "px-6" : "px-6", // Increased mobile padding for more impact
+    large: isMobile ? "px-8" : "px-8"
   };
   
   // On mobile with fullWidthOnMobile, use minimal constraints

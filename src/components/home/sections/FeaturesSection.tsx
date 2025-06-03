@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Gift, Users, Bell, Star, ShoppingBag, Heart } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FeatureProps {
   title: string;
@@ -20,8 +19,6 @@ const Feature: React.FC<FeatureProps> = ({ title, description, icon }) => (
 );
 
 const FeaturesSection = () => {
-  const isMobile = useIsMobile();
-  
   const features = [
     {
       title: "Smart Wishlists",
@@ -57,7 +54,7 @@ const FeaturesSection = () => {
 
   return (
     <section className="py-16 bg-gradient-to-b from-white to-purple-50">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Features You'll Love</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -65,7 +62,7 @@ const FeaturesSection = () => {
           </p>
         </div>
         
-        <div className={`grid grid-cols-1 ${isMobile ? "md:grid-cols-2" : "md:grid-cols-3"} gap-6`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <Feature 
               key={index}

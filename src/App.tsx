@@ -13,6 +13,7 @@ import Marketplace from "./pages/Marketplace";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import Wishlists from "./pages/Wishlists";
+import Dashboard from "./pages/Dashboard";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/wishlists" element={<Wishlists />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 {/* Add other routes as needed */}
               </Routes>
               <SearchOptimizationMonitor />

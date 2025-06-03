@@ -3,10 +3,11 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, User, Loader2 } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
+import PasswordInputField from "../../shared/PasswordInputField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 
@@ -49,7 +50,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     } catch (error: any) {
       console.error("Form submission error:", error);
       
-      // Handle specific error cases
       if (error.message?.includes("already registered")) {
         setErrorMessage("Email already registered. Please use a different email address or sign in.");
       } else if (error.status === 504 || error.message?.includes("timeout")) {
@@ -60,7 +60,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       } else if (error.message?.includes("Network error")) {
         setErrorMessage("Network error. Please check your internet connection and try again.");
       } else {
-        // Fallback for other errors
         setErrorMessage(error.message || "An unexpected error occurred. Please try again.");
       }
     }
@@ -92,13 +91,12 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           Icon={Mail}
         />
         
-        <InputField
+        <PasswordInputField
           form={form}
           name="password"
           label="Password"
-          placeholder="********"
-          type="password"
-          Icon={Lock}
+          placeholder="••••••••"
+          autoComplete="new-password"
         />
         
         <Button 

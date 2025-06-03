@@ -3,10 +3,11 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, User, Loader2 } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/auth/signup/fields/InputField";
+import PasswordInputField from "@/components/auth/shared/PasswordInputField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Simplified schema without captcha
@@ -74,13 +75,12 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           Icon={Mail}
         />
         
-        <InputField
+        <PasswordInputField
           form={form}
           name="password"
           label="Password"
-          placeholder="********"
-          type="password"
-          Icon={Lock}
+          placeholder="••••••••"
+          autoComplete="new-password"
         />
         
         <Button 

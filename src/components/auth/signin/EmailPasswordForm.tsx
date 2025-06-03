@@ -3,18 +3,20 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, Loader2, Info } from "lucide-react"; // Added Info
+import { Mail, Loader2, Info } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import InputField from "@/components/auth/signup/fields/InputField";
+import PasswordInputField from "@/components/auth/shared/PasswordInputField";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }), // Supabase default min is 6
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
 type SignInValues = z.infer<typeof signInSchema>;
@@ -65,7 +67,6 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
       }
       
       if (!data.user) {
-        // This case should ideally be covered by the error above, but as a fallback:
         setErrorMessage("Sign in failed. Please check your credentials.");
         return;
       }
@@ -88,7 +89,7 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {errorMessage && (
           <Alert variant="destructive" className="mb-2">
-            <Info className="h-4 w-4" /> {/* Using Info icon for consistency */}
+            <Info className="h-4 w-4" />
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
@@ -116,32 +117,17 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
           )}
         />
         
-        <FormField
-          control={form.control}
+        <PasswordInputField
+          form={form}
           name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...field}
-                    disabled={isLoading}
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Password"
+          placeholder="••••••••"
+          autoComplete="current-password"
         />
         
         <Button 
           type="submit" 
-          className="w-full bg-purple-600 hover:bg-purple-700" // Styled like sign-up button
+          className="w-full bg-purple-600 hover:bg-purple-700"
           disabled={isLoading}
         >
           {isLoading ? (

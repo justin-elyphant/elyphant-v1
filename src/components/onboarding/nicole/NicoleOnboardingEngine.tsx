@@ -283,7 +283,7 @@ const NicoleOnboardingEngine: React.FC<NicoleOnboardingEngineProps> = ({
           absolute bg-white shadow-2xl transition-transform duration-300 ease-out
           ${isMobile 
             ? 'bottom-0 left-0 right-0 h-[90vh] rounded-t-3xl safe-area-bottom' 
-            : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[700px] rounded-3xl'
+            : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[800px] rounded-3xl'
           }
         `}>
           {/* Progress Tracker */}

@@ -95,7 +95,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         
         <Input
           type="search"
-          placeholder="Search for gifts or products"
+          placeholder="Search friends, products, or brands"
           className={`pl-10 pr-32 ${mobile ? "text-base py-3 h-12" : ""} rounded-full border-gray-300`}
           value={query}
           onChange={e => setQuery(e.target.value)}

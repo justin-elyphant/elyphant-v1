@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -10,8 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import NicoleConversationEngine from "@/components/ai/NicoleConversationEngine";
 import MobileConversationModal from "@/components/ai/conversation/MobileConversationModal";
 import SearchSuggestions from "./SearchSuggestions";
+import UnifiedSearchSuggestions from "./UnifiedSearchSuggestions";
 import VoiceInputButton from "./VoiceInputButton";
 import { IOSSwitch } from "@/components/ui/ios-switch";
+import { useAuth } from "@/contexts/auth";
+import { unifiedSearch } from "@/services/search/unifiedSearchService";
+import { useFriendSearch } from "@/hooks/useFriendSearch";
+import { FriendSearchResult } from "@/services/search/friendSearchService";
+import { ZincProduct } from "@/components/marketplace/zinc/types";
 
 interface AIEnhancedSearchBarProps {
   mobile?: boolean;
@@ -25,19 +30,27 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const { mode, setMode, isNicoleMode } = useSearchMode();
+  const { sendFriendRequest } = useFriendSearch();
   
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [unifiedResults, setUnifiedResults] = useState<{
+    friends: FriendSearchResult[];
+    products: ZincProduct[];
+    brands: string[];
+  }>({ friends: [], products: [], brands: [] });
   const [showNicoleDropdown, setShowNicoleDropdown] = useState(false);
   const [showMobileModal, setShowMobileModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const nicoleDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Mock suggestions for demo
+  // Mock suggestions for Nicole mode
   const mockSuggestions = [
     "Birthday gifts for mom",
     "Christmas presents under $50",
@@ -72,18 +85,47 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   }, [location.pathname]);
 
   useEffect(() => {
-    if (query.length > 0 && !isNicoleMode) {
-      const q = query.toLowerCase();
-      const matches = mockSuggestions
-        .filter(s => s.toLowerCase().includes(q))
-        .slice(0, 5);
-      setSuggestions(matches);
-      setShowSuggestions(matches.length > 0);
-    } else {
-      setShowSuggestions(false);
-      setSuggestions([]);
-    }
-  }, [query, isNicoleMode]);
+    const searchUnified = async () => {
+      if (query.length > 1 && !isNicoleMode) {
+        setSearchLoading(true);
+        try {
+          const results = await unifiedSearch(query, {
+            maxResults: 10,
+            currentUserId: user?.id
+          });
+          
+          setUnifiedResults({
+            friends: results.friends,
+            products: results.products,
+            brands: results.brands
+          });
+          
+          const hasResults = results.friends.length > 0 || results.products.length > 0 || results.brands.length > 0;
+          setShowSuggestions(hasResults);
+        } catch (error) {
+          console.error('Unified search error:', error);
+          setShowSuggestions(false);
+        } finally {
+          setSearchLoading(false);
+        }
+      } else if (query.length > 0 && isNicoleMode) {
+        // Nicole mode - show traditional suggestions
+        const q = query.toLowerCase();
+        const matches = mockSuggestions
+          .filter(s => s.toLowerCase().includes(q))
+          .slice(0, 5);
+        setSuggestions(matches);
+        setShowSuggestions(matches.length > 0);
+      } else {
+        setShowSuggestions(false);
+        setSuggestions([]);
+        setUnifiedResults({ friends: [], products: [], brands: [] });
+      }
+    };
+
+    const debounceTimer = setTimeout(searchUnified, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [query, isNicoleMode, user?.id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +160,28 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     searchParams.set("search", suggestion);
     navigate(`/marketplace?${searchParams.toString()}`);
     setShowSuggestions(false);
+  };
+
+  const handleFriendSelect = (friend: FriendSearchResult) => {
+    // Navigate to friend's profile (assuming we have profile routes)
+    navigate(`/profile/${friend.id}`);
+    setShowSuggestions(false);
+  };
+
+  const handleProductSelect = (product: ZincProduct) => {
+    // Navigate to product details
+    navigate(`/marketplace?search=${encodeURIComponent(product.title)}`);
+    setShowSuggestions(false);
+  };
+
+  const handleBrandSelect = (brand: string) => {
+    // Navigate to brand search
+    navigate(`/marketplace?search=${encodeURIComponent(brand)}`);
+    setShowSuggestions(false);
+  };
+
+  const handleSendFriendRequest = async (friendId: string, friendName: string) => {
+    await sendFriendRequest(friendId, friendName);
   };
 
   const handleModeToggle = (checked: boolean) => {
@@ -185,7 +249,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   const placeholderText = isNicoleMode 
     ? "Ask Nicole anything about gifts..." 
-    : "Search for gifts or products";
+    : "Search friends, products, or brands";
 
   return (
     <div className={`relative w-full ${className}`}>
@@ -227,8 +291,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             value={query}
             onChange={e => setQuery(e.target.value)}
             onFocus={() => {
-              if (!isNicoleMode) {
-                setShowSuggestions(suggestions.length > 0);
+              if (!isNicoleMode && (unifiedResults.friends.length > 0 || unifiedResults.products.length > 0 || unifiedResults.brands.length > 0)) {
+                setShowSuggestions(true);
               }
             }}
           />
@@ -267,13 +331,30 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         </div>
       )}
 
-      {/* Product Search Suggestions */}
-      <SearchSuggestions
-        suggestions={suggestions}
-        isVisible={showSuggestions && !isNicoleMode}
-        onSuggestionClick={handleSuggestionClick}
-        mobile={mobile}
-      />
+      {/* Unified Search Suggestions */}
+      {!isNicoleMode && (
+        <UnifiedSearchSuggestions
+          friends={unifiedResults.friends}
+          products={unifiedResults.products}
+          brands={unifiedResults.brands}
+          isVisible={showSuggestions}
+          onFriendSelect={handleFriendSelect}
+          onProductSelect={handleProductSelect}
+          onBrandSelect={handleBrandSelect}
+          onSendFriendRequest={handleSendFriendRequest}
+          mobile={mobile}
+        />
+      )}
+
+      {/* Nicole Mode Traditional Suggestions */}
+      {isNicoleMode && (
+        <SearchSuggestions
+          suggestions={suggestions}
+          isVisible={showSuggestions}
+          onSuggestionClick={handleSuggestionClick}
+          mobile={mobile}
+        />
+      )}
 
       {/* Desktop Nicole Conversation Dropdown */}
       {showNicoleDropdown && isNicoleMode && !isMobile && (

@@ -1,111 +1,100 @@
 
-import { searchZincProducts, ZincSearchResult } from "@/services/api/zincApiService";
-import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
+import { searchProducts as searchZincProducts } from "@/services/search/unifiedSearchService";
+import { searchFriends, FriendSearchResult } from "./friendSearchService";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
-import { convertMockToZincProduct } from "@/components/marketplace/zinc/utils/productConverter";
+
+export interface UnifiedSearchResult {
+  friends: FriendSearchResult[];
+  products: ZincProduct[];
+  brands: string[];
+  query: string;
+  total: number;
+}
 
 export interface SearchOptions {
   maxResults?: number;
-  useRealAPI?: boolean;
-  fallbackToMock?: boolean;
+  includeFriends?: boolean;
+  includeProducts?: boolean;
+  includeBrands?: boolean;
+  currentUserId?: string;
 }
 
-export interface SearchResponse {
-  products: ZincProduct[];
-  total: number;
-  source: 'zinc-api' | 'mock' | 'fallback';
-  query: string;
-}
+const POPULAR_BRANDS = [
+  'Nike', 'Apple', 'Samsung', 'Sony', 'Microsoft', 'Google', 'Amazon',
+  'Adidas', 'Puma', 'Under Armour', 'Levi\'s', 'Coach', 'Louis Vuitton',
+  'Gucci', 'Rolex', 'Canon', 'Nikon', 'Dell', 'HP', 'Lenovo'
+];
 
-/**
- * Unified search service that handles both real Zinc API and mock data
- */
-export const searchProducts = async (
-  query: string, 
-  options: SearchOptions = {}
-): Promise<SearchResponse> => {
-  const {
-    maxResults = 10,
-    useRealAPI = true,
-    fallbackToMock = true
-  } = options;
-
-  console.log(`Unified search for: "${query}" (useRealAPI: ${useRealAPI})`);
-
-  // Try real API first if enabled
-  if (useRealAPI) {
-    try {
-      const zincResponse = await searchZincProducts(query, maxResults);
-      
-      if (!zincResponse.fallback && zincResponse.results.length > 0) {
-        console.log(`Real API returned ${zincResponse.results.length} results`);
-        
-        // Convert to ZincProduct format
-        const products: ZincProduct[] = zincResponse.results.map(result => ({
-          product_id: result.product_id,
-          title: result.title,
-          price: result.price,
-          description: result.description,
-          image: result.image,
-          images: result.images || [result.image],
-          category: result.category,
-          retailer: result.retailer,
-          rating: result.rating,
-          review_count: result.review_count
-        }));
-
-        return {
-          products,
-          total: zincResponse.total,
-          source: 'zinc-api',
-          query
-        };
-      }
-    } catch (error) {
-      console.error('Real API search failed:', error);
-    }
-  }
-
-  // Fallback to mock data
-  if (fallbackToMock) {
-    console.log('Using mock data for search');
-    const mockProducts = searchMockProducts(query, maxResults);
-    
-    // Convert mock products to ZincProduct format
-    const products: ZincProduct[] = mockProducts.map(convertMockToZincProduct);
-    
-    return {
-      products,
-      total: products.length,
-      source: useRealAPI ? 'fallback' : 'mock',
-      query
-    };
-  }
-
-  // No results
-  return {
-    products: [],
-    total: 0,
-    source: 'fallback',
-    query
-  };
+export const searchBrands = (query: string, maxResults: number = 5): string[] => {
+  if (!query || query.length < 2) return [];
+  
+  const queryLower = query.toLowerCase();
+  return POPULAR_BRANDS
+    .filter(brand => brand.toLowerCase().includes(queryLower))
+    .slice(0, maxResults);
 };
 
-/**
- * Test connectivity to all search services
- */
-export const testSearchServices = async () => {
-  const results = {
-    zincApi: false,
-    mockData: true // Mock data is always available
+export const unifiedSearch = async (
+  query: string,
+  options: SearchOptions = {}
+): Promise<UnifiedSearchResult> => {
+  const {
+    maxResults = 10,
+    includeFriends = true,
+    includeProducts = true,
+    includeBrands = true,
+    currentUserId
+  } = options;
+
+  console.log(`Unified search for: "${query}"`);
+
+  const result: UnifiedSearchResult = {
+    friends: [],
+    products: [],
+    brands: [],
+    query,
+    total: 0
   };
 
-  try {
-    const testSearch = await searchZincProducts("test", 1);
-    results.zincApi = !testSearch.fallback && !testSearch.error;
-  } catch {
-    results.zincApi = false;
+  // Run searches in parallel
+  const searchPromises: Promise<any>[] = [];
+
+  if (includeFriends) {
+    searchPromises.push(
+      searchFriends(query, currentUserId).then(friends => {
+        result.friends = friends.slice(0, Math.min(maxResults, 5));
+      }).catch(error => {
+        console.error('Friend search failed:', error);
+        result.friends = [];
+      })
+    );
   }
 
-  return results;
+  if (includeProducts) {
+    searchPromises.push(
+      // Import and use the existing product search
+      import("@/components/marketplace/zinc/services/productSearchService")
+        .then(({ searchProducts }) => searchProducts(query, maxResults.toString()))
+        .then(products => {
+          result.products = products.slice(0, maxResults);
+        }).catch(error => {
+          console.error('Product search failed:', error);
+          result.products = [];
+        })
+    );
+  }
+
+  if (includeBrands) {
+    searchPromises.push(
+      Promise.resolve().then(() => {
+        result.brands = searchBrands(query, 3);
+      })
+    );
+  }
+
+  await Promise.all(searchPromises);
+
+  result.total = result.friends.length + result.products.length + result.brands.length;
+
+  return result;
 };

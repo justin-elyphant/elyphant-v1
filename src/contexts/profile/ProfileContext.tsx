@@ -44,8 +44,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         setProfile(profileData);
         setLastFetchTime(Date.now());
         
-        // Clear onboarding flags after successful profile load
-        if (localStorage.getItem("newSignUp") === "true") {
+        // Clear onboarding flags after successful profile load - but only if not in signup flow
+        const isInSignupFlow = window.location.pathname.includes('/signup') || 
+                              localStorage.getItem("showingIntentModal") === "true";
+        
+        if (localStorage.getItem("newSignUp") === "true" && !isInSignupFlow) {
           localStorage.removeItem("newSignUp");
           localStorage.removeItem("profileSetupLoading");
           console.log("Cleared onboarding flags after profile load");
@@ -57,26 +60,32 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchProfile]);
 
-  // Initial profile fetch - only once
+  // Initial profile fetch - only once and not during signup
   useEffect(() => {
     if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
-      debouncedFetchProfile();
+      const isInSignupFlow = window.location.pathname.includes('/signup');
+      
+      if (!isInSignupFlow) {
+        initialLoadRef.current = true;
+        debouncedFetchProfile();
+      }
     }
   }, [debouncedFetchProfile]);
 
-  // Handle onboarding completion signals - but with strict conditions
+  // Handle onboarding completion signals with more careful timing
   useEffect(() => {
     const isNewSignup = localStorage.getItem("newSignUp") === "true";
     const isProfileSetupLoading = localStorage.getItem("profileSetupLoading") === "true";
     const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
     const timeSinceLastFetch = lastFetchTime ? Date.now() - lastFetchTime : Infinity;
+    const isInSignupFlow = window.location.pathname.includes('/signup');
     
-    // Only fetch if there's a clear signal AND enough time has passed AND no profile yet
-    if ((isNewSignup || isProfileSetupLoading || onboardingComplete) && 
-        timeSinceLastFetch > 10000 && 
+    // Only fetch if there's a clear signal AND enough time has passed AND no profile yet AND not in signup flow
+    if ((isProfileSetupLoading || onboardingComplete) && 
+        timeSinceLastFetch > 15000 && 
         !profile && 
-        !fetchingRef.current) {
+        !fetchingRef.current &&
+        !isInSignupFlow) {
       console.log("Detected onboarding completion, fetching profile data");
       debouncedFetchProfile();
     }

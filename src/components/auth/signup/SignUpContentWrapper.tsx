@@ -30,34 +30,36 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true
 }) => {
   const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
+  const [isNavigating, setIsNavigating] = React.useState(false);
   const navigate = useNavigate();
 
-  // Determine if Nicole should show based on current conditions
+  // Determine if Nicole should show with more stable conditions
   const shouldShowNicole = React.useMemo(() => {
-    if (step !== "verification" || !userEmail) return false;
+    if (step !== "verification" || !userEmail || isNavigating) return false;
     
     const newSignUp = localStorage.getItem("newSignUp") === "true";
     const onboardingComplete = localStorage.getItem("onboardingComplete") === "true";
     
-    console.log("Nicole trigger check:", { step, userEmail, newSignUp, onboardingComplete });
+    console.log("Nicole trigger check:", { step, userEmail, newSignUp, onboardingComplete, isNavigating });
     
     return newSignUp && !onboardingComplete;
-  }, [step, userEmail]);
+  }, [step, userEmail, isNavigating]);
 
-  // Show Nicole immediately when conditions are met
+  // Show Nicole with delay to prevent flashing
   React.useEffect(() => {
     if (shouldShowNicole && !showNicoleOnboarding) {
       console.log("Triggering Nicole onboarding...");
       
-      // Clear any existing intent to let Nicole set it
-      localStorage.removeItem("userIntent");
-      localStorage.setItem("showingIntentModal", "true");
-      
-      // Show Nicole immediately
-      setShowNicoleOnboarding(true);
-      console.log("Nicole onboarding triggered");
+      // Add small delay to prevent flash
+      const timer = setTimeout(() => {
+        localStorage.removeItem("userIntent");
+        localStorage.setItem("showingIntentModal", "true");
+        setShowNicoleOnboarding(true);
+        console.log("Nicole onboarding triggered");
+      }, 500);
+
+      return () => clearTimeout(timer);
     } else if (!shouldShowNicole && showNicoleOnboarding) {
-      // Hide Nicole if conditions no longer met
       setShowNicoleOnboarding(false);
     }
   }, [shouldShowNicole, showNicoleOnboarding]);
@@ -65,11 +67,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   // Handle Nicole onboarding completion
   const handleOnboardingComplete = React.useCallback(() => {
     console.log("Nicole onboarding completed");
+    setIsNavigating(true);
     localStorage.removeItem("showingIntentModal");
     localStorage.setItem("onboardingComplete", "true");
     setShowNicoleOnboarding(false);
 
-    // Navigate based on user intent (which Nicole will have set)
     const finalIntent = localStorage.getItem("userIntent");
     console.log("Final intent:", finalIntent);
     
@@ -85,12 +87,16 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   // Handle Nicole onboarding close or error
   const handleOnboardingClose = React.useCallback(() => {
     console.log("Nicole onboarding closed or failed");
+    setIsNavigating(true);
     localStorage.setItem("userIntent", "explorer");
     localStorage.setItem("onboardingComplete", "true");
     localStorage.setItem("showingIntentModal", "false");
     setShowNicoleOnboarding(false);
-    handleOnboardingComplete();
-  }, [handleOnboardingComplete]);
+    
+    setTimeout(() => {
+      navigate("/dashboard", { replace: true });
+    }, 100);
+  }, [navigate]);
 
   // Render base content
   const renderBaseContent = () => {
@@ -115,14 +121,26 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   };
 
+  // Don't render anything if navigating to prevent flash
+  if (isNavigating) {
+    return (
+      <div className="flex items-center justify-center p-8 min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Completing signup...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       {/* Always show base content first to prevent flash */}
       {renderBaseContent()}
 
-      {/* Nicole onboarding overlay - only show when ready */}
+      {/* Nicole onboarding overlay - only show when ready and not navigating */}
       <NicoleOnboardingEngine
-        isOpen={showNicoleOnboarding}
+        isOpen={showNicoleOnboarding && !isNavigating}
         onComplete={handleOnboardingComplete}
         onClose={handleOnboardingClose}
       />
@@ -131,7 +149,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       {process.env.NODE_ENV === 'development' && step === "verification" && (
         <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-75 pointer-events-none z-40">
           Nicole: {showNicoleOnboarding ? 'showing' : 'hidden'} | 
-          Should show: {shouldShowNicole ? 'yes' : 'no'}
+          Should show: {shouldShowNicole ? 'yes' : 'no'} |
+          Navigating: {isNavigating ? 'yes' : 'no'}
         </div>
       )}
     </div>

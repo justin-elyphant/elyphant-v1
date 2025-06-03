@@ -44,9 +44,8 @@ const StickyFiltersBar = ({
       className={`sticky top-0 z-30 bg-white border-b py-4 transition-shadow mb-6 ${isScrolled ? "shadow-md" : ""}`}
     >
       <div className="container mx-auto flex flex-col gap-2">
-        {/* Filter Toggle and Recent Searches */}
+        {/* Filter Toggle */}
         <div className="flex items-center justify-between gap-4">
-          {/* Filter Toggle Button */}
           <Button
             variant="outline"
             size="sm"
@@ -56,40 +55,40 @@ const StickyFiltersBar = ({
             <Filter className="h-4 w-4" />
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
-
-          {/* Recent searches */}
-          {recentSearches.length > 0 && (
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-muted-foreground font-medium">Recent:</span>
-              </div>
-              
-              <Carousel
-                opts={{
-                  align: "start",
-                  slidesToScroll: isMobile ? 1 : 2,
-                }}
-                className="w-full"
-              >
-                <CarouselContent className="-ml-2">
-                  {recentSearches.map((term, idx) => (
-                    <CarouselItem key={term + idx} className="pl-2 basis-auto">
-                      <button
-                        className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-purple-700 font-semibold text-xs shadow-sm border border-purple-200 hover:bg-purple-200 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 whitespace-nowrap"
-                        type="button"
-                        style={{ lineHeight: 1.2 }}
-                        onClick={() => onRecentSearchClick?.(term)}
-                        aria-label={`Search again for ${term}`}
-                      >
-                        {term}
-                      </button>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-            </div>
-          )}
         </div>
+
+        {/* Recent searches - separate from filter toggle */}
+        {recentSearches.length > 0 && (
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs text-muted-foreground font-medium">Recent:</span>
+            </div>
+            
+            <Carousel
+              opts={{
+                align: "start",
+                slidesToScroll: isMobile ? 1 : 2,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-2">
+                {recentSearches.map((term, idx) => (
+                  <CarouselItem key={term + idx} className="pl-2 basis-auto">
+                    <button
+                      className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-purple-700 font-semibold text-xs shadow-sm border border-purple-200 hover:bg-purple-200 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 whitespace-nowrap"
+                      type="button"
+                      style={{ lineHeight: 1.2 }}
+                      onClick={() => onRecentSearchClick?.(term)}
+                      aria-label={`Search again for ${term}`}
+                    >
+                      {term}
+                    </button>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">

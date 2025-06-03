@@ -63,75 +63,6 @@ const PopularBrandsSection = () => {
     }
   };
 
-  const renderBrands = () => {
-    if (isMobile) {
-      return (
-        <Carousel
-          opts={{
-            align: "start",
-            loop: false,
-          }}
-          className="w-full"
-        >
-          <CarouselContent className="-ml-2 md:-ml-4">
-            {brands.map((brand) => (
-              <CarouselItem key={brand.name} className="pl-2 md:pl-4 basis-1/3 sm:basis-1/4">
-                <div
-                  className={`relative flex flex-col items-center justify-center p-4 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-manipulation min-h-[100px] ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
-                  onClick={() => handleBrandClick(brand.name)}
-                >
-                  <img
-                    src={brand.logo}
-                    alt={`${brand.name} logo`}
-                    className={`max-h-12 max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
-                    loading="lazy"
-                    style={{ aspectRatio: "3/1", objectFit: "contain" }}
-                  />
-                  <span className="text-sm font-medium text-gray-700 mt-3 text-center">{brand.name}</span>
-                  {loadingBrand === brand.name && (
-                    <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-16">
-                      Loading...
-                    </div>
-                  )}
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="hidden sm:flex" />
-          <CarouselNext className="hidden sm:flex" />
-        </Carousel>
-      );
-    }
-
-    // Desktop layout with improved spacing
-    return (
-      <div className="flex gap-6 md:gap-8 overflow-x-auto no-scrollbar justify-center px-2">
-        {brands.map((brand) => (
-          <div
-            key={brand.name}
-            className={`relative flex flex-col items-center justify-center p-4 md:p-6 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
-            style={{ minWidth: 120, minHeight: 100 }}
-            onClick={() => handleBrandClick(brand.name)}
-          >
-            <img
-              src={brand.logo}
-              alt={`${brand.name} logo`}
-              className={`max-h-12 max-w-24 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
-              loading="lazy"
-              style={{ aspectRatio: "3/1", objectFit: "contain" }}
-            />
-            <span className="text-sm font-medium text-gray-700 mt-3">{brand.name}</span>
-            {loadingBrand === brand.name && (
-              <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-16">
-                Loading...
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="py-16 bg-white">
       <div className="container px-4">
@@ -139,7 +70,43 @@ const PopularBrandsSection = () => {
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
           Shop from trusted brands our customers love
         </p>
-        {renderBrands()}
+        
+        <div className="relative">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: false,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {brands.map((brand) => (
+                <CarouselItem key={brand.name} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
+                  <div
+                    className={`relative flex flex-col items-center justify-center p-4 md:p-6 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-manipulation min-h-[100px] ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
+                    onClick={() => handleBrandClick(brand.name)}
+                  >
+                    <img
+                      src={brand.logo}
+                      alt={`${brand.name} logo`}
+                      className={`max-h-8 md:max-h-12 max-w-16 md:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
+                      loading="lazy"
+                      style={{ aspectRatio: "3/1", objectFit: "contain" }}
+                    />
+                    <span className="text-xs md:text-sm font-medium text-gray-700 mt-2 md:mt-3 text-center">{brand.name}</span>
+                    {loadingBrand === brand.name && (
+                      <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-16">
+                        Loading...
+                      </div>
+                    )}
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-2 md:-left-12" />
+            <CarouselNext className="right-2 md:-right-12" />
+          </Carousel>
+        </div>
       </div>
     </div>
   );

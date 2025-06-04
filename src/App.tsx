@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import Messages from "./pages/Messages";
 import Connections from "./pages/Connections";
 import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/messages/:connectionId" element={<Messages />} />
                 <Route path="/connections" element={<Connections />} />
                 <Route path="/orders" element={<Orders />} />
+                <Route path="/profile/:identifier" element={<Profile />} />
                 {/* Add other routes as needed */}
               </Routes>
               <SearchOptimizationMonitor />

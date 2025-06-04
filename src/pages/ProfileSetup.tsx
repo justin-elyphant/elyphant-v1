@@ -31,13 +31,19 @@ const ProfileSetup = () => {
     return <LoadingState message="Preparing your profile setup..." />;
   }
 
+  // Create completion handler that accepts next steps option
+  const handleCompleteWithNextSteps = (nextStepsOption?: string) => {
+    console.log("ProfileSetup: Completing with next steps option:", nextStepsOption);
+    handleSetupComplete(nextStepsOption);
+  };
+
   if (isNewSignUp && !isInitializing) {
     return (
       <MainLayout>
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-4xl">
             <ProfileSetupFlow 
-              onComplete={handleSetupComplete} 
+              onComplete={handleCompleteWithNextSteps} 
               onSkip={handleSkip} 
             />
           </div>
@@ -66,7 +72,7 @@ const ProfileSetup = () => {
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-4xl">
             <ProfileSetupFlow 
-              onComplete={handleSetupComplete} 
+              onComplete={handleCompleteWithNextSteps} 
               onSkip={handleSkip} 
             />
           </div>

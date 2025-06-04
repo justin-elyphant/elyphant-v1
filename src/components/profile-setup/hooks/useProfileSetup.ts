@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 interface UseProfileSetupProps {
-  onComplete: () => void;
+  onComplete: (nextStepsOption?: string) => void;
   onSkip?: () => void;
 }
 
@@ -20,7 +20,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     onSuccess: (data) => {
       console.log("Profile setup completed successfully:", data);
     },
-    onComplete
+    onComplete: (nextStepsOption?: string) => onComplete(nextStepsOption)
   });
   
   const [isCompleting, setIsCompleting] = useState(false);
@@ -91,9 +91,13 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       
       toast.success("Profile setup complete!");
       
+      // Pass the next steps option to the completion handler
+      const nextStepsOption = profileData?.next_steps_option;
+      console.log("Profile setup complete, next steps option:", nextStepsOption);
+      
       // Small delay to ensure state updates
       setTimeout(() => {
-        onComplete();
+        onComplete(nextStepsOption);
       }, 100);
       
     } catch (error: any) {
@@ -107,8 +111,9 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       
       toast.error("Profile setup completed with some errors");
       
+      const nextStepsOption = profileData?.next_steps_option;
       setTimeout(() => {
-        onComplete();
+        onComplete(nextStepsOption);
       }, 100);
     }
   }, [profileData, submitProfile, onComplete, isCompleting]);

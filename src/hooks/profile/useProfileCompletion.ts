@@ -9,7 +9,23 @@ export const useProfileCompletion = (user: User | null) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSetupComplete = async () => {
+  // Map next steps options to actual routes
+  const getRouteFromNextStepsOption = (option: string | undefined): string => {
+    switch (option) {
+      case "explore_marketplace":
+      case "shop_gifts":
+        return "/marketplace";
+      case "create_wishlist":
+        return "/wishlists";
+      case "find_friends":
+        return "/connections";
+      case "dashboard":
+      default:
+        return "/dashboard";
+    }
+  };
+
+  const handleSetupComplete = async (nextStepsOption?: string) => {
     if (!user) return;
     
     try {
@@ -26,11 +42,20 @@ export const useProfileCompletion = (user: User | null) => {
       // Check if this is a new signup
       const isNewSignUp = localStorage.getItem("newSignUp") === "true";
       
-      // Redirect based on user state
+      // Determine the route based on next steps option
+      const targetRoute = getRouteFromNextStepsOption(nextStepsOption);
+      
+      // Redirect based on user state and their selection
       if (isNewSignUp) {
-        navigate("/onboarding");
+        // For new signups, check if they chose a specific option
+        if (nextStepsOption && nextStepsOption !== "dashboard") {
+          navigate(targetRoute);
+          toast.success("Profile setup completed!");
+        } else {
+          navigate("/onboarding");
+        }
       } else {
-        navigate("/dashboard");
+        navigate(targetRoute);
         toast.success("Profile setup completed!");
       }
     } catch (error) {

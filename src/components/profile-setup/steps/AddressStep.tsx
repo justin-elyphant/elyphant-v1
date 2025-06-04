@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProfileData } from "../hooks/types";
+import { ShippingAddress } from "@/hooks/settings/types";
 
 interface AddressStepProps {
   profileData: ProfileData;
@@ -11,7 +12,7 @@ interface AddressStepProps {
 }
 
 const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileData }) => {
-  const currentAddress = profileData.address || {};
+  const currentAddress: ShippingAddress = profileData.address || {};
 
   const handleChange = (field: string, fieldValue: string) => {
     updateProfileData('address', {
@@ -35,8 +36,8 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
           <Input
             id="street"
             placeholder="123 Main St"
-            value={currentAddress.address_line1 || currentAddress.street || ""}
-            onChange={(e) => handleChange("address_line1", e.target.value)}
+            value={currentAddress.street || ""}
+            onChange={(e) => handleChange("street", e.target.value)}
           />
         </div>
 
@@ -66,8 +67,8 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
             <Input
               id="zipCode"
               placeholder="ZIP Code"
-              value={currentAddress.zip_code || currentAddress.zipCode || ""}
-              onChange={(e) => handleChange("zip_code", e.target.value)}
+              value={currentAddress.zipCode || ""}
+              onChange={(e) => handleChange("zipCode", e.target.value)}
             />
           </div>
         </div>

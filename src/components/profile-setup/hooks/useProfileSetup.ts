@@ -1,4 +1,3 @@
-
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
@@ -15,7 +14,8 @@ interface UseProfileSetupProps {
 export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) => {
   const { activeStep, steps, handleNext, handleBack } = useProfileSteps();
   const { profileData, updateProfileData, isLoading: isDataLoading } = useProfileData();
-  const { isCurrentStepValid } = useProfileValidation(activeStep, profileData);
+  const currentStepIndex = steps.findIndex(step => step.id === activeStep);
+  const { isCurrentStepValid } = useProfileValidation(currentStepIndex, profileData);
   const { isSubmitting, submitProfile, submitError } = useProfileSubmit({
     onSuccess: (data) => {
       console.log("Profile setup completed successfully:", data);

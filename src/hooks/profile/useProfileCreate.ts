@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
-import { formatProfileForSubmission } from "@/utils/dataFormatUtils";
+import { formatProfileForSubmission, formatBirthdayForStorage } from "@/utils/dataFormatUtils";
 import { ProfileData } from "@/components/profile-setup/hooks/types";
 
 export const useProfileCreate = () => {
@@ -30,7 +30,7 @@ export const useProfileCreate = () => {
         email: formattedData.email,
         bio: formattedData.bio || "",
         profile_image: formattedData.profile_image || null,
-        dob: formattedData.birthday ? formattedData.birthday.toISOString() : null,
+        dob: formatBirthdayForStorage(formattedData.birthday),
         shipping_address: {
           address_line1: formattedData.address?.street || "",
           city: formattedData.address?.city || "",

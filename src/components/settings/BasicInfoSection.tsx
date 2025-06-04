@@ -3,6 +3,7 @@ import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { MonthDayPicker } from "@/components/ui/month-day-picker";
 import { User } from "@supabase/supabase-js";
 
 interface BasicInfoSectionProps {
@@ -44,6 +45,26 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
                 Email address is connected to your account and cannot be changed here.
               </FormDescription>
             )}
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        name="birthday"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Birthday</FormLabel>
+            <FormControl>
+              <MonthDayPicker
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select your birthday"
+              />
+            </FormControl>
+            <FormDescription>
+              Only month and day - used for birthday reminders and age-appropriate gift suggestions.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

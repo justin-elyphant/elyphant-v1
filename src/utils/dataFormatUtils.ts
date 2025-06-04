@@ -1,7 +1,6 @@
-
 import { z } from "zod";
 import { getDefaultDataSharingSettings } from "./privacyUtils";
-import { ProfileData } from "@/components/profile-setup/hooks/types";
+import { ProfileData, BirthdayData } from "@/components/profile-setup/hooks/types";
 
 /**
  * Database-specific profile data type that extends ProfileData with additional fields
@@ -10,6 +9,35 @@ type DatabaseProfileData = ProfileData & {
   onboarding_completed?: boolean;
   updated_at?: string;
 };
+
+/**
+ * Converts birthday month/day to a formatted string for storage
+ */
+export function formatBirthdayForStorage(birthday: BirthdayData | null): string | null {
+  if (!birthday) return null;
+  return `${birthday.month.toString().padStart(2, '0')}-${birthday.day.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Converts stored birthday string back to month/day object
+ */
+export function parseBirthdayFromStorage(birthdayStr: string | null): BirthdayData | null {
+  if (!birthdayStr) return null;
+  
+  try {
+    const [monthStr, dayStr] = birthdayStr.split('-');
+    const month = parseInt(monthStr, 10);
+    const day = parseInt(dayStr, 10);
+    
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return { month, day };
+    }
+  } catch (error) {
+    console.error("Error parsing birthday from storage:", error);
+  }
+  
+  return null;
+}
 
 /**
  * Validates and cleans profile data before submission
@@ -30,8 +58,14 @@ export function validateAndCleanProfileData(profileData: ProfileData): [boolean,
         ...getDefaultDataSharingSettings(),
         ...(profileData.data_sharing_settings || {})
       },
-      // Handle birthday conversion
-      birthday: profileData.birthday instanceof Date ? profileData.birthday : null,
+      // Handle birthday validation
+      birthday: profileData.birthday && 
+                profileData.birthday.month >= 1 && 
+                profileData.birthday.month <= 12 &&
+                profileData.birthday.day >= 1 && 
+                profileData.birthday.day <= 31 
+                ? profileData.birthday 
+                : null,
       // Ensure interests is an array
       interests: Array.isArray(profileData.interests) ? profileData.interests : [],
       // Ensure importantDates is an array with proper structure
@@ -68,7 +102,7 @@ export function validateAndCleanProfileData(profileData: ProfileData): [boolean,
 /**
  * Formats profile data for submission to the API with database-specific fields
  */
-export function formatProfileForSubmission(profileData: ProfileData): DatabaseProfileData {
+export function formatProfileForSubmission(profileData: ProfileData): any {
   const [isValid, cleanedData] = validateAndCleanProfileData(profileData);
   
   if (!isValid || !cleanedData) {
@@ -76,8 +110,10 @@ export function formatProfileForSubmission(profileData: ProfileData): DatabasePr
   }
   
   // Add database-specific fields
-  const databaseData: DatabaseProfileData = {
+  const databaseData = {
     ...cleanedData,
+    // Convert birthday to storage format
+    dob: formatBirthdayForStorage(cleanedData.birthday),
     onboarding_completed: true,
     updated_at: new Date().toISOString()
   };
@@ -96,7 +132,7 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     email: databaseProfile.email || "",
     bio: databaseProfile.bio || "",
     profile_image: databaseProfile.profile_image || null,
-    birthday: databaseProfile.dob ? new Date(databaseProfile.dob) : null,
+    birthday: parseBirthdayFromStorage(databaseProfile.dob),
     address: {
       street: databaseProfile.shipping_address?.address_line1 || databaseProfile.shipping_address?.street || "",
       city: databaseProfile.shipping_address?.city || "",

@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ProfileData } from "./types";
+import { ProfileData, BirthdayData } from "./types";
 import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { parseBirthdayFromStorage } from "@/utils/dataFormatUtils";
 
 export const useProfileData = () => {
   const { user } = useAuth();
@@ -63,7 +64,7 @@ export const useProfileData = () => {
             email: profile.email || user.email || "",
             bio: profile.bio || "",
             profile_image: profile.profile_image,
-            birthday: profile.dob ? new Date(profile.dob) : null,
+            birthday: parseBirthdayFromStorage(profile.dob),
             address: {
               street: profile.shipping_address?.street || profile.shipping_address?.address_line1 || "",
               city: profile.shipping_address?.city || "",

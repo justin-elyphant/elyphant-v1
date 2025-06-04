@@ -7,13 +7,22 @@ export interface ImportantDate {
   description: string;
 }
 
+// Define birthday type as month/day only
+export interface BirthdayData {
+  month: number;
+  day: number;
+}
+
 // Define form schema
 export const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   bio: z.string().optional(),
   profile_image: z.string().nullable().optional(),
-  birthday: z.date().nullable().optional(),
+  birthday: z.object({
+    month: z.number().min(1).max(12),
+    day: z.number().min(1).max(31)
+  }).nullable().optional(),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
     city: z.string().min(1, "City is required"),

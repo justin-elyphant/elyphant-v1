@@ -21,21 +21,35 @@ export const useAutoRedirect = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only redirect if userIntent is present *and* valid ('giftor' or 'giftee')
+    // Only redirect if we have the conditions for it
     const userIntent = localStorage.getItem("userIntent");
     const validIntent = userIntent === "giftor" || userIntent === "giftee";
-    console.log("[useAutoRedirect] Auto-redirect check", { emailSent, step, userEmail, userIntent, validIntent, bypassVerification });
+    const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
+    
+    console.log("[useAutoRedirect] Auto-redirect check", { 
+      emailSent, 
+      step, 
+      userEmail, 
+      userIntent, 
+      validIntent, 
+      bypassVerification,
+      showingIntentModal 
+    });
 
-    // -- BLOCK navigation in all cases unless we have a valid userIntent --
+    // Don't redirect if intent modal is showing or should be showing
+    if (showingIntentModal || ((emailSent && step === "verification") && !validIntent)) {
+      console.log("[useAutoRedirect] BLOCKING navigation—intent modal should handle this");
+      return;
+    }
+
     if ((emailSent && step === "verification") || bypassVerification) {
       localStorage.setItem("newSignUp", "true");
       localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("userName", userName || "");
 
-      // -- CRITICAL: Only redirect if userIntent is set and valid --
+      // Only redirect if userIntent is valid
       if (!validIntent) {
-        // Never navigate if no valid userIntent (modal will show & handle it)
-        console.log("[useAutoRedirect] BLOCKING navigation—waiting on valid intent (modal should be visible)", { step, userEmail, userIntent, validIntent, bypassVerification });
+        console.log("[useAutoRedirect] No valid intent, staying on verification page for modal");
         return;
       }
 
@@ -45,14 +59,16 @@ export const useAutoRedirect = ({
         });
       }
 
-      // If 'giftor', go to marketplace, else profile-setup
-      if (userIntent === "giftor") {
-        console.log("[useAutoRedirect] Navigating to /marketplace (userIntent = giftor)");
-        navigate('/marketplace', { replace: true });
-      } else if (userIntent === "giftee") {
-        console.log("[useAutoRedirect] Navigating to /profile-setup (userIntent = giftee)");
-        navigate('/profile-setup', { replace: true });
-      }
+      // Navigate based on intent with a small delay to ensure state is ready
+      setTimeout(() => {
+        if (userIntent === "giftor") {
+          console.log("[useAutoRedirect] Navigating to /onboarding-gift (userIntent = giftor)");
+          navigate('/onboarding-gift', { replace: true });
+        } else if (userIntent === "giftee") {
+          console.log("[useAutoRedirect] Navigating to /profile-setup (userIntent = giftee)");
+          navigate('/profile-setup', { replace: true });
+        }
+      }, 150);
     }
   }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
   

@@ -25,10 +25,16 @@ const ProfileSetup = () => {
     handleBackToDashboard
   } = useProfileCompletion(user);
 
+  // Check for stuck modal state and provide fallback
   const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
   
+  // Show loading for various conditions, but with timeout fallback
   if (showingIntentModal || authLoading || isManuallyLoading || isInitializing) {
-    return <LoadingState message="Preparing your profile setup..." />;
+    const message = showingIntentModal 
+      ? "Preparing your profile setup..." 
+      : "Loading your profile...";
+    
+    return <LoadingState message={message} />;
   }
 
   // Create completion handler that accepts next steps option

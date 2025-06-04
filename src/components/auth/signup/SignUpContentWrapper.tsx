@@ -1,3 +1,4 @@
+
 import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
@@ -58,10 +59,12 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     const intent = localStorage.getItem("userIntent");
     // Always show modal if no valid intent is found
     if (!validIntent(intent)) {
+      console.log("[SignUpContentWrapper] No valid intent found, showing modal");
       localStorage.setItem("showingIntentModal", "true");
       setShowIntentModal(true);
       setIntentHandled(false);
     } else {
+      console.log("[SignUpContentWrapper] Valid intent found:", intent);
       setShowIntentModal(false);
       setIntentHandled(true);
     }
@@ -74,17 +77,26 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     !validIntent(localStorage.getItem("userIntent"))
   ) {
     const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
+      console.log("[SignUpContentWrapper] Intent selected:", userIntent);
+      
+      // Set the intent and clear modal flags immediately
       localStorage.setItem("userIntent", userIntent);
       localStorage.removeItem("showingIntentModal");
+      
+      // Update local state
       setShowIntentModal(false);
       setIntentHandled(true);
 
-      if (userIntent === "giftor") {
-        // Instead of marketplace, route to new onboarding wizard for giftors
-        navigate("/onboarding-gift", { replace: true });
-      } else {
-        navigate("/profile-setup", { replace: true });
-      }
+      // Small delay to ensure localStorage is updated before navigation
+      setTimeout(() => {
+        if (userIntent === "giftor") {
+          console.log("[SignUpContentWrapper] Navigating to onboarding-gift");
+          navigate("/onboarding-gift", { replace: true });
+        } else {
+          console.log("[SignUpContentWrapper] Navigating to profile-setup");
+          navigate("/profile-setup", { replace: true });
+        }
+      }, 100);
     };
 
     return (

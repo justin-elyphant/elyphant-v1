@@ -11,10 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, LogOut, Settings, Heart, Store, MessageSquare, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 const UserButton = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   
   const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
   
@@ -58,8 +60,14 @@ const UserButton = () => {
   };
 
   const handleProfileClick = () => {
-    // Navigate to profile-setup instead of the non-existent profile route
-    navigate("/profile-setup");
+    // Navigate to the user's public profile using username or user ID
+    const profileIdentifier = profile?.username || user?.id;
+    if (profileIdentifier) {
+      navigate(`/profile/${profileIdentifier}`);
+    } else {
+      // Fallback to profile setup if no identifier available
+      navigate("/profile-setup");
+    }
   };
 
   const handleMarketplaceClick = (e: React.MouseEvent) => {
@@ -112,7 +120,7 @@ const UserButton = () => {
 
         <DropdownMenuItem onClick={handleProfileClick}>
           <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+          <span>View Profile</span>
         </DropdownMenuItem>
         
         <DropdownMenuItem onClick={() => navigate("/wishlists")}>

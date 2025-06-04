@@ -2,21 +2,22 @@
 import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { ProfileData } from "../hooks/types";
 
 interface BasicInfoStepProps {
-  value: string;
-  onChange: (name: string) => void;
+  profileData: ProfileData;
+  updateProfileData: (key: keyof ProfileData, value: any) => void;
 }
 
-const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ value, onChange }) => {
+const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ profileData, updateProfileData }) => {
   // Log when this component renders to trace potential issues
   useEffect(() => {
-    console.log("BasicInfoStep rendered with value:", value);
-  }, [value]);
+    console.log("BasicInfoStep rendered with profileData:", profileData);
+  }, [profileData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("Name input changed:", e.target.value);
-    onChange(e.target.value);
+    updateProfileData('name', e.target.value);
   };
 
   return (
@@ -35,7 +36,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ value, onChange }) => {
             id="name"
             type="text"
             placeholder="Your full name"
-            value={value}
+            value={profileData.name || ""}
             onChange={handleInputChange}
             autoFocus
           />

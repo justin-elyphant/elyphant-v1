@@ -5,24 +5,26 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X } from "lucide-react";
+import { ProfileData } from "../hooks/types";
 
 interface InterestsStepProps {
-  value: string[];
-  onChange: (interests: string[]) => void;
+  profileData: ProfileData;
+  updateProfileData: (key: keyof ProfileData, value: any) => void;
 }
 
-const InterestsStep: React.FC<InterestsStepProps> = ({ value, onChange }) => {
+const InterestsStep: React.FC<InterestsStepProps> = ({ profileData, updateProfileData }) => {
   const [newInterest, setNewInterest] = useState("");
+  const currentInterests = profileData.interests || [];
 
   const addInterest = () => {
-    if (newInterest.trim() && !value.includes(newInterest.trim())) {
-      onChange([...value, newInterest.trim()]);
+    if (newInterest.trim() && !currentInterests.includes(newInterest.trim())) {
+      updateProfileData('interests', [...currentInterests, newInterest.trim()]);
       setNewInterest("");
     }
   };
 
   const removeInterest = (index: number) => {
-    onChange(value.filter((_, i) => i !== index));
+    updateProfileData('interests', currentInterests.filter((_, i) => i !== index));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -69,11 +71,11 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ value, onChange }) => {
         </div>
 
         {/* Current interests */}
-        {value.length > 0 && (
+        {currentInterests.length > 0 && (
           <div className="space-y-2">
             <Label>Your Interests</Label>
             <div className="flex flex-wrap gap-2">
-              {value.map((interest, index) => (
+              {currentInterests.map((interest, index) => (
                 <Badge key={index} variant="secondary" className="gap-1">
                   {interest}
                   <Button
@@ -95,13 +97,13 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ value, onChange }) => {
           <Label>Quick Add</Label>
           <div className="flex flex-wrap gap-2">
             {suggestedInterests
-              .filter(interest => !value.includes(interest))
+              .filter(interest => !currentInterests.includes(interest))
               .map((interest) => (
                 <Button
                   key={interest}
                   variant="outline"
                   size="sm"
-                  onClick={() => onChange([...value, interest])}
+                  onClick={() => updateProfileData('interests', [...currentInterests, interest])}
                 >
                   {interest}
                 </Button>

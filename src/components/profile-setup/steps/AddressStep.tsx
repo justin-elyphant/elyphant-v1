@@ -3,17 +3,19 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShippingAddress } from "@/hooks/settings/types";
+import { ProfileData } from "../hooks/types";
 
 interface AddressStepProps {
-  value: ShippingAddress;
-  onChange: (address: ShippingAddress) => void;
+  profileData: ProfileData;
+  updateProfileData: (key: keyof ProfileData, value: any) => void;
 }
 
-const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
-  const handleChange = (field: keyof ShippingAddress, fieldValue: string) => {
-    onChange({
-      ...value,
+const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileData }) => {
+  const currentAddress = profileData.shipping_address || {};
+
+  const handleChange = (field: string, fieldValue: string) => {
+    updateProfileData('shipping_address', {
+      ...currentAddress,
       [field]: fieldValue
     });
   };
@@ -33,7 +35,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
           <Input
             id="street"
             placeholder="123 Main St"
-            value={value.street || ""}
+            value={currentAddress.street || ""}
             onChange={(e) => handleChange("street", e.target.value)}
           />
         </div>
@@ -43,7 +45,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
           <Input
             id="city"
             placeholder="City"
-            value={value.city || ""}
+            value={currentAddress.city || ""}
             onChange={(e) => handleChange("city", e.target.value)}
           />
         </div>
@@ -54,7 +56,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
             <Input
               id="state"
               placeholder="State"
-              value={value.state || ""}
+              value={currentAddress.state || ""}
               onChange={(e) => handleChange("state", e.target.value)}
             />
           </div>
@@ -64,7 +66,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
             <Input
               id="zipCode"
               placeholder="ZIP Code"
-              value={value.zipCode || ""}
+              value={currentAddress.zipCode || ""}
               onChange={(e) => handleChange("zipCode", e.target.value)}
             />
           </div>
@@ -72,7 +74,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
 
         <div className="grid gap-2">
           <Label htmlFor="country">Country</Label>
-          <Select value={value.country || "US"} onValueChange={(country) => handleChange("country", country)}>
+          <Select value={currentAddress.country || "US"} onValueChange={(country) => handleChange("country", country)}>
             <SelectTrigger>
               <SelectValue placeholder="Select country" />
             </SelectTrigger>

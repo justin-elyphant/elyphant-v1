@@ -28,15 +28,22 @@ export const useAutoRedirect = ({
       bypassVerification 
     });
 
-    // Don't auto-redirect during verification step - let the intent modal handle it
+    // CRITICAL: Never auto-redirect during verification step - let the intent modal handle everything
     if (step === "verification") {
-      console.log("[useAutoRedirect] BLOCKING auto-redirect - verification step should show intent modal");
+      console.log("[useAutoRedirect] BLOCKING auto-redirect - verification step should show intent modal first");
       return;
     }
 
     // Only proceed if we have email sent and bypass is enabled
     if (!emailSent || !bypassVerification) {
       console.log("[useAutoRedirect] Conditions not met for auto-redirect");
+      return;
+    }
+
+    // Check if intent modal is currently showing
+    const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
+    if (showingIntentModal) {
+      console.log("[useAutoRedirect] Intent modal is showing - blocking auto-redirect");
       return;
     }
 
@@ -64,8 +71,8 @@ export const useAutoRedirect = ({
     // Navigate based on intent with delay
     setTimeout(() => {
       if (userIntent === "giftor") {
-        console.log("[useAutoRedirect] Navigating to /onboarding-gift");
-        navigate('/onboarding-gift', { replace: true });
+        console.log("[useAutoRedirect] Navigating to /marketplace");
+        navigate('/marketplace', { replace: true });
       } else if (userIntent === "giftee") {
         console.log("[useAutoRedirect] Navigating to /profile-setup");
         navigate('/profile-setup', { replace: true });

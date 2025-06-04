@@ -33,14 +33,17 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
   const navigate = useNavigate();
 
-  // Check if intent modal should show
+  // Check if intent modal should show - IMMEDIATELY on verification step
   React.useEffect(() => {
     console.log("[SignUpContentWrapper] Effect triggered:", { step, userEmail, showIntentModal });
     
     // Only show modal during verification step with email
     if (step !== "verification" || !userEmail) {
       console.log("[SignUpContentWrapper] Not verification step or no email, hiding modal");
-      setShowIntentModal(false);
+      if (showIntentModal) {
+        setShowIntentModal(false);
+        localStorage.removeItem("showingIntentModal");
+      }
       return;
     }
 
@@ -53,24 +56,23 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     if (validIntent) {
       console.log("[SignUpContentWrapper] Valid intent found, hiding modal");
       setShowIntentModal(false);
+      localStorage.removeItem("showingIntentModal");
       return;
     }
 
     // Get suggested intent from CTA (only once)
-    if (!showIntentModal) {
-      const ctaIntent = localStorage.getItem("ctaIntent");
-      if (ctaIntent === "giftor" || ctaIntent === "giftee") {
-        console.log("[SignUpContentWrapper] Setting suggested intent:", ctaIntent);
-        setSuggestedIntent(ctaIntent);
-        localStorage.removeItem("ctaIntent"); // Clear after using
-      }
+    const ctaIntent = localStorage.getItem("ctaIntent");
+    if (ctaIntent === "giftor" || ctaIntent === "giftee") {
+      console.log("[SignUpContentWrapper] Setting suggested intent:", ctaIntent);
+      setSuggestedIntent(ctaIntent);
+      localStorage.removeItem("ctaIntent"); // Clear after using
     }
 
-    // Show the intent modal
-    console.log("[SignUpContentWrapper] Showing intent modal");
+    // Show the intent modal IMMEDIATELY
+    console.log("[SignUpContentWrapper] Showing intent modal immediately");
     localStorage.setItem("showingIntentModal", "true");
     setShowIntentModal(true);
-  }, [step, userEmail, showIntentModal]);
+  }, [step, userEmail]); // Removed showIntentModal dependency to prevent loops
 
   const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
     console.log("[SignUpContentWrapper] Intent selected:", userIntent);
@@ -86,8 +88,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     // Navigate based on intent with small delay
     setTimeout(() => {
       if (userIntent === "giftor") {
-        console.log("[SignUpContentWrapper] Navigating to onboarding-gift");
-        navigate("/onboarding-gift", { replace: true });
+        console.log("[SignUpContentWrapper] Navigating to marketplace");
+        navigate("/marketplace", { replace: true });
       } else {
         console.log("[SignUpContentWrapper] Navigating to profile-setup");
         navigate("/profile-setup", { replace: true });
@@ -95,7 +97,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     }, 100);
   };
 
-  // If modal should show, render only the modal
+  // Always render the modal if it should show, regardless of other conditions
   if (showIntentModal && step === "verification" && userEmail) {
     console.log("[SignUpContentWrapper] Rendering intent modal");
     return (

@@ -22,25 +22,32 @@ export const useVerificationContainer = ({
   const [isVerified, setIsVerified] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
 
-  // Enhanced auto-bypass - but wait for intent selection
+  // Enhanced auto-bypass - but ONLY after intent modal interaction
   useEffect(() => {
     console.log("[useVerificationContainer] Auto verification mode active");
     
-    // Don't auto-verify immediately - wait for intent modal
-    const verifyTimer = setTimeout(() => {
-      const userIntent = localStorage.getItem("userIntent");
-      const validIntent = userIntent === "giftor" || userIntent === "giftee";
-      
-      console.log("[useVerificationContainer] Checking intent for auto-verify:", { userIntent, validIntent });
-      
-      // Only auto-verify if we have valid intent or enough time has passed
-      if (validIntent || !isVerified) {
-        console.log("[useVerificationContainer] Auto-verifying now");
-        handleVerificationSuccess();
-      }
-    }, 2000); // Increased delay to allow intent modal to show
+    // Check if intent modal is currently showing
+    const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
+    const userIntent = localStorage.getItem("userIntent");
+    const validIntent = userIntent === "giftor" || userIntent === "giftee";
     
-    return () => clearTimeout(verifyTimer);
+    console.log("[useVerificationContainer] Intent status:", { showingIntentModal, userIntent, validIntent });
+    
+    // DO NOT auto-verify if the intent modal is showing or no intent selected
+    if (showingIntentModal || !validIntent) {
+      console.log("[useVerificationContainer] Waiting for intent selection - blocking auto-verification");
+      return;
+    }
+    
+    // Only auto-verify if we have valid intent and modal is not showing
+    if (validIntent && !showingIntentModal && !isVerified) {
+      console.log("[useVerificationContainer] Auto-verifying with valid intent:", userIntent);
+      const verifyTimer = setTimeout(() => {
+        handleVerificationSuccess();
+      }, 1000); // Small delay to allow modal to show first
+      
+      return () => clearTimeout(verifyTimer);
+    }
   }, [navigate, userEmail, userName, isVerified]);
   
   // Handle successful verification

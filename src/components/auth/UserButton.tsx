@@ -1,3 +1,4 @@
+
 import React from "react";
 import { 
   DropdownMenu, 
@@ -57,14 +58,8 @@ const UserButton = () => {
   };
 
   const handleProfileClick = () => {
-    if (user?.id) {
-      // Navigate to profile using user ID as identifier
-      navigate(`/profile/${user.id}`);
-    } else {
-      console.error("No user ID available for profile navigation");
-      // Fallback to dashboard if no user ID
-      navigate("/dashboard");
-    }
+    // Navigate to profile-setup instead of the non-existent profile route
+    navigate("/profile-setup");
   };
 
   const handleMarketplaceClick = (e: React.MouseEvent) => {

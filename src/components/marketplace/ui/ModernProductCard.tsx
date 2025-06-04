@@ -30,7 +30,9 @@ const ModernProductCard = ({
   const productId = String(product.product_id || product.id);
   const productName = product.title || product.name || "";
 
-  const handleWishlistClick = () => {
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (!user) {
       setShowSignUpDialog(true);
       return;
@@ -39,6 +41,12 @@ const ModernProductCard = ({
 
   const handleWishlistAdded = () => {
     onToggleFavorite({} as React.MouseEvent);
+  };
+
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onAddToCart(e);
   };
 
   return (
@@ -66,7 +74,7 @@ const ModernProductCard = ({
           {/* Overlay Actions */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300">
             {/* Wishlist Button */}
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 right-3" onClick={(e) => e.stopPropagation()}>
               {user ? (
                 <WishlistSelectionPopoverButton
                   product={{
@@ -84,10 +92,7 @@ const ModernProductCard = ({
                   variant="ghost"
                   size="icon"
                   className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 rounded-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleWishlistClick();
-                  }}
+                  onClick={handleWishlistClick}
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -100,7 +105,7 @@ const ModernProductCard = ({
             <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Button
                 size="sm"
-                onClick={onAddToCart}
+                onClick={handleAddToCartClick}
                 className="rounded-full shadow-lg"
               >
                 <ShoppingBag className="w-4 h-4" />

@@ -63,6 +63,7 @@ const QuickWishlistButton = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     
     if (!user) {
       setShowSignUpDialog(true);
@@ -98,6 +99,7 @@ const QuickWishlistButton = ({
         onMouseUp={() => setIsPressed(false)}
         onTouchStart={() => setIsPressed(true)}
         onTouchEnd={() => setIsPressed(false)}
+        onClick={handleClick}
         aria-label={isActuallyFavorited ? "Remove from wishlist" : "Add to wishlist"}
       >
         <Heart
@@ -114,7 +116,7 @@ const QuickWishlistButton = ({
       <TooltipProvider>
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
-            <div>
+            <div onClick={(e) => e.stopPropagation()}>
               <WishlistSelectionPopover
                 productId={productId}
                 productName="" // Will be populated by the parent component

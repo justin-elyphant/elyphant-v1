@@ -32,7 +32,7 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
   // Load profile data when component mounts or profile changes
   useEffect(() => {
     // Only load if we have profile data and haven't loaded yet, or if profile has actually changed
-    const profileUpdateTime = profile?.updated_at || profile?.created_at;
+    const profileUpdateTime = profile?.updated_at;
     
     if (profile && !loading && (!hasLoadedRef.current || profileUpdateTime !== lastProfileUpdateRef.current)) {
       loadProfileData();

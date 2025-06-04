@@ -8,10 +8,17 @@ export interface BirthdayData {
   day: number;
 }
 
+// Define important date with month/day format
+export interface ImportantDateData {
+  date: Date; // Still use Date object but only month/day matters
+  description: string;
+}
+
 // Extend the settings form values with onboarding-specific fields
-export interface ProfileData extends Omit<SettingsFormValues, 'address' | 'birthday'> {
+export interface ProfileData extends Omit<SettingsFormValues, 'address' | 'birthday' | 'importantDates'> {
   address: ShippingAddress;
   birthday: BirthdayData | null;
+  importantDates: ImportantDateData[];
   next_steps_option?: string;
 }
 

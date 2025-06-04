@@ -5,13 +5,13 @@ import { useFormSubmission } from "@/hooks/settings/useFormSubmission";
 import { useInterests } from "@/hooks/settings/useInterests";
 import { useImportantDates } from "@/hooks/settings/useImportantDates";
 import { useProfileData } from "@/hooks/settings/useProfileData";
-import ProfileImageFormSection from "./form-sections/ProfileImageFormSection";
-import BasicInfoFormSection from "./form-sections/BasicInfoFormSection";
-import AddressFormSection from "./form-sections/AddressFormSection";
-import InterestsFormSection from "./form-sections/InterestsFormSection";
-import ImportantDatesFormSection from "./form-sections/ImportantDatesFormSection";
-import DataSharingFormSection from "./form-sections/DataSharingFormSection";
-import FormSubmitSection from "./form-sections/FormSubmitSection";
+import ProfileImageSection from "./ProfileImageSection";
+import BasicInfoSection from "./BasicInfoSection";
+import AddressSection from "./AddressSection";
+import InterestsFormSection from "./InterestsFormSection";
+import ImportantDatesFormSection from "./ImportantDatesFormSection";
+import DataSharingSection from "./DataSharingSection";
+import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 
 const GeneralSettings = () => {
@@ -57,14 +57,14 @@ const GeneralSettings = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-          <ProfileImageFormSection 
+          <ProfileImageSection 
             form={form} 
             refetchProfile={refetchProfile}
           />
           
-          <BasicInfoFormSection form={form} />
+          <BasicInfoSection form={form} />
           
-          <AddressFormSection form={form} />
+          <AddressSection form={form} />
           
           <InterestsFormSection
             form={form}
@@ -82,9 +82,13 @@ const GeneralSettings = () => {
             handleRemoveImportantDate={handleRemoveImportantDate}
           />
           
-          <DataSharingFormSection form={form} />
+          <DataSharingSection form={form} />
           
-          <FormSubmitSection isSaving={isSaving} />
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

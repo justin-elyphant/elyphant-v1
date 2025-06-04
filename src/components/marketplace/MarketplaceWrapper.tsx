@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -172,7 +171,7 @@ const MarketplaceWrapper = () => {
       <SubtleCountdownBanner />
 
       {/* Results Summary Bar */}
-      <ResultsSummaryBar totalItems={products.length} />
+      <ResultsSummaryBar totalItems={products.length} searchTerm={searchTerm} />
 
       {/* Main Content - full bleed layout */}
       <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">

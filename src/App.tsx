@@ -16,6 +16,7 @@ import Wishlists from "./pages/Wishlists";
 import Dashboard from "./pages/Dashboard";
 import ProfileSetup from "./pages/ProfileSetup";
 import Settings from "./pages/Settings";
+import Messages from "./pages/Messages";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,8 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/messages/:connectionId" element={<Messages />} />
                 {/* Add other routes as needed */}
               </Routes>
               <SearchOptimizationMonitor />

@@ -13,7 +13,7 @@ interface UseVerificationContainerProps {
 export const useVerificationContainer = ({
   userEmail,
   userName = "", 
-  bypassVerification = true // Phase 5: Default to true
+  bypassVerification = true
 }: UseVerificationContainerProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -22,38 +22,30 @@ export const useVerificationContainer = ({
   const [isVerified, setIsVerified] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
 
-  // Phase 5: Enhanced auto-bypass - will always automatically verify and redirect
+  // Enhanced auto-bypass - but wait for intent selection
   useEffect(() => {
-    console.log("Phase 5 - Auto verification mode active");
+    console.log("[useVerificationContainer] Auto verification mode active");
     
-    // Set a short delay for UX so users see the success screen briefly
+    // Don't auto-verify immediately - wait for intent modal
     const verifyTimer = setTimeout(() => {
-      if (!isVerified) {
+      const userIntent = localStorage.getItem("userIntent");
+      const validIntent = userIntent === "giftor" || userIntent === "giftee";
+      
+      console.log("[useVerificationContainer] Checking intent for auto-verify:", { userIntent, validIntent });
+      
+      // Only auto-verify if we have valid intent or enough time has passed
+      if (validIntent || !isVerified) {
+        console.log("[useVerificationContainer] Auto-verifying now");
         handleVerificationSuccess();
       }
-    }, 800);
+    }, 2000); // Increased delay to allow intent modal to show
     
-    // Set redirect timer slightly longer than verification timer
-    const redirectTimer = setTimeout(() => {
-      console.log("Auto-redirecting to profile setup");
-      
-      // Store verification state and data for reliability
-      localStorage.setItem("emailVerified", "true");
-      localStorage.setItem("verifiedEmail", userEmail);
-      localStorage.setItem("userName", userName);
-      
-      // Navigate to profile setup
-      navigate("/profile-setup", { replace: true });
-    }, 1500);
-    
-    return () => {
-      clearTimeout(verifyTimer);
-      clearTimeout(redirectTimer);
-    };
-  }, [navigate, userEmail, userName]);
+    return () => clearTimeout(verifyTimer);
+  }, [navigate, userEmail, userName, isVerified]);
   
   // Handle successful verification
   const handleVerificationSuccess = () => {
+    console.log("[useVerificationContainer] Handling verification success");
     setIsVerified(true);
     
     // Store the verification state in localStorage
@@ -65,25 +57,23 @@ export const useVerificationContainer = ({
     
     // Show success toast
     toast.success("Account created successfully!", {
-      description: "Taking you to complete your profile."
+      description: "Please select how you'd like to use Elyphant."
     });
     
-    console.log("Verification successful, proceeding with profile setup");
+    console.log("[useVerificationContainer] Verification successful, waiting for intent selection");
   };
   
-  // Check if email is verified in Supabase - for Phase 5, always returns verified
+  // Check if email is verified in Supabase
   const handleCheckVerification = async (): Promise<{ verified: boolean }> => {
-    // Phase 5: Always return verified=true
-    console.log("Phase 5 verification mode active, returning verified=true");
+    console.log("[useVerificationContainer] Manual verification check");
     
     // Store bypass data for reliability
     localStorage.setItem("bypassVerification", "true");
     localStorage.setItem("emailVerified", "true");
     localStorage.setItem("verifiedEmail", userEmail);
     
-    // Still send actual verification email in background for email collection
+    // Send verification email in background
     try {
-      // Call verify in background but don't wait for result
       supabase.auth.resend({
         type: 'signup',
         email: userEmail,
@@ -94,17 +84,17 @@ export const useVerificationContainer = ({
       console.error("Error in background verification:", error);
     }
     
-    // Mark as verified and return true regardless of actual verification status
+    // Mark as verified and return true
     handleVerificationSuccess();
     return { verified: true };
   };
   
-  // Handle resending the verification - Phase 5: always succeeds
+  // Handle resending the verification
   const handleResendVerification = async (): Promise<{ success: boolean }> => {
     try {
       setIsLoading(true);
       
-      console.log("Phase 5 - Resending verification email to:", userEmail);
+      console.log("[useVerificationContainer] Resending verification email to:", userEmail);
       
       // Use native Supabase method to resend verification email in background
       const { error } = await supabase.auth.resend({
@@ -114,21 +104,20 @@ export const useVerificationContainer = ({
       
       if (error) {
         console.error("Error in background verification:", error);
-        // Continue with verification bypass regardless of error
       }
       
       toast.success("Account created successfully!", {
-        description: "Taking you to complete your profile."
+        description: "Please select how you'd like to use Elyphant."
       });
       
-      // Always mark as successful for Phase 5
+      // Always mark as successful
       handleVerificationSuccess();
       
       return { success: true };
     } catch (error) {
       console.error("Error in handleResendVerification:", error);
       
-      // Still return success and bypass verification for Phase 5
+      // Still return success and bypass verification
       handleVerificationSuccess();
       
       return { success: true };

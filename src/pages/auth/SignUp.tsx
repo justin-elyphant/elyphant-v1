@@ -5,62 +5,49 @@ import { useSignUpProcess } from "@/hooks/auth";
 import SignUpContentWrapper from "@/components/auth/signup/SignUpContentWrapper";
 import Header from "@/components/home/Header";
 import { useAuth } from "@/contexts/auth";
-import Footer from "@/components/home/Footer"; // Import Footer
+import Footer from "@/components/home/Footer";
 
-// List of all onboarding keys to clear
-const CLEAR_ONBOARDING_KEYS = [
+// Simplified list of keys to clear on fresh signup visits
+const CLEAR_SIGNUP_KEYS = [
   "userIntent",
-  "onboardingComplete",
   "newSignUp",
-  "userEmail",
-  "userName",
-  "profileSetupLoading",
-  "signupRateLimited",
+  "showingIntentModal",
+  "ctaIntent",
   "bypassVerification",
-  "onboardingSkipped",
-  "onboardingSkippedTime",
-  // --- extra keys to ensure clean state ---
-  "pendingVerificationEmail",
-  "pendingVerificationName",
-  "verificationResendCount",
-  "signupStep",
+  "emailVerified",
+  "verifiedEmail",
 ];
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Always clear onboarding keys for /signup, unless logged in
-  // ALSO: Fully reset any stuck sign up state (step/userEmail) for a cold visit
+  // Clear signup state for fresh starts (but preserve ongoing signup sessions)
   React.useEffect(() => {
     if (!user) {
-      CLEAR_ONBOARDING_KEYS.forEach((key) => localStorage.removeItem(key));
-      // This ensures NO persisted email/name/step carryover from a prior session.
-
-      // Extra fix: wipe any in-memory stuck state if starting at signup with no "newSignUp" present
-      // (patches issues from prior state leaks in hooks)
-      if (!localStorage.getItem("newSignUp")) {
-        localStorage.setItem("signupStep", "signup");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("userName");
+      const hasOngoingSignup = localStorage.getItem("pendingVerificationEmail");
+      
+      if (!hasOngoingSignup) {
+        console.log("[SignUp] Fresh visit - clearing signup state");
+        CLEAR_SIGNUP_KEYS.forEach((key) => localStorage.removeItem(key));
+      } else {
+        console.log("[SignUp] Ongoing signup detected - preserving state");
       }
-      console.log("[SignUp] Onboarding keys wiped and signup state force-reset!", { user });
     }
   }, [user]);
 
-  // WARNING: Do NOT navigate to /profile-setup unless userIntent is present AND valid!
+  // Handle authenticated users
   React.useEffect(() => {
     const newSignUp = localStorage.getItem("newSignUp") === "true";
     const userIntent = localStorage.getItem("userIntent");
-    // Only 'giftor' or 'giftee' should allow proceeding
     const validIntent = userIntent === "giftor" || userIntent === "giftee";
-    console.log("[SignUp] Checking navigation after key wipe", { user, newSignUp, userIntent, validIntent });
+    
+    console.log("[SignUp] Auth check:", { user: !!user, newSignUp, userIntent, validIntent });
 
     if (user && (!newSignUp || validIntent)) {
-      console.log("[SignUp] Auto-navigating to /dashboard, not blocking onboarding modal.", { user, newSignUp, userIntent, validIntent });
+      console.log("[SignUp] Authenticated user with valid state - navigating to dashboard");
       navigate("/dashboard", { replace: true });
     }
-    // Else: explicitly do NOTHING, modal+onboarding will control all navigation.
   }, [user, navigate]);
 
   const {
@@ -75,21 +62,18 @@ const SignUp: React.FC = () => {
     bypassVerification = true,
   } = useSignUpProcess();
 
-  // Always set bypassVerification in localStorage for consistent experience
+  // Set bypass verification flag
   React.useEffect(() => {
     localStorage.setItem("bypassVerification", "true");
+    
     if (step === "verification") {
       localStorage.setItem("newSignUp", "true");
-      // If in verification phase, enforce intent cleared to ensure modal shows
-      const currentIntent = localStorage.getItem("userIntent");
-      if (currentIntent !== "giftor" && currentIntent !== "giftee") {
-        localStorage.removeItem("userIntent");
-      }
-      console.log("[SignUp] Set 'newSignUp' and sanitized userIntent at verification step");
+      console.log("[SignUp] Entered verification step - newSignUp flag set");
     }
-    // If returning to signup step, clear newSignUp flag so cold reload starts over!
+    
     if (step === "signup") {
       localStorage.removeItem("newSignUp");
+      console.log("[SignUp] Returned to signup step - newSignUp flag cleared");
     }
   }, [step]);
 
@@ -109,7 +93,7 @@ const SignUp: React.FC = () => {
           bypassVerification={bypassVerification}
         />
       </div>
-      <Footer /> {/* Add Footer here */}
+      <Footer />
     </div>
   );
 };

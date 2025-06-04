@@ -21,55 +21,56 @@ export const useAutoRedirect = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only redirect if we have the conditions for it
-    const userIntent = localStorage.getItem("userIntent");
-    const validIntent = userIntent === "giftor" || userIntent === "giftee";
-    const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
-    
-    console.log("[useAutoRedirect] Auto-redirect check", { 
+    console.log("[useAutoRedirect] Checking auto-redirect conditions", { 
       emailSent, 
       step, 
       userEmail, 
-      userIntent, 
-      validIntent, 
-      bypassVerification,
-      showingIntentModal 
+      bypassVerification 
     });
 
-    // Don't redirect if intent modal is showing or should be showing
-    if (showingIntentModal || ((emailSent && step === "verification") && !validIntent)) {
-      console.log("[useAutoRedirect] BLOCKING navigation—intent modal should handle this");
+    // Don't auto-redirect during verification step - let the intent modal handle it
+    if (step === "verification") {
+      console.log("[useAutoRedirect] BLOCKING auto-redirect - verification step should show intent modal");
       return;
     }
 
-    if ((emailSent && step === "verification") || bypassVerification) {
-      localStorage.setItem("newSignUp", "true");
-      localStorage.setItem("userEmail", userEmail);
-      localStorage.setItem("userName", userName || "");
-
-      // Only redirect if userIntent is valid
-      if (!validIntent) {
-        console.log("[useAutoRedirect] No valid intent, staying on verification page for modal");
-        return;
-      }
-
-      if (bypassVerification) {
-        toast.success("Account created successfully!", {
-          description: "We've simplified your signup experience."
-        });
-      }
-
-      // Navigate based on intent with a small delay to ensure state is ready
-      setTimeout(() => {
-        if (userIntent === "giftor") {
-          console.log("[useAutoRedirect] Navigating to /onboarding-gift (userIntent = giftor)");
-          navigate('/onboarding-gift', { replace: true });
-        } else if (userIntent === "giftee") {
-          console.log("[useAutoRedirect] Navigating to /profile-setup (userIntent = giftee)");
-          navigate('/profile-setup', { replace: true });
-        }
-      }, 150);
+    // Only proceed if we have email sent and bypass is enabled
+    if (!emailSent || !bypassVerification) {
+      console.log("[useAutoRedirect] Conditions not met for auto-redirect");
+      return;
     }
+
+    // Store user data for later use
+    localStorage.setItem("newSignUp", "true");
+    localStorage.setItem("userEmail", userEmail);
+    localStorage.setItem("userName", userName || "");
+
+    // Check if we have a valid intent
+    const userIntent = localStorage.getItem("userIntent");
+    const validIntent = userIntent === "giftor" || userIntent === "giftee";
+
+    if (!validIntent) {
+      console.log("[useAutoRedirect] No valid intent, will wait for intent modal");
+      return;
+    }
+
+    // If we reach here, we have valid intent and can redirect
+    if (bypassVerification) {
+      toast.success("Account created successfully!", {
+        description: "We've simplified your signup experience."
+      });
+    }
+
+    // Navigate based on intent with delay
+    setTimeout(() => {
+      if (userIntent === "giftor") {
+        console.log("[useAutoRedirect] Navigating to /onboarding-gift");
+        navigate('/onboarding-gift', { replace: true });
+      } else if (userIntent === "giftee") {
+        console.log("[useAutoRedirect] Navigating to /profile-setup");
+        navigate('/profile-setup', { replace: true });
+      }
+    }, 150);
   }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
   
   return null;

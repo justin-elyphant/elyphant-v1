@@ -5,7 +5,6 @@ import VerificationForm from "@/components/auth/signup/verification/Verification
 import VerificationCodeSection from "./VerificationCodeSection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 
 interface VerificationContentSectionProps {
@@ -33,80 +32,78 @@ const VerificationContentSection = ({
   onResendVerification,
   onCheckVerification,
   setVerificationCode,
-  bypassVerification = true // Default to true for testing
+  bypassVerification = true
 }: VerificationContentSectionProps) => {
-  const navigate = useNavigate();
   const [progress, setProgress] = React.useState(0);
+  const [shouldShowProgress, setShouldShowProgress] = React.useState(false);
 
-  // Enhanced auto-redirect with clear messaging about verification bypass
+  // Show progress only after verification success
   useEffect(() => {
-    console.log("Auto-verification and redirection initiated");
-    let currentProgress = 0;
-    
-    // Show progress bar to indicate auto-verification
-    const progressInterval = setInterval(() => {
-      currentProgress += 8; // Faster progress increment
-      setProgress(Math.min(currentProgress, 100));
+    if (isVerified) {
+      console.log("[VerificationContentSection] Verification successful, showing progress");
+      setShouldShowProgress(true);
       
-      if (currentProgress >= 100) {
-        clearInterval(progressInterval);
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        currentProgress += 10;
+        setProgress(Math.min(currentProgress, 100));
         
-        // Trigger success callback
-        onVerificationSuccess();
-        
-        // Navigate to profile setup with small delay
-        setTimeout(() => {
-          navigate('/profile-setup', { replace: true });
-        }, 300);
-      }
-    }, 80);
-    
-    return () => clearInterval(progressInterval);
-  }, [onVerificationSuccess, navigate]);
+        if (currentProgress >= 100) {
+          clearInterval(progressInterval);
+        }
+      }, 100);
+      
+      return () => clearInterval(progressInterval);
+    }
+  }, [isVerified]);
 
   return (
     <CardContent>
-      <>
-        <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700">
-            <span className="font-semibold">Account created successfully!</span> Setting up your profile...
-          </AlertDescription>
-        </Alert>
-        
-        <Alert className="mb-4 bg-blue-50 border-blue-200">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-700">
-            <span className="font-semibold">Testing Mode:</span> Email verification is optional during testing.
-            You'll be automatically redirected to complete your profile setup.
-          </AlertDescription>
-        </Alert>
-        
-        <div className="my-6">
-          <Progress value={progress} className="h-2" />
-          <p className="text-sm text-center mt-2 text-muted-foreground">
-            Redirecting to profile setup...
-          </p>
-        </div>
-      </>
-      
-      {/* Hide verification form in testing mode */}
-      {isVerified ? null : (
-        <div className="hidden">
-          <VerificationCodeSection
-            userEmail={userEmail}
-            isVerified={isVerified}
-            isLoading={isLoading}
-            verificationChecking={verificationChecking}
-            effectiveVerificationCode={effectiveVerificationCode}
-            resendCount={resendCount}
-            onVerificationSuccess={onVerificationSuccess}
-            onResendVerification={onResendVerification}
-            onCheckVerification={onCheckVerification}
-            setVerificationCode={setVerificationCode}
-            bypassVerification={bypassVerification}
-          />
-        </div>
+      {isVerified ? (
+        <>
+          <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700">
+              <span className="font-semibold">Account created successfully!</span> Please choose how you'd like to use Elyphant.
+            </AlertDescription>
+          </Alert>
+          
+          {shouldShowProgress && (
+            <div className="my-6">
+              <Progress value={progress} className="h-2" />
+              <p className="text-sm text-center mt-2 text-muted-foreground">
+                Waiting for your selection...
+              </p>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-700">
+              <span className="font-semibold">Almost there!</span> We're setting up your account.
+              You'll be able to choose your preferences in just a moment.
+            </AlertDescription>
+          </Alert>
+          
+          {/* Hide verification form during bypass mode */}
+          <div className="hidden">
+            <VerificationCodeSection
+              userEmail={userEmail}
+              isVerified={isVerified}
+              isLoading={isLoading}
+              verificationChecking={verificationChecking}
+              effectiveVerificationCode={effectiveVerificationCode}
+              resendCount={resendCount}
+              onVerificationSuccess={onVerificationSuccess}
+              onResendVerification={onResendVerification}
+              onCheckVerification={onCheckVerification}
+              setVerificationCode={setVerificationCode}
+              bypassVerification={bypassVerification}
+            />
+          </div>
+        </>
       )}
     </CardContent>
   );

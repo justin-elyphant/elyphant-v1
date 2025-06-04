@@ -18,9 +18,6 @@ interface SignUpContentWrapperProps {
   bypassVerification?: boolean;
 }
 
-// Helper to check valid intent
-const validIntent = (intent: string | null) => intent === "giftor" || intent === "giftee";
-
 const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   step,
   userEmail,
@@ -33,83 +30,85 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true
 }) => {
   const [showIntentModal, setShowIntentModal] = React.useState(false);
-  const [intentHandled, setIntentHandled] = React.useState(false);
+  const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
   const navigate = useNavigate();
 
-  // Pickup intended CTA intent (set on homepage) and clear after referencing
-  const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
-
+  // Check if intent modal should show
   React.useEffect(() => {
+    console.log("[SignUpContentWrapper] Effect triggered:", { step, userEmail, showIntentModal });
+    
+    // Only show modal during verification step with email
     if (step !== "verification" || !userEmail) {
-      if (showIntentModal) setShowIntentModal(false);
-      if (intentHandled) setIntentHandled(false);
+      console.log("[SignUpContentWrapper] Not verification step or no email, hiding modal");
+      setShowIntentModal(false);
       return;
     }
 
-    // Retrieve suggested intent only ONCE on modal show, then clear the value for next visits
-    if (!intentHandled && !showIntentModal) {
+    // Check if user already has valid intent
+    const userIntent = localStorage.getItem("userIntent");
+    const validIntent = userIntent === "giftor" || userIntent === "giftee";
+    
+    console.log("[SignUpContentWrapper] Current intent:", userIntent, "Valid:", validIntent);
+
+    if (validIntent) {
+      console.log("[SignUpContentWrapper] Valid intent found, hiding modal");
+      setShowIntentModal(false);
+      return;
+    }
+
+    // Get suggested intent from CTA (only once)
+    if (!showIntentModal) {
       const ctaIntent = localStorage.getItem("ctaIntent");
       if (ctaIntent === "giftor" || ctaIntent === "giftee") {
+        console.log("[SignUpContentWrapper] Setting suggested intent:", ctaIntent);
         setSuggestedIntent(ctaIntent);
-        // Clear so it only applies on first modal show after signup
-        localStorage.removeItem("ctaIntent");
+        localStorage.removeItem("ctaIntent"); // Clear after using
       }
     }
 
-    const intent = localStorage.getItem("userIntent");
-    // Always show modal if no valid intent is found
-    if (!validIntent(intent)) {
-      console.log("[SignUpContentWrapper] No valid intent found, showing modal");
-      localStorage.setItem("showingIntentModal", "true");
-      setShowIntentModal(true);
-      setIntentHandled(false);
-    } else {
-      console.log("[SignUpContentWrapper] Valid intent found:", intent);
-      setShowIntentModal(false);
-      setIntentHandled(true);
-    }
-  }, [step, userEmail, intentHandled, showIntentModal]);
+    // Show the intent modal
+    console.log("[SignUpContentWrapper] Showing intent modal");
+    localStorage.setItem("showingIntentModal", "true");
+    setShowIntentModal(true);
+  }, [step, userEmail, showIntentModal]);
 
-  // -- EARLY BLOCKER: If we should show the intent modal, render ONLY the modal --
-  if (
-    step === "verification" &&
-    userEmail &&
-    !validIntent(localStorage.getItem("userIntent"))
-  ) {
-    const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
-      console.log("[SignUpContentWrapper] Intent selected:", userIntent);
-      
-      // Set the intent and clear modal flags immediately
-      localStorage.setItem("userIntent", userIntent);
-      localStorage.removeItem("showingIntentModal");
-      
-      // Update local state
-      setShowIntentModal(false);
-      setIntentHandled(true);
+  const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
+    console.log("[SignUpContentWrapper] Intent selected:", userIntent);
+    
+    // Set the intent and clear modal flags
+    localStorage.setItem("userIntent", userIntent);
+    localStorage.removeItem("showingIntentModal");
+    localStorage.removeItem("ctaIntent"); // Ensure it's cleared
+    
+    // Update local state
+    setShowIntentModal(false);
 
-      // Small delay to ensure localStorage is updated before navigation
-      setTimeout(() => {
-        if (userIntent === "giftor") {
-          console.log("[SignUpContentWrapper] Navigating to onboarding-gift");
-          navigate("/onboarding-gift", { replace: true });
-        } else {
-          console.log("[SignUpContentWrapper] Navigating to profile-setup");
-          navigate("/profile-setup", { replace: true });
-        }
-      }, 100);
-    };
+    // Navigate based on intent with small delay
+    setTimeout(() => {
+      if (userIntent === "giftor") {
+        console.log("[SignUpContentWrapper] Navigating to onboarding-gift");
+        navigate("/onboarding-gift", { replace: true });
+      } else {
+        console.log("[SignUpContentWrapper] Navigating to profile-setup");
+        navigate("/profile-setup", { replace: true });
+      }
+    }, 100);
+  };
 
+  // If modal should show, render only the modal
+  if (showIntentModal && step === "verification" && userEmail) {
+    console.log("[SignUpContentWrapper] Rendering intent modal");
     return (
       <OnboardingIntentModal
         open={true}
         onSelect={handleSelectIntent}
-        onSkip={() => {/* Not used */}
-        }
+        onSkip={() => {/* Not used */}}
         suggestedIntent={suggestedIntent}
       />
     );
   }
 
+  // Regular signup/verification flow
   if (step === "signup") {
     return (
       <SignUpView 

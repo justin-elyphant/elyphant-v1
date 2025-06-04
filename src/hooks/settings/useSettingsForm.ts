@@ -101,12 +101,18 @@ export const useSettingsForm = () => {
         zipCode: data.address.zipCode || ""
       };
       
+      // Format birthday for storage, ensuring we have valid data before calling formatBirthdayForStorage
+      let formattedBirthday: string | null = null;
+      if (data.birthday && data.birthday.month && data.birthday.day) {
+        formattedBirthday = formatBirthdayForStorage(data.birthday as { month: number; day: number });
+      }
+      
       // Format the data for Supabase
       const updateData = {
         name: data.name,
         bio: data.bio,
         profile_image: data.profile_image,
-        dob: formatBirthdayForStorage(data.birthday), // data.birthday is already properly typed
+        dob: formattedBirthday,
         shipping_address: shippingAddress,
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({

@@ -2,8 +2,8 @@
 import { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { SettingsFormValues, ImportantDate } from "./settingsFormSchema";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { SettingsFormValues } from "./settingsFormSchema";
+import { mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
 
 export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
   const { profile, loading, refetchProfile } = useProfile();
@@ -13,75 +13,38 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
     if (profile && !loading) {
       console.log("Loading profile data into settings form:", profile);
       
-      // Convert birthday string to Date if available
-      let birthdayDate = undefined;
-      if (profile.dob) {
-        try {
-          birthdayDate = new Date(profile.dob);
-        } catch (e) {
-          console.error("Error parsing birthday date:", e);
-        }
+      // Use the improved mapping function
+      const mappedData = mapDatabaseToSettingsForm(profile);
+      
+      if (mappedData) {
+        console.log("Mapped data for settings form:", mappedData);
+        form.reset(mappedData);
+        console.log("Settings form reset with mapped data");
+      } else {
+        console.warn("Failed to map profile data to settings form");
       }
-      
-      // Convert important dates if available
-      const importantDates: ImportantDate[] = [];
-      if (profile.important_dates && Array.isArray(profile.important_dates)) {
-        profile.important_dates.forEach((date: any) => {
-          if (date.date && date.description) {
-            try {
-              importantDates.push({
-                date: new Date(date.date),
-                description: date.description
-              });
-            } catch (e) {
-              console.error("Error parsing important date:", e);
-            }
-          }
-        });
-      }
-      
-      // Extract interests from gift preferences
-      const interests = Array.isArray(profile.gift_preferences)
-        ? profile.gift_preferences.map((pref: any) => 
-            typeof pref === 'string' ? pref : (pref.category || '')
-          ).filter(Boolean)
-        : [];
-      
-      // Ensure complete data sharing settings with consistent defaults
-      const completeDataSharingSettings = {
-        ...getDefaultDataSharingSettings(),
-        ...(profile.data_sharing_settings || {})
-      };
-      
-      // Map fields to form values
-      form.reset({
-        name: profile.name || '',
-        email: profile.email || '',
-        bio: profile.bio || '',
-        profile_image: profile.profile_image || null,
-        birthday: birthdayDate,
-        address: profile.shipping_address || {
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: ''
-        },
-        interests: interests,
-        importantDates: importantDates,
-        data_sharing_settings: completeDataSharingSettings
-      });
-      
-      console.log("Profile data loaded into settings form with consistent defaults:", completeDataSharingSettings);
     }
   };
 
-  // Load profile data when component mounts
+  // Load profile data when component mounts or profile changes
   useEffect(() => {
-    if (profile) {
-      loadProfileData();
-    }
-  }, [profile]);
+    loadProfileData();
+  }, [profile, loading]);
+
+  // Also check for onboarding completion flag and refresh if needed
+  useEffect(() => {
+    const checkOnboardingCompletion = async () => {
+      const onboardingComplete = localStorage.getItem("onboardingComplete");
+      const newSignUp = localStorage.getItem("newSignUp");
+      
+      if (onboardingComplete === "true" && newSignUp !== "true") {
+        console.log("Onboarding completed, refreshing profile data");
+        await refetchProfile();
+      }
+    };
+
+    checkOnboardingCompletion();
+  }, [refetchProfile]);
 
   return {
     profile,

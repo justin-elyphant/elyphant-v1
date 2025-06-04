@@ -1,108 +1,70 @@
 
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { validateAndCleanProfileData } from "@/utils/dataFormatUtils";
-import { useProfileValidation } from "./useProfileValidation";
+import { useState } from "react";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useProfileCreate } from "./useProfileCreate";
+import { toast } from "sonner";
+import { ProfileData } from "@/components/profile-setup/hooks/types";
 
-interface UseProfileSubmitOptions {
+interface UseProfileSubmitProps {
   onSuccess?: (data: any) => void;
-  onError?: (error: Error) => void;
-  onComplete?: () => void;
+  onComplete: () => void;
 }
 
-export function useProfileSubmit(options: UseProfileSubmitOptions = {}) {
+export const useProfileSubmit = ({ onSuccess, onComplete }: UseProfileSubmitProps) => {
   const { user } = useAuth();
+  const { profile, refetchProfile } = useProfile();
+  const { createProfile } = useProfileCreate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<Error | null>(null);
-  const { validateProfileData } = useProfileValidation();
-  
-  const submitProfile = useCallback(async (profileData: any) => {
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const submitProfile = async (profileData: ProfileData) => {
     if (!user) {
-      const error = new Error("You must be logged in to update your profile");
-      toast.error(error.message);
+      const error = "You must be logged in to submit profile data";
       setSubmitError(error);
-      if (options.onError) options.onError(error);
-      return false;
+      throw new Error(error);
     }
-    
-    // First, validate the data structure
-    if (!validateProfileData(profileData)) {
-      console.error("Profile data validation failed");
-      return false;
-    }
-    
+
     setIsSubmitting(true);
     setSubmitError(null);
     
+    console.log("Submitting profile data:", JSON.stringify(profileData, null, 2));
+
     try {
-      // Format the data for submission
-      const [isValid, cleanedData] = validateAndCleanProfileData(profileData);
+      // Create or update the profile
+      const result = await createProfile(profileData);
       
-      if (!isValid || !cleanedData) {
-        throw new Error("Failed to prepare profile data for submission");
-      }
-      
-      // Ensure we have the user ID
-      cleanedData.id = user.id;
-      
-      // Try up to 3 times to submit in case of network issues
-      let attempts = 0;
-      let success = false;
-      let result = null;
-      
-      while (attempts < 3 && !success) {
-        attempts++;
-        console.log(`Profile submission attempt ${attempts}`);
+      if (result) {
+        console.log("Profile submission successful, refreshing profile context");
         
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .upsert(cleanedData, {
-              onConflict: 'id'
-            })
-            .select();
-            
-          if (error) {
-            console.error(`Error in submission attempt ${attempts}:`, error);
-            if (attempts === 3) throw error;
-          } else {
-            success = true;
-            result = data;
-            console.log("Profile submission successful:", data);
-          }
-        } catch (err) {
-          if (attempts === 3) throw err;
-          // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 500));
+        // Force refresh the profile context to get the latest data
+        await refetchProfile();
+        
+        // Mark onboarding as complete
+        localStorage.setItem("onboardingComplete", "true");
+        localStorage.removeItem("newSignUp");
+        
+        toast.success("Profile created successfully!");
+        
+        if (onSuccess) {
+          onSuccess(result);
         }
-      }
-      
-      if (success) {
-        toast.success("Profile updated successfully");
-        if (options.onSuccess) options.onSuccess(result);
-        return true;
-      } else {
-        throw new Error("Profile submission failed after multiple attempts");
+        
+        return result;
       }
     } catch (error: any) {
-      console.error("Profile submission error:", error);
-      setSubmitError(error);
-      toast.error("Failed to update profile", { 
-        description: error.message || "An unexpected error occurred"
-      });
-      if (options.onError) options.onError(error);
-      return false;
+      console.error("Profile submission failed:", error);
+      setSubmitError(error.message || "Failed to submit profile");
+      toast.error("Failed to save profile data");
+      throw error;
     } finally {
       setIsSubmitting(false);
-      if (options.onComplete) options.onComplete();
     }
-  }, [user, validateProfileData, options]);
-  
+  };
+
   return {
     submitProfile,
     isSubmitting,
     submitError
   };
-}
+};

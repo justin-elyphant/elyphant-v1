@@ -19,9 +19,14 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
       const mappedData = mapDatabaseToSettingsForm(profile);
       
       if (mappedData) {
-        console.log("Mapped data for settings form:", mappedData);
+        // Ensure profile_image is included
+        if (profile.profile_image !== undefined) {
+          mappedData.profile_image = profile.profile_image;
+        }
+        
+        console.log("Mapped data for settings form (including profile_image):", mappedData);
         form.reset(mappedData);
-        console.log("Settings form reset with mapped data");
+        console.log("Settings form reset with mapped data including profile image");
         hasLoadedRef.current = true;
       } else {
         console.warn("Failed to map profile data to settings form");

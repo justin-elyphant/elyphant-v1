@@ -22,6 +22,13 @@ export const useFormSubmission = () => {
       // Convert form data to API format
       const apiData = profileFormToApiData(formData);
       
+      // Ensure profile_image is included in the update
+      if (formData.profile_image !== undefined) {
+        apiData.profile_image = formData.profile_image;
+      }
+      
+      console.log("Submitting profile update with data:", apiData);
+      
       // Update profile
       await updateProfile(apiData);
       toast.success("Profile updated successfully");

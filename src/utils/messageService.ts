@@ -23,7 +23,54 @@ export interface SendMessageParams {
   replyToId?: string;
 }
 
+// Mock messages for demo connections
+const generateMockMessages = (connectionId: string): Message[] => {
+  const baseMessages = [
+    {
+      id: `mock-msg-${connectionId}-1`,
+      sender_id: connectionId,
+      recipient_id: "current-user",
+      content: "Hey! How's it going?",
+      product_link_id: null,
+      wishlist_link_id: null,
+      reply_to_id: null,
+      is_read: true,
+      created_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+    },
+    {
+      id: `mock-msg-${connectionId}-2`,
+      sender_id: "current-user",
+      recipient_id: connectionId,
+      content: "Good! Thanks for asking. How about you?",
+      product_link_id: null,
+      wishlist_link_id: null,
+      reply_to_id: `mock-msg-${connectionId}-1`,
+      is_read: true,
+      created_at: new Date(Date.now() - 3000000).toISOString(), // 50 minutes ago
+    },
+    {
+      id: `mock-msg-${connectionId}-3`,
+      sender_id: connectionId,
+      recipient_id: "current-user",
+      content: "I'm doing well! Did you see that gift I recommended?",
+      product_link_id: null,
+      wishlist_link_id: null,
+      reply_to_id: null,
+      is_read: false,
+      created_at: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+    }
+  ];
+  
+  return baseMessages;
+};
+
 export const fetchMessages = async (otherUserId: string): Promise<Message[]> => {
+  // Handle mock connections
+  if (otherUserId.startsWith('mock-')) {
+    console.log(`Loading mock messages for connection: ${otherUserId}`);
+    return generateMockMessages(otherUserId);
+  }
+
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) {
     toast.error("You must be logged in to view messages");
@@ -53,6 +100,25 @@ export const sendMessage = async ({
   wishlistLinkId,
   replyToId 
 }: SendMessageParams): Promise<Message | null> => {
+  // Handle mock connections
+  if (recipientId.startsWith('mock-')) {
+    console.log(`Simulating message send to mock connection: ${recipientId}`);
+    const mockMessage: Message = {
+      id: `mock-msg-${Date.now()}`,
+      sender_id: "current-user",
+      recipient_id: recipientId,
+      content,
+      product_link_id: productLinkId || null,
+      wishlist_link_id: wishlistLinkId || null,
+      reply_to_id: replyToId || null,
+      is_read: false,
+      created_at: new Date().toISOString()
+    };
+    
+    toast.success("Message sent!");
+    return mockMessage;
+  }
+
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) {
     toast.error("You must be logged in to send messages");
@@ -87,10 +153,14 @@ export const sendMessage = async ({
 export const markMessagesAsRead = async (messageIds: string[]): Promise<void> => {
   if (!messageIds.length) return;
 
+  // Skip for mock messages
+  const realMessageIds = messageIds.filter(id => !id.startsWith('mock-'));
+  if (!realMessageIds.length) return;
+
   const { error } = await supabase
     .from('messages')
     .update({ is_read: true })
-    .in('id', messageIds);
+    .in('id', realMessageIds);
 
   if (error) {
     console.error('Error marking messages as read:', error);
@@ -101,6 +171,12 @@ export const subscribeToMessages = (
   connectionId: string, 
   onNewMessage: (message: Message) => void
 ) => {
+  // Skip subscription for mock connections
+  if (connectionId.startsWith('mock-')) {
+    console.log(`Skipping real-time subscription for mock connection: ${connectionId}`);
+    return () => {}; // Return empty cleanup function
+  }
+
   const channel = supabase
     .channel('messages_channel')
     .on(
@@ -127,6 +203,12 @@ export const addMessageReaction = async (
   messageId: string, 
   emoji: string
 ): Promise<boolean> => {
+  // Handle mock messages
+  if (messageId.startsWith('mock-')) {
+    toast.success("Reaction added!");
+    return true;
+  }
+
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) {
     toast.error("You must be logged in to react to messages");
@@ -144,6 +226,12 @@ export const removeMessageReaction = async (
   messageId: string, 
   emoji: string
 ): Promise<boolean> => {
+  // Handle mock messages
+  if (messageId.startsWith('mock-')) {
+    toast.success("Reaction removed!");
+    return true;
+  }
+
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) {
     toast.error("You must be logged in to remove reactions");

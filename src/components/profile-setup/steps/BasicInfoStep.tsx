@@ -21,11 +21,14 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ profileData, updateProfil
   // Log when this component renders to trace potential issues
   useEffect(() => {
     console.log("BasicInfoStep rendered with profileData:", profileData);
+    console.log("Current name value:", profileData.name);
+    console.log("Name is valid?", !!(profileData.name && profileData.name.trim().length > 0));
   }, [profileData]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Name input changed:", e.target.value);
-    updateProfileData('name', e.target.value);
+    const newName = e.target.value;
+    console.log("Name input changed from:", profileData.name, "to:", newName);
+    updateProfileData('name', newName);
   };
 
   const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -33,6 +36,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ profileData, updateProfil
   };
 
   const handleBirthdayChange = (birthday: { month: number; day: number } | null) => {
+    console.log("Birthday changed to:", birthday);
     updateProfileData('birthday', birthday);
   };
 
@@ -113,7 +117,11 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ profileData, updateProfil
             value={profileData.name || ""}
             onChange={handleNameChange}
             autoFocus
+            className="w-full"
           />
+          <p className="text-xs text-muted-foreground">
+            This is how friends will find and recognize you
+          </p>
         </div>
 
         {/* Birthday */}
@@ -138,6 +146,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ profileData, updateProfil
             rows={3}
             value={profileData.bio || ""}
             onChange={handleBioChange}
+            className="w-full"
           />
           <p className="text-xs text-muted-foreground">
             Optional - helps friends choose better gifts for you

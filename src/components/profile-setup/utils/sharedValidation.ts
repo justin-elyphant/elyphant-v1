@@ -1,68 +1,45 @@
 
-import { formSchema, SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
-import { ProfileData } from "../hooks/types";
-import { ZodError } from "zod";
-import { convertProfileDataToSettingsForm, validateDataStructureCompatibility } from "./dataStructureValidator";
+import { ProfileData } from '../hooks/types';
 
-export const validateProfileStep = (step: number, data: ProfileData): boolean => {
-  console.log(`Validating step ${step} with data:`, data);
+export const validateProfileStep = (stepIndex: number, profileData: ProfileData): boolean => {
+  console.log(`Validating step ${stepIndex} with data:`, profileData);
   
-  try {
-    switch (step) {
-      case 0: // Basic info
-        return !!(data.name && data.name.trim().length >= 2 && data.email && data.email.includes('@'));
+  switch (stepIndex) {
+    case 0: // Basic Info Step
+      const isNameValid = profileData.name && profileData.name.trim().length > 0;
+      console.log('Basic Info validation - name valid:', isNameValid, 'name:', profileData.name);
+      return isNameValid;
       
-      case 1: // Birthday (optional during onboarding)
-        return true;
+    case 1: // Address Step
+      const address = profileData.address;
+      const isAddressValid = !!(
+        address &&
+        address.street &&
+        address.city &&
+        address.state &&
+        address.zipCode
+      );
+      console.log('Address validation:', isAddressValid);
+      return isAddressValid;
       
-      case 2: // Address - require at minimum city and country during onboarding
-        return !!(data.address?.city && data.address?.country);
+    case 2: // Interests Step - Optional, always valid
+      console.log('Interests validation: always true');
+      return true;
       
-      case 3: // Interests
-        return Array.isArray(data.interests) && data.interests.length > 0;
+    case 3: // Important Dates Step - Optional, always valid
+      console.log('Important Dates validation: always true');
+      return true;
       
-      case 4: // Data sharing
-        return !!(data.data_sharing_settings && 
-                 data.data_sharing_settings.dob &&
-                 data.data_sharing_settings.shipping_address &&
-                 data.data_sharing_settings.gift_preferences &&
-                 data.data_sharing_settings.email);
+    case 4: // Privacy Step - Optional, always valid
+      console.log('Privacy validation: always true');
+      return true;
       
-      case 5: // Next steps (always valid)
-        return true;
+    case 5: // Next Steps Step - Optional, always valid
+      console.log('Next Steps validation: always true');
+      return true;
       
-      default:
-        return false;
-    }
-  } catch (error) {
-    console.error("Validation error:", error);
-    return false;
-  }
-};
-
-export const validateCompleteProfile = (data: ProfileData): { isValid: boolean; errors: string[] } => {
-  // First validate our custom profile data structure
-  const structureValidation = validateDataStructureCompatibility(data);
-  
-  if (!structureValidation.isValid) {
-    return {
-      isValid: false,
-      errors: structureValidation.errors
-    };
-  }
-  
-  // Then validate against the settings form schema
-  try {
-    const settingsData = convertProfileDataToSettingsForm(data);
-    formSchema.parse(settingsData);
-    return { isValid: true, errors: [] };
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return {
-        isValid: false,
-        errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
-      };
-    }
-    return { isValid: false, errors: ['Unknown validation error'] };
+    default:
+      console.log('Default validation: true');
+      return true;
   }
 };

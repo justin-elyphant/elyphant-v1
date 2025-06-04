@@ -21,11 +21,10 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
     
     try {
       // Create username from name if not provided
-      const username = profileData.username || 
-        profileData.name?.toLowerCase().replace(/\s+/g, '_') || 
+      const username = profileData.name?.toLowerCase().replace(/\s+/g, '_') || 
         `user_${Date.now().toString(36)}`;
 
-      // Format the data for storage - ensuring ALL fields are included
+      // Format the data for storage - mapping new fields to database fields
       const formattedData = {
         id: user.id,
         name: profileData.name || "",
@@ -33,39 +32,32 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
         email: profileData.email || user.email || "",
         profile_image: profileData.profile_image || null,
         bio: profileData.bio || `Hi, I'm ${profileData.name || "there"}`,
-        dob: profileData.dob || null,
-        shipping_address: profileData.shipping_address || {},
-        gift_preferences: Array.isArray(profileData.gift_preferences) 
-          ? profileData.gift_preferences.map(pref => ({
-              category: typeof pref === 'string' ? pref : pref.category,
+        dob: profileData.birthday ? profileData.birthday.toISOString().split('T')[0] : null,
+        shipping_address: profileData.address || {},
+        gift_preferences: Array.isArray(profileData.interests) 
+          ? profileData.interests.map(interest => ({
+              category: typeof interest === 'string' ? interest : interest,
               importance: 'medium'
             }))
           : [],
-        important_dates: Array.isArray(profileData.important_dates) 
-          ? profileData.important_dates 
+        important_dates: Array.isArray(profileData.importantDates) 
+          ? profileData.importantDates.map(date => ({
+              date: date.date.toISOString().split('T')[0],
+              description: date.description
+            }))
           : [],
         data_sharing_settings: {
           dob: "friends",
-          shipping_address: "friends",
+          shipping_address: "friends", 
           gift_preferences: "public",
-          email: "private", // Default to private for email
+          email: "private",
           ...(profileData.data_sharing_settings || {})
         },
         onboarding_completed: true,
         updated_at: new Date().toISOString()
       };
 
-      // Add detailed logging of the exact payload we're sending to Supabase
       console.log("EXACT PAYLOAD FOR PROFILE SUBMISSION:", JSON.stringify(formattedData, null, 2));
-      console.log("User ID for RLS:", user.id);
-      console.log("Profile data keys:", Object.keys(formattedData));
-      console.log("Has shipping_address:", !!formattedData.shipping_address);
-      console.log("Has dob:", !!formattedData.dob);
-      console.log("Has username:", !!formattedData.username);
-      console.log("Has bio:", !!formattedData.bio);
-      console.log("Has important_dates:", !!formattedData.important_dates && Array.isArray(formattedData.important_dates));
-      console.log("Gift preferences length:", formattedData.gift_preferences?.length || 0);
-      console.log("Email sharing setting:", formattedData.data_sharing_settings.email);
 
       // Try up to 3 times to save the profile data
       let attempts = 0;
@@ -91,21 +83,16 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
           }
         } catch (error) {
           console.error(`Error in upsert operation (attempt ${attempts}):`, error);
-          // On last attempt, throw to exit the while loop
           if (attempts === 3) throw error;
-          // Otherwise wait and try again
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
       
       if (success) {
         toast.success("Profile setup complete!");
-
-        // Clear signup-related flags
         localStorage.removeItem("newSignUp");
         localStorage.removeItem("userEmail");
         localStorage.removeItem("userName");
-        
         setIsLoading(false);
         onComplete();
       } else {
@@ -115,7 +102,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile data, but continuing anyway");
       setIsLoading(false);
-      onComplete(); // Still complete to prevent users getting stuck
+      onComplete();
     }
   };
 

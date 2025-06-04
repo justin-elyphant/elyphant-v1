@@ -28,6 +28,13 @@ export const useAutoRedirect = ({
       bypassVerification 
     });
 
+    // CRITICAL: Check if auto-redirect is blocked by intent modal
+    const isAutoRedirectBlocked = localStorage.getItem("blockAutoRedirect") === "true";
+    if (isAutoRedirectBlocked) {
+      console.log("[useAutoRedirect] Auto-redirect is blocked - intent modal is handling navigation");
+      return;
+    }
+
     // CRITICAL: COMPLETELY DISABLE auto-redirect during verification step
     // The intent modal in SignUpContentWrapper will handle ALL navigation
     if (step === "verification") {

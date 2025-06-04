@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSignUpSubmit } from "./useSignUpSubmit";
+import { useSignUpSubmit } from "../signup/useSignUpProcess/useSignUpSubmit";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,7 +11,8 @@ export function useSignUpProcess() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [resendCount, setResendCount] = useState<number>(0);
-  const { onSignUpSubmit: originalOnSignUpSubmit, isSubmitting } = useSignUpSubmit();
+  const [emailSent, setEmailSent] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Phase 5: Always enable verification bypass
   const [bypassVerification] = useState(true);
@@ -44,6 +45,14 @@ export function useSignUpProcess() {
     // Phase 5: Always set bypass verification to true
     localStorage.setItem("bypassVerification", "true");
   }, [navigate]);
+
+  const { onSignUpSubmit: originalOnSignUpSubmit } = useSignUpSubmit({
+    setUserEmail,
+    setUserName,
+    setEmailSent,
+    setStep,
+    setIsSubmitting
+  });
 
   const handleSignUpSubmit = async (values: any) => {
     try {

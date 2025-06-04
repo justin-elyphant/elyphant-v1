@@ -41,18 +41,27 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     loadProfile();
   }, [fetchProfile]);
 
-  // Also fetch profile data if we have localStorage flags indicating a new signup
+  // Check for new signup or profile setup flags ONLY ONCE on mount
   useEffect(() => {
-    if (localStorage.getItem("newSignUp") === "true" || localStorage.getItem("profileSetupLoading") === "true") {
-      console.log("Detected new signup or profile setup, fetching profile data");
-      fetchProfile().then(profileData => {
+    const checkInitialFlags = async () => {
+      const newSignUp = localStorage.getItem("newSignUp");
+      const profileSetupLoading = localStorage.getItem("profileSetupLoading");
+      
+      if (newSignUp === "true" || profileSetupLoading === "true") {
+        console.log("Detected new signup or profile setup, fetching profile data once");
+        const profileData = await fetchProfile();
         if (profileData) {
           setProfile(profileData);
           setLastFetchTime(Date.now());
         }
-      });
-    }
-  }, [fetchProfile]);
+        // Clear flags after initial fetch
+        localStorage.removeItem("newSignUp");
+        localStorage.removeItem("profileSetupLoading");
+      }
+    };
+
+    checkInitialFlags();
+  }, []); // Empty dependency array - only run once
 
   // Wrapper for updating the profile that also updates local state
   const handleUpdateProfile = async (data: Partial<Profile>) => {

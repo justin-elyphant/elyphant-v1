@@ -1,4 +1,3 @@
-
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
@@ -32,7 +31,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
   const isLoading = isSubmitting || isCompleting || isDataLoading;
 
-  // Ensure data_sharing_settings has all required fields
+  // Ensure data_sharing_settings has all required fields including email
   useEffect(() => {
     if (profileData && (!profileData.data_sharing_settings || 
         Object.keys(profileData.data_sharing_settings).length === 0 ||
@@ -122,7 +121,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     }
   }, [onSkip, cleanupTimeouts]);
 
-  // Handle completion with better preparation for privacy settings
+  // Enhanced completion handler with data structure validation
   const handleComplete = useCallback(async () => {
     if (hasCompletedRef.current || isCompleting) {
       console.log("Completion already in progress, ignoring duplicate request");
@@ -130,6 +129,16 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     }
 
     console.log("Completing profile setup with data:", profileData);
+    
+    // Validate data structure compatibility before submission
+    const { testDataStructureCompatibility } = await import('../utils/dataStructureValidator');
+    const testResult = testDataStructureCompatibility(profileData);
+    
+    if (!testResult.success) {
+      console.error("Data structure compatibility test failed:", testResult);
+      toast.error("Profile data validation failed");
+      return;
+    }
     
     // Always ensure data_sharing_settings is complete before submission
     const completeSettings = {
@@ -148,17 +157,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     localStorage.setItem("profileSetupLoading", "true");
     
     try {
-      // Transform data to match database expectations
-      const finalProfileData = {
-        ...profileData,
-        data_sharing_settings: completeSettings,
-        // Convert birthday to string for database
-        dob: profileData.birthday ? profileData.birthday.toISOString().split('T')[0] : null,
-        // Convert address to shipping_address for database
-        shipping_address: profileData.address,
-        // Convert interests to gift_preferences for database
-        gift_preferences: profileData.interests.map(interest => ({ category: interest }))
-      };
+      // Use the converted data for submission
+      const finalProfileData = testResult.convertedData;
       
       await submitProfile(finalProfileData);
       

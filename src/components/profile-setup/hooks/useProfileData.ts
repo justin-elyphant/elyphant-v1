@@ -10,7 +10,7 @@ export const useProfileData = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize with settings-compatible structure with all required fields
+  // Initialize with complete required structure
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
     email: user?.email || "",
@@ -49,7 +49,15 @@ export const useProfileData = () => {
         }
 
         if (profile) {
-          // Map profile data to settings format exactly, ensuring all required fields
+          console.log("Loading existing profile data:", profile);
+          
+          // Ensure complete data sharing settings with email field
+          const completeDataSharingSettings = {
+            ...getDefaultDataSharingSettings(),
+            ...(profile.data_sharing_settings || {})
+          };
+
+          // Map profile data to onboarding format with proper structure
           const mappedData: Partial<ProfileData> = {
             name: profile.name || "",
             email: profile.email || user.email || "",
@@ -74,10 +82,11 @@ export const useProfileData = () => {
                   description: date.description || date.title || ""
                 })).filter((date: any) => date.date && date.description)
               : [],
-            data_sharing_settings: profile.data_sharing_settings || getDefaultDataSharingSettings()
+            data_sharing_settings: completeDataSharingSettings
           };
 
           setProfileData(prev => ({ ...prev, ...mappedData }));
+          console.log("Profile data loaded and mapped successfully");
         }
       } catch (error) {
         console.error("Error loading profile:", error);

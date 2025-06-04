@@ -1,8 +1,10 @@
 
 import { formSchema, SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
+import { ProfileData } from "../hooks/types";
 import { ZodError } from "zod";
+import { convertProfileDataToSettingsForm, validateDataStructureCompatibility } from "./dataStructureValidator";
 
-export const validateProfileStep = (step: number, data: Partial<SettingsFormValues>): boolean => {
+export const validateProfileStep = (step: number, data: ProfileData): boolean => {
   console.log(`Validating step ${step} with data:`, data);
   
   try {
@@ -38,9 +40,21 @@ export const validateProfileStep = (step: number, data: Partial<SettingsFormValu
   }
 };
 
-export const validateCompleteProfile = (data: SettingsFormValues): { isValid: boolean; errors: string[] } => {
+export const validateCompleteProfile = (data: ProfileData): { isValid: boolean; errors: string[] } => {
+  // First validate our custom profile data structure
+  const structureValidation = validateDataStructureCompatibility(data);
+  
+  if (!structureValidation.isValid) {
+    return {
+      isValid: false,
+      errors: structureValidation.errors
+    };
+  }
+  
+  // Then validate against the settings form schema
   try {
-    formSchema.parse(data);
+    const settingsData = convertProfileDataToSettingsForm(data);
+    formSchema.parse(settingsData);
     return { isValid: true, errors: [] };
   } catch (error) {
     if (error instanceof ZodError) {

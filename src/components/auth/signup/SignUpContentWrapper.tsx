@@ -1,5 +1,5 @@
-
 import React from "react";
+import { toast } from "sonner";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
 import { SignUpFormValues } from "./SignUpForm";

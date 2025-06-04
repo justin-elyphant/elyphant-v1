@@ -24,11 +24,19 @@ const ImportantDatesStep: React.FC<ImportantDatesStepProps> = ({
 
   // Auto-add birthday if it exists and isn't already in important dates
   useEffect(() => {
+    console.log("ImportantDatesStep - checking birthday:", profileData.birthday);
+    console.log("Current important dates:", currentDates);
+    
     if (profileData.birthday && !currentDates.some(date => date.description === "My Birthday")) {
+      console.log("Adding birthday to important dates:", profileData.birthday);
+      
+      // Use the birthday month and day directly - no need to subtract 1 since we're storing the actual month number
       const birthdayDate = {
-        date: new Date(2000, profileData.birthday.month - 1, profileData.birthday.day), // Use dummy year
+        date: new Date(2000, profileData.birthday.month - 1, profileData.birthday.day), // Date months are 0-indexed
         description: "My Birthday"
       };
+      
+      console.log("Created birthday date object:", birthdayDate);
       updateProfileData('importantDates', [birthdayDate, ...currentDates]);
     }
   }, [profileData.birthday, currentDates, updateProfileData]);
@@ -55,6 +63,7 @@ const ImportantDatesStep: React.FC<ImportantDatesStepProps> = ({
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
     ];
+    console.log("Formatting date for display:", date, "Month index:", date.getMonth(), "Day:", date.getDate());
     return `${months[date.getMonth()]} ${date.getDate()}`;
   };
 

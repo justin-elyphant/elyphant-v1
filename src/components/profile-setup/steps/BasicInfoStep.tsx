@@ -22,6 +22,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ profileData, updateProfil
   useEffect(() => {
     console.log("BasicInfoStep rendered with profileData:", profileData);
     console.log("Current name value:", profileData.name);
+    console.log("Current birthday value:", profileData.birthday);
     console.log("Name is valid?", !!(profileData.name && profileData.name.trim().length > 0));
   }, [profileData]);
 

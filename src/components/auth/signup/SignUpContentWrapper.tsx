@@ -48,20 +48,22 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       return;
     }
     
-    // Handle verification step
+    // Handle verification step - IMMEDIATELY show modal without any delays
     if (step === "verification" && userEmail) {
-      console.log("[SignUpContentWrapper] Verification step detected");
-      setIsCheckingIntent(true);
+      console.log("[SignUpContentWrapper] Verification step detected - IMMEDIATELY showing intent modal");
       
-      // Check if user already has valid intent
+      // Block any potential auto-redirects
+      localStorage.setItem("blockAutoRedirect", "true");
+      
+      // Check if user already has valid intent (only check, don't navigate)
       const userIntent = localStorage.getItem("userIntent");
       const validIntent = userIntent === "giftor" || userIntent === "giftee";
       
       console.log("[SignUpContentWrapper] Current intent:", userIntent, "Valid:", validIntent);
 
+      // If valid intent already exists, navigate immediately (this is the only place we should navigate)
       if (validIntent) {
         console.log("[SignUpContentWrapper] Valid intent found, navigating immediately");
-        // Navigate immediately if intent is already selected
         setTimeout(() => {
           if (userIntent === "giftor") {
             console.log("[SignUpContentWrapper] Navigating to marketplace");
@@ -82,11 +84,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
         localStorage.removeItem("ctaIntent"); // Clear after using
       }
 
-      // Show the intent modal
-      console.log("[SignUpContentWrapper] Showing intent modal");
+      // IMMEDIATELY show the intent modal without any loading states
+      console.log("[SignUpContentWrapper] Setting up intent modal IMMEDIATELY");
       localStorage.setItem("showingIntentModal", "true");
       setShouldShowModal(true);
-      setIsCheckingIntent(false);
+      setIsCheckingIntent(false); // No loading state needed
     }
   }, [step, userEmail, navigate]);
 
@@ -97,6 +99,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     localStorage.setItem("userIntent", userIntent);
     localStorage.removeItem("showingIntentModal");
     localStorage.removeItem("ctaIntent");
+    localStorage.removeItem("blockAutoRedirect");
     
     // Show success toast
     toast.success("Account created successfully!", {
@@ -128,42 +131,15 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // During verification step - show intent modal if needed
+  // During verification step - ALWAYS render intent modal if we reach this step
   if (step === "verification") {
-    // Show loading while checking intent
-    if (isCheckingIntent) {
-      return (
-        <div className="flex items-center justify-center p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Setting up your account...</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Show intent modal if needed
-    if (shouldShowModal) {
-      console.log("[SignUpContentWrapper] RENDERING intent modal");
-      return (
-        <OnboardingIntentModal
-          open={true}
-          onSelect={handleSelectIntent}
-          onSkip={() => {/* Not used */}}
-          suggestedIntent={suggestedIntent}
-        />
-      );
-    }
-
-    // Fallback to verification view (should rarely be reached)
+    console.log("[SignUpContentWrapper] RENDERING intent modal for verification step");
     return (
-      <VerificationView
-        userEmail={userEmail}
-        userName={userName}
-        onBackToSignUp={handleBackToSignUp}
-        onResendVerification={onResendVerification}
-        resendCount={resendCount}
-        bypassVerification={bypassVerification}
+      <OnboardingIntentModal
+        open={true}
+        onSelect={handleSelectIntent}
+        onSkip={() => {/* Not used */}}
+        suggestedIntent={suggestedIntent}
       />
     );
   }

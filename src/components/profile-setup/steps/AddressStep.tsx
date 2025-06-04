@@ -3,15 +3,15 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Address } from "../hooks/types";
+import { ShippingAddress } from "@/hooks/settings/types";
 
 interface AddressStepProps {
-  value: Address;
-  onChange: (address: Address) => void;
+  value: ShippingAddress;
+  onChange: (address: ShippingAddress) => void;
 }
 
 const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
-  const handleChange = (field: keyof Address, fieldValue: string) => {
+  const handleChange = (field: keyof ShippingAddress, fieldValue: string) => {
     onChange({
       ...value,
       [field]: fieldValue
@@ -60,29 +60,29 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="country">Country</Label>
-            <Select value={value.country || "US"} onValueChange={(country) => handleChange("country", country)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="US">United States</SelectItem>
-                <SelectItem value="CA">Canada</SelectItem>
-                <SelectItem value="GB">United Kingdom</SelectItem>
-                <SelectItem value="AU">Australia</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="zipCode">ZIP Code</Label>
+            <Input
+              id="zipCode"
+              placeholder="ZIP Code"
+              value={value.zipCode || ""}
+              onChange={(e) => handleChange("zipCode", e.target.value)}
+            />
           </div>
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="zipCode">Zip / Postal Code</Label>
-          <Input
-            id="zipCode"
-            placeholder="Zip Code"
-            value={value.zipCode || ""}
-            onChange={(e) => handleChange("zipCode", e.target.value)}
-          />
+          <Label htmlFor="country">Country</Label>
+          <Select value={value.country || "US"} onValueChange={(country) => handleChange("country", country)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select country" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="US">United States</SelectItem>
+              <SelectItem value="CA">Canada</SelectItem>
+              <SelectItem value="GB">United Kingdom</SelectItem>
+              <SelectItem value="AU">Australia</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

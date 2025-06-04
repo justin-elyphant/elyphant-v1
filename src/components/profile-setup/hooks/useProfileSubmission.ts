@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { ProfileData } from "./types";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { profileFormToApiData } from "@/types/profile";
 
 export const useProfileSubmission = ({ onComplete, onSkip }) => {
   const { user } = useAuth();
@@ -20,44 +20,10 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
     console.log("Starting profile submission with data:", JSON.stringify(profileData, null, 2));
     
     try {
-      // Create username from name if not provided
-      const username = profileData.name?.toLowerCase().replace(/\s+/g, '_') || 
-        `user_${Date.now().toString(36)}`;
-
-      // Format the data for storage - mapping new fields to database fields
-      const formattedData = {
-        id: user.id,
-        name: profileData.name || "",
-        username: username,
-        email: profileData.email || user.email || "",
-        profile_image: profileData.profile_image || null,
-        bio: profileData.bio || `Hi, I'm ${profileData.name || "there"}`,
-        dob: profileData.birthday ? profileData.birthday.toISOString().split('T')[0] : null,
-        shipping_address: profileData.address || {},
-        gift_preferences: Array.isArray(profileData.interests) 
-          ? profileData.interests.map(interest => ({
-              category: typeof interest === 'string' ? interest : interest,
-              importance: 'medium'
-            }))
-          : [],
-        important_dates: Array.isArray(profileData.importantDates) 
-          ? profileData.importantDates.map(date => ({
-              date: date.date.toISOString().split('T')[0],
-              description: date.description
-            }))
-          : [],
-        data_sharing_settings: {
-          dob: "friends",
-          shipping_address: "friends", 
-          gift_preferences: "public",
-          email: "private",
-          ...(profileData.data_sharing_settings || {})
-        },
-        onboarding_completed: true,
-        updated_at: new Date().toISOString()
-      };
-
-      console.log("EXACT PAYLOAD FOR PROFILE SUBMISSION:", JSON.stringify(formattedData, null, 2));
+      // Use the same transformation logic as settings
+      const apiData = profileFormToApiData(profileData);
+      
+      console.log("EXACT PAYLOAD FOR PROFILE SUBMISSION:", JSON.stringify(apiData, null, 2));
 
       // Try up to 3 times to save the profile data
       let attempts = 0;
@@ -70,7 +36,12 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .upsert(formattedData, {
+            .upsert({
+              id: user.id,
+              ...apiData,
+              onboarding_completed: true,
+              updated_at: new Date().toISOString()
+            }, {
               onConflict: 'id'
             });
 

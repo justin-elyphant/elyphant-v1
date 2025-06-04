@@ -49,7 +49,7 @@ export const useProfileData = () => {
         }
 
         if (profile) {
-          // Map profile data to settings format
+          // Map profile data to settings format exactly
           const mappedData: Partial<ProfileData> = {
             name: profile.name || "",
             email: profile.email || user.email || "",

@@ -90,7 +90,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       case 2:
         return (
           <AddressStep
-            value={profileData.address || {}}
+            value={profileData.address}
             onChange={(address) => updateProfileData('address', address)}
           />
         );

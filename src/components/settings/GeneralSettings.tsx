@@ -9,10 +9,11 @@ import ProfileImageSection from "./ProfileImageSection";
 import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import InterestsFormSection from "./InterestsFormSection";
-import ImportantDatesFormSection from "./ImportantDatesFormSection";
+import ImportantDatesFormSection from "./form-sections/ImportantDatesFormSection";
 import DataSharingSection from "./DataSharingSection";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { ImportantDate } from "@/hooks/settings/settingsFormSchema";
 
 const GeneralSettings = () => {
   const { form, onSubmit, isLoading } = useSettingsForm();
@@ -49,7 +50,7 @@ const GeneralSettings = () => {
   const currentImage = form.watch("profile_image");
   const currentName = form.watch("name") || "";
   const interests = form.watch("interests") || [];
-  const importantDates = form.watch("importantDates") || [];
+  const importantDates = (form.watch("importantDates") || []) as ImportantDate[];
 
   const handleImageUpdate = async (imageUrl: string | null) => {
     form.setValue("profile_image", imageUrl);
@@ -86,11 +87,11 @@ const GeneralSettings = () => {
           />
           
           <ImportantDatesFormSection
-            importantDates={importantDates}
-            removeImportantDate={handleRemoveImportantDate}
+            form={form}
             newImportantDate={newImportantDate}
             setNewImportantDate={setNewImportantDate}
-            addImportantDate={handleAddImportantDate}
+            handleAddImportantDate={handleAddImportantDate}
+            handleRemoveImportantDate={handleRemoveImportantDate}
           />
           
           <DataSharingSection />

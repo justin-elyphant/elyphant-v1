@@ -19,7 +19,7 @@ const ImportantDatesStep: React.FC<ImportantDatesStepProps> = ({
   const [newDate, setNewDate] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-  const currentDates = profileData.important_dates || [];
+  const currentDates = profileData.importantDates || [];
 
   const addDate = () => {
     if (newDate.trim() && newDescription.trim()) {
@@ -30,7 +30,7 @@ const ImportantDatesStep: React.FC<ImportantDatesStepProps> = ({
           description: newDescription.trim()
         }
       ];
-      updateProfileData('important_dates', updatedDates);
+      updateProfileData('importantDates', updatedDates);
       setNewDate("");
       setNewDescription("");
     }
@@ -38,7 +38,7 @@ const ImportantDatesStep: React.FC<ImportantDatesStepProps> = ({
 
   const removeDate = (index: number) => {
     const updatedDates = currentDates.filter((_, i) => i !== index);
-    updateProfileData('important_dates', updatedDates);
+    updateProfileData('importantDates', updatedDates);
   };
 
   return (

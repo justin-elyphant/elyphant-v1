@@ -11,10 +11,10 @@ interface AddressStepProps {
 }
 
 const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileData }) => {
-  const currentAddress = profileData.shipping_address || {};
+  const currentAddress = profileData.address || {};
 
   const handleChange = (field: string, fieldValue: string) => {
-    updateProfileData('shipping_address', {
+    updateProfileData('address', {
       ...currentAddress,
       [field]: fieldValue
     });
@@ -35,8 +35,8 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
           <Input
             id="street"
             placeholder="123 Main St"
-            value={currentAddress.street || ""}
-            onChange={(e) => handleChange("street", e.target.value)}
+            value={currentAddress.address_line1 || currentAddress.street || ""}
+            onChange={(e) => handleChange("address_line1", e.target.value)}
           />
         </div>
 
@@ -66,8 +66,8 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
             <Input
               id="zipCode"
               placeholder="ZIP Code"
-              value={currentAddress.zipCode || ""}
-              onChange={(e) => handleChange("zipCode", e.target.value)}
+              value={currentAddress.zip_code || currentAddress.zipCode || ""}
+              onChange={(e) => handleChange("zip_code", e.target.value)}
             />
           </div>
         </div>

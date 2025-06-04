@@ -14,11 +14,11 @@ export interface ProfileData extends SettingsFormValues {
 
 export type ProfileDataKey = keyof ProfileData;
 
-// Address interface that matches the form structure
+// Address interface that matches the form structure - made optional for setup flow
 export interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
 }

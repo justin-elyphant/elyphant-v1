@@ -45,12 +45,15 @@ export const useSettingsForm = () => {
   // Load profile data when available
   useEffect(() => {
     if (profile && !loading) {
+      // Parse birthday from storage format, ensuring we have valid data
+      const parsedBirthday = parseBirthdayFromStorage(profile.dob);
+      
       form.reset({
         name: profile.name || "",
         email: profile.email || "",
         bio: profile.bio || "",
         profile_image: profile.profile_image || null,
-        birthday: parseBirthdayFromStorage(profile.dob), // Parse birthday from storage format
+        birthday: parsedBirthday, // This is now properly typed as BirthdayData | null
         address: profile.shipping_address || {
           street: "",
           city: "",
@@ -103,7 +106,7 @@ export const useSettingsForm = () => {
         name: data.name,
         bio: data.bio,
         profile_image: data.profile_image,
-        dob: formatBirthdayForStorage(data.birthday), // Convert birthday to storage format
+        dob: formatBirthdayForStorage(data.birthday), // data.birthday is already properly typed
         shipping_address: shippingAddress,
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({

@@ -21,6 +21,7 @@ import Connections from "./pages/Connections";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import VendorPartner from "./pages/VendorPartner";
+import AboutUs from "./pages/AboutUs";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/profile/:identifier" element={<Profile />} />
                 <Route path="/vendor-partner" element={<VendorPartner />} />
+                <Route path="/about" element={<AboutUs />} />
                 {/* Add other routes as needed */}
               </Routes>
               <SearchOptimizationMonitor />

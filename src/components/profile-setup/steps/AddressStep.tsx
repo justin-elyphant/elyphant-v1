@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,17 @@ interface AddressStepProps {
 }
 
 const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileData }) => {
-  const currentAddress: ShippingAddress = profileData.address || {};
+  const defaultAddress: ShippingAddress = {
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "US"
+  };
+  
+  const currentAddress: ShippingAddress = (profileData.address && Object.keys(profileData.address).length > 0) 
+    ? profileData.address 
+    : defaultAddress;
 
   const handleChange = (field: string, fieldValue: string) => {
     updateProfileData('address', {

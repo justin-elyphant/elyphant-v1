@@ -3,14 +3,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
+import { Address } from "../hooks/types";
 
 interface AddressStepProps {
   value: Address;
@@ -40,7 +33,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
           <Input
             id="street"
             placeholder="123 Main St"
-            value={value.street}
+            value={value.street || ""}
             onChange={(e) => handleChange("street", e.target.value)}
           />
         </div>
@@ -50,7 +43,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
           <Input
             id="city"
             placeholder="City"
-            value={value.city}
+            value={value.city || ""}
             onChange={(e) => handleChange("city", e.target.value)}
           />
         </div>
@@ -61,14 +54,14 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
             <Input
               id="state"
               placeholder="State"
-              value={value.state}
+              value={value.state || ""}
               onChange={(e) => handleChange("state", e.target.value)}
             />
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="country">Country</Label>
-            <Select value={value.country} onValueChange={(country) => handleChange("country", country)}>
+            <Select value={value.country || "US"} onValueChange={(country) => handleChange("country", country)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
@@ -87,7 +80,7 @@ const AddressStep: React.FC<AddressStepProps> = ({ value, onChange }) => {
           <Input
             id="zipCode"
             placeholder="Zip Code"
-            value={value.zipCode}
+            value={value.zipCode || ""}
             onChange={(e) => handleChange("zipCode", e.target.value)}
           />
         </div>

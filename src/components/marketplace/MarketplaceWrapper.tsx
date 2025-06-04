@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -58,17 +59,16 @@ const MarketplaceWrapper = () => {
     }
   }, [isMobile]);
 
-  // Only show filters automatically on desktop when there are active search parameters
+  // Only show filters when there are active search parameters AND user manually interacts
   useEffect(() => {
     const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam);
     
-    // Only auto-show filters on desktop when there are active search parameters
-    if (!isMobile && hasActiveSearch && !isInitialLoad) {
-      setShowFilters(true);
-    } else if (!hasActiveSearch) {
-      // Hide filters when there are no search parameters
+    // Never auto-show filters - only show when user explicitly requests them
+    // Reset to false when there are no search parameters
+    if (!hasActiveSearch) {
       setShowFilters(false);
     }
+    // Note: Removed auto-show logic for desktop with active search parameters
   }, [searchTerm, categoryParam, brandParam, isMobile, isInitialLoad]);
 
   // Clean up conflicting URL parameters

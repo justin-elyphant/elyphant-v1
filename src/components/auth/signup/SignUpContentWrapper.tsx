@@ -1,3 +1,4 @@
+
 import React from "react";
 import { toast } from "sonner";
 import SignUpView from "./views/SignUpView";
@@ -31,9 +32,10 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 }) => {
   const [showIntentModal, setShowIntentModal] = React.useState(false);
   const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
+  const [isLoading, setIsLoading] = React.useState(false);
   const navigate = useNavigate();
 
-  // CRITICAL: Show intent modal IMMEDIATELY when entering verification step
+  // Handle verification step logic
   React.useEffect(() => {
     console.log("[SignUpContentWrapper] Effect triggered:", { step, userEmail, showIntentModal });
     
@@ -42,12 +44,14 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       localStorage.removeItem("showingIntentModal");
       localStorage.removeItem("userIntent");
       setShowIntentModal(false);
+      setIsLoading(false);
       return;
     }
     
-    // IMMEDIATELY show modal when verification step loads with email
+    // Handle verification step
     if (step === "verification" && userEmail) {
       console.log("[SignUpContentWrapper] Verification step detected - checking intent");
+      setIsLoading(true);
       
       // Check if user already has valid intent
       const userIntent = localStorage.getItem("userIntent");
@@ -78,10 +82,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
         localStorage.removeItem("ctaIntent"); // Clear after using
       }
 
-      // IMMEDIATELY show the intent modal and block everything else
-      console.log("[SignUpContentWrapper] IMMEDIATELY showing intent modal - BLOCKING all navigation");
+      // Show the intent modal and stop loading
+      console.log("[SignUpContentWrapper] Showing intent modal");
       localStorage.setItem("showingIntentModal", "true");
       setShowIntentModal(true);
+      setIsLoading(false);
     }
   }, [step, userEmail, navigate]);
 
@@ -113,9 +118,31 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     }, 100);
   };
 
-  // FORCE the modal to show if we're in verification step with email - this overrides everything
-  if (step === "verification" && userEmail && showIntentModal) {
-    console.log("[SignUpContentWrapper] FORCE RENDERING intent modal - BLOCKING all other content");
+  // Render signup step
+  if (step === "signup") {
+    return (
+      <SignUpView 
+        onSubmit={onSignUpSubmit} 
+        isSubmitting={isSubmitting} 
+      />
+    );
+  }
+
+  // Render verification step loading
+  if (step === "verification" && isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Setting up your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render intent modal - this takes priority over everything else in verification step
+  if (step === "verification" && showIntentModal) {
+    console.log("[SignUpContentWrapper] RENDERING intent modal");
     return (
       <OnboardingIntentModal
         open={true}
@@ -126,16 +153,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Regular signup/verification flow only if modal is not showing
-  if (step === "signup") {
-    return (
-      <SignUpView 
-        onSubmit={onSignUpSubmit} 
-        isSubmitting={isSubmitting} 
-      />
-    );
-  }
-
+  // Fallback to verification view (this should rarely be reached now)
   return (
     <VerificationView
       userEmail={userEmail}

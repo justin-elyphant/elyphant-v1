@@ -31,10 +31,10 @@ export const useProfileCompletion = (user: User | null) => {
     try {
       setIsSubmitting(true);
       
-      // Mark profile as completed
+      // Mark profile as completed using the correct column name
       const { error } = await supabase
         .from("profiles")
-        .update({ profile_completed: true })
+        .update({ onboarding_completed: true })
         .eq("id", user.id);
         
       if (error) throw error;
@@ -45,6 +45,11 @@ export const useProfileCompletion = (user: User | null) => {
       // Determine the route based on next steps option
       const targetRoute = getRouteFromNextStepsOption(nextStepsOption);
       
+      // Clear signup flags
+      localStorage.removeItem("newSignUp");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
+      
       // Redirect based on user state and their selection
       if (isNewSignUp) {
         // For new signups, check if they chose a specific option
@@ -52,7 +57,8 @@ export const useProfileCompletion = (user: User | null) => {
           navigate(targetRoute);
           toast.success("Profile setup completed!");
         } else {
-          navigate("/onboarding");
+          navigate("/dashboard");
+          toast.success("Profile setup completed!");
         }
       } else {
         navigate(targetRoute);
@@ -70,9 +76,14 @@ export const useProfileCompletion = (user: User | null) => {
     // Check if this is a new signup
     const isNewSignUp = localStorage.getItem("newSignUp") === "true";
     
+    // Clear signup flags
+    localStorage.removeItem("newSignUp");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
+    
     // Redirect based on user state
     if (isNewSignUp) {
-      navigate("/onboarding");
+      navigate("/dashboard");
     } else {
       navigate("/dashboard");
     }

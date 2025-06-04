@@ -28,9 +28,9 @@ export const useAutoRedirect = ({
       bypassVerification 
     });
 
-    // CRITICAL: Never auto-redirect during verification step - let the intent modal handle everything
+    // CRITICAL: NEVER auto-redirect during verification step - let the intent modal handle everything
     if (step === "verification") {
-      console.log("[useAutoRedirect] BLOCKING auto-redirect - verification step should show intent modal first");
+      console.log("[useAutoRedirect] BLOCKING auto-redirect - verification step requires intent modal first");
       return;
     }
 

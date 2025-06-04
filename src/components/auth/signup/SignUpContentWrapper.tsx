@@ -33,17 +33,20 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
   const navigate = useNavigate();
 
-  // Check if intent modal should show - IMMEDIATELY on verification step
+  // Check if intent modal should show - ONLY during verification step
   React.useEffect(() => {
     console.log("[SignUpContentWrapper] Effect triggered:", { step, userEmail, showIntentModal });
     
+    // Clear any existing flags that might interfere
+    if (step === "signup") {
+      localStorage.removeItem("showingIntentModal");
+      setShowIntentModal(false);
+      return;
+    }
+    
     // Only show modal during verification step with email
     if (step !== "verification" || !userEmail) {
-      console.log("[SignUpContentWrapper] Not verification step or no email, hiding modal");
-      if (showIntentModal) {
-        setShowIntentModal(false);
-        localStorage.removeItem("showingIntentModal");
-      }
+      console.log("[SignUpContentWrapper] Not verification step or no email");
       return;
     }
 
@@ -54,9 +57,20 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     console.log("[SignUpContentWrapper] Current intent:", userIntent, "Valid:", validIntent);
 
     if (validIntent) {
-      console.log("[SignUpContentWrapper] Valid intent found, hiding modal");
-      setShowIntentModal(false);
+      console.log("[SignUpContentWrapper] Valid intent found, no modal needed");
       localStorage.removeItem("showingIntentModal");
+      setShowIntentModal(false);
+      
+      // Navigate immediately if intent is already selected
+      setTimeout(() => {
+        if (userIntent === "giftor") {
+          console.log("[SignUpContentWrapper] Navigating to marketplace");
+          navigate("/marketplace", { replace: true });
+        } else {
+          console.log("[SignUpContentWrapper] Navigating to profile-setup");
+          navigate("/profile-setup", { replace: true });
+        }
+      }, 100);
       return;
     }
 
@@ -68,11 +82,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       localStorage.removeItem("ctaIntent"); // Clear after using
     }
 
-    // Show the intent modal IMMEDIATELY
-    console.log("[SignUpContentWrapper] Showing intent modal immediately");
+    // Show the intent modal IMMEDIATELY and block everything else
+    console.log("[SignUpContentWrapper] Showing intent modal and blocking navigation");
     localStorage.setItem("showingIntentModal", "true");
     setShowIntentModal(true);
-  }, [step, userEmail]); // Removed showIntentModal dependency to prevent loops
+  }, [step, userEmail, navigate]);
 
   const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
     console.log("[SignUpContentWrapper] Intent selected:", userIntent);
@@ -80,7 +94,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     // Set the intent and clear modal flags
     localStorage.setItem("userIntent", userIntent);
     localStorage.removeItem("showingIntentModal");
-    localStorage.removeItem("ctaIntent"); // Ensure it's cleared
+    localStorage.removeItem("ctaIntent");
     
     // Update local state
     setShowIntentModal(false);
@@ -97,9 +111,9 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     }, 100);
   };
 
-  // Always render the modal if it should show, regardless of other conditions
-  if (showIntentModal && step === "verification" && userEmail) {
-    console.log("[SignUpContentWrapper] Rendering intent modal");
+  // FORCE the modal to show if conditions are met - this overrides everything else
+  if (step === "verification" && userEmail && showIntentModal) {
+    console.log("[SignUpContentWrapper] FORCE RENDERING intent modal");
     return (
       <OnboardingIntentModal
         open={true}

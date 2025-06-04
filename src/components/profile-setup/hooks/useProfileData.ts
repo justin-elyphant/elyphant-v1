@@ -3,15 +3,15 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ProfileData } from "./types";
+import { SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
 import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 export const useProfileData = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize with settings-compatible structure
-  const [profileData, setProfileData] = useState<ProfileData>({
+  // Initialize with settings-compatible structure with all required fields
+  const [profileData, setProfileData] = useState<SettingsFormValues>({
     name: "",
     email: user?.email || "",
     bio: "",
@@ -26,8 +26,7 @@ export const useProfileData = () => {
     },
     interests: [],
     importantDates: [],
-    data_sharing_settings: getDefaultDataSharingSettings(),
-    next_steps_option: undefined
+    data_sharing_settings: getDefaultDataSharingSettings()
   });
 
   // Load existing profile data if available
@@ -49,19 +48,19 @@ export const useProfileData = () => {
         }
 
         if (profile) {
-          // Map profile data to settings format exactly
-          const mappedData: Partial<ProfileData> = {
+          // Map profile data to settings format exactly, ensuring all required fields
+          const mappedData: Partial<SettingsFormValues> = {
             name: profile.name || "",
             email: profile.email || user.email || "",
             bio: profile.bio || "",
             profile_image: profile.profile_image,
             birthday: profile.dob ? new Date(profile.dob) : null,
-            address: profile.shipping_address || {
-              street: "",
-              city: "",
-              state: "",
-              zipCode: "",
-              country: "US"
+            address: {
+              street: profile.shipping_address?.street || profile.shipping_address?.address_line1 || "",
+              city: profile.shipping_address?.city || "",
+              state: profile.shipping_address?.state || "",
+              zipCode: profile.shipping_address?.zipCode || profile.shipping_address?.zip_code || "",
+              country: profile.shipping_address?.country || "US"
             },
             interests: Array.isArray(profile.gift_preferences) 
               ? profile.gift_preferences.map((pref: any) => 
@@ -71,7 +70,7 @@ export const useProfileData = () => {
             importantDates: Array.isArray(profile.important_dates)
               ? profile.important_dates.map((date: any) => ({
                   date: new Date(date.date),
-                  description: date.description
+                  description: date.description || date.title || ""
                 })).filter((date: any) => date.date && date.description)
               : [],
             data_sharing_settings: profile.data_sharing_settings || getDefaultDataSharingSettings()
@@ -90,7 +89,7 @@ export const useProfileData = () => {
     loadExistingProfile();
   }, [user?.id, user?.email]);
 
-  const updateProfileData = (key: keyof ProfileData, value: any) => {
+  const updateProfileData = (key: keyof SettingsFormValues, value: any) => {
     setProfileData(prev => ({
       ...prev,
       [key]: value

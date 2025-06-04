@@ -1,10 +1,9 @@
 
 import { SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
 
-// Use the exact same data structure as settings for consistency
+// Extend the settings form values with onboarding-specific fields
 export interface ProfileData extends SettingsFormValues {
   next_steps_option?: string;
-  // Remove legacy fields that are no longer needed
 }
 
 export type ProfileDataKey = keyof ProfileData;

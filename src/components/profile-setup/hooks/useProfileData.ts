@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
+import { ProfileData } from "./types";
 import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 export const useProfileData = () => {
@@ -11,7 +11,7 @@ export const useProfileData = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Initialize with settings-compatible structure with all required fields
-  const [profileData, setProfileData] = useState<SettingsFormValues>({
+  const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
     email: user?.email || "",
     bio: "",
@@ -26,7 +26,8 @@ export const useProfileData = () => {
     },
     interests: [],
     importantDates: [],
-    data_sharing_settings: getDefaultDataSharingSettings()
+    data_sharing_settings: getDefaultDataSharingSettings(),
+    next_steps_option: undefined
   });
 
   // Load existing profile data if available
@@ -49,7 +50,7 @@ export const useProfileData = () => {
 
         if (profile) {
           // Map profile data to settings format exactly, ensuring all required fields
-          const mappedData: Partial<SettingsFormValues> = {
+          const mappedData: Partial<ProfileData> = {
             name: profile.name || "",
             email: profile.email || user.email || "",
             bio: profile.bio || "",
@@ -89,7 +90,7 @@ export const useProfileData = () => {
     loadExistingProfile();
   }, [user?.id, user?.email]);
 
-  const updateProfileData = (key: keyof SettingsFormValues, value: any) => {
+  const updateProfileData = (key: keyof ProfileData, value: any) => {
     setProfileData(prev => ({
       ...prev,
       [key]: value

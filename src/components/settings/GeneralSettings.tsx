@@ -46,6 +46,16 @@ const GeneralSettings = () => {
     );
   }
 
+  const currentImage = form.watch("profile_image");
+  const currentName = form.watch("name") || "";
+  const interests = form.watch("interests") || [];
+  const importantDates = form.watch("importantDates") || [];
+
+  const handleImageUpdate = async (imageUrl: string | null) => {
+    form.setValue("profile_image", imageUrl);
+    await refetchProfile();
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -58,31 +68,32 @@ const GeneralSettings = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
           <ProfileImageSection 
-            form={form} 
-            refetchProfile={refetchProfile}
+            currentImage={currentImage}
+            name={currentName}
+            onImageUpdate={handleImageUpdate}
           />
           
-          <BasicInfoSection form={form} />
+          <BasicInfoSection user={user} />
           
-          <AddressSection form={form} />
+          <AddressSection />
           
           <InterestsFormSection
-            form={form}
+            interests={interests}
+            removeInterest={handleRemoveInterest}
             newInterest={newInterest}
             setNewInterest={setNewInterest}
-            handleAddInterest={handleAddInterest}
-            handleRemoveInterest={handleRemoveInterest}
+            addInterest={handleAddInterest}
           />
           
           <ImportantDatesFormSection
-            form={form}
+            importantDates={importantDates}
+            removeImportantDate={handleRemoveImportantDate}
             newImportantDate={newImportantDate}
             setNewImportantDate={setNewImportantDate}
-            handleAddImportantDate={handleAddImportantDate}
-            handleRemoveImportantDate={handleRemoveImportantDate}
+            addImportantDate={handleAddImportantDate}
           />
           
-          <DataSharingSection form={form} />
+          <DataSharingSection />
           
           <div className="flex justify-end">
             <Button type="submit" disabled={isSaving}>

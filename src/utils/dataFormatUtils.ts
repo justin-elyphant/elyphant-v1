@@ -4,9 +4,17 @@ import { getDefaultDataSharingSettings } from "./privacyUtils";
 import { ProfileData } from "@/components/profile-setup/hooks/types";
 
 /**
+ * Database-specific profile data type that extends ProfileData with additional fields
+ */
+type DatabaseProfileData = ProfileData & {
+  onboarding_completed?: boolean;
+  updated_at?: string;
+};
+
+/**
  * Validates and cleans profile data before submission
  */
-export function validateAndCleanProfileData(profileData: ProfileData): [boolean, any] {
+export function validateAndCleanProfileData(profileData: ProfileData): [boolean, ProfileData | null] {
   try {
     // Make sure we have an object
     if (!profileData || typeof profileData !== 'object') {
@@ -15,7 +23,7 @@ export function validateAndCleanProfileData(profileData: ProfileData): [boolean,
     }
 
     // Create a cleaned data object with proper type conversion
-    const cleanedData = {
+    const cleanedData: ProfileData = {
       ...profileData,
       // Ensure data sharing settings are complete
       data_sharing_settings: {
@@ -49,12 +57,6 @@ export function validateAndCleanProfileData(profileData: ProfileData): [boolean,
       cleanedData.bio = cleanedData.bio.substring(0, 500);
     }
 
-    // Add onboarding_completed flag
-    cleanedData.onboarding_completed = true;
-    
-    // Add timestamp
-    cleanedData.updated_at = new Date().toISOString();
-
     console.log("Cleaned profile data:", JSON.stringify(cleanedData, null, 2));
     return [true, cleanedData];
   } catch (error) {
@@ -64,16 +66,23 @@ export function validateAndCleanProfileData(profileData: ProfileData): [boolean,
 }
 
 /**
- * Formats profile data for submission to the API
+ * Formats profile data for submission to the API with database-specific fields
  */
-export function formatProfileForSubmission(profileData: ProfileData) {
+export function formatProfileForSubmission(profileData: ProfileData): DatabaseProfileData {
   const [isValid, cleanedData] = validateAndCleanProfileData(profileData);
   
   if (!isValid || !cleanedData) {
     throw new Error("Failed to format profile data for submission");
   }
   
-  return cleanedData;
+  // Add database-specific fields
+  const databaseData: DatabaseProfileData = {
+    ...cleanedData,
+    onboarding_completed: true,
+    updated_at: new Date().toISOString()
+  };
+  
+  return databaseData;
 }
 
 /**

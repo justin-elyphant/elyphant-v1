@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SettingsFormValues, ImportantDate } from "./settingsFormSchema";
+import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
   const { profile, loading, refetchProfile } = useProfile();
@@ -46,6 +47,12 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
           ).filter(Boolean)
         : [];
       
+      // Ensure complete data sharing settings with consistent defaults
+      const completeDataSharingSettings = {
+        ...getDefaultDataSharingSettings(),
+        ...(profile.data_sharing_settings || {})
+      };
+      
       // Map fields to form values
       form.reset({
         name: profile.name || '',
@@ -62,14 +69,10 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         },
         interests: interests,
         importantDates: importantDates,
-        data_sharing_settings: profile.data_sharing_settings || {
-          dob: "friends",
-          shipping_address: "private", 
-          gift_preferences: "public"
-        }
+        data_sharing_settings: completeDataSharingSettings
       });
       
-      console.log("Profile data loaded into form successfully");
+      console.log("Profile data loaded into settings form with consistent defaults:", completeDataSharingSettings);
     }
   };
 

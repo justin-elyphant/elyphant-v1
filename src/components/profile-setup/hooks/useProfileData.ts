@@ -10,7 +10,7 @@ export const useProfileData = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize with complete required structure
+  // Initialize with complete required structure using consistent defaults
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
     email: user?.email || "",
@@ -51,7 +51,7 @@ export const useProfileData = () => {
         if (profile) {
           console.log("Loading existing profile data:", profile);
           
-          // Ensure complete data sharing settings with email field
+          // Ensure complete data sharing settings with email field using consistent defaults
           const completeDataSharingSettings = {
             ...getDefaultDataSharingSettings(),
             ...(profile.data_sharing_settings || {})
@@ -86,7 +86,7 @@ export const useProfileData = () => {
           };
 
           setProfileData(prev => ({ ...prev, ...mappedData }));
-          console.log("Profile data loaded and mapped successfully");
+          console.log("Profile data loaded with consistent defaults:", completeDataSharingSettings);
         }
       } catch (error) {
         console.error("Error loading profile:", error);

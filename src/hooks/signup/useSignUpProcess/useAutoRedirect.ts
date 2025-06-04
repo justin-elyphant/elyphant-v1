@@ -28,56 +28,45 @@ export const useAutoRedirect = ({
       bypassVerification 
     });
 
-    // CRITICAL: NEVER auto-redirect during verification step - let the intent modal handle everything
+    // CRITICAL: COMPLETELY DISABLE auto-redirect during verification step
+    // The intent modal in SignUpContentWrapper will handle ALL navigation
     if (step === "verification") {
-      console.log("[useAutoRedirect] BLOCKING auto-redirect - verification step requires intent modal first");
+      console.log("[useAutoRedirect] COMPLETELY BLOCKING auto-redirect - verification step requires intent modal selection");
       return;
     }
 
-    // Only proceed if we have email sent and bypass is enabled
-    if (!emailSent || !bypassVerification) {
+    // Only proceed during signup step if we have specific conditions
+    if (step !== "signup" || !emailSent || !bypassVerification) {
       console.log("[useAutoRedirect] Conditions not met for auto-redirect");
       return;
     }
 
-    // Check if intent modal is currently showing
-    const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
-    if (showingIntentModal) {
-      console.log("[useAutoRedirect] Intent modal is showing - blocking auto-redirect");
-      return;
-    }
-
-    // Store user data for later use
-    localStorage.setItem("newSignUp", "true");
-    localStorage.setItem("userEmail", userEmail);
-    localStorage.setItem("userName", userName || "");
-
-    // Check if we have a valid intent
+    // During signup step, we can potentially redirect if user already has intent
     const userIntent = localStorage.getItem("userIntent");
     const validIntent = userIntent === "giftor" || userIntent === "giftee";
 
-    if (!validIntent) {
-      console.log("[useAutoRedirect] No valid intent, will wait for intent modal");
-      return;
-    }
-
-    // If we reach here, we have valid intent and can redirect
-    if (bypassVerification) {
-      toast.success("Account created successfully!", {
-        description: "We've simplified your signup experience."
-      });
-    }
-
-    // Navigate based on intent with delay
-    setTimeout(() => {
-      if (userIntent === "giftor") {
-        console.log("[useAutoRedirect] Navigating to /marketplace");
-        navigate('/marketplace', { replace: true });
-      } else if (userIntent === "giftee") {
-        console.log("[useAutoRedirect] Navigating to /profile-setup");
-        navigate('/profile-setup', { replace: true });
+    if (validIntent) {
+      console.log("[useAutoRedirect] Valid intent during signup, redirecting");
+      
+      if (bypassVerification) {
+        toast.success("Welcome back!", {
+          description: "Redirecting to your dashboard."
+        });
       }
-    }, 150);
+
+      // Navigate based on intent with delay
+      setTimeout(() => {
+        if (userIntent === "giftor") {
+          console.log("[useAutoRedirect] Navigating to /marketplace");
+          navigate('/marketplace', { replace: true });
+        } else if (userIntent === "giftee") {
+          console.log("[useAutoRedirect] Navigating to /profile-setup");
+          navigate('/profile-setup', { replace: true });
+        }
+      }, 150);
+    } else {
+      console.log("[useAutoRedirect] No valid intent during signup - will proceed to verification step");
+    }
   }, [emailSent, step, navigate, userEmail, userName, bypassVerification]);
   
   return null;

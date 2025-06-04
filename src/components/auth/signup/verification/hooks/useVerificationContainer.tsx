@@ -22,41 +22,17 @@ export const useVerificationContainer = ({
   const [isVerified, setIsVerified] = useState(false);
   const [verificationChecking, setVerificationChecking] = useState(false);
 
-  // CRITICAL: Do NOT auto-verify until intent is selected
+  // CRITICAL: NEVER auto-verify during verification step - intent modal must control everything
   useEffect(() => {
-    console.log("[useVerificationContainer] Checking auto-verification conditions");
+    console.log("[useVerificationContainer] BLOCKING auto-verification - intent modal controls flow");
     
-    // Check if intent modal is currently showing - if so, BLOCK auto-verification
-    const showingIntentModal = localStorage.getItem("showingIntentModal") === "true";
-    if (showingIntentModal) {
-      console.log("[useVerificationContainer] Intent modal is showing - BLOCKING auto-verification");
-      return;
-    }
+    // Do NOT auto-verify - let the intent modal handle everything
+    // The intent modal in SignUpContentWrapper will control when to proceed
     
-    // Check if user has selected intent
-    const userIntent = localStorage.getItem("userIntent");
-    const validIntent = userIntent === "giftor" || userIntent === "giftee";
-    
-    console.log("[useVerificationContainer] Intent status:", { userIntent, validIntent });
-    
-    // Only auto-verify if we have valid intent and modal is not showing
-    if (!validIntent) {
-      console.log("[useVerificationContainer] No valid intent - waiting for selection");
-      return;
-    }
-    
-    // If we reach here, user has selected intent and we can proceed
-    if (!isVerified) {
-      console.log("[useVerificationContainer] Auto-verifying with valid intent:", userIntent);
-      const verifyTimer = setTimeout(() => {
-        handleVerificationSuccess();
-      }, 500);
-      
-      return () => clearTimeout(verifyTimer);
-    }
-  }, [isVerified]); // Removed navigate and other dependencies to prevent loops
+    return () => {}; // No cleanup needed since we're not auto-verifying
+  }, []); // Empty dependency array - we never want to auto-verify
   
-  // Handle successful verification
+  // Handle successful verification - only called by intent modal after selection
   const handleVerificationSuccess = () => {
     console.log("[useVerificationContainer] Handling verification success");
     setIsVerified(true);
@@ -68,12 +44,7 @@ export const useVerificationContainer = ({
     localStorage.removeItem("pendingVerificationEmail");
     localStorage.removeItem("pendingVerificationName");
     
-    // Show success toast
-    toast.success("Account created successfully!", {
-      description: "Please select how you'd like to use Elyphant."
-    });
-    
-    console.log("[useVerificationContainer] Verification successful, waiting for intent selection");
+    console.log("[useVerificationContainer] Verification successful - ready for intent selection");
   };
   
   // Check if email is verified in Supabase
@@ -119,11 +90,7 @@ export const useVerificationContainer = ({
         console.error("Error in background verification:", error);
       }
       
-      toast.success("Account created successfully!", {
-        description: "Please select how you'd like to use Elyphant."
-      });
-      
-      // Always mark as successful
+      // Always mark as successful and let intent modal handle navigation
       handleVerificationSuccess();
       
       return { success: true };

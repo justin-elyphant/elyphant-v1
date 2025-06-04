@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -104,7 +103,16 @@ const Profile = () => {
       }
 
       if (data) {
-        setProfileData(data);
+        // Validate profile data flow
+        import("@/utils/profileDataValidator").then(({ validateProfileDataFlow, formatProfileForDisplay }) => {
+          validateProfileDataFlow(data, 'Profile page fetch');
+          const formattedProfile = formatProfileForDisplay(data);
+          setProfileData(formattedProfile);
+        }).catch(() => {
+          // Fallback if validation fails
+          setProfileData(data);
+        });
+        
         setIsCurrentUser(user?.id === data.id);
         setIsMockProfile(false);
       }

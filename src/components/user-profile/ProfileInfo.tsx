@@ -4,8 +4,8 @@ import { Calendar, Gift, MapPin, Mail, Globe, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import PrivacyNotice from "./PrivacyNotice";
-import { formatDate } from "@/utils/date-formatting";
 import { Profile } from "@/types/profile";
+import { formatBirthdayForDisplay, shouldDisplayBirthday } from "@/utils/birthdayUtils";
 
 interface ProfileInfoProps {
   profile: Profile;
@@ -20,8 +20,25 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
     dob,
     shipping_address,
     gift_preferences,
+    interests,
     data_sharing_settings
   } = profile;
+
+  // Format birthday for display
+  const formattedBirthday = formatBirthdayForDisplay(dob);
+  const showBirthday = shouldDisplayBirthday(data_sharing_settings, 'public');
+
+  // Format address for display
+  const formatAddress = () => {
+    if (!shipping_address) return null;
+    const parts = [];
+    if (shipping_address.city) parts.push(shipping_address.city);
+    if (shipping_address.state) parts.push(shipping_address.state);
+    if (shipping_address.country && shipping_address.country !== 'US') parts.push(shipping_address.country);
+    return parts.join(', ');
+  };
+
+  const formattedAddress = formatAddress();
 
   return (
     <div className="space-y-4">
@@ -31,7 +48,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
           <CardTitle className="text-lg">Contact Info</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {email && data_sharing_settings?.email && (
+          {email && data_sharing_settings?.email && data_sharing_settings.email !== 'private' && (
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
                 <Mail className="h-4 w-4 text-blue-600" />
@@ -66,7 +83,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
           <CardTitle className="text-lg">Personal Info</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {dob && data_sharing_settings?.dob && (
+          {formattedBirthday && showBirthday && (
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
                 <Calendar className="h-4 w-4 text-green-600" />
@@ -74,14 +91,14 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium">Birthday</div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  {formatDate(dob)}
-                  <PrivacyNotice level={data_sharing_settings.dob} />
+                  {formattedBirthday}
+                  <PrivacyNotice level={data_sharing_settings?.dob || 'private'} />
                 </div>
               </div>
             </div>
           )}
 
-          {shipping_address && data_sharing_settings?.shipping_address && (
+          {formattedAddress && data_sharing_settings?.shipping_address && data_sharing_settings.shipping_address !== 'private' && (
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
                 <MapPin className="h-4 w-4 text-orange-600" />
@@ -89,7 +106,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium">Location</div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  {shipping_address.city}, {shipping_address.state}
+                  {formattedAddress}
                   <PrivacyNotice level={data_sharing_settings.shipping_address} />
                 </div>
               </div>
@@ -98,8 +115,9 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
         </CardContent>
       </Card>
 
-      {/* Gift Preferences */}
-      {gift_preferences && gift_preferences.length > 0 && data_sharing_settings?.gift_preferences && (
+      {/* Gift Preferences - Show interests as gift preferences */}
+      {((interests && interests.length > 0) || (gift_preferences && gift_preferences.length > 0)) && 
+       data_sharing_settings?.gift_preferences && data_sharing_settings.gift_preferences !== 'private' && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -110,7 +128,17 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {gift_preferences.slice(0, 6).map((pref, i) => {
+              {/* Show interests first (primary source from settings) */}
+              {interests && Array.isArray(interests) && interests.slice(0, 6).map((interest, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <span className="text-sm">{interest}</span>
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                </div>
+              ))}
+              
+              {/* Fallback to gift_preferences if no interests */}
+              {(!interests || interests.length === 0) && gift_preferences && Array.isArray(gift_preferences) && 
+               gift_preferences.slice(0, 6).map((pref, i) => {
                 const category = typeof pref === 'string' ? pref : pref.category;
                 const importance = typeof pref === 'object' ? pref.importance : 'medium';
                 
@@ -124,9 +152,11 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
                   </div>
                 );
               })}
-              {gift_preferences.length > 6 && (
+              
+              {/* Show count of additional preferences */}
+              {interests && interests.length > 6 && (
                 <div className="text-xs text-muted-foreground pt-2">
-                  +{gift_preferences.length - 6} more preferences
+                  +{interests.length - 6} more interests
                 </div>
               )}
             </div>

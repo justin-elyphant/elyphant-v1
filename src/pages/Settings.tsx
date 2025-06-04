@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import MainLayout from "@/components/layout/MainLayout";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
@@ -16,54 +15,24 @@ type SettingsTab = "general" | "notifications" | "privacy";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
-  const { profile, loading, refreshProfile } = useProfile();
+  const { profile, loading } = useProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if not logged in
   React.useEffect(() => {
     if (!user && !loading) {
-      console.log("No user found, redirecting to signin");
       toast.error("You must be logged in to access settings");
-      navigate("/signin", { replace: true });
+      navigate("/signin");
     }
   }, [user, loading, navigate]);
 
-  // Refresh profile data when settings page loads
-  React.useEffect(() => {
-    const profileCompleted = localStorage.getItem("profileCompleted") === "true";
-    const profileCompletedTimestamp = localStorage.getItem("profileCompletedTimestamp");
-    
-    if (user && (profileCompleted || profileCompletedTimestamp)) {
-      console.log("[Settings] Profile completion detected, refreshing profile data");
-      refreshProfile().then(() => {
-        // Clear completion flags after refresh
-        localStorage.removeItem("profileCompleted");
-        localStorage.removeItem("profileCompletedTimestamp");
-      });
-    } else if (user && !profile && !loading) {
-      console.log("[Settings] No profile data loaded, triggering refresh");
-      refreshProfile();
-    }
-  }, [user, profile, loading, refreshProfile]);
-
-  // Show loading with timeout
-  if (loading && user) {
+  if (loading || !profile) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-gray-600">Loading your settings...</p>
-          </div>
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
-  }
-
-  // Don't render anything if no user (will redirect)
-  if (!user) {
-    return null;
   }
 
   const tabs = [
@@ -73,40 +42,26 @@ const Settings = () => {
   ];
 
   const renderTabContent = () => {
-    try {
-      switch (activeTab) {
-        case "general":
-          return <GeneralSettings />;
-        case "notifications":
-          return <NotificationSettings />;
-        case "privacy":
-          return <PrivacySecuritySettings />;
-        default:
-          return <GeneralSettings />;
-      }
-    } catch (error) {
-      console.error("Error rendering tab content:", error);
-      return (
-        <div className="text-center p-4">
-          <p className="text-red-500">Error loading settings. Please try refreshing the page.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded"
-          >
-            Refresh
-          </button>
-        </div>
-      );
+    switch (activeTab) {
+      case "general":
+        return <GeneralSettings />;
+      case "notifications":
+        return <NotificationSettings />;
+      case "privacy":
+        return <PrivacySecuritySettings />;
+      default:
+        return <GeneralSettings />;
     }
   };
 
+  // Only show quick links for signed-in users
   return (
-    <MainLayout>
-      <SettingsLayout
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
-      >
+    <SettingsLayout
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
+    >
+      {user && (
         <div className="mb-6">
           <h2 className="font-semibold text-lg mb-3">Your Quick Links</h2>
           <div className="flex flex-wrap gap-3 mb-4">
@@ -136,9 +91,9 @@ const Settings = () => {
             </Link>
           </div>
         </div>
-        {renderTabContent()}
-      </SettingsLayout>
-    </MainLayout>
+      )}
+      {renderTabContent()}
+    </SettingsLayout>
   );
 };
 

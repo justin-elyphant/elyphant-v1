@@ -2,7 +2,7 @@ import React from "react";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
 import { SignUpFormValues } from "./SignUpForm";
-import NicoleOnboardingEngine from "@/components/onboarding/nicole/NicoleOnboardingEngine";
+import OnboardingIntentModal from "./OnboardingIntentModal";
 import { useNavigate } from "react-router-dom";
 
 interface SignUpContentWrapperProps {
@@ -17,6 +17,9 @@ interface SignUpContentWrapperProps {
   bypassVerification?: boolean;
 }
 
+// Helper to check valid intent
+const validIntent = (intent: string | null) => intent === "giftor" || intent === "giftee";
+
 const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   step,
   userEmail,
@@ -28,140 +31,91 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   resendCount = 0,
   bypassVerification = true
 }) => {
-  const [showNicoleOnboarding, setShowNicoleOnboarding] = React.useState(false);
-  const [isNavigating, setIsNavigating] = React.useState(false);
-  const [formData, setFormData] = React.useState<SignUpFormValues | null>(null);
+  const [showIntentModal, setShowIntentModal] = React.useState(false);
+  const [intentHandled, setIntentHandled] = React.useState(false);
   const navigate = useNavigate();
 
-  // Enhanced form submission that stores data and shows Nicole immediately
-  const handleFormSubmit = React.useCallback(async (values: SignUpFormValues) => {
-    console.log("Form submission starting for:", values.email);
-    
-    // Store form data temporarily
-    setFormData(values);
-    
-    // Show Nicole immediately before account creation
-    localStorage.setItem("tempUserData", JSON.stringify(values));
-    localStorage.setItem("showingIntentModal", "true");
-    setShowNicoleOnboarding(true);
-    
-    console.log("Showing Nicole onboarding before account creation");
-  }, []);
+  // Pickup intended CTA intent (set on homepage) and clear after referencing
+  const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
 
-  // Handle Nicole onboarding completion - create account after Nicole
-  const handleOnboardingComplete = React.useCallback(async () => {
-    console.log("Nicole onboarding completed, creating account...");
-    
-    if (!formData) {
-      console.error("No form data available for account creation");
+  React.useEffect(() => {
+    if (step !== "verification" || !userEmail) {
+      if (showIntentModal) setShowIntentModal(false);
+      if (intentHandled) setIntentHandled(false);
       return;
     }
-    
-    try {
-      setIsNavigating(true);
+
+    // Retrieve suggested intent only ONCE on modal show, then clear the value for next visits
+    if (!intentHandled && !showIntentModal) {
+      const ctaIntent = localStorage.getItem("ctaIntent");
+      if (ctaIntent === "giftor" || ctaIntent === "giftee") {
+        setSuggestedIntent(ctaIntent);
+        // Clear so it only applies on first modal show after signup
+        localStorage.removeItem("ctaIntent");
+      }
+    }
+
+    const intent = localStorage.getItem("userIntent");
+    // Always show modal if no valid intent is found
+    if (!validIntent(intent)) {
+      localStorage.setItem("showingIntentModal", "true");
+      setShowIntentModal(true);
+      setIntentHandled(false);
+    } else {
+      setShowIntentModal(false);
+      setIntentHandled(true);
+    }
+  }, [step, userEmail, intentHandled, showIntentModal]);
+
+  // -- EARLY BLOCKER: If we should show the intent modal, render ONLY the modal --
+  if (
+    step === "verification" &&
+    userEmail &&
+    !validIntent(localStorage.getItem("userIntent"))
+  ) {
+    const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
+      localStorage.setItem("userIntent", userIntent);
       localStorage.removeItem("showingIntentModal");
-      localStorage.setItem("onboardingComplete", "true");
-      setShowNicoleOnboarding(false);
+      setShowIntentModal(false);
+      setIntentHandled(true);
 
-      // Now create the account with collected data
-      await onSignUpSubmit(formData);
-      
-      const finalIntent = localStorage.getItem("userIntent");
-      console.log("Account created, final intent:", finalIntent);
-      
-      setTimeout(() => {
+      if (userIntent === "giftor") {
+        // Instead of marketplace, route to new onboarding wizard for giftors
+        navigate("/onboarding-gift", { replace: true });
+      } else {
         navigate("/profile-setup", { replace: true });
-      }, 100);
-    } catch (error) {
-      console.error("Error creating account after Nicole:", error);
-      setIsNavigating(false);
-      // Show error to user but keep Nicole closed
-      setShowNicoleOnboarding(false);
-    }
-  }, [formData, navigate, onSignUpSubmit]);
-
-  // Handle Nicole onboarding close or error
-  const handleOnboardingClose = React.useCallback(() => {
-    console.log("Nicole onboarding closed, creating account without onboarding...");
-    
-    if (!formData) {
-      console.error("No form data available for account creation");
-      return;
-    }
-    
-    setIsNavigating(true);
-    localStorage.setItem("userIntent", "explorer");
-    localStorage.setItem("onboardingComplete", "true");
-    localStorage.removeItem("showingIntentModal");
-    setShowNicoleOnboarding(false);
-    
-    // Create account anyway
-    onSignUpSubmit(formData).then(() => {
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 100);
-    }).catch((error) => {
-      console.error("Error creating account:", error);
-      setIsNavigating(false);
-    });
-  }, [formData, navigate, onSignUpSubmit]);
-
-  // Render base content
-  const renderBaseContent = () => {
-    if (step === "signup") {
-      return (
-        <SignUpView 
-          onSubmit={handleFormSubmit} 
-          isSubmitting={isSubmitting || showNicoleOnboarding} 
-        />
-      );
-    }
+      }
+    };
 
     return (
-      <VerificationView
-        userEmail={userEmail}
-        userName={userName}
-        onBackToSignUp={handleBackToSignUp}
-        onResendVerification={onResendVerification}
-        resendCount={resendCount}
-        bypassVerification={bypassVerification}
+      <OnboardingIntentModal
+        open={true}
+        onSelect={handleSelectIntent}
+        onSkip={() => {/* Not used */}
+        }
+        suggestedIntent={suggestedIntent}
       />
     );
-  };
+  }
 
-  // Don't render anything if navigating to prevent flash
-  if (isNavigating) {
+  if (step === "signup") {
     return (
-      <div className="flex items-center justify-center p-8 min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Creating your account...</p>
-        </div>
-      </div>
+      <SignUpView 
+        onSubmit={onSignUpSubmit} 
+        isSubmitting={isSubmitting} 
+      />
     );
   }
 
   return (
-    <div className="relative">
-      {/* Always show base content first to prevent flash */}
-      {renderBaseContent()}
-
-      {/* Nicole onboarding overlay - show when triggered from signup form */}
-      <NicoleOnboardingEngine
-        isOpen={showNicoleOnboarding && !isNavigating}
-        onComplete={handleOnboardingComplete}
-        onClose={handleOnboardingClose}
-      />
-
-      {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-75 pointer-events-none z-40">
-          Nicole: {showNicoleOnboarding ? 'showing' : 'hidden'} | 
-          Navigating: {isNavigating ? 'yes' : 'no'} |
-          Form Data: {formData ? 'stored' : 'none'}
-        </div>
-      )}
-    </div>
+    <VerificationView
+      userEmail={userEmail}
+      userName={userName}
+      onBackToSignUp={handleBackToSignUp}
+      onResendVerification={onResendVerification}
+      resendCount={resendCount}
+      bypassVerification={bypassVerification}
+    />
   );
 };
 

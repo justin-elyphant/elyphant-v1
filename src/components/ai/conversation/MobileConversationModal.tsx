@@ -79,75 +79,7 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
     ? { transform: `translateY(${Math.max(0, currentY - startY)}px)` }
     : {};
 
-  // Enhanced responsive sizing for better viewport fit
-  const getModalStyle = () => {
-    const baseStyle = {
-      maxHeight: isMobile ? '90vh' : '85vh',
-      minHeight: isMobile ? '50vh' : '60vh',
-      maxWidth: isMobile ? '100vw' : '480px',
-      width: isMobile ? '100%' : '90vw',
-      paddingBottom: 'env(safe-area-inset-bottom)',
-      ...transformStyle
-    };
-    
-    return baseStyle;
-  };
-
-  if (!isMobile) {
-    // For desktop/tablet, use a centered modal instead of bottom sheet
-    return (
-      <>
-        {/* Backdrop */}
-        <div
-          className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
-            isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          onClick={() => {
-            triggerHapticFeedback('light');
-            onClose();
-          }}
-        />
-        
-        {/* Centered Modal for Desktop */}
-        <div
-          className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-2xl shadow-2xl transition-all duration-300 ease-out ${
-            isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
-          }`}
-          style={{
-            maxHeight: '80vh',
-            height: '600px',
-            width: '480px',
-            maxWidth: '90vw'
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">Ask Nicole</h3>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => {
-                triggerHapticFeedback('light');
-                onClose();
-              }}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {/* Content */}
-          <div className="h-full overflow-hidden" style={{ height: 'calc(100% - 73px)' }}>
-            <NicoleConversationEngine
-              initialQuery={initialQuery}
-              onClose={onClose}
-              onNavigateToResults={onNavigateToResults}
-            />
-          </div>
-        </div>
-      </>
-    );
-  }
+  if (!isMobile) return null;
 
   return (
     <>
@@ -162,13 +94,18 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
         }}
       />
       
-      {/* Mobile Bottom Sheet Modal */}
+      {/* Modal */}
       <div
         ref={modalRef}
         className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}
-        style={getModalStyle()}
+        style={{
+          maxHeight: '85vh',
+          minHeight: '60vh',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          ...transformStyle
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

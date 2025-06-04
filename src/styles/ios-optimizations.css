@@ -44,39 +44,6 @@
   }
 }
 
-/* Enhanced scroll area styling for desktop */
-[data-radix-scroll-area-root] {
-  overflow: hidden;
-}
-
-[data-radix-scroll-area-viewport] {
-  scroll-behavior: smooth;
-}
-
-/* Desktop-specific scrollbar styling */
-@media (min-width: 768px) {
-  [data-radix-scroll-area-scrollbar] {
-    padding: 2px;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-    transition: background 150ms ease;
-  }
-  
-  [data-radix-scroll-area-scrollbar]:hover {
-    background: rgba(0, 0, 0, 0.1);
-  }
-  
-  [data-radix-scroll-area-thumb] {
-    background: rgba(139, 92, 246, 0.5);
-    border-radius: 2px;
-    transition: background 150ms ease;
-  }
-  
-  [data-radix-scroll-area-thumb]:hover {
-    background: rgba(139, 92, 246, 0.7);
-  }
-}
-
 /* Animation optimizations for better performance */
 .gpu-accelerated {
   transform: translateZ(0);
@@ -95,21 +62,4 @@
     0 0 20px rgba(139, 92, 246, 0.1),
     0 0 40px rgba(139, 92, 246, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-/* Prevent text selection in modal content */
-.modal-content {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* Allow text selection in input areas */
-.modal-content input,
-.modal-content textarea {
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
 }

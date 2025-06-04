@@ -30,28 +30,28 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   resendCount = 0,
   bypassVerification = true
 }) => {
-  const [showIntentModal, setShowIntentModal] = React.useState(false);
+  const [shouldShowModal, setShouldShowModal] = React.useState(false);
   const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isCheckingIntent, setIsCheckingIntent] = React.useState(false);
   const navigate = useNavigate();
 
   // Handle verification step logic
   React.useEffect(() => {
-    console.log("[SignUpContentWrapper] Effect triggered:", { step, userEmail, showIntentModal });
+    console.log("[SignUpContentWrapper] Effect triggered:", { step, userEmail, shouldShowModal });
     
-    // Clear any existing flags during signup step
+    // Clear flags during signup step
     if (step === "signup") {
       localStorage.removeItem("showingIntentModal");
       localStorage.removeItem("userIntent");
-      setShowIntentModal(false);
-      setIsLoading(false);
+      setShouldShowModal(false);
+      setIsCheckingIntent(false);
       return;
     }
     
     // Handle verification step
     if (step === "verification" && userEmail) {
-      console.log("[SignUpContentWrapper] Verification step detected - checking intent");
-      setIsLoading(true);
+      console.log("[SignUpContentWrapper] Verification step detected");
+      setIsCheckingIntent(true);
       
       // Check if user already has valid intent
       const userIntent = localStorage.getItem("userIntent");
@@ -82,11 +82,11 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
         localStorage.removeItem("ctaIntent"); // Clear after using
       }
 
-      // Show the intent modal and stop loading
+      // Show the intent modal
       console.log("[SignUpContentWrapper] Showing intent modal");
       localStorage.setItem("showingIntentModal", "true");
-      setShowIntentModal(true);
-      setIsLoading(false);
+      setShouldShowModal(true);
+      setIsCheckingIntent(false);
     }
   }, [step, userEmail, navigate]);
 
@@ -104,7 +104,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     });
     
     // Update local state
-    setShowIntentModal(false);
+    setShouldShowModal(false);
 
     // Navigate based on intent with small delay
     setTimeout(() => {
@@ -128,42 +128,48 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     );
   }
 
-  // Render verification step loading
-  if (step === "verification" && isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Setting up your account...</p>
+  // During verification step - show intent modal if needed
+  if (step === "verification") {
+    // Show loading while checking intent
+    if (isCheckingIntent) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Setting up your account...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Render intent modal - this takes priority over everything else in verification step
-  if (step === "verification" && showIntentModal) {
-    console.log("[SignUpContentWrapper] RENDERING intent modal");
+    // Show intent modal if needed
+    if (shouldShowModal) {
+      console.log("[SignUpContentWrapper] RENDERING intent modal");
+      return (
+        <OnboardingIntentModal
+          open={true}
+          onSelect={handleSelectIntent}
+          onSkip={() => {/* Not used */}}
+          suggestedIntent={suggestedIntent}
+        />
+      );
+    }
+
+    // Fallback to verification view (should rarely be reached)
     return (
-      <OnboardingIntentModal
-        open={true}
-        onSelect={handleSelectIntent}
-        onSkip={() => {/* Not used */}}
-        suggestedIntent={suggestedIntent}
+      <VerificationView
+        userEmail={userEmail}
+        userName={userName}
+        onBackToSignUp={handleBackToSignUp}
+        onResendVerification={onResendVerification}
+        resendCount={resendCount}
+        bypassVerification={bypassVerification}
       />
     );
   }
 
-  // Fallback to verification view (this should rarely be reached now)
-  return (
-    <VerificationView
-      userEmail={userEmail}
-      userName={userName}
-      onBackToSignUp={handleBackToSignUp}
-      onResendVerification={onResendVerification}
-      resendCount={resendCount}
-      bypassVerification={bypassVerification}
-    />
-  );
+  // Default fallback
+  return null;
 };
 
 export default SignUpContentWrapper;

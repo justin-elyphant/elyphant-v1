@@ -7,11 +7,11 @@ import StepNavigation from "./components/StepNavigation";
 import ProfileStepperHeader from "./components/ProfileStepperHeader";
 import { useProfileSetup } from "./hooks/useProfileSetup";
 
-// Import the step components
-import ProfileCombinedStep from "./steps/ProfileCombinedStep";
+// Import the updated step components
+import BasicInfoCombinedStep from "./steps/BasicInfoCombinedStep";
 import DateOfBirthStep from "./steps/DateOfBirthStep";
-import ShippingAddressStep from "./steps/ShippingAddressStep";
-import GiftPreferencesStep from "./steps/GiftPreferencesStep";
+import AddressStep from "./steps/AddressStep";
+import InterestsStep from "./steps/InterestsStep";
 import DataSharingStep from "./steps/DataSharingStep";
 import NextStepsStep from "./steps/NextStepsStep";
 
@@ -23,30 +23,17 @@ interface ProfileSetupFlowProps {
 const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip }) => {
   // Clear any stale loading flags and rate limit flags on component mount
   useEffect(() => {
-    // Clear any stuck loading states
     localStorage.removeItem("profileSetupLoading");
     localStorage.removeItem("signupRateLimited");
     
     console.log("ProfileSetupFlow: Component mounted, cleared loading flags");
-    
-    // Check if we have a newSignUp flag in localStorage - debugging info
-    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
-    const userEmail = localStorage.getItem("userEmail");
-    const userName = localStorage.getItem("userName");
-    console.log("ProfileSetupFlow: User data from localStorage:", { 
-      isNewSignUp, 
-      userEmail, 
-      userName 
-    });
   }, []);
 
   const handleCompleteWrapper = useCallback(() => {
     console.log("ProfileSetupFlow: onComplete wrapper triggered");
-    // Ensure all loading and rate limit flags are cleared
     localStorage.removeItem("profileSetupLoading");
     localStorage.removeItem("signupRateLimited");
     
-    // Ensure we invoke the parent's onComplete
     setTimeout(() => {
       onComplete();
     }, 50);
@@ -73,7 +60,6 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       activeStep,
       isLoading,
       isCurrentStepValid,
-      rateLimitFlag: localStorage.getItem("signupRateLimited"),
       profileData
     });
   }, [activeStep, isLoading, isCurrentStepValid, profileData]);
@@ -83,37 +69,36 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
     switch (activeStep) {
       case 0:
         return (
-          <ProfileCombinedStep
+          <BasicInfoCombinedStep
             name={profileData.name}
-            username={profileData.username}
-            email={profileData.email || ''}
-            profileImage={profileData.profile_image}
+            email={profileData.email}
+            bio={profileData.bio || ""}
+            profile_image={profileData.profile_image}
             onNameChange={(name) => updateProfileData('name', name)}
-            onUsernameChange={(username) => updateProfileData('username', username)}
+            onEmailChange={(email) => updateProfileData('email', email)}
+            onBioChange={(bio) => updateProfileData('bio', bio)}
             onProfileImageChange={(image) => updateProfileData('profile_image', image)}
           />
         );
       case 1:
         return (
           <DateOfBirthStep
-            value={profileData.dob}
-            onChange={(dob) => updateProfileData('dob', dob)}
+            value={profileData.birthday}
+            onChange={(birthday) => updateProfileData('birthday', birthday)}
           />
         );
       case 2:
         return (
-          <ShippingAddressStep
-            value={profileData.shipping_address}
-            onChange={(address) => updateProfileData('shipping_address', address)}
+          <AddressStep
+            value={profileData.address}
+            onChange={(address) => updateProfileData('address', address)}
           />
         );
       case 3:
         return (
-          <GiftPreferencesStep
-            preferences={profileData.gift_preferences}
-            onPreferencesChange={(preferences) => updateProfileData('gift_preferences', preferences)}
-            onNext={handleNext}
-            onBack={handleBack}
+          <InterestsStep
+            value={profileData.interests}
+            onChange={(interests) => updateProfileData('interests', interests)}
           />
         );
       case 4:
@@ -126,34 +111,30 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
       case 5:
         return (
           <NextStepsStep
-            onSelectOption={(option) => updateProfileData('next_steps_option' as keyof typeof profileData, option)}
+            onSelectOption={(option) => updateProfileData('next_steps_option', option)}
             selectedOption={profileData.next_steps_option}
           />
         );
       default:
         return null;
     }
-  }, [activeStep, profileData, updateProfileData, handleNext, handleBack]);
+  }, [activeStep, profileData, updateProfileData]);
 
   // Create memoized complete handler with additional safety
   const handleCompleteClick = useCallback(() => {
     console.log("Complete button clicked in ProfileSetupFlow");
     
-    // Safety check - clear rate limit flag before completing
     localStorage.removeItem("signupRateLimited");
     
-    // Directly attempt to complete without complex checks
     try {
       handleComplete();
     } catch (error) {
       console.error("Error during completion:", error);
       toast.error("Error completing profile setup, continuing anyway");
       
-      // Force completion even if there's an error
       localStorage.removeItem("profileSetupLoading");
       localStorage.removeItem("signupRateLimited");
       
-      // Then complete
       onComplete();
     }
   }, [handleComplete, onComplete]);

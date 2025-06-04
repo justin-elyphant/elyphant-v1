@@ -1,3 +1,4 @@
+
 import { useProfileSteps } from "./useProfileSteps";
 import { useProfileData } from "./useProfileData";
 import { useProfileValidation } from "./useProfileValidation";
@@ -5,6 +6,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useProfileSubmit } from "@/hooks/profile/useProfileSubmit";
 import { toast } from "sonner";
 import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { ProfileData } from "./types";
 
 interface UseProfileSetupProps {
   onComplete: () => void;
@@ -26,9 +28,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
   const [error, setError] = useState<string | null>(null);
   const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 5000; // Increase timeout to 5 seconds
+  const maxCompletionTime = 5000;
 
-  // More reliable loading state checking
   const isLoading = isSubmitting || isCompleting || isDataLoading;
 
   // Ensure data_sharing_settings has all required fields
@@ -37,10 +38,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         Object.keys(profileData.data_sharing_settings).length === 0 ||
         !profileData.data_sharing_settings.email)) {
       
-      // Get complete default settings to ensure consistent initialization
       const defaultSettings = getDefaultDataSharingSettings();
       
-      // Update profile data with complete settings
       updateProfileData('data_sharing_settings', {
         ...defaultSettings,
         ...(profileData.data_sharing_settings || {})
@@ -52,12 +51,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
   // Clear all loading flags when component mounts
   useEffect(() => {
-    // Clear any stale loading flags
     localStorage.removeItem("profileSetupLoading");
     setError(null);
     console.log("useProfileSetup: Initialized and cleared loading flags");
     
-    // Also clear when component unmounts
     return () => {
       if (completionTimeoutRef.current) {
         clearTimeout(completionTimeoutRef.current);
@@ -88,11 +85,10 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       console.log("Setting up safety timeout for profile completion");
       completionTimeoutRef.current = setTimeout(() => {
         console.warn("Forcing profile setup completion due to timeout");
-        if (isCompleting) { // Double-check we're still completing
+        if (isCompleting) {
           setIsCompleting(false);
-          // Remove loading flags from localStorage
           localStorage.removeItem("profileSetupLoading");
-          localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
+          localStorage.removeItem("signupRateLimited");
           toast.success("Setup complete!");
           onComplete();
         }
@@ -113,9 +109,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       clearTimeout(completionTimeoutRef.current);
       completionTimeoutRef.current = null;
     }
-    // Remove loading flag
     localStorage.removeItem("profileSetupLoading");
-    localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
+    localStorage.removeItem("signupRateLimited");
   }, []);
 
   // Handle skip action
@@ -150,26 +145,29 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
     setIsCompleting(true);
     setError(null);
     
-    // Set loading flag in localStorage
     localStorage.setItem("profileSetupLoading", "true");
     
     try {
-      // Ensure we have the latest data with all sharing settings
+      // Transform data to match database expectations
       const finalProfileData = {
         ...profileData,
-        data_sharing_settings: completeSettings
+        data_sharing_settings: completeSettings,
+        // Convert birthday to string for database
+        dob: profileData.birthday ? profileData.birthday.toISOString().split('T')[0] : null,
+        // Convert address to shipping_address for database
+        shipping_address: profileData.address,
+        // Convert interests to gift_preferences for database
+        gift_preferences: profileData.interests.map(interest => ({ category: interest }))
       };
       
       await submitProfile(finalProfileData);
       
-      // Clear completion flags and redirect
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileSetupLoading");
       localStorage.removeItem("signupRateLimited");
       setIsCompleting(false);
       cleanupTimeouts();
       
-      // Short timeout before completing to ensure state updates
       setTimeout(() => {
         onComplete();
       }, 100);
@@ -178,13 +176,11 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       setError(error.message || "An error occurred, continuing anyway");
       toast.error("Setup completed with some errors. Your data may be incomplete.");
       
-      // Clear loading states and force completion
       setIsCompleting(false);
       localStorage.removeItem("profileSetupLoading");
-      localStorage.removeItem("signupRateLimited"); // Clear rate limit flag
+      localStorage.removeItem("signupRateLimited");
       cleanupTimeouts();
       
-      // Even on error, we still want to complete the flow to prevent users getting stuck
       setTimeout(() => {
         onComplete();
       }, 100);

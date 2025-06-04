@@ -1,8 +1,7 @@
 
 import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { getSharingLevelLabel } from "@/utils/privacyUtils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProfileData } from "../hooks/types";
 
 interface DataSharingStepProps {
@@ -10,96 +9,91 @@ interface DataSharingStepProps {
   updateProfileData: (key: keyof ProfileData, value: any) => void;
 }
 
-const DataSharingStep: React.FC<DataSharingStepProps> = ({ profileData, updateProfileData }) => {
-  const handleSharingChange = (field: string, value: "public" | "friends" | "private") => {
-    const updatedSettings = {
+const DataSharingStep: React.FC<DataSharingStepProps> = ({ 
+  profileData, 
+  updateProfileData 
+}) => {
+  const handlePrivacyChange = (field: string, value: string) => {
+    updateProfileData('data_sharing_settings', {
       ...profileData.data_sharing_settings,
       [field]: value
-    };
-    
-    updateProfileData("data_sharing_settings", updatedSettings);
+    });
   };
-  
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold mb-2">Privacy Settings</h2>
-        <p className="text-muted-foreground">
-          Control who can see your profile information.
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-medium">Privacy Settings</h3>
+        <p className="text-sm text-muted-foreground">
+          Control who can see your information
         </p>
       </div>
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email-privacy">Email Address</Label>
+          <Label>Email Address</Label>
           <Select
             value={profileData.data_sharing_settings?.email || "private"}
-            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("email", value)}
+            onValueChange={(value) => handlePrivacyChange("email", value)}
           >
-            <SelectTrigger id="email-privacy" className="w-full">
-              <SelectValue placeholder="Select who can see your email" />
+            <SelectTrigger>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
-              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
-              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+              <SelectItem value="private">Private</SelectItem>
+              <SelectItem value="friends">Friends Only</SelectItem>
+              <SelectItem value="public">Public</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground mt-1">
-            We recommend keeping your email private.
-          </p>
         </div>
-        
+
         <div className="space-y-2">
-          <Label htmlFor="dob-privacy">Date of Birth</Label>
+          <Label>Birthday</Label>
           <Select
             value={profileData.data_sharing_settings?.dob || "friends"}
-            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("dob", value)}
+            onValueChange={(value) => handlePrivacyChange("dob", value)}
           >
-            <SelectTrigger id="dob-privacy" className="w-full">
-              <SelectValue placeholder="Select who can see your birthday" />
+            <SelectTrigger>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
-              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
-              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+              <SelectItem value="private">Private</SelectItem>
+              <SelectItem value="friends">Friends Only</SelectItem>
+              <SelectItem value="public">Public</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="space-y-2">
-          <Label htmlFor="address-privacy">Shipping Address</Label>
+          <Label>Shipping Address</Label>
           <Select
             value={profileData.data_sharing_settings?.shipping_address || "private"}
-            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("shipping_address", value)}
+            onValueChange={(value) => handlePrivacyChange("shipping_address", value)}
           >
-            <SelectTrigger id="address-privacy" className="w-full">
-              <SelectValue placeholder="Select who can see your address" />
+            <SelectTrigger>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
-              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
-              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+              <SelectItem value="private">Private</SelectItem>
+              <SelectItem value="friends">Friends Only</SelectItem>
+              <SelectItem value="public">Public</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground mt-1">
-            This allows friends to send you gifts directly.
-          </p>
         </div>
-        
+
         <div className="space-y-2">
-          <Label htmlFor="preferences-privacy">Gift Preferences</Label>
+          <Label>Gift Preferences</Label>
           <Select
             value={profileData.data_sharing_settings?.gift_preferences || "friends"}
-            onValueChange={(value: "public" | "friends" | "private") => handleSharingChange("gift_preferences", value)}
+            onValueChange={(value) => handlePrivacyChange("gift_preferences", value)}
           >
-            <SelectTrigger id="preferences-privacy" className="w-full">
-              <SelectValue placeholder="Select who can see your preferences" />
+            <SelectTrigger>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="private">{getSharingLevelLabel("private")}</SelectItem>
-              <SelectItem value="friends">{getSharingLevelLabel("friends")}</SelectItem>
-              <SelectItem value="public">{getSharingLevelLabel("public")}</SelectItem>
+              <SelectItem value="private">Private</SelectItem>
+              <SelectItem value="friends">Friends Only</SelectItem>
+              <SelectItem value="public">Public</SelectItem>
             </SelectContent>
           </Select>
         </div>

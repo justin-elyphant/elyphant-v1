@@ -8,84 +8,93 @@ import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 export const useProfileData = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Initialize with settings-compatible structure
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
-    username: "",
-    bio: "",
     email: user?.email || "",
-    profile_image: "",
-    dob: "",
-    shipping_address: {
-      address_line1: "",
+    bio: "",
+    profile_image: null,
+    birthday: null,
+    address: {
+      street: "",
       city: "",
       state: "",
-      zip_code: "",
-      country: ""
+      zipCode: "",
+      country: "US"
     },
-    gift_preferences: [],
-    important_dates: [],
-    data_sharing_settings: {
-      dob: "friends",
-      shipping_address: "private",
-      gift_preferences: "public",
-      email: "private"
-    },
+    interests: [],
+    importantDates: [],
+    data_sharing_settings: getDefaultDataSharingSettings(),
+    next_steps_option: undefined
   });
 
+  // Load existing profile data if available
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) return;
+    const loadExistingProfile = async () => {
+      if (!user?.id) return;
       
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const { data, error } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
-          
+          .maybeSingle();
+
         if (error) {
           console.error("Error loading profile:", error);
           return;
         }
-        
-        if (data) {
-          console.log("Loaded initial profile data:", data);
-          
-          // Ensure username is extracted, with fallback
-          const username = data.username || 
-            (data.email ? data.email.split('@')[0] : '') ||
-            `user_${Date.now().toString(36)}`;
-          
-          setProfileData(prevData => ({
-            ...prevData,
-            name: data.name || prevData.name,
-            username: username,
-            bio: data.bio || prevData.bio,
-            email: data.email || user.email || '',
-            profile_image: data.profile_image || prevData.profile_image,
-            dob: data.dob || prevData.dob,
-            shipping_address: data.shipping_address || prevData.shipping_address,
-            gift_preferences: data.gift_preferences || [],
-            important_dates: data.important_dates || [],
-            data_sharing_settings: data.data_sharing_settings || getDefaultDataSharingSettings()
-          }));
+
+        if (profile) {
+          // Map profile data to settings format
+          const mappedData: Partial<ProfileData> = {
+            name: profile.name || "",
+            email: profile.email || user.email || "",
+            bio: profile.bio || "",
+            profile_image: profile.profile_image,
+            birthday: profile.dob ? new Date(profile.dob) : null,
+            address: profile.shipping_address || {
+              street: "",
+              city: "",
+              state: "",
+              zipCode: "",
+              country: "US"
+            },
+            interests: Array.isArray(profile.gift_preferences) 
+              ? profile.gift_preferences.map((pref: any) => 
+                  typeof pref === 'string' ? pref : (pref.category || '')
+                ).filter(Boolean)
+              : [],
+            importantDates: Array.isArray(profile.important_dates)
+              ? profile.important_dates.map((date: any) => ({
+                  date: new Date(date.date),
+                  description: date.description
+                })).filter((date: any) => date.date && date.description)
+              : [],
+            data_sharing_settings: profile.data_sharing_settings || getDefaultDataSharingSettings()
+          };
+
+          setProfileData(prev => ({ ...prev, ...mappedData }));
         }
       } catch (error) {
-        console.error("Error fetching profile data:", error);
-        toast.error("Failed to load profile data");
+        console.error("Error loading profile:", error);
+        toast.error("Failed to load existing profile data");
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchUserProfile();
-  }, [user]);
 
-  const updateProfileData = (field: keyof ProfileData, value: any) => {
-    console.log(`Updating profile field "${field}" with value:`, value);
-    setProfileData(prev => ({ ...prev, [field]: value }));
+    loadExistingProfile();
+  }, [user?.id, user?.email]);
+
+  const updateProfileData = (key: keyof ProfileData, value: any) => {
+    setProfileData(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   return {

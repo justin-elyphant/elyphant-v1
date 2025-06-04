@@ -88,23 +88,41 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     inputRef
   });
 
-  // Check URL params for AI mode activation
+  // Check URL params for AI mode activation with personalized greeting
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const modeParam = params.get("mode");
     const openParam = params.get("open");
+    const greetingParam = params.get("greeting");
     
     if (modeParam === "nicole") {
       setMode("nicole");
       if (openParam === "true") {
+        // Set personalized greeting if specified
+        if (greetingParam === "personalized" && user) {
+          const firstName = user.user_metadata?.name?.split(' ')[0] || 
+                          user.email?.split('@')[0] || 
+                          "there";
+          setQuery(`Hi ${firstName}, what brings you to Elyphant today?`);
+        }
+        
         if (isMobile) {
           setShowMobileModal(true);
         } else {
           setShowNicoleDropdown(true);
         }
+        
+        // Clean up URL params after activation
+        const newParams = new URLSearchParams(params);
+        newParams.delete("open");
+        newParams.delete("greeting");
+        const newUrl = newParams.toString() ? 
+          `${location.pathname}?${newParams.toString()}` : 
+          location.pathname;
+        window.history.replaceState({}, '', newUrl);
       }
     }
-  }, [location.search, isMobile, setMode]);
+  }, [location.search, isMobile, setMode, user, setQuery]);
 
   const handleSendFriendRequest = async (friendId: string, friendName: string) => {
     await sendFriendRequest(friendId, friendName);

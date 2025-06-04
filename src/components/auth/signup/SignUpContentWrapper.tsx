@@ -6,6 +6,7 @@ import VerificationView from "./views/VerificationView";
 import { SignUpFormValues } from "./SignUpForm";
 import OnboardingIntentModal from "./OnboardingIntentModal";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth";
 
 interface SignUpContentWrapperProps {
   step: "signup" | "verification";
@@ -34,6 +35,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
   const [isCheckingIntent, setIsCheckingIntent] = React.useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Handle verification step logic
   React.useEffect(() => {
@@ -61,13 +63,13 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       
       console.log("[SignUpContentWrapper] Current intent:", userIntent, "Valid:", validIntent);
 
-      // If valid intent already exists, navigate immediately (this is the only place we should navigate)
+      // If valid intent already exists, navigate immediately
       if (validIntent) {
         console.log("[SignUpContentWrapper] Valid intent found, navigating immediately");
         setTimeout(() => {
           if (userIntent === "giftor") {
-            console.log("[SignUpContentWrapper] Navigating to marketplace");
-            navigate("/marketplace", { replace: true });
+            console.log("[SignUpContentWrapper] Navigating to marketplace with AI mode");
+            navigate("/marketplace?mode=nicole&open=true&greeting=personalized", { replace: true });
           } else {
             console.log("[SignUpContentWrapper] Navigating to profile-setup");
             navigate("/profile-setup", { replace: true });
@@ -112,8 +114,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     // Navigate based on intent with small delay
     setTimeout(() => {
       if (userIntent === "giftor") {
-        console.log("[SignUpContentWrapper] Navigating to marketplace");
-        navigate("/marketplace", { replace: true });
+        console.log("[SignUpContentWrapper] Navigating to marketplace with AI mode");
+        navigate("/marketplace?mode=nicole&open=true&greeting=personalized", { replace: true });
       } else {
         console.log("[SignUpContentWrapper] Navigating to profile-setup");
         navigate("/profile-setup", { replace: true });

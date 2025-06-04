@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { normalizeDataSharingSettings } from "@/utils/privacyUtils";
 import { ShippingAddress, DataSharingSettings } from "@/types/profile";
+import { parseBirthdayFromStorage, formatBirthdayForStorage } from "@/utils/dataFormatUtils";
 
 export const useSettingsForm = () => {
   const { user } = useAuth();
@@ -21,7 +23,7 @@ export const useSettingsForm = () => {
       email: "",
       bio: "",
       profile_image: null,
-      birthday: undefined,
+      birthday: null, // Use null for month/day birthday format
       address: {
         street: "",
         city: "",
@@ -48,7 +50,7 @@ export const useSettingsForm = () => {
         email: profile.email || "",
         bio: profile.bio || "",
         profile_image: profile.profile_image || null,
-        birthday: profile.dob ? new Date(profile.dob) : undefined,
+        birthday: parseBirthdayFromStorage(profile.dob), // Parse birthday from storage format
         address: profile.shipping_address || {
           street: "",
           city: "",
@@ -101,7 +103,7 @@ export const useSettingsForm = () => {
         name: data.name,
         bio: data.bio,
         profile_image: data.profile_image,
-        dob: data.birthday ? data.birthday.toISOString() : null,
+        dob: formatBirthdayForStorage(data.birthday), // Convert birthday to storage format
         shipping_address: shippingAddress,
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({

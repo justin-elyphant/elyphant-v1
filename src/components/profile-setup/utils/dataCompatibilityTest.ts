@@ -16,7 +16,7 @@ export const testOnboardingToSettingsCompatibility = () => {
     email: "john@example.com",
     bio: "Test bio",
     profile_image: null,
-    birthday: new Date("1990-01-01"),
+    birthday: { month: 1, day: 15 }, // Use new month/day format
     address: {
       street: "123 Main St",
       city: "New York",

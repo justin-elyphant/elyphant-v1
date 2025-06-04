@@ -55,7 +55,7 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ profileData, updateProfil
           <div className="flex gap-2">
             <Input
               id="newInterest"
-              placeholder="e.g., Photography, Cooking, Gaming"
+              placeholder="e.g., Photography, Cooking, Gaming, Brands"
               value={newInterest}
               onChange={(e) => setNewInterest(e.target.value)}
               onKeyPress={handleKeyPress}

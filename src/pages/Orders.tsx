@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback } from "react";
-import BackToDashboard from "@/components/shared/BackToDashboard";
 import OrdersHeader from "@/components/orders/OrdersHeader";
 import OrderTable from "@/components/orders/OrderTable";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,7 +57,6 @@ const Orders = () => {
   return (
     <MainLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <BackToDashboard />
         <OrdersHeader 
           refreshOrders={refreshOrders} 
           isRefreshing={isRefreshing}

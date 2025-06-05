@@ -62,7 +62,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           ref={inputRef}
           type="search"
           placeholder={placeholderText}
-          className={`pl-32 pr-20 transition-all duration-300 ${
+          className={`pl-32 pr-24 transition-all duration-300 ${
             mobile ? "text-base py-3 h-12" : ""
           } rounded-full border-gray-300 ${
             isNicoleMode 
@@ -83,17 +83,17 @@ const SearchInput: React.FC<SearchInputProps> = ({
         <Button
           type="submit"
           size="sm"
-          className={`absolute right-2 rounded-full px-4 py-1 text-xs font-semibold h-7 transition-all duration-300 touch-manipulation ${
-            mobile ? "min-h-[36px] min-w-[60px]" : ""
+          className={`absolute right-1 rounded-full px-3 py-1 text-xs font-medium h-6 transition-all duration-300 touch-manipulation ${
+            mobile ? "h-8 px-4" : ""
           } ${
             isNicoleMode 
-              ? "bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white shadow-lg"
+              ? "bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white shadow-sm"
               : "bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white"
           }`}
         >
           {isNicoleMode ? "Ask" : "Search"}
           {isNicoleMode && (
-            <Badge variant="secondary" className="ml-1 text-xs bg-white/20">AI</Badge>
+            <Badge variant="secondary" className="ml-1 text-xs bg-white/20 h-4 px-1">AI</Badge>
           )}
         </Button>
       </div>

@@ -18,27 +18,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
+    // This endpoint is now admin-only - no user authentication required
+    // Only the service role can access elyphant_amazon_credentials
     
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      throw new Error('Unauthorized')
-    }
-
-    const { action, email, password } = await req.json()
+    const { action, email, password, credential_name, notes } = await req.json()
 
     if (action === 'save') {
       // Simple encryption (in production, use proper encryption with Supabase secrets)
       const encryptedPassword = password // TODO: Implement proper encryption
 
-      // Upsert credentials
+      // Upsert the single Elyphant credential record
       const { data, error } = await supabase
-        .from('amazon_business_credentials')
+        .from('elyphant_amazon_credentials')
         .upsert({
-          user_id: user.id,
           email: email,
           encrypted_password: encryptedPassword,
+          credential_name: credential_name || 'Primary Amazon Business Account',
+          notes: notes || 'Main Elyphant Amazon Business account for order fulfillment',
           is_active: true,
           is_verified: false // Will be verified on first successful order
         })
@@ -50,16 +46,16 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, message: 'Credentials saved successfully' }),
+        JSON.stringify({ success: true, message: 'Elyphant Amazon credentials saved successfully' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     if (action === 'get') {
+      // Get the active Elyphant credentials (should only be one record)
       const { data, error } = await supabase
-        .from('amazon_business_credentials')
-        .select('email, is_verified, last_verified_at, created_at')
-        .eq('user_id', user.id)
+        .from('elyphant_amazon_credentials')
+        .select('email, is_verified, last_verified_at, created_at, credential_name, notes')
         .eq('is_active', true)
         .single()
 
@@ -78,17 +74,18 @@ serve(async (req) => {
     }
 
     if (action === 'delete') {
+      // Deactivate the Elyphant credentials
       const { error } = await supabase
-        .from('amazon_business_credentials')
+        .from('elyphant_amazon_credentials')
         .update({ is_active: false })
-        .eq('user_id', user.id)
+        .eq('is_active', true)
 
       if (error) {
         throw error
       }
 
       return new Response(
-        JSON.stringify({ success: true, message: 'Credentials removed successfully' }),
+        JSON.stringify({ success: true, message: 'Elyphant Amazon credentials deactivated successfully' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -96,7 +93,7 @@ serve(async (req) => {
     throw new Error('Invalid action')
 
   } catch (error) {
-    console.error('Error managing Amazon credentials:', error)
+    console.error('Error managing Elyphant Amazon credentials:', error)
     
     return new Response(
       JSON.stringify({

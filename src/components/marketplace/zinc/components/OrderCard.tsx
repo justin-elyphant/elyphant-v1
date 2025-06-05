@@ -1,92 +1,91 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, TruckIcon, ShoppingBag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Package, Calendar, DollarSign } from "lucide-react";
 
-interface OrderCardProps {
-  order: {
-    id: string;
-    status: string;
-    customerName: string;
-    date: string;
-    items: { name: string; quantity: number; price: number }[];
-    total: number;
-  };
-  onProcessOrder: (orderId: string) => void;
-  hasAmazonCredentials: boolean;
+interface Order {
+  id: string;
+  status: string;
+  customerName: string;
+  date: string;
+  items: { name: string; quantity: number; price: number; }[];
+  total: number;
 }
 
-const OrderCard = ({ order, onProcessOrder, hasAmazonCredentials }: OrderCardProps) => {
-  const getBadgeVariant = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return "default";
-      case "shipped":
-        return "secondary";
-      case "processing":
-        return "outline";
-      default:
-        return "default";
-    }
-  };
+interface OrderCardProps {
+  order: Order;
+  onProcessOrder: (orderId: string) => void;
+}
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return <Package className="h-3 w-3 mr-1" />;
-      case "shipped":
-        return <TruckIcon className="h-3 w-3 mr-1" />;
-      case "processing":
-        return <ShoppingBag className="h-3 w-3 mr-1" />;
+const OrderCard = ({ order, onProcessOrder }: OrderCardProps) => {
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'shipped':
+        return 'bg-green-100 text-green-800';
+      case 'delivered':
+        return 'bg-emerald-100 text-emerald-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
       default:
-        return null;
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-base">Order #{order.id.slice(-6)}</CardTitle>
-          <Badge variant={getBadgeVariant(order.status)} className="flex items-center">
-            {getStatusIcon(order.status)}
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Order #{order.id.slice(-8)}
+          </CardTitle>
+          <Badge className={getStatusColor(order.status)}>
+            {order.status}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Customer:</span>
-            <span>{order.customerName}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Date:</span>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
             <span>{new Date(order.date).toLocaleDateString()}</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Items:</span>
-            <span>{order.items.reduce((acc, item) => acc + item.quantity, 0)}</span>
-          </div>
-          <div className="flex justify-between font-medium">
-            <span>Total:</span>
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
             <span>${order.total.toFixed(2)}</span>
           </div>
-          
-          <div className="pt-2 flex justify-end space-x-2">
-            <Button variant="outline" size="sm">Details</Button>
-            {order.status === "processing" && (
-              <Button 
-                size="sm" 
-                onClick={() => onProcessOrder(order.id)}
-                disabled={!hasAmazonCredentials}
-              >
-                {hasAmazonCredentials ? "Process Now" : "Add Amazon Credentials"}
-              </Button>
-            )}
+          <div className="text-muted-foreground">
+            Customer: {order.customerName}
           </div>
+        </div>
+        
+        <div>
+          <h4 className="font-medium mb-2">Items:</h4>
+          <div className="space-y-1">
+            {order.items.map((item, index) => (
+              <div key={index} className="text-sm text-muted-foreground flex justify-between">
+                <span>{item.name} x{item.quantity}</span>
+                <span>${item.price.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex justify-end pt-2">
+          {order.status === 'pending' && (
+            <Button 
+              onClick={() => onProcessOrder(order.id)}
+              size="sm"
+            >
+              Process Order
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -51,24 +51,23 @@ serve(async (req) => {
 
     console.log(`Processing Zinc order for user ${user.id}, order ${orderId}`)
 
-    // Get user's Amazon Business credentials
+    // Get Elyphant's centralized Amazon Business credentials
     const { data: credentials, error: credError } = await supabase
-      .from('amazon_business_credentials')
+      .from('elyphant_amazon_credentials')
       .select('email, encrypted_password, is_verified')
-      .eq('user_id', user.id)
       .eq('is_active', true)
       .single()
 
     if (credError || !credentials) {
-      console.log('No Amazon Business credentials found for user')
+      console.log('No Elyphant Amazon Business credentials found')
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Amazon Business credentials not found. Please add your credentials in settings.',
-          requiresCredentials: true
+          error: 'Elyphant Amazon Business credentials not configured. Please contact support.',
+          requiresAdminSetup: true
         }),
         { 
-          status: 400, 
+          status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -77,7 +76,7 @@ serve(async (req) => {
     // Simple decryption (in production, use proper encryption)
     const decryptedPassword = credentials.encrypted_password
 
-    // Add Amazon credentials to the order request
+    // Add Elyphant's Amazon credentials to the order request
     const enhancedOrderRequest = {
       ...orderRequest,
       retailer_credentials: {
@@ -86,7 +85,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('Enhanced order request with Amazon credentials prepared')
+    console.log('Enhanced order request with Elyphant Amazon credentials prepared')
 
     // Process order through Zinc API
     const zincApiKey = Deno.env.get('ZINC_API_KEY')
@@ -124,6 +123,15 @@ serve(async (req) => {
         console.error('Failed to update order with Zinc details:', updateError)
       }
 
+      // Mark credentials as verified on successful order
+      await supabase
+        .from('elyphant_amazon_credentials')
+        .update({ 
+          is_verified: true,
+          last_verified_at: new Date().toISOString()
+        })
+        .eq('is_active', true)
+
     } else {
       const errorData = await zincResponse.json()
       zincError = errorData
@@ -131,20 +139,20 @@ serve(async (req) => {
 
       // Check for credential-related errors
       if (errorData.code === 'invalid_credentials' || errorData.message?.includes('credentials')) {
-        // Mark credentials as unverified
+        // Mark Elyphant credentials as unverified
         await supabase
-          .from('amazon_business_credentials')
+          .from('elyphant_amazon_credentials')
           .update({ is_verified: false })
-          .eq('user_id', user.id)
+          .eq('is_active', true)
 
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Amazon Business credentials are invalid. Please update your credentials.',
+            error: 'Elyphant Amazon Business credentials are invalid. Please contact support.',
             invalidCredentials: true
           }),
           { 
-            status: 400, 
+            status: 500, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         )

@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
-import { createZincOrderRequest, processOrder } from "@/components/marketplace/zinc/services/orderProcessingService";
+import { createZincOrderRequest } from "@/components/marketplace/zinc/services/orderProcessingService";
 import { getTransparentPricing } from "@/utils/transparentPricing";
-import { validateCartData, validateProductAvailability, updateCartItemPrices } from "@/utils/validateCartData";
+import { validateCartData, validateProductAvailability } from "@/utils/validateCartData";
 
 // Import our components
 import CheckoutHeader from "./CheckoutHeader";
@@ -26,7 +26,7 @@ import OrderSummary from "./OrderSummary";
 import ShippingOptionsForm from "./ShippingOptionsForm";
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, clearCart, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, cartTotal, clearCart, removeFromCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showGuestSignup, setShowGuestSignup] = useState(false);
@@ -178,7 +178,7 @@ const CheckoutPage = () => {
         paymentIntentId: paymentIntentId
       });
 
-      // Process order through server-side Zinc API
+      // Process order through server-side Zinc API (no credential checks needed - handled centrally)
       if (paymentIntentId || checkoutData.paymentMethod === "demo") {
         try {
           const zincProducts = cartItems.map(item => ({
@@ -215,13 +215,13 @@ const CheckoutPage = () => {
           if (zincError) {
             console.error("Server-side Zinc processing error:", zincError);
             
-            if (zincResult?.requiresCredentials) {
-              toast.error("Amazon Business credentials required", {
-                description: "Please add your Amazon Business credentials in settings to complete orders."
+            if (zincResult?.requiresAdminSetup) {
+              toast.error("System configuration required", {
+                description: "Please contact support - order fulfillment needs to be configured."
               });
             } else if (zincResult?.invalidCredentials) {
-              toast.error("Invalid Amazon Business credentials", {
-                description: "Please update your Amazon Business credentials in settings."
+              toast.error("Fulfillment system error", {
+                description: "Please contact support - there's an issue with order processing."
               });
             } else {
               toast.warning("Order placed but fulfillment may be delayed", {

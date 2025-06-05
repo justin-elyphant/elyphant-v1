@@ -1,7 +1,6 @@
 
 import React from "react";
 import { useOrders } from "./hooks/useOrders";
-import AmazonCredentialsManager from "./AmazonCredentialsManager";
 import OrderCard from "./components/OrderCard";
 import OrdersHeader from "./components/OrdersHeader";
 import TestPurchaseDialog from "./components/TestPurchaseDialog";
@@ -9,8 +8,6 @@ import TestPurchaseDialog from "./components/TestPurchaseDialog";
 const ZincOrdersTab = () => {
   const {
     orders,
-    isCredentialsModalOpen,
-    setIsCredentialsModalOpen,
     isTestPurchaseModalOpen,
     setIsTestPurchaseModalOpen,
     testProductId,
@@ -18,10 +15,7 @@ const ZincOrdersTab = () => {
     isProcessing,
     isSimulatedTest,
     setIsSimulatedTest,
-    hasAmazonCredentials,
-    handleSaveCredentials,
     handleProcessOrder,
-    handleManageCredentials,
     openTestPurchaseModal,
     handleTestPurchase
   } = useOrders();
@@ -29,8 +23,6 @@ const ZincOrdersTab = () => {
   return (
     <div className="space-y-4 py-4">
       <OrdersHeader 
-        hasAmazonCredentials={hasAmazonCredentials}
-        onManageCredentials={handleManageCredentials}
         onOpenTestPurchase={openTestPurchaseModal}
       />
       
@@ -39,16 +31,9 @@ const ZincOrdersTab = () => {
           key={order.id} 
           order={order} 
           onProcessOrder={handleProcessOrder}
-          hasAmazonCredentials={hasAmazonCredentials}
         />
       ))}
       
-      <AmazonCredentialsManager 
-        isOpen={isCredentialsModalOpen}
-        onClose={() => setIsCredentialsModalOpen(false)}
-        onSave={handleSaveCredentials}
-      />
-
       <TestPurchaseDialog
         isOpen={isTestPurchaseModalOpen}
         onOpenChange={setIsTestPurchaseModalOpen}

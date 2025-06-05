@@ -53,42 +53,6 @@ export type Database = {
           },
         ]
       }
-      amazon_business_credentials: {
-        Row: {
-          created_at: string | null
-          email: string
-          encrypted_password: string
-          id: string
-          is_active: boolean | null
-          is_verified: boolean | null
-          last_verified_at: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          encrypted_password: string
-          id?: string
-          is_active?: boolean | null
-          is_verified?: boolean | null
-          last_verified_at?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          encrypted_password?: string
-          id?: string
-          is_active?: boolean | null
-          is_verified?: boolean | null
-          last_verified_at?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       api_keys: {
         Row: {
           created_at: string
@@ -283,6 +247,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      elyphant_amazon_credentials: {
+        Row: {
+          created_at: string | null
+          credential_name: string
+          email: string
+          encrypted_password: string
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          last_verified_at: string | null
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credential_name?: string
+          email: string
+          encrypted_password: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_verified_at?: string | null
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credential_name?: string
+          email?: string
+          encrypted_password?: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_verified_at?: string | null
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       funding_campaigns: {
         Row: {

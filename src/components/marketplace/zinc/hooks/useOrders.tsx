@@ -3,7 +3,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { testPurchase } from "../zincService";
 import { getMockOrders } from "../orderService";
-import { ZincOrder } from "../types";
 
 // Updated Order interface to match ZincOrder structure
 interface Order {
@@ -30,19 +29,10 @@ export const useOrders = () => {
     }));
   });
   
-  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
   const [isTestPurchaseModalOpen, setIsTestPurchaseModalOpen] = useState(false);
   const [testProductId, setTestProductId] = useState("B01DFKC2SO"); // Default test product - Amazon Echo Dot
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSimulatedTest, setIsSimulatedTest] = useState(true);
-  const [hasAmazonCredentials, setHasAmazonCredentials] = useState(
-    localStorage.getItem('amazonCredentials') !== null
-  );
-
-  const handleSaveCredentials = (credentials: any) => {
-    setHasAmazonCredentials(true);
-    console.log("Amazon credentials saved:", credentials.email);
-  };
 
   const handleProcessOrder = (orderId: string) => {
     toast.loading("Processing order...", { id: "process-order" });
@@ -61,16 +51,7 @@ export const useOrders = () => {
     }, 2000);
   };
 
-  const handleManageCredentials = () => {
-    setIsCredentialsModalOpen(true);
-  };
-
   const openTestPurchaseModal = () => {
-    if (!hasAmazonCredentials) {
-      toast.error("Please add Amazon credentials first");
-      setIsCredentialsModalOpen(true);
-      return;
-    }
     setIsTestPurchaseModalOpen(true);
   };
 
@@ -113,8 +94,6 @@ export const useOrders = () => {
 
   return {
     orders,
-    isCredentialsModalOpen,
-    setIsCredentialsModalOpen,
     isTestPurchaseModalOpen, 
     setIsTestPurchaseModalOpen,
     testProductId,
@@ -122,10 +101,7 @@ export const useOrders = () => {
     isProcessing,
     isSimulatedTest,
     setIsSimulatedTest,
-    hasAmazonCredentials,
-    handleSaveCredentials,
     handleProcessOrder,
-    handleManageCredentials,
     openTestPurchaseModal,
     handleTestPurchase
   };

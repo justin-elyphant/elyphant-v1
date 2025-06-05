@@ -87,8 +87,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
             mobile ? "h-8 px-4" : ""
           } ${
             isNicoleMode 
-              ? "bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white shadow-sm"
-              : "bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white"
+              ? "bg-transparent hover:bg-gray-50 text-purple-500 hover:text-purple-600 border border-gray-300"
+              : "bg-transparent hover:bg-gray-50 text-blue-500 hover:text-blue-600 border border-gray-300"
           }`}
         >
           {isNicoleMode ? "Ask" : "Search"}

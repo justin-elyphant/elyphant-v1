@@ -178,7 +178,7 @@ const CheckoutPage = () => {
         paymentIntentId: paymentIntentId
       });
 
-      // Process order through Zinc API with Amazon Business credentials
+      // Process order through server-side Zinc API
       if (paymentIntentId || checkoutData.paymentMethod === "demo") {
         try {
           const zincProducts = cartItems.map(item => ({
@@ -193,36 +193,46 @@ const CheckoutPage = () => {
             checkoutData.paymentMethod,
             checkoutData.giftOptions,
             "amazon",
-            checkoutData.paymentMethod === "demo" // is_test = true for demo
+            checkoutData.paymentMethod === "demo"
           );
 
           zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
           
-          // Add Amazon Business credentials for payment processing
-          const amazonCredentialsString = localStorage.getItem('amazonCredentials');
-          if (amazonCredentialsString) {
-            try {
-              const amazonCredentials = JSON.parse(amazonCredentialsString);
-              console.log("Using stored Amazon Business credentials for payment");
-              
-              zincOrderRequest.retailer_credentials = {
-                email: amazonCredentials.email,
-                password: amazonCredentials.password
-              };
-            } catch (error) {
-              console.error("Error parsing Amazon credentials:", error);
+          console.log("Sending order to server-side Zinc processing");
+          
+          // Call the server-side Zinc processing function
+          const { data: zincResult, error: zincError } = await supabase.functions.invoke(
+            'process-zinc-order',
+            {
+              body: {
+                orderRequest: zincOrderRequest,
+                orderId: order.id,
+                paymentIntentId: paymentIntentId
+              }
             }
-          }
+          );
 
-          console.log("Sending Zinc order request:", zincOrderRequest);
-          
-          const zincOrder = await processOrder(zincOrderRequest);
-          
-          if (zincOrder) {
-            console.log("Zinc order processed successfully:", zincOrder);
+          if (zincError) {
+            console.error("Server-side Zinc processing error:", zincError);
+            
+            if (zincResult?.requiresCredentials) {
+              toast.error("Amazon Business credentials required", {
+                description: "Please add your Amazon Business credentials in settings to complete orders."
+              });
+            } else if (zincResult?.invalidCredentials) {
+              toast.error("Invalid Amazon Business credentials", {
+                description: "Please update your Amazon Business credentials in settings."
+              });
+            } else {
+              toast.warning("Order placed but fulfillment may be delayed", {
+                description: "There was an issue with order processing, but payment was successful."
+              });
+            }
+          } else if (zincResult?.success) {
+            console.log("Server-side Zinc order processed successfully:", zincResult.zincOrderId);
             toast.success("Order placed and sent to fulfillment!");
           } else {
-            console.warn("Zinc order processing failed, but payment was processed");
+            console.warn("Zinc processing completed with warnings");
             toast.warning("Order placed but fulfillment may be delayed");
           }
         } catch (zincError) {

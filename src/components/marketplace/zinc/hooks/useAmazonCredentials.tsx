@@ -1,44 +1,82 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from "sonner";
-import { AmazonCredentials } from '../types';
+import { supabase } from "@/integrations/supabase/client";
+
+interface AmazonCredentials {
+  email: string;
+  is_verified: boolean;
+  last_verified_at?: string;
+  created_at?: string;
+}
 
 export const useAmazonCredentials = (onSaveCallback?: (credentials: AmazonCredentials) => void) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
+  const [credentials, setCredentials] = useState<AmazonCredentials | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Check if credentials are already stored
+  // Load credentials from server on mount
   useEffect(() => {
-    const storedCredentials = localStorage.getItem('amazonCredentials');
-    if (storedCredentials) {
-      try {
-        const parsedCredentials = JSON.parse(storedCredentials);
-        setEmail(parsedCredentials.email || '');
-        setPassword(parsedCredentials.password || '');
-        setHasStoredCredentials(true);
-      } catch (error) {
-        console.error("Error parsing stored Amazon credentials:", error);
-      }
-    }
+    loadCredentials();
   }, []);
 
-  const handleSave = () => {
+  const loadCredentials = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
+        body: { action: 'get' }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.success && data.credentials) {
+        setCredentials(data.credentials);
+        setEmail(data.credentials.email);
+        setHasStoredCredentials(true);
+      } else {
+        setHasStoredCredentials(false);
+      }
+    } catch (error) {
+      console.error("Error loading Amazon credentials:", error);
+      // Don't show error toast on initial load - credentials might not exist yet
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
     if (!email || !password) {
       toast.error("Please enter both email and password");
-      return;
+      return false;
     }
 
-    const credentials: AmazonCredentials = { email, password };
-    
-    // Save credentials in localStorage (encrypted in a real app)
     try {
-      localStorage.setItem('amazonCredentials', JSON.stringify(credentials));
-      if (onSaveCallback) {
-        onSaveCallback(credentials);
+      const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
+        body: {
+          action: 'save',
+          email: email,
+          password: password
+        }
+      });
+
+      if (error) {
+        throw error;
       }
-      toast.success("Amazon credentials saved successfully");
-      return true;
+
+      if (data.success) {
+        await loadCredentials(); // Reload to get updated status
+        if (onSaveCallback && credentials) {
+          onSaveCallback(credentials);
+        }
+        toast.success("Amazon credentials saved successfully");
+        return true;
+      } else {
+        throw new Error('Failed to save credentials');
+      }
     } catch (error) {
       console.error("Error saving Amazon credentials:", error);
       toast.error("Failed to save credentials");
@@ -46,12 +84,29 @@ export const useAmazonCredentials = (onSaveCallback?: (credentials: AmazonCreden
     }
   };
 
-  const handleClearCredentials = () => {
-    localStorage.removeItem('amazonCredentials');
-    setEmail('');
-    setPassword('');
-    setHasStoredCredentials(false);
-    toast.success("Amazon credentials cleared");
+  const handleClearCredentials = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
+        body: { action: 'delete' }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.success) {
+        setCredentials(null);
+        setHasStoredCredentials(false);
+        setEmail('');
+        setPassword('');
+        toast.success("Amazon credentials cleared");
+      } else {
+        throw new Error('Failed to delete credentials');
+      }
+    } catch (error) {
+      console.error("Error clearing Amazon credentials:", error);
+      toast.error("Failed to clear credentials");
+    }
   };
 
   return {
@@ -60,7 +115,10 @@ export const useAmazonCredentials = (onSaveCallback?: (credentials: AmazonCreden
     password,
     setPassword,
     hasStoredCredentials,
+    credentials,
+    isLoading,
     handleSave,
-    handleClearCredentials
+    handleClearCredentials,
+    loadCredentials
   };
 };

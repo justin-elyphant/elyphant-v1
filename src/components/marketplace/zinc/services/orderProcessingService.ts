@@ -1,3 +1,4 @@
+
 import { ZINC_API_BASE_URL, getZincHeaders } from '../zincCore';
 import { ZincOrderRequest, ZincOrder } from '../types';
 import { GiftOptions } from '../../checkout/useCheckoutState';
@@ -5,6 +6,7 @@ import { toast } from "sonner";
 
 /**
  * Creates a Zinc order request with gift options, delivery scheduling, and shipping method
+ * Note: Amazon Business credentials are now handled server-side for security
  */
 export const createZincOrderRequest = (
   products: { product_id: string; quantity: number }[],
@@ -83,131 +85,19 @@ export const createZincOrderRequest = (
 };
 
 /**
- * Process an order through the Zinc API
- * @param orderRequest The order request data
- * @returns The processed order data
+ * Legacy function - now redirects to server-side processing
+ * This function is kept for backward compatibility but now returns a warning
  */
 export const processOrder = async (orderRequest: ZincOrderRequest): Promise<ZincOrder | null> => {
-  try {
-    console.log("Processing order through Zinc API:", orderRequest);
-    
-    const isTestOrder = orderRequest.is_test === true;
-    if (isTestOrder) {
-      console.log("This is a TEST order - will not actually place an Amazon order");
-      toast.info("Processing test order");
-    }
-    
-    if (orderRequest.is_gift) {
-      console.log("Gift order details:", {
-        gift_message: orderRequest.gift_message,
-        delivery_instructions: orderRequest.delivery_instructions,
-        delivery_date_preference: orderRequest.delivery_date_preference
-      });
-    }
-    
-    // Check for Amazon Business credentials
-    const amazonCredentialsString = localStorage.getItem('amazonCredentials');
-    if (amazonCredentialsString) {
-      try {
-        const amazonCredentials = JSON.parse(amazonCredentialsString);
-        console.log("Using Amazon Business credentials for order placement");
-        
-        orderRequest.retailer_credentials = {
-          email: amazonCredentials.email,
-          password: amazonCredentials.password
-        };
-      } catch (error) {
-        console.error("Error parsing Amazon credentials:", error);
-      }
-    } else {
-      console.log("No Amazon Business credentials found - order may fail");
-      toast.warning("Amazon Business credentials not found. Order may require manual processing.");
-    }
-    
-    if (isTestOrder) {
-      console.log("Simulating Zinc API order response for test");
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const testOrderId = 'test-' + Math.random().toString(36).substring(2, 15);
-      
-      return {
-        id: testOrderId,
-        status: "processing",
-        created_at: new Date().toISOString(),
-        retailer: orderRequest.retailer,
-        products: orderRequest.products,
-        total_price: 99.99,
-      };
-    }
-    
-    // Process real order through Zinc API
-    const response = await fetch(`${ZINC_API_BASE_URL}/orders`, {
-      method: 'POST',
-      headers: getZincHeaders(),
-      body: JSON.stringify(orderRequest),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Zinc API order error:", errorData);
-      
-      // Retry logic for transient failures
-      if (response.status >= 500 && response.status < 600) {
-        console.log("Server error detected, retrying in 2 seconds...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const retryResponse = await fetch(`${ZINC_API_BASE_URL}/orders`, {
-          method: 'POST',
-          headers: getZincHeaders(),
-          body: JSON.stringify(orderRequest),
-        });
-        
-        if (retryResponse.ok) {
-          const retryData = await retryResponse.json();
-          console.log("Retry successful:", retryData);
-          
-          return {
-            id: retryData.request_id,
-            status: "processing",
-            created_at: new Date().toISOString(),
-            retailer: orderRequest.retailer,
-            products: orderRequest.products,
-            total_price: retryData.price || 0,
-          };
-        }
-      }
-      
-      throw new Error(errorData.message || "Failed to process order through Zinc");
-    }
-    
-    const orderData = await response.json();
-    console.log("Zinc order processed successfully:", orderData);
-    
-    return {
-      id: orderData.request_id,
-      status: "processing",
-      created_at: new Date().toISOString(),
-      retailer: orderRequest.retailer,
-      products: orderRequest.products,
-      total_price: orderData.price || 0,
-    };
-  } catch (error) {
-    console.error("Error processing order:", error);
-    
-    // Don't show error for missing credentials - that's handled above
-    if (!error.message.includes('credentials')) {
-      toast.error("Order processing encountered an issue. Payment was successful, order will be processed manually if needed.");
-    }
-    
-    return null;
-  }
+  console.warn("processOrder called - this function is deprecated. Use server-side processing instead.");
+  
+  toast.warning("Order processing has been moved to server-side for security. Please use the new checkout flow.");
+  
+  return null;
 };
 
 /**
  * Get the status of an order from the Zinc API
- * @param orderId The order ID
- * @returns The order status
  */
 export const getOrderStatus = async (orderId: string): Promise<ZincOrder | null> => {
   try {

@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, EyeOff, Shield, CheckCircle, AlertCircle, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import CredentialsForm from "./amazon-credentials/CredentialsForm";
+import CredentialsStatus from "./amazon-credentials/CredentialsStatus";
+import CredentialsActions from "./amazon-credentials/CredentialsActions";
+import AdminNotice from "./amazon-credentials/AdminNotice";
 
 interface ElyphantCredentials {
   email: string;
@@ -85,8 +85,8 @@ const ElyphantAmazonCredentialsManager = () => {
 
       if (data.success) {
         toast.success("Elyphant Amazon Business credentials saved successfully");
-        await loadCredentials(); // Reload to get updated status
-        setPassword(''); // Clear password field after saving
+        await loadCredentials();
+        setPassword('');
       } else {
         throw new Error('Failed to save credentials');
       }
@@ -158,126 +158,32 @@ const ElyphantAmazonCredentialsManager = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {hasCredentials && credentials && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              {credentials.is_verified ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
-              )}
-              <span className="font-medium">
-                {credentials.is_verified ? 'Verified Account' : 'Unverified Account'}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600 mb-2">
-              Email: {credentials.email}
-            </p>
-            <p className="text-sm text-gray-600 mb-2">
-              Account: {credentials.credential_name}
-            </p>
-            {credentials.last_verified_at && (
-              <p className="text-xs text-gray-500">
-                Last verified: {new Date(credentials.last_verified_at).toLocaleDateString()}
-              </p>
-            )}
-            {!credentials.is_verified && (
-              <p className="text-xs text-yellow-600 mt-2">
-                Credentials will be verified on the next successful order
-              </p>
-            )}
-          </div>
+          <CredentialsStatus credentials={credentials} />
         )}
 
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="credential-name">Account Name</Label>
-            <Input
-              id="credential-name"
-              type="text"
-              value={credentialName}
-              onChange={(e) => setCredentialName(e.target.value)}
-              placeholder="Primary Amazon Business Account"
-              disabled={isSaving}
-            />
-          </div>
+        <CredentialsForm
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          credentialName={credentialName}
+          setCredentialName={setCredentialName}
+          notes={notes}
+          setNotes={setNotes}
+          showPassword={showPassword}
+          setShowPassword={setShowPassword}
+          isSaving={isSaving}
+        />
 
-          <div>
-            <Label htmlFor="amazon-email">Amazon Business Email</Label>
-            <Input
-              id="amazon-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="business@elyphant.com"
-              disabled={isSaving}
-            />
-          </div>
+        <CredentialsActions
+          onSave={handleSave}
+          onDeactivate={handleDeactivate}
+          isSaving={isSaving}
+          hasCredentials={hasCredentials}
+          canSave={!!(email && password)}
+        />
 
-          <div>
-            <Label htmlFor="amazon-password">Amazon Business Password</Label>
-            <div className="relative">
-              <Input
-                id="amazon-password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={hasCredentials ? "Enter new password to update" : "Enter password"}
-                disabled={isSaving}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isSaving}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Additional notes about this account..."
-              disabled={isSaving}
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button 
-              onClick={handleSave}
-              disabled={isSaving || !email || !password}
-              className="flex-1"
-            >
-              {isSaving ? "Saving..." : hasCredentials ? "Update Credentials" : "Save Credentials"}
-            </Button>
-            
-            {hasCredentials && (
-              <Button 
-                variant="destructive"
-                onClick={handleDeactivate}
-                disabled={isSaving}
-              >
-                {isSaving ? "Deactivating..." : "Deactivate"}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="text-xs text-muted-foreground bg-amber-50 p-3 rounded-lg">
-          <p className="font-medium mb-1">Admin Notice:</p>
-          <p>
-            These are Elyphant's centralized Amazon Business credentials used for all customer orders.
-            Customers do not need their own Amazon accounts - they simply place orders through our platform
-            and we fulfill them using this account. Keep these credentials secure and up-to-date.
-          </p>
-        </div>
+        <AdminNotice />
       </CardContent>
     </Card>
   );

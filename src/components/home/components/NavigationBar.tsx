@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
@@ -52,10 +51,12 @@ const NavigationBar = () => {
             Elyphant
           </Link>
           
-          {/* Desktop Search Bar (Nicole) */}
+          {/* Desktop Search Bar (Nicole) - Centered */}
           {!isMobile && (
-            <div className="flex-1 max-w-2xl mx-8">
-              <AIEnhancedSearchBar />
+            <div className="flex-1 flex justify-center px-8">
+              <div className="w-full max-w-2xl">
+                <AIEnhancedSearchBar />
+              </div>
             </div>
           )}
           

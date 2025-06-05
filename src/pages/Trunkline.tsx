@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { useNavigate } from "react-router-dom";
 import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
+import TrunklineAmazonTab from "@/components/trunkline/TrunklineAmazonTab";
 import TrunklineOrdersTab from "@/components/trunkline/TrunklineOrdersTab";
 import TrunklineShoppersTab from "@/components/trunkline/TrunklineCustomersTab"; // Will keep original file name to avoid breaking changes
 import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
@@ -44,6 +45,7 @@ const Trunkline = () => {
             <TabsTrigger value="orders" className="text-sm">Orders</TabsTrigger>
             <TabsTrigger value="shoppers" className="text-sm">Shoppers</TabsTrigger>
             <TabsTrigger value="vendors" className="text-sm">Vendors</TabsTrigger>
+            <TabsTrigger value="amazon" className="text-sm">Amazon Credentials</TabsTrigger>
             <TabsTrigger value="zinc" className="text-sm">Zinc Integration</TabsTrigger>
           </TabsList>
           
@@ -61,6 +63,10 @@ const Trunkline = () => {
           
           <TabsContent value="vendors">
             <TrunklineVendorsTab />
+          </TabsContent>
+          
+          <TabsContent value="amazon">
+            <TrunklineAmazonTab />
           </TabsContent>
           
           <TabsContent value="zinc">

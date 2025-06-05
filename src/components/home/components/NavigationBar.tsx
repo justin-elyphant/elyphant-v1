@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
@@ -38,8 +39,7 @@ const NavigationBar = () => {
   };
 
   const navItems = [
-    { path: "/wishlists", label: "Wishlists", requireAuth: true },
-    { path: "/connections", label: "Friends", requireAuth: true },
+    // Removed wishlists and connections/friends nav items
   ];
 
   return (
@@ -60,7 +60,7 @@ const NavigationBar = () => {
             </div>
           )}
           
-          {/* Desktop navigation */}
+          {/* Desktop navigation - now empty since nav items removed */}
           <div className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
               (!item.requireAuth || user) && (

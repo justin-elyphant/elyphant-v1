@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -133,7 +132,7 @@ const CheckoutPage = () => {
     return cartTotal + getShippingCost() + getTaxAmount() + giftingFee;
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (paymentIntentId?: string) => {
     if (cartItems.length === 0) {
       toast.error("Your cart is empty");
       return;
@@ -171,48 +170,7 @@ const CheckoutPage = () => {
       console.log("Processing order with gift options:", checkoutData.giftOptions);
       console.log("Using shipping option:", checkoutData.selectedShippingOption);
       
-      // Create payment intent with retry mechanism
-      let paymentData;
-      let retryCount = 0;
-      const maxRetries = 3;
-
-      while (retryCount < maxRetries) {
-        try {
-          const { data, error } = await supabase.functions.invoke(
-            'create-payment-intent',
-            {
-              body: {
-                amount: totalAmount,
-                currency: 'usd',
-                metadata: {
-                  order_type: 'marketplace',
-                  items_count: cartItems.length,
-                  is_gift: checkoutData.giftOptions.isGift,
-                  shipping_method: checkoutData.selectedShippingOption.id,
-                  user_id: user?.id || 'guest'
-                }
-              }
-            }
-          );
-
-          if (error) {
-            throw new Error(error.message || 'Failed to create payment intent');
-          }
-
-          paymentData = data;
-          break;
-        } catch (error) {
-          retryCount++;
-          if (retryCount >= maxRetries) {
-            throw error;
-          }
-          
-          console.warn(`Payment intent creation attempt ${retryCount} failed, retrying...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-        }
-      }
-
-      // Create order in database with validated cart data
+      // Create order in database with payment intent ID if provided
       const order = await createOrder({
         cartItems: finalValidation.validItems,
         subtotal: cartTotal,
@@ -221,49 +179,81 @@ const CheckoutPage = () => {
         totalAmount: totalAmount,
         shippingInfo: checkoutData.shippingInfo,
         giftOptions: checkoutData.giftOptions,
-        paymentIntentId: paymentData.payment_intent_id
+        paymentIntentId: paymentIntentId
       });
 
-      // Process order through Zinc API with error handling
-      try {
-        const zincProducts = finalValidation.validItems.map(item => ({
-          product_id: item.product.product_id,
-          quantity: item.quantity
-        }));
+      // If we have a payment intent, confirm the payment
+      if (paymentIntentId) {
+        try {
+          const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
+            'confirm-payment',
+            {
+              body: {
+                payment_intent_id: paymentIntentId,
+                order_id: order.id
+              }
+            }
+          );
 
-        const zincOrderRequest = createZincOrderRequest(
-          zincProducts,
-          checkoutData.shippingInfo,
-          checkoutData.shippingInfo, // Using shipping as billing for demo
-          checkoutData.paymentMethod,
-          checkoutData.giftOptions,
-          "amazon",
-          true // is_test = true for demo
-        );
+          if (confirmError) {
+            throw new Error(`Payment confirmation failed: ${confirmError.message}`);
+          }
 
-        // Add shipping method to Zinc order request
-        zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
-
-        console.log("Sending Zinc order request with shipping method:", zincOrderRequest);
-        
-        const zincOrder = await processOrder(zincOrderRequest);
-        
-        if (zincOrder) {
-          console.log("Zinc order processed successfully:", zincOrder);
-          toast.success("Order placed and sent to fulfillment!");
-        } else {
-          console.warn("Zinc order processing failed, but internal order was created");
-          toast.warning("Order placed but fulfillment may be delayed");
+          console.log("Payment confirmed:", confirmData);
+        } catch (confirmationError) {
+          console.error("Payment confirmation error:", confirmationError);
+          // Don't fail the entire order - it was created successfully
+          toast.warning("Order created but payment confirmation had issues");
         }
-      } catch (zincError) {
-        console.error("Zinc order processing error:", zincError);
-        // Don't fail the entire checkout - order was created successfully
-        toast.warning("Order placed successfully, but there may be a delay in fulfillment processing");
+      }
+
+      // Process order through Zinc API with error handling (if not demo mode)
+      if (paymentIntentId) {
+        try {
+          const zincProducts = finalValidation.validItems.map(item => ({
+            product_id: item.product.product_id,
+            quantity: item.quantity
+          }));
+
+          const zincOrderRequest = createZincOrderRequest(
+            zincProducts,
+            checkoutData.shippingInfo,
+            checkoutData.shippingInfo, // Using shipping as billing for demo
+            checkoutData.paymentMethod,
+            checkoutData.giftOptions,
+            "amazon",
+            true // is_test = true for demo
+          );
+
+          // Add shipping method to Zinc order request
+          zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
+
+          console.log("Sending Zinc order request with shipping method:", zincOrderRequest);
+          
+          const zincOrder = await processOrder(zincOrderRequest);
+          
+          if (zincOrder) {
+            console.log("Zinc order processed successfully:", zincOrder);
+            toast.success("Order placed and sent to fulfillment!");
+          } else {
+            console.warn("Zinc order processing failed, but internal order was created");
+            toast.warning("Order placed but fulfillment may be delayed");
+          }
+        } catch (zincError) {
+          console.error("Zinc order processing error:", zincError);
+          // Don't fail the entire checkout - order was created successfully
+          toast.warning("Order placed successfully, but there may be a delay in fulfillment processing");
+        }
       }
 
       // Clear cart and handle post-purchase flow
       clearCart();
-      toast.success("Order placed successfully!");
+      
+      if (paymentIntentId) {
+        toast.success("Order placed and payment processed successfully!");
+      } else {
+        toast.success("Demo order placed successfully!");
+      }
 
       // Show guest signup prompt if user is not logged in
       if (!user) {
@@ -392,6 +382,7 @@ const CheckoutPage = () => {
                 isProcessing={Boolean(isProcessing)}
                 canPlaceOrder={Boolean(canPlaceOrder()) && !isValidatingCart}
                 onPrevious={() => handleTabChange("schedule")}
+                totalAmount={cartTotal + getShippingCost() + getTaxAmount()}
               />
             </TabsContent>
           </CheckoutTabs>

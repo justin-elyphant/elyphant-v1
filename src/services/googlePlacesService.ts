@@ -1,4 +1,3 @@
-
 import { getGoogleMapsApiKey } from '@/utils/googleMapsConfig';
 
 export interface GooglePlacesPrediction {
@@ -80,6 +79,7 @@ class GooglePlacesService {
             return;
           } else {
             console.log('🏗️ [GooglePlaces] ✅ API key retrieved successfully');
+            console.log('🏗️ [GooglePlaces] 🔍 API Key starts with:', this.apiKey.substring(0, 20) + '...');
             this.usingMockData = false;
           }
         }
@@ -102,6 +102,7 @@ class GooglePlacesService {
         
         script.onerror = (error) => {
           console.error('🏗️ [GooglePlaces] ❌ Failed to load Google Maps script:', error);
+          console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to script load failure');
           this.usingMockData = true;
           this.isLoaded = true;
           resolve(); // Don't reject, use mock data
@@ -111,6 +112,7 @@ class GooglePlacesService {
         document.head.appendChild(script);
       } catch (error) {
         console.error('🏗️ [GooglePlaces] ❌ Error during Google Maps API loading:', error);
+        console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to loading error');
         this.usingMockData = true;
         this.isLoaded = true;
         resolve(); // Don't reject, use mock data
@@ -133,10 +135,12 @@ class GooglePlacesService {
         this.usingMockData = false;
       } catch (error) {
         console.error('🏗️ [GooglePlaces] ❌ Failed to initialize Google Places services:', error);
+        console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to service initialization failure');
         this.usingMockData = true;
       }
     } else {
       console.warn('🏗️ [GooglePlaces] ⚠️ Google Maps Places API not available or no API key, using mock data');
+      console.log('🏗️ [GooglePlaces] 🔍 Debug - Has Google Maps:', !!googleMaps, 'Has API Key:', !!this.apiKey, 'Using Mock:', this.usingMockData);
       this.usingMockData = true;
     }
   }
@@ -186,6 +190,7 @@ class GooglePlacesService {
     // If Google Maps API is available, use it
     if (shouldUseRealAPI) {
       console.log('🔍 [GooglePlaces] Using real Google Places API');
+      console.log('🔍 [GooglePlaces] 🔍 API Key starts with:', this.apiKey!.substring(0, 20) + '...');
       
       // Create or reuse session token
       if (!this.sessionToken) {
@@ -216,6 +221,14 @@ class GooglePlacesService {
           console.log('🔍 [GooglePlaces] Using default US location bias');
         }
 
+        console.log('🔍 [GooglePlaces] 📋 Request details:', {
+          input: request.input,
+          types: request.types,
+          componentRestrictions: request.componentRestrictions,
+          hasLocation: !!request.location,
+          radius: request.radius
+        });
+
         this.autocompleteService.getPlacePredictions(
           request,
           (predictions: any[], status: string) => {
@@ -223,6 +236,7 @@ class GooglePlacesService {
             
             if (status === 'OK' && predictions) {
               console.log(`🔍 [GooglePlaces] ✅ Successfully got ${predictions.length} real predictions`);
+              console.log(`🔍 [GooglePlaces] 📋 First prediction:`, predictions[0]);
               const formattedPredictions = predictions.map(prediction => ({
                 place_id: prediction.place_id,
                 description: prediction.description,
@@ -234,6 +248,13 @@ class GooglePlacesService {
               resolve(formattedPredictions);
             } else {
               console.warn(`🔍 [GooglePlaces] ⚠️ Google Places API error: ${status}, falling back to mock data`);
+              if (status === 'REQUEST_DENIED') {
+                console.error('🔍 [GooglePlaces] ❌ REQUEST_DENIED - This usually means:');
+                console.error('  1. API key is invalid or expired');
+                console.error('  2. Places API is not enabled for this key');
+                console.error('  3. Billing is not set up');
+                console.error('  4. API key restrictions are blocking the request');
+              }
               resolve(this.getMockPredictions(input));
             }
           }

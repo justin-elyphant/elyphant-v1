@@ -22,6 +22,7 @@ export const getGoogleMapsApiKey = async (): Promise<string | null> => {
     
     if (data.apiKey) {
       console.log('🗝️ [GoogleMaps] ✅ API key retrieved successfully');
+      console.log('🗝️ [GoogleMaps] 🔍 API Key starts with:', data.apiKey.substring(0, 20) + '...');
       cachedApiKey = data.apiKey;
       return data.apiKey;
     } else {
@@ -46,17 +47,22 @@ export const testGoogleMapsApiKey = async (): Promise<void> => {
     }
     
     console.log('🧪 [GoogleMaps] ✅ API key test successful - key retrieved');
+    console.log('🧪 [GoogleMaps] 🔍 Testing API key with a simple geocoding request...');
     
     // Test if the API key works by making a simple request
     const testUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=test&key=${apiKey}`;
     const response = await fetch(testUrl);
     const data = await response.json();
     
+    console.log('🧪 [GoogleMaps] 📍 Geocoding API response status:', data.status);
+    console.log('🧪 [GoogleMaps] 📍 Geocoding API response:', data);
+    
     if (data.status === 'OK' || data.status === 'ZERO_RESULTS') {
       console.log('🧪 [GoogleMaps] ✅ API key validation successful');
     } else {
       console.error('🧪 [GoogleMaps] ❌ API key validation failed:', data.status);
-      throw new Error(`API validation failed: ${data.status}`);
+      console.error('🧪 [GoogleMaps] ❌ Error details:', data.error_message || 'No error message');
+      throw new Error(`API validation failed: ${data.status} - ${data.error_message || 'Unknown error'}`);
     }
   } catch (error) {
     console.error('🧪 [GoogleMaps] ❌ API key test failed:', error);

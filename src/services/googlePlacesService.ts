@@ -1,3 +1,4 @@
+
 import { getGoogleMapsApiKey } from '@/utils/googleMapsConfig';
 
 export interface GooglePlacesPrediction {
@@ -42,6 +43,7 @@ class GooglePlacesService {
   private isLoaded = false;
   private loadingPromise: Promise<void> | null = null;
   private usingMockData = false;
+  private sessionToken: any = null;
 
   constructor() {
     console.log('🏗️ [GooglePlaces] Service initialized');
@@ -76,7 +78,6 @@ class GooglePlacesService {
         }
 
         console.log('🏗️ [GooglePlaces] ✅ API key retrieved, loading Google Maps script...');
-        console.log('🏗️ [GooglePlaces] Script URL will be:', `https://maps.googleapis.com/maps/api/js?key=${this.apiKey.substring(0, 10)}...&libraries=places`);
 
         // Load Google Maps script
         const script = document.createElement('script');
@@ -94,11 +95,6 @@ class GooglePlacesService {
         
         script.onerror = (error) => {
           console.error('🏗️ [GooglePlaces] ❌ Failed to load Google Maps script:', error);
-          console.error('🏗️ [GooglePlaces] This could be due to:');
-          console.error('🏗️ [GooglePlaces] - Invalid API key');
-          console.error('🏗️ [GooglePlaces] - API restrictions (domain/referrer)');
-          console.error('🏗️ [GooglePlaces] - Disabled APIs in Google Cloud Console');
-          console.error('🏗️ [GooglePlaces] - Network connectivity issues');
           this.usingMockData = true;
           this.isLoaded = true;
           resolve(); // Don't reject, use mock data
@@ -138,6 +134,36 @@ class GooglePlacesService {
     }
   }
 
+  private createSessionToken(): any {
+    if ((window as any).google?.maps?.places) {
+      return new (window as any).google.maps.places.AutocompleteSessionToken();
+    }
+    return null;
+  }
+
+  private getUserLocation(): Promise<{ lat: number; lng: number } | null> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('🔍 [GooglePlaces] Location access denied or unavailable, using default location bias');
+          resolve(null);
+        },
+        { timeout: 5000, maximumAge: 300000 } // 5 second timeout, 5 minute cache
+      );
+    });
+  }
+
   async getAddressPredictions(input: string): Promise<GooglePlacesPrediction[]> {
     if (!input || input.length < 3) {
       return [];
@@ -149,13 +175,38 @@ class GooglePlacesService {
     // If Google Maps API is available, use it
     if (this.autocompleteService && this.apiKey && !this.usingMockData) {
       console.log('🔍 [GooglePlaces] Using real Google Places API');
+      
+      // Create or reuse session token
+      if (!this.sessionToken) {
+        this.sessionToken = this.createSessionToken();
+      }
+
+      // Get user location for better results
+      const userLocation = await this.getUserLocation();
+      
       return new Promise((resolve) => {
+        const request: any = {
+          input: input,
+          // Use 'geocode' instead of 'address' for broader results including cities, neighborhoods
+          types: ['geocode'],
+          componentRestrictions: { country: 'us' },
+          sessionToken: this.sessionToken
+        };
+
+        // Add location bias if available
+        if (userLocation) {
+          request.location = new (window as any).google.maps.LatLng(userLocation.lat, userLocation.lng);
+          request.radius = 50000; // 50km radius
+          console.log(`🔍 [GooglePlaces] Adding location bias: ${userLocation.lat}, ${userLocation.lng}`);
+        } else {
+          // Default to US center for location bias
+          request.location = new (window as any).google.maps.LatLng(39.8283, -98.5795);
+          request.radius = 2000000; // 2000km radius to cover most of US
+          console.log('🔍 [GooglePlaces] Using default US location bias');
+        }
+
         this.autocompleteService.getPlacePredictions(
-          {
-            input: input,
-            types: ['address'],
-            componentRestrictions: { country: 'us' }
-          },
+          request,
           (predictions: any[], status: string) => {
             console.log(`🔍 [GooglePlaces] API Response - Status: ${status}, Predictions: ${predictions?.length || 0}`);
             
@@ -195,10 +246,14 @@ class GooglePlacesService {
         this.placesService.getDetails(
           {
             placeId: placeId,
-            fields: ['place_id', 'formatted_address', 'address_components', 'geometry']
+            fields: ['place_id', 'formatted_address', 'address_components', 'geometry'],
+            sessionToken: this.sessionToken
           },
           (place: any, status: string) => {
             console.log(`📍 [GooglePlaces] Details API Response - Status: ${status}`);
+            
+            // Clear session token after use
+            this.sessionToken = null;
             
             if (status === 'OK' && place) {
               console.log('📍 [GooglePlaces] ✅ Successfully got real place details');

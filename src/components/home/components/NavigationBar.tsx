@@ -45,9 +45,9 @@ const NavigationBar = () => {
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-3">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center h-12">
           {/* Logo */}
-          <Link to="/" className="text-xl font-bold text-purple-700 flex-shrink-0">
+          <Link to="/" className="text-xl font-bold text-purple-700 flex-shrink-0 h-10 flex items-center">
             Elyphant
           </Link>
           
@@ -61,13 +61,13 @@ const NavigationBar = () => {
           )}
           
           {/* Desktop navigation - now empty since nav items removed */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-3 h-10">
             {navItems.map((item) => (
               (!item.requireAuth || user) && (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`text-sm font-medium transition-colors hover:text-purple-700 ${
+                  className={`text-sm font-medium transition-colors hover:text-purple-700 h-10 flex items-center px-3 ${
                     location.pathname === item.path ? "text-purple-700" : "text-gray-700"
                   }`}
                 >
@@ -78,7 +78,7 @@ const NavigationBar = () => {
           </div>
           
           {/* Right side actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 h-10">
             <ShoppingCartButton />
             {user && <NotificationBell />}
             <div className="hidden md:flex">
@@ -86,8 +86,14 @@ const NavigationBar = () => {
             </div>
 
             {/* Mobile menu button */}
-            <Button variant="ghost" size="sm" onClick={toggleMenu} className="p-1 md:hidden">
-              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            <Button 
+              variant="ghost" 
+              size={isMobile ? "touch" : "icon"} 
+              onClick={toggleMenu} 
+              className="md:hidden"
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {isMenuOpen ? <X size={isMobile ? 24 : 20} /> : <Menu size={isMobile ? 24 : 20} />}
             </Button>
           </div>
         </div>
@@ -106,7 +112,7 @@ const NavigationBar = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`text-base font-medium py-2 px-4 rounded-md ${
+                    className={`text-base font-medium py-3 px-4 rounded-md min-h-[48px] flex items-center ${
                       location.pathname === item.path
                         ? "bg-purple-50 text-purple-700"
                         : "text-gray-700 hover:bg-gray-50"

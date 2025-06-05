@@ -2,39 +2,30 @@
 import React from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/contexts/CartContext";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { useCartStore } from "@/stores/cartStore";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ShoppingCartButtonProps {
-  className?: string;
-}
-
-const ShoppingCartButton: React.FC<ShoppingCartButtonProps> = ({ className }) => {
-  const { cartItems } = useCart();
-  const navigate = useNavigate();
-  
-  const itemCount = cartItems.length;
-  
-  const handleCartClick = () => {
-    navigate("/cart");
-  };
+const ShoppingCartButton = () => {
+  const { items, toggleCart } = useCartStore();
+  const isMobile = useIsMobile();
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <Button 
-      variant="ghost" 
-      size="icon" 
-      className={cn("relative", className)}
-      onClick={handleCartClick}
+    <Button
+      variant="ghost"
+      size={isMobile ? "touch" : "icon"}
+      onClick={toggleCart}
+      className="relative h-10 w-10"
+      aria-label={`Shopping cart with ${itemCount} items`}
     >
-      <ShoppingCart className="h-5 w-5" />
+      <ShoppingCart size={isMobile ? 24 : 20} />
       {itemCount > 0 && (
         <Badge 
           variant="destructive" 
-          className="h-4 w-4 p-0 min-w-4 flex items-center justify-center absolute -top-1 -right-1 text-[10px]"
+          className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs font-bold"
         >
-          {itemCount > 99 ? '99+' : itemCount}
+          {itemCount > 99 ? "99+" : itemCount}
         </Badge>
       )}
     </Button>

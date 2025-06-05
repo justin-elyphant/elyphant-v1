@@ -40,7 +40,7 @@ const fetchApiKeyFromServer = async (): Promise<string | null> => {
   
   try {
     console.log('🗺️ [GoogleMaps] Calling edge function: get-google-maps-key');
-    console.log('🗺️ [GoogleMaps] Supabase URL:', supabase.supabaseUrl);
+    console.log('🗺️ [GoogleMaps] Supabase URL: https://dmkxtkvlispxeqfzlczr.supabase.co');
     
     const { data, error } = await supabase.functions.invoke('get-google-maps-key', {
       method: 'GET'

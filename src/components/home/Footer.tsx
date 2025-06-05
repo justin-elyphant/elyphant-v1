@@ -20,6 +20,14 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             </ul>
           </div>
           <div>
+            <h3 className="font-semibold mb-4">For Vendors</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="/vendor-partner" className="hover:text-foreground">Vendor Portal</a></li>
+              <li><a href="/vendor-signup" className="hover:text-foreground">Vendor Sign Up</a></li>
+              <li><a href="/vendor-login" className="hover:text-foreground">Vendor Login</a></li>
+            </ul>
+          </div>
+          <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><a href="/help" className="hover:text-foreground">Help Center</a></li>
@@ -28,19 +36,11 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
+            <h3 className="font-semibold mb-4">Legal & Admin</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><a href="/privacy" className="hover:text-foreground">Privacy Policy</a></li>
               <li><a href="/terms" className="hover:text-foreground">Terms of Service</a></li>
-              <li><a href="/cookies" className="hover:text-foreground">Cookie Policy</a></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-4">Connect</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-foreground">Twitter</a></li>
-              <li><a href="#" className="hover:text-foreground">Instagram</a></li>
-              <li><a href="#" className="hover:text-foreground">Facebook</a></li>
+              <li><a href="/trunkline-login" className="hover:text-foreground">Trunkline</a></li>
             </ul>
           </div>
         </div>

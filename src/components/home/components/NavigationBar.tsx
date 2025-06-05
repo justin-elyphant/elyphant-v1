@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useViewport } from "@/hooks/useViewport";
+import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
+import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
 
 const NavigationBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,9 +50,16 @@ const NavigationBar = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="text-xl font-bold text-purple-700">
+          <Link to="/" className="text-xl font-bold text-purple-700 flex-shrink-0">
             Elyphant
           </Link>
+          
+          {/* Desktop Search Bar (Nicole) */}
+          {!isMobile && (
+            <div className="flex-1 max-w-2xl mx-8">
+              <AIEnhancedSearchBar />
+            </div>
+          )}
           
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center space-x-6">
@@ -69,16 +78,16 @@ const NavigationBar = () => {
             ))}
           </div>
           
-          {/* Auth buttons and notifications */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Right side actions */}
+          <div className="flex items-center space-x-3">
+            <ShoppingCartButton />
             {user && <NotificationBell />}
-            <AuthButtons profileImage={profile?.profile_image} />
-          </div>
+            <div className="hidden md:flex">
+              <AuthButtons profileImage={profile?.profile_image} />
+            </div>
 
-          {/* Mobile menu button */}
-          <div className="flex md:hidden items-center space-x-3">
-            {user && <NotificationBell />}
-            <Button variant="ghost" size="sm" onClick={toggleMenu} className="p-1">
+            {/* Mobile menu button */}
+            <Button variant="ghost" size="sm" onClick={toggleMenu} className="p-1 md:hidden">
               {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </Button>
           </div>
@@ -86,7 +95,12 @@ const NavigationBar = () => {
         
         {/* Mobile navigation */}
         {isMenuOpen && (
-          <div className="fixed inset-0 top-[56px] bg-white z-50 flex flex-col p-4 md:hidden">
+          <div className="fixed inset-0 top-[72px] bg-white z-50 flex flex-col p-4 md:hidden">
+            {/* Mobile Search Bar (Nicole) */}
+            <div className="mb-6">
+              <AIEnhancedSearchBar mobile={true} />
+            </div>
+            
             <div className="flex flex-col space-y-4 mb-6">
               {navItems.map((item) => (
                 (!item.requireAuth || user) && (

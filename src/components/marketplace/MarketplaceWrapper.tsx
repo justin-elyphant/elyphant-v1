@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
 import IntegratedSearchSection from "./IntegratedSearchSection";
 import SubtleCountdownBanner from "./SubtleCountdownBanner";
 import ResultsSummaryBar from "./ResultsSummaryBar";
+import MarketplaceErrorBoundary from "./error/ErrorBoundary";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
@@ -27,6 +29,8 @@ const MarketplaceWrapper = () => {
   
   const [products, setProducts] = useState(allProducts);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
@@ -87,39 +91,57 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, setSearchParams]);
 
-  // Product filtering and search logic
+  // Enhanced product filtering and search logic with error handling
   useEffect(() => {
-    let results = [];
-    
-    // Prioritize search over category
-    if (searchTerm) {
-      if (brandParam) {
-        results = searchMockProducts(`${brandParam} ${searchTerm}`, 12);
-      } else {
-        results = searchMockProducts(searchTerm, 16);
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        let results = [];
+        
+        // Prioritize search over category
+        if (searchTerm) {
+          if (brandParam) {
+            results = searchMockProducts(`${brandParam} ${searchTerm}`, 12);
+          } else {
+            results = searchMockProducts(searchTerm, 16);
+          }
+        } else if (brandParam) {
+          if (categoryParam) {
+            results = searchMockProducts(`${brandParam} ${categoryParam}`, 12);
+          } else {
+            results = searchMockProducts(brandParam, 12);
+          }
+        } else if (categoryParam) {
+          results = searchMockProducts(categoryParam, 16);
+        } else {
+          // Default: show all products when no search parameters are present
+          results = allProducts.slice(0, 20); // Show first 20 products as default
+        }
+        
+        setProducts(results);
+        
+        // Dismiss loading toasts
+        if (categoryParam && !searchTerm) {
+          toast.dismiss(`category-search-${categoryParam}`);
+        }
+        if (brandParam) {
+          toast.dismiss(`brand-loading-${brandParam}`);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load products";
+        setError(errorMessage);
+        console.error("Error loading products:", err);
+        toast.error("Error loading products", {
+          description: errorMessage
+        });
+      } finally {
+        setIsLoading(false);
       }
-    } else if (brandParam) {
-      if (categoryParam) {
-        results = searchMockProducts(`${brandParam} ${categoryParam}`, 12);
-      } else {
-        results = searchMockProducts(brandParam, 12);
-      }
-    } else if (categoryParam) {
-      results = searchMockProducts(categoryParam, 16);
-    } else {
-      // Default: show all products when no search parameters are present
-      results = allProducts.slice(0, 20); // Show first 20 products as default
-    }
-    
-    setProducts(results);
-    
-    // Dismiss loading toasts
-    if (categoryParam && !searchTerm) {
-      toast.dismiss(`category-search-${categoryParam}`);
-    }
-    if (brandParam) {
-      toast.dismiss(`brand-loading-${brandParam}`);
-    }
+    };
+
+    fetchProducts();
   }, [searchTerm, categoryParam, brandParam]);
   
   const handleProductView = (productId: string) => {
@@ -160,33 +182,41 @@ const MarketplaceWrapper = () => {
     setSearchParams(newParams, { replace: true });
   };
 
+  const handleRefresh = async () => {
+    window.location.reload();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Search and Categories - full width for better mobile experience */}
-      <FullWidthSection>
-        <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
-      </FullWidthSection>
+    <MarketplaceErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        {/* Search and Categories - full width for better mobile experience */}
+        <FullWidthSection>
+          <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
+        </FullWidthSection>
 
-      {/* Countdown Banner */}
-      <SubtleCountdownBanner />
+        {/* Countdown Banner */}
+        <SubtleCountdownBanner />
 
-      {/* Results Summary Bar */}
-      <ResultsSummaryBar totalItems={products.length} searchTerm={searchTerm} />
+        {/* Results Summary Bar */}
+        <ResultsSummaryBar totalItems={products.length} searchTerm={searchTerm} />
 
-      {/* Main Content - full bleed layout */}
-      <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">
-        <div ref={resultsRef}>
-          <MarketplaceContent
-            products={products}
-            isLoading={false}
-            searchTerm={searchTerm}
-            onProductView={handleProductView}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          />
-        </div>
-      </FullWidthSection>
-    </div>
+        {/* Main Content - full bleed layout */}
+        <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">
+          <div ref={resultsRef}>
+            <MarketplaceContent
+              products={products}
+              isLoading={isLoading}
+              searchTerm={searchTerm}
+              onProductView={handleProductView}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              error={error}
+              onRefresh={handleRefresh}
+            />
+          </div>
+        </FullWidthSection>
+      </div>
+    </MarketplaceErrorBoundary>
   );
 };
 

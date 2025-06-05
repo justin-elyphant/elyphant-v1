@@ -1,28 +1,29 @@
 
 import React from "react";
 import Header from "@/components/home/Header";
-import { useIsMobile } from "@/hooks/use-mobile";
 import Footer from "@/components/home/Footer";
+import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  className?: string;
+  headerClassName?: string;
+  footerClassName?: string;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
-  const isMobile = useIsMobile();
-  
+const MainLayout: React.FC<MainLayoutProps> = ({
+  children,
+  className,
+  headerClassName,
+  footerClassName
+}) => {
   return (
-    <div className="min-h-screen flex flex-col bg-background dark:bg-gray-950">
-      {/* Full-width header */}
-      <Header />
-      
-      {/* Full-width main content area */}
-      <main className="flex-1">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header className={headerClassName} />
+      <main className={cn("flex-1", className)}>
         {children}
       </main>
-      
-      {/* Full-width footer */}
-      <Footer />
+      <Footer className={footerClassName} />
     </div>
   );
 };

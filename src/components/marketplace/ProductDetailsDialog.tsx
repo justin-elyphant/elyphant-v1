@@ -3,8 +3,10 @@ import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Product } from "@/types/product";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ProductDetailsImageSection from "./product-details/ProductDetailsImageSection";
 import ProductDetailsActionsSection from "./product-details/ProductDetailsActionsSection";
+import MobileProductSheet from "./product-details/MobileProductSheet";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 
 interface ProductDetailsDialogProps {
@@ -24,6 +26,7 @@ const ProductDetailsDialog = ({
 }: ProductDetailsDialogProps) => {
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
+  const isMobile = useIsMobile();
 
   // Use unified wishlist system directly
   const { wishlists, loadWishlists } = useUnifiedWishlist();
@@ -50,6 +53,19 @@ const ProductDetailsDialog = ({
   const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
 
   if (!product) return null;
+
+  // Use mobile sheet on mobile devices for better UX
+  if (isMobile) {
+    return (
+      <MobileProductSheet
+        product={product}
+        open={open}
+        onOpenChange={onOpenChange}
+        isWishlisted={isWishlisted}
+        onWishlistChange={handleWishlistChange}
+      />
+    );
+  }
 
   // Share function
   const handleShareProduct = () => {

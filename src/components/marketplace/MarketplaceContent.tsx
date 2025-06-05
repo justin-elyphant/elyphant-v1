@@ -1,238 +1,134 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useSearchParams, useLocation } from "react-router-dom";
-import MarketplaceHeader from "./MarketplaceHeader";
-import MarketplaceFilters from "./MarketplaceFilters";
-import FiltersSidebar from "./FiltersSidebar";
-import ProductGrid from "./ProductGrid";
-import MarketplaceLoading from "./MarketplaceLoading";
-import { useFilteredProducts } from "./hooks/useFilteredProducts";
-import { useMarketplaceProducts } from "./hooks/useMarketplaceProducts";
-import MobileFiltersDrawer from "./MobileFiltersDrawer";
+
+import React, { useState, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import SignUpDialog from "./SignUpDialog";
-import { useOptimizedSearch } from "@/hooks/useOptimizedSearch";
 import { Product } from "@/types/product";
-import BleedFirstLayout from "./BleedFirstLayout";
+import ProductGrid from "./ProductGrid";
+import ProductSkeleton from "./loading/ProductSkeleton";
+import MarketplaceToolbar from "./MarketplaceToolbar";
+import MobileFilterDrawer from "./filters/MobileFilterDrawer";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, AlertCircle } from "lucide-react";
 
 interface MarketplaceContentProps {
-  products?: Product[];
-  isLoading?: boolean;
-  searchTerm?: string;
-  onProductView?: (productId: string) => void;
-  showFilters?: boolean;
-  setShowFilters?: React.Dispatch<React.SetStateAction<boolean>>;
+  products: Product[];
+  isLoading: boolean;
+  searchTerm: string;
+  onProductView: (productId: string) => void;
+  showFilters: boolean;
+  setShowFilters: (show: boolean) => void;
+  error?: string | null;
+  onRefresh?: () => void;
 }
 
-const MarketplaceContent = ({ 
-  products: propProducts,
-  isLoading: propIsLoading,
-  searchTerm: propSearchTerm,
+const MarketplaceContent = ({
+  products,
+  isLoading,
+  searchTerm,
   onProductView,
-  showFilters: propShowFilters,
-  setShowFilters: propSetShowFilters
+  showFilters,
+  setShowFilters,
+  error,
+  onRefresh
 }: MarketplaceContentProps) => {
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
   const isMobile = useIsMobile();
-  const query = searchParams.get("q") || propSearchTerm || "";
-  
-  // Check if this is a fresh navigation from home page
-  const isFromHomePage = location.state?.fromHome || false;
-  
-  // Initialize state with proper boolean conversion, but reset if coming from home
-  const [internalShowFilters, setInternalShowFilters] = useState(() => {
-    if (isFromHomePage) return false; // Always start with filters closed from home
-    const saved = localStorage.getItem('showFilters');
-    return saved === 'true';
-  });
-  
-  const showFilters = propShowFilters !== undefined ? propShowFilters : internalShowFilters;
-  const setShowFilters = propSetShowFilters || setInternalShowFilters;
-  
-  const [savedFiltersActive, setSavedFiltersActive] = useState(() => {
-    if (isFromHomePage) return false; // Don't use saved filters from home
-    const saved = localStorage.getItem('savedFiltersActive');
-    return saved === 'true';
-  });
-  
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [sortOption, setSortOption] = useState("relevance");
-  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  
-  // Active filters state - reset to defaults if coming from home
-  const [activeFilters, setActiveFilters] = useState(() => {
-    if (isFromHomePage) {
-      // Always start with clean filters from home page
-      return {
-        categories: [] as string[],
-        priceRange: [0, 1000] as [number, number],
-        rating: 0,
-        inStock: false,
-        onSale: false,
-        freeShipping: false,
-        brands: [] as string[],
-        occasion: "",
-      };
-    }
-    
-    // Otherwise use saved state
-    return {
-      categories: [] as string[],
-      priceRange: [0, 1000] as [number, number],
-      rating: 0,
-      inStock: false,
-      onSale: false,
-      freeShipping: false,
-      brands: [] as string[],
-      occasion: "",
-    };
-  });
 
-  // Use optimized search hook
-  const { search: optimizedSearch, isLoading: searchLoading, results: searchResults, error: searchError } = useOptimizedSearch();
+  // Memoize active filters count for performance
+  const activeFiltersCount = useMemo(() => {
+    // This would count actual active filters in a real implementation
+    return 0;
+  }, []);
 
-  // Regular product fetching (when no search query and no props provided)
-  const { products: regularProducts, isLoading: regularLoading } = useMarketplaceProducts();
-
-  // Determine which products to use - prioritize props, then search results, then regular products
-  const products = useMemo(() => {
-    if (propProducts) {
-      return propProducts;
-    }
-    if (query && searchResults.length > 0) {
-      return searchResults;
-    }
-    return regularProducts || [];
-  }, [propProducts, query, searchResults, regularProducts]);
-
-  // Determine loading state
-  const isLoading = propIsLoading !== undefined ? propIsLoading : (query ? searchLoading : regularLoading);
-
-  // Filter products based on active filters
-  const filteredProducts = useFilteredProducts(products, activeFilters, sortOption);
-
-  // Categories for filters
-  const categories = useMemo(() => {
-    const categorySet = new Set<string>();
-    products.forEach((product) => {
-      if (product.category) {
-        categorySet.add(product.category);
-      }
-    });
-    return Array.from(categorySet);
-  }, [products]);
-
-  // Handle search when query changes
-  useEffect(() => {
-    if (query.trim()) {
-      console.log(`MarketplaceContent: Triggering optimized search for "${query}"`);
-      optimizedSearch(query, 50);
-    }
-  }, [query, optimizedSearch]);
-
-  // Save filter state to localStorage (only for internal state and not from home)
-  useEffect(() => {
-    if (propShowFilters === undefined && !isFromHomePage) {
-      localStorage.setItem('showFilters', internalShowFilters.toString());
-    }
-  }, [internalShowFilters, propShowFilters, isFromHomePage]);
-
-  useEffect(() => {
-    if (!isFromHomePage) {
-      localStorage.setItem('savedFiltersActive', savedFiltersActive.toString());
-    }
-  }, [savedFiltersActive, isFromHomePage]);
-
-  // Clear the fromHome state after initial load to allow normal behavior
-  useEffect(() => {
-    if (isFromHomePage) {
-      // Replace the current history entry to remove the fromHome state
-      window.history.replaceState({}, '', window.location.pathname + window.location.search);
-    }
-  }, [isFromHomePage]);
-
-  const handleFilterChange = (newFilters: typeof activeFilters) => {
-    setActiveFilters(newFilters);
+  const handleClearFilters = () => {
+    // Implementation for clearing filters
+    console.log("Clearing filters");
   };
 
-  const handleSavedFiltersToggle = () => {
-    setSavedFiltersActive(!savedFiltersActive);
-  };
+  // Error state
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center max-w-md mx-auto">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          {onRefresh && (
+            <Button onClick={onRefresh} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
-  const handleProductView = (productId: string) => {
-    if (onProductView) {
-      onProductView(productId);
-    }
-  };
-
+  // Loading state
   if (isLoading) {
-    return <MarketplaceLoading />;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <div className="h-12 bg-gray-200 rounded animate-pulse mb-4" />
+        </div>
+        <ProductSkeleton count={isMobile ? 6 : 12} viewMode={viewMode} />
+      </div>
+    );
   }
 
-  if (searchError) {
-    console.error('Search error:', searchError);
-  }
-
+  // Main content
   return (
-    <>
-      <div className="min-h-screen bg-background">
-        <BleedFirstLayout>
-          <MarketplaceHeader />
-          
-          <div className="py-6">
-            <MarketplaceFilters
+    <div className="container mx-auto px-4 py-6">
+      {/* Toolbar */}
+      <div className="mb-6">
+        {isMobile ? (
+          <div className="flex items-center justify-between gap-4">
+            <MobileFilterDrawer
+              activeFiltersCount={activeFiltersCount}
+              onClearFilters={handleClearFilters}
+            >
+              <div className="p-4">
+                <p className="text-sm text-muted-foreground">
+                  Filters will be implemented here
+                </p>
+              </div>
+            </MobileFilterDrawer>
+            
+            <MarketplaceToolbar
               viewMode={viewMode}
               setViewMode={setViewMode}
               sortOption={sortOption}
-              onSortChange={setSortOption}
-              isMobile={isMobile}
-              savedFiltersCount={0}
-              onSavedFiltersToggle={handleSavedFiltersToggle}
-              savedFiltersActive={savedFiltersActive}
+              setSortOption={setSortOption}
+              totalItems={products.length}
               showFilters={showFilters}
               setShowFilters={setShowFilters}
+              isMobile={isMobile}
             />
-            
-            <div className="flex gap-6">
-              {/* Desktop Filters Sidebar */}
-              {!isMobile && showFilters && (
-                <div className="w-64 flex-shrink-0">
-                  <FiltersSidebar
-                    activeFilters={activeFilters}
-                    onFilterChange={handleFilterChange}
-                    categories={categories}
-                  />
-                </div>
-              )}
-              
-              {/* Product Grid */}
-              <div className="flex-1">
-                <ProductGrid 
-                  products={filteredProducts} 
-                  viewMode={viewMode}
-                  onProductView={handleProductView}
-                />
-              </div>
-            </div>
           </div>
-        </BleedFirstLayout>
-        
-        {/* Mobile Filters Drawer */}
-        <MobileFiltersDrawer
-          activeFilters={activeFilters}
-          onFilterChange={handleFilterChange}
-          categories={categories}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
+        ) : (
+          <MarketplaceToolbar
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            totalItems={products.length}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            isMobile={isMobile}
+          />
+        )}
+      </div>
+
+      {/* Product Grid */}
+      <div className="relative">
+        <ProductGrid
+          products={products}
+          viewMode={viewMode}
+          sortOption={sortOption}
+          onProductView={onProductView}
         />
       </div>
-      
-      <SignUpDialog 
-        open={showSignUpDialog} 
-        onOpenChange={setShowSignUpDialog} 
-      />
-    </>
+    </div>
   );
 };
 

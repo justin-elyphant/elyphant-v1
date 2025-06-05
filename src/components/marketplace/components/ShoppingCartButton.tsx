@@ -3,20 +3,25 @@ import React from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCartStore } from "@/stores/cartStore";
+import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const ShoppingCartButton = () => {
-  const { items, toggleCart } = useCartStore();
+  const { getItemCount } = useCart();
   const isMobile = useIsMobile();
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const itemCount = getItemCount();
+
+  const handleCartClick = () => {
+    // This could open a cart drawer/modal in the future
+    console.log("Cart clicked with", itemCount, "items");
+  };
 
   return (
     <Button
       variant="ghost"
       size={isMobile ? "touch" : "icon"}
-      onClick={toggleCart}
-      className="relative h-10 w-10"
+      onClick={handleCartClick}
+      className="relative h-12 w-12"
       aria-label={`Shopping cart with ${itemCount} items`}
     >
       <ShoppingCart size={isMobile ? 24 : 20} />

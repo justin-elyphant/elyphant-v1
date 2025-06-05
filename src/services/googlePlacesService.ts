@@ -36,8 +36,8 @@ export interface StandardizedAddress {
 
 class GooglePlacesService {
   private apiKey: string;
-  private autocompleteService: google.maps.places.AutocompleteService | null = null;
-  private placesService: google.maps.places.PlacesService | null = null;
+  private autocompleteService: any = null;
+  private placesService: any = null;
   private isLoaded = false;
 
   constructor() {
@@ -46,7 +46,7 @@ class GooglePlacesService {
   }
 
   private async loadGoogleMapsAPI(): Promise<void> {
-    if (this.isLoaded || window.google?.maps?.places) {
+    if (this.isLoaded || (window as any).google?.maps?.places) {
       this.initializeServices();
       return;
     }
@@ -62,12 +62,13 @@ class GooglePlacesService {
   }
 
   private initializeServices(): void {
-    if (window.google?.maps?.places) {
-      this.autocompleteService = new google.maps.places.AutocompleteService();
+    const googleMaps = (window as any).google?.maps?.places;
+    if (googleMaps) {
+      this.autocompleteService = new googleMaps.AutocompleteService();
       // Create a temporary div for PlacesService
       const div = document.createElement('div');
-      const map = new google.maps.Map(div);
-      this.placesService = new google.maps.places.PlacesService(map);
+      const map = new (window as any).google.maps.Map(div);
+      this.placesService = new googleMaps.PlacesService(map);
     }
   }
 

@@ -383,6 +383,7 @@ const CheckoutPage = () => {
                 canPlaceOrder={Boolean(canPlaceOrder()) && !isValidatingCart}
                 onPrevious={() => handleTabChange("schedule")}
                 totalAmount={cartTotal + getShippingCost() + getTaxAmount()}
+                cartItems={cartItems}
               />
             </TabsContent>
           </CheckoutTabs>

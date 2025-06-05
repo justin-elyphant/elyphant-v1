@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from "@/integrations/stripe/client";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Info } from "lucide-react";
+import { CreditCard, Info, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StripePaymentForm from "./StripePaymentForm";
+import { CartItem } from "@/contexts/CartContext";
 
 interface PaymentSectionProps {
   paymentMethod: string;
@@ -16,6 +16,7 @@ interface PaymentSectionProps {
   canPlaceOrder: boolean;
   onPrevious: () => void;
   totalAmount: number;
+  cartItems?: CartItem[];
 }
 
 const PaymentSection = ({
@@ -25,7 +26,8 @@ const PaymentSection = ({
   isProcessing,
   canPlaceOrder,
   onPrevious,
-  totalAmount
+  totalAmount,
+  cartItems = []
 }: PaymentSectionProps) => {
   const [clientSecret, setClientSecret] = useState<string>('');
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
@@ -70,6 +72,45 @@ const PaymentSection = ({
     }
   };
 
+  const handleExpressCheckout = async () => {
+    if (!canPlaceOrder) {
+      toast.error("Please complete all required fields before proceeding");
+      return;
+    }
+
+    setIsCreatingPayment(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          amount: totalAmount,
+          currency: 'usd',
+          cartItems: cartItems,
+          metadata: {
+            order_type: 'marketplace',
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Failed to initialize Express Checkout. Please try again.');
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
   const handlePaymentSuccess = (paymentIntentId: string) => {
     console.log('Payment successful:', paymentIntentId);
     onPlaceOrder(paymentIntentId);
@@ -107,6 +148,21 @@ const PaymentSection = ({
         <div className="flex items-center">
           <input 
             type="radio" 
+            id="express-checkout" 
+            name="payment-method"
+            checked={paymentMethod === "express"}
+            onChange={() => onPaymentMethodChange("express")}
+            className="mr-2"
+          />
+          <label htmlFor="express-checkout" className="flex items-center">
+            <Zap className="h-4 w-4 mr-2" />
+            Express Checkout
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input 
+            type="radio" 
             id="demo-payment" 
             name="payment-method"
             checked={paymentMethod === "demo"}
@@ -131,6 +187,13 @@ const PaymentSection = ({
                 onProcessingChange={setPaymentProcessing}
               />
             </Elements>
+          </div>
+        )}
+
+        {paymentMethod === "express" && (
+          <div className="pl-6 text-sm text-muted-foreground flex items-center">
+            <Zap className="h-4 w-4 mr-2" />
+            Fast and secure checkout powered by Stripe. Mobile-optimized experience.
           </div>
         )}
 
@@ -159,6 +222,16 @@ const PaymentSection = ({
             disabled={isProcessing || !canPlaceOrder}
           >
             {isProcessing ? "Processing..." : "Place Demo Order"}
+          </Button>
+        )}
+
+        {paymentMethod === "express" && (
+          <Button 
+            onClick={handleExpressCheckout}
+            disabled={isCreatingPayment || !canPlaceOrder}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isCreatingPayment ? "Redirecting..." : "Express Checkout"}
           </Button>
         )}
 

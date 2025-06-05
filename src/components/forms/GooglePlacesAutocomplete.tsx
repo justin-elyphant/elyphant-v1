@@ -29,7 +29,6 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const popoverWasOpen = useRef(false);
 
   const {
     query,
@@ -41,6 +40,14 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     onAddressSelect: (address) => {
       onAddressSelect(address);
       setOpen(false);
+      // Only restore focus after selecting a prediction
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
+        }
+      }, 50);
     }
   });
 
@@ -55,33 +62,17 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   useEffect(() => {
     if (predictions.length > 0 && !isLoading && query.length >= 3) {
       setOpen(true);
-    } else if (predictions.length === 0 && !isLoading) {
+    } else if (predictions.length === 0 && !isLoading && query.length >= 3) {
       setOpen(false);
     }
   }, [predictions.length, isLoading, query.length]);
-
-  // Handle focus restoration after popover closes
-  useEffect(() => {
-    if (open) {
-      popoverWasOpen.current = true;
-    } else if (popoverWasOpen.current) {
-      popoverWasOpen.current = false;
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          const length = inputRef.current.value.length;
-          inputRef.current.setSelectionRange(length, length);
-        }
-      }, 10);
-    }
-  }, [open]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
     setQuery(newValue);
     
-    // Don't immediately open popover - let the useEffect handle it when predictions arrive
+    // Close popover if input is too short
     if (newValue.length < 3) {
       setOpen(false);
     }
@@ -108,18 +99,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       {label && <Label htmlFor="address-input">{label}</Label>}
       <Popover 
         open={open && predictions.length > 0} 
-        onOpenChange={(isOpen) => {
-          setOpen(isOpen);
-          if (!isOpen && inputRef.current) {
-            setTimeout(() => {
-              if (inputRef.current) {
-                inputRef.current.focus();
-                const length = inputRef.current.value.length;
-                inputRef.current.setSelectionRange(length, length);
-              }
-            }, 10);
-          }
-        }}
+        onOpenChange={setOpen}
       >
         <PopoverTrigger asChild>
           <div className="relative">

@@ -39,8 +39,6 @@ const NavigationBar = () => {
   };
 
   const navItems = [
-    { path: "/", label: "Home" },
-    { path: "/marketplace", label: "Marketplace" },
     { path: "/wishlists", label: "Wishlists", requireAuth: true },
     { path: "/connections", label: "Friends", requireAuth: true },
   ];

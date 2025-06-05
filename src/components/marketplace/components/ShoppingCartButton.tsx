@@ -21,7 +21,7 @@ const ShoppingCartButton = () => {
       variant="ghost"
       size={isMobile ? "touch" : "icon"}
       onClick={handleCartClick}
-      className="relative h-12 w-12"
+      className="relative h-10 w-10"
       aria-label={`Shopping cart with ${itemCount} items`}
     >
       <ShoppingCart size={isMobile ? 24 : 20} />

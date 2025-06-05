@@ -44,6 +44,7 @@ class GooglePlacesService {
   private loadingPromise: Promise<void> | null = null;
   private usingMockData = false;
   private sessionToken: any = null;
+  private apiKeyFetched = false;
 
   constructor() {
     console.log('🏗️ [GooglePlaces] Service initialized');
@@ -65,19 +66,25 @@ class GooglePlacesService {
       try {
         console.log('🏗️ [GooglePlaces] Starting Google Maps API loading process...');
         
-        // Get API key from server
-        console.log('🏗️ [GooglePlaces] Fetching API key...');
-        this.apiKey = await getGoogleMapsApiKey();
-        
-        if (!this.apiKey) {
-          console.warn('🏗️ [GooglePlaces] ⚠️ No API key available - switching to mock data mode');
-          this.usingMockData = true;
-          this.isLoaded = true;
-          resolve();
-          return;
+        // Get API key from server - only fetch once
+        if (!this.apiKeyFetched) {
+          console.log('🏗️ [GooglePlaces] Fetching API key...');
+          this.apiKey = await getGoogleMapsApiKey();
+          this.apiKeyFetched = true;
+          
+          if (!this.apiKey) {
+            console.warn('🏗️ [GooglePlaces] ⚠️ No API key available - switching to mock data mode');
+            this.usingMockData = true;
+            this.isLoaded = true;
+            resolve();
+            return;
+          } else {
+            console.log('🏗️ [GooglePlaces] ✅ API key retrieved successfully');
+            this.usingMockData = false;
+          }
         }
 
-        console.log('🏗️ [GooglePlaces] ✅ API key retrieved, loading Google Maps script...');
+        console.log('🏗️ [GooglePlaces] Loading Google Maps script...');
 
         // Load Google Maps script
         const script = document.createElement('script');
@@ -115,7 +122,7 @@ class GooglePlacesService {
 
   private initializeServices(): void {
     const googleMaps = (window as any).google?.maps?.places;
-    if (googleMaps) {
+    if (googleMaps && this.apiKey && !this.usingMockData) {
       try {
         this.autocompleteService = new googleMaps.AutocompleteService();
         // Create a temporary div for PlacesService
@@ -129,7 +136,7 @@ class GooglePlacesService {
         this.usingMockData = true;
       }
     } else {
-      console.warn('🏗️ [GooglePlaces] ⚠️ Google Maps Places API not available, using mock data');
+      console.warn('🏗️ [GooglePlaces] ⚠️ Google Maps Places API not available or no API key, using mock data');
       this.usingMockData = true;
     }
   }
@@ -172,8 +179,12 @@ class GooglePlacesService {
     console.log(`🔍 [GooglePlaces] Getting predictions for: "${input}"`);
     await this.loadGoogleMapsAPI();
 
+    // Force check if we should be using real API
+    const shouldUseRealAPI = this.autocompleteService && this.apiKey && !this.usingMockData;
+    console.log(`🔍 [GooglePlaces] API Status - Has Service: ${!!this.autocompleteService}, Has Key: ${!!this.apiKey}, Using Mock: ${this.usingMockData}, Should Use Real: ${shouldUseRealAPI}`);
+
     // If Google Maps API is available, use it
-    if (this.autocompleteService && this.apiKey && !this.usingMockData) {
+    if (shouldUseRealAPI) {
       console.log('🔍 [GooglePlaces] Using real Google Places API');
       
       // Create or reuse session token

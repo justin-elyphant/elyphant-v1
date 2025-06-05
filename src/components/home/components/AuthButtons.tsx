@@ -25,7 +25,7 @@ const AuthButtons = (_props: AuthButtonsProps) => {
         <Button
           variant="purple"
           size="sm"
-          className="flex items-center h-8"
+          className="flex items-center h-9"
         >
           <User className="mr-2" size={16} />
           Sign Up

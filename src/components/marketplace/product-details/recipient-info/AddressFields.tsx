@@ -3,6 +3,9 @@ import React from 'react';
 import { Control } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
+import { StandardizedAddress } from '@/services/googlePlacesService';
+import { standardizedToForm } from '@/utils/addressStandardization';
 
 interface AddressFieldsProps {
   control: Control<any>;
@@ -16,9 +19,22 @@ export const AddressFields: React.FC<AddressFieldsProps> = ({ control }) => {
         name="recipientAddress"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Street Address</FormLabel>
             <FormControl>
-              <Input placeholder="123 Main St" {...field} />
+              <GooglePlacesAutocomplete
+                value={field.value || ''}
+                onChange={field.onChange}
+                onAddressSelect={(standardizedAddress: StandardizedAddress) => {
+                  const formAddr = standardizedToForm(standardizedAddress);
+                  field.onChange(formAddr.street);
+                  
+                  // Auto-fill other fields
+                  control._defaultValues.recipientCity = formAddr.city;
+                  control._defaultValues.recipientState = formAddr.state;
+                  control._defaultValues.recipientZip = formAddr.zipCode;
+                }}
+                label="Street Address"
+                placeholder="Start typing the recipient's address..."
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

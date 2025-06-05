@@ -3,6 +3,9 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
+import { StandardizedAddress } from "@/services/googlePlacesService";
+import { standardizedToForm } from "@/utils/addressStandardization";
 
 interface ShippingInfo {
   name: string;
@@ -23,6 +26,17 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({
       [e.target.name]: e.target.value
+    });
+  };
+
+  const handleGooglePlacesSelect = (standardizedAddress: StandardizedAddress) => {
+    const formAddr = standardizedToForm(standardizedAddress);
+    onUpdate({
+      address: formAddr.street,
+      city: formAddr.city,
+      state: formAddr.state,
+      zipCode: formAddr.zipCode,
+      country: formAddr.country
     });
   };
 
@@ -70,14 +84,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
         </div>
         
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="address">Street Address</Label>
-          <Input 
-            id="address"
-            name="address"
+          <GooglePlacesAutocomplete
             value={shippingInfo.address}
-            onChange={handleChange}
-            placeholder="123 Main St"
-            required
+            onChange={(value) => onUpdate({ address: value })}
+            onAddressSelect={handleGooglePlacesSelect}
+            label="Street Address"
+            placeholder="Start typing your address..."
           />
         </div>
         

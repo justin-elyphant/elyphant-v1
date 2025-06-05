@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { ShippingAddress } from "@/types/profile";
 import CountrySelect from "./CountrySelect";
 import StateSelect from "./StateSelect";
+import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
+import { StandardizedAddress } from "@/services/googlePlacesService";
+import { databaseToForm, formToDatabase, standardizedToForm } from "@/utils/addressStandardization";
 
 interface ShippingAddressFormProps {
   address: ShippingAddress;
@@ -12,46 +15,48 @@ interface ShippingAddressFormProps {
 }
 
 export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ address, onChange }) => {
-  // Convert between API and form formats
-  const formAddress = {
-    street: address.address_line1 || address.street || "",
-    city: address.city || "",
-    state: address.state || "",
-    zipCode: address.zip_code || address.zipCode || "",
-    country: address.country || "US"
-  };
+  // Convert database format to form format for display
+  const formAddress = databaseToForm(address);
 
   const handleChange = (field: string, value: string) => {
-    // Update the form data
     const updatedForm = {
       ...formAddress,
       [field]: value
     };
     
-    // Convert back to API format when calling onChange
+    // Convert back to database format when calling onChange
+    const dbAddress = formToDatabase(updatedForm);
     onChange({
-      address_line1: updatedForm.street,
-      city: updatedForm.city,
-      state: updatedForm.state,
-      zip_code: updatedForm.zipCode,
-      country: updatedForm.country,
+      ...dbAddress,
       // Add aliases for compatibility
-      street: updatedForm.street,
-      zipCode: updatedForm.zipCode
+      street: dbAddress.address_line1,
+      zipCode: dbAddress.zip_code
+    });
+  };
+
+  const handleGooglePlacesSelect = (standardizedAddress: StandardizedAddress) => {
+    const formAddr = standardizedToForm(standardizedAddress);
+    const dbAddress = formToDatabase(formAddr);
+    
+    onChange({
+      ...dbAddress,
+      formatted_address: standardizedAddress.formatted_address,
+      place_id: standardizedAddress.place_id,
+      // Add aliases for compatibility
+      street: dbAddress.address_line1,
+      zipCode: dbAddress.zip_code
     });
   };
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-2">
-        <Label htmlFor="street">Street Address</Label>
-        <Input
-          id="street"
-          placeholder="123 Main St"
-          value={formAddress.street}
-          onChange={(e) => handleChange("street", e.target.value)}
-        />
-      </div>
+      <GooglePlacesAutocomplete
+        value={formAddress.street}
+        onChange={(value) => handleChange("street", value)}
+        onAddressSelect={handleGooglePlacesSelect}
+        label="Street Address"
+        placeholder="Start typing your address..."
+      />
 
       <div className="grid gap-2">
         <Label htmlFor="city">City</Label>

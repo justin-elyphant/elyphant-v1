@@ -46,9 +46,14 @@ const NavigationBar = () => {
     <nav className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center h-12">
-          {/* Logo */}
-          <Link to="/" className="text-xl font-bold text-purple-700 flex-shrink-0 h-10 flex items-center">
-            Elyphant
+          {/* Logo with image and text */}
+          <Link to="/" className="flex items-center cursor-pointer">
+            <img 
+              src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
+              alt="Elyphant" 
+              className="h-12 w-12 mr-3" 
+            />
+            <h1 className="text-2xl font-bold text-purple-700">Elyphant</h1>
           </Link>
           
           {/* Desktop Search Bar (Nicole) - Centered */}

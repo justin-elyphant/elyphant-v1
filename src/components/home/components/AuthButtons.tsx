@@ -24,12 +24,12 @@ const AuthButtons = (_props: AuthButtonsProps) => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="purple"
-          size={isMobile ? "touch" : "default"}
-          className="flex items-center h-10"
+          size="sm"
+          className="flex items-center h-8"
         >
-          <User className="mr-2" size={isMobile ? 20 : 16} />
+          <User className="mr-2" size={16} />
           Sign Up
-          <ChevronDown className="ml-2" size={isMobile ? 20 : 16} />
+          <ChevronDown className="ml-2" size={16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40 z-50 bg-white shadow-lg border rounded-md">

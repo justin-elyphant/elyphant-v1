@@ -36,15 +36,14 @@ export interface StandardizedAddress {
 }
 
 class GooglePlacesService {
-  private apiKey: string | null;
+  private apiKey: string | null = null;
   private autocompleteService: any = null;
   private placesService: any = null;
   private isLoaded = false;
   private loadingPromise: Promise<void> | null = null;
 
   constructor() {
-    this.apiKey = getGoogleMapsApiKey();
-    this.loadGoogleMapsAPI();
+    console.log('GooglePlacesService initialized');
   }
 
   private async loadGoogleMapsAPI(): Promise<void> {
@@ -59,12 +58,19 @@ class GooglePlacesService {
 
     this.loadingPromise = new Promise(async (resolve, reject) => {
       try {
+        console.log('Loading Google Maps API...');
+        
+        // Get API key from server
+        this.apiKey = await getGoogleMapsApiKey();
+        
         if (!this.apiKey) {
-          console.warn('Google Maps API key not found, using mock data');
+          console.warn('Google Maps API key not available, using mock data');
           this.isLoaded = true;
           resolve();
           return;
         }
+
+        console.log('Google Maps API key retrieved, loading script...');
 
         // Load Google Maps script
         const script = document.createElement('script');
@@ -80,16 +86,16 @@ class GooglePlacesService {
         };
         
         script.onerror = () => {
-          console.error('Failed to load Google Maps API');
+          console.error('Failed to load Google Maps API script');
           this.isLoaded = true; // Use mock data as fallback
-          reject(new Error('Failed to load Google Maps API'));
+          resolve(); // Don't reject, use mock data
         };
         
         document.head.appendChild(script);
       } catch (error) {
         console.error('Error loading Google Maps API:', error);
         this.isLoaded = true; // Use mock data as fallback
-        resolve();
+        resolve(); // Don't reject, use mock data
       }
     });
 
@@ -113,10 +119,12 @@ class GooglePlacesService {
       return [];
     }
 
+    console.log('Getting address predictions for:', input);
     await this.loadGoogleMapsAPI();
 
     // If Google Maps API is available, use it
     if (this.autocompleteService && this.apiKey) {
+      console.log('Using Google Places API for predictions');
       return new Promise((resolve) => {
         this.autocompleteService.getPlacePredictions(
           {
@@ -126,6 +134,7 @@ class GooglePlacesService {
           },
           (predictions: any[], status: string) => {
             if (status === 'OK' && predictions) {
+              console.log(`Google Places API returned ${predictions.length} predictions`);
               const formattedPredictions = predictions.map(prediction => ({
                 place_id: prediction.place_id,
                 description: prediction.description,
@@ -150,10 +159,12 @@ class GooglePlacesService {
   }
 
   async getPlaceDetails(placeId: string): Promise<StandardizedAddress | null> {
+    console.log('Getting place details for:', placeId);
     await this.loadGoogleMapsAPI();
 
     // If Google Maps API is available, use it
     if (this.placesService && this.apiKey && !placeId.startsWith('mock_')) {
+      console.log('Using Google Places API for place details');
       return new Promise((resolve) => {
         this.placesService.getDetails(
           {
@@ -162,6 +173,7 @@ class GooglePlacesService {
           },
           (place: any, status: string) => {
             if (status === 'OK' && place) {
+              console.log('Google Places API returned place details');
               const standardizedAddress = this.parseGooglePlaceDetails(place);
               resolve(standardizedAddress);
             } else {

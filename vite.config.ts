@@ -26,12 +26,7 @@ export default defineConfig(({ command }) => ({
           // Vendor chunk for large libraries
           vendor: ['react', 'react-dom', 'react-router-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
-          utils: ['clsx', 'tailwind-merge', 'class-variance-authority'],
-          marketplace: [
-            'src/components/marketplace',
-            'src/contexts/ProductContext',
-            'src/services/enhancedZincApiService'
-          ]
+          utils: ['clsx', 'tailwind-merge', 'class-variance-authority']
         },
         // Optimize chunk names for better caching
         chunkFileNames: (chunkInfo) => {

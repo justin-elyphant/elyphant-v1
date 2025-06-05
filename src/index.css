@@ -1,10 +1,9 @@
 
+@import './styles/hide-scrollbar.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import './styles/hide-scrollbar.css';
 
 @layer base {
   :root {

@@ -58,11 +58,11 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     }
   }, [value, query, setQuery]);
 
-  // Auto-open popover when predictions arrive
+  // Auto-open popover when predictions arrive, but don't close it immediately
   useEffect(() => {
     if (predictions.length > 0 && !isLoading && query.length >= 3) {
       setOpen(true);
-    } else if (predictions.length === 0 && !isLoading && query.length >= 3) {
+    } else if (query.length < 3) {
       setOpen(false);
     }
   }, [predictions.length, isLoading, query.length]);
@@ -94,12 +94,21 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     }
   };
 
+  // Prevent popover from stealing focus
+  const handlePopoverOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setOpen(false);
+    }
+    // Don't set open to true here - let the useEffect handle it
+  };
+
   return (
     <div className={`space-y-2 ${className}`}>
       {label && <Label htmlFor="address-input">{label}</Label>}
       <Popover 
         open={open && predictions.length > 0} 
-        onOpenChange={setOpen}
+        onOpenChange={handlePopoverOpenChange}
+        modal={false}
       >
         <PopoverTrigger asChild>
           <div className="relative">
@@ -122,7 +131,12 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
             )}
           </div>
         </PopoverTrigger>
-        <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start">
+        <PopoverContent 
+          className="p-0 w-[var(--radix-popover-trigger-width)]" 
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <Command>
             <CommandList>
               <CommandEmpty>No addresses found.</CommandEmpty>

@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, currency = 'usd', cartItems, metadata = {} } = await req.json()
+    const { cartItems, totalAmount, shippingInfo, giftOptions, metadata = {} } = await req.json()
 
     const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
       Deno.env.get('STRIPE_SECRET_KEY') || '',
@@ -26,7 +26,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get user from auth header (optional for guest checkout)
+    // Get user from auth header
     let user = null
     const authHeader = req.headers.get('Authorization')
     if (authHeader) {
@@ -46,7 +46,7 @@ serve(async (req) => {
     // Create line items from cart data
     const lineItems = cartItems?.map((item: any) => ({
       price_data: {
-        currency: currency,
+        currency: 'usd',
         product_data: {
           name: item.product.name || item.product.title,
           images: item.product.image ? [item.product.image] : [],
@@ -58,16 +58,7 @@ serve(async (req) => {
         unit_amount: Math.round((item.product.price || 0) * 100)
       },
       quantity: item.quantity
-    })) || [{
-      price_data: {
-        currency: currency,
-        product_data: {
-          name: 'Order Total'
-        },
-        unit_amount: Math.round(amount * 100)
-      },
-      quantity: 1
-    }]
+    })) || []
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -89,19 +80,44 @@ serve(async (req) => {
       }
     })
 
-    // Store session info for later retrieval
+    // Create order in database
     if (user) {
-      await supabase
+      const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
-          subtotal: amount,
-          total_amount: amount,
+          subtotal: totalAmount - (giftOptions?.giftingFee || 0),
+          total_amount: totalAmount,
           status: 'pending',
           payment_status: 'pending',
-          stripe_payment_intent_id: session.payment_intent,
+          stripe_session_id: session.id,
+          shipping_info: shippingInfo,
+          gift_message: giftOptions?.giftMessage || null,
+          is_gift: giftOptions?.isGift || false,
+          scheduled_delivery_date: giftOptions?.scheduledDeliveryDate || null,
+          is_surprise_gift: giftOptions?.isSurpriseGift || false,
           created_at: new Date().toISOString()
         })
+        .select()
+        .single()
+
+      if (!orderError && order) {
+        // Create order items
+        const orderItems = cartItems?.map((item: any) => ({
+          order_id: order.id,
+          product_id: item.product.product_id,
+          product_name: item.product.name || item.product.title,
+          product_image: item.product.image,
+          vendor: item.product.vendor,
+          quantity: item.quantity,
+          unit_price: item.product.price,
+          total_price: item.product.price * item.quantity
+        })) || []
+
+        await supabase
+          .from('order_items')
+          .insert(orderItems)
+      }
     }
 
     return new Response(

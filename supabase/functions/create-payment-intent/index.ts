@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,18 +20,18 @@ serve(async (req) => {
     )
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency,
+      amount: Math.round(amount),
+      currency: currency,
       automatic_payment_methods: {
         enabled: true,
       },
-      metadata,
+      metadata: metadata
     })
 
     return new Response(
       JSON.stringify({ 
         client_secret: paymentIntent.client_secret,
-        payment_intent_id: paymentIntent.id 
+        payment_intent_id: paymentIntent.id
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -51,58 +51,48 @@ const CheckoutPage = () => {
     getShippingCost
   } = useCheckoutState();
 
-  // Non-blocking cart validation for user awareness only
+  // Cart validation - now blocking for critical issues
   useEffect(() => {
     if (cartItems.length > 0) {
-      validateCartAsync();
+      validateCartAndBlock();
     }
   }, [cartItems]);
 
-  const validateCartAsync = async () => {
+  const validateCartAndBlock = async () => {
     setIsValidatingCart(true);
     
     try {
       const validation = validateCartData(cartItems);
       
       if (!validation.isValid) {
-        toast.warning("Cart validation issues detected", {
-          description: "Some items may have issues but you can still proceed with checkout"
-        });
-        
-        // Remove invalid items but don't block checkout
+        // Block checkout for invalid items
         validation.invalidItems.forEach(item => {
           removeFromCart(item.product.product_id);
-        });
-      }
-
-      if (validation.warnings.length > 0) {
-        console.warn("Cart validation warnings:", validation.warnings);
-      }
-
-      const availability = await validateProductAvailability(cartItems);
-      const unavailableItems = availability.filter(item => !item.available);
-      const priceChangedItems = availability.filter(item => item.price_changed);
-
-      if (unavailableItems.length > 0) {
-        toast.warning("Some items updated", {
-          description: `${unavailableItems.length} items were removed due to availability`
+          toast.error(`Removed invalid item: ${item.product.name || 'Unknown item'}`);
         });
         
-        unavailableItems.forEach(item => {
-          removeFromCart(item.product_id);
-        });
+        if (validation.validItems.length === 0) {
+          toast.error("Cart is empty after removing invalid items");
+          navigate("/marketplace");
+          return;
+        }
       }
 
-      if (priceChangedItems.length > 0) {
-        toast.info("Price updates detected", {
-          description: `${priceChangedItems.length} items have updated prices`
+      // Check product availability
+      const availability = await validateProductAvailability(cartItems);
+      const unavailableItems = availability.filter(item => !item.available);
+      
+      if (unavailableItems.length > 0) {
+        unavailableItems.forEach(item => {
+          removeFromCart(item.product_id);
+          toast.error(`Item no longer available and was removed from cart`);
         });
       }
 
       setCartValidation(validation);
     } catch (error) {
       console.error("Cart validation error:", error);
-      // Don't show error toast for validation - it's informational only
+      toast.error("Unable to validate cart items. Please refresh and try again.");
     } finally {
       setIsValidatingCart(false);
     }
@@ -128,7 +118,7 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (!checkoutData.selectedShippingOption) {
+    if (!checkoutData.selectedShippingOption && checkoutData.paymentMethod !== 'demo') {
       toast.error("Please select a shipping method");
       return;
     }
@@ -136,36 +126,27 @@ const CheckoutPage = () => {
     setIsProcessing(true);
     
     try {
-      // Process payment first if payment intent provided
+      // Confirm payment first if payment intent provided
       if (paymentIntentId) {
-        try {
-          const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
-            'confirm-payment',
-            {
-              body: {
-                payment_intent_id: paymentIntentId,
-                order_id: null // We'll update this after order creation
-              }
+        const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
+          'confirm-payment',
+          {
+            body: {
+              payment_intent_id: paymentIntentId
             }
-          );
-
-          if (confirmError) {
-            throw new Error(`Payment confirmation failed: ${confirmError.message}`);
           }
+        );
 
-          console.log("Payment confirmed:", confirmData);
-        } catch (confirmationError) {
-          console.error("Payment confirmation error:", confirmationError);
-          throw new Error("Payment processing failed");
+        if (confirmError) {
+          throw new Error(`Payment confirmation failed: ${confirmError.message}`);
         }
+
+        console.log("Payment confirmed:", confirmData);
       }
 
-      // Create order after payment is confirmed
+      // Create order
       const giftingFee = await getGiftingFee();
       const totalAmount = await getTotalAmount();
-      
-      console.log("Processing order with gift options:", checkoutData.giftOptions);
-      console.log("Using shipping option:", checkoutData.selectedShippingOption);
       
       const order = await createOrder({
         cartItems: cartItems,
@@ -178,7 +159,7 @@ const CheckoutPage = () => {
         paymentIntentId: paymentIntentId
       });
 
-      // Process order through server-side Zinc API (no credential checks needed - handled centrally)
+      // Process fulfillment through Zinc (with centralized Amazon credentials)
       if (paymentIntentId || checkoutData.paymentMethod === "demo") {
         try {
           const zincProducts = cartItems.map(item => ({
@@ -196,11 +177,12 @@ const CheckoutPage = () => {
             checkoutData.paymentMethod === "demo"
           );
 
-          zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
+          if (checkoutData.selectedShippingOption) {
+            zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
+          }
           
-          console.log("Sending order to server-side Zinc processing");
+          console.log("Processing order through Zinc API");
           
-          // Call the server-side Zinc processing function
           const { data: zincResult, error: zincError } = await supabase.functions.invoke(
             'process-zinc-order',
             {
@@ -212,36 +194,27 @@ const CheckoutPage = () => {
             }
           );
 
-          if (zincError) {
-            console.error("Server-side Zinc processing error:", zincError);
+          if (zincError || !zincResult?.success) {
+            console.error("Zinc processing error:", zincError);
             
             if (zincResult?.requiresAdminSetup) {
-              toast.error("System configuration required", {
-                description: "Please contact support - order fulfillment needs to be configured."
-              });
+              toast.warning("Order placed successfully, but fulfillment requires admin setup.");
             } else if (zincResult?.invalidCredentials) {
-              toast.error("Fulfillment system error", {
-                description: "Please contact support - there's an issue with order processing."
-              });
+              toast.warning("Order placed successfully, but there's an issue with fulfillment credentials.");
             } else {
-              toast.warning("Order placed but fulfillment may be delayed", {
-                description: "There was an issue with order processing, but payment was successful."
-              });
+              toast.warning("Order placed successfully, but fulfillment may be delayed.");
             }
-          } else if (zincResult?.success) {
-            console.log("Server-side Zinc order processed successfully:", zincResult.zincOrderId);
-            toast.success("Order placed and sent to fulfillment!");
           } else {
-            console.warn("Zinc processing completed with warnings");
-            toast.warning("Order placed but fulfillment may be delayed");
+            console.log("Zinc order processed successfully:", zincResult.zincOrderId);
+            toast.success("Order placed and sent for fulfillment!");
           }
         } catch (zincError) {
           console.error("Zinc order processing error:", zincError);
-          toast.warning("Order placed successfully, but there may be a delay in fulfillment processing");
+          toast.warning("Order placed successfully, but fulfillment processing encountered an issue.");
         }
       }
 
-      // Clear cart and handle post-purchase flow
+      // Clear cart and navigate
       clearCart();
       
       if (paymentIntentId) {
@@ -250,7 +223,6 @@ const CheckoutPage = () => {
         toast.success("Demo order placed successfully!");
       }
 
-      // Show guest signup prompt if user is not logged in
       if (!user) {
         setCompletedOrderNumber(order.order_number);
         setShowGuestSignup(true);
@@ -279,7 +251,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Redirect if cart is empty
+  // Redirect if cart is empty after validation
   React.useEffect(() => {
     if (cartItems.length === 0 && !isValidatingCart) {
       toast.error("Your cart is empty");
@@ -287,7 +259,7 @@ const CheckoutPage = () => {
     }
   }, [cartItems.length, navigate, isValidatingCart]);
 
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !isValidatingCart) {
     return null;
   }
 
@@ -295,21 +267,10 @@ const CheckoutPage = () => {
     <div className="container mx-auto py-8 px-4">
       <CheckoutHeader title="Checkout" />
 
-      {/* Cart Validation Status - Informational Only */}
+      {/* Cart Validation Status */}
       {isValidatingCart && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-700">Validating cart items...</p>
-        </div>
-      )}
-
-      {cartValidation && cartValidation.warnings.length > 0 && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-700 font-medium">Cart Warnings (you can still proceed):</p>
-          <ul className="text-sm text-yellow-600 mt-1">
-            {cartValidation.warnings.map((warning: string, index: number) => (
-              <li key={index}>• {warning}</li>
-            ))}
-          </ul>
         </div>
       )}
 
@@ -376,6 +337,8 @@ const CheckoutPage = () => {
                 onPrevious={() => handleTabChange("schedule")}
                 totalAmount={cartTotal + getShippingCost() + getTaxAmount()}
                 cartItems={cartItems}
+                shippingInfo={checkoutData.shippingInfo}
+                giftOptions={checkoutData.giftOptions}
               />
             </TabsContent>
           </CheckoutTabs>

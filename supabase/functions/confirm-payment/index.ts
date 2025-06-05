@@ -13,15 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    const { payment_intent_id, order_id } = await req.json()
+    const { payment_intent_id, session_id } = await req.json()
 
     const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
       Deno.env.get('STRIPE_SECRET_KEY') || '',
       { apiVersion: '2023-10-16' }
     )
-
-    // Retrieve the payment intent from Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent_id)
 
     // Create Supabase client
     const supabase = createClient(
@@ -29,26 +26,50 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Update order status based on payment status
-    let orderStatus = 'pending'
     let paymentStatus = 'pending'
+    let orderStatus = 'pending'
 
-    if (paymentIntent.status === 'succeeded') {
-      orderStatus = 'confirmed'
-      paymentStatus = 'completed'
-    } else if (paymentIntent.status === 'payment_failed') {
-      orderStatus = 'payment_failed'
-      paymentStatus = 'failed'
+    if (payment_intent_id) {
+      // Retrieve the payment intent from Stripe
+      const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent_id)
+      
+      if (paymentIntent.status === 'succeeded') {
+        paymentStatus = 'completed'
+        orderStatus = 'payment_confirmed'
+      } else if (paymentIntent.status === 'payment_failed') {
+        paymentStatus = 'failed'
+        orderStatus = 'payment_failed'
+      }
+    } else if (session_id) {
+      // Retrieve the checkout session from Stripe
+      const session = await stripe.checkout.sessions.retrieve(session_id)
+      
+      if (session.payment_status === 'paid') {
+        paymentStatus = 'completed'
+        orderStatus = 'payment_confirmed'
+      } else if (session.payment_status === 'failed') {
+        paymentStatus = 'failed'
+        orderStatus = 'payment_failed'
+      }
     }
 
-    const { error: updateError } = await supabase
+    // Update order status based on payment status
+    const updateData: any = {
+      payment_status: paymentStatus,
+      status: orderStatus,
+      updated_at: new Date().toISOString()
+    }
+
+    if (payment_intent_id) {
+      updateData.stripe_payment_intent_id = payment_intent_id
+    }
+
+    const { data: order, error: updateError } = await supabase
       .from('orders')
-      .update({
-        status: orderStatus,
-        payment_status: paymentStatus,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', order_id)
+      .update(updateData)
+      .eq(session_id ? 'stripe_session_id' : 'stripe_payment_intent_id', session_id || payment_intent_id)
+      .select()
+      .single()
 
     if (updateError) {
       throw new Error(`Failed to update order: ${updateError.message}`)
@@ -56,9 +77,10 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        status: paymentIntent.status,
+        success: true,
+        payment_status: paymentStatus,
         order_status: orderStatus,
-        payment_status: paymentStatus
+        order: order
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,13 +1,17 @@
 
 import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { CreditCard, Smartphone } from "lucide-react";
+import { CartItem } from "@/contexts/CartContext";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from "@/integrations/stripe/client";
-import { Button } from "@/components/ui/button";
-import { CreditCard, Info, Zap } from "lucide-react";
+import StripePaymentForm from "./StripePaymentForm";
+import ExpressCheckoutButton from "./ExpressCheckoutButton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import StripePaymentForm from "./StripePaymentForm";
-import { CartItem } from "@/contexts/CartContext";
 
 interface PaymentSectionProps {
   paymentMethod: string;
@@ -17,7 +21,9 @@ interface PaymentSectionProps {
   canPlaceOrder: boolean;
   onPrevious: () => void;
   totalAmount: number;
-  cartItems?: CartItem[];
+  cartItems: CartItem[];
+  shippingInfo?: any;
+  giftOptions?: any;
 }
 
 const PaymentSection = ({
@@ -28,240 +34,151 @@ const PaymentSection = ({
   canPlaceOrder,
   onPrevious,
   totalAmount,
-  cartItems = []
+  cartItems,
+  shippingInfo,
+  giftOptions
 }: PaymentSectionProps) => {
   const [clientSecret, setClientSecret] = useState<string>('');
-  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
-  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
 
-  // Initialize payment intent immediately when card payment is selected
   useEffect(() => {
-    if (paymentMethod === "card" && totalAmount > 0 && !clientSecret) {
+    if (paymentMethod === 'card' && totalAmount > 0) {
       createPaymentIntent();
     }
   }, [paymentMethod, totalAmount]);
 
   const createPaymentIntent = async () => {
-    if (isCreatingPayment || clientSecret) return;
-    
-    setIsCreatingPayment(true);
-    
+    setIsCreatingPaymentIntent(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
-          amount: totalAmount,
+          amount: Math.round(totalAmount * 100), // Convert to cents
           currency: 'usd',
           metadata: {
-            order_type: 'marketplace',
-            timestamp: new Date().toISOString()
+            order_type: 'marketplace'
           }
         }
       });
 
       if (error) {
-        throw new Error(error.message || 'Failed to create payment intent');
+        throw error;
       }
 
       setClientSecret(data.client_secret);
-      setPaymentIntentId(data.payment_intent_id);
-      console.log("Payment intent created successfully");
     } catch (error) {
       console.error('Error creating payment intent:', error);
       toast.error('Failed to initialize payment. Please try again.');
     } finally {
-      setIsCreatingPayment(false);
-    }
-  };
-
-  const handleExpressCheckout = async () => {
-    if (!canPlaceOrder) {
-      toast.error("Please complete all required fields before proceeding");
-      return;
-    }
-
-    setIsCreatingPayment(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: {
-          amount: totalAmount,
-          currency: 'usd',
-          cartItems: cartItems,
-          metadata: {
-            order_type: 'marketplace',
-            timestamp: new Date().toISOString()
-          }
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to create checkout session');
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast.error('Failed to initialize Express Checkout. Please try again.');
-    } finally {
-      setIsCreatingPayment(false);
+      setIsCreatingPaymentIntent(false);
     }
   };
 
   const handlePaymentSuccess = (paymentIntentId: string) => {
-    console.log('Payment successful:', paymentIntentId);
     onPlaceOrder(paymentIntentId);
   };
 
   const handlePaymentError = (error: string) => {
-    console.error('Payment error:', error);
-    toast.error('Payment failed. Please try again.');
-    setPaymentProcessing(false);
-  };
-
-  const handleDemoOrder = () => {
-    onPlaceOrder();
-  };
-
-  const handleCardPaymentMethodSelect = () => {
-    onPaymentMethodChange("card");
-    if (!clientSecret && totalAmount > 0) {
-      createPaymentIntent();
-    }
+    toast.error(`Payment failed: ${error}`);
   };
 
   return (
-    <div className="rounded-lg border p-6">
-      <h3 className="text-lg font-medium mb-4">Payment Method</h3>
-      
-      <div className="space-y-4">
-        <div className="flex items-center">
-          <input 
-            type="radio" 
-            id="card-payment" 
-            name="payment-method"
-            checked={paymentMethod === "card"}
-            onChange={handleCardPaymentMethodSelect}
-            className="mr-2"
-          />
-          <label htmlFor="card-payment" className="flex items-center">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Credit/Debit Card
-          </label>
-        </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Method</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="express" id="express" />
+              <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer">
+                <Smartphone className="h-4 w-4" />
+                Express Checkout (Stripe)
+              </Label>
+            </div>
+            
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="card" id="card" />
+              <Label htmlFor="card" className="flex items-center gap-2 flex-1 cursor-pointer">
+                <CreditCard className="h-4 w-4" />
+                Credit/Debit Card
+              </Label>
+            </div>
+            
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="demo" id="demo" />
+              <Label htmlFor="demo" className="flex items-center gap-2 flex-1 cursor-pointer">
+                Demo Mode (Testing)
+              </Label>
+            </div>
+          </RadioGroup>
 
-        <div className="flex items-center">
-          <input 
-            type="radio" 
-            id="express-checkout" 
-            name="payment-method"
-            checked={paymentMethod === "express"}
-            onChange={() => onPaymentMethodChange("express")}
-            className="mr-2"
-          />
-          <label htmlFor="express-checkout" className="flex items-center">
-            <Zap className="h-4 w-4 mr-2" />
-            Express Checkout
-          </label>
-        </div>
+          {paymentMethod === 'express' && (
+            <div className="mt-4">
+              <ExpressCheckoutButton
+                cartItems={cartItems}
+                totalAmount={totalAmount}
+                shippingInfo={shippingInfo}
+                giftOptions={giftOptions}
+                onProcessing={() => {}}
+                onSuccess={() => {}}
+              />
+            </div>
+          )}
 
-        <div className="flex items-center">
-          <input 
-            type="radio" 
-            id="demo-payment" 
-            name="payment-method"
-            checked={paymentMethod === "demo"}
-            onChange={() => onPaymentMethodChange("demo")}
-            className="mr-2"
-          />
-          <label htmlFor="demo-payment" className="flex items-center">
-            <Info className="h-4 w-4 mr-2" />
-            Demo Mode (Skip Payment)
-          </label>
-        </div>
+          {paymentMethod === 'card' && (
+            <div className="mt-4">
+              {isCreatingPaymentIntent ? (
+                <div className="text-center py-4">Creating payment form...</div>
+              ) : clientSecret ? (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <StripePaymentForm
+                    clientSecret={clientSecret}
+                    amount={totalAmount}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                    isProcessing={isProcessing}
+                    onProcessingChange={() => {}}
+                  />
+                </Elements>
+              ) : (
+                <div className="text-center py-4 text-red-600">
+                  Failed to initialize payment form
+                </div>
+              )}
+            </div>
+          )}
 
-        {paymentMethod === "card" && (
-          <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-            {isCreatingPayment && (
-              <div className="text-center text-sm text-gray-600 mb-4">
-                Initializing payment...
+          {paymentMethod === 'demo' && (
+            <div className="mt-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Demo Mode:</strong> This will create a test order without processing payment.
+                </p>
               </div>
-            )}
-            {clientSecret && (
-              <Elements stripe={stripePromise}>
-                <StripePaymentForm
-                  clientSecret={clientSecret}
-                  amount={totalAmount}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                  isProcessing={paymentProcessing}
-                  onProcessingChange={setPaymentProcessing}
-                />
-              </Elements>
-            )}
-            {!clientSecret && !isCreatingPayment && (
-              <div className="text-center">
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={onPrevious}>
+                  Back to Schedule
+                </Button>
                 <Button 
-                  onClick={createPaymentIntent}
-                  disabled={!canPlaceOrder}
-                  variant="outline"
+                  onClick={() => onPlaceOrder()}
+                  disabled={!canPlaceOrder || isProcessing}
                 >
-                  Initialize Payment
+                  {isProcessing ? "Processing..." : "Place Demo Order"}
                 </Button>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {paymentMethod === "express" && (
-          <div className="pl-6 text-sm text-muted-foreground flex items-center">
-            <Zap className="h-4 w-4 mr-2" />
-            Fast and secure checkout powered by Stripe. Mobile-optimized experience.
-          </div>
-        )}
-
-        {paymentMethod === "demo" && (
-          <div className="pl-6 text-sm text-muted-foreground flex items-center">
-            <Info className="h-4 w-4 mr-2" />
-            Demo mode will simulate a successful payment without charging
-          </div>
-        )}
-      </div>
-      
-      <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={onPrevious}>
-          Back to Schedule
-        </Button>
-
-        {paymentMethod === "demo" && (
-          <Button 
-            onClick={handleDemoOrder}
-            disabled={isProcessing || !canPlaceOrder}
-          >
-            {isProcessing ? "Processing..." : "Place Demo Order"}
-          </Button>
-        )}
-
-        {paymentMethod === "express" && (
-          <Button 
-            onClick={handleExpressCheckout}
-            disabled={isCreatingPayment || !canPlaceOrder}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isCreatingPayment ? "Redirecting..." : "Express Checkout"}
-          </Button>
-        )}
-
-        {paymentMethod === "card" && clientSecret && !paymentProcessing && (
-          <div className="text-sm text-gray-600">
-            Complete payment form above to proceed
-          </div>
-        )}
-      </div>
+          {paymentMethod !== 'demo' && paymentMethod !== 'express' && (
+            <div className="flex justify-between mt-6">
+              <Button variant="outline" onClick={onPrevious}>
+                Back to Schedule
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

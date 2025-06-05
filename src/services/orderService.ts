@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
@@ -28,8 +29,11 @@ export interface Order {
   scheduled_delivery_date?: string;
   is_surprise_gift: boolean;
   stripe_payment_intent_id?: string;
+  stripe_session_id?: string;
   zinc_order_id?: string;
+  zinc_status?: string;
   tracking_number?: string;
+  payment_status: string;
   created_at: string;
   updated_at: string;
   order_items: OrderItem[];
@@ -53,7 +57,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
     throw new Error('User must be authenticated to create an order');
   }
 
-  // Create the order with gift options
+  // Create the order with proper schema alignment
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -83,7 +87,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   const orderItems = orderData.cartItems.map(item => ({
     order_id: order.id,
     product_id: item.product.product_id,
-    product_name: item.product.name,
+    product_name: item.product.name || item.product.title,
     product_image: item.product.image,
     vendor: item.product.vendor,
     quantity: item.quantity,

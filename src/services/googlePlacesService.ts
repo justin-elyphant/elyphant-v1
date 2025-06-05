@@ -41,36 +41,42 @@ class GooglePlacesService {
   private placesService: any = null;
   private isLoaded = false;
   private loadingPromise: Promise<void> | null = null;
+  private usingMockData = false;
 
   constructor() {
-    console.log('GooglePlacesService initialized');
+    console.log('🏗️ [GooglePlaces] Service initialized');
   }
 
   private async loadGoogleMapsAPI(): Promise<void> {
     if (this.loadingPromise) {
+      console.log('🏗️ [GooglePlaces] Already loading, waiting for existing promise...');
       return this.loadingPromise;
     }
 
     if (this.isLoaded || (window as any).google?.maps?.places) {
+      console.log('🏗️ [GooglePlaces] Google Maps already loaded, initializing services...');
       this.initializeServices();
       return;
     }
 
     this.loadingPromise = new Promise(async (resolve, reject) => {
       try {
-        console.log('Loading Google Maps API...');
+        console.log('🏗️ [GooglePlaces] Starting Google Maps API loading process...');
         
         // Get API key from server
+        console.log('🏗️ [GooglePlaces] Fetching API key...');
         this.apiKey = await getGoogleMapsApiKey();
         
         if (!this.apiKey) {
-          console.warn('Google Maps API key not available, using mock data');
+          console.warn('🏗️ [GooglePlaces] ⚠️ No API key available - switching to mock data mode');
+          this.usingMockData = true;
           this.isLoaded = true;
           resolve();
           return;
         }
 
-        console.log('Google Maps API key retrieved, loading script...');
+        console.log('🏗️ [GooglePlaces] ✅ API key retrieved, loading Google Maps script...');
+        console.log('🏗️ [GooglePlaces] Script URL will be:', `https://maps.googleapis.com/maps/api/js?key=${this.apiKey.substring(0, 10)}...&libraries=places`);
 
         // Load Google Maps script
         const script = document.createElement('script');
@@ -79,22 +85,31 @@ class GooglePlacesService {
         script.defer = true;
         
         script.onload = () => {
+          console.log('🏗️ [GooglePlaces] ✅ Google Maps script loaded successfully');
           this.isLoaded = true;
+          this.usingMockData = false;
           this.initializeServices();
-          console.log('Google Maps API loaded successfully');
           resolve();
         };
         
-        script.onerror = () => {
-          console.error('Failed to load Google Maps API script');
-          this.isLoaded = true; // Use mock data as fallback
+        script.onerror = (error) => {
+          console.error('🏗️ [GooglePlaces] ❌ Failed to load Google Maps script:', error);
+          console.error('🏗️ [GooglePlaces] This could be due to:');
+          console.error('🏗️ [GooglePlaces] - Invalid API key');
+          console.error('🏗️ [GooglePlaces] - API restrictions (domain/referrer)');
+          console.error('🏗️ [GooglePlaces] - Disabled APIs in Google Cloud Console');
+          console.error('🏗️ [GooglePlaces] - Network connectivity issues');
+          this.usingMockData = true;
+          this.isLoaded = true;
           resolve(); // Don't reject, use mock data
         };
         
+        console.log('🏗️ [GooglePlaces] Adding script to document head...');
         document.head.appendChild(script);
       } catch (error) {
-        console.error('Error loading Google Maps API:', error);
-        this.isLoaded = true; // Use mock data as fallback
+        console.error('🏗️ [GooglePlaces] ❌ Error during Google Maps API loading:', error);
+        this.usingMockData = true;
+        this.isLoaded = true;
         resolve(); // Don't reject, use mock data
       }
     });
@@ -105,12 +120,21 @@ class GooglePlacesService {
   private initializeServices(): void {
     const googleMaps = (window as any).google?.maps?.places;
     if (googleMaps) {
-      this.autocompleteService = new googleMaps.AutocompleteService();
-      // Create a temporary div for PlacesService
-      const div = document.createElement('div');
-      const map = new (window as any).google.maps.Map(div);
-      this.placesService = new googleMaps.PlacesService(map);
-      console.log('Google Places services initialized');
+      try {
+        this.autocompleteService = new googleMaps.AutocompleteService();
+        // Create a temporary div for PlacesService
+        const div = document.createElement('div');
+        const map = new (window as any).google.maps.Map(div);
+        this.placesService = new googleMaps.PlacesService(map);
+        console.log('🏗️ [GooglePlaces] ✅ Google Places services initialized successfully');
+        this.usingMockData = false;
+      } catch (error) {
+        console.error('🏗️ [GooglePlaces] ❌ Failed to initialize Google Places services:', error);
+        this.usingMockData = true;
+      }
+    } else {
+      console.warn('🏗️ [GooglePlaces] ⚠️ Google Maps Places API not available, using mock data');
+      this.usingMockData = true;
     }
   }
 
@@ -119,12 +143,12 @@ class GooglePlacesService {
       return [];
     }
 
-    console.log('Getting address predictions for:', input);
+    console.log(`🔍 [GooglePlaces] Getting predictions for: "${input}"`);
     await this.loadGoogleMapsAPI();
 
     // If Google Maps API is available, use it
-    if (this.autocompleteService && this.apiKey) {
-      console.log('Using Google Places API for predictions');
+    if (this.autocompleteService && this.apiKey && !this.usingMockData) {
+      console.log('🔍 [GooglePlaces] Using real Google Places API');
       return new Promise((resolve) => {
         this.autocompleteService.getPlacePredictions(
           {
@@ -133,8 +157,10 @@ class GooglePlacesService {
             componentRestrictions: { country: 'us' }
           },
           (predictions: any[], status: string) => {
+            console.log(`🔍 [GooglePlaces] API Response - Status: ${status}, Predictions: ${predictions?.length || 0}`);
+            
             if (status === 'OK' && predictions) {
-              console.log(`Google Places API returned ${predictions.length} predictions`);
+              console.log(`🔍 [GooglePlaces] ✅ Successfully got ${predictions.length} real predictions`);
               const formattedPredictions = predictions.map(prediction => ({
                 place_id: prediction.place_id,
                 description: prediction.description,
@@ -145,7 +171,7 @@ class GooglePlacesService {
               }));
               resolve(formattedPredictions);
             } else {
-              console.warn('Google Places API error:', status, 'falling back to mock data');
+              console.warn(`🔍 [GooglePlaces] ⚠️ Google Places API error: ${status}, falling back to mock data`);
               resolve(this.getMockPredictions(input));
             }
           }
@@ -154,17 +180,17 @@ class GooglePlacesService {
     }
 
     // Fallback to mock data
-    console.log('Using mock predictions for:', input);
+    console.log('🔍 [GooglePlaces] 🤖 Using mock predictions (API not available)');
     return this.getMockPredictions(input);
   }
 
   async getPlaceDetails(placeId: string): Promise<StandardizedAddress | null> {
-    console.log('Getting place details for:', placeId);
+    console.log(`📍 [GooglePlaces] Getting place details for: ${placeId}`);
     await this.loadGoogleMapsAPI();
 
     // If Google Maps API is available, use it
-    if (this.placesService && this.apiKey && !placeId.startsWith('mock_')) {
-      console.log('Using Google Places API for place details');
+    if (this.placesService && this.apiKey && !placeId.startsWith('mock_') && !this.usingMockData) {
+      console.log('📍 [GooglePlaces] Using real Google Places API for details');
       return new Promise((resolve) => {
         this.placesService.getDetails(
           {
@@ -172,12 +198,14 @@ class GooglePlacesService {
             fields: ['place_id', 'formatted_address', 'address_components', 'geometry']
           },
           (place: any, status: string) => {
+            console.log(`📍 [GooglePlaces] Details API Response - Status: ${status}`);
+            
             if (status === 'OK' && place) {
-              console.log('Google Places API returned place details');
+              console.log('📍 [GooglePlaces] ✅ Successfully got real place details');
               const standardizedAddress = this.parseGooglePlaceDetails(place);
               resolve(standardizedAddress);
             } else {
-              console.warn('Google Places Details API error:', status, 'falling back to mock data');
+              console.warn(`📍 [GooglePlaces] ⚠️ Google Places Details API error: ${status}, falling back to mock data`);
               resolve(this.getMockPlaceDetails(placeId));
             }
           }
@@ -186,7 +214,7 @@ class GooglePlacesService {
     }
 
     // Fallback to mock data
-    console.log('Using mock place details for:', placeId);
+    console.log('📍 [GooglePlaces] 🤖 Using mock place details (API not available)');
     return this.getMockPlaceDetails(placeId);
   }
 
@@ -234,6 +262,8 @@ class GooglePlacesService {
   }
 
   private getMockPredictions(input: string): GooglePlacesPrediction[] {
+    console.log('🤖 [GooglePlaces] Generating mock predictions');
+    
     const mockAddresses = [
       {
         place_id: `mock_${input}_1`,
@@ -261,12 +291,17 @@ class GooglePlacesService {
       }
     ];
 
-    return mockAddresses.filter(addr => 
+    const filtered = mockAddresses.filter(addr => 
       addr.description.toLowerCase().includes(input.toLowerCase())
     );
+    
+    console.log(`🤖 [GooglePlaces] Generated ${filtered.length} mock predictions`);
+    return filtered;
   }
 
   private getMockPlaceDetails(placeId: string): StandardizedAddress {
+    console.log('🤖 [GooglePlaces] Generating mock place details');
+    
     const mockData: Record<string, StandardizedAddress> = {
       default: {
         street: '123 Main St',
@@ -315,6 +350,20 @@ class GooglePlacesService {
       address.country
     );
   }
+
+  // Diagnostic method
+  getStatus(): { usingMockData: boolean; hasApiKey: boolean; isLoaded: boolean } {
+    return {
+      usingMockData: this.usingMockData,
+      hasApiKey: !!this.apiKey,
+      isLoaded: this.isLoaded
+    };
+  }
 }
 
 export const googlePlacesService = new GooglePlacesService();
+
+// Expose service status globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).googlePlacesService = googlePlacesService;
+}

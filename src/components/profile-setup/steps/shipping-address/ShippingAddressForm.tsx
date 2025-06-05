@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import StateSelect from "./StateSelect";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { StandardizedAddress } from "@/services/googlePlacesService";
 import { FormAddress } from "@/utils/addressStandardization";
+import GoogleMapsDebugPanel from "@/components/debug/GoogleMapsDebugPanel";
 
 interface ShippingAddressFormProps {
   address: ShippingAddress;
@@ -63,51 +63,56 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ addres
   };
 
   return (
-    <div className="grid gap-4">
-      <GooglePlacesAutocomplete
-        value={formAddress.street}
-        onChange={(value) => handleChange("street", value)}
-        onAddressSelect={handleGooglePlacesSelect}
-        label="Street Address"
-        placeholder="Start typing your address..."
-      />
-
-      <div className="grid gap-2">
-        <Label htmlFor="city">City</Label>
-        <Input
-          id="city"
-          placeholder="City"
-          value={formAddress.city}
-          onChange={(e) => handleChange("city", e.target.value)}
+    <div className="grid gap-6">
+      {/* Debug Panel - Remove this after testing */}
+      <GoogleMapsDebugPanel />
+      
+      <div className="grid gap-4">
+        <GooglePlacesAutocomplete
+          value={formAddress.street}
+          onChange={(value) => handleChange("street", value)}
+          onAddressSelect={handleGooglePlacesSelect}
+          label="Street Address"
+          placeholder="Start typing your address..."
         />
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="state">State</Label>
-          <StateSelect
-            value={formAddress.state}
-            onChange={(state) => handleChange("state", state)}
+          <Label htmlFor="city">City</Label>
+          <Input
+            id="city"
+            placeholder="City"
+            value={formAddress.city}
+            onChange={(e) => handleChange("city", e.target.value)}
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="state">State</Label>
+            <StateSelect
+              value={formAddress.state}
+              onChange={(state) => handleChange("state", state)}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="country">Country</Label>
+            <CountrySelect
+              value={formAddress.country}
+              onChange={(country) => handleChange("country", country)}
+            />
+          </div>
+        </div>
+
         <div className="grid gap-2">
-          <Label htmlFor="country">Country</Label>
-          <CountrySelect
-            value={formAddress.country}
-            onChange={(country) => handleChange("country", country)}
+          <Label htmlFor="zipCode">Zip / Postal Code</Label>
+          <Input
+            id="zipCode"
+            placeholder="Zip Code"
+            value={formAddress.zipCode}
+            onChange={(e) => handleChange("zipCode", e.target.value)}
           />
         </div>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="zipCode">Zip / Postal Code</Label>
-        <Input
-          id="zipCode"
-          placeholder="Zip Code"
-          value={formAddress.zipCode}
-          onChange={(e) => handleChange("zipCode", e.target.value)}
-        />
       </div>
     </div>
   );

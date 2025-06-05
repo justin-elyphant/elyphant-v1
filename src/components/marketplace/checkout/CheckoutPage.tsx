@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -50,75 +51,64 @@ const CheckoutPage = () => {
     getShippingCost
   } = useCheckoutState();
 
-  // Validate cart on component mount and when cart changes
+  // Non-blocking cart validation for user awareness only
   useEffect(() => {
     if (cartItems.length > 0) {
-      validateCart();
+      validateCartAsync();
     }
   }, [cartItems]);
 
-  const validateCart = async () => {
+  const validateCartAsync = async () => {
     setIsValidatingCart(true);
     
     try {
-      // Validate cart data structure
       const validation = validateCartData(cartItems);
       
       if (!validation.isValid) {
-        toast.error("Cart validation failed", {
-          description: `${validation.errors.length} issues found. Please review your cart.`
+        toast.warning("Cart validation issues detected", {
+          description: "Some items may have issues but you can still proceed with checkout"
         });
         
-        // Remove invalid items
+        // Remove invalid items but don't block checkout
         validation.invalidItems.forEach(item => {
           removeFromCart(item.product.product_id);
         });
       }
 
-      // Show warnings if any
       if (validation.warnings.length > 0) {
         console.warn("Cart validation warnings:", validation.warnings);
       }
 
-      // Check product availability
       const availability = await validateProductAvailability(cartItems);
       const unavailableItems = availability.filter(item => !item.available);
       const priceChangedItems = availability.filter(item => item.price_changed);
 
       if (unavailableItems.length > 0) {
-        toast.error("Some items are no longer available", {
-          description: `${unavailableItems.length} items have been removed from your cart`
+        toast.warning("Some items updated", {
+          description: `${unavailableItems.length} items were removed due to availability`
         });
         
-        // Remove unavailable items
         unavailableItems.forEach(item => {
           removeFromCart(item.product_id);
         });
       }
 
       if (priceChangedItems.length > 0) {
-        toast.warning("Price updates detected", {
+        toast.info("Price updates detected", {
           description: `${priceChangedItems.length} items have updated prices`
         });
-        
-        // Update cart with new prices
-        const updatedCart = updateCartItemPrices(cartItems, availability);
-        // Note: In a real implementation, you'd update the cart context here
       }
 
       setCartValidation(validation);
     } catch (error) {
       console.error("Cart validation error:", error);
-      toast.error("Unable to validate cart", {
-        description: "Please try refreshing the page"
-      });
+      // Don't show error toast for validation - it's informational only
     } finally {
       setIsValidatingCart(false);
     }
   };
 
   const getTaxAmount = () => {
-    // Simple tax calculation - 8.25% for demonstration
     return cartTotal * 0.0825;
   };
 
@@ -143,46 +133,10 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Validate cart before proceeding
-    if (isValidatingCart) {
-      toast.error("Please wait while we validate your cart");
-      return;
-    }
-
-    if (cartValidation && !cartValidation.isValid) {
-      toast.error("Please resolve cart issues before placing order");
-      return;
-    }
-
     setIsProcessing(true);
     
     try {
-      // Re-validate cart one more time before checkout
-      const finalValidation = validateCartData(cartItems);
-      if (!finalValidation.isValid) {
-        throw new Error("Cart validation failed during checkout");
-      }
-
-      const giftingFee = await getGiftingFee();
-      const totalAmount = await getTotalAmount();
-      
-      // Log gift options being processed
-      console.log("Processing order with gift options:", checkoutData.giftOptions);
-      console.log("Using shipping option:", checkoutData.selectedShippingOption);
-      
-      // Create order in database with payment intent ID if provided
-      const order = await createOrder({
-        cartItems: finalValidation.validItems,
-        subtotal: cartTotal,
-        shippingCost: getShippingCost(),
-        taxAmount: getTaxAmount(),
-        totalAmount: totalAmount,
-        shippingInfo: checkoutData.shippingInfo,
-        giftOptions: checkoutData.giftOptions,
-        paymentIntentId: paymentIntentId
-      });
-
-      // If we have a payment intent, confirm the payment
+      // Process payment first if payment intent provided
       if (paymentIntentId) {
         try {
           const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
@@ -190,7 +144,7 @@ const CheckoutPage = () => {
             {
               body: {
                 payment_intent_id: paymentIntentId,
-                order_id: order.id
+                order_id: null // We'll update this after order creation
               }
             }
           );
@@ -202,15 +156,32 @@ const CheckoutPage = () => {
           console.log("Payment confirmed:", confirmData);
         } catch (confirmationError) {
           console.error("Payment confirmation error:", confirmationError);
-          // Don't fail the entire order - it was created successfully
-          toast.warning("Order created but payment confirmation had issues");
+          throw new Error("Payment processing failed");
         }
       }
 
-      // Process order through Zinc API with error handling (if not demo mode)
-      if (paymentIntentId) {
+      // Create order after payment is confirmed
+      const giftingFee = await getGiftingFee();
+      const totalAmount = await getTotalAmount();
+      
+      console.log("Processing order with gift options:", checkoutData.giftOptions);
+      console.log("Using shipping option:", checkoutData.selectedShippingOption);
+      
+      const order = await createOrder({
+        cartItems: cartItems,
+        subtotal: cartTotal,
+        shippingCost: getShippingCost(),
+        taxAmount: getTaxAmount(),
+        totalAmount: totalAmount,
+        shippingInfo: checkoutData.shippingInfo,
+        giftOptions: checkoutData.giftOptions,
+        paymentIntentId: paymentIntentId
+      });
+
+      // Process order through Zinc API with Amazon Business credentials
+      if (paymentIntentId || checkoutData.paymentMethod === "demo") {
         try {
-          const zincProducts = finalValidation.validItems.map(item => ({
+          const zincProducts = cartItems.map(item => ({
             product_id: item.product.product_id,
             quantity: item.quantity
           }));
@@ -218,17 +189,32 @@ const CheckoutPage = () => {
           const zincOrderRequest = createZincOrderRequest(
             zincProducts,
             checkoutData.shippingInfo,
-            checkoutData.shippingInfo, // Using shipping as billing for demo
+            checkoutData.shippingInfo,
             checkoutData.paymentMethod,
             checkoutData.giftOptions,
             "amazon",
-            true // is_test = true for demo
+            checkoutData.paymentMethod === "demo" // is_test = true for demo
           );
 
-          // Add shipping method to Zinc order request
           zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
+          
+          // Add Amazon Business credentials for payment processing
+          const amazonCredentialsString = localStorage.getItem('amazonCredentials');
+          if (amazonCredentialsString) {
+            try {
+              const amazonCredentials = JSON.parse(amazonCredentialsString);
+              console.log("Using stored Amazon Business credentials for payment");
+              
+              zincOrderRequest.retailer_credentials = {
+                email: amazonCredentials.email,
+                password: amazonCredentials.password
+              };
+            } catch (error) {
+              console.error("Error parsing Amazon credentials:", error);
+            }
+          }
 
-          console.log("Sending Zinc order request with shipping method:", zincOrderRequest);
+          console.log("Sending Zinc order request:", zincOrderRequest);
           
           const zincOrder = await processOrder(zincOrderRequest);
           
@@ -236,12 +222,11 @@ const CheckoutPage = () => {
             console.log("Zinc order processed successfully:", zincOrder);
             toast.success("Order placed and sent to fulfillment!");
           } else {
-            console.warn("Zinc order processing failed, but internal order was created");
+            console.warn("Zinc order processing failed, but payment was processed");
             toast.warning("Order placed but fulfillment may be delayed");
           }
         } catch (zincError) {
           console.error("Zinc order processing error:", zincError);
-          // Don't fail the entire checkout - order was created successfully
           toast.warning("Order placed successfully, but there may be a delay in fulfillment processing");
         }
       }
@@ -259,7 +244,6 @@ const CheckoutPage = () => {
       if (!user) {
         setCompletedOrderNumber(order.order_number);
         setShowGuestSignup(true);
-        // Still navigate to confirmation page
         setTimeout(() => {
           navigate(`/order-confirmation/${order.id}`);
         }, 500);
@@ -274,8 +258,6 @@ const CheckoutPage = () => {
       if (error instanceof Error) {
         if (error.message.includes('payment')) {
           errorMessage = "Payment processing failed. Please check your payment details.";
-        } else if (error.message.includes('validation')) {
-          errorMessage = "Cart validation failed. Please review your items.";
         } else if (error.message.includes('shipping')) {
           errorMessage = "Shipping validation failed. Please check your address.";
         }
@@ -303,7 +285,7 @@ const CheckoutPage = () => {
     <div className="container mx-auto py-8 px-4">
       <CheckoutHeader title="Checkout" />
 
-      {/* Cart Validation Status */}
+      {/* Cart Validation Status - Informational Only */}
       {isValidatingCart && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-700">Validating cart items...</p>
@@ -312,7 +294,7 @@ const CheckoutPage = () => {
 
       {cartValidation && cartValidation.warnings.length > 0 && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-700 font-medium">Cart Warnings:</p>
+          <p className="text-sm text-yellow-700 font-medium">Cart Warnings (you can still proceed):</p>
           <ul className="text-sm text-yellow-600 mt-1">
             {cartValidation.warnings.map((warning: string, index: number) => (
               <li key={index}>• {warning}</li>
@@ -380,7 +362,7 @@ const CheckoutPage = () => {
                 onPaymentMethodChange={handlePaymentMethodChange}
                 onPlaceOrder={handlePlaceOrder}
                 isProcessing={Boolean(isProcessing)}
-                canPlaceOrder={Boolean(canPlaceOrder()) && !isValidatingCart}
+                canPlaceOrder={Boolean(canPlaceOrder())}
                 onPrevious={() => handleTabChange("schedule")}
                 totalAmount={cartTotal + getShippingCost() + getTaxAmount()}
                 cartItems={cartItems}
@@ -400,7 +382,6 @@ const CheckoutPage = () => {
         </div>
       </div>
 
-      {/* Guest Signup Prompt */}
       <GuestSignupPrompt
         isOpen={showGuestSignup}
         onClose={() => setShowGuestSignup(false)}

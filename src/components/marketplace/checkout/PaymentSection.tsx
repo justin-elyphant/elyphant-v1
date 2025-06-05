@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from "@/integrations/stripe/client";
@@ -34,15 +35,15 @@ const PaymentSection = ({
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  // Create payment intent when component mounts and payment method is card
+  // Initialize payment intent immediately when card payment is selected
   useEffect(() => {
-    if (paymentMethod === "card" && canPlaceOrder && totalAmount > 0) {
+    if (paymentMethod === "card" && totalAmount > 0 && !clientSecret) {
       createPaymentIntent();
     }
-  }, [paymentMethod, canPlaceOrder, totalAmount]);
+  }, [paymentMethod, totalAmount]);
 
   const createPaymentIntent = async () => {
-    if (isCreatingPayment) return;
+    if (isCreatingPayment || clientSecret) return;
     
     setIsCreatingPayment(true);
     
@@ -64,6 +65,7 @@ const PaymentSection = ({
 
       setClientSecret(data.client_secret);
       setPaymentIntentId(data.payment_intent_id);
+      console.log("Payment intent created successfully");
     } catch (error) {
       console.error('Error creating payment intent:', error);
       toast.error('Failed to initialize payment. Please try again.');
@@ -97,7 +99,6 @@ const PaymentSection = ({
         throw new Error(error.message || 'Failed to create checkout session');
       }
 
-      // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -119,10 +120,18 @@ const PaymentSection = ({
   const handlePaymentError = (error: string) => {
     console.error('Payment error:', error);
     toast.error('Payment failed. Please try again.');
+    setPaymentProcessing(false);
   };
 
   const handleDemoOrder = () => {
     onPlaceOrder();
+  };
+
+  const handleCardPaymentMethodSelect = () => {
+    onPaymentMethodChange("card");
+    if (!clientSecret && totalAmount > 0) {
+      createPaymentIntent();
+    }
   };
 
   return (
@@ -136,7 +145,7 @@ const PaymentSection = ({
             id="card-payment" 
             name="payment-method"
             checked={paymentMethod === "card"}
-            onChange={() => onPaymentMethodChange("card")}
+            onChange={handleCardPaymentMethodSelect}
             className="mr-2"
           />
           <label htmlFor="card-payment" className="flex items-center">
@@ -175,18 +184,36 @@ const PaymentSection = ({
           </label>
         </div>
 
-        {paymentMethod === "card" && clientSecret && (
+        {paymentMethod === "card" && (
           <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-            <Elements stripe={stripePromise}>
-              <StripePaymentForm
-                clientSecret={clientSecret}
-                amount={totalAmount}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-                isProcessing={paymentProcessing}
-                onProcessingChange={setPaymentProcessing}
-              />
-            </Elements>
+            {isCreatingPayment && (
+              <div className="text-center text-sm text-gray-600 mb-4">
+                Initializing payment...
+              </div>
+            )}
+            {clientSecret && (
+              <Elements stripe={stripePromise}>
+                <StripePaymentForm
+                  clientSecret={clientSecret}
+                  amount={totalAmount}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                  isProcessing={paymentProcessing}
+                  onProcessingChange={setPaymentProcessing}
+                />
+              </Elements>
+            )}
+            {!clientSecret && !isCreatingPayment && (
+              <div className="text-center">
+                <Button 
+                  onClick={createPaymentIntent}
+                  disabled={!canPlaceOrder}
+                  variant="outline"
+                >
+                  Initialize Payment
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -201,12 +228,6 @@ const PaymentSection = ({
           <div className="pl-6 text-sm text-muted-foreground flex items-center">
             <Info className="h-4 w-4 mr-2" />
             Demo mode will simulate a successful payment without charging
-          </div>
-        )}
-
-        {paymentMethod === "card" && !clientSecret && canPlaceOrder && (
-          <div className="pl-6 text-sm text-muted-foreground">
-            {isCreatingPayment ? "Initializing payment..." : "Click 'Initialize Payment' to continue"}
           </div>
         )}
       </div>
@@ -235,13 +256,10 @@ const PaymentSection = ({
           </Button>
         )}
 
-        {paymentMethod === "card" && !clientSecret && (
-          <Button 
-            onClick={createPaymentIntent}
-            disabled={isCreatingPayment || !canPlaceOrder}
-          >
-            {isCreatingPayment ? "Initializing..." : "Initialize Payment"}
-          </Button>
+        {paymentMethod === "card" && clientSecret && !paymentProcessing && (
+          <div className="text-sm text-gray-600">
+            Complete payment form above to proceed
+          </div>
         )}
       </div>
     </div>

@@ -27,11 +27,11 @@ export const createZincOrderRequest = (
       city: shippingAddress.city,
       state: shippingAddress.state,
       country: shippingAddress.country,
-      phone_number: '555-0123' // Default phone for demo
+      phone_number: '555-0123'
     },
     payment_method: {
       name_on_card: shippingAddress.name,
-      number: '4111111111111111', // Demo card
+      number: '4111111111111111',
       expiration_month: 12,
       expiration_year: 2025,
       security_code: '123'
@@ -49,22 +49,18 @@ export const createZincOrderRequest = (
     is_test: isTest
   };
 
-  // Add shipping method if specified
   if (shippingMethod) {
     orderRequest.shipping_method = shippingMethod;
     console.log("Adding shipping method to order:", shippingMethod);
   }
 
-  // Add gift options if this is a gift
   if (giftOptions.isGift) {
     orderRequest.is_gift = true;
     
-    // Add gift message (truncated to 255 chars for Amazon compliance)
     if (giftOptions.giftMessage && giftOptions.giftMessage.trim()) {
       orderRequest.gift_message = giftOptions.giftMessage.substring(0, 255);
     }
     
-    // Add delivery scheduling as delivery instructions
     const deliveryInstructions = [];
     
     if (giftOptions.scheduledDeliveryDate) {
@@ -95,14 +91,12 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
   try {
     console.log("Processing order through Zinc API:", orderRequest);
     
-    // Check if this is a test order
     const isTestOrder = orderRequest.is_test === true;
     if (isTestOrder) {
-      console.log("This is a TEST order - will not actually charge your card or place an Amazon order");
-      toast.info("This is a TEST order - no actual Amazon order will be placed");
+      console.log("This is a TEST order - will not actually place an Amazon order");
+      toast.info("Processing test order");
     }
     
-    // Log gift options being sent to Zinc
     if (orderRequest.is_gift) {
       console.log("Gift order details:", {
         gift_message: orderRequest.gift_message,
@@ -111,14 +105,13 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
       });
     }
     
-    // Check for stored Amazon credentials
+    // Check for Amazon Business credentials
     const amazonCredentialsString = localStorage.getItem('amazonCredentials');
     if (amazonCredentialsString) {
       try {
         const amazonCredentials = JSON.parse(amazonCredentialsString);
-        console.log("Using stored Amazon credentials for", amazonCredentials.email);
+        console.log("Using Amazon Business credentials for order placement");
         
-        // Add retailer credentials to the order request
         orderRequest.retailer_credentials = {
           email: amazonCredentials.email,
           password: amazonCredentials.password
@@ -127,15 +120,14 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
         console.error("Error parsing Amazon credentials:", error);
       }
     } else {
-      console.log("No Amazon credentials found in local storage");
+      console.log("No Amazon Business credentials found - order may fail");
+      toast.warning("Amazon Business credentials not found. Order may require manual processing.");
     }
     
-    // For test orders, we simulate the API response
     if (isTestOrder) {
-      console.log("Simulating a Zinc API order response for test order");
+      console.log("Simulating Zinc API order response for test");
       
-      // Create a simulated response after a short delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       const testOrderId = 'test-' + Math.random().toString(36).substring(2, 15);
       
@@ -145,11 +137,11 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
         created_at: new Date().toISOString(),
         retailer: orderRequest.retailer,
         products: orderRequest.products,
-        total_price: 99.99, // Simulated price
+        total_price: 99.99,
       };
     }
     
-    // For real orders, process through the Zinc API
+    // Process real order through Zinc API
     const response = await fetch(`${ZINC_API_BASE_URL}/orders`, {
       method: 'POST',
       headers: getZincHeaders(),
@@ -159,7 +151,34 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Zinc API order error:", errorData);
-      throw new Error(errorData.message || "Failed to process order");
+      
+      // Retry logic for transient failures
+      if (response.status >= 500 && response.status < 600) {
+        console.log("Server error detected, retrying in 2 seconds...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const retryResponse = await fetch(`${ZINC_API_BASE_URL}/orders`, {
+          method: 'POST',
+          headers: getZincHeaders(),
+          body: JSON.stringify(orderRequest),
+        });
+        
+        if (retryResponse.ok) {
+          const retryData = await retryResponse.json();
+          console.log("Retry successful:", retryData);
+          
+          return {
+            id: retryData.request_id,
+            status: "processing",
+            created_at: new Date().toISOString(),
+            retailer: orderRequest.retailer,
+            products: orderRequest.products,
+            total_price: retryData.price || 0,
+          };
+        }
+      }
+      
+      throw new Error(errorData.message || "Failed to process order through Zinc");
     }
     
     const orderData = await response.json();
@@ -175,7 +194,12 @@ export const processOrder = async (orderRequest: ZincOrderRequest): Promise<Zinc
     };
   } catch (error) {
     console.error("Error processing order:", error);
-    toast.error("Failed to process order. Please try again.");
+    
+    // Don't show error for missing credentials - that's handled above
+    if (!error.message.includes('credentials')) {
+      toast.error("Order processing encountered an issue. Payment was successful, order will be processed manually if needed.");
+    }
+    
     return null;
   }
 };

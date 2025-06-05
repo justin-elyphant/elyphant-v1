@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import AuthButtons from "./AuthButtons";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useViewport } from "@/hooks/useViewport";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
@@ -85,7 +84,6 @@ const NavigationBar = () => {
           {/* Right side actions */}
           <div className="flex items-center space-x-2 h-10">
             <ShoppingCartButton />
-            {user && <NotificationBell />}
             <div className="hidden md:flex">
               <AuthButtons profileImage={profile?.profile_image} />
             </div>

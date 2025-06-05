@@ -25,6 +25,7 @@ import VendorPartner from "./pages/VendorPartner";
 import AboutUs from "./pages/AboutUs";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import Trunkline from "./pages/Trunkline";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,8 @@ const App = () => (
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/payment-cancel" element={<PaymentCancel />} />
+                <Route path="/trunkline-login" element={<Trunkline />} />
+                <Route path="/trunkline" element={<Trunkline />} />
               </Routes>
               <SearchOptimizationMonitor />
             </CartProvider>

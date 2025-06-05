@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
 import { createZincOrderRequest, processOrder } from "@/components/marketplace/zinc/services/orderProcessingService";
 import { getTransparentPricing } from "@/utils/transparentPricing";
+import { validateCartData, validateProductAvailability, updateCartItemPrices } from "@/utils/validateCartData";
 
 // Import our components
 import CheckoutHeader from "./CheckoutHeader";
@@ -25,11 +26,13 @@ import OrderSummary from "./OrderSummary";
 import ShippingOptionsForm from "./ShippingOptionsForm";
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const { cartItems, cartTotal, clearCart, updateQuantity, removeFromCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showGuestSignup, setShowGuestSignup] = useState(false);
   const [completedOrderNumber, setCompletedOrderNumber] = useState("");
+  const [cartValidation, setCartValidation] = useState<any>(null);
+  const [isValidatingCart, setIsValidatingCart] = useState(false);
   
   const { 
     activeTab, 
@@ -47,6 +50,73 @@ const CheckoutPage = () => {
     canPlaceOrder,
     getShippingCost
   } = useCheckoutState();
+
+  // Validate cart on component mount and when cart changes
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      validateCart();
+    }
+  }, [cartItems]);
+
+  const validateCart = async () => {
+    setIsValidatingCart(true);
+    
+    try {
+      // Validate cart data structure
+      const validation = validateCartData(cartItems);
+      
+      if (!validation.isValid) {
+        toast.error("Cart validation failed", {
+          description: `${validation.errors.length} issues found. Please review your cart.`
+        });
+        
+        // Remove invalid items
+        validation.invalidItems.forEach(item => {
+          removeFromCart(item.product.product_id);
+        });
+      }
+
+      // Show warnings if any
+      if (validation.warnings.length > 0) {
+        console.warn("Cart validation warnings:", validation.warnings);
+      }
+
+      // Check product availability
+      const availability = await validateProductAvailability(cartItems);
+      const unavailableItems = availability.filter(item => !item.available);
+      const priceChangedItems = availability.filter(item => item.price_changed);
+
+      if (unavailableItems.length > 0) {
+        toast.error("Some items are no longer available", {
+          description: `${unavailableItems.length} items have been removed from your cart`
+        });
+        
+        // Remove unavailable items
+        unavailableItems.forEach(item => {
+          removeFromCart(item.product_id);
+        });
+      }
+
+      if (priceChangedItems.length > 0) {
+        toast.warning("Price updates detected", {
+          description: `${priceChangedItems.length} items have updated prices`
+        });
+        
+        // Update cart with new prices
+        const updatedCart = updateCartItemPrices(cartItems, availability);
+        // Note: In a real implementation, you'd update the cart context here
+      }
+
+      setCartValidation(validation);
+    } catch (error) {
+      console.error("Cart validation error:", error);
+      toast.error("Unable to validate cart", {
+        description: "Please try refreshing the page"
+      });
+    } finally {
+      setIsValidatingCart(false);
+    }
+  };
 
   const getTaxAmount = () => {
     // Simple tax calculation - 8.25% for demonstration
@@ -74,9 +144,26 @@ const CheckoutPage = () => {
       return;
     }
 
+    // Validate cart before proceeding
+    if (isValidatingCart) {
+      toast.error("Please wait while we validate your cart");
+      return;
+    }
+
+    if (cartValidation && !cartValidation.isValid) {
+      toast.error("Please resolve cart issues before placing order");
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
+      // Re-validate cart one more time before checkout
+      const finalValidation = validateCartData(cartItems);
+      if (!finalValidation.isValid) {
+        throw new Error("Cart validation failed during checkout");
+      }
+
       const giftingFee = await getGiftingFee();
       const totalAmount = await getTotalAmount();
       
@@ -84,30 +171,50 @@ const CheckoutPage = () => {
       console.log("Processing order with gift options:", checkoutData.giftOptions);
       console.log("Using shipping option:", checkoutData.selectedShippingOption);
       
-      // Create payment intent
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-        'create-payment-intent',
-        {
-          body: {
-            amount: totalAmount,
-            currency: 'usd',
-            metadata: {
-              order_type: 'marketplace',
-              items_count: cartItems.length,
-              is_gift: checkoutData.giftOptions.isGift,
-              shipping_method: checkoutData.selectedShippingOption.id
-            }
-          }
-        }
-      );
+      // Create payment intent with retry mechanism
+      let paymentData;
+      let retryCount = 0;
+      const maxRetries = 3;
 
-      if (paymentError) {
-        throw new Error('Failed to create payment intent');
+      while (retryCount < maxRetries) {
+        try {
+          const { data, error } = await supabase.functions.invoke(
+            'create-payment-intent',
+            {
+              body: {
+                amount: totalAmount,
+                currency: 'usd',
+                metadata: {
+                  order_type: 'marketplace',
+                  items_count: cartItems.length,
+                  is_gift: checkoutData.giftOptions.isGift,
+                  shipping_method: checkoutData.selectedShippingOption.id,
+                  user_id: user?.id || 'guest'
+                }
+              }
+            }
+          );
+
+          if (error) {
+            throw new Error(error.message || 'Failed to create payment intent');
+          }
+
+          paymentData = data;
+          break;
+        } catch (error) {
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            throw error;
+          }
+          
+          console.warn(`Payment intent creation attempt ${retryCount} failed, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
       }
 
-      // Create order in database with gift options and real shipping cost
+      // Create order in database with validated cart data
       const order = await createOrder({
-        cartItems,
+        cartItems: finalValidation.validItems,
         subtotal: cartTotal,
         shippingCost: getShippingCost(),
         taxAmount: getTaxAmount(),
@@ -117,35 +224,41 @@ const CheckoutPage = () => {
         paymentIntentId: paymentData.payment_intent_id
       });
 
-      // Process order through Zinc API with gift options and selected shipping method
-      const zincProducts = cartItems.map(item => ({
-        product_id: item.product.product_id,
-        quantity: item.quantity
-      }));
+      // Process order through Zinc API with error handling
+      try {
+        const zincProducts = finalValidation.validItems.map(item => ({
+          product_id: item.product.product_id,
+          quantity: item.quantity
+        }));
 
-      const zincOrderRequest = createZincOrderRequest(
-        zincProducts,
-        checkoutData.shippingInfo,
-        checkoutData.shippingInfo, // Using shipping as billing for demo
-        checkoutData.paymentMethod,
-        checkoutData.giftOptions,
-        "amazon",
-        true // is_test = true for demo
-      );
+        const zincOrderRequest = createZincOrderRequest(
+          zincProducts,
+          checkoutData.shippingInfo,
+          checkoutData.shippingInfo, // Using shipping as billing for demo
+          checkoutData.paymentMethod,
+          checkoutData.giftOptions,
+          "amazon",
+          true // is_test = true for demo
+        );
 
-      // Add shipping method to Zinc order request
-      zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
+        // Add shipping method to Zinc order request
+        zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
 
-      console.log("Sending Zinc order request with shipping method:", zincOrderRequest);
-      
-      const zincOrder = await processOrder(zincOrderRequest);
-      
-      if (zincOrder) {
-        console.log("Zinc order processed successfully:", zincOrder);
-        toast.success("Order placed and sent to fulfillment!");
-      } else {
-        console.warn("Zinc order processing failed, but internal order was created");
-        toast.warning("Order placed but fulfillment may be delayed");
+        console.log("Sending Zinc order request with shipping method:", zincOrderRequest);
+        
+        const zincOrder = await processOrder(zincOrderRequest);
+        
+        if (zincOrder) {
+          console.log("Zinc order processed successfully:", zincOrder);
+          toast.success("Order placed and sent to fulfillment!");
+        } else {
+          console.warn("Zinc order processing failed, but internal order was created");
+          toast.warning("Order placed but fulfillment may be delayed");
+        }
+      } catch (zincError) {
+        console.error("Zinc order processing error:", zincError);
+        // Don't fail the entire checkout - order was created successfully
+        toast.warning("Order placed successfully, but there may be a delay in fulfillment processing");
       }
 
       // Clear cart and handle post-purchase flow
@@ -166,7 +279,19 @@ const CheckoutPage = () => {
       
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("Failed to process order. Please try again.");
+      
+      let errorMessage = "Failed to process order. Please try again.";
+      if (error instanceof Error) {
+        if (error.message.includes('payment')) {
+          errorMessage = "Payment processing failed. Please check your payment details.";
+        } else if (error.message.includes('validation')) {
+          errorMessage = "Cart validation failed. Please review your items.";
+        } else if (error.message.includes('shipping')) {
+          errorMessage = "Shipping validation failed. Please check your address.";
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -174,11 +299,11 @@ const CheckoutPage = () => {
 
   // Redirect if cart is empty
   React.useEffect(() => {
-    if (cartItems.length === 0) {
+    if (cartItems.length === 0 && !isValidatingCart) {
       toast.error("Your cart is empty");
       navigate("/marketplace");
     }
-  }, [cartItems.length, navigate]);
+  }, [cartItems.length, navigate, isValidatingCart]);
 
   if (cartItems.length === 0) {
     return null;
@@ -187,6 +312,24 @@ const CheckoutPage = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <CheckoutHeader title="Checkout" />
+
+      {/* Cart Validation Status */}
+      {isValidatingCart && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">Validating cart items...</p>
+        </div>
+      )}
+
+      {cartValidation && cartValidation.warnings.length > 0 && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-700 font-medium">Cart Warnings:</p>
+          <ul className="text-sm text-yellow-600 mt-1">
+            {cartValidation.warnings.map((warning: string, index: number) => (
+              <li key={index}>• {warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -247,7 +390,7 @@ const CheckoutPage = () => {
                 onPaymentMethodChange={handlePaymentMethodChange}
                 onPlaceOrder={handlePlaceOrder}
                 isProcessing={Boolean(isProcessing)}
-                canPlaceOrder={Boolean(canPlaceOrder())}
+                canPlaceOrder={Boolean(canPlaceOrder()) && !isValidatingCart}
                 onPrevious={() => handleTabChange("schedule")}
               />
             </TabsContent>

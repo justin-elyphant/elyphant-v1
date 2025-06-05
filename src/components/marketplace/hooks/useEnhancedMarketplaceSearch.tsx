@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { useAdvancedFilters } from "@/hooks/useAdvancedFilters";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import { toast } from "sonner";
 
 export const useEnhancedMarketplaceSearch = () => {
@@ -53,27 +54,70 @@ export const useEnhancedMarketplaceSearch = () => {
     }
   }, [debouncedSearchTerm]);
 
+  // Prefetch popular searches on mount
+  useEffect(() => {
+    enhancedZincApiService.prefetchPopularSearches();
+  }, []);
+
   const performSearch = async (query: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log(`Enhanced search for: "${query}"`);
       
-      // In a real implementation, this would call the Zinc API
-      console.log(`Searching for: "${query}"`);
+      const searchResult = await enhancedZincApiService.searchProducts(query, 50);
       
-      // For now, we'll just show a success message
-      toast.success("Search completed", {
-        description: `Found results for "${query}"`
-      });
+      if (searchResult.error && !searchResult.cached) {
+        throw new Error(searchResult.error);
+      }
+      
+      if (searchResult.results && searchResult.results.length > 0) {
+        // Convert to Product format and update context
+        const normalizedProducts = searchResult.results.map(result => ({
+          id: result.product_id,
+          product_id: result.product_id,
+          name: result.title,
+          title: result.title,
+          price: result.price,
+          category: result.category,
+          image: result.image,
+          vendor: result.retailer || "Amazon via Zinc",
+          description: result.description,
+          rating: result.rating,
+          reviewCount: result.review_count
+        }));
+        
+        // Update products context
+        setProducts(prev => {
+          const nonZincProducts = prev.filter(p => 
+            p.vendor !== "Amazon via Zinc" && 
+            p.vendor !== "Elyphant"
+          );
+          return [...nonZincProducts, ...normalizedProducts];
+        });
+        
+        const description = searchResult.cached 
+          ? `Found ${searchResult.results.length} cached results for "${query}"`
+          : `Found ${searchResult.results.length} results for "${query}"`;
+          
+        toast.success("Search completed", { description });
+      } else {
+        toast.info("No results found", {
+          description: `No products found matching "${query}"`
+        });
+      }
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Search failed";
       setError(errorMessage);
-      toast.error("Search failed", {
-        description: errorMessage
+      
+      toast.error("Search error", {
+        description: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => performSearch(query)
+        }
       });
     } finally {
       setIsLoading(false);
@@ -84,6 +128,11 @@ export const useEnhancedMarketplaceSearch = () => {
     if (debouncedSearchTerm) {
       performSearch(debouncedSearchTerm);
     }
+  };
+
+  const clearCache = () => {
+    enhancedZincApiService.clearCache();
+    toast.success("Search cache cleared");
   };
 
   return {
@@ -99,6 +148,7 @@ export const useEnhancedMarketplaceSearch = () => {
     clearFilters,
     error,
     isLoading,
-    handleRetrySearch
+    handleRetrySearch,
+    clearCache
   };
 };

@@ -10,6 +10,11 @@ export interface ShippingAddress {
   zip_code?: string;  // Using standard database naming
   country?: string;
   is_default?: boolean;
+  formatted_address?: string;  // Added to support Google Places
+  place_id?: string;           // Added to support Google Places
+  // Legacy compatibility fields
+  street?: string;
+  zipCode?: string;
 }
 
 /**
@@ -24,7 +29,10 @@ export function mapFormToApiAddress(formAddress: any): ShippingAddress {
     state: formAddress.state || '',
     zip_code: formAddress.zipCode || '',
     country: formAddress.country || '',
-    is_default: true
+    is_default: true,
+    // Legacy compatibility
+    street: formAddress.street || '',
+    zipCode: formAddress.zipCode || ''
   };
 }
 
@@ -32,10 +40,10 @@ export function mapApiToFormAddress(apiAddress: ShippingAddress): any {
   if (!apiAddress) return {};
   
   return {
-    street: apiAddress.address_line1 || '',
+    street: apiAddress.address_line1 || apiAddress.street || '',
     city: apiAddress.city || '',
     state: apiAddress.state || '',
-    zipCode: apiAddress.zip_code || '',
+    zipCode: apiAddress.zip_code || apiAddress.zipCode || '',
     country: apiAddress.country || ''
   };
 }

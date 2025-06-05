@@ -2,12 +2,12 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ShippingAddress } from "@/types/profile";
+import { ShippingAddress } from "@/types/shipping";
 import CountrySelect from "./CountrySelect";
 import StateSelect from "./StateSelect";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { StandardizedAddress } from "@/services/googlePlacesService";
-import { databaseToForm, formToDatabase, standardizedToForm } from "@/utils/addressStandardization";
+import { FormAddress } from "@/utils/addressStandardization";
 
 interface ShippingAddressFormProps {
   address: ShippingAddress;
@@ -15,37 +15,51 @@ interface ShippingAddressFormProps {
 }
 
 export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ address, onChange }) => {
-  // Convert database format to form format for display
-  const formAddress = databaseToForm(address);
+  // Convert shipping address to form format for display
+  const formAddress: FormAddress = {
+    street: address.address_line1 || address.street || '',
+    city: address.city || '',
+    state: address.state || '',
+    zipCode: address.zip_code || address.zipCode || '',
+    country: address.country || 'US'
+  };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof FormAddress, value: string) => {
     const updatedForm = {
       ...formAddress,
       [field]: value
     };
     
-    // Convert back to database format when calling onChange
-    const dbAddress = formToDatabase(updatedForm);
-    onChange({
-      ...dbAddress,
-      // Add aliases for compatibility
-      street: dbAddress.address_line1,
-      zipCode: dbAddress.zip_code
-    });
+    // Convert back to shipping address format
+    const updatedAddress: ShippingAddress = {
+      address_line1: updatedForm.street,
+      city: updatedForm.city,
+      state: updatedForm.state,
+      zip_code: updatedForm.zipCode,
+      country: updatedForm.country,
+      // Legacy compatibility
+      street: updatedForm.street,
+      zipCode: updatedForm.zipCode
+    };
+    
+    onChange(updatedAddress);
   };
 
   const handleGooglePlacesSelect = (standardizedAddress: StandardizedAddress) => {
-    const formAddr = standardizedToForm(standardizedAddress);
-    const dbAddress = formToDatabase(formAddr);
-    
-    onChange({
-      ...dbAddress,
+    const updatedAddress: ShippingAddress = {
+      address_line1: standardizedAddress.street,
+      city: standardizedAddress.city,
+      state: standardizedAddress.state,
+      zip_code: standardizedAddress.zipCode,
+      country: standardizedAddress.country,
       formatted_address: standardizedAddress.formatted_address,
       place_id: standardizedAddress.place_id,
-      // Add aliases for compatibility
-      street: dbAddress.address_line1,
-      zipCode: dbAddress.zip_code
-    });
+      // Legacy compatibility
+      street: standardizedAddress.street,
+      zipCode: standardizedAddress.zipCode
+    };
+    
+    onChange(updatedAddress);
   };
 
   return (

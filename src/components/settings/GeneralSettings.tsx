@@ -12,6 +12,7 @@ import DataSharingSection from "./DataSharingSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import InterestsFormSection from "./InterestsFormSection";
 import GiftingPreferencesSection from "./GiftingPreferencesSection";
+import GoogleMapsDebugPanel from "@/components/debug/GoogleMapsDebugPanel";
 
 const GeneralSettings = () => {
   const { user } = useAuth();
@@ -49,6 +50,11 @@ const GeneralSettings = () => {
       <div>
         <h2 className="text-2xl font-bold">General Settings</h2>
         <p className="text-gray-600">Manage your profile information and preferences</p>
+      </div>
+
+      {/* Google Maps Debug Panel */}
+      <div className="mb-6">
+        <GoogleMapsDebugPanel />
       </div>
       
       <Form {...form}>

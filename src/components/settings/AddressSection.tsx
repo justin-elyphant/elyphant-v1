@@ -5,9 +5,20 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
+import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
+import { StandardizedAddress } from "@/services/googlePlacesService";
 
 const AddressSection = () => {
   const form = useFormContext();
+
+  const handleGooglePlacesSelect = (standardizedAddress: StandardizedAddress) => {
+    // Update all address fields when a place is selected
+    form.setValue("address.street", standardizedAddress.street);
+    form.setValue("address.city", standardizedAddress.city);
+    form.setValue("address.state", standardizedAddress.state);
+    form.setValue("address.zipCode", standardizedAddress.zipCode);
+    form.setValue("address.country", standardizedAddress.country);
+  };
 
   return (
     <Card>
@@ -25,7 +36,13 @@ const AddressSection = () => {
             <FormItem>
               <FormLabel>Street Address</FormLabel>
               <FormControl>
-                <Input placeholder="123 Main St" {...field} />
+                <GooglePlacesAutocomplete
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  onAddressSelect={handleGooglePlacesSelect}
+                  placeholder="Start typing your address..."
+                  label=""
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

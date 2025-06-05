@@ -83,7 +83,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
         <Button
           type="submit"
           size="sm"
-          className={`absolute right-1 rounded-full px-3 py-1 text-xs font-medium h-6 transition-all duration-300 touch-manipulation ${
+          className={`absolute right-1 rounded-full px-3 py-1 text-xs font-medium h-5 transition-all duration-300 touch-manipulation ${
             mobile ? "h-8 px-4" : ""
           } ${
             isNicoleMode 

@@ -49,7 +49,16 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     if (value !== query) {
       setQuery(value);
     }
-  }, [value, setQuery]);
+  }, [value, query, setQuery]);
+
+  // Auto-open popover when predictions arrive
+  useEffect(() => {
+    if (predictions.length > 0 && !isLoading && query.length >= 3) {
+      setOpen(true);
+    } else if (predictions.length === 0 && !isLoading) {
+      setOpen(false);
+    }
+  }, [predictions.length, isLoading, query.length]);
 
   // Handle focus restoration after popover closes
   useEffect(() => {
@@ -72,9 +81,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     onChange(newValue);
     setQuery(newValue);
     
-    if (newValue.length >= 3) {
-      setOpen(true);
-    } else {
+    // Don't immediately open popover - let the useEffect handle it when predictions arrive
+    if (newValue.length < 3) {
       setOpen(false);
     }
   };
@@ -84,7 +92,13 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   };
 
   const handleInputClick = () => {
-    if (value && value.length >= 3 && predictions.length > 0) {
+    if (value && value.length >= 3 && predictions.length > 0 && !isLoading) {
+      setOpen(true);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (value.length >= 3 && predictions.length > 0 && !isLoading) {
       setOpen(true);
     }
   };
@@ -115,11 +129,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
               value={value}
               onChange={handleInputChange}
               onClick={handleInputClick}
-              onFocus={() => {
-                if (value.length >= 3 && predictions.length > 0) {
-                  setOpen(true);
-                }
-              }}
+              onFocus={handleInputFocus}
               placeholder={placeholder}
               disabled={disabled}
               className="w-full"

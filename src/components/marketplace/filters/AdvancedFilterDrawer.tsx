@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Filter, X, Star } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FilterState } from "@/hooks/useAdvancedFilters";
+import { FilterState, SortByOption, AvailabilityOption } from "@/hooks/useAdvancedFilters";
 
 interface AdvancedFilterDrawerProps {
   filters: FilterState;
@@ -115,7 +115,7 @@ const AdvancedFilterDrawer: React.FC<AdvancedFilterDrawerProps> = ({
         <Label className="text-sm font-medium mb-3 block">Availability</Label>
         <Select 
           value={filters.availability} 
-          onValueChange={(value: FilterState['availability']) => 
+          onValueChange={(value: AvailabilityOption) => 
             onUpdateFilters({ availability: value })
           }
         >
@@ -137,7 +137,7 @@ const AdvancedFilterDrawer: React.FC<AdvancedFilterDrawerProps> = ({
         <Label className="text-sm font-medium mb-3 block">Sort By</Label>
         <Select 
           value={filters.sortBy} 
-          onValueChange={(value: FilterState['sortBy']) => 
+          onValueChange={(value: SortByOption) => 
             onUpdateFilters({ sortBy: value })
           }
         >

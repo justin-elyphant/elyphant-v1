@@ -1,6 +1,10 @@
+
 import { useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Product } from '@/types/product';
+
+export type SortByOption = 'relevance' | 'price-low' | 'price-high' | 'rating' | 'newest';
+export type AvailabilityOption = 'all' | 'in-stock' | 'pre-order';
 
 export interface FilterState {
   priceRange: {
@@ -9,8 +13,8 @@ export interface FilterState {
   };
   categories: string[];
   minRating: number;
-  availability: 'all' | 'in-stock' | 'pre-order';
-  sortBy: 'relevance' | 'price-low' | 'price-high' | 'rating' | 'newest';
+  availability: AvailabilityOption;
+  sortBy: SortByOption;
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -38,8 +42,12 @@ export const useAdvancedFilters = (products: Product[]) => {
     if (maxPrice) urlFilters.priceRange.max = parseInt(maxPrice);
     if (categories) urlFilters.categories = categories.split(',');
     if (minRating) urlFilters.minRating = parseFloat(minRating);
-    if (availability) urlFilters.availability = availability as FilterState['availability'];
-    if (sortBy) urlFilters.sortBy = sortBy as FilterState['sortBy'];
+    if (availability && ['all', 'in-stock', 'pre-order'].includes(availability)) {
+      urlFilters.availability = availability as AvailabilityOption;
+    }
+    if (sortBy && ['relevance', 'price-low', 'price-high', 'rating', 'newest'].includes(sortBy)) {
+      urlFilters.sortBy = sortBy as SortByOption;
+    }
 
     return urlFilters;
   });

@@ -123,7 +123,7 @@ const MarketplaceContent = ({
                   viewMode={viewMode}
                   setViewMode={setViewMode}
                   sortOption={filters.sortBy}
-                  setSortOption={(sortBy) => updateFilters({ sortBy })}
+                  setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
                   totalItems={filteredProducts.length}
                   showFilters={showFilters}
                   setShowFilters={setShowFilters}
@@ -135,7 +135,7 @@ const MarketplaceContent = ({
                 viewMode={viewMode}
                 setViewMode={setViewMode}
                 sortOption={filters.sortBy}
-                setSortOption={(sortBy) => updateFilters({ sortBy })}
+                setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
                 totalItems={filteredProducts.length}
                 showFilters={showFilters}
                 setShowFilters={setShowFilters}

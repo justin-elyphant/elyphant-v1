@@ -31,10 +31,10 @@ const NavigationActions: React.FC<NavigationActionsProps> = ({
         <>
           {!isMobile && (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" size="sm" asChild>
                 <Link to="/signin">Sign In</Link>
               </Button>
-              <Button asChild>
+              <Button size="sm" asChild>
                 <Link to="/signup">Sign Up</Link>
               </Button>
             </>

@@ -31,7 +31,7 @@ const MarketplaceContent = ({
   onRefresh
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState("relevance");
 
   // Memoize active filters count for performance

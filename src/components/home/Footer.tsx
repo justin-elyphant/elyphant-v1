@@ -1,52 +1,51 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
+import { cn } from "@/lib/utils";
 
-const Footer = () => {
-  const { user } = useAuth();
-  const isInternalUser = user?.email?.endsWith('@elyphant.com') || user?.user_metadata?.isInternalUser;
+interface FooterProps {
+  className?: string;
+}
 
+const Footer: React.FC<FooterProps> = ({ className }) => {
   return (
-    <footer className="bg-gray-800 text-white py-8">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start">
-          <div className="mb-6 md:mb-0">
-            <h3 className="text-lg font-semibold mb-2">Elyphant</h3>
-            <p className="text-gray-400 text-sm max-w-md">
-              The future of gifting is automated. Connect with loved ones and let our platform handle 
-              everything from selection to delivery.
-            </p>
+    <footer className={cn("bg-gray-50 border-t mt-auto", className)}>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="font-semibold mb-4">Company</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="/about" className="hover:text-foreground">About Us</a></li>
+              <li><a href="/careers" className="hover:text-foreground">Careers</a></li>
+              <li><a href="/press" className="hover:text-foreground">Press</a></li>
+            </ul>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-            <div>
-              <h4 className="font-medium mb-3">Platform</h4>
-              <ul className="space-y-2">
-                <li><Link to="/marketplace" className="text-gray-400 hover:text-white text-sm transition-colors">Marketplace</Link></li>
-                <li><Link to="/trunkline-login" className="text-gray-400 hover:text-white text-sm transition-colors">Trunkline</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-3">Company</h4>
-              <ul className="space-y-2">
-                <li><Link to="/about-us" className="text-gray-400 hover:text-white text-sm transition-colors">About Us</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-3">Vendors</h4>
-              <ul className="space-y-2">
-                <li><Link to="/vendor-partner" className="text-gray-400 hover:text-white text-sm transition-colors">Become a Vendor Partner</Link></li>
-                <li><Link to="/vendor-login" className="text-gray-400 hover:text-white text-sm transition-colors">Vendor Portal Signin</Link></li>
-              </ul>
-            </div>
+          <div>
+            <h3 className="font-semibold mb-4">Support</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="/help" className="hover:text-foreground">Help Center</a></li>
+              <li><a href="/contact" className="hover:text-foreground">Contact Us</a></li>
+              <li><a href="/returns" className="hover:text-foreground">Returns</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="/privacy" className="hover:text-foreground">Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-foreground">Terms of Service</a></li>
+              <li><a href="/cookies" className="hover:text-foreground">Cookie Policy</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-4">Connect</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="#" className="hover:text-foreground">Twitter</a></li>
+              <li><a href="#" className="hover:text-foreground">Instagram</a></li>
+              <li><a href="#" className="hover:text-foreground">Facebook</a></li>
+            </ul>
           </div>
         </div>
-        
-        <div className="border-t border-gray-700 mt-8 pt-6 text-sm text-gray-400">
-          <p>© 2023 Elyphant. All rights reserved.</p>
+        <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+          <p>&copy; 2024 Elyphant. All rights reserved.</p>
         </div>
       </div>
     </footer>

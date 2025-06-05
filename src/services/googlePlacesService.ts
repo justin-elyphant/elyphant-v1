@@ -1,3 +1,4 @@
+import { getGoogleMapsApiKey } from '@/utils/googleMapsConfig';
 
 export interface GooglePlacesPrediction {
   place_id: string;
@@ -35,30 +36,64 @@ export interface StandardizedAddress {
 }
 
 class GooglePlacesService {
-  private apiKey: string;
+  private apiKey: string | null;
   private autocompleteService: any = null;
   private placesService: any = null;
   private isLoaded = false;
+  private loadingPromise: Promise<void> | null = null;
 
   constructor() {
-    this.apiKey = '';
+    this.apiKey = getGoogleMapsApiKey();
     this.loadGoogleMapsAPI();
   }
 
   private async loadGoogleMapsAPI(): Promise<void> {
+    if (this.loadingPromise) {
+      return this.loadingPromise;
+    }
+
     if (this.isLoaded || (window as any).google?.maps?.places) {
       this.initializeServices();
       return;
     }
 
-    try {
-      // In a real implementation, we would load the Google Maps script
-      // For now, we'll simulate the API with better mock data
-      this.isLoaded = true;
-      this.initializeServices();
-    } catch (error) {
-      console.error('Failed to load Google Maps API:', error);
-    }
+    this.loadingPromise = new Promise(async (resolve, reject) => {
+      try {
+        if (!this.apiKey) {
+          console.warn('Google Maps API key not found, using mock data');
+          this.isLoaded = true;
+          resolve();
+          return;
+        }
+
+        // Load Google Maps script
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        
+        script.onload = () => {
+          this.isLoaded = true;
+          this.initializeServices();
+          console.log('Google Maps API loaded successfully');
+          resolve();
+        };
+        
+        script.onerror = () => {
+          console.error('Failed to load Google Maps API');
+          this.isLoaded = true; // Use mock data as fallback
+          reject(new Error('Failed to load Google Maps API'));
+        };
+        
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error('Error loading Google Maps API:', error);
+        this.isLoaded = true; // Use mock data as fallback
+        resolve();
+      }
+    });
+
+    return this.loadingPromise;
   }
 
   private initializeServices(): void {
@@ -69,6 +104,7 @@ class GooglePlacesService {
       const div = document.createElement('div');
       const map = new (window as any).google.maps.Map(div);
       this.placesService = new googleMaps.PlacesService(map);
+      console.log('Google Places services initialized');
     }
   }
 
@@ -77,13 +113,112 @@ class GooglePlacesService {
       return [];
     }
 
-    // For now, return enhanced mock data until Google Maps API is properly configured
+    await this.loadGoogleMapsAPI();
+
+    // If Google Maps API is available, use it
+    if (this.autocompleteService && this.apiKey) {
+      return new Promise((resolve) => {
+        this.autocompleteService.getPlacePredictions(
+          {
+            input: input,
+            types: ['address'],
+            componentRestrictions: { country: 'us' }
+          },
+          (predictions: any[], status: string) => {
+            if (status === 'OK' && predictions) {
+              const formattedPredictions = predictions.map(prediction => ({
+                place_id: prediction.place_id,
+                description: prediction.description,
+                structured_formatting: {
+                  main_text: prediction.structured_formatting.main_text,
+                  secondary_text: prediction.structured_formatting.secondary_text
+                }
+              }));
+              resolve(formattedPredictions);
+            } else {
+              console.warn('Google Places API error:', status, 'falling back to mock data');
+              resolve(this.getMockPredictions(input));
+            }
+          }
+        );
+      });
+    }
+
+    // Fallback to mock data
+    console.log('Using mock predictions for:', input);
     return this.getMockPredictions(input);
   }
 
   async getPlaceDetails(placeId: string): Promise<StandardizedAddress | null> {
-    // For now, return mock place details
+    await this.loadGoogleMapsAPI();
+
+    // If Google Maps API is available, use it
+    if (this.placesService && this.apiKey && !placeId.startsWith('mock_')) {
+      return new Promise((resolve) => {
+        this.placesService.getDetails(
+          {
+            placeId: placeId,
+            fields: ['place_id', 'formatted_address', 'address_components', 'geometry']
+          },
+          (place: any, status: string) => {
+            if (status === 'OK' && place) {
+              const standardizedAddress = this.parseGooglePlaceDetails(place);
+              resolve(standardizedAddress);
+            } else {
+              console.warn('Google Places Details API error:', status, 'falling back to mock data');
+              resolve(this.getMockPlaceDetails(placeId));
+            }
+          }
+        );
+      });
+    }
+
+    // Fallback to mock data
+    console.log('Using mock place details for:', placeId);
     return this.getMockPlaceDetails(placeId);
+  }
+
+  private parseGooglePlaceDetails(place: any): StandardizedAddress {
+    const components = place.address_components || [];
+    let street = '';
+    let city = '';
+    let state = '';
+    let zipCode = '';
+    let country = '';
+
+    // Parse address components
+    components.forEach((component: any) => {
+      const types = component.types;
+      
+      if (types.includes('street_number')) {
+        street = component.long_name + ' ';
+      }
+      if (types.includes('route')) {
+        street += component.long_name;
+      }
+      if (types.includes('locality')) {
+        city = component.long_name;
+      }
+      if (types.includes('administrative_area_level_1')) {
+        state = component.short_name;
+      }
+      if (types.includes('postal_code')) {
+        zipCode = component.long_name;
+      }
+      if (types.includes('country')) {
+        country = component.short_name;
+      }
+    });
+
+    return {
+      street: street.trim(),
+      city,
+      state,
+      zipCode,
+      country,
+      formatted_address: place.formatted_address,
+      place_id: place.place_id
+    };
   }
 
   private getMockPredictions(input: string): GooglePlacesPrediction[] {
@@ -120,7 +255,6 @@ class GooglePlacesService {
   }
 
   private getMockPlaceDetails(placeId: string): StandardizedAddress {
-    // Extract city from place_id for mock data
     const mockData: Record<string, StandardizedAddress> = {
       default: {
         street: '123 Main St',

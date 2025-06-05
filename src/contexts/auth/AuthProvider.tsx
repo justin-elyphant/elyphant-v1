@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,19 +29,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [isDebugMode] = useState<boolean>(false);
 
-  // Initialize auth state from Supabase
+  // Initialize auth state from Supabase with timeout
   useEffect(() => {
-    // Set the initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setState({
-        session,
-        user: session?.user ?? null,
-        isLoading: false
-      });
-    }).catch(error => {
-      console.error("Error getting session:", error);
-      setState(prev => ({ ...prev, isLoading: false }));
-    });
+    let timeoutId: NodeJS.Timeout;
+    
+    const initAuth = async () => {
+      try {
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          console.warn("Auth initialization taking too long, setting loading to false");
+          setState(prev => ({ ...prev, isLoading: false }));
+        }, 5000);
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+        }
+
+        clearTimeout(timeoutId);
+        setState({
+          session,
+          user: session?.user ?? null,
+          isLoading: false
+        });
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        clearTimeout(timeoutId);
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    initAuth();
 
     // Listen for auth changes
     const {
@@ -53,8 +73,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     });
 
-    // Cleanup subscription
+    // Cleanup
     return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription.unsubscribe();
     };
   }, []);
@@ -132,7 +155,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         "profileSetupLoading",
         "emailVerified",
         "verifiedEmail",
-        // --- Add these keys relevant to onboarding flow ---
         "pendingVerificationEmail",
         "pendingVerificationName",
         "verificationResendCount",
@@ -149,8 +171,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       navigate('/');
       toast.success("Signed out successfully");
 
-      // Extra: log for debugging
-      // eslint-disable-next-line no-console
       console.log("All onboarding/auth localStorage cleared (signOut). State reset.");
     } catch (error) {
       console.error("Error signing out:", error);

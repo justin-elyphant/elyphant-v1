@@ -11,14 +11,15 @@ const SignIn = () => {
 
   React.useEffect(() => {
     if (!isLoading && user) {
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [user, isLoading, navigate]);
 
   const handleSignInSuccess = () => {
-    navigate("/", { replace: true });
+    navigate("/dashboard", { replace: true });
   };
 
+  // Don't show loading state for too long to prevent timeouts
   if (isLoading) {
     return (
       <MainLayout>
@@ -27,6 +28,11 @@ const SignIn = () => {
         </div>
       </MainLayout>
     );
+  }
+
+  // If user is already logged in, redirect immediately
+  if (user) {
+    return null;
   }
 
   return (

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Eye, EyeOff, Shield, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,13 @@ interface AmazonCredentials {
   created_at?: string;
 }
 
-const AmazonCredentialsManager = () => {
+interface AmazonCredentialsManagerProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSave?: (credentials: AmazonCredentials) => void;
+}
+
+const AmazonCredentialsManager = ({ isOpen, onClose, onSave }: AmazonCredentialsManagerProps = {}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +30,8 @@ const AmazonCredentialsManager = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [credentials, setCredentials] = useState<AmazonCredentials | null>(null);
   const [hasCredentials, setHasCredentials] = useState(false);
+
+  const isModalMode = typeof isOpen === 'boolean';
 
   useEffect(() => {
     loadCredentials();
@@ -78,6 +87,14 @@ const AmazonCredentialsManager = () => {
         toast.success("Amazon Business credentials saved successfully");
         await loadCredentials(); // Reload to get updated status
         setPassword(''); // Clear password field after saving
+        
+        if (onSave && credentials) {
+          onSave(credentials);
+        }
+        
+        if (onClose) {
+          onClose();
+        }
       } else {
         throw new Error('Failed to save credentials');
       }
@@ -117,35 +134,15 @@ const AmazonCredentialsManager = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Amazon Business Credentials
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center text-muted-foreground">Loading credentials...</div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="text-center text-muted-foreground">Loading credentials...</div>
+      );
+    }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          Amazon Business Credentials
-        </CardTitle>
-        <CardDescription>
-          Securely store your Amazon Business account credentials for automatic order fulfillment.
-          Your credentials are encrypted and stored securely on our servers.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    return (
+      <div className="space-y-4">
         {hasCredentials && credentials && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
@@ -240,6 +237,44 @@ const AmazonCredentialsManager = () => {
             We recommend using a dedicated Amazon Business account for automated ordering.
           </p>
         </div>
+      </div>
+    );
+  };
+
+  if (isModalMode) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Amazon Business Credentials
+            </DialogTitle>
+            <DialogDescription>
+              Securely store your Amazon Business account credentials for automatic order fulfillment.
+              Your credentials are encrypted and stored securely on our servers.
+            </DialogDescription>
+          </DialogHeader>
+          {renderContent()}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Amazon Business Credentials
+        </CardTitle>
+        <CardDescription>
+          Securely store your Amazon Business account credentials for automatic order fulfillment.
+          Your credentials are encrypted and stored securely on our servers.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {renderContent()}
       </CardContent>
     </Card>
   );

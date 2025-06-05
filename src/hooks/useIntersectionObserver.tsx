@@ -1,40 +1,55 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-interface UseIntersectionObserverProps {
-  threshold?: number;
+interface UseIntersectionObserverOptions {
+  threshold?: number | number[];
+  root?: Element | null;
   rootMargin?: string;
-  triggerOnce?: boolean;
+  freezeOnceVisible?: boolean;
+  initialIsIntersecting?: boolean;
 }
 
-export const useIntersectionObserver = ({
-  threshold = 0.1,
-  rootMargin = "0px",
-  triggerOnce = true
-}: UseIntersectionObserverProps = {}) => {
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  const [hasTriggered, setHasTriggered] = useState(false);
-  const elementRef = useRef<HTMLDivElement>(null);
+export function useIntersectionObserver(
+  options: UseIntersectionObserverOptions = {}
+) {
+  const {
+    threshold = 0.1,
+    root = null,
+    rootMargin = '0px',
+    freezeOnceVisible = false,
+    initialIsIntersecting = false
+  } = options;
+
+  const [isIntersecting, setIsIntersecting] = useState(initialIsIntersecting);
+  const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
+  const elementRef = useRef<Element | null>(null);
+
+  const frozen = freezeOnceVisible && isIntersecting;
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element) return;
+    const hasIOSupport = !!window.IntersectionObserver;
+
+    if (!hasIOSupport || frozen || !element) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        const isVisible = entry.isIntersecting;
+      (entries) => {
+        const thresholdArray = Array.isArray(threshold) ? threshold : [threshold];
         
-        if (isVisible && (!triggerOnce || !hasTriggered)) {
-          setIsIntersecting(true);
-          if (triggerOnce) {
-            setHasTriggered(true);
-          }
-        } else if (!triggerOnce) {
-          setIsIntersecting(isVisible);
-        }
+        entries.forEach((entry) => {
+          const isIntersecting = thresholdArray.some(
+            (t) => entry.intersectionRatio >= t
+          );
+          
+          setIsIntersecting(isIntersecting);
+          setEntry(entry);
+        });
       },
       {
         threshold,
+        root,
         rootMargin
       }
     );
@@ -42,9 +57,47 @@ export const useIntersectionObserver = ({
     observer.observe(element);
 
     return () => {
-      observer.disconnect();
+      observer.unobserve(element);
     };
-  }, [threshold, rootMargin, triggerOnce, hasTriggered]);
+  }, [elementRef.current, threshold, root, rootMargin, frozen]);
 
-  return { elementRef, isIntersecting };
-};
+  return {
+    ref: elementRef,
+    isIntersecting,
+    entry
+  };
+}
+
+// Hook for lazy loading components
+export function useLazyLoad<T>(
+  loadFn: () => Promise<T>,
+  dependencies: any[] = []
+) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const { ref, isIntersecting } = useIntersectionObserver({
+    freezeOnceVisible: true,
+    threshold: 0.1
+  });
+
+  useEffect(() => {
+    if (isIntersecting && !data && !loading) {
+      setLoading(true);
+      setError(null);
+      
+      loadFn()
+        .then(setData)
+        .catch(setError)
+        .finally(() => setLoading(false));
+    }
+  }, [isIntersecting, data, loading, ...dependencies]);
+
+  return {
+    ref,
+    data,
+    loading,
+    error,
+    isVisible: isIntersecting
+  };
+}

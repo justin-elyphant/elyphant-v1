@@ -1,41 +1,58 @@
 
 /* iOS Mobile Optimizations */
 
-/* Prevent zoom on inputs */
+/* Prevent zoom on inputs - iOS Safari fix */
 input[type="search"],
 input[type="text"],
 input[type="email"],
 input[type="password"],
 select,
 textarea {
-  font-size: 16px;
+  font-size: 16px; /* Prevents zoom on iOS */
 }
 
 /* Touch targets - minimum 44px for accessibility */
 .touch-target-44 {
   min-height: 44px;
   min-width: 44px;
+  touch-action: manipulation;
+}
+
+/* Enhanced touch targets for better UX */
+.touch-target-48 {
+  min-height: 48px;
+  min-width: 48px;
+  touch-action: manipulation;
 }
 
 /* Smooth scrolling performance */
 .smooth-scroll {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 /* Prevent bounce scrolling on iOS */
 .prevent-bounce {
   overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Optimize tap highlights */
+/* Optimize tap highlights and touch feedback */
 * {
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
-/* Better button touch feedback */
-button {
+/* Better button touch feedback with haptic-like visual response */
+button, .interactive-element {
   touch-action: manipulation;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+button:active, .interactive-element:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Prevent text selection on interactive elements */
@@ -46,7 +63,7 @@ button {
   user-select: none;
 }
 
-/* Safe area padding for iOS devices */
+/* Safe area padding for iOS devices with notches */
 .safe-area-inset {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
@@ -60,9 +77,10 @@ button {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Optimize image loading */
+/* Optimize image loading and performance */
 img {
   content-visibility: auto;
+  loading: lazy;
 }
 
 /* Performance optimizations */
@@ -74,6 +92,12 @@ img {
   will-change: scroll-position;
 }
 
+/* Intersection observer optimizations */
+.intersection-target {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+
 /* Grid layout optimizations for mobile */
 @media (max-width: 768px) {
   .mobile-grid-optimized {
@@ -81,18 +105,21 @@ img {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
     padding: 0.5rem;
+    contain: layout style paint;
   }
   
   .mobile-grid-optimized > * {
     min-height: 200px;
+    content-visibility: auto;
   }
 }
 
-/* Loading states */
+/* Loading states with better performance */
 .skeleton-loading {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
+  will-change: background-position;
 }
 
 @keyframes loading {
@@ -104,21 +131,88 @@ img {
   }
 }
 
+/* Swipe gesture support */
+.swipeable {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.swipe-container {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+}
+
+.swipe-container::-webkit-scrollbar {
+  display: none;
+}
+
+.swipe-item {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
 /* Cart drawer optimizations */
 .cart-drawer-content {
   max-height: 80vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Product modal optimizations */
 .product-modal-mobile {
   max-height: 90vh;
   border-radius: 16px 16px 0 0;
+  overscroll-behavior: contain;
 }
 
 /* Filter drawer optimizations */
 .filter-drawer-mobile {
   max-height: 80vh;
   border-radius: 16px 16px 0 0;
+  overscroll-behavior: contain;
+}
+
+/* Pull-to-refresh indicator */
+.pull-to-refresh {
+  transform: translateY(-100px);
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.pull-to-refresh.active {
+  transform: translateY(0);
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS only styles */
+  .ios-fix {
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+  
+  /* Fix for iOS input styling */
+  input, textarea, select {
+    -webkit-appearance: none;
+    border-radius: 6px;
+  }
+  
+  /* Prevent iOS zoom on form focus */
+  input:focus, textarea:focus, select:focus {
+    font-size: 16px;
+  }
+}
+
+/* Gesture feedback animations */
+@keyframes tapFeedback {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.tap-feedback:active {
+  animation: tapFeedback 0.15s ease;
 }

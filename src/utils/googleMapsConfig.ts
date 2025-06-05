@@ -5,10 +5,11 @@ export const getGoogleMapsApiKey = async (): Promise<string | null> => {
   try {
     console.log('🗝️ [GoogleMaps] Fetching API key from server...');
     
-    const response = await fetch('/api/get-google-maps-key', {
+    const response = await fetch('https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/get-google-maps-key', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRta3h0a3ZsaXNweGVxZnpsY3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3ODYwNTYsImV4cCI6MjA1OTM2MjA1Nn0.L4maWmbU_MgnjWRuc9hGZweXVY4QCYjrnhFMGbdEebI`,
       },
     });
 

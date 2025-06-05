@@ -140,7 +140,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
 
         <Button
           type="submit"
-          className="absolute right-2 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white rounded-full px-3 py-1 text-xs font-semibold h-8"
+          className="absolute right-2 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white rounded-full px-3 py-1 text-xs font-semibold h-5"
         >
           Search
         </Button>

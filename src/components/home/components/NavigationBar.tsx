@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
 import { useViewport } from "@/hooks/useViewport";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
+import CategoryFilterBar from "./CategoryFilterBar";
 import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
 
 const NavigationBar = () => {
@@ -57,9 +58,10 @@ const NavigationBar = () => {
           
           {/* Desktop Search Bar (Nicole) - Centered */}
           {!isMobile && (
-            <div className="flex-1 flex justify-center px-8">
-              <div className="w-full max-w-2xl">
+            <div className="flex-1 flex flex-col justify-center px-8">
+              <div className="w-full max-w-2xl mx-auto">
                 <AIEnhancedSearchBar />
+                <CategoryFilterBar />
               </div>
             </div>
           )}
@@ -105,8 +107,9 @@ const NavigationBar = () => {
         {isMenuOpen && (
           <div className="fixed inset-0 top-[72px] bg-white z-50 flex flex-col p-4 md:hidden">
             {/* Mobile Search Bar (Nicole) */}
-            <div className="mb-6">
+            <div className="mb-4">
               <AIEnhancedSearchBar mobile={true} />
+              <CategoryFilterBar mobile={true} />
             </div>
             
             <div className="flex flex-col space-y-4 mb-6">

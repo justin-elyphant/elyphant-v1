@@ -3,23 +3,26 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-// Updated: Added purple styling to Sign Up button for brand consistency
 const AuthButtons = () => {
   return (
-    <>
-      <Button variant="ghost" size="sm" asChild>
+    <div className="flex items-center gap-3">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        asChild
+        className="text-gray-600 hover:text-gray-900 font-medium"
+      >
         <Link to="/signin">Sign In</Link>
       </Button>
       <Button
         size="sm"
         asChild
-        className="bg-purple-600 hover:bg-purple-700 text-white border-0"
+        className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white border-0 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
       >
-        <Link to="/signup">Sign Up</Link>
+        <Link to="/signup">Get Started</Link>
       </Button>
-    </>
+    </div>
   );
 };
 
 export default AuthButtons;
-

@@ -96,14 +96,14 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         <Input
           type="search"
           placeholder="Search friends, products, or brands"
-          className={`pl-10 pr-32 ${mobile ? "text-base py-3 h-12" : ""} rounded-full border-gray-300`}
+          className={`pl-10 pr-36 ${mobile ? "text-base py-3 h-12" : ""} rounded-full border-gray-300`}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => setShowSuggestions(suggestions.length > 0)}
         />
 
         {/* Category selector integrated into search bar */}
-        <div className="absolute right-12 flex items-center border-l border-gray-300 pl-2">
+        <div className="absolute right-20 flex items-center border-l border-gray-300 pl-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -115,7 +115,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
                 <Grid3X3 className="h-4 w-4 mr-1" />
                 {!isMobile && (
                   <>
-                    <span className="text-xs max-w-20 truncate">
+                    <span className="text-xs max-w-16 truncate">
                       {selectedCategoryName.replace(" Categories", "")}
                     </span>
                     <ChevronDown className="h-3 w-3 ml-1" />
@@ -140,7 +140,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
 
         <Button
           type="submit"
-          className="absolute right-2 bg-transparent hover:bg-gray-50 text-blue-500 hover:text-blue-600 rounded-full px-3 py-1 text-xs font-semibold h-5 border border-gray-300"
+          className="absolute right-2 bg-transparent hover:bg-gray-50 text-blue-500 hover:text-blue-600 rounded-full px-3 py-1 text-xs font-semibold h-6 border border-gray-300"
         >
           Search
         </Button>

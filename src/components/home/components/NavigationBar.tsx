@@ -44,47 +44,28 @@ const NavigationBar = () => {
 
   return (
     <nav className="bg-white shadow-sm border-b">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex justify-between items-center h-12">
-          {/* Logo with image and text */}
-          <Link to="/" className="flex items-center cursor-pointer">
+      <div className="container mx-auto px-4">
+        {/* Main navigation row - reduced height */}
+        <div className="flex justify-between items-center h-16">
+          {/* Logo - more compact */}
+          <Link to="/" className="flex items-center cursor-pointer flex-shrink-0">
             <img 
               src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
               alt="Elyphant" 
-              className="h-12 w-12 mr-3" 
+              className="h-10 w-10 mr-2" 
             />
-            <h1 className="text-2xl font-bold text-purple-700">Elyphant</h1>
+            <h1 className="text-xl font-bold text-purple-700">Elyphant</h1>
           </Link>
           
-          {/* Desktop Search Bar (Nicole) - Centered */}
+          {/* Desktop Search Bar - better proportions */}
           {!isMobile && (
-            <div className="flex-1 flex flex-col justify-center px-8">
-              <div className="w-full max-w-2xl mx-auto">
-                <AIEnhancedSearchBar />
-                <CategoryFilterBar />
-              </div>
+            <div className="flex-1 max-w-2xl mx-8">
+              <AIEnhancedSearchBar />
             </div>
           )}
           
-          {/* Desktop navigation - now empty since nav items removed */}
-          <div className="hidden md:flex items-center space-x-3 h-10">
-            {navItems.map((item) => (
-              (!item.requireAuth || user) && (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`text-sm font-medium transition-colors hover:text-purple-700 h-10 flex items-center px-3 ${
-                    location.pathname === item.path ? "text-purple-700" : "text-gray-700"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              )
-            ))}
-          </div>
-          
-          {/* Right side actions */}
-          <div className="flex items-center space-x-2 h-10">
+          {/* Right side actions - more compact */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
             <ShoppingCartButton />
             <div className="hidden md:flex">
               <AuthButtons profileImage={profile?.profile_image} />
@@ -93,23 +74,32 @@ const NavigationBar = () => {
             {/* Mobile menu button */}
             <Button 
               variant="ghost" 
-              size={isMobile ? "touch" : "icon"} 
+              size="icon" 
               onClick={toggleMenu} 
-              className="md:hidden"
+              className="md:hidden h-10 w-10"
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             >
-              {isMenuOpen ? <X size={isMobile ? 24 : 20} /> : <Menu size={isMobile ? 24 : 20} />}
+              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </Button>
           </div>
         </div>
         
+        {/* Category filter bar - only on desktop, more compact */}
+        {!isMobile && (
+          <div className="py-2 border-t border-gray-100">
+            <CategoryFilterBar />
+          </div>
+        )}
+        
         {/* Mobile navigation */}
         {isMenuOpen && (
-          <div className="fixed inset-0 top-[72px] bg-white z-50 flex flex-col p-4 md:hidden">
-            {/* Mobile Search Bar (Nicole) */}
+          <div className="fixed inset-0 top-[64px] bg-white z-50 flex flex-col p-4 md:hidden">
+            {/* Mobile Search Bar */}
             <div className="mb-4">
               <AIEnhancedSearchBar mobile={true} />
-              <CategoryFilterBar mobile={true} />
+              <div className="mt-2">
+                <CategoryFilterBar mobile={true} />
+              </div>
             </div>
             
             <div className="flex flex-col space-y-4 mb-6">

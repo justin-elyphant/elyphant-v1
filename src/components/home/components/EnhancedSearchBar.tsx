@@ -55,11 +55,10 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
 
   return (
     <form
-      className={`relative flex items-center w-full`}
+      className="relative flex items-center w-full"
       onSubmit={handleSubmit}
       autoComplete="off"
     >
-      {/* Clean search bar without category selector */}
       <div className="relative flex-1 flex items-center">
         <div className="absolute left-3 flex items-center">
           <Search className="h-4 w-4 text-gray-400" />
@@ -68,7 +67,11 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         <Input
           type="search"
           placeholder="Search friends, products, or brands"
-          className={`pl-10 pr-20 ${mobile ? "text-base py-3 h-12" : ""} rounded-full border-gray-300`}
+          className={`pl-10 pr-16 ${
+            mobile 
+              ? "text-base py-3 h-12 rounded-lg" 
+              : "h-10 rounded-lg"
+          } border-gray-300 focus:border-purple-500 focus:ring-purple-500`}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => setShowSuggestions(suggestions.length > 0)}
@@ -76,7 +79,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
 
         <Button
           type="submit"
-          className="absolute right-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4 py-1 text-sm font-medium h-8"
+          className="absolute right-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md px-3 py-1 text-sm font-medium h-7"
         >
           Search
         </Button>

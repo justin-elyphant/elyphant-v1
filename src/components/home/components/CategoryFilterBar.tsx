@@ -46,22 +46,22 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
   const selectedCategoryName = categories.find(cat => cat.value === selectedCategory)?.name || "All Categories";
 
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div className="flex items-center gap-3">
       <span className="text-sm text-gray-600 flex-shrink-0">Shop by:</span>
       
-      {/* Category Dropdown */}
+      {/* Category Dropdown - more compact */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-9 px-3 text-gray-700 hover:text-gray-900 border-gray-300"
+            className="h-8 px-3 text-gray-700 hover:text-gray-900 border-gray-300 text-sm"
           >
-            <Grid3X3 className="h-4 w-4 mr-2" />
-            <span className="text-sm">
+            <Grid3X3 className="h-3 w-3 mr-2" />
+            <span className="max-w-[120px] truncate">
               {selectedCategoryName}
             </span>
-            <ChevronDown className="h-4 w-4 ml-2" />
+            <ChevronDown className="h-3 w-3 ml-2" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg z-50">
@@ -69,7 +69,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
             <DropdownMenuItem
               key={category.value}
               onClick={() => handleCategorySelect(category.value)}
-              className="cursor-pointer hover:bg-gray-100"
+              className="cursor-pointer hover:bg-gray-100 text-sm"
             >
               {category.name}
             </DropdownMenuItem>
@@ -77,16 +77,16 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Quick category buttons for popular categories */}
-      {!mobile && (
-        <div className="flex items-center gap-2 ml-4">
+      {/* Quick category buttons for popular categories - only on desktop and more compact */}
+      {!mobile && !isMobile && (
+        <div className="flex items-center gap-2 ml-2">
           {categories.slice(1, 5).map((category) => (
             <Button
               key={category.value}
               variant="ghost"
               size="sm"
               onClick={() => handleCategorySelect(category.value)}
-              className={`h-8 px-3 text-xs ${
+              className={`h-7 px-2 text-xs ${
                 selectedCategory === category.value 
                   ? "bg-blue-50 text-blue-600" 
                   : "text-gray-600 hover:text-gray-900"

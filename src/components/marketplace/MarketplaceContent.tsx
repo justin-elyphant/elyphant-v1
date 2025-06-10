@@ -29,10 +29,11 @@ const MarketplaceContent = ({
   showFilters,
   setShowFilters,
   error: externalError,
-  onRefresh
+  onRefresh,
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Use enhanced search and filters
   const {
@@ -45,7 +46,7 @@ const MarketplaceContent = ({
     isSearching,
     error: searchError,
     handleRetrySearch
-  } = useEnhancedMarketplaceSearch();
+  } = useEnhancedMarketplaceSearch(currentPage);
 
   // Combine loading states
   const isLoading = externalLoading || isSearching;
@@ -128,6 +129,8 @@ const MarketplaceContent = ({
                   showFilters={showFilters}
                   setShowFilters={setShowFilters}
                   isMobile={isMobile}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
                 />
               </div>
             ) : (
@@ -140,6 +143,8 @@ const MarketplaceContent = ({
                 showFilters={showFilters}
                 setShowFilters={setShowFilters}
                 isMobile={isMobile}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
               />
             )}
           </div>
@@ -171,6 +176,47 @@ const MarketplaceContent = ({
               sortOption={filters.sortBy}
               onProductView={onProductView}
             />
+          </div>
+
+          {/* Toolbar */}
+          <div className="mb-6">
+            {isMobile ? (
+              <div className="flex items-center justify-between gap-4">
+                <AdvancedFilterDrawer
+                  filters={filters}
+                  availableCategories={availableCategories}
+                  activeFilterCount={activeFilterCount}
+                  onUpdateFilters={updateFilters}
+                  onClearFilters={clearFilters}
+                />
+                
+                <MarketplaceToolbar
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  sortOption={filters.sortBy}
+                  setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
+                  totalItems={filteredProducts.length}
+                  showFilters={showFilters}
+                  setShowFilters={setShowFilters}
+                  isMobile={isMobile}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                />
+              </div>
+            ) : (
+              <MarketplaceToolbar
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                sortOption={filters.sortBy}
+                setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
+                totalItems={filteredProducts.length}
+                showFilters={showFilters}
+                setShowFilters={setShowFilters}
+                isMobile={isMobile}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+              />
+            )}
           </div>
         </div>
       </div>

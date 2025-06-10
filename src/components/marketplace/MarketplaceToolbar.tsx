@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Grid, List, SlidersHorizontal } from "lucide-react";
@@ -14,6 +14,8 @@ interface MarketplaceToolbarProps {
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
   isMobile: boolean;
+  currentPage: number;
+  setCurrentPage: (pageNumber: number) => void;
 }
 
 const MarketplaceToolbar: React.FC<MarketplaceToolbarProps> = ({
@@ -24,7 +26,9 @@ const MarketplaceToolbar: React.FC<MarketplaceToolbarProps> = ({
   totalItems,
   showFilters,
   setShowFilters,
-  isMobile
+  isMobile,
+  currentPage,
+  setCurrentPage
 }) => {
   const sortOptions = [
     { value: "relevance", label: "Relevance" },
@@ -42,6 +46,62 @@ const MarketplaceToolbar: React.FC<MarketplaceToolbarProps> = ({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Pagination controls */}
+        <div className="flex items-center gap-2 ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            className="px-4 py-2"
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1} // Optional: Disable if on the first page
+          >
+            Previous
+          </Button>
+
+          {/* Page numbers */}
+          {!isMobile && (
+            <>
+              {currentPage > 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-4 py-2"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                >
+                  {currentPage - 1}
+                </Button>
+              )}
+              
+              <Button
+                variant="default"
+                size="sm"
+                className="px-4 py-2"
+                onClick={() => setCurrentPage(currentPage)}
+              >
+                {currentPage}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="px-4 py-2"
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                {currentPage + 1}
+              </Button>
+            </>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="px-4 py-2"
+            onClick={() => setCurrentPage(currentPage + 1)}
+          >
+            Next
+          </Button>
+        </div>
+
         {/* Sort dropdown */}
         <Select value={sortOption} onValueChange={setSortOption}>
           <SelectTrigger className="w-[180px]">

@@ -4,10 +4,12 @@ import { useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { useAdvancedFilters } from "@/hooks/useAdvancedFilters";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { enhancedZincApiService, ZincSearchResponse } from "@/services/enhancedZincApiService";
 import { toast } from "sonner";
 
-export const useEnhancedMarketplaceSearch = () => {
+export const useEnhancedMarketplaceSearch = (currentPage) => {
+  console.log("useEnhancedMarketPlace search");
+  console.log(currentPage);
   const location = useLocation();
   const { products, setProducts } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +18,9 @@ export const useEnhancedMarketplaceSearch = () => {
   
   // Get search term from URL
   const searchParams = new URLSearchParams(location.search);
-  const urlSearchTerm = searchParams.get("search") || "";
+  let urlSearchTerm = searchParams.get("search") || "";
+  const categoryParam = searchParams.get("category");
+  if (categoryParam) urlSearchTerm = "category="+categoryParam;
   
   // Use debounced search
   const {
@@ -43,30 +47,63 @@ export const useEnhancedMarketplaceSearch = () => {
   useEffect(() => {
     if (urlSearchTerm !== searchTerm) {
       setSearchTerm(urlSearchTerm);
+      performSearch(urlSearchTerm, currentPage);
     }
   }, [urlSearchTerm, searchTerm, setSearchTerm]);
 
+  useEffect(() => {
+    performSearch(urlSearchTerm, currentPage);
+  }, [currentPage]);
+
   // Perform search when debounced term changes
   useEffect(() => {
-    if (debouncedSearchTerm && debouncedSearchTerm !== searchIdRef.current) {
-      searchIdRef.current = debouncedSearchTerm;
-      performSearch(debouncedSearchTerm);
-    }
-  }, [debouncedSearchTerm]);
-
-  // Prefetch popular searches on mount
-  useEffect(() => {
-    enhancedZincApiService.prefetchPopularSearches();
+    // if (debouncedSearchTerm && debouncedSearchTerm !== searchIdRef.current) {
+      // searchIdRef.current = debouncedSearchTerm;
+      // performSearch(debouncedSearchTerm);
+    // }
   }, []);
 
-  const performSearch = async (query: string) => {
+  // Prefetch popular searches on mount
+  // useEffect(() => {
+  //   const fetchProductsAsync = async () => {
+  //     try {
+  //       const prefetchProducts:ZincSearchResponse[] = await enhancedZincApiService.prefetchPopularSearches();
+
+  //       if (prefetchProducts && prefetchProducts.length > 0) {
+  //         const combinedProducts = prefetchProducts.flatMap(prefetch => 
+  //           prefetch.results.map(result => ({
+  //             id: result.product_id,
+  //             product_id: result.product_id,
+  //             name: result.title,
+  //             title: result.title,
+  //             price: result.price,
+  //             category: result.category,
+  //             image: result.image,
+  //             vendor: result.retailer || "Amazon via Zinc",
+  //             description: result.description,
+  //             rating: result.stars,
+  //             reviewCount: result.num_reviews
+  //           }))
+  //         );
+  //         console.log("useEnhancedMMSS..83", combinedProducts);
+  //         setProducts(combinedProducts);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching popular searches:', error);
+  //     }
+  //   }
+  //   fetchProductsAsync();
+  // }, []);
+
+  const performSearch = async (query: string, page: number) => {
+    console.log("performSearch");
     setIsLoading(true);
     setError(null);
     
     try {
       console.log(`Enhanced search for: "${query}"`);
       
-      const searchResult = await enhancedZincApiService.searchProducts(query, 50);
+      const searchResult = await enhancedZincApiService.searchProducts(query, page, 50);
       
       if (searchResult.error && !searchResult.cached) {
         throw new Error(searchResult.error);
@@ -84,8 +121,8 @@ export const useEnhancedMarketplaceSearch = () => {
           image: result.image,
           vendor: result.retailer || "Amazon via Zinc",
           description: result.description,
-          rating: result.rating,
-          reviewCount: result.review_count
+          rating: result.stars,
+          reviewCount: result.num_reviews
         }));
         
         // Update products context
@@ -116,7 +153,7 @@ export const useEnhancedMarketplaceSearch = () => {
         description: errorMessage,
         action: {
           label: "Retry",
-          onClick: () => performSearch(query)
+          onClick: () => performSearch(query, page)
         }
       });
     } finally {
@@ -126,7 +163,7 @@ export const useEnhancedMarketplaceSearch = () => {
 
   const handleRetrySearch = () => {
     if (debouncedSearchTerm) {
-      performSearch(debouncedSearchTerm);
+      performSearch(debouncedSearchTerm, currentPage);
     }
   };
 
@@ -140,6 +177,7 @@ export const useEnhancedMarketplaceSearch = () => {
     debouncedSearchTerm,
     isSearching: isSearching || isLoading,
     setSearchTerm,
+    currentPage,
     filters,
     filteredProducts,
     availableCategories,

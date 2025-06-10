@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,12 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const placeholderText = isNicoleMode 
     ? "Ask Nicole anything about gifts..." 
     : "Search friends, products, or brands";
+    
+  useEffect(() => {  
+    const searchParams = new URLSearchParams(location.search);
+    let urlSearchTerm = searchParams.get("search") || "";
+    setQuery(urlSearchTerm);
+  }, [location.search])
 
   return (
     <form onSubmit={handleSubmit} className="relative flex items-center w-full" autoComplete="off">

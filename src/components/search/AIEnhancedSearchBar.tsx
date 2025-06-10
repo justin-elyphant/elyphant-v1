@@ -52,7 +52,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   // Handle location changes - clear state when navigating
   useEffect(() => {
     setShowSuggestions(false);
-    setQuery("");
+    const searchParams = new URLSearchParams(location.search);
+    let urlSearchTerm = searchParams.get("search") || "";
+    setQuery(urlSearchTerm);
     setShowNicoleDropdown(false);
     setShowMobileModal(false);
   }, [location.pathname]);

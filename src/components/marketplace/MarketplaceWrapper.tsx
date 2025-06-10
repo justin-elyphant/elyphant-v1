@@ -29,7 +29,7 @@ const MarketplaceWrapper = () => {
   
   const [products, setProducts] = useState(allProducts);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const searchTerm = searchParams.get("search") || "";

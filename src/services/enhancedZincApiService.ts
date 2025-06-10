@@ -12,8 +12,8 @@ export interface ZincSearchResult {
   images?: string[];
   category: string;
   retailer: string;
-  rating?: number;
-  review_count?: number;
+  stars?: number;
+  num_reviews?: number;
   url?: string;
 }
 
@@ -46,8 +46,8 @@ class EnhancedZincApiService {
     setInterval(() => this.cleanExpiredCache(), 5 * 60 * 1000);
   }
 
-  private getCacheKey(query: string, maxResults: number): string {
-    return `zinc_search_${query.toLowerCase().trim()}_${maxResults}`;
+  private getCacheKey(query: string, page: number): string {
+    return `zinc_search_${query.toLowerCase().trim()}_${page}`;
   }
 
   private loadCacheFromStorage(): void {
@@ -107,6 +107,7 @@ class EnhancedZincApiService {
 
   private async callZincApiWithRetry(
     query: string, 
+    page: number,
     maxResults: number, 
     retryCount: number = 0
   ): Promise<ZincSearchResponse> {
@@ -115,9 +116,11 @@ class EnhancedZincApiService {
     try {
       console.log(`Zinc API call attempt ${retryCount + 1} for query: "${query}"`);
       
-      const { data, error } = await supabase.functions.invoke('zinc-search', {
+      if (query === "") query = "gift";
+      const { data, error } = await supabase.functions.invoke('get-products', {
         body: {
           query: query.trim(),
+          page: page,
           maxResults: maxResults.toString()
         }
       });
@@ -128,8 +131,9 @@ class EnhancedZincApiService {
 
       // Track successful API call performance
       const duration = performance.now() - startTime;
-      this.performanceMonitor.trackApiCall('zinc-search', duration);
+      this.performanceMonitor.trackApiCall('get-products', duration);
 
+      console.log("call zinc api", data);
       return data as ZincSearchResponse;
 
     } catch (error) {
@@ -150,17 +154,18 @@ class EnhancedZincApiService {
     }
   }
 
-  async searchProducts(query: string, maxResults: number = 10): Promise<ZincSearchResponse> {
-    if (!query.trim()) {
-      return {
-        results: [],
-        total: 0,
-        query,
-        error: 'Empty query'
-      };
-    }
+  async searchProducts(query: string, page: number = 1, maxResults: number = 10): Promise<ZincSearchResponse> {
+    console.log("searchProducts");
+    // if (!query.trim()) {
+    //   return {
+    //     results: [],
+    //     total: 0,
+    //     query,
+    //     error: 'Empty query'
+    //   };
+    // }
 
-    const cacheKey = this.getCacheKey(query, maxResults);
+    const cacheKey = this.getCacheKey(query, page);
     
     // Check cache first
     const cached = this.cache.get(cacheKey);
@@ -177,7 +182,7 @@ class EnhancedZincApiService {
     }
 
     // Create new request with performance tracking
-    const requestPromise = this.executeSearchWithPerformanceTracking(query, maxResults, cacheKey);
+    const requestPromise = this.executeSearchWithPerformanceTracking(query, page, maxResults, cacheKey);
     this.pendingRequests.set(cacheKey, requestPromise);
 
     try {
@@ -190,13 +195,14 @@ class EnhancedZincApiService {
 
   private async executeSearchWithPerformanceTracking(
     query: string, 
+    page: number,
     maxResults: number, 
     cacheKey: string
   ): Promise<ZincSearchResponse> {
     const startTime = performance.now();
     
     try {
-      const result = await this.callZincApiWithRetry(query, maxResults);
+      const result = await this.callZincApiWithRetry(query, page, maxResults);
       
       if (result.results && result.results.length > 0) {
         // Cache successful results
@@ -239,12 +245,12 @@ class EnhancedZincApiService {
   }
 
   // Batch search with performance optimization
-  async batchSearch(queries: string[], maxResults: number = 10): Promise<ZincSearchResponse[]> {
+  async batchSearch(queries: string[], page: number = 1, maxResults: number = 10): Promise<ZincSearchResponse[]> {
     const startTime = performance.now();
     
     try {
       // Use Promise.allSettled to handle partial failures gracefully
-      const promises = queries.map(query => this.searchProducts(query, maxResults));
+      const promises = queries.map(query => this.searchProducts(query, page, maxResults));
       const results = await Promise.allSettled(promises);
       
       const successfulResults = results
@@ -265,21 +271,23 @@ class EnhancedZincApiService {
   }
 
   // Prefetch with better error handling and performance tracking
-  async prefetchPopularSearches(): Promise<void> {
+  async prefetchPopularSearches(): Promise<ZincSearchResponse[]> {
     const popularQueries = [
       'electronics',
       'clothing', 
       'books',
-      'home decor',
       'kitchen'
     ];
 
     try {
       // Prefetch in small batches to avoid overwhelming the API
       const batchSize = 2;
+
+      const totalResults: ZincSearchResponse[] = [];
       for (let i = 0; i < popularQueries.length; i += batchSize) {
         const batch = popularQueries.slice(i, i + batchSize);
-        await this.batchSearch(batch, 5);
+        const results = await this.batchSearch(batch, 1, 50);
+        totalResults.push(...results);
         
         // Small delay between batches
         if (i + batchSize < popularQueries.length) {
@@ -288,8 +296,10 @@ class EnhancedZincApiService {
       }
       
       console.log('Popular searches prefetched successfully');
+      return totalResults;
     } catch (error) {
       console.warn('Failed to prefetch popular searches:', error);
+      return [];
     }
   }
 
@@ -336,7 +346,7 @@ export const searchZincProducts = (query: string, maxResults: number = 10) => {
 // Test connection function with performance tracking
 export const testZincConnection = async (): Promise<boolean> => {
   try {
-    const result = await enhancedZincApiService.searchProducts("test", 1);
+    const result = await enhancedZincApiService.searchProducts("test", 1, 1);
     return !result.fallback && !result.error;
   } catch {
     return false;

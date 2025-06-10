@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Calendar, ChevronRight, Gift, Clock, Settings } from "lucide-react";
+import { Calendar, Gift, Clock, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,15 +86,9 @@ const UpcomingEventsCardContent = () => {
               }
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/events?tab=automated" className="text-sm text-muted-foreground hover:text-primary flex items-center">
-              <Settings className="h-4 w-4 mr-1" />
-              Settings
-            </Link>
-            <Link to="/events" className="text-sm text-purple-600 hover:underline flex items-center whitespace-nowrap">
-              View All <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
+          <Link to="/events" className="text-sm text-muted-foreground hover:text-primary flex items-center">
+            <Settings className="h-4 w-4" />
+          </Link>
         </div>
       </CardHeader>
       <CardContent>

@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import PastEventsContainer from "@/components/gifting/events/past-events/PastEventsContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,7 +16,20 @@ import { EventsProvider, useEvents } from "@/components/gifting/events/context/E
 
 const Events = () => {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+
+  // Check for action=add parameter on page load
+  useEffect(() => {
+    const action = searchParams.get("action");
+    if (action === "add") {
+      setIsAddEventOpen(true);
+      // Clear the action parameter after opening the dialog
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete("action");
+      setSearchParams(newSearchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleAddEvent = () => {
     setIsAddEventOpen(true);

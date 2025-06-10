@@ -44,7 +44,7 @@ const MessagesCard = () => {
   const activeConnections = connections.filter(conn => conn.status === 'accepted');
 
   return (
-    <Card className="h-full max-w-md">
+    <Card className="h-full">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

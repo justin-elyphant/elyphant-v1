@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { ExtendedEventData } from "./types";
 import EventPrivacyBadge from "./EventPrivacyBadge";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { fetchGifteeData, generateGiftSuggestions } from "@/services/gifteeDataService";
 
 interface EventCardProps {
   event: ExtendedEventData;
@@ -40,13 +40,68 @@ const EventCard = ({
     onClick?.();
   };
 
-  const handleSendGift = () => {
-    console.log(`Sending gift for ${event.person}'s ${event.type}`);
-    toast.success(`Opening gift marketplace for ${event.person}'s ${event.type}`, {
-      description: "Browse curated gifts perfect for this occasion"
-    });
-    // Navigate to marketplace with search parameters
-    navigate(`/marketplace?search=${encodeURIComponent(`${event.type} gift for ${event.person}`)}&occasion=${event.type}&recipient=${event.person}`);
+  const handleSendGift = async () => {
+    console.log(`Fetching wishlist data for ${event.person} before navigating to marketplace`);
+    
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading(`Finding ${event.person}'s wishlist and preferences...`);
+      
+      // Fetch giftee's data
+      const gifteeData = await fetchGifteeData(event.person);
+      
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      
+      if (gifteeData) {
+        // Generate suggestions based on their data
+        const suggestions = generateGiftSuggestions(gifteeData, event.type);
+        
+        if (gifteeData.wishlistItems.length > 0) {
+          toast.success(`Found ${gifteeData.wishlistItems.length} items on ${event.person}'s wishlist!`, {
+            description: "Browse curated gifts based on their preferences"
+          });
+        } else {
+          toast.info(`No public wishlist found for ${event.person}`, {
+            description: "We'll suggest gifts based on general preferences"
+          });
+        }
+        
+        // Navigate to marketplace with personalized search
+        const searchQuery = suggestions.length > 0 ? suggestions[0] : `${event.type} gift`;
+        const urlParams = new URLSearchParams({
+          search: searchQuery,
+          occasion: event.type,
+          recipient: event.person,
+          // Pass giftee data as URL params (limited by URL length)
+          hasWishlist: gifteeData.wishlistItems.length > 0 ? 'true' : 'false',
+          interests: gifteeData.preferences.interests?.slice(0, 3).join(',') || ''
+        });
+        
+        navigate(`/marketplace?${urlParams.toString()}`);
+        
+        console.log('Generated suggestions:', suggestions);
+        console.log('Giftee data:', gifteeData);
+        
+      } else {
+        // Fallback to basic navigation
+        toast.info(`Opening marketplace for ${event.person}'s ${event.type}`, {
+          description: "Browse gift suggestions for this occasion"
+        });
+        
+        navigate(`/marketplace?search=${encodeURIComponent(`${event.type} gift for ${event.person}`)}&occasion=${event.type}&recipient=${event.person}`);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching giftee data:', error);
+      
+      // Fallback to basic navigation
+      toast.error('Could not load personalized suggestions', {
+        description: "Proceeding with general gift recommendations"
+      });
+      
+      navigate(`/marketplace?search=${encodeURIComponent(`${event.type} gift for ${event.person}`)}&occasion=${event.type}&recipient=${event.person}`);
+    }
   };
 
   const handleAutoGiftToggle = () => {

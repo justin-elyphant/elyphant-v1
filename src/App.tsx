@@ -11,6 +11,7 @@ import ScrollToTop from "@/components/layout/ScrollToTop";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import Wishlists from "./pages/Wishlists";
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/wishlists" element={<Wishlists />} />

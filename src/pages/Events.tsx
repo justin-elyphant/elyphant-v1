@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
@@ -7,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
 import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
 import BackToDashboard from "@/components/shared/BackToDashboard";
+import MainLayout from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,47 +38,51 @@ const Events = () => {
   // Show sign-in prompt if not authenticated
   if (!user) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <BackToDashboard />
-        
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
-        </div>
+      <MainLayout>
+        <div className="container mx-auto py-8 px-4">
+          <BackToDashboard />
+          
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
+          </div>
 
-        <Card>
-          <CardContent className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <UserPlus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Sign in required</h3>
-              <p className="text-muted-foreground mb-4">
-                Please sign in to manage your events and auto-gifting preferences
-              </p>
-              <Button asChild>
-                <Link to="/sign-in">Sign In</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <UserPlus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Sign in required</h3>
+                <p className="text-muted-foreground mb-4">
+                  Please sign in to manage your events and auto-gifting preferences
+                </p>
+                <Button asChild>
+                  <Link to="/sign-in">Sign In</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <EventsProvider>
-      <div className="container mx-auto py-8 px-4">
-        <BackToDashboard />
-        
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
+    <MainLayout>
+      <EventsProvider>
+        <div className="container mx-auto py-8 px-4">
+          <BackToDashboard />
+          
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
+          </div>
+          
+          <EventsContent onAddEvent={handleAddEvent} />
+          <AddEventDialog 
+            open={isAddEventOpen} 
+            onOpenChange={setIsAddEventOpen} 
+          />
         </div>
-        
-        <EventsContent onAddEvent={handleAddEvent} />
-        <AddEventDialog 
-          open={isAddEventOpen} 
-          onOpenChange={setIsAddEventOpen} 
-        />
-      </div>
-    </EventsProvider>
+      </EventsProvider>
+    </MainLayout>
   );
 };
 

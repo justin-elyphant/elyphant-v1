@@ -35,11 +35,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
       <SheetContent 
         side="right" 
         className={cn(
-          "w-full sm:max-w-lg",
+          "w-full sm:max-w-lg flex flex-col h-full",
           isMobile ? "p-4" : "p-6"
         )}
       >
-        <SheetHeader className="space-y-2">
+        <SheetHeader className="space-y-2 flex-shrink-0">
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
             Shopping Cart
@@ -55,14 +55,14 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
         </SheetHeader>
 
         {cartItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center flex-1 text-center">
             <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">Your cart is empty</p>
             <p className="text-sm text-muted-foreground mt-1">Add some products to get started</p>
           </div>
         ) : (
-          <div className="flex flex-col h-full">
-            <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="flex flex-col flex-1 min-h-0">
+            <ScrollArea className="flex-1 pr-4">
               <div className="space-y-4 py-4">
                 {cartItems.map((item) => (
                   <div key={item.product.product_id} className="flex gap-3 p-3 border rounded-lg">
@@ -123,7 +123,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
               </div>
             </ScrollArea>
 
-            <div className="border-t pt-4 space-y-4">
+            <div className="flex-shrink-0 border-t pt-4 space-y-4 bg-background">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold">Total:</span>
                 <span className="text-lg font-bold text-green-600">

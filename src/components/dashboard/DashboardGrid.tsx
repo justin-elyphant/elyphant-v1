@@ -5,6 +5,7 @@ import FriendsCard from "./FriendsCard";
 import SettingsCard from "./SettingsCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import WishlistsCard from "./WishlistsCard";
+import MessagesCard from "./MessagesCard";
 
 const DashboardGrid = () => {
   return (
@@ -20,7 +21,10 @@ const DashboardGrid = () => {
       </div>
 
       {/* Secondary cards - grid layout with consistent heights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex flex-col h-full">
+          <MessagesCard />
+        </div>
         <div className="flex flex-col h-full">
           <OrdersCard />
         </div>

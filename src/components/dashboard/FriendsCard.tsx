@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
-import { Users } from "lucide-react";
+import { Users, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,13 +17,23 @@ const FriendsCard = () => {
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold flex items-center">
-          <Users className="h-5 w-5 mr-2 text-gray-500" />
-          Friends
-        </CardTitle>
-        <CardDescription className="text-sm text-muted-foreground">
-          Connect with friends to share wishlists
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg font-semibold flex items-center">
+              <Users className="h-5 w-5 mr-2 text-gray-500" />
+              Friends
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Connect with friends to share wishlists
+            </CardDescription>
+          </div>
+          <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+            <Link to="/messages" className="flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" />
+              Messages
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

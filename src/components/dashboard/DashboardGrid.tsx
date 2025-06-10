@@ -5,14 +5,11 @@ import FriendsCard from "./FriendsCard";
 import SettingsCard from "./SettingsCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import WishlistsCard from "./WishlistsCard";
-import { Button } from "@/components/ui/button";
-import { MessageSquare } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const DashboardGrid = () => {
   return (
     <div className="space-y-6">
-      {/* Main hero section with messages button */}
+      {/* Main hero section */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
           <UpcomingEventsCard />
@@ -20,16 +17,6 @@ const DashboardGrid = () => {
         <div className="lg:col-span-2 space-y-4">
           <WishlistsCard />
         </div>
-      </div>
-
-      {/* Messages button - centered between sections */}
-      <div className="flex justify-center">
-        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
-          <Link to="/messages" className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Open Messages
-          </Link>
-        </Button>
       </div>
 
       {/* Secondary cards - grid layout with consistent heights */}

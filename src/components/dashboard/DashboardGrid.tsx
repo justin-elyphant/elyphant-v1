@@ -17,19 +17,18 @@ const DashboardGrid = () => {
         <div className="lg:col-span-3">
           <UpcomingEventsCard />
         </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
+          {/* Messages button positioned above wishlists card */}
+          <div className="flex justify-end">
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Link to="/messages" className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Open Messages
+              </Link>
+            </Button>
+          </div>
           <WishlistsCard />
         </div>
-      </div>
-
-      {/* Quick Actions Bar */}
-      <div className="flex justify-center">
-        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
-          <Link to="/messages" className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Open Messages
-          </Link>
-        </Button>
       </div>
 
       {/* Secondary cards - grid layout with consistent heights */}

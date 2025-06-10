@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
@@ -32,6 +33,7 @@ const Events = () => {
   }, [searchParams, setSearchParams]);
 
   const handleAddEvent = () => {
+    console.log("Add event button clicked"); // Debug log
     setIsAddEventOpen(true);
   };
 
@@ -78,7 +80,10 @@ const Events = () => {
           <EventsContent onAddEvent={handleAddEvent} />
           <AddEventDialog 
             open={isAddEventOpen} 
-            onOpenChange={setIsAddEventOpen} 
+            onOpenChange={(open) => {
+              console.log("Dialog open state changed:", open); // Debug log
+              setIsAddEventOpen(open);
+            }}
           />
         </div>
       </EventsProvider>

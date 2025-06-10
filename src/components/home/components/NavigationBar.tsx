@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthButtons from "./AuthButtons";
+import UserButton from "@/components/auth/UserButton";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
 import { useViewport } from "@/hooks/useViewport";
@@ -68,7 +69,11 @@ const NavigationBar = () => {
           <div className="flex items-center space-x-3 flex-shrink-0">
             <ShoppingCartButton />
             <div className="hidden md:flex">
-              <AuthButtons profileImage={profile?.profile_image} />
+              {user ? (
+                <UserButton />
+              ) : (
+                <AuthButtons profileImage={profile?.profile_image} />
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -122,7 +127,11 @@ const NavigationBar = () => {
             </div>
             
             <div className="mt-auto px-4 py-4 border-t">
-              <AuthButtons profileImage={profile?.profile_image} />
+              {user ? (
+                <UserButton />
+              ) : (
+                <AuthButtons profileImage={profile?.profile_image} />
+              )}
             </div>
           </div>
         )}

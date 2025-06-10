@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Calendar, Gift, Clock, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,9 +8,15 @@ import { format } from "date-fns";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useAuth } from "@/contexts/auth";
 
-const UpcomingEventsCardContent = () => {
+interface UpcomingEventsCardContentProps {
+  onAddEvent?: () => void;
+}
+
+const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProps) => {
   const { events, isLoading } = useEvents();
   const { user } = useAuth();
+  const location = useLocation();
+  const isOnEventsPage = location.pathname === '/events';
 
   // Filter to upcoming events only and sort by date
   const upcomingEvents = React.useMemo(() => {
@@ -172,22 +177,38 @@ const UpcomingEventsCardContent = () => {
             </div>
           )}
           
-          <Button variant="outline" className="w-full border-dashed" asChild>
-            <Link to="/events?action=add">
+          {/* Conditional button logic based on current page */}
+          {isOnEventsPage && onAddEvent ? (
+            <Button 
+              variant="outline" 
+              className="w-full border-dashed" 
+              onClick={onAddEvent}
+            >
               <Gift className="h-4 w-4 mr-2" />
               Add New Event
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button variant="outline" className="w-full border-dashed" asChild>
+              <Link to="/events?action=add">
+                <Gift className="h-4 w-4 mr-2" />
+                Add New Event
+              </Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 };
 
-const UpcomingEventsCard = () => {
+interface UpcomingEventsCardProps {
+  onAddEvent?: () => void;
+}
+
+const UpcomingEventsCard = ({ onAddEvent }: UpcomingEventsCardProps) => {
   return (
     <EventsProvider>
-      <UpcomingEventsCardContent />
+      <UpcomingEventsCardContent onAddEvent={onAddEvent} />
     </EventsProvider>
   );
 };

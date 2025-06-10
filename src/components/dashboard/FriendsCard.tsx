@@ -27,10 +27,15 @@ const FriendsCard = () => {
               Connect with friends to share wishlists
             </CardDescription>
           </div>
-          <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
-            <Link to="/messages" className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" />
-              Messages
+          <Button 
+            asChild 
+            variant="outline" 
+            size="sm" 
+            className="h-8 px-3 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 text-purple-700 hover:text-purple-800"
+          >
+            <Link to="/messages" className="flex items-center gap-1.5">
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Messages</span>
             </Link>
           </Button>
         </div>

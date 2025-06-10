@@ -9,7 +9,6 @@ import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { RecipientAssignment } from '@/types/recipient';
-import { format } from 'date-fns';
 
 interface Connection {
   id: string;
@@ -61,7 +60,7 @@ const RecipientAssignmentSection: React.FC = () => {
       const formattedConnections = connectionsData?.map(conn => ({
         id: conn.id,
         connected_user_id: conn.connected_user_id,
-        name: conn.profiles?.name || 'Unknown',
+        name: (conn.profiles as any)?.name || 'Unknown',
         relationship_type: conn.relationship_type
       })) || [];
 

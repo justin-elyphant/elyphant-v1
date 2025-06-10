@@ -49,19 +49,19 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
     <div className="flex items-center gap-3">
       <span className="text-sm text-gray-600 flex-shrink-0">Shop by:</span>
       
-      {/* Category Dropdown - more compact */}
+      {/* Category Dropdown - more compact and consistent */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm" 
-            className="h-8 px-3 text-gray-700 hover:text-gray-900 border-gray-300 text-sm"
+            className="h-7 px-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 text-xs font-medium"
           >
-            <Grid3X3 className="h-3 w-3 mr-2" />
-            <span className="max-w-[120px] truncate">
+            <Grid3X3 className="h-3 w-3 mr-1.5" />
+            <span className="max-w-[100px] truncate">
               {selectedCategoryName}
             </span>
-            <ChevronDown className="h-3 w-3 ml-2" />
+            <ChevronDown className="h-3 w-3 ml-1.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg z-50">
@@ -77,19 +77,19 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Quick category buttons for popular categories - only on desktop and more compact */}
+      {/* Quick category buttons for popular categories - more compact */}
       {!mobile && !isMobile && (
-        <div className="flex items-center gap-2 ml-2">
+        <div className="flex items-center gap-1.5 ml-1">
           {categories.slice(1, 5).map((category) => (
             <Button
               key={category.value}
               variant="ghost"
               size="sm"
               onClick={() => handleCategorySelect(category.value)}
-              className={`h-7 px-2 text-xs ${
+              className={`h-7 px-2 text-xs font-medium ${
                 selectedCategory === category.value 
-                  ? "bg-blue-50 text-blue-600" 
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-blue-50 text-blue-600 hover:bg-blue-100" 
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               }`}
             >
               {category.name}

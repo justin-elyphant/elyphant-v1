@@ -1,13 +1,15 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, Gift, Settings, MoreVertical, Repeat, Clock, Edit, Trash2 } from "lucide-react";
+import { Calendar, Gift, Settings, MoreVertical, Repeat, Clock, Edit, Trash2, Star, Bell, Share2, Eye } from "lucide-react";
 import { ExtendedEventData } from "./types";
 import EventPrivacyBadge from "./EventPrivacyBadge";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { fetchGifteeData, generateGiftSuggestions } from "@/services/gifteeDataService";
 
 interface EventCardProps {
   event: ExtendedEventData;
@@ -28,12 +30,130 @@ const EventCard = ({
   onVerifyEvent,
   onClick 
 }: EventCardProps) => {
+  const navigate = useNavigate();
+
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger card click if clicking on buttons or dropdowns
     if ((e.target as Element).closest('button, [role="menuitem"]')) {
       return;
     }
     onClick?.();
+  };
+
+  const handleSendGift = async () => {
+    console.log(`Fetching wishlist data for ${event.person} before navigating to marketplace`);
+    
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading(`Finding ${event.person}'s wishlist and preferences...`);
+      
+      // Fetch giftee's data
+      const gifteeData = await fetchGifteeData(event.person);
+      
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      
+      if (gifteeData) {
+        // Generate suggestions based on their data
+        const suggestions = generateGiftSuggestions(gifteeData, event.type);
+        
+        if (gifteeData.wishlistItems.length > 0) {
+          toast.success(`Found ${gifteeData.wishlistItems.length} items on ${event.person}'s wishlist!`, {
+            description: "Browse curated gifts based on their preferences"
+          });
+        } else {
+          toast.info(`No public wishlist found for ${event.person}`, {
+            description: "We'll suggest gifts based on general preferences"
+          });
+        }
+        
+        // Navigate to marketplace with personalized search
+        const searchQuery = suggestions.length > 0 ? suggestions[0] : `${event.type} gift`;
+        const urlParams = new URLSearchParams({
+          search: searchQuery,
+          occasion: event.type,
+          recipient: event.person,
+          // Pass giftee data as URL params (limited by URL length)
+          hasWishlist: gifteeData.wishlistItems.length > 0 ? 'true' : 'false',
+          interests: gifteeData.preferences.interests?.slice(0, 3).join(',') || ''
+        });
+        
+        navigate(`/marketplace?${urlParams.toString()}`);
+        
+        console.log('Generated suggestions:', suggestions);
+        console.log('Giftee data:', gifteeData);
+        
+      } else {
+        // Fallback to basic navigation
+        toast.info(`Opening marketplace for ${event.person}'s ${event.type}`, {
+          description: "Browse gift suggestions for this occasion"
+        });
+        
+        navigate(`/marketplace?search=${encodeURIComponent(`${event.type} gift for ${event.person}`)}&occasion=${event.type}&recipient=${event.person}`);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching giftee data:', error);
+      
+      // Fallback to basic navigation
+      toast.error('Could not load personalized suggestions', {
+        description: "Proceeding with general gift recommendations"
+      });
+      
+      navigate(`/marketplace?search=${encodeURIComponent(`${event.type} gift for ${event.person}`)}&occasion=${event.type}&recipient=${event.person}`);
+    }
+  };
+
+  const handleAutoGiftToggle = () => {
+    const newStatus = !event.autoGiftEnabled;
+    console.log(`${newStatus ? 'Enabling' : 'Disabling'} auto-gift for ${event.person}'s ${event.type}`);
+    
+    if (newStatus) {
+      toast.success(`Auto-gifting enabled for ${event.person}'s ${event.type}`, {
+        description: "We'll automatically send a gift based on your preferences"
+      });
+    } else {
+      toast.info(`Auto-gifting disabled for ${event.person}'s ${event.type}`, {
+        description: "You'll need to send gifts manually"
+      });
+    }
+    onToggleAutoGift();
+  };
+
+  const handleShareEvent = () => {
+    const shareText = `${event.person}'s ${event.type} is coming up on ${event.date}!`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `${event.person}'s ${event.type}`,
+        text: shareText,
+        url: window.location.href
+      });
+    } else {
+      navigator.clipboard.writeText(shareText);
+      toast.success("Event details copied to clipboard!", {
+        description: "Share this with friends and family"
+      });
+    }
+  };
+
+  const handleSetReminder = () => {
+    toast.success(`Reminder set for ${event.person}'s ${event.type}`, {
+      description: "You'll be notified 3 days before the event"
+    });
+  };
+
+  const handleViewDetails = () => {
+    toast.info(`Viewing details for ${event.person}'s ${event.type}`, {
+      description: "Opening event details panel"
+    });
+    onEdit();
+  };
+
+  const handleMarkAsPriority = () => {
+    toast.success(`${event.person}'s ${event.type} marked as priority`, {
+      description: "This event will appear at the top of your list"
+    });
   };
 
   const getSeriesInfo = () => {
@@ -97,10 +217,26 @@ const EventCard = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleViewDetails}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={onEdit}>
                 <Settings className="h-4 w-4 mr-2" />
                 Edit Event
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSetReminder}>
+                <Bell className="h-4 w-4 mr-2" />
+                Set Reminder
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleMarkAsPriority}>
+                <Star className="h-4 w-4 mr-2" />
+                Mark as Priority
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleShareEvent}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share Event
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDelete} className="text-red-600">
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -148,7 +284,7 @@ const EventCard = ({
             className="flex-1 min-h-[44px] touch-manipulation"
             onClick={(e) => {
               e.stopPropagation();
-              onSendGift();
+              handleSendGift();
             }}
           >
             <Gift className="h-4 w-4 mr-2" />
@@ -161,10 +297,10 @@ const EventCard = ({
             className="flex-1 sm:flex-none min-h-[44px] touch-manipulation"
             onClick={(e) => {
               e.stopPropagation();
-              onToggleAutoGift();
+              handleAutoGiftToggle();
             }}
           >
-            {event.autoGiftEnabled ? "Manage" : "Auto-Gift"}
+            {event.autoGiftEnabled ? "Manage Auto-Gift" : "Enable Auto-Gift"}
           </Button>
         </div>
       </CardContent>

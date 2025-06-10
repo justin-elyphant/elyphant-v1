@@ -89,12 +89,12 @@ const SearchInput: React.FC<SearchInputProps> = ({
         <Button
           type="submit"
           size="sm"
-          className={`absolute right-1 rounded-full px-3 py-1 text-xs font-medium h-5 transition-all duration-300 touch-manipulation ${
+          className={`absolute right-2 rounded-full px-3 py-1 text-xs font-medium h-5 transition-all duration-300 touch-manipulation ${
             mobile ? "h-8 px-4" : ""
           } ${
             isNicoleMode 
-              ? "bg-transparent hover:bg-gray-50 text-purple-500 hover:text-purple-600 border border-gray-300"
-              : "bg-transparent hover:bg-gray-50 text-blue-500 hover:text-blue-600 border border-gray-300"
+              ? "bg-transparent hover:bg-purple-50 text-purple-500 hover:text-purple-600 border-0"
+              : "bg-transparent hover:bg-blue-50 text-blue-500 hover:text-blue-600 border-0"
           }`}
         >
           {isNicoleMode ? "Ask" : "Search"}

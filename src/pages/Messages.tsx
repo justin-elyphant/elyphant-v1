@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useConnections } from "@/hooks/profile/useConnections";
@@ -5,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import EnhancedChatInterface from "@/components/messaging/EnhancedChatInterface";
 import MessageThread from "@/components/messaging/MessageThread";
 import Header from "@/components/home/Header";
+import StandardBackButton from "@/components/shared/StandardBackButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -148,6 +150,11 @@ const Messages = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="container max-w-7xl mx-auto py-8 px-4">
+        <StandardBackButton 
+          to="/dashboard" 
+          text="Back to Dashboard" 
+        />
+        
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Messages</h1>
           <Button onClick={() => navigate('/connections')}>

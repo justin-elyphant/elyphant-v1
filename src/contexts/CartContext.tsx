@@ -1,23 +1,30 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '@/types/product';
+import { RecipientAssignment, DeliveryGroup } from '@/types/recipient';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
 export interface CartItem {
   product: Product;
   quantity: number;
+  recipientAssignment?: RecipientAssignment;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   cartTotal: number;
+  deliveryGroups: DeliveryGroup[];
   addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getItemCount: () => number;
   transferGuestCart: () => void;
+  assignItemToRecipient: (productId: string, recipientAssignment: RecipientAssignment) => void;
+  unassignItemFromRecipient: (productId: string) => void;
+  updateRecipientAssignment: (productId: string, updates: Partial<RecipientAssignment>) => void;
+  getItemsByRecipient: () => Map<string, CartItem[]>;
+  getUnassignedItems: () => CartItem[];
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -176,20 +183,102 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const assignItemToRecipient = (productId: string, recipientAssignment: RecipientAssignment) => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.product.product_id === productId
+          ? { ...item, recipientAssignment }
+          : item
+      )
+    );
+    toast.success('Item assigned to recipient', {
+      description: `Assigned to ${recipientAssignment.connectionName}`
+    });
+  };
+
+  const unassignItemFromRecipient = (productId: string) => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.product.product_id === productId
+          ? { ...item, recipientAssignment: undefined }
+          : item
+      )
+    );
+    toast.success('Item unassigned from recipient');
+  };
+
+  const updateRecipientAssignment = (productId: string, updates: Partial<RecipientAssignment>) => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.product.product_id === productId && item.recipientAssignment
+          ? { 
+              ...item, 
+              recipientAssignment: { ...item.recipientAssignment, ...updates }
+            }
+          : item
+      )
+    );
+  };
+
+  const getItemsByRecipient = (): Map<string, CartItem[]> => {
+    const groupedItems = new Map<string, CartItem[]>();
+    
+    cartItems.forEach(item => {
+      if (item.recipientAssignment) {
+        const key = item.recipientAssignment.connectionId;
+        if (!groupedItems.has(key)) {
+          groupedItems.set(key, []);
+        }
+        groupedItems.get(key)!.push(item);
+      }
+    });
+    
+    return groupedItems;
+  };
+
+  const getUnassignedItems = (): CartItem[] => {
+    return cartItems.filter(item => !item.recipientAssignment);
+  };
+
+  const deliveryGroups: DeliveryGroup[] = Array.from(getItemsByRecipient().entries()).map(
+    ([connectionId, items]) => {
+      const firstItem = items[0];
+      const assignment = firstItem.recipientAssignment!;
+      
+      return {
+        id: assignment.deliveryGroupId,
+        connectionId,
+        connectionName: assignment.connectionName,
+        items: items.map(item => item.product.product_id),
+        giftMessage: assignment.giftMessage,
+        scheduledDeliveryDate: assignment.scheduledDeliveryDate,
+        shippingAddress: assignment.shippingAddress
+      };
+    }
+  );
+
   return (
     <CartContext.Provider
       value={{
         cartItems,
         cartTotal,
+        deliveryGroups,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
         getItemCount,
         transferGuestCart,
+        assignItemToRecipient,
+        unassignItemFromRecipient,
+        updateRecipientAssignment,
+        getItemsByRecipient,
+        getUnassignedItems,
       }}
     >
       {children}
     </CartContext.Provider>
   );
 };
+
+export default CartProvider;

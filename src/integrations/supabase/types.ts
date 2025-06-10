@@ -416,36 +416,48 @@ export type Database = {
       order_items: {
         Row: {
           created_at: string
+          delivery_group_id: string | null
           id: string
           order_id: string | null
           product_id: string
           product_image: string | null
           product_name: string
           quantity: number
+          recipient_connection_id: string | null
+          recipient_gift_message: string | null
+          scheduled_delivery_date: string | null
           total_price: number
           unit_price: number
           vendor: string | null
         }
         Insert: {
           created_at?: string
+          delivery_group_id?: string | null
           id?: string
           order_id?: string | null
           product_id: string
           product_image?: string | null
           product_name: string
           quantity?: number
+          recipient_connection_id?: string | null
+          recipient_gift_message?: string | null
+          scheduled_delivery_date?: string | null
           total_price: number
           unit_price: number
           vendor?: string | null
         }
         Update: {
           created_at?: string
+          delivery_group_id?: string | null
           id?: string
           order_id?: string | null
           product_id?: string
           product_image?: string | null
           product_name?: string
           quantity?: number
+          recipient_connection_id?: string | null
+          recipient_gift_message?: string | null
+          scheduled_delivery_date?: string | null
           total_price?: number
           unit_price?: number
           vendor?: string | null
@@ -458,15 +470,24 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_items_recipient_connection_id_fkey"
+            columns: ["recipient_connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orders: {
         Row: {
           created_at: string
           currency: string
+          delivery_groups: Json | null
           gift_message: string | null
           gift_options: Json | null
           gift_scheduling_options: Json | null
+          has_multiple_recipients: boolean | null
           id: string
           is_gift: boolean | null
           is_surprise_gift: boolean | null
@@ -490,9 +511,11 @@ export type Database = {
         Insert: {
           created_at?: string
           currency?: string
+          delivery_groups?: Json | null
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
+          has_multiple_recipients?: boolean | null
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
@@ -516,9 +539,11 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string
+          delivery_groups?: Json | null
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
+          has_multiple_recipients?: boolean | null
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null

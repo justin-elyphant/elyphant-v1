@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
+import { DeliveryGroup } from "@/types/recipient";
 
 export interface CreateOrderData {
   cartItems: CartItem[];
@@ -12,6 +12,7 @@ export interface CreateOrderData {
   shippingInfo: ShippingInfo;
   giftOptions: GiftOptions;
   paymentIntentId?: string;
+  deliveryGroups?: DeliveryGroup[];
 }
 
 export interface Order {
@@ -48,6 +49,10 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  recipient_connection_id?: string;
+  delivery_group_id?: string;
+  recipient_gift_message?: string;
+  scheduled_delivery_date?: string;
 }
 
 export const createOrder = async (orderData: CreateOrderData): Promise<Order> => {
@@ -56,6 +61,8 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   if (!user) {
     throw new Error('User must be authenticated to create an order');
   }
+
+  const hasMultipleRecipients = orderData.deliveryGroups && orderData.deliveryGroups.length > 0;
 
   // Create the order with proper schema alignment
   const { data: order, error: orderError } = await supabase
@@ -73,7 +80,9 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       is_surprise_gift: orderData.giftOptions.isSurpriseGift,
       stripe_payment_intent_id: orderData.paymentIntentId,
       status: 'pending',
-      payment_status: 'pending'
+      payment_status: 'pending',
+      has_multiple_recipients: hasMultipleRecipients,
+      delivery_groups: orderData.deliveryGroups || []
     })
     .select()
     .single();
@@ -83,17 +92,25 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
     throw new Error('Failed to create order');
   }
 
-  // Create order items
-  const orderItems = orderData.cartItems.map(item => ({
-    order_id: order.id,
-    product_id: item.product.product_id,
-    product_name: item.product.name || item.product.title,
-    product_image: item.product.image,
-    vendor: item.product.vendor,
-    quantity: item.quantity,
-    unit_price: item.product.price,
-    total_price: item.product.price * item.quantity
-  }));
+  // Create order items with recipient assignments
+  const orderItems = orderData.cartItems.map(item => {
+    const recipientAssignment = item.recipientAssignment;
+    
+    return {
+      order_id: order.id,
+      product_id: item.product.product_id,
+      product_name: item.product.name || item.product.title,
+      product_image: item.product.image,
+      vendor: item.product.vendor,
+      quantity: item.quantity,
+      unit_price: item.product.price,
+      total_price: item.product.price * item.quantity,
+      recipient_connection_id: recipientAssignment?.connectionId || null,
+      delivery_group_id: recipientAssignment?.deliveryGroupId || null,
+      recipient_gift_message: recipientAssignment?.giftMessage || null,
+      scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null
+    };
+  });
 
   const { data: createdItems, error: itemsError } = await supabase
     .from('order_items')

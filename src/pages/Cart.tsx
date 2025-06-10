@@ -5,15 +5,25 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MainLayout from "@/components/layout/MainLayout";
+import RecipientAssignmentSection from "@/components/cart/RecipientAssignmentSection";
 import { toast } from "sonner";
 
 const Cart = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { cartItems, cartTotal, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { 
+    cartItems, 
+    cartTotal, 
+    updateQuantity, 
+    removeFromCart, 
+    clearCart,
+    deliveryGroups,
+    getUnassignedItems 
+  } = useCart();
   const isMobile = useIsMobile();
 
   const handleCheckout = () => {
@@ -26,10 +36,11 @@ const Cart = () => {
   };
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+  const unassignedItems = getUnassignedItems();
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button
@@ -44,6 +55,11 @@ const Cart = () => {
             <h1 className="text-2xl font-bold">Shopping Cart</h1>
             <p className="text-muted-foreground">
               {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart
+              {deliveryGroups.length > 0 && (
+                <span className="ml-2">
+                  • {deliveryGroups.length} recipient{deliveryGroups.length === 1 ? '' : 's'}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -61,69 +77,116 @@ const Cart = () => {
           </div>
         ) : (
           <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
-            {/* Cart Items */}
+            {/* Cart Content */}
             <div className={isMobile ? 'order-1' : 'lg:col-span-2'}>
-              <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div key={item.product.product_id} className="flex gap-4 p-4 border rounded-lg">
-                    <div className="flex-shrink-0">
-                      <img 
-                        src={item.product.image || "/placeholder.svg"} 
-                        alt={item.product.name || item.product.title}
-                        className="w-20 h-20 object-cover rounded-md bg-gray-100"
-                        loading="lazy"
-                      />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm line-clamp-2 mb-1">
-                        {item.product.name || item.product.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {item.product.vendor && `By ${item.product.vendor}`}
-                      </p>
-                      <p className="text-lg font-semibold text-green-600">
-                        {formatPrice(item.product.price)}
-                      </p>
-                      
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center border rounded">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateQuantity(item.product.product_id, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
-                            className="h-8 w-8 p-0 touch-target-44"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateQuantity(item.product.product_id, item.quantity + 1)}
-                            disabled={item.quantity >= 10}
-                            className="h-8 w-8 p-0 touch-target-44"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
+              <Tabs defaultValue="items" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="items" className="flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4" />
+                    All Items
+                    {unassignedItems.length > 0 && (
+                      <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                        {unassignedItems.length} unassigned
+                      </span>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="recipients" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Recipients
+                    {deliveryGroups.length > 0 && (
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                        {deliveryGroups.length}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="items" className="mt-6">
+                  <div className="space-y-4">
+                    {cartItems.map((item) => (
+                      <div key={item.product.product_id} className="flex gap-4 p-4 border rounded-lg">
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={item.product.image || "/placeholder.svg"} 
+                            alt={item.product.name || item.product.title}
+                            className="w-20 h-20 object-cover rounded-md bg-gray-100"
+                            loading="lazy"
+                          />
                         </div>
                         
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFromCart(item.product.product_id)}
-                          className="text-red-500 hover:text-red-700 touch-target-44"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-sm line-clamp-2 mb-1">
+                            {item.product.name || item.product.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {item.product.vendor && `By ${item.product.vendor}`}
+                          </p>
+                          
+                          {/* Recipient Assignment Status */}
+                          {item.recipientAssignment ? (
+                            <div className="flex items-center gap-2 mb-2">
+                              <Gift className="h-4 w-4 text-green-600" />
+                              <span className="text-sm text-green-600">
+                                Assigned to {item.recipientAssignment.connectionName}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 mb-2">
+                              <Users className="h-4 w-4 text-orange-600" />
+                              <span className="text-sm text-orange-600">
+                                Not assigned to recipient
+                              </span>
+                            </div>
+                          )}
+                          
+                          <p className="text-lg font-semibold text-green-600">
+                            {formatPrice(item.product.price)}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-3">
+                            <div className="flex items-center border rounded">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateQuantity(item.product.product_id, item.quantity - 1)}
+                                disabled={item.quantity <= 1}
+                                className="h-8 w-8 p-0 touch-target-44"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateQuantity(item.product.product_id, item.quantity + 1)}
+                                disabled={item.quantity >= 10}
+                                className="h-8 w-8 p-0 touch-target-44"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromCart(item.product.product_id)}
+                              className="text-red-500 hover:text-red-700 touch-target-44"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </TabsContent>
+
+                <TabsContent value="recipients" className="mt-6">
+                  <RecipientAssignmentSection />
+                </TabsContent>
+              </Tabs>
             </div>
 
             {/* Order Summary */}
@@ -136,6 +199,14 @@ const Cart = () => {
                     <span>Subtotal ({cartItems.length} items)</span>
                     <span>{formatPrice(cartTotal)}</span>
                   </div>
+                  
+                  {deliveryGroups.length > 0 && (
+                    <div className="flex justify-between">
+                      <span>Recipients</span>
+                      <span>{deliveryGroups.length} people</span>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between">
                     <span>Shipping</span>
                     <span className="text-green-600">Free</span>

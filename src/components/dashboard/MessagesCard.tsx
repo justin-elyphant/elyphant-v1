@@ -44,8 +44,8 @@ const MessagesCard = () => {
   const activeConnections = connections.filter(conn => conn.status === 'accepted');
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
+    <Card className="h-full max-w-md">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-purple-600" />
@@ -58,7 +58,7 @@ const MessagesCard = () => {
           </div>
           <Button size="sm" asChild>
             <Link to="/messages">
-              <Send className="h-4 w-4 mr-2" />
+              <Send className="h-4 w-4 mr-1" />
               View All
             </Link>
           </Button>
@@ -68,14 +68,14 @@ const MessagesCard = () => {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {loading ? (
-          <div className="text-center py-4">
+          <div className="text-center py-6">
             <p className="text-sm text-muted-foreground">Loading conversations...</p>
           </div>
         ) : mockRecentMessages.length > 0 ? (
           <>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {mockRecentMessages.slice(0, 3).map((message) => {
                 const initials = message.connectionName
                   .split(' ')
@@ -85,10 +85,10 @@ const MessagesCard = () => {
                   .slice(0, 2);
 
                 return (
-                  <div key={message.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer">
-                    <div className="relative">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
+                  <div key={message.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                    <div className="relative flex-shrink-0">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-purple-100 text-purple-800 text-sm font-medium">
                           {initials}
                         </AvatarFallback>
                         <AvatarImage src="" alt={message.connectionName} />
@@ -101,7 +101,7 @@ const MessagesCard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-sm font-medium truncate">{message.connectionName}</p>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                           {formatDistanceToNow(message.lastMessageTime, { addSuffix: true })}
                         </span>
                       </div>
@@ -109,7 +109,7 @@ const MessagesCard = () => {
                     </div>
                     
                     {message.unreadCount > 0 && (
-                      <Badge variant="default" className="bg-primary text-primary-foreground min-w-[18px] h-4 text-xs">
+                      <Badge variant="default" className="bg-primary text-primary-foreground min-w-[20px] h-5 text-xs flex-shrink-0">
                         {message.unreadCount}
                       </Badge>
                     )}
@@ -118,7 +118,7 @@ const MessagesCard = () => {
               })}
             </div>
             
-            <div className="pt-2 border-t">
+            <div className="pt-3 border-t">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Users className="h-4 w-4" />
@@ -133,10 +133,10 @@ const MessagesCard = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-6">
+          <div className="text-center py-8">
             <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
             <h3 className="font-medium mb-2">No Messages Yet</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-4 px-2">
               Connect with friends and family to start messaging
             </p>
             <div className="space-y-2">

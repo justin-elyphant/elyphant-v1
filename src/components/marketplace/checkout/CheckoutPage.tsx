@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
 import { createZincOrderRequest } from "@/components/marketplace/zinc/services/orderProcessingService";
 import { getTransparentPricing } from "@/utils/transparentPricing";
-import { validateCartData, validateProductAvailability } from "@/utils/validateCartData";
 
 // Import our components
 import CheckoutHeader from "./CheckoutHeader";
@@ -24,13 +23,11 @@ import { useCheckoutState } from "./useCheckoutState";
 import { useAdaptiveCheckout } from "./useAdaptiveCheckout";
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, clearCart, removeFromCart, deliveryGroups } = useCart();
+  const { cartItems, cartTotal, clearCart, deliveryGroups } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showGuestSignup, setShowGuestSignup] = useState(false);
   const [completedOrderNumber, setCompletedOrderNumber] = useState("");
-  const [cartValidation, setCartValidation] = useState<any>(null);
-  const [isValidatingCart, setIsValidatingCart] = useState(false);
   
   const { 
     activeTab, 
@@ -56,50 +53,13 @@ const CheckoutPage = () => {
     }
   }, [adaptiveFlow.tabs, activeTab, handleTabChange]);
 
-  // Cart validation - now blocking for critical issues
+  // Redirect if cart is empty
   useEffect(() => {
-    if (cartItems.length > 0) {
-      validateCartAndBlock();
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty");
+      navigate("/marketplace");
     }
-  }, [cartItems]);
-
-  const validateCartAndBlock = async () => {
-    setIsValidatingCart(true);
-    
-    try {
-      const validation = validateCartData(cartItems);
-      
-      if (!validation.isValid) {
-        validation.invalidItems.forEach(item => {
-          removeFromCart(item.product.product_id);
-          toast.error(`Removed invalid item: ${item.product.name || 'Unknown item'}`);
-        });
-        
-        if (validation.validItems.length === 0) {
-          toast.error("Cart is empty after removing invalid items");
-          navigate("/marketplace");
-          return;
-        }
-      }
-
-      const availability = await validateProductAvailability(cartItems);
-      const unavailableItems = availability.filter(item => !item.available);
-      
-      if (unavailableItems.length > 0) {
-        unavailableItems.forEach(item => {
-          removeFromCart(item.product_id);
-          toast.error(`Item no longer available and was removed from cart`);
-        });
-      }
-
-      setCartValidation(validation);
-    } catch (error) {
-      console.error("Cart validation error:", error);
-      toast.error("Unable to validate cart items. Please refresh and try again.");
-    } finally {
-      setIsValidatingCart(false);
-    }
-  };
+  }, [cartItems.length, navigate]);
 
   const canProceedToNext = (tab: string): boolean => {
     switch (tab) {
@@ -107,13 +67,11 @@ const CheckoutPage = () => {
         const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
         return !!(name && email && address && city && state && zipCode && !isLoadingShipping);
       case 'delivery':
-        // For mixed scenario, need shipping info filled if there are unassigned items
         return canProceedToNext('shipping');
       case 'recipients':
-        // All items should be assigned if this is pure gift scenario
         return deliveryScenario === 'gift' ? deliveryGroups.length > 0 : true;
       case 'schedule':
-        return true; // Scheduling is optional
+        return true;
       default:
         return true;
     }
@@ -279,15 +237,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Redirect if cart is empty after validation
-  React.useEffect(() => {
-    if (cartItems.length === 0 && !isValidatingCart) {
-      toast.error("Your cart is empty");
-      navigate("/marketplace");
-    }
-  }, [cartItems.length, navigate, isValidatingCart]);
-
-  if (cartItems.length === 0 && !isValidatingCart) {
+  if (cartItems.length === 0) {
     return null;
   }
 
@@ -295,7 +245,6 @@ const CheckoutPage = () => {
     <div className="container mx-auto py-8 px-4">
       <CheckoutHeader title="Checkout" />
 
-      {/* Scenario Indicator */}
       <div className="mb-4 flex items-center justify-between">
         <Badge variant="outline" className="text-sm">
           {getScenarioDescription()}
@@ -304,13 +253,6 @@ const CheckoutPage = () => {
           {adaptiveFlow.tabs.length} step checkout
         </div>
       </div>
-
-      {/* Cart Validation Status */}
-      {isValidatingCart && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">Validating cart items...</p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">

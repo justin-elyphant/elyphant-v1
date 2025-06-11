@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Product } from '@/types/product';
 import { RecipientAssignment, DeliveryGroup } from '@/types/recipient';
 import { useAuth } from '@/contexts/auth';
@@ -41,13 +42,32 @@ const getCartKey = (userId?: string) => {
   return userId ? `cart_${userId}` : 'guest_cart';
 };
 
+// Debounce localStorage saves to improve performance
+const useDebounceLocalStorage = (key: string, value: any, delay: number = 500) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [key, value, delay]);
+};
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Load cart from localStorage based on auth state
+  const cartKey = useMemo(() => getCartKey(user?.id), [user?.id]);
+
+  // Debounced localStorage save
+  useDebounceLocalStorage(cartKey, cartItems);
+
+  // Load cart from localStorage on mount and user change
   useEffect(() => {
-    const cartKey = getCartKey(user?.id);
     const savedCart = localStorage.getItem(cartKey);
     
     if (savedCart) {
@@ -57,20 +77,65 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Error parsing cart data:', error);
         localStorage.removeItem(cartKey);
+        setCartItems([]);
       }
     } else {
       setCartItems([]);
     }
-  }, [user]);
+  }, [cartKey]);
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    const cartKey = getCartKey(user?.id);
-    localStorage.setItem(cartKey, JSON.stringify(cartItems));
-  }, [cartItems, user]);
+  // Memoized calculations to prevent unnecessary recalculations
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((total, item) => {
+      return total + (item.product.price * item.quantity);
+    }, 0);
+  }, [cartItems]);
+
+  const getItemCount = useCallback(() => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  }, [cartItems]);
+
+  const getItemsByRecipient = useCallback((): Map<string, CartItem[]> => {
+    const groupedItems = new Map<string, CartItem[]>();
+    
+    cartItems.forEach(item => {
+      if (item.recipientAssignment) {
+        const key = item.recipientAssignment.connectionId;
+        if (!groupedItems.has(key)) {
+          groupedItems.set(key, []);
+        }
+        groupedItems.get(key)!.push(item);
+      }
+    });
+    
+    return groupedItems;
+  }, [cartItems]);
+
+  const getUnassignedItems = useCallback((): CartItem[] => {
+    return cartItems.filter(item => !item.recipientAssignment);
+  }, [cartItems]);
+
+  const deliveryGroups: DeliveryGroup[] = useMemo(() => {
+    return Array.from(getItemsByRecipient().entries()).map(
+      ([connectionId, items]) => {
+        const firstItem = items[0];
+        const assignment = firstItem.recipientAssignment!;
+        
+        return {
+          id: assignment.deliveryGroupId,
+          connectionId,
+          connectionName: assignment.connectionName,
+          items: items.map(item => item.product.product_id),
+          giftMessage: assignment.giftMessage,
+          scheduledDeliveryDate: assignment.scheduledDeliveryDate,
+          shippingAddress: assignment.shippingAddress
+        };
+      }
+    );
+  }, [getItemsByRecipient]);
 
   // Transfer guest cart to authenticated user
-  const transferGuestCart = () => {
+  const transferGuestCart = useCallback(() => {
     if (!user) return;
 
     const guestCartKey = getCartKey();
@@ -80,7 +145,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const guestItems = JSON.parse(guestCart);
         if (guestItems.length > 0) {
-          // Merge guest cart with user cart (if any)
           const userCartKey = getCartKey(user.id);
           const userCart = localStorage.getItem(userCartKey);
           let mergedCart = guestItems;
@@ -89,12 +153,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userItems = JSON.parse(userCart);
             const mergedMap = new Map();
             
-            // Add user items first
             userItems.forEach((item: CartItem) => {
               mergedMap.set(item.product.product_id, item);
             });
             
-            // Merge guest items (combine quantities for existing products)
             guestItems.forEach((item: CartItem) => {
               const existing = mergedMap.get(item.product.product_id);
               if (existing) {
@@ -108,31 +170,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           
           setCartItems(mergedCart);
-          localStorage.setItem(userCartKey, JSON.stringify(mergedCart));
           localStorage.removeItem(guestCartKey);
           
-          toast.success('Cart items transferred successfully!', {
-            description: `${guestItems.length} items moved to your account`
-          });
+          toast.success('Cart items transferred successfully!');
         }
       } catch (error) {
         console.error('Error transferring guest cart:', error);
       }
     }
-  };
+  }, [user]);
 
   // Trigger cart transfer when user logs in
   useEffect(() => {
     if (user) {
       transferGuestCart();
     }
-  }, [user]);
+  }, [user, transferGuestCart]);
 
-  const cartTotal = cartItems.reduce((total, item) => {
-    return total + (item.product.price * item.quantity);
-  }, 0);
-
-  const addToCart = (product: Product, quantity: number = 1) => {
+  const addToCart = useCallback((product: Product, quantity: number = 1) => {
     setCartItems(prev => {
       const existingItem = prev.find(item => item.product.product_id === product.product_id);
       
@@ -150,14 +205,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Added to cart', {
       description: product.name || product.title
     });
-  };
+  }, []);
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = useCallback((productId: string) => {
     setCartItems(prev => prev.filter(item => item.product.product_id !== productId));
     toast.success('Removed from cart');
-  };
+  }, []);
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
@@ -170,20 +225,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : item
       )
     );
-  };
+  }, [removeFromCart]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([]);
-    const cartKey = getCartKey(user?.id);
     localStorage.removeItem(cartKey);
     toast.success('Cart cleared');
-  };
+  }, [cartKey]);
 
-  const getItemCount = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const assignItemToRecipient = (productId: string, recipientAssignment: RecipientAssignment) => {
+  const assignItemToRecipient = useCallback((productId: string, recipientAssignment: RecipientAssignment) => {
     setCartItems(prev =>
       prev.map(item =>
         item.product.product_id === productId
@@ -191,12 +241,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : item
       )
     );
-    toast.success('Item assigned to recipient', {
-      description: `Assigned to ${recipientAssignment.connectionName}`
-    });
-  };
+    toast.success('Item assigned to recipient');
+  }, []);
 
-  const unassignItemFromRecipient = (productId: string) => {
+  const unassignItemFromRecipient = useCallback((productId: string) => {
     setCartItems(prev =>
       prev.map(item =>
         item.product.product_id === productId
@@ -205,9 +253,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       )
     );
     toast.success('Item unassigned from recipient');
-  };
+  }, []);
 
-  const updateRecipientAssignment = (productId: string, updates: Partial<RecipientAssignment>) => {
+  const updateRecipientAssignment = useCallback((productId: string, updates: Partial<RecipientAssignment>) => {
     setCartItems(prev =>
       prev.map(item =>
         item.product.product_id === productId && item.recipientAssignment
@@ -218,64 +266,42 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : item
       )
     );
-  };
+  }, []);
 
-  const getItemsByRecipient = (): Map<string, CartItem[]> => {
-    const groupedItems = new Map<string, CartItem[]>();
-    
-    cartItems.forEach(item => {
-      if (item.recipientAssignment) {
-        const key = item.recipientAssignment.connectionId;
-        if (!groupedItems.has(key)) {
-          groupedItems.set(key, []);
-        }
-        groupedItems.get(key)!.push(item);
-      }
-    });
-    
-    return groupedItems;
-  };
-
-  const getUnassignedItems = (): CartItem[] => {
-    return cartItems.filter(item => !item.recipientAssignment);
-  };
-
-  const deliveryGroups: DeliveryGroup[] = Array.from(getItemsByRecipient().entries()).map(
-    ([connectionId, items]) => {
-      const firstItem = items[0];
-      const assignment = firstItem.recipientAssignment!;
-      
-      return {
-        id: assignment.deliveryGroupId,
-        connectionId,
-        connectionName: assignment.connectionName,
-        items: items.map(item => item.product.product_id),
-        giftMessage: assignment.giftMessage,
-        scheduledDeliveryDate: assignment.scheduledDeliveryDate,
-        shippingAddress: assignment.shippingAddress
-      };
-    }
-  );
+  const contextValue = useMemo(() => ({
+    cartItems,
+    cartTotal,
+    deliveryGroups,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    getItemCount,
+    transferGuestCart,
+    assignItemToRecipient,
+    unassignItemFromRecipient,
+    updateRecipientAssignment,
+    getItemsByRecipient,
+    getUnassignedItems,
+  }), [
+    cartItems,
+    cartTotal,
+    deliveryGroups,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    getItemCount,
+    transferGuestCart,
+    assignItemToRecipient,
+    unassignItemFromRecipient,
+    updateRecipientAssignment,
+    getItemsByRecipient,
+    getUnassignedItems,
+  ]);
 
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        cartTotal,
-        deliveryGroups,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        getItemCount,
-        transferGuestCart,
-        assignItemToRecipient,
-        unassignItemFromRecipient,
-        updateRecipientAssignment,
-        getItemsByRecipient,
-        getUnassignedItems,
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

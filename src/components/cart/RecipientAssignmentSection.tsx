@@ -18,6 +18,40 @@ interface Connection {
   upcoming_events?: any[];
 }
 
+// Mock connections for testing
+const mockConnections: Connection[] = [
+  {
+    id: 'mock-1',
+    connected_user_id: 'mock-user-1',
+    name: 'Sarah Johnson',
+    relationship_type: 'friend'
+  },
+  {
+    id: 'mock-2',
+    connected_user_id: 'mock-user-2',
+    name: 'Mike Chen',
+    relationship_type: 'family'
+  },
+  {
+    id: 'mock-3',
+    connected_user_id: 'mock-user-3',
+    name: 'Emily Rodriguez',
+    relationship_type: 'colleague'
+  },
+  {
+    id: 'mock-4',
+    connected_user_id: 'mock-user-4',
+    name: 'Alex Thompson',
+    relationship_type: 'friend'
+  },
+  {
+    id: 'mock-5',
+    connected_user_id: 'mock-user-5',
+    name: 'Jessica Wilson',
+    relationship_type: 'family'
+  }
+];
+
 const RecipientAssignmentSection: React.FC = () => {
   const { user } = useAuth();
   const { 
@@ -36,6 +70,10 @@ const RecipientAssignmentSection: React.FC = () => {
   useEffect(() => {
     if (user) {
       fetchConnections();
+    } else {
+      // If no user, still show mock connections for testing
+      setConnections(mockConnections);
+      setIsLoading(false);
     }
   }, [user]);
 
@@ -64,9 +102,13 @@ const RecipientAssignmentSection: React.FC = () => {
         relationship_type: conn.relationship_type
       })) || [];
 
-      setConnections(formattedConnections);
+      // If no real connections, use mock data for testing
+      const finalConnections = formattedConnections.length > 0 ? formattedConnections : mockConnections;
+      setConnections(finalConnections);
     } catch (error) {
       console.error('Error fetching connections:', error);
+      // Fall back to mock connections on error
+      setConnections(mockConnections);
     } finally {
       setIsLoading(false);
     }
@@ -94,6 +136,18 @@ const RecipientAssignmentSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Show info banner about mock data */}
+      {connections === mockConnections && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-sm text-blue-700">
+              <Users className="h-4 w-4" />
+              <span>Using mock connections for testing. In production, these would be your actual friends and family.</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Unassigned Items */}
       {unassignedItems.length > 0 && (
         <Card>

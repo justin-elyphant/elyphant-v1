@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -169,17 +168,8 @@ export const useCheckoutState = () => {
     }));
   };
   
-  const canProceedToSchedule = () => {
-    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-    return name && email && address && city && state && zipCode && !isLoadingShipping && activeTab !== "shipping";
-  };
-
-  const canProceedToPayment = () => {
-    return activeTab === "schedule" && canProceedToSchedule();
-  };
-
   const canPlaceOrder = () => {
-    return activeTab === "payment" && canProceedToSchedule() && checkoutData.selectedShippingOption;
+    return activeTab === "payment" && checkoutData.selectedShippingOption;
   };
 
   const getShippingCost = () => {
@@ -197,8 +187,6 @@ export const useCheckoutState = () => {
     handleShippingMethodChange,
     handlePaymentMethodChange,
     handleGiftOptionsChange,
-    canProceedToSchedule,
-    canProceedToPayment,
     canPlaceOrder,
     getShippingCost
   };

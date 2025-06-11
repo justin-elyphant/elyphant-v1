@@ -6,44 +6,79 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import { Truck, Calendar, CreditCard, Users } from "lucide-react";
+import { Truck, Calendar, CreditCard, Users, Package } from "lucide-react";
 
 interface CheckoutTabsProps {
   activeTab: string;
   onTabChange: (value: string) => void;
-  canProceedToRecipients: boolean;
-  canProceedToSchedule: boolean;
-  canProceedToPayment: boolean;
+  availableTabs: string[];
+  canProceedToNext: (tab: string) => boolean;
   children: React.ReactNode;
 }
 
 const CheckoutTabs = ({ 
   activeTab, 
   onTabChange, 
-  canProceedToRecipients,
-  canProceedToSchedule,
-  canProceedToPayment,
+  availableTabs,
+  canProceedToNext,
   children 
 }: CheckoutTabsProps) => {
+  const getTabIcon = (tab: string) => {
+    switch (tab) {
+      case 'shipping':
+        return <Truck className="h-4 w-4" />;
+      case 'recipients':
+        return <Users className="h-4 w-4" />;
+      case 'delivery':
+        return <Package className="h-4 w-4" />;
+      case 'schedule':
+        return <Calendar className="h-4 w-4" />;
+      case 'payment':
+        return <CreditCard className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const getTabLabel = (tab: string) => {
+    switch (tab) {
+      case 'shipping':
+        return 'Shipping';
+      case 'recipients':
+        return 'Recipients';
+      case 'delivery':
+        return 'Delivery';
+      case 'schedule':
+        return 'Schedule';
+      case 'payment':
+        return 'Payment';
+      default:
+        return tab;
+    }
+  };
+
+  const getTabIndex = (tab: string) => availableTabs.indexOf(tab);
+  const currentTabIndex = getTabIndex(activeTab);
+
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
-      <TabsList className="grid w-full grid-cols-4 mb-6">
-        <TabsTrigger value="shipping" className="flex items-center gap-2">
-          <Truck className="h-4 w-4" />
-          <span className="hidden sm:inline">Shipping</span>
-        </TabsTrigger>
-        <TabsTrigger value="recipients" className="flex items-center gap-2" disabled={!canProceedToRecipients}>
-          <Users className="h-4 w-4" />
-          <span className="hidden sm:inline">Recipients</span>
-        </TabsTrigger>
-        <TabsTrigger value="schedule" className="flex items-center gap-2" disabled={!canProceedToSchedule}>
-          <Calendar className="h-4 w-4" />
-          <span className="hidden sm:inline">Schedule</span>
-        </TabsTrigger>
-        <TabsTrigger value="payment" className="flex items-center gap-2" disabled={!canProceedToPayment}>
-          <CreditCard className="h-4 w-4" />
-          <span className="hidden sm:inline">Payment</span>
-        </TabsTrigger>
+      <TabsList className={`grid w-full grid-cols-${availableTabs.length} mb-6`}>
+        {availableTabs.map((tab, index) => {
+          const isDisabled = index > currentTabIndex + 1 || 
+            (index > 0 && !canProceedToNext(availableTabs[index - 1]));
+          
+          return (
+            <TabsTrigger 
+              key={tab}
+              value={tab} 
+              className="flex items-center gap-2" 
+              disabled={isDisabled}
+            >
+              {getTabIcon(tab)}
+              <span className="hidden sm:inline">{getTabLabel(tab)}</span>
+            </TabsTrigger>
+          );
+        })}
       </TabsList>
       
       {children}

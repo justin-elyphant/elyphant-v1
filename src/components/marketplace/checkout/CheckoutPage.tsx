@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
@@ -18,13 +18,10 @@ import CheckoutTabs from "./CheckoutTabs";
 import PaymentSection from "./PaymentSection";
 import GiftScheduleForm from "./GiftScheduleForm";
 import GuestSignupPrompt from "./GuestSignupPrompt";
-import { useCheckoutState } from "./useCheckoutState";
-import RecipientAssignmentSection from "@/components/cart/RecipientAssignmentSection";
-
-// Re-use existing components
-import CheckoutForm from "./CheckoutForm";
+import UnifiedDeliverySection from "./UnifiedDeliverySection";
 import OrderSummary from "./OrderSummary";
-import ShippingOptionsForm from "./ShippingOptionsForm";
+import { useCheckoutState } from "./useCheckoutState";
+import { useAdaptiveCheckout } from "./useAdaptiveCheckout";
 
 const CheckoutPage = () => {
   const { cartItems, cartTotal, clearCart, removeFromCart, deliveryGroups } = useCart();
@@ -46,11 +43,18 @@ const CheckoutPage = () => {
     handleShippingMethodChange, 
     handlePaymentMethodChange,
     handleGiftOptionsChange,
-    canProceedToPayment,
-    canProceedToSchedule,
     canPlaceOrder,
     getShippingCost
   } = useCheckoutState();
+
+  const { adaptiveFlow, deliveryScenario, getScenarioDescription } = useAdaptiveCheckout();
+
+  // Initialize tab to first available tab in adaptive flow
+  useEffect(() => {
+    if (adaptiveFlow.tabs.length > 0 && !adaptiveFlow.tabs.includes(activeTab)) {
+      handleTabChange(adaptiveFlow.tabs[0]);
+    }
+  }, [adaptiveFlow.tabs, activeTab, handleTabChange]);
 
   // Cart validation - now blocking for critical issues
   useEffect(() => {
@@ -66,7 +70,6 @@ const CheckoutPage = () => {
       const validation = validateCartData(cartItems);
       
       if (!validation.isValid) {
-        // Block checkout for invalid items
         validation.invalidItems.forEach(item => {
           removeFromCart(item.product.product_id);
           toast.error(`Removed invalid item: ${item.product.name || 'Unknown item'}`);
@@ -79,7 +82,6 @@ const CheckoutPage = () => {
         }
       }
 
-      // Check product availability
       const availability = await validateProductAvailability(cartItems);
       const unavailableItems = availability.filter(item => !item.available);
       
@@ -99,9 +101,32 @@ const CheckoutPage = () => {
     }
   };
 
-  const canProceedToRecipients = () => {
-    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-    return name && email && address && city && state && zipCode && !isLoadingShipping;
+  const canProceedToNext = (tab: string): boolean => {
+    switch (tab) {
+      case 'shipping':
+        const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+        return !!(name && email && address && city && state && zipCode && !isLoadingShipping);
+      case 'delivery':
+        // For mixed scenario, need shipping info filled if there are unassigned items
+        return canProceedToNext('shipping');
+      case 'recipients':
+        // All items should be assigned if this is pure gift scenario
+        return deliveryScenario === 'gift' ? deliveryGroups.length > 0 : true;
+      case 'schedule':
+        return true; // Scheduling is optional
+      default:
+        return true;
+    }
+  };
+
+  const getNextTab = (currentTab: string): string | null => {
+    const currentIndex = adaptiveFlow.tabs.indexOf(currentTab);
+    return currentIndex < adaptiveFlow.tabs.length - 1 ? adaptiveFlow.tabs[currentIndex + 1] : null;
+  };
+
+  const getPreviousTab = (currentTab: string): string | null => {
+    const currentIndex = adaptiveFlow.tabs.indexOf(currentTab);
+    return currentIndex > 0 ? adaptiveFlow.tabs[currentIndex - 1] : null;
   };
 
   const getTaxAmount = () => {
@@ -132,7 +157,6 @@ const CheckoutPage = () => {
     setIsProcessing(true);
     
     try {
-      // Confirm payment first if payment intent provided
       if (paymentIntentId) {
         const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
           'confirm-payment',
@@ -150,7 +174,6 @@ const CheckoutPage = () => {
         console.log("Payment confirmed:", confirmData);
       }
 
-      // Create order with delivery groups
       const giftingFee = await getGiftingFee();
       const totalAmount = await getTotalAmount();
       
@@ -166,7 +189,6 @@ const CheckoutPage = () => {
         deliveryGroups: deliveryGroups
       });
 
-      // Process fulfillment through Zinc (with centralized Amazon credentials)
       if (paymentIntentId || checkoutData.paymentMethod === "demo") {
         try {
           const zincProducts = cartItems.map(item => ({
@@ -221,7 +243,6 @@ const CheckoutPage = () => {
         }
       }
 
-      // Clear cart and navigate
       clearCart();
       
       if (paymentIntentId) {
@@ -274,6 +295,16 @@ const CheckoutPage = () => {
     <div className="container mx-auto py-8 px-4">
       <CheckoutHeader title="Checkout" />
 
+      {/* Scenario Indicator */}
+      <div className="mb-4 flex items-center justify-between">
+        <Badge variant="outline" className="text-sm">
+          {getScenarioDescription()}
+        </Badge>
+        <div className="text-sm text-muted-foreground">
+          {adaptiveFlow.tabs.length} step checkout
+        </div>
+      </div>
+
       {/* Cart Validation Status */}
       {isValidatingCart && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -286,73 +317,68 @@ const CheckoutPage = () => {
           <CheckoutTabs 
             activeTab={activeTab} 
             onTabChange={handleTabChange}
-            canProceedToRecipients={Boolean(canProceedToRecipients())}
-            canProceedToSchedule={Boolean(canProceedToSchedule())}
-            canProceedToPayment={Boolean(canProceedToPayment())}
+            availableTabs={adaptiveFlow.tabs}
+            canProceedToNext={canProceedToNext}
           >
-            <TabsContent value="shipping" className="space-y-6">
-              <CheckoutForm 
-                shippingInfo={checkoutData.shippingInfo} 
-                onUpdate={handleUpdateShippingInfo} 
-              />
-              
-              <ShippingOptionsForm
-                selectedMethod={checkoutData.shippingMethod}
-                onSelect={handleShippingMethodChange}
-                shippingOptions={checkoutData.shippingOptions}
-                isLoading={isLoadingShipping}
-              />
-              
-              <div className="flex justify-end mt-6">
-                <Button 
-                  onClick={() => handleTabChange("recipients")} 
-                  disabled={!canProceedToRecipients()}
-                >
-                  Continue to Recipients
-                </Button>
-              </div>
-            </TabsContent>
+            {(adaptiveFlow.tabs.includes('shipping') || adaptiveFlow.tabs.includes('delivery') || adaptiveFlow.tabs.includes('recipients')) && (
+              <TabsContent value={adaptiveFlow.tabs.includes('delivery') ? 'delivery' : adaptiveFlow.tabs.includes('shipping') ? 'shipping' : 'recipients'} className="space-y-6">
+                <UnifiedDeliverySection
+                  scenario={deliveryScenario}
+                  shippingInfo={checkoutData.shippingInfo}
+                  onUpdateShippingInfo={handleUpdateShippingInfo}
+                  selectedShippingMethod={checkoutData.shippingMethod}
+                  onShippingMethodChange={handleShippingMethodChange}
+                  shippingOptions={checkoutData.shippingOptions}
+                  isLoadingShipping={isLoadingShipping}
+                />
+                
+                <div className="flex justify-between mt-6">
+                  {getPreviousTab(activeTab) && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleTabChange(getPreviousTab(activeTab)!)}
+                    >
+                      Back
+                    </Button>
+                  )}
+                  {getNextTab(activeTab) && (
+                    <Button 
+                      onClick={() => handleTabChange(getNextTab(activeTab)!)}
+                      disabled={!canProceedToNext(activeTab)}
+                      className={!getPreviousTab(activeTab) ? "ml-auto" : ""}
+                    >
+                      Continue
+                    </Button>
+                  )}
+                </div>
+              </TabsContent>
+            )}
 
-            <TabsContent value="recipients" className="space-y-6">
-              <RecipientAssignmentSection />
-              
-              <div className="flex justify-between mt-6">
-                <Button 
-                  variant="outline"
-                  onClick={() => handleTabChange("shipping")}
-                >
-                  Back to Shipping
-                </Button>
-                <Button 
-                  onClick={() => handleTabChange("schedule")}
-                  disabled={!canProceedToRecipients()}
-                >
-                  Continue to Schedule
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="schedule" className="space-y-6">
-              <GiftScheduleForm
-                giftOptions={checkoutData.giftOptions}
-                onUpdate={handleGiftOptionsChange}
-              />
-              
-              <div className="flex justify-between mt-6">
-                <Button 
-                  variant="outline"
-                  onClick={() => handleTabChange("recipients")}
-                >
-                  Back to Recipients
-                </Button>
-                <Button 
-                  onClick={() => handleTabChange("payment")}
-                  disabled={!canProceedToSchedule()}
-                >
-                  Continue to Payment
-                </Button>
-              </div>
-            </TabsContent>
+            {adaptiveFlow.tabs.includes('schedule') && (
+              <TabsContent value="schedule" className="space-y-6">
+                <GiftScheduleForm
+                  giftOptions={checkoutData.giftOptions}
+                  onUpdate={handleGiftOptionsChange}
+                />
+                
+                <div className="flex justify-between mt-6">
+                  {getPreviousTab('schedule') && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleTabChange(getPreviousTab('schedule')!)}
+                    >
+                      Back
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={() => handleTabChange('payment')}
+                    disabled={!canProceedToNext('schedule')}
+                  >
+                    Continue to Payment
+                  </Button>
+                </div>
+              </TabsContent>
+            )}
 
             <TabsContent value="payment" className="space-y-6">
               <PaymentSection
@@ -361,7 +387,10 @@ const CheckoutPage = () => {
                 onPlaceOrder={handlePlaceOrder}
                 isProcessing={Boolean(isProcessing)}
                 canPlaceOrder={Boolean(canPlaceOrder())}
-                onPrevious={() => handleTabChange("schedule")}
+                onPrevious={() => {
+                  const prevTab = getPreviousTab('payment');
+                  if (prevTab) handleTabChange(prevTab);
+                }}
                 totalAmount={cartTotal + getShippingCost() + getTaxAmount()}
                 cartItems={cartItems}
                 shippingInfo={checkoutData.shippingInfo}

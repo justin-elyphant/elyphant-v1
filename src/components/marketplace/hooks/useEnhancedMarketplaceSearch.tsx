@@ -116,7 +116,7 @@ export const useEnhancedMarketplaceSearch = (currentPage) => {
           product_id: result.product_id,
           name: result.title,
           title: result.title,
-          price: result.price,
+          price: result.price / 100,
           category: result.category,
           image: result.image,
           vendor: result.retailer || "Amazon via Zinc",
@@ -124,6 +124,8 @@ export const useEnhancedMarketplaceSearch = (currentPage) => {
           rating: result.stars,
           reviewCount: result.num_reviews
         }));
+
+        console.log("normalized products: ", normalizedProducts);
         
         // Update products context
         setProducts(prev => {

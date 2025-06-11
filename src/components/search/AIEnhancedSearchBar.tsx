@@ -46,6 +46,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     searchLoading,
     setSearchLoading,
     inputRef,
+    suggestionRef,
+    isSuggestionVisible,
+    setIsSuggestionVisible,
     nicoleDropdownRef
   } = useSearchState();
 
@@ -89,6 +92,26 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setIsListening,
     inputRef
   });
+
+  const handleClickOutside = (event) => {
+    if (
+      inputRef.current && !inputRef.current.contains(event.target) &&
+      suggestionRef.current && !suggestionRef.current.contains(event.target)
+    ) {
+      setIsSuggestionVisible(false); // Hide suggestions
+    } 
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsSuggestionVisible(true);
+  }, [query]);
 
   // Check URL params for AI mode activation with personalized greeting
   useEffect(() => {
@@ -183,22 +206,26 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       )}
 
       {/* Search Results */}
-      <SearchResults
-        shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}
-        shouldShowNicoleSuggestions={shouldShowNicoleSuggestions}
-        shouldShowNoResults={shouldShowNoResults}
-        searchLoading={searchLoading}
-        query={query}
-        unifiedResults={unifiedResults}
-        suggestions={suggestions}
-        onFriendSelect={handleFriendSelect}
-        onProductSelect={handleProductSelect}
-        onBrandSelect={handleBrandSelect}
-        onSendFriendRequest={handleSendFriendRequest}
-        onSuggestionClick={handleSuggestionClick}
-        mobile={mobile}
-        isNicoleMode={isNicoleMode}
-      />
+      {isSuggestionVisible && (
+        <div ref={suggestionRef}>
+          <SearchResults
+            shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}
+            shouldShowNicoleSuggestions={shouldShowNicoleSuggestions}
+            shouldShowNoResults={shouldShowNoResults}
+            searchLoading={searchLoading}
+            query={query}
+            unifiedResults={unifiedResults}
+            suggestions={suggestions}
+            onFriendSelect={handleFriendSelect}
+            onProductSelect={handleProductSelect}
+            onBrandSelect={handleBrandSelect}
+            onSendFriendRequest={handleSendFriendRequest}
+            onSuggestionClick={handleSuggestionClick}
+            mobile={mobile}
+            isNicoleMode={isNicoleMode}
+          />
+        </div>
+      )}
 
       {/* Desktop Nicole Conversation Dropdown */}
       {showNicoleDropdown && isNicoleMode && !isMobile && (

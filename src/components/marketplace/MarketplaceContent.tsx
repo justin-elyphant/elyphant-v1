@@ -47,6 +47,7 @@ const MarketplaceContent = ({
     error: searchError,
     handleRetrySearch
   } = useEnhancedMarketplaceSearch(currentPage);
+  console.log("marketplacecontent: ", filteredProducts);
 
   // Combine loading states
   const isLoading = externalLoading || isSearching;

@@ -26,6 +26,7 @@ const DEFAULT_FILTERS: FilterState = {
 };
 
 export const useAdvancedFilters = (products: Product[]) => {
+  console.log("before advanced filters:", products);
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<FilterState>(() => {
     // Initialize from URL params

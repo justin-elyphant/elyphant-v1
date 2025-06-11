@@ -19,6 +19,7 @@ import PaymentSection from "./PaymentSection";
 import GiftScheduleForm from "./GiftScheduleForm";
 import GuestSignupPrompt from "./GuestSignupPrompt";
 import { useCheckoutState } from "./useCheckoutState";
+import RecipientAssignmentSection from "@/components/cart/RecipientAssignmentSection";
 
 // Re-use existing components
 import CheckoutForm from "./CheckoutForm";
@@ -26,7 +27,7 @@ import OrderSummary from "./OrderSummary";
 import ShippingOptionsForm from "./ShippingOptionsForm";
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, clearCart, removeFromCart } = useCart();
+  const { cartItems, cartTotal, clearCart, removeFromCart, deliveryGroups } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showGuestSignup, setShowGuestSignup] = useState(false);
@@ -98,6 +99,11 @@ const CheckoutPage = () => {
     }
   };
 
+  const canProceedToRecipients = () => {
+    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+    return name && email && address && city && state && zipCode && !isLoadingShipping;
+  };
+
   const getTaxAmount = () => {
     return cartTotal * 0.0825;
   };
@@ -144,7 +150,7 @@ const CheckoutPage = () => {
         console.log("Payment confirmed:", confirmData);
       }
 
-      // Create order
+      // Create order with delivery groups
       const giftingFee = await getGiftingFee();
       const totalAmount = await getTotalAmount();
       
@@ -156,7 +162,8 @@ const CheckoutPage = () => {
         totalAmount: totalAmount,
         shippingInfo: checkoutData.shippingInfo,
         giftOptions: checkoutData.giftOptions,
-        paymentIntentId: paymentIntentId
+        paymentIntentId: paymentIntentId,
+        deliveryGroups: deliveryGroups
       });
 
       // Process fulfillment through Zinc (with centralized Amazon credentials)
@@ -279,6 +286,7 @@ const CheckoutPage = () => {
           <CheckoutTabs 
             activeTab={activeTab} 
             onTabChange={handleTabChange}
+            canProceedToRecipients={Boolean(canProceedToRecipients())}
             canProceedToSchedule={Boolean(canProceedToSchedule())}
             canProceedToPayment={Boolean(canProceedToPayment())}
           >
@@ -297,8 +305,27 @@ const CheckoutPage = () => {
               
               <div className="flex justify-end mt-6">
                 <Button 
-                  onClick={() => handleTabChange("schedule")} 
-                  disabled={!canProceedToSchedule()}
+                  onClick={() => handleTabChange("recipients")} 
+                  disabled={!canProceedToRecipients()}
+                >
+                  Continue to Recipients
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="recipients" className="space-y-6">
+              <RecipientAssignmentSection />
+              
+              <div className="flex justify-between mt-6">
+                <Button 
+                  variant="outline"
+                  onClick={() => handleTabChange("shipping")}
+                >
+                  Back to Shipping
+                </Button>
+                <Button 
+                  onClick={() => handleTabChange("schedule")}
+                  disabled={!canProceedToRecipients()}
                 >
                   Continue to Schedule
                 </Button>
@@ -314,9 +341,9 @@ const CheckoutPage = () => {
               <div className="flex justify-between mt-6">
                 <Button 
                   variant="outline"
-                  onClick={() => handleTabChange("shipping")}
+                  onClick={() => handleTabChange("recipients")}
                 >
-                  Back to Shipping
+                  Back to Recipients
                 </Button>
                 <Button 
                   onClick={() => handleTabChange("payment")}

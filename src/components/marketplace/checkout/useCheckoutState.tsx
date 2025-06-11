@@ -171,7 +171,7 @@ export const useCheckoutState = () => {
   
   const canProceedToSchedule = () => {
     const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-    return name && email && address && city && state && zipCode && !isLoadingShipping;
+    return name && email && address && city && state && zipCode && !isLoadingShipping && activeTab !== "shipping";
   };
 
   const canProceedToPayment = () => {

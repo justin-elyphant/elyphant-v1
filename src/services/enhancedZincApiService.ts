@@ -136,7 +136,7 @@ class EnhancedZincApiService {
     try {
       console.log(`Zinc API call attempt ${retryCount + 1} for query: "${query}"`);
       
-      query = query + " gift";
+      query = query;
       const { data, error } = await supabase.functions.invoke('get-products', {
         body: {
           query: query.trim(),

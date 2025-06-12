@@ -101,6 +101,7 @@ const ProductDetailsDialog = ({
   const productFeatures = Array.isArray(productData?.feature_bullets)
     ? productData?.feature_bullets.map(detail => detail?.toString())
     : [];
+  // Product details
   const productDetails = Array.isArray(productData?.product_details)
     ? productData?.product_details.map(detail => detail?.toString())
     : [];

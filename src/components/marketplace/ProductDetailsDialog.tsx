@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Product } from "@/types/product";
@@ -8,8 +8,6 @@ import ProductDetailsImageSection from "./product-details/ProductDetailsImageSec
 import ProductDetailsActionsSection from "./product-details/ProductDetailsActionsSection";
 import MobileProductSheet from "./product-details/MobileProductSheet";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
-import { Star } from "lucide-react";
 
 interface ProductDetailsDialogProps {
   product: Product | null;
@@ -26,29 +24,12 @@ const ProductDetailsDialog = ({
   userData,
   onWishlistChange
 }: ProductDetailsDialogProps) => {
-  console.log("dialog origin products : ", product);
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
   const isMobile = useIsMobile();
-  const [productData, setProductData] = useState(null);
 
   // Use unified wishlist system directly
   const { wishlists, loadWishlists } = useUnifiedWishlist();
-
-  useEffect(() => {
-    if (open) {
-      setProductData(null);
-      fetchData();
-    }
-  }, [open, product]);
-  
-  const fetchData = async ()=>{
-    const zincProductDetailData = await enhancedZincApiService.getProductDetail(product.product_id || product.id);
-    console.log(zincProductDetailData);
-    setProductData(zincProductDetailData);
-  }
-
-  const images = Array.isArray(productData?.images) ? productData?.images : [productData?.image].filter(Boolean);
 
   // Always recalculate isWishlisted live
   const isWishlisted =
@@ -98,21 +79,17 @@ const ProductDetailsDialog = ({
   };
 
   // Product features extraction
-  const productFeatures = Array.isArray(productData?.feature_bullets)
-    ? productData?.feature_bullets.map(detail => detail?.toString())
-    : [];
-  const productDetails = Array.isArray(productData?.product_details)
-    ? productData?.product_details.map(detail => detail?.toString())
+  const productFeatures = Array.isArray(product.product_details)
+    ? product.product_details.map(detail => detail?.value || detail?.toString())
     : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px] p-0 overflow-y-auto max-h-[90vh]">
+      <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden max-h-[90vh]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
           {/* Pass isWishlisted and callback to the image section */}
           <ProductDetailsImageSection
             product={product}
-            productData={productData}
             isHeartAnimating={isHeartAnimating}
             onShare={handleShareProduct}
             isWishlisted={isWishlisted}
@@ -127,24 +104,15 @@ const ProductDetailsDialog = ({
               </DialogTitle>
               <div className="flex items-center justify-between mt-2">
                 <div className="text-lg font-bold">${product.price?.toFixed(2)}</div>
-                {product.rating && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span>{product.rating}</span>
-                    {product.reviewCount && (
-                      <span>({product.reviewCount} reviews)</span>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {product.vendor && `By ${product.vendor}`}
+                <div className="text-sm text-muted-foreground">
+                  {product.vendor && `By ${product.vendor}`}
+                </div>
               </div>
             </DialogHeader>
             <Separator className="my-4" />
             <div className="mb-6">
               <p className="text-sm text-muted-foreground">
-                {productData?.product_description || product.description || "No description available for this product."}
+                {product.description || "No description available for this product."}
               </p>
             </div>
             {productFeatures.length > 0 && (
@@ -153,19 +121,6 @@ const ProductDetailsDialog = ({
                 <ul className="text-sm list-disc pl-4 space-y-1">
                   {productFeatures.map((feature, idx) => (
                     <li key={idx}>{feature}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {productDetails.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2">Product Details</h4>
-                <ul className="text-sm space-y-1">
-                  {productDetails.slice(0, 10).map((detail, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-green-500 mt-1">•</span>
-                      <span className="text-muted-foreground">{detail}</span>
-                    </li>
                   ))}
                 </ul>
               </div>

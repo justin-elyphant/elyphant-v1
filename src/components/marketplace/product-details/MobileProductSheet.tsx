@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,7 +8,6 @@ import { Product } from "@/types/product";
 import { useAuth } from "@/contexts/auth";
 import ProductDetailsActionsSection from "./ProductDetailsActionsSection";
 import { cn } from "@/lib/utils";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 interface MobileProductSheetProps {
   product: Product | null;
@@ -29,34 +28,12 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { user } = useAuth();
-  const [productData, setProductData] = useState(null);
 
   if (!product) return null;
 
-  useEffect(() => {
-    if (open) {
-      setProductData(null);
-      fetchData();
-    }
-  }, [open, product]);
-  
-  const fetchData = async ()=>{
-    const zincProductDetailData = await enhancedZincApiService.getProductDetail(product.product_id || product.id);
-    console.log(zincProductDetailData);
-    setProductData(zincProductDetailData);
-  }
-
-  product.description = product.description || productData?.product_description;
-
-  const images = Array.isArray(productData?.images) ? productData?.images : [productData?.image].filter(Boolean);
-
-  // Product features extraction
-  const productFeatures = Array.isArray(productData?.feature_bullets)
-    ? productData?.feature_bullets.map(detail => detail?.toString())
-    : [];
-  // Product details
-  const productDetails = Array.isArray(productData?.product_details)
-    ? productData?.product_details.map(detail => detail?.toString())
+  const images = Array.isArray(product.images) ? product.images : [product.image].filter(Boolean);
+  const productFeatures = Array.isArray(product.product_details)
+    ? product.product_details.map(detail => detail?.value || detail?.toString())
     : [];
 
   const handleShare = async () => {
@@ -80,12 +57,12 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[90vh] overflow-y-auto rounded-t-xl p-0 touch-manipulation"
+        className="h-[90vh] rounded-t-xl p-0 touch-manipulation"
       >
         <div className="flex flex-col h-full">
           {/* Image Section */}
-          <div className="relative bg-gray-50">
-            <div className="relative aspect-square overflow-hidden">
+          <div className="relative bg-gray-50 flex-shrink-0">
+            <div className="relative aspect-square max-h-[40vh] overflow-hidden">
               <img
                 src={images[currentImageIndex] || "/placeholder.svg"}
                 alt={product.title || product.name}
@@ -172,20 +149,6 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
                         <li key={idx} className="flex items-start gap-2">
                           <span className="text-green-500 mt-1">•</span>
                           <span className="text-muted-foreground">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {productDetails.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-2">Product Details</h4>
-                    <ul className="text-sm space-y-1">
-                      {productDetails.slice(0, 10).map((detail, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-green-500 mt-1">•</span>
-                          <span className="text-muted-foreground">{detail}</span>
                         </li>
                       ))}
                     </ul>

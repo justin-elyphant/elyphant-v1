@@ -1,13 +1,16 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import SignUpDialog from "../SignUpDialog";
+import { cn } from "@/lib/utils";
+import { ZincProductDetail } from "@/services/enhancedZincApiService";
 
 interface ProductDetailsImageSectionProps {
   product: any;
+  productData: ZincProductDetail;
   isHeartAnimating: boolean;
   onShare: () => void;
   isWishlisted?: boolean;
@@ -16,6 +19,7 @@ interface ProductDetailsImageSectionProps {
 
 const ProductDetailsImageSection = ({
   product,
+  productData,
   isHeartAnimating,
   onShare,
   isWishlisted = false,
@@ -23,6 +27,13 @@ const ProductDetailsImageSection = ({
 }: ProductDetailsImageSectionProps) => {
   const { user } = useAuth();
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    const images = Array.isArray(productData?.images) ? productData?.images : [productData?.main_image].filter(Boolean);
+    setImages(images);
+  }, [productData]);
 
   const handleWishlistClick = () => {
     if (!user) {
@@ -43,13 +54,31 @@ const ProductDetailsImageSection = ({
         {/* Product Image */}
         {product.image ? (
           <img
-            src={product.image}
+            src={images[currentImageIndex] || "/placeholder.svg"}
             alt={product.title || product.name}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
             <ShoppingBag className="w-16 h-16" />
+          </div>
+        )}
+
+        {/* Navigation dots for multiple images */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-colors touch-target-44",
+                  index === currentImageIndex ? "bg-white" : "bg-white/50"
+                )}
+                aria-label={`View image ${index + 1}`}
+              />
+            ))}
           </div>
         )}
 

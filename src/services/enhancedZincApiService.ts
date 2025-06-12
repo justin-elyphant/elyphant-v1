@@ -26,6 +26,26 @@ export interface ZincSearchResponse {
   error?: string;
 }
 
+export interface ZincProductDetail {
+  product_id: string;
+  title: string;
+  brand: string;
+  name: string;
+  product_description: string;
+  product_details: string[];
+  description: string;
+  feature_bullets: string[];
+  price: number;
+  main_image: string;
+  images?: string[];
+  category: string;
+  categories: string[];
+  retailer: string;
+  stars?: number;
+  review_count?: number;
+  url?: string;
+}
+
 interface CacheEntry {
   data: ZincSearchResponse;
   timestamp: number;
@@ -333,6 +353,28 @@ class EnhancedZincApiService {
   getPerformanceMetrics() {
     return this.performanceMonitor.getPerformanceReport();
   }
+
+  async getProductDetail(product_id: string): Promise<ZincProductDetail> {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-product-detail', {
+        body: {
+          product_id: product_id.trim(),
+          retailer: 'amazon'
+        }
+      });
+
+      if (error) {
+        throw new Error(`Zinc API error: ${error.message}`);
+      }
+
+      console.log("detail : ", data);
+
+      return data as ZincProductDetail;
+    } catch (error) {
+      console.error(`Zinc API error:`, error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
@@ -352,3 +394,7 @@ export const testZincConnection = async (): Promise<boolean> => {
     return false;
   }
 };
+
+export const searchZincProductDetail = (product_id: string) => {
+  return enhancedZincApiService.getProductDetail(product_id);
+}

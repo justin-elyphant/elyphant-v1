@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Gift, Calendar, Heart } from "lucide-react";
+import { Gift, Calendar, Heart, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GiftOptions } from "./useCheckoutState";
 
 interface GiftScheduleFormProps {
@@ -39,6 +40,14 @@ const GiftScheduleForm: React.FC<GiftScheduleFormProps> = ({
 
   return (
     <div className="space-y-6">
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Manual Gift Scheduling:</strong> Set delivery timing and gift options for this specific order. 
+          For automated gift-giving based on events, visit the Gift Timing Hub.
+        </AlertDescription>
+      </Alert>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

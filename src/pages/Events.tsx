@@ -6,6 +6,7 @@ import PastEventsContainer from "@/components/gifting/events/past-events/PastEve
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
 import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
+import UnifiedGiftTimingDashboard from "@/components/gifting/unified/UnifiedGiftTimingDashboard";
 import BackToDashboard from "@/components/shared/BackToDashboard";
 import MainLayout from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/auth";
@@ -45,7 +46,7 @@ const Events = () => {
           <BackToDashboard />
           
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Gift Timing Hub</h1>
           </div>
 
           <Card>
@@ -54,7 +55,7 @@ const Events = () => {
                 <UserPlus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">Sign in required</h3>
                 <p className="text-muted-foreground mb-4">
-                  Please sign in to manage your events and auto-gifting preferences
+                  Please sign in to manage your events and gift timing preferences
                 </p>
                 <Button asChild>
                   <Link to="/sign-in">Sign In</Link>
@@ -74,7 +75,10 @@ const Events = () => {
           <BackToDashboard />
           
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Auto-gifting Hub</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Gift Timing Hub</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage automated event gifting and manual gift scheduling
+            </p>
           </div>
           
           <EventsContent onAddEvent={handleAddEvent} />
@@ -113,18 +117,25 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
   }, [events]);
 
   return (
-    <Tabs defaultValue="upcoming" className="w-full">
+    <Tabs defaultValue="overview" className="w-full">
       <div className="flex items-center justify-between">
         <TabsList className="h-10">
+          <TabsTrigger value="overview" className="text-sm">
+            Overview
+          </TabsTrigger>
           <TabsTrigger value="upcoming" className="text-sm">
             Upcoming Events ({upcomingEvents.length})
           </TabsTrigger>
           <TabsTrigger value="past" className="text-sm">
             Past Events ({pastEvents.length})
           </TabsTrigger>
-          <TabsTrigger value="automated" className="text-sm">Automated Gifting</TabsTrigger>
+          <TabsTrigger value="automated" className="text-sm">Auto-Gifting Setup</TabsTrigger>
         </TabsList>
       </div>
+        
+      <TabsContent value="overview" className="mt-6">
+        <UnifiedGiftTimingDashboard />
+      </TabsContent>
         
       <TabsContent value="upcoming" className="mt-6">
         <UpcomingEvents onAddEvent={onAddEvent} />

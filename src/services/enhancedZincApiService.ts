@@ -8,11 +8,30 @@ export interface ZincApiResponse {
   hasMore: boolean;
 }
 
+export interface ZincSearchResponse {
+  results: any[];
+  error?: string;
+  cached?: boolean;
+}
+
+export interface ZincProductDetail {
+  product_id: string;
+  title: string;
+  price: number;
+  images: string[];
+  main_image: string;
+  product_description: string;
+  feature_bullets: string[];
+  product_details: string[];
+}
+
 class EnhancedZincApiService {
+  private cache = new Map();
+
   /**
    * Search for products using the enhanced Zinc API via Supabase Edge Function
    */
-  async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincApiResponse> {
+  async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
     console.log(`Searching products: "${query}", page: ${page}, limit: ${limit}`);
     
     try {
@@ -27,29 +46,31 @@ class EnhancedZincApiService {
 
       if (error) {
         console.error('Error calling get-products function:', error);
-        throw new Error(`Product search failed: ${error.message}`);
+        return {
+          results: [],
+          error: `Product search failed: ${error.message}`
+        };
       }
 
-      if (!data || !data.products) {
+      if (!data || !data.results) {
         console.warn('No products returned from search');
         return {
-          products: [],
-          total: 0,
-          page,
-          hasMore: false
+          results: [],
+          error: 'No products found'
         };
       }
 
       return {
-        products: data.products || [],
-        total: data.total || 0,
-        page: data.page || page,
-        hasMore: data.has_more || false
+        results: data.results || [],
+        cached: false
       };
 
     } catch (error) {
       console.error('Enhanced Zinc API search error:', error);
-      throw error;
+      return {
+        results: [],
+        error: error instanceof Error ? error.message : 'Search failed'
+      };
     }
   }
 
@@ -81,20 +102,35 @@ class EnhancedZincApiService {
   }
 
   /**
+   * Get product detail (alias for getProductDetails for backward compatibility)
+   */
+  async getProductDetail(productId: string): Promise<ZincProductDetail> {
+    return this.getProductDetails(productId);
+  }
+
+  /**
    * Search products by category
    */
-  async searchByCategory(category: string, page: number = 1, limit: number = 20): Promise<ZincApiResponse> {
+  async searchByCategory(category: string, page: number = 1, limit: number = 20): Promise<ZincSearchResponse> {
     return this.searchProducts(`category:${category}`, page, limit);
   }
 
   /**
    * Search products with price range
    */
-  async searchWithPriceRange(query: string, minPrice: number, maxPrice: number, page: number = 1): Promise<ZincApiResponse> {
+  async searchWithPriceRange(query: string, minPrice: number, maxPrice: number, page: number = 1): Promise<ZincSearchResponse> {
     return this.searchProducts(query, page, 20, {
       min_price: minPrice,
       max_price: maxPrice
     });
+  }
+
+  /**
+   * Clear search cache
+   */
+  clearCache(): void {
+    this.cache.clear();
+    console.log('Search cache cleared');
   }
 }
 

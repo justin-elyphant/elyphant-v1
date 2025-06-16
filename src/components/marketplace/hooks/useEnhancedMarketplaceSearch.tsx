@@ -55,46 +55,6 @@ export const useEnhancedMarketplaceSearch = (currentPage) => {
     performSearch(urlSearchTerm, currentPage);
   }, [currentPage]);
 
-  // Perform search when debounced term changes
-  useEffect(() => {
-    // if (debouncedSearchTerm && debouncedSearchTerm !== searchIdRef.current) {
-      // searchIdRef.current = debouncedSearchTerm;
-      // performSearch(debouncedSearchTerm);
-    // }
-  }, []);
-
-  // Prefetch popular searches on mount
-  // useEffect(() => {
-  //   const fetchProductsAsync = async () => {
-  //     try {
-  //       const prefetchProducts:ZincSearchResponse[] = await enhancedZincApiService.prefetchPopularSearches();
-
-  //       if (prefetchProducts && prefetchProducts.length > 0) {
-  //         const combinedProducts = prefetchProducts.flatMap(prefetch => 
-  //           prefetch.results.map(result => ({
-  //             id: result.product_id,
-  //             product_id: result.product_id,
-  //             name: result.title,
-  //             title: result.title,
-  //             price: result.price,
-  //             category: result.category,
-  //             image: result.image,
-  //             vendor: result.retailer || "Amazon via Zinc",
-  //             description: result.description,
-  //             rating: result.stars,
-  //             reviewCount: result.num_reviews
-  //           }))
-  //         );
-  //         console.log("useEnhancedMMSS..83", combinedProducts);
-  //         setProducts(combinedProducts);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching popular searches:', error);
-  //     }
-  //   }
-  //   fetchProductsAsync();
-  // }, []);
-
   const performSearch = async (query: string, page: number) => {
     console.log("performSearch");
     setIsLoading(true);

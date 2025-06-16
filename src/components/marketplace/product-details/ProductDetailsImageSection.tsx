@@ -6,11 +6,10 @@ import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import SignUpDialog from "../SignUpDialog";
 import { cn } from "@/lib/utils";
-import { ZincProductDetail } from "@/services/enhancedZincApiService";
 
 interface ProductDetailsImageSectionProps {
   product: any;
-  productData: ZincProductDetail;
+  productData: any;
   isHeartAnimating: boolean;
   onShare: () => void;
   isWishlisted?: boolean;

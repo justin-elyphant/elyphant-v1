@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { autoGiftingService, AutoGiftingRule, AutoGiftingSettings } from "./autoGiftingService";
 
@@ -230,20 +231,13 @@ class UnifiedGiftTimingService {
    */
   async triggerAutomatedGiftProcessor(): Promise<void> {
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/automated-gift-processor`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('automated-gift-processor');
 
-      if (!response.ok) {
-        throw new Error('Failed to trigger automated gift processor');
+      if (error) {
+        throw new Error(`Failed to trigger automated gift processor: ${error.message}`);
       }
 
-      const result = await response.json();
-      console.log('Automated gift processor result:', result);
+      console.log('Automated gift processor result:', data);
     } catch (error) {
       console.error('Error triggering automated gift processor:', error);
       throw error;

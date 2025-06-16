@@ -9,6 +9,8 @@ export interface AutoGiftingRule {
   event_id?: string;
   is_active: boolean;
   budget_limit?: number;
+  gift_message?: string;
+  created_from_event_id?: string;
   notification_preferences: {
     enabled: boolean;
     days_before: number[];

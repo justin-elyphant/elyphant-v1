@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Calendar, Gift, Clock, Settings } from "lucide-react";
@@ -223,8 +224,9 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
         <AutoGiftSetupDialog
           open={setupDialogOpen}
           onOpenChange={setSetupDialogOpen}
-          eventPerson={selectedEvent.person}
+          eventId={selectedEvent.id}
           eventType={selectedEvent.type}
+          recipientId={selectedEvent.recipientId}
           onSave={handleSaveAutoGiftSettings}
         />
       )}

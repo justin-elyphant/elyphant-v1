@@ -18,6 +18,7 @@ interface AutoGiftSetupDialogProps {
   eventId?: string;
   eventType?: string;
   recipientId?: string;
+  onSave?: (settings: any) => void;
 }
 
 const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
@@ -25,7 +26,8 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
   onOpenChange,
   eventId,
   eventType,
-  recipientId
+  recipientId,
+  onSave
 }) => {
   const { createRule, settings } = useAutoGifting();
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +65,6 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
         event_id: eventId,
         is_active: true,
         budget_limit: formData.budgetLimit,
-        auto_approve_gifts: formData.autoApproveGifts,
         gift_message: formData.giftMessage,
         created_from_event_id: eventId,
         notification_preferences: {
@@ -83,6 +84,19 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
 
       toast.success("Auto-gifting rule created successfully!");
       onOpenChange(false);
+      
+      if (onSave) {
+        onSave({
+          budgetLimit: formData.budgetLimit,
+          autoApproveGifts: formData.autoApproveGifts,
+          giftMessage: formData.giftMessage,
+          giftSource: formData.giftSource,
+          categories: formData.categories,
+          notificationDays: formData.notificationDays,
+          emailNotifications: formData.emailNotifications,
+          pushNotifications: formData.pushNotifications,
+        });
+      }
       
       // Reset form
       setFormData({

@@ -1,14 +1,17 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gift, Clock, CheckCircle, XCircle, AlertCircle, DollarSign } from "lucide-react";
+import { Gift, Clock, CheckCircle, XCircle, AlertCircle, DollarSign, Eye } from "lucide-react";
 import { useAutoGiftExecution } from "@/hooks/useAutoGiftExecution";
 import { format } from "date-fns";
+import AutoGiftProductReview from "./AutoGiftProductReview";
 
 const AutoGiftExecutionDashboard = () => {
-  const { executions, loading, processing, processPendingExecutions } = useAutoGiftExecution();
+  const { executions, loading, processing, processPendingExecutions, approveExecution } = useAutoGiftExecution();
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedExecution, setSelectedExecution] = useState<any>(null);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -44,8 +47,26 @@ const AutoGiftExecutionDashboard = () => {
     }
   };
 
-  const pendingExecutions = executions.filter(exec => exec.status === 'pending');
+  const pendingExecutions = executions.filter(exec => exec.status === 'pending' && exec.selected_products?.length > 0);
   const recentExecutions = executions.slice(0, 5);
+
+  const handleReviewProducts = (execution: any) => {
+    setSelectedExecution(execution);
+    setReviewModalOpen(true);
+  };
+
+  const handleApproveProducts = async (selectedProductIds: string[]) => {
+    if (selectedExecution) {
+      await approveExecution(selectedExecution.id, selectedProductIds);
+      setSelectedExecution(null);
+    }
+  };
+
+  const handleRejectProducts = async () => {
+    // TODO: Implement reject functionality
+    console.log('Products rejected');
+    setSelectedExecution(null);
+  };
 
   if (loading) {
     return (
@@ -71,16 +92,14 @@ const AutoGiftExecutionDashboard = () => {
           </p>
         </div>
         
-        {pendingExecutions.length > 0 && (
-          <Button 
-            onClick={processPendingExecutions} 
-            disabled={processing}
-            className="flex items-center gap-2"
-          >
-            <Gift className="h-4 w-4" />
-            {processing ? "Processing..." : `Process ${pendingExecutions.length} Pending`}
-          </Button>
-        )}
+        <Button 
+          onClick={processPendingExecutions} 
+          disabled={processing}
+          className="flex items-center gap-2"
+        >
+          <Gift className="h-4 w-4" />
+          {processing ? "Processing..." : "Process Auto-Gifts"}
+        </Button>
       </div>
 
       {/* Pending executions requiring attention */}
@@ -109,7 +128,14 @@ const AutoGiftExecutionDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <Button size="sm">Review & Approve</Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleReviewProducts(execution)}
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Review & Approve
+                  </Button>
                 </div>
               ))}
             </div>
@@ -164,7 +190,7 @@ const AutoGiftExecutionDashboard = () => {
                     )}
                     
                     {execution.status === 'pending' && execution.selected_products && (
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={() => handleReviewProducts(execution)}>
                         Review
                       </Button>
                     )}
@@ -183,6 +209,19 @@ const AutoGiftExecutionDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Product Review Modal */}
+      {selectedExecution && (
+        <AutoGiftProductReview
+          open={reviewModalOpen}
+          onOpenChange={setReviewModalOpen}
+          products={selectedExecution.selected_products || []}
+          totalBudget={selectedExecution.total_amount || 0}
+          eventType={selectedExecution.event_type || 'Event'}
+          onApprove={handleApproveProducts}
+          onReject={handleRejectProducts}
+        />
+      )}
     </div>
   );
 };

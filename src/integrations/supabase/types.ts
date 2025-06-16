@@ -180,6 +180,79 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_gift_executions: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_id: string | null
+          execution_date: string
+          id: string
+          next_retry_at: string | null
+          order_id: string | null
+          retry_count: number | null
+          rule_id: string | null
+          selected_products: Json | null
+          status: string
+          total_amount: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          execution_date: string
+          id?: string
+          next_retry_at?: string | null
+          order_id?: string | null
+          retry_count?: number | null
+          rule_id?: string | null
+          selected_products?: Json | null
+          status?: string
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          execution_date?: string
+          id?: string
+          next_retry_at?: string | null
+          order_id?: string | null
+          retry_count?: number | null
+          rule_id?: string | null
+          selected_products?: Json | null
+          status?: string
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automated_gift_executions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "user_special_dates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automated_gift_executions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automated_gift_executions_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "auto_gifting_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocked_users: {
         Row: {
           blocked_id: string
@@ -1056,6 +1129,19 @@ export type Database = {
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_upcoming_auto_gift_events: {
+        Args: { days_ahead?: number }
+        Returns: {
+          event_id: string
+          rule_id: string
+          user_id: string
+          event_date: string
+          event_type: string
+          recipient_id: string
+          budget_limit: number
+          notification_days: number[]
+        }[]
       }
       get_user_privacy_settings: {
         Args: { target_user_id: string }

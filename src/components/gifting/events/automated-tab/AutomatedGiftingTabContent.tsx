@@ -2,6 +2,9 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { UserPlus, Zap } from "lucide-react";
 import BudgetTrackingSection from "./BudgetTrackingSection";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import DefaultGiftSourceSection from "./DefaultGiftSourceSection";
@@ -9,13 +12,12 @@ import ActiveRulesSection from "./ActiveRulesSection";
 import AutoGiftExecutionDashboard from "../../auto-execution/AutoGiftExecutionDashboard";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { UserPlus } from "lucide-react";
+import { useAutoGiftTrigger } from "@/hooks/useAutoGiftTrigger";
 
 const AutomatedGiftingTabContent = () => {
   const { user } = useAuth();
   const { settings, rules, loading, updateSettings } = useAutoGifting();
+  const { triggerAutoGiftProcessing, triggering } = useAutoGiftTrigger();
 
   if (!user) {
     return (
@@ -51,11 +53,23 @@ const AutomatedGiftingTabContent = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-semibold mb-2">Automated Gifting Settings</h3>
-        <p className="text-sm text-muted-foreground">
-          Configure your preferences for automated gift-giving and manage your active rules
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-semibold mb-2">Automated Gifting Settings</h3>
+          <p className="text-sm text-muted-foreground">
+            Configure your preferences for automated gift-giving and manage your active rules
+          </p>
+        </div>
+        
+        <Button 
+          onClick={triggerAutoGiftProcessing}
+          disabled={triggering}
+          className="flex items-center gap-2"
+          variant="outline"
+        >
+          <Zap className="h-4 w-4" />
+          {triggering ? "Processing..." : "Trigger Auto-Gifts"}
+        </Button>
       </div>
 
       <Tabs defaultValue="executions" className="w-full">

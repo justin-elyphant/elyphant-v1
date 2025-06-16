@@ -8,8 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Gift, DollarSign, Bell, ShoppingCart } from "lucide-react";
+import { Gift, DollarSign, Bell, ShoppingCart, Sparkles } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
+import AutoGiftProductSelector from "../edit-drawer/gift-settings/AutoGiftProductSelector";
 import { toast } from "sonner";
 
 interface AutoGiftSetupDialogProps {
@@ -38,6 +39,7 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
     giftMessage: "",
     giftSource: "wishlist" as "wishlist" | "ai" | "both" | "specific",
     categories: [] as string[],
+    specificProductId: undefined as string | undefined,
     notificationDays: [7, 3, 1],
     emailNotifications: true,
     pushNotifications: false,
@@ -45,7 +47,7 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
 
   const availableCategories = [
     "Electronics", "Fashion", "Books", "Home & Garden", 
-    "Sports", "Beauty", "Toys", "Jewelry", "Art"
+    "Sports", "Beauty", "Toys", "Jewelry", "Art", "Kitchen"
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,13 +78,17 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
         gift_selection_criteria: {
           source: formData.giftSource,
           max_price: formData.budgetLimit,
-          min_price: 0,
+          min_price: Math.max(1, formData.budgetLimit * 0.1), // Minimum 10% of budget
           categories: formData.categories,
           exclude_items: [],
+          specific_product_id: formData.specificProductId,
         },
       });
 
-      toast.success("Auto-gifting rule created successfully!");
+      toast.success("Auto-gifting rule created successfully!", {
+        description: "Your automated gift will be processed based on your preferences"
+      });
+      
       onOpenChange(false);
       
       if (onSave) {
@@ -92,6 +98,7 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
           giftMessage: formData.giftMessage,
           giftSource: formData.giftSource,
           categories: formData.categories,
+          specificProductId: formData.specificProductId,
           notificationDays: formData.notificationDays,
           emailNotifications: formData.emailNotifications,
           pushNotifications: formData.pushNotifications,
@@ -105,6 +112,7 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
         giftMessage: "",
         giftSource: "wishlist",
         categories: [],
+        specificProductId: undefined,
         notificationDays: [7, 3, 1],
         emailNotifications: true,
         pushNotifications: false,
@@ -152,6 +160,7 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
                   id="budget"
                   type="number"
                   min="1"
+                  max="1000"
                   value={formData.budgetLimit}
                   onChange={(e) => setFormData(prev => ({ 
                     ...prev, 
@@ -196,28 +205,50 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="wishlist">From Recipient's Wishlist</SelectItem>
-                  <SelectItem value="ai">AI Recommendations</SelectItem>
+                  <SelectItem value="ai">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-3 w-3" />
+                      AI Recommendations via Zinc API
+                    </div>
+                  </SelectItem>
                   <SelectItem value="both">Wishlist + AI Backup</SelectItem>
-                  <SelectItem value="specific">Specific Products</SelectItem>
+                  <SelectItem value="specific">Specific Product</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <Label>Preferred Categories</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {availableCategories.map((category) => (
-                  <Badge
-                    key={category}
-                    variant={formData.categories.includes(category) ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => toggleCategory(category)}
-                  >
-                    {category}
-                  </Badge>
-                ))}
+            {/* Specific product selection */}
+            {formData.giftSource === "specific" && (
+              <AutoGiftProductSelector
+                onSelectProduct={(productId) => setFormData(prev => ({ 
+                  ...prev, 
+                  specificProductId: productId 
+                }))}
+                selectedProductId={formData.specificProductId}
+              />
+            )}
+
+            {/* Category preferences for AI selection */}
+            {(formData.giftSource === "ai" || formData.giftSource === "both") && (
+              <div>
+                <Label>Preferred Categories for AI Selection</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Help our AI find better gift suggestions by selecting preferred categories
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {availableCategories.map((category) => (
+                    <Badge
+                      key={category}
+                      variant={formData.categories.includes(category) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => toggleCategory(category)}
+                    >
+                      {category}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div>
               <Label htmlFor="giftMessage">Custom Gift Message (Optional)</Label>

@@ -6,6 +6,7 @@ import BudgetTrackingSection from "./BudgetTrackingSection";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import DefaultGiftSourceSection from "./DefaultGiftSourceSection";
 import ActiveRulesSection from "./ActiveRulesSection";
+import AutoGiftExecutionDashboard from "../../auto-execution/AutoGiftExecutionDashboard";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
@@ -57,13 +58,18 @@ const AutomatedGiftingTabContent = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="executions" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="executions">Executions</TabsTrigger>
           <TabsTrigger value="settings">General Settings</TabsTrigger>
           <TabsTrigger value="budget">Budget Tracking</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="rules">Active Rules</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="executions" className="space-y-4">
+          <AutoGiftExecutionDashboard />
+        </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
           <Card>

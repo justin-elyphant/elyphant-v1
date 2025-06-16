@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { autoGiftingService, AutoGiftingRule, AutoGiftingSettings } from "./autoGiftingService";
 
@@ -30,6 +29,23 @@ export interface ScheduledGiftEvent {
     isHidden?: boolean;
   };
   status: 'scheduled' | 'processed' | 'cancelled';
+}
+
+export interface AutomatedGiftExecution {
+  id: string;
+  rule_id: string;
+  event_id: string;
+  user_id: string;
+  execution_date: Date;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  selected_products?: any[];
+  total_amount?: number;
+  order_id?: string;
+  error_message?: string;
+  retry_count: number;
+  next_retry_at?: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 class UnifiedGiftTimingService {
@@ -153,6 +169,85 @@ class UnifiedGiftTimingService {
         spent_this_year: 0
       }
     });
+  }
+
+  /**
+   * Get automated gift executions for monitoring
+   */
+  async getAutomatedGiftExecutions(userId: string): Promise<AutomatedGiftExecution[]> {
+    const { data, error } = await supabase
+      .from('automated_gift_executions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('execution_date', { ascending: false });
+
+    if (error) throw error;
+    
+    return (data || []).map(execution => ({
+      ...execution,
+      execution_date: new Date(execution.execution_date),
+      next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
+      created_at: new Date(execution.created_at),
+      updated_at: new Date(execution.updated_at)
+    }));
+  }
+
+  /**
+   * Approve a pending automated gift execution
+   */
+  async approveAutomatedGift(executionId: string): Promise<void> {
+    const { error } = await supabase
+      .from('automated_gift_executions')
+      .update({ 
+        status: 'processing',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', executionId);
+
+    if (error) throw error;
+
+    // TODO: Trigger actual order processing
+    console.log('Automated gift approved and processing started');
+  }
+
+  /**
+   * Cancel a pending automated gift execution
+   */
+  async cancelAutomatedGift(executionId: string): Promise<void> {
+    const { error } = await supabase
+      .from('automated_gift_executions')
+      .update({ 
+        status: 'cancelled',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', executionId);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Trigger manual execution of automated gift processor
+   */
+  async triggerAutomatedGiftProcessor(): Promise<void> {
+    try {
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/automated-gift-processor`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to trigger automated gift processor');
+      }
+
+      const result = await response.json();
+      console.log('Automated gift processor result:', result);
+    } catch (error) {
+      console.error('Error triggering automated gift processor:', error);
+      throw error;
+    }
   }
 }
 

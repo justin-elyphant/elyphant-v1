@@ -3,9 +3,10 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Gift, Settings, TrendingUp } from "lucide-react";
+import { Calendar, Clock, Gift, Settings, TrendingUp, Zap } from "lucide-react";
 import { useUnifiedGiftTiming } from "@/hooks/useUnifiedGiftTiming";
 import { formatDistanceToNow } from "date-fns";
+import AutomatedGiftExecutionsMonitor from "../automated/AutomatedGiftExecutionsMonitor";
 
 const UnifiedGiftTimingDashboard = () => {
   const { scheduledGifts, upcomingReminders, loading, stats, refreshData } = useUnifiedGiftTiming();
@@ -37,7 +38,7 @@ const UnifiedGiftTimingDashboard = () => {
         
         <Card>
           <CardContent className="flex items-center p-6">
-            <Settings className="h-8 w-8 text-purple-600" />
+            <Zap className="h-8 w-8 text-purple-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">Auto-Gifting Rules</p>
               <p className="text-2xl font-bold">{stats.automatedGifts}</p>
@@ -110,12 +111,15 @@ const UnifiedGiftTimingDashboard = () => {
         </Card>
       )}
 
+      {/* Automated Gift Executions Monitor */}
+      <AutomatedGiftExecutionsMonitor />
+
       {/* System Comparison */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-purple-600" />
+              <Zap className="h-5 w-5 text-purple-600" />
               Automated Event Gifting
             </CardTitle>
             <CardDescription>
@@ -132,6 +136,7 @@ const UnifiedGiftTimingDashboard = () => {
                 • Event-triggered automation
                 • Budget and notification controls
                 • AI or wishlist-based selection
+                • Production-ready execution engine
               </div>
               <Button variant="outline" size="sm" className="w-full">
                 Manage Auto-Gifting Rules
@@ -160,6 +165,7 @@ const UnifiedGiftTimingDashboard = () => {
                 • User-initiated during checkout
                 • Flexible delivery dates
                 • Custom gift messages
+                • Real Zinc API integration
               </div>
               <Button variant="outline" size="sm" className="w-full">
                 View Scheduled Orders

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { enhancedZincApiService } from "./enhancedZincApiService";
 import { autoGiftingService, AutoGiftingRule } from "./autoGiftingService";
@@ -29,6 +28,7 @@ export interface GiftSelectionCriteria {
   exclude_items: string[];
   preferred_brands?: string[];
   recipient_preferences?: any;
+  specific_product_id?: string;
 }
 
 class AutoGiftExecutionService {

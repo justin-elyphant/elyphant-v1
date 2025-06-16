@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AutoGiftingRule {
@@ -23,6 +22,7 @@ export interface AutoGiftingRule {
     min_price?: number;
     categories: string[];
     exclude_items: string[];
+    specific_product_id?: string;
   };
   gift_preferences?: any;
   created_at?: string;

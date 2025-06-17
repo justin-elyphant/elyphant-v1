@@ -100,7 +100,7 @@ const MarketplaceContent = ({
   // Main content
   return (
     <div className="flex flex-col">
-      {/* Results Summary Bar - Only show this one */}
+      {/* Results Summary Bar */}
       <ResultsSummaryBar 
         totalItems={filteredProducts.length}
         searchTerm={urlSearchTerm}

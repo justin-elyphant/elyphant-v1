@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchParams } from "react-router-dom";
+import { useProducts } from "@/contexts/ProductContext";
 
 interface ResultsSummaryBarProps {
   totalItems?: number;
@@ -11,14 +12,18 @@ interface ResultsSummaryBarProps {
 }
 
 const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
-  totalItems = 0,
+  totalItems,
   searchTerm = "",
 }) => {
   const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { products } = useProducts();
   
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
+
+  // Use provided totalItems or fallback to products length
+  const displayCount = totalItems !== undefined ? totalItems : (products?.length || 0);
 
   const hasActiveFilters = Boolean(searchTerm || categoryParam || brandParam);
 
@@ -77,7 +82,7 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
           </div>
           
           <div className="text-sm text-gray-600 flex-shrink-0">
-            {totalItems.toLocaleString()} {totalItems === 1 ? "item" : "items"}
+            {displayCount.toLocaleString()} {displayCount === 1 ? "item" : "items"}
           </div>
         </div>
       </div>

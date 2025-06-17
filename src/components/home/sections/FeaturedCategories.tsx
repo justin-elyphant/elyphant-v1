@@ -17,7 +17,7 @@ const categories = [
     name: "Electronics",
     icon: Smartphone,
     category: "electronics",
-    searchTerm: "electronics gifts",
+    searchTerm: "best electronics",
     description: "Latest tech and gadgets"
   },
   {
@@ -25,7 +25,7 @@ const categories = [
     name: "Fashion",
     icon: Shirt,
     category: "fashion",
-    searchTerm: "fashion gifts",
+    searchTerm: "best fashion",
     description: "Clothing and accessories"
   },
   {
@@ -41,7 +41,7 @@ const categories = [
     name: "Beauty",
     icon: Heart,
     category: "beauty",
-    searchTerm: "beauty gifts",
+    searchTerm: "best beauty products",
     description: "Skincare and cosmetics"
   },
   {
@@ -49,7 +49,7 @@ const categories = [
     name: "Sports",
     icon: Dumbbell,
     category: "sports",
-    searchTerm: "top sports equipment",
+    searchTerm: "best sports equipment",
     description: "Fitness and outdoor gear"
   },
   {
@@ -57,7 +57,7 @@ const categories = [
     name: "Books",
     icon: BookOpen,
     category: "books",
-    searchTerm: "books gifts",
+    searchTerm: "best books",
     description: "Literature and educational"
   },
   {
@@ -65,7 +65,7 @@ const categories = [
     name: "Toys & Games",
     icon: Gamepad2,
     category: "toys",
-    searchTerm: "toys gifts",
+    searchTerm: "best toys",
     description: "Fun for all ages"
   },
   {
@@ -73,7 +73,7 @@ const categories = [
     name: "Food & Drinks",
     icon: Coffee,
     category: "food",
-    searchTerm: "gourmet food gifts",
+    searchTerm: "best gourmet food",
     description: "Gourmet and specialty items"
   },
   {
@@ -81,7 +81,7 @@ const categories = [
     name: "Arts & Crafts",
     icon: Palette,
     category: "arts",
-    searchTerm: "arts crafts gifts",
+    searchTerm: "best arts crafts",
     description: "Creative supplies and tools"
   },
   {
@@ -89,7 +89,7 @@ const categories = [
     name: "Health",
     icon: Pill,
     category: "health",
-    searchTerm: "wellness gifts",
+    searchTerm: "best wellness products",
     description: "Wellness and self-care"
   }
 ];

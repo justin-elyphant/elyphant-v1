@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
@@ -11,16 +12,16 @@ import {
 import { Smartphone, Home, Shirt, Dumbbell, Gamepad2, Heart, Baby, Coffee, BookOpen, Music } from "lucide-react";
 
 const categories = [
-  { name: "Tech", icon: Smartphone, param: "electronics" },
-  { name: "Home", icon: Home, param: "home" },
-  { name: "Fashion", icon: Shirt, param: "fashion" },
-  { name: "Sports", icon: Dumbbell, param: "sports" },
-  { name: "Gaming", icon: Gamepad2, param: "gaming" },
-  { name: "Beauty", icon: Heart, param: "beauty" },
-  { name: "Baby", icon: Baby, param: "baby" },
-  { name: "Kitchen", icon: Coffee, param: "kitchen" },
-  { name: "Books", icon: BookOpen, param: "books" },
-  { name: "Music", icon: Music, param: "music" },
+  { name: "Tech", icon: Smartphone, param: "electronics", searchTerm: "best electronics" },
+  { name: "Home", icon: Home, param: "home", searchTerm: "best home products" },
+  { name: "Fashion", icon: Shirt, param: "fashion", searchTerm: "best fashion" },
+  { name: "Sports", icon: Dumbbell, param: "sports", searchTerm: "best sports equipment" },
+  { name: "Gaming", icon: Gamepad2, param: "gaming", searchTerm: "best gaming" },
+  { name: "Beauty", icon: Heart, param: "beauty", searchTerm: "best beauty products" },
+  { name: "Baby", icon: Baby, param: "baby", searchTerm: "best baby products" },
+  { name: "Kitchen", icon: Coffee, param: "kitchen", searchTerm: "best kitchen products" },
+  { name: "Books", icon: BookOpen, param: "books", searchTerm: "best books" },
+  { name: "Music", icon: Music, param: "music", searchTerm: "best music" },
 ];
 
 interface IntegratedSearchSectionProps {
@@ -36,16 +37,19 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
   const selectedCategory = searchParams.get("category");
   const currentSearch = searchParams.get("search");
 
-  const handleCategoryClick = (categoryParam: string) => {
+  const handleCategoryClick = (categoryParam: string, searchTerm: string) => {
     const newParams = new URLSearchParams(searchParams);
     
     // If clicking the same category, remove it (toggle off)
     if (selectedCategory === categoryParam) {
       newParams.delete("category");
-    } else {
-      newParams.set("category", categoryParam);
-      // Clear search when selecting a category to avoid conflicts
       newParams.delete("search");
+    } else {
+      // Use the search term for better results
+      if (searchTerm) {
+        newParams.set("search", searchTerm);
+      }
+      newParams.set("category", categoryParam);
     }
     
     setSearchParams(newParams, { replace: true });
@@ -95,7 +99,7 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
                       variant={selectedCategory === category.param ? "default" : "outline"}
                       size="sm"
                       className="whitespace-nowrap h-8 px-3 flex items-center gap-1.5 text-xs"
-                      onClick={() => handleCategoryClick(category.param)}
+                      onClick={() => handleCategoryClick(category.param, category.searchTerm)}
                     >
                       <category.icon className="h-3.5 w-3.5" />
                       {category.name}
@@ -112,7 +116,7 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
                   variant={selectedCategory === category.param ? "default" : "outline"}
                   size="sm"
                   className="h-8 px-3 flex items-center gap-1.5 text-xs"
-                  onClick={() => handleCategoryClick(category.param)}
+                  onClick={() => handleCategoryClick(category.param, category.searchTerm)}
                 >
                   <category.icon className="h-3.5 w-3.5" />
                   {category.name}

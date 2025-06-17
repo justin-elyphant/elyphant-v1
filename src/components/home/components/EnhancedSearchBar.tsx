@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -13,13 +13,22 @@ interface EnhancedSearchBarProps {
 const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
+  // Sync search bar with URL parameters
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam && searchParam !== query) {
+      setQuery(searchParam);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     setShowSuggestions(false);
-    setQuery("");
+    // Don't clear query when navigating, let URL params handle it
   }, [location.pathname]);
 
   useEffect(() => {

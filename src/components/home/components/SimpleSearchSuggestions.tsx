@@ -52,23 +52,25 @@ const SimpleSearchSuggestions: React.FC<SimpleSearchSuggestionsProps> = ({
   };
 
   return (
-    <ul className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 text-sm max-h-80 overflow-y-auto">
-      {suggestions.map((suggestion, idx) => (
-        <li
-          key={idx}
-          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
-          onClick={() => onSuggestionClick(suggestion.text)}
-        >
-          {getIcon(suggestion.type)}
-          <span className="flex-1 text-gray-900">
-            {highlightMatch(suggestion.text, query)}
-          </span>
-          {suggestion.type === 'popular' && (
-            <span className="text-xs text-gray-500">Popular</span>
-          )}
-        </li>
-      ))}
-    </ul>
+    <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 max-h-80 overflow-y-auto">
+      <ul className="text-sm">
+        {suggestions.map((suggestion, idx) => (
+          <li
+            key={idx}
+            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+            onClick={() => onSuggestionClick(suggestion.text)}
+          >
+            {getIcon(suggestion.type)}
+            <span className="flex-1 text-gray-900">
+              {highlightMatch(suggestion.text, query)}
+            </span>
+            {suggestion.type === 'popular' && (
+              <span className="text-xs text-gray-500">Popular</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 

@@ -32,7 +32,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     setShowSuggestions(false);
   }, [location.pathname]);
 
-  // Generate text-based suggestions (fast, no API calls)
+  // Generate simple text-based suggestions only (no API calls)
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -41,8 +41,9 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     debounceTimer.current = setTimeout(() => {
       const searchSuggestions = getSearchSuggestions(query);
       setSuggestions(searchSuggestions);
-      setShowSuggestions(searchSuggestions.length > 0);
-    }, 150); // Faster debounce for text suggestions
+      // Only show suggestions if we have a query and suggestions
+      setShowSuggestions(query.length > 0 && searchSuggestions.length > 0);
+    }, 150);
 
     return () => {
       if (debounceTimer.current) {
@@ -69,6 +70,17 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     setShowSuggestions(false);
   };
 
+  const handleInputFocus = () => {
+    if (suggestions.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay hiding to allow clicks on suggestions
+    setTimeout(() => setShowSuggestions(false), 200);
+  };
+
   return (
     <form
       className="relative flex items-center w-full"
@@ -90,11 +102,8 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
           } border-gray-300 focus:border-purple-500 focus:ring-purple-500`}
           value={query}
           onChange={e => setQuery(e.target.value)}
-          onFocus={() => setShowSuggestions(suggestions.length > 0)}
-          onBlur={() => {
-            // Delay hiding to allow clicks on suggestions
-            setTimeout(() => setShowSuggestions(false), 200);
-          }}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
         />
 
         <Button
@@ -105,7 +114,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         </Button>
       </div>
 
-      {/* Simple text-based suggestions dropdown */}
+      {/* Simple text-based suggestions dropdown - no product cards */}
       <SimpleSearchSuggestions
         query={query}
         suggestions={suggestions}

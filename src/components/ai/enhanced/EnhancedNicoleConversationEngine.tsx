@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         // Regular initial query - auto-send it
         setCurrentMessage(initialQuery);
         setTimeout(() => {
-          handleSendMessage(initialQuery);
+          sendMessage(initialQuery);
         }, 500);
       }
       setHasProcessedInitialQuery(true);
@@ -217,7 +218,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      sendMessage();
     }
   };
 
@@ -230,7 +231,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
   const handleQuickResponse = (response: string) => {
     setCurrentMessage(response);
-    setTimeout(() => handleSendMessage(response), 100);
+    setTimeout(() => sendMessage(response), 100);
   };
 
   return (

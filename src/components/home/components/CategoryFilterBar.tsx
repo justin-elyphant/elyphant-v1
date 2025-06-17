@@ -16,14 +16,14 @@ interface CategoryFilterBarProps {
 }
 
 const categories = [
-  { name: "All Categories", value: "" },
-  { name: "Electronics", value: "electronics" },
-  { name: "Fashion", value: "fashion" },
-  { name: "Home & Garden", value: "home" },
-  { name: "Sports & Outdoors", value: "sports" },
-  { name: "Beauty & Personal Care", value: "beauty" },
-  { name: "Books & Media", value: "books" },
-  { name: "Toys & Games", value: "toys" },
+  { name: "All Categories", value: "", searchTerm: "" },
+  { name: "Electronics", value: "electronics", searchTerm: "electronics gifts" },
+  { name: "Fashion", value: "fashion", searchTerm: "fashion gifts" },
+  { name: "Home & Garden", value: "home", searchTerm: "best home products" },
+  { name: "Sports & Outdoors", value: "sports", searchTerm: "top sports equipment" },
+  { name: "Beauty & Personal Care", value: "beauty", searchTerm: "beauty gifts" },
+  { name: "Books & Media", value: "books", searchTerm: "books gifts" },
+  { name: "Toys & Games", value: "toys", searchTerm: "toys gifts" },
 ];
 
 const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false }) => {
@@ -34,11 +34,23 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
 
   const handleCategorySelect = (categoryValue: string) => {
     setSelectedCategory(categoryValue);
+    const category = categories.find(cat => cat.value === categoryValue);
     const params = new URLSearchParams(searchParams);
-    if (categoryValue) {
+    
+    if (category?.searchTerm) {
+      // Use search term for better results
+      params.set("search", category.searchTerm);
+      if (categoryValue) {
+        params.set("category", categoryValue);
+      } else {
+        params.delete("category");
+      }
+    } else if (categoryValue) {
       params.set("category", categoryValue);
+      params.delete("search");
     } else {
       params.delete("category");
+      params.delete("search");
     }
     navigate(`/marketplace?${params.toString()}`);
   };

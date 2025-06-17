@@ -10,13 +10,13 @@ interface CategoryFilterBarProps {
 
 const categories = [
   { name: "All Categories", value: "", searchTerm: "" },
-  { name: "Electronics", value: "electronics", searchTerm: "electronics" },
-  { name: "Fashion", value: "fashion", searchTerm: "fashion" },
-  { name: "Home & Garden", value: "home", searchTerm: "home garden" },
-  { name: "Sports & Outdoors", value: "sports", searchTerm: "sports outdoors" },
-  { name: "Beauty & Personal Care", value: "beauty", searchTerm: "beauty personal care" },
-  { name: "Books & Media", value: "books", searchTerm: "books media" },
-  { name: "Toys & Games", value: "toys", searchTerm: "toys games" },
+  { name: "Electronics", value: "electronics", searchTerm: "electronics gifts" },
+  { name: "Fashion", value: "fashion", searchTerm: "fashion gifts" },
+  { name: "Home & Garden", value: "home", searchTerm: "best home products" },
+  { name: "Sports & Outdoors", value: "sports", searchTerm: "top sports equipment" },
+  { name: "Beauty & Personal Care", value: "beauty", searchTerm: "beauty gifts" },
+  { name: "Books & Media", value: "books", searchTerm: "books gifts" },
+  { name: "Toys & Games", value: "toys", searchTerm: "toys gifts" },
 ];
 
 const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({

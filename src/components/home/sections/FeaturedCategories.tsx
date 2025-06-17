@@ -17,6 +17,7 @@ const categories = [
     name: "Electronics",
     icon: Smartphone,
     category: "electronics",
+    searchTerm: "electronics gifts",
     description: "Latest tech and gadgets"
   },
   {
@@ -24,6 +25,7 @@ const categories = [
     name: "Fashion",
     icon: Shirt,
     category: "fashion",
+    searchTerm: "fashion gifts",
     description: "Clothing and accessories"
   },
   {
@@ -31,6 +33,7 @@ const categories = [
     name: "Home & Living",
     icon: Home,
     category: "home",
+    searchTerm: "best home products",
     description: "Decor and household items"
   },
   {
@@ -38,6 +41,7 @@ const categories = [
     name: "Beauty",
     icon: Heart,
     category: "beauty",
+    searchTerm: "beauty gifts",
     description: "Skincare and cosmetics"
   },
   {
@@ -45,6 +49,7 @@ const categories = [
     name: "Sports",
     icon: Dumbbell,
     category: "sports",
+    searchTerm: "top sports equipment",
     description: "Fitness and outdoor gear"
   },
   {
@@ -52,6 +57,7 @@ const categories = [
     name: "Books",
     icon: BookOpen,
     category: "books",
+    searchTerm: "books gifts",
     description: "Literature and educational"
   },
   {
@@ -59,6 +65,7 @@ const categories = [
     name: "Toys & Games",
     icon: Gamepad2,
     category: "toys",
+    searchTerm: "toys gifts",
     description: "Fun for all ages"
   },
   {
@@ -66,6 +73,7 @@ const categories = [
     name: "Food & Drinks",
     icon: Coffee,
     category: "food",
+    searchTerm: "gourmet food gifts",
     description: "Gourmet and specialty items"
   },
   {
@@ -73,6 +81,7 @@ const categories = [
     name: "Arts & Crafts",
     icon: Palette,
     category: "arts",
+    searchTerm: "arts crafts gifts",
     description: "Creative supplies and tools"
   },
   {
@@ -80,6 +89,7 @@ const categories = [
     name: "Health",
     icon: Pill,
     category: "health",
+    searchTerm: "wellness gifts",
     description: "Wellness and self-care"
   }
 ];
@@ -87,9 +97,14 @@ const categories = [
 const FeaturedCategories: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleCategoryClick = (category: string) => {
-    // Pass fromHome state to ensure clean filters
-    navigate(`/marketplace?category=${encodeURIComponent(category)}`, { state: { fromHome: true } });
+  const handleCategoryClick = (category: string, searchTerm: string) => {
+    // Use search terms for better gift-focused results
+    if (searchTerm) {
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(category)}`, { state: { fromHome: true } });
+    } else {
+      // Fallback to category-based navigation
+      navigate(`/marketplace?category=${encodeURIComponent(category)}`, { state: { fromHome: true } });
+    }
   };
 
   return (
@@ -117,7 +132,7 @@ const FeaturedCategories: React.FC = () => {
                 <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
                   <div
                     className="group relative p-4 md:p-6 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 h-full"
-                    onClick={() => handleCategoryClick(category.category)}
+                    onClick={() => handleCategoryClick(category.category, category.searchTerm)}
                   >
                     <div className="text-center">
                       <div className="text-gray-600 mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300 flex justify-center">

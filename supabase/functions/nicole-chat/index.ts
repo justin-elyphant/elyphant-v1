@@ -8,64 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ContextualLink {
-  text: string;
-  url: string;
-  type: 'wishlist' | 'schedule' | 'profile' | 'connections';
-}
-
-const generateContextualLinks = (context: any, aiResponse: string): ContextualLink[] => {
-  const links: ContextualLink[] = [];
-  const lowerResponse = aiResponse.toLowerCase();
-  const lowerMessage = context.lastMessage?.toLowerCase() || '';
-
-  // Post-search context - offer wishlist creation
-  if (context.shouldGenerateSearch || lowerResponse.includes('found') || lowerResponse.includes('recommendations')) {
-    if (context.recipient) {
-      links.push({
-        text: `Add these to a wishlist for ${context.recipient}`,
-        url: `/wishlists/create?recipient=${encodeURIComponent(context.recipient)}&occasion=${encodeURIComponent(context.occasion || '')}`,
-        type: 'wishlist'
-      });
-    } else {
-      links.push({
-        text: "Save these items to a wishlist",
-        url: `/wishlists/create`,
-        type: 'wishlist'
-      });
-    }
-  }
-
-  // Gift scheduling context
-  if ((lowerResponse.includes('schedule') || lowerResponse.includes('recurring') || lowerResponse.includes('remind')) && context.recipient && context.occasion) {
-    links.push({
-      text: `Schedule recurring gifts for ${context.recipient}`,
-      url: `/gift-scheduling/create?recipient=${encodeURIComponent(context.recipient)}&occasion=${encodeURIComponent(context.occasion)}`,
-      type: 'schedule'
-    });
-  }
-
-  // Friend/connection context
-  if ((lowerResponse.includes('friend') || lowerResponse.includes('connect') || lowerMessage.includes('friend')) && !context.selectedFriend) {
-    links.push({
-      text: "Browse your friends' wishlists",
-      url: `/connections?intent=gift-giving`,
-      type: 'connections'
-    });
-  }
-
-  // Budget/multiple gifts context
-  if (lowerResponse.includes('budget') || lowerResponse.includes('multiple') || lowerResponse.includes('more gifts')) {
-    links.push({
-      text: "Set up automated gift scheduling",
-      url: `/gift-scheduling?setup=auto`,
-      type: 'schedule'
-    });
-  }
-
-  return links;
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -74,7 +16,7 @@ serve(async (req) => {
   try {
     const { message, conversationHistory, context } = await req.json();
     
-    console.log('Enhanced Nicole chat request with contextual linking:', { message, context });
+    console.log('Enhanced Nicole chat request with conservative contextual linking:', { message, context });
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     
@@ -96,37 +38,64 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt with contextual linking awareness
-    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through structured conversation flow and provide helpful next steps.
+    // Enhanced system prompt with conservative contextual linking awareness
+    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through structured conversation flow and provide helpful next steps ONLY when users are ready.
 
 CONVERSATION FLOW GUIDELINES:
-1. GREETING (step: greeting)
+1. GREETING (phase: greeting)
    - Welcome warmly and ask what they're looking for
-   - If they mention a specific person, move to step 2
+   - If they mention a specific person, move to phase 2
+   - NO ACTION LINKS during greeting
 
-2. DISCOVERY (step: discovery) 
+2. GATHERING_INFO (phase: gathering_info) 
    - Ask about the recipient: "Who are you shopping for?"
    - Ask about relationship: "How are they related to you?" (mom, dad, friend, spouse, etc.)
    - Ask about occasion: "What's the occasion?" (birthday, Christmas, anniversary, etc.)
-   - Move to step 3 when you have recipient + occasion
+   - NO ACTION LINKS during information gathering
+   - Move to phase 3 when you have recipient + occasion
 
-3. PREFERENCES (step: preferences)
+3. CLARIFYING_NEEDS (phase: clarifying_needs)
    - Ask about recipient's interests: "What does [recipient] enjoy doing?"
    - Ask about budget: "What's your budget range?"
    - Ask about any specific preferences or restrictions
-   - Move to step 4 when you have enough context
+   - NO ACTION LINKS until user expresses satisfaction
+   - Move to phase 4 when you have enough context
 
-4. SEARCH_READY (step: search_ready)
+4. PROVIDING_SUGGESTIONS (phase: providing_suggestions)
    - Confirm you have enough information
    - Generate a specific search query for the Enhanced Zinc API System
    - Set shouldGenerateSearch: true
+   - Mark hasReceivedSuggestions: true in context
+   - NO ACTION LINKS until user responds to suggestions
 
-CONTEXTUAL ASSISTANCE:
-When appropriate, naturally suggest helpful next steps:
-- After finding products: "Would you like to save these to a wishlist?"
-- When discussing recurring occasions: "Want to schedule this as a recurring gift?"
-- When mentioning friends/family: "Would you like to see what they're interested in?"
-- For budget discussions: "Ready to set up automated gift giving?"
+5. POST_SUGGESTIONS (phase: post_suggestions)
+   - User has seen suggestions and is responding
+   - Listen for satisfaction signals: "perfect", "great", "love these", "exactly what I wanted"
+   - Listen for action readiness: "what now", "next step", "how do I"
+   - ONLY show contextual links if user expresses satisfaction
+
+6. READY_FOR_ACTION (phase: ready_for_action)
+   - User has explicitly expressed intent to take action
+   - User asks about saving, scheduling, or next steps
+   - NOW show relevant contextual links based on their specific request
+
+CONSERVATIVE LINKING RULES:
+- NEVER show action links during greeting, gathering_info, or clarifying_needs phases
+- ONLY show links when user explicitly expresses satisfaction with suggestions
+- ONLY show links when user asks about next steps or taking action
+- Links must be directly relevant to user's expressed intent
+- Suppress all links during early conversation phases
+
+USER INTENT DETECTION:
+- Save items: "save", "add to wishlist", "keep these", "remember these"
+- Schedule gifts: "schedule", "recurring", "remind me", "set up"
+- Find connections: "find friends", "connect with", "see what they like"
+- View profile: "profile", "about them"
+
+SATISFACTION SIGNALS:
+- High satisfaction: "perfect", "great", "love these", "exactly what"
+- Positive feedback: "these look good", "nice options", "I like"
+- Ready for action: "what now", "next step", "how do I"
 
 CONTEXT TRACKING:
 Current context: ${JSON.stringify(context || {})}
@@ -135,7 +104,10 @@ Current context: ${JSON.stringify(context || {})}
 - Occasion: ${context?.occasion || 'Unknown'}
 - Budget: ${context?.budget ? `$${context.budget[0]} - $${context.budget[1]}` : 'Unknown'}
 - Interests: ${context?.interests?.join(', ') || 'Unknown'}
-- Step: ${context?.step || 'greeting'}
+- Phase: ${context?.conversationPhase || 'greeting'}
+- User Intent: ${context?.userIntent || 'none'}
+- Has Received Suggestions: ${context?.hasReceivedSuggestions || false}
+- Satisfaction Signals: ${context?.userSatisfactionSignals?.join(', ') || 'none'}
 
 RESPONSE RULES:
 - Always ask ONE clear follow-up question to move the conversation forward
@@ -144,7 +116,8 @@ RESPONSE RULES:
 - When you have recipient + occasion + some preferences, suggest generating search
 - Use specific product terms that work well with Enhanced Zinc API (brand names, categories)
 - Keep responses concise but engaging
-- Naturally weave in helpful suggestions for next steps when contextually appropriate
+- NEVER suggest action links until user shows satisfaction and readiness
+- Focus on the conversation flow, not on pushing users toward actions
 
 The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
 
@@ -154,7 +127,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       { role: 'user', content: message }
     ];
 
-    console.log('Sending enhanced request to OpenAI with contextual linking capabilities');
+    console.log('Sending enhanced request to OpenAI with conservative contextual linking capabilities');
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -193,17 +166,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       throw new Error('No response from AI service');
     }
 
-    console.log('Enhanced OpenAI response with contextual linking received');
-
-    // Enhanced context for link generation
-    const enhancedContext = {
-      ...context,
-      lastMessage: message,
-      conversationLength: (conversationHistory || []).length
-    };
-
-    // Generate contextual links based on conversation context and AI response
-    const contextualLinks = generateContextualLinks(enhancedContext, aiResponse);
+    console.log('Enhanced OpenAI response with conservative contextual linking received');
 
     // Enhanced response analysis for structured conversation flow
     const shouldGenerateSearch = 
@@ -220,15 +183,24 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       (!context?.interests && !context?.budget)
     );
 
+    // Update context if suggestions are being provided
+    const updatedContext = { ...context };
+    if (shouldGenerateSearch) {
+      updatedContext.hasReceivedSuggestions = true;
+    }
+
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
         shouldGenerateSearch,
         conversationContinues,
-        contextualLinks,
+        contextualLinks: [], // Links will be generated on the frontend based on context
         contextEnhanced: true,
+        conservativeLinkingEnabled: true,
         enhancedZincApiIntegrated: true,
-        step: context?.step || 'discovery'
+        step: context?.step || 'discovery',
+        conversationPhase: context?.conversationPhase || 'greeting',
+        userIntent: context?.userIntent || 'none'
       }),
       { 
         status: 200, 

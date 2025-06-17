@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Sparkles, X, ShoppingCart } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { chatWithNicole, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
@@ -28,6 +27,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const [context, setContext] = useState<NicoleContext>({});
   const [conversationStep, setConversationStep] = useState<string>("greeting");
   const [hasProcessedInitialQuery, setHasProcessedInitialQuery] = useState(false);
+  const [contextualLinks, setContextualLinks] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -108,6 +108,13 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       // Update context based on response
       updateContextFromMessage(userMessage.content, response);
 
+      // Update contextual links from response (using conservative logic)
+      if (response.contextualLinks && response.contextualLinks.length > 0) {
+        setContextualLinks(response.contextualLinks);
+      } else {
+        setContextualLinks([]); // Clear links if none should be shown
+      }
+
       // Handle search generation if Nicole suggests it
       if (response.shouldGenerateSearch) {
         const searchQuery = extractSearchQuery(response.response, context);
@@ -125,6 +132,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         content: "I'm having trouble connecting right now. Let me help you with a basic search instead. What kind of gift are you looking for?"
       };
       setMessages(prev => [...prev, errorMessage]);
+      setContextualLinks([]); // No links during error state
     } finally {
       setIsLoading(false);
     }
@@ -188,7 +196,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   };
 
   const extractSearchQuery = (response: string, context: NicoleContext): string => {
-    // Generate search query from context
     let query = "";
     
     if (context.recipient) {
@@ -281,24 +288,13 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
                 </div>
               </div>
               
-              {/* Show contextual links for assistant messages */}
-              {message.role === "assistant" && index === messages.length - 1 && (
+              {/* Show contextual links only for the last assistant message and when appropriate */}
+              {message.role === "assistant" && 
+               index === messages.length - 1 && 
+               contextualLinks.length > 0 && (
                 <div className="flex justify-start">
                   <div className="max-w-xs">
-                    <ContextualLinks 
-                      links={[
-                        {
-                          text: "Create a wishlist",
-                          url: "/wishlists/create",
-                          type: "wishlist"
-                        },
-                        {
-                          text: "Schedule gifts",
-                          url: "/gift-scheduling",
-                          type: "schedule"
-                        }
-                      ]} 
-                    />
+                    <ContextualLinks links={contextualLinks} />
                   </div>
                 </div>
               )}

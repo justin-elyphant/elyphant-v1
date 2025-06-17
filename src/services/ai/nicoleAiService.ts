@@ -1,10 +1,13 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface NicoleMessage {
   role: 'user' | 'assistant';
   content: string;
 }
+
+export type ConversationPhase = 'greeting' | 'gathering_info' | 'clarifying_needs' | 'providing_suggestions' | 'post_suggestions' | 'ready_for_action';
+
+export type UserIntent = 'save_items' | 'schedule_gifts' | 'find_connections' | 'view_profile' | 'none';
 
 export interface NicoleContext {
   recipient?: string;
@@ -13,7 +16,10 @@ export interface NicoleContext {
   budget?: [number, number];
   interests?: string[];
   step?: string;
-  conversationPhase?: string;
+  conversationPhase?: ConversationPhase;
+  userIntent?: UserIntent;
+  hasReceivedSuggestions?: boolean;
+  userSatisfactionSignals?: string[];
   connections?: any[];
   recipientWishlists?: any[];
   recommendations?: any[];
@@ -33,7 +39,182 @@ export interface NicoleResponse {
   fallback?: boolean;
   error?: string;
   step?: string;
+  conversationPhase?: ConversationPhase;
+  userIntent?: UserIntent;
 }
+
+/**
+ * Detect user intent from their message
+ */
+const detectUserIntent = (message: string): UserIntent => {
+  const lowerMessage = message.toLowerCase();
+  
+  // Intent to save items
+  if (lowerMessage.includes('save') || lowerMessage.includes('add to wishlist') || 
+      lowerMessage.includes('keep these') || lowerMessage.includes('remember these')) {
+    return 'save_items';
+  }
+  
+  // Intent to schedule gifts
+  if (lowerMessage.includes('schedule') || lowerMessage.includes('recurring') || 
+      lowerMessage.includes('remind me') || lowerMessage.includes('set up')) {
+    return 'schedule_gifts';
+  }
+  
+  // Intent to find connections
+  if (lowerMessage.includes('find friends') || lowerMessage.includes('connect with') || 
+      lowerMessage.includes('see what they like')) {
+    return 'find_connections';
+  }
+  
+  // Intent to view profile
+  if (lowerMessage.includes('profile') || lowerMessage.includes('about them')) {
+    return 'view_profile';
+  }
+  
+  return 'none';
+};
+
+/**
+ * Detect satisfaction signals from user message
+ */
+const detectSatisfactionSignals = (message: string): string[] => {
+  const lowerMessage = message.toLowerCase();
+  const signals: string[] = [];
+  
+  if (lowerMessage.includes('perfect') || lowerMessage.includes('great') || 
+      lowerMessage.includes('love these') || lowerMessage.includes('exactly what')) {
+    signals.push('high_satisfaction');
+  }
+  
+  if (lowerMessage.includes('these look good') || lowerMessage.includes('nice options') || 
+      lowerMessage.includes('i like')) {
+    signals.push('positive_feedback');
+  }
+  
+  if (lowerMessage.includes('what now') || lowerMessage.includes('next step') || 
+      lowerMessage.includes('how do i')) {
+    signals.push('ready_for_action');
+  }
+  
+  return signals;
+};
+
+/**
+ * Determine conversation phase based on context and message
+ */
+const determineConversationPhase = (context: NicoleContext, message: string): ConversationPhase => {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check if user is ready for action
+  if (context.userSatisfactionSignals?.includes('ready_for_action') || 
+      context.userIntent !== 'none') {
+    return 'ready_for_action';
+  }
+  
+  // Check if user has received suggestions and is responding
+  if (context.hasReceivedSuggestions && 
+      (context.userSatisfactionSignals?.length || 0) > 0) {
+    return 'post_suggestions';
+  }
+  
+  // Check if we're providing suggestions
+  if (context.step === 'search_ready' || context.hasReceivedSuggestions) {
+    return 'providing_suggestions';
+  }
+  
+  // Check if we're clarifying needs (have some info but need more)
+  if ((context.recipient || context.relationship) && context.occasion && 
+      (!context.interests && !context.budget)) {
+    return 'clarifying_needs';
+  }
+  
+  // Check if we're gathering basic info
+  if (context.recipient || context.relationship || context.occasion) {
+    return 'gathering_info';
+  }
+  
+  return 'greeting';
+};
+
+/**
+ * Generate contextual links based on conversation state and user intent
+ */
+const generateConservativeContextualLinks = (context: NicoleContext, aiResponse: string): ContextualLink[] => {
+  const links: ContextualLink[] = [];
+  const phase = context.conversationPhase || 'greeting';
+  const intent = context.userIntent || 'none';
+  
+  // Only show links in appropriate phases
+  if (phase === 'greeting' || phase === 'gathering_info') {
+    return []; // No links during early conversation
+  }
+  
+  // Show links based on explicit user intent
+  if (intent === 'save_items' && context.hasReceivedSuggestions) {
+    if (context.recipient) {
+      links.push({
+        text: `Save these gifts for ${context.recipient}`,
+        url: `/wishlists/create?recipient=${encodeURIComponent(context.recipient)}&occasion=${encodeURIComponent(context.occasion || '')}`,
+        type: 'wishlist'
+      });
+    } else {
+      links.push({
+        text: "Create a wishlist for these items",
+        url: `/wishlists/create`,
+        type: 'wishlist'
+      });
+    }
+  }
+  
+  if (intent === 'schedule_gifts' && context.recipient && context.occasion) {
+    links.push({
+      text: `Schedule recurring ${context.occasion} gifts for ${context.recipient}`,
+      url: `/gift-scheduling/create?recipient=${encodeURIComponent(context.recipient)}&occasion=${encodeURIComponent(context.occasion)}`,
+      type: 'schedule'
+    });
+  }
+  
+  if (intent === 'find_connections') {
+    links.push({
+      text: "Browse your friends' wishlists",
+      url: `/connections?intent=gift-giving`,
+      type: 'connections'
+    });
+  }
+  
+  // Show contextual links only after user shows satisfaction with suggestions
+  if (phase === 'post_suggestions' && context.userSatisfactionSignals?.includes('high_satisfaction')) {
+    if (context.recipient && !links.some(l => l.type === 'wishlist')) {
+      links.push({
+        text: `Save these to a wishlist for ${context.recipient}`,
+        url: `/wishlists/create?recipient=${encodeURIComponent(context.recipient)}`,
+        type: 'wishlist'
+      });
+    }
+  }
+  
+  // Show action-ready links only when user signals readiness
+  if (phase === 'ready_for_action') {
+    if (!links.some(l => l.type === 'wishlist') && context.hasReceivedSuggestions) {
+      links.push({
+        text: "Save these items to a wishlist",
+        url: `/wishlists/create`,
+        type: 'wishlist'
+      });
+    }
+    
+    if (!links.some(l => l.type === 'schedule') && context.recipient && context.occasion) {
+      links.push({
+        text: "Set up recurring gift reminders",
+        url: `/gift-scheduling/create`,
+        type: 'schedule'
+      });
+    }
+  }
+  
+  return links;
+};
 
 /**
  * Send a message to Nicole AI and get a response with enhanced conversation flow and contextual links
@@ -44,11 +225,25 @@ export const chatWithNicole = async (
   context: NicoleContext = {}
 ): Promise<NicoleResponse> => {
   try {
-    console.log('Sending message to Nicole AI with contextual linking:', message);
+    console.log('Sending message to Nicole AI with conservative contextual linking:', message);
     console.log('Current context:', context);
     
     // Enhance context by extracting information from the message
     const enhancedContext = enhanceContextFromMessage(message, context);
+    
+    // Detect user intent and satisfaction signals
+    const userIntent = detectUserIntent(message);
+    const satisfactionSignals = detectSatisfactionSignals(message);
+    
+    // Update context with new information
+    enhancedContext.userIntent = userIntent;
+    enhancedContext.userSatisfactionSignals = [
+      ...(enhancedContext.userSatisfactionSignals || []),
+      ...satisfactionSignals
+    ];
+    
+    // Determine conversation phase
+    enhancedContext.conversationPhase = determineConversationPhase(enhancedContext, message);
     
     const { data, error } = await supabase.functions.invoke('nicole-chat', {
       body: {
@@ -63,31 +258,28 @@ export const chatWithNicole = async (
       throw new Error(`Nicole AI error: ${error.message}`);
     }
 
-    console.log('Nicole AI response with contextual links received:', data);
-    return data as NicoleResponse;
+    console.log('Nicole AI response with conservative contextual links received:', data);
+    
+    // Generate conservative contextual links
+    const contextualLinks = generateConservativeContextualLinks(enhancedContext, data.response);
+    
+    return {
+      ...data,
+      contextualLinks
+    } as NicoleResponse;
 
   } catch (error) {
     console.error('Error calling Nicole AI:', error);
     
-    // Return enhanced fallback response with helpful suggestions
+    // Return enhanced fallback response with minimal links
     return {
       response: "I'm having trouble connecting to my AI service right now. But I can still help! Try searching for specific items like 'gifts for mom birthday' or 'Dad Christmas tech gadgets'. What type of gift are you looking for?",
       shouldGenerateSearch: false,
       conversationContinues: true,
-      contextualLinks: [
-        {
-          text: "Browse popular gift categories",
-          url: "/marketplace",
-          type: "wishlist"
-        },
-        {
-          text: "Create a wishlist",
-          url: "/wishlists/create",
-          type: "wishlist"
-        }
-      ],
+      contextualLinks: [], // No links during fallback
       fallback: true,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      conversationPhase: 'greeting'
     };
   }
 };

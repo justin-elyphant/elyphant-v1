@@ -21,11 +21,43 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
   
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
+  const urlSearchTerm = searchParams.get("search") || searchTerm;
 
-  // Use provided totalItems or fallback to products length
-  const displayCount = totalItems !== undefined ? totalItems : (products?.length || 0);
+  // Get the actual product count - prioritize totalItems prop, then products length
+  const actualProductCount = totalItems !== undefined ? totalItems : (products?.length || 0);
+  
+  // Filter products to match current search/category if no totalItems provided
+  const filteredCount = totalItems !== undefined ? totalItems : 
+    products?.filter(product => {
+      if (urlSearchTerm) {
+        const searchLower = urlSearchTerm.toLowerCase();
+        const matchesSearch = (
+          product.title?.toLowerCase().includes(searchLower) ||
+          product.name?.toLowerCase().includes(searchLower) ||
+          product.description?.toLowerCase().includes(searchLower) ||
+          product.category?.toLowerCase().includes(searchLower)
+        );
+        if (!matchesSearch) return false;
+      }
+      
+      if (categoryParam) {
+        const categoryLower = categoryParam.toLowerCase();
+        const productCategory = (product.category || '').toLowerCase();
+        if (!productCategory.includes(categoryLower)) return false;
+      }
+      
+      if (brandParam) {
+        const brandLower = brandParam.toLowerCase();
+        const productBrand = (product.brand || product.vendor || '').toLowerCase();
+        if (!productBrand.includes(brandLower)) return false;
+      }
+      
+      return true;
+    })?.length || 0;
 
-  const hasActiveFilters = Boolean(searchTerm || categoryParam || brandParam);
+  const displayCount = filteredCount;
+
+  const hasActiveFilters = Boolean(urlSearchTerm || categoryParam || brandParam);
 
   const handleClearAll = () => {
     const newParams = new URLSearchParams();
@@ -34,7 +66,7 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
 
   const getActiveFiltersText = () => {
     const filters = [];
-    if (searchTerm) filters.push(`"${searchTerm}"`);
+    if (urlSearchTerm) filters.push(`"${urlSearchTerm}"`);
     if (categoryParam) filters.push(categoryParam);
     if (brandParam) filters.push(brandParam);
     return filters.join(", ");
@@ -43,8 +75,8 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
   const getDisplayText = () => {
     if (isMobile) {
       // On mobile, show the search term or "Filtered" if other filters are active
-      if (searchTerm) {
-        return searchTerm;
+      if (urlSearchTerm) {
+        return urlSearchTerm;
       } else if (categoryParam || brandParam) {
         return "Filtered results";
       }

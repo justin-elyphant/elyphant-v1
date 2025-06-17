@@ -63,7 +63,7 @@ const MarketplaceContent = ({
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center max-w-md mx-auto">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="h-12 w-12 text-re-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
           <p className="text-muted-foreground mb-4">{error}</p>
           <div className="flex gap-2 justify-center">
@@ -138,7 +138,7 @@ const MarketplaceContent = ({
                     setViewMode={setViewMode}
                     sortOption={filters.sortBy}
                     setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                    totalItems={filteredProducts.length}
+                    // Remove the totalItems prop to avoid duplicate display
                     showFilters={showFilters}
                     setShowFilters={setShowFilters}
                     isMobile={isMobile}
@@ -152,7 +152,7 @@ const MarketplaceContent = ({
                   setViewMode={setViewMode}
                   sortOption={filters.sortBy}
                   setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                  totalItems={filteredProducts.length}
+                  // Remove the totalItems prop to avoid duplicate display
                   showFilters={showFilters}
                   setShowFilters={setShowFilters}
                   isMobile={isMobile}

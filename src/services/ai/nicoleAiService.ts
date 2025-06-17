@@ -19,17 +19,24 @@ export interface NicoleContext {
   recommendations?: any[];
 }
 
+export interface ContextualLink {
+  text: string;
+  url: string;
+  type: 'wishlist' | 'schedule' | 'profile' | 'connections';
+}
+
 export interface NicoleResponse {
   response: string;
   shouldGenerateSearch: boolean;
   conversationContinues: boolean;
+  contextualLinks?: ContextualLink[];
   fallback?: boolean;
   error?: string;
   step?: string;
 }
 
 /**
- * Send a message to Nicole AI and get a response with enhanced conversation flow
+ * Send a message to Nicole AI and get a response with enhanced conversation flow and contextual links
  */
 export const chatWithNicole = async (
   message: string,
@@ -37,7 +44,7 @@ export const chatWithNicole = async (
   context: NicoleContext = {}
 ): Promise<NicoleResponse> => {
   try {
-    console.log('Sending message to Nicole AI:', message);
+    console.log('Sending message to Nicole AI with contextual linking:', message);
     console.log('Current context:', context);
     
     // Enhance context by extracting information from the message
@@ -56,7 +63,7 @@ export const chatWithNicole = async (
       throw new Error(`Nicole AI error: ${error.message}`);
     }
 
-    console.log('Nicole AI response received:', data);
+    console.log('Nicole AI response with contextual links received:', data);
     return data as NicoleResponse;
 
   } catch (error) {
@@ -67,6 +74,18 @@ export const chatWithNicole = async (
       response: "I'm having trouble connecting to my AI service right now. But I can still help! Try searching for specific items like 'gifts for mom birthday' or 'Dad Christmas tech gadgets'. What type of gift are you looking for?",
       shouldGenerateSearch: false,
       conversationContinues: true,
+      contextualLinks: [
+        {
+          text: "Browse popular gift categories",
+          url: "/marketplace",
+          type: "wishlist"
+        },
+        {
+          text: "Create a wishlist",
+          url: "/wishlists/create",
+          type: "wishlist"
+        }
+      ],
       fallback: true,
       error: error instanceof Error ? error.message : 'Unknown error'
     };

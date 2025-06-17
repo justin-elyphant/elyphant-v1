@@ -8,8 +8,65 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ContextualLink {
+  text: string;
+  url: string;
+  type: 'wishlist' | 'schedule' | 'profile' | 'connections';
+}
+
+const generateContextualLinks = (context: any, aiResponse: string): ContextualLink[] => {
+  const links: ContextualLink[] = [];
+  const lowerResponse = aiResponse.toLowerCase();
+  const lowerMessage = context.lastMessage?.toLowerCase() || '';
+
+  // Post-search context - offer wishlist creation
+  if (context.shouldGenerateSearch || lowerResponse.includes('found') || lowerResponse.includes('recommendations')) {
+    if (context.recipient) {
+      links.push({
+        text: `Add these to a wishlist for ${context.recipient}`,
+        url: `/wishlists/create?recipient=${encodeURIComponent(context.recipient)}&occasion=${encodeURIComponent(context.occasion || '')}`,
+        type: 'wishlist'
+      });
+    } else {
+      links.push({
+        text: "Save these items to a wishlist",
+        url: `/wishlists/create`,
+        type: 'wishlist'
+      });
+    }
+  }
+
+  // Gift scheduling context
+  if ((lowerResponse.includes('schedule') || lowerResponse.includes('recurring') || lowerResponse.includes('remind')) && context.recipient && context.occasion) {
+    links.push({
+      text: `Schedule recurring gifts for ${context.recipient}`,
+      url: `/gift-scheduling/create?recipient=${encodeURIComponent(context.recipient)}&occasion=${encodeURIComponent(context.occasion)}`,
+      type: 'schedule'
+    });
+  }
+
+  // Friend/connection context
+  if ((lowerResponse.includes('friend') || lowerResponse.includes('connect') || lowerMessage.includes('friend')) && !context.selectedFriend) {
+    links.push({
+      text: "Browse your friends' wishlists",
+      url: `/connections?intent=gift-giving`,
+      type: 'connections'
+    });
+  }
+
+  // Budget/multiple gifts context
+  if (lowerResponse.includes('budget') || lowerResponse.includes('multiple') || lowerResponse.includes('more gifts')) {
+    links.push({
+      text: "Set up automated gift scheduling",
+      url: `/gift-scheduling?setup=auto`,
+      type: 'schedule'
+    });
+  }
+
+  return links;
+};
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -17,9 +74,8 @@ serve(async (req) => {
   try {
     const { message, conversationHistory, context } = await req.json();
     
-    console.log('Enhanced Nicole chat request:', { message, context });
+    console.log('Enhanced Nicole chat request with contextual linking:', { message, context });
 
-    // Get OpenAI API key from environment
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openaiApiKey) {
@@ -36,13 +92,12 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client for database operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt for structured conversation flow
-    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through structured conversation flow.
+    // Enhanced system prompt with contextual linking awareness
+    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through structured conversation flow and provide helpful next steps.
 
 CONVERSATION FLOW GUIDELINES:
 1. GREETING (step: greeting)
@@ -66,6 +121,13 @@ CONVERSATION FLOW GUIDELINES:
    - Generate a specific search query for the Enhanced Zinc API System
    - Set shouldGenerateSearch: true
 
+CONTEXTUAL ASSISTANCE:
+When appropriate, naturally suggest helpful next steps:
+- After finding products: "Would you like to save these to a wishlist?"
+- When discussing recurring occasions: "Want to schedule this as a recurring gift?"
+- When mentioning friends/family: "Would you like to see what they're interested in?"
+- For budget discussions: "Ready to set up automated gift giving?"
+
 CONTEXT TRACKING:
 Current context: ${JSON.stringify(context || {})}
 - Recipient: ${context?.recipient || 'Unknown'}
@@ -82,26 +144,18 @@ RESPONSE RULES:
 - When you have recipient + occasion + some preferences, suggest generating search
 - Use specific product terms that work well with Enhanced Zinc API (brand names, categories)
 - Keep responses concise but engaging
-
-SEARCH QUERY GENERATION:
-When ready to search, create specific queries like:
-- "gifts for mom birthday kitchen cooking" 
-- "Dad Christmas tech gadgets under $100"
-- "wife anniversary jewelry romantic"
-- "friend birthday Nike shoes sneakers"
+- Naturally weave in helpful suggestions for next steps when contextually appropriate
 
 The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
 
-    // Build messages array for OpenAI
     const messages = [
       { role: 'system', content: systemPrompt },
       ...(conversationHistory || []),
       { role: 'user', content: message }
     ];
 
-    console.log('Sending enhanced request to OpenAI with structured conversation flow');
+    console.log('Sending enhanced request to OpenAI with contextual linking capabilities');
 
-    // Call OpenAI API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -139,7 +193,17 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       throw new Error('No response from AI service');
     }
 
-    console.log('Enhanced OpenAI response with structured flow received');
+    console.log('Enhanced OpenAI response with contextual linking received');
+
+    // Enhanced context for link generation
+    const enhancedContext = {
+      ...context,
+      lastMessage: message,
+      conversationLength: (conversationHistory || []).length
+    };
+
+    // Generate contextual links based on conversation context and AI response
+    const contextualLinks = generateContextualLinks(enhancedContext, aiResponse);
 
     // Enhanced response analysis for structured conversation flow
     const shouldGenerateSearch = 
@@ -150,7 +214,6 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       context?.step === 'search_ready' ||
       (context?.recipient && context?.occasion && (context?.interests || context?.budget));
 
-    // Determine if conversation should continue based on missing context
     const conversationContinues = !shouldGenerateSearch && (
       !context?.recipient || 
       !context?.occasion || 
@@ -162,6 +225,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
         response: aiResponse,
         shouldGenerateSearch,
         conversationContinues,
+        contextualLinks,
         contextEnhanced: true,
         enhancedZincApiIntegrated: true,
         step: context?.step || 'discovery'

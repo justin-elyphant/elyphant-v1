@@ -1,6 +1,10 @@
 
-import React, { useEffect, useRef } from "react";
-import { useGiftAdvisorBot } from "./hooks/useGiftAdvisorBot";
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Send } from "lucide-react";
+import { ConversationStep } from "./hooks/useGiftAdvisorBot";
 import WelcomeStep from "./steps/WelcomeStep";
 import RecipientSelectionStep from "./steps/RecipientSelectionStep";
 import FriendSelectedStep from "./steps/FriendSelectedStep";
@@ -11,32 +15,72 @@ import GeneratingStep from "./steps/GeneratingStep";
 import ResultsStep from "./steps/ResultsStep";
 import ResultsPreviewStep from "./steps/ResultsPreviewStep";
 import SignUpPromptStep from "./steps/SignUpPromptStep";
+import ContextualLinks from "../ai/conversation/ContextualLinks";
+import { ContextualLink } from "@/services/ai/nicoleAiService";
 
-type ConversationFlowProps = ReturnType<typeof useGiftAdvisorBot>;
+interface ConversationFlowProps {
+  botState: any;
+  connections: any[];
+  nextStep: (step: ConversationStep, updates?: any) => void;
+  selectFriend: (friend: any) => void;
+  setRecipientDetails: (details: any) => void;
+  setOccasion: (occasion: string) => void;
+  setBudget: (budget: { min: number; max: number }) => void;
+  generateSearchQuery: () => void;
+  isLoading: boolean;
+}
 
-const ConversationFlow = (props: ConversationFlowProps) => {
+const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
   const { botState } = props;
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to top when step changes
-  useEffect(() => {
-    if (containerRef.current) {
-      // Scroll to top of the conversation flow
-      containerRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-      
-      // Also try to scroll the parent dialog content if it exists
-      const dialogContent = containerRef.current.closest('[role="dialog"]');
-      if (dialogContent) {
-        dialogContent.scrollTo({
-          top: 0,
-          behavior: 'smooth'
+  // Generate contextual links based on current step
+  const getContextualLinks = (): ContextualLink[] => {
+    const links: ContextualLink[] = [];
+
+    switch (botState.step) {
+      case "recipient-selection":
+        links.push({
+          text: "Browse your connections",
+          url: "/connections",
+          type: "connections"
         });
-      }
+        break;
+      case "occasion":
+        if (botState.selectedFriend || botState.recipientDetails) {
+          links.push({
+            text: "View their wishlist",
+            url: botState.selectedFriend ? `/profile/${botState.selectedFriend.id}` : "/wishlists",
+            type: "wishlist"
+          });
+        }
+        break;
+      case "budget":
+        links.push({
+          text: "Set up recurring gifts",
+          url: "/gift-scheduling/create",
+          type: "schedule"
+        });
+        break;
+      case "results":
+        if (botState.searchQuery) {
+          links.push(
+            {
+              text: "Save these to a wishlist",
+              url: `/wishlists/create?query=${encodeURIComponent(botState.searchQuery)}`,
+              type: "wishlist"
+            },
+            {
+              text: "Schedule as recurring gift",
+              url: `/gift-scheduling/create?query=${encodeURIComponent(botState.searchQuery)}`,
+              type: "schedule"
+            }
+          );
+        }
+        break;
     }
-  }, [botState.step]);
+
+    return links;
+  };
 
   const renderStep = () => {
     switch (botState.step) {
@@ -65,12 +109,21 @@ const ConversationFlow = (props: ConversationFlowProps) => {
     }
   };
 
+  const contextualLinks = getContextualLinks();
+
   return (
-    <div 
-      ref={containerRef}
-      className="h-full overflow-y-auto"
-    >
-      {renderStep()}
+    <div className="h-full flex flex-col">
+      <div className="flex-1 overflow-y-auto">
+        {renderStep()}
+      </div>
+      
+      {/* Show contextual links at the bottom */}
+      {contextualLinks.length > 0 && (
+        <div className="p-4 border-t bg-gray-50">
+          <p className="text-xs text-gray-600 mb-2">Quick actions:</p>
+          <ContextualLinks links={contextualLinks} />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Send, Sparkles, X, ShoppingCart } from "lucide-react";
 import { chatWithNicole, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
+import ContextualLinks from "../conversation/ContextualLinks";
 
 interface EnhancedNicoleConversationEngineProps {
   initialQuery?: string;
@@ -70,7 +70,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   }, [initialQuery, user, hasProcessedInitialQuery]);
 
-  const handleSendMessage = async (messageContent?: string) => {
+  const sendMessage = async (messageContent?: string) => {
     const messageText = messageContent || currentMessage;
     if (!messageText.trim() || isLoading) return;
 
@@ -261,23 +261,46 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={cn(
-                "flex",
-                message.role === "user" ? "justify-end" : "justify-start"
-              )}
-            >
+            <div key={index}>
               <div
                 className={cn(
-                  "max-w-xs px-3 py-2 rounded-lg text-sm",
-                  message.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-900"
+                  "flex",
+                  message.role === "user" ? "justify-end" : "justify-start"
                 )}
               >
-                {message.content}
+                <div
+                  className={cn(
+                    "max-w-xs px-3 py-2 rounded-lg text-sm",
+                    message.role === "user"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-900"
+                  )}
+                >
+                  {message.content}
+                </div>
               </div>
+              
+              {/* Show contextual links for assistant messages */}
+              {message.role === "assistant" && index === messages.length - 1 && (
+                <div className="flex justify-start">
+                  <div className="max-w-xs">
+                    <ContextualLinks 
+                      links={[
+                        {
+                          text: "Create a wishlist",
+                          url: "/wishlists/create",
+                          type: "wishlist"
+                        },
+                        {
+                          text: "Schedule gifts",
+                          url: "/gift-scheduling",
+                          type: "schedule"
+                        }
+                      ]} 
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           
@@ -327,7 +350,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               disabled={isLoading}
             />
             <Button
-              onClick={() => handleSendMessage()}
+              onClick={() => sendMessage()}
               disabled={!currentMessage.trim() || isLoading}
               size="sm"
               className="bg-purple-500 hover:bg-purple-600"

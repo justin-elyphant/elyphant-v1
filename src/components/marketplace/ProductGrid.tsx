@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
-import StandardProductGrid from "./components/StandardProductGrid";
-import GroupedProductSection from "./components/GroupedProductSection";
-import { useProductDisplay } from "./hooks/useProductDisplay";
+import StandardProductGrid from "./product-grid/components/StandardProductGrid";
+import GroupedProductSection from "./product-grid/components/GroupedProductSection";
+import { useProductDisplay } from "./product-grid/hooks/useProductDisplay";
 
 interface ProductGridProps {
   products: Product[];

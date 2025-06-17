@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -5,15 +6,19 @@ import {
   List,
   SlidersHorizontal,
 } from "lucide-react";
-import { Select } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface MarketplaceToolbarProps {
   viewMode: "grid" | "list";
   setViewMode: (mode: "grid" | "list") => void;
   sortOption: string;
   setSortOption: (option: string) => void;
-  // Make totalItems optional - we'll remove this display
-  totalItems?: number;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
   isMobile?: boolean;
@@ -26,7 +31,6 @@ const MarketplaceToolbar: React.FC<MarketplaceToolbarProps> = ({
   setViewMode,
   sortOption,
   setSortOption,
-  // totalItems, - Remove this from destructuring since we won't use it
   showFilters,
   setShowFilters,
   isMobile = false,
@@ -49,16 +53,17 @@ const MarketplaceToolbar: React.FC<MarketplaceToolbarProps> = ({
 
       <div className="flex items-center gap-3 ml-auto">
         {/* Sort options */}
-        <Select 
-          value={sortOption} 
-          onValueChange={setSortOption}
-          className="w-40"
-        >
-          <option value="relevance">Relevance</option>
-          <option value="price-low-high">Price: Low to High</option>
-          <option value="price-high-low">Price: High to Low</option>
-          <option value="newest">Newest</option>
-          <option value="rating">Highest Rated</option>
+        <Select value={sortOption} onValueChange={setSortOption}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="relevance">Relevance</SelectItem>
+            <SelectItem value="price-low-high">Price: Low to High</SelectItem>
+            <SelectItem value="price-high-low">Price: High to Low</SelectItem>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="rating">Highest Rated</SelectItem>
+          </SelectContent>
         </Select>
 
         {/* View mode toggle */}

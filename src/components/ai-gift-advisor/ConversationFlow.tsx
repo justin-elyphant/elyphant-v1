@@ -19,15 +19,19 @@ import ContextualLinks from "../ai/conversation/ContextualLinks";
 import { ContextualLink } from "@/services/ai/nicoleAiService";
 
 interface ConversationFlowProps {
+  isOpen: boolean;
+  isLoading: boolean;
   botState: any;
   connections: any[];
+  openBot: () => void;
+  closeBot: () => void;
+  resetBot: () => void;
   nextStep: (step: ConversationStep, updates?: any) => void;
   selectFriend: (friend: any) => void;
   setRecipientDetails: (details: any) => void;
   setOccasion: (occasion: string) => void;
   setBudget: (budget: { min: number; max: number }) => void;
   generateSearchQuery: () => void;
-  isLoading: boolean;
 }
 
 const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {

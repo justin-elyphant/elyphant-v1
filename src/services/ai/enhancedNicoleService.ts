@@ -13,11 +13,16 @@ export interface WishlistRecommendation {
   item: {
     id: string;
     title: string;
+    name?: string;
     price: number;
     image_url?: string;
+    image?: string;
+    brand?: string;
   };
   reasoning: string;
   matchScore: number;
+  priority?: 'high' | 'medium' | 'low';
+  inBudget?: boolean;
 }
 
 export interface EnhancedNicoleContext {
@@ -100,15 +105,24 @@ export class EnhancedNicoleService {
         for (const wishlist of context.recipientWishlists) {
           if (wishlist.items) {
             for (const item of wishlist.items.slice(0, 3)) {
+              const price = item.price || 0;
+              const isInBudget = context.budget ? 
+                price >= context.budget[0] && price <= context.budget[1] : true;
+              
               recommendations.push({
                 item: {
                   id: item.id || Math.random().toString(),
                   title: item.title || item.name || 'Wishlist Item',
-                  price: item.price || 0,
-                  image_url: item.image_url
+                  name: item.name,
+                  price: price,
+                  image_url: item.image_url,
+                  image: item.image,
+                  brand: item.brand
                 },
                 reasoning: `This matches their interests in ${context.interests?.join(', ') || 'their preferences'}`,
-                matchScore: Math.random() * 0.3 + 0.7 // 0.7-1.0 range
+                matchScore: Math.random() * 0.3 + 0.7, // 0.7-1.0 range
+                priority: price > 100 ? 'high' : price > 50 ? 'medium' : 'low',
+                inBudget: isInBudget
               });
             }
           }

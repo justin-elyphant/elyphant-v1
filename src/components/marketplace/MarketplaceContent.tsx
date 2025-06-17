@@ -100,7 +100,7 @@ const MarketplaceContent = ({
   // Main content
   return (
     <div className="flex flex-col">
-      {/* Results Summary Bar */}
+      {/* Results Summary Bar - Only show this one */}
       <ResultsSummaryBar 
         totalItems={filteredProducts.length}
         searchTerm={urlSearchTerm}
@@ -138,7 +138,6 @@ const MarketplaceContent = ({
                     setViewMode={setViewMode}
                     sortOption={filters.sortBy}
                     setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                    // Remove the totalItems prop to avoid duplicate display
                     showFilters={showFilters}
                     setShowFilters={setShowFilters}
                     isMobile={isMobile}
@@ -152,7 +151,6 @@ const MarketplaceContent = ({
                   setViewMode={setViewMode}
                   sortOption={filters.sortBy}
                   setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                  // Remove the totalItems prop to avoid duplicate display
                   showFilters={showFilters}
                   setShowFilters={setShowFilters}
                   isMobile={isMobile}

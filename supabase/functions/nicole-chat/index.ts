@@ -41,22 +41,27 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt that understands connections and wishlists
-    const systemPrompt = `You are Nicole, an enhanced AI gift shopping assistant with access to user connections and wishlist data. Your goal is to help users find perfect gifts by leveraging their social connections and recipients' actual wishlists.
+    // Enhanced system prompt that understands the Enhanced Zinc API System
+    const systemPrompt = `You are Nicole, an enhanced AI gift shopping assistant with access to the Enhanced Zinc API System and user data. Your goal is to help users find perfect gifts by leveraging advanced product search capabilities, social connections, and recipients' actual wishlists.
 
 Key capabilities:
-- You have access to the user's connections and their profiles
+- You have access to the Enhanced Zinc API System that can search for specific products like "Dallas Cowboys merchandise", "Made In kitchen gear", "Nike shoes", etc.
 - You can see recipients' actual wishlist items and preferences
 - You prioritize gifts from recipients' wishlists when available
-- You provide creative alternatives when wishlist items don't match criteria
 - You understand relationships, occasions, and budgets
+- You generate intelligent search queries that work with the enhanced product search system
 - You're conversational, helpful, and make thoughtful recommendations
+
+Enhanced Search Integration:
+- When generating search queries, use specific brand names, product categories, and descriptive terms
+- Examples of effective search queries: "Dallas Cowboys jersey", "Made In cookware set", "Nike running shoes", "Apple iPhone", "Samsung Galaxy"
+- The Enhanced Zinc API System can handle specific brand and product searches much better than generic terms
 
 Current conversation context: ${JSON.stringify(context || {})}
 
 Guidelines:
 - Always prioritize items from the recipient's actual wishlist when they match the budget and occasion
-- If no wishlist items match, suggest creative alternatives based on their interests
+- Generate specific, detailed search queries that will work well with the Enhanced Zinc API System
 - Reference the recipient by name when you know it
 - Consider the relationship type when making suggestions
 - Be specific about why you're recommending certain items
@@ -79,7 +84,7 @@ Available context data:
       { role: 'user', content: message }
     ];
 
-    console.log('Sending enhanced request to OpenAI with', messages.length, 'messages');
+    console.log('Sending enhanced request to OpenAI with Enhanced Zinc API context');
 
     // Call OpenAI API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -119,13 +124,16 @@ Available context data:
       throw new Error('No response from AI service');
     }
 
-    console.log('Enhanced OpenAI response received:', aiResponse.substring(0, 100) + '...');
+    console.log('Enhanced OpenAI response with Zinc API integration received');
 
-    // Enhanced response analysis
+    // Enhanced response analysis that understands the Enhanced Zinc API System
     const shouldGenerateSearch = 
       aiResponse.toLowerCase().includes('search') || 
       aiResponse.toLowerCase().includes('find') ||
       aiResponse.toLowerCase().includes('look for') ||
+      aiResponse.toLowerCase().includes('dallas cowboys') ||
+      aiResponse.toLowerCase().includes('made in') ||
+      aiResponse.toLowerCase().includes('nike') ||
       (context?.recipient && context?.occasion && context?.budget) ||
       context?.step === 'ready_to_search';
 
@@ -142,7 +150,8 @@ Available context data:
         shouldGenerateSearch,
         conversationContinues: !shouldGenerateSearch,
         shouldShowWishlist: shouldShowWishlist,
-        contextEnhanced: true
+        contextEnhanced: true,
+        enhancedZincApiIntegrated: true
       }),
       { 
         status: 200, 

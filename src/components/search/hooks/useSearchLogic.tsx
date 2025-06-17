@@ -14,10 +14,13 @@ interface SearchLogicProps {
 
 const mockSuggestions = [
   "Birthday gifts for mom",
-  "Christmas presents under $50",
+  "Christmas presents under $50", 
   "Tech gifts for dad",
   "Graduation gifts",
-  "Anniversary presents"
+  "Anniversary presents",
+  "Dallas Cowboys merchandise",
+  "Made In kitchen gear",
+  "Nike running shoes"
 ];
 
 export const useSearchLogic = ({
@@ -32,15 +35,18 @@ export const useSearchLogic = ({
   useEffect(() => {
     const searchUnified = async () => {
       if (query.length > 1 && !isNicoleMode) {
-        console.log(`Starting unified search for: "${query}"`);
+        console.log(`Enhanced Search Logic: Starting unified search for: "${query}"`);
         setSearchLoading(true);
         try {
           const results = await unifiedSearch(query, {
             maxResults: 10,
-            currentUserId: user?.id
+            currentUserId: user?.id,
+            includeFriends: true,
+            includeProducts: true,
+            includeBrands: true
           });
           
-          console.log('Unified search results:', {
+          console.log('Enhanced Search Logic: Unified search results:', {
             friends: results.friends.length,
             products: results.products.length,
             brands: results.brands.length,
@@ -49,9 +55,9 @@ export const useSearchLogic = ({
           
           // Log the actual friend results for debugging
           if (results.friends.length > 0) {
-            console.log('Friend results found:', results.friends);
+            console.log('Enhanced Search Logic: Friend results found:', results.friends);
           } else {
-            console.log('No friend results found for query:', query);
+            console.log('Enhanced Search Logic: No friend results found for query:', query);
           }
           
           setUnifiedResults({
@@ -61,16 +67,16 @@ export const useSearchLogic = ({
           });
           
           const hasResults = results.friends.length > 0 || results.products.length > 0 || results.brands.length > 0;
-          console.log('Has unified results:', hasResults);
+          console.log('Enhanced Search Logic: Has unified results:', hasResults);
           setShowSuggestions(hasResults);
         } catch (error) {
-          console.error('Unified search error:', error);
+          console.error('Enhanced Search Logic: Unified search error:', error);
           setShowSuggestions(false);
         } finally {
           setSearchLoading(false);
         }
       } else if (query.length > 0 && isNicoleMode) {
-        // Nicole mode - show traditional suggestions
+        // Nicole mode - show enhanced suggestions that include specific brands/products
         const q = query.toLowerCase();
         const matches = mockSuggestions
           .filter(s => s.toLowerCase().includes(q))

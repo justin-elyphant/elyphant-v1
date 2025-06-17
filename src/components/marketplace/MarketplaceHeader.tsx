@@ -1,68 +1,53 @@
 
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { Search, Filter } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useSearchParams } from "react-router-dom";
+import { getCategoryName } from "./hooks/utils/category/categoryNames";
 
-const MarketplaceHeader = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+interface MarketplaceHeaderProps {
+  totalResults?: number;
+  currentCategory?: string | null;
+  filteredProducts?: any[];
+}
+
+const MarketplaceHeader = ({
+  totalResults,
+  currentCategory,
+  filteredProducts = [],
+}: MarketplaceHeaderProps) => {
   const isMobile = useIsMobile();
-  const [searchInput, setSearchInput] = useState("");
-
-  // Get current search term from URL
-  const searchParams = new URLSearchParams(location.search);
-  const currentSearch = searchParams.get("search") || "";
-
-  React.useEffect(() => {
-    setSearchInput(currentSearch);
-  }, [currentSearch]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchInput.trim()) {
-      const newParams = new URLSearchParams();
-      newParams.set("search", searchInput.trim());
-      navigate(`/marketplace?${newParams.toString()}`);
-    }
-  };
-
-  const handleClearSearch = () => {
-    setSearchInput("");
-    navigate("/marketplace");
-  };
+  const [searchParams] = useSearchParams();
+  
+  // Get current state from URL params
+  const searchParam = searchParams.get("search");
+  const categoryParam = searchParams.get("category") || currentCategory;
+  
+  // Only show header content when there's no active search or category
+  // since we have the "Showing results for: x" section that handles this
+  const shouldShowHeader = !searchParam && !categoryParam;
+  
+  if (!shouldShowHeader) {
+    return null;
+  }
 
   return (
-    <div className="bg-white border-b border-gray-200">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center gap-4">
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search for gifts..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-10 pr-4"
-              />
-              {searchInput && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearSearch}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                >
-                  ×
-                </Button>
-              )}
-            </div>
-          </form>
-        </div>
+    <div className="mb-6">
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center mb-2`}>
+        <h1
+          className={`font-sans font-semibold text-gray-900
+            ${isMobile ? 'mb-2 text-lg text-center w-full' : 'text-xl md:text-2xl'}`}
+        >
+          Gift Marketplace
+        </h1>
+        {totalResults !== undefined && (
+          <div className="text-sm text-muted-foreground">
+            {totalResults} {totalResults === 1 ? 'item' : 'items'} found
+          </div>
+        )}
       </div>
+      <p className={`text-sm text-muted-foreground ${isMobile ? "text-center" : ""}`}>
+        Discover the perfect gifts for every occasion
+      </p>
     </div>
   );
 };

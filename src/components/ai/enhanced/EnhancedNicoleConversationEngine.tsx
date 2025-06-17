@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Send, X } from "lucide-react";
-import { chatWithNicole, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
+import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase, UserIntent } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
 import ContextualLinks from "../conversation/ContextualLinks";
@@ -85,11 +86,11 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     setIsLoading(true);
 
     try {
-      // Enhanced context with conversation step
-      const enhancedContext = {
+      // Enhanced context with conversation step - ensure proper type casting
+      const enhancedContext: NicoleContext = {
         ...context,
         step: conversationStep,
-        conversationPhase: conversationStep
+        conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase
       };
 
       const response = await chatWithNicole(
@@ -192,6 +193,11 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       setConversationStep("preferences");
     } else if (context.recipient || context.relationship) {
       setConversationStep("occasion");
+    }
+
+    // Update conversation phase based on response
+    if (response.conversationPhase) {
+      setContext(prev => ({ ...prev, conversationPhase: response.conversationPhase as ConversationPhase }));
     }
   };
 

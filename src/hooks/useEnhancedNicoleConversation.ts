@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { EnhancedNicoleService, EnhancedNicoleContext, WishlistRecommendation } from "@/services/ai/enhancedNicoleService";
-import { chatWithNicole, generateSearchQuery, NicoleMessage } from "@/services/ai/nicoleAiService";
+import { chatWithNicole, generateSearchQuery, NicoleMessage, ConversationPhase } from "@/services/ai/nicoleAiService";
 
 export interface EnhancedConversationMessage {
   type: "nicole" | "user" | "wishlist_display" | "product_suggestions";
@@ -57,18 +57,22 @@ export const useEnhancedNicoleConversation = () => {
         user.id
       );
 
+      // Map the enhanced phase to the standard ConversationPhase
+      const mappedPhase: ConversationPhase = mapToConversationPhase(analysis.phase);
+      
       // Update context with new information
-      setContext(prev => ({ ...prev, conversationPhase: analysis.phase as any }));
+      setContext(prev => ({ ...prev, conversationPhase: mappedPhase }));
 
-      // Get AI response with enhanced context
-      const enhancedContext = {
+      // Get AI response with enhanced context - but convert to NicoleContext format
+      const nicoleContext = {
         ...context,
+        conversationPhase: mappedPhase,
         connections: context.connections,
         recipientWishlists: context.recipientWishlists,
         recommendations: analysis.recommendations
       };
 
-      const aiResponse = await chatWithNicole(userMessage, conversationHistory, enhancedContext);
+      const aiResponse = await chatWithNicole(userMessage, conversationHistory, nicoleContext);
       
       // Add Nicole's response to conversation
       const nicoleConversationMessage: EnhancedConversationMessage = {
@@ -95,7 +99,7 @@ export const useEnhancedNicoleConversation = () => {
       if (analysis.shouldSearchProducts && context.recipientProfile) {
         const searchSuggestions = await EnhancedNicoleService.generateGPTSuggestions(
           context.recipientProfile,
-          enhancedContext,
+          nicoleContext,
           context.recipientWishlists || []
         );
 
@@ -149,16 +153,40 @@ export const useEnhancedNicoleConversation = () => {
     }
   }, [user, conversationHistory, context, addMessage]);
 
+  // Helper function to map enhanced phases to standard ConversationPhase
+  const mapToConversationPhase = (enhancedPhase: string): ConversationPhase => {
+    switch (enhancedPhase) {
+      case 'discovery':
+        return 'gathering_info';
+      case 'wishlist_review':
+        return 'providing_suggestions';
+      case 'alternatives':
+        return 'clarifying_needs';
+      case 'finalization':
+        return 'ready_for_action';
+      default:
+        return 'greeting';
+    }
+  };
+
   const generateSearchQueryFromContext = useCallback(async (): Promise<string> => {
     if (context.recipientProfile && context.recipientWishlists) {
+      const nicoleContext = {
+        ...context,
+        conversationPhase: mapToConversationPhase(context.conversationPhase || 'discovery')
+      };
       const suggestions = await EnhancedNicoleService.generateGPTSuggestions(
         context.recipientProfile,
-        context,
+        nicoleContext,
         context.recipientWishlists || []
       );
-      return suggestions[0] || generateSearchQuery(context);
+      return suggestions[0] || generateSearchQuery(nicoleContext);
     }
-    return generateSearchQuery(context);
+    const nicoleContext = {
+      ...context,
+      conversationPhase: mapToConversationPhase(context.conversationPhase || 'discovery')
+    };
+    return generateSearchQuery(nicoleContext);
   }, [context]);
 
   const resetConversation = useCallback(() => {

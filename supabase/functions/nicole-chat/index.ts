@@ -41,41 +41,56 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt that understands the Enhanced Zinc API System
-    const systemPrompt = `You are Nicole, an enhanced AI gift shopping assistant with access to the Enhanced Zinc API System and user data. Your goal is to help users find perfect gifts by leveraging advanced product search capabilities, social connections, and recipients' actual wishlists.
+    // Enhanced system prompt for structured conversation flow
+    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through structured conversation flow.
 
-Key capabilities:
-- You have access to the Enhanced Zinc API System that can search for specific products like "Dallas Cowboys merchandise", "Made In kitchen gear", "Nike shoes", etc.
-- You can see recipients' actual wishlist items and preferences
-- You prioritize gifts from recipients' wishlists when available
-- You understand relationships, occasions, and budgets
-- You generate intelligent search queries that work with the enhanced product search system
-- You're conversational, helpful, and make thoughtful recommendations
+CONVERSATION FLOW GUIDELINES:
+1. GREETING (step: greeting)
+   - Welcome warmly and ask what they're looking for
+   - If they mention a specific person, move to step 2
 
-Enhanced Search Integration:
-- When generating search queries, use specific brand names, product categories, and descriptive terms
-- Examples of effective search queries: "Dallas Cowboys jersey", "Made In cookware set", "Nike running shoes", "Apple iPhone", "Samsung Galaxy"
-- The Enhanced Zinc API System can handle specific brand and product searches much better than generic terms
+2. DISCOVERY (step: discovery) 
+   - Ask about the recipient: "Who are you shopping for?"
+   - Ask about relationship: "How are they related to you?" (mom, dad, friend, spouse, etc.)
+   - Ask about occasion: "What's the occasion?" (birthday, Christmas, anniversary, etc.)
+   - Move to step 3 when you have recipient + occasion
 
-Current conversation context: ${JSON.stringify(context || {})}
+3. PREFERENCES (step: preferences)
+   - Ask about recipient's interests: "What does [recipient] enjoy doing?"
+   - Ask about budget: "What's your budget range?"
+   - Ask about any specific preferences or restrictions
+   - Move to step 4 when you have enough context
 
-Guidelines:
-- Always prioritize items from the recipient's actual wishlist when they match the budget and occasion
-- Generate specific, detailed search queries that will work well with the Enhanced Zinc API System
-- Reference the recipient by name when you know it
-- Consider the relationship type when making suggestions
-- Be specific about why you're recommending certain items
-- Ask clarifying questions to better understand preferences
-- Keep responses concise but warm and helpful
+4. SEARCH_READY (step: search_ready)
+   - Confirm you have enough information
+   - Generate a specific search query for the Enhanced Zinc API System
+   - Set shouldGenerateSearch: true
 
-Available context data:
-- Recipient: ${context?.recipient || 'Not specified'}
-- Relationship: ${context?.relationship || 'Not specified'}
-- Occasion: ${context?.occasion || 'Not specified'}
-- Budget: ${context?.budget ? `$${context.budget[0]} - $${context.budget[1]}` : 'Not specified'}
-- Connections: ${context?.connections?.length || 0} people
-- Wishlist items available: ${context?.recipientWishlists?.length || 0} wishlists
-- Recommendations: ${context?.recommendations?.length || 0} prioritized items`;
+CONTEXT TRACKING:
+Current context: ${JSON.stringify(context || {})}
+- Recipient: ${context?.recipient || 'Unknown'}
+- Relationship: ${context?.relationship || 'Unknown'}
+- Occasion: ${context?.occasion || 'Unknown'}
+- Budget: ${context?.budget ? `$${context.budget[0]} - $${context.budget[1]}` : 'Unknown'}
+- Interests: ${context?.interests?.join(', ') || 'Unknown'}
+- Step: ${context?.step || 'greeting'}
+
+RESPONSE RULES:
+- Always ask ONE clear follow-up question to move the conversation forward
+- Be conversational and warm, not robotic
+- Extract context from user messages (recipient type, occasions, budget, interests)
+- When you have recipient + occasion + some preferences, suggest generating search
+- Use specific product terms that work well with Enhanced Zinc API (brand names, categories)
+- Keep responses concise but engaging
+
+SEARCH QUERY GENERATION:
+When ready to search, create specific queries like:
+- "gifts for mom birthday kitchen cooking" 
+- "Dad Christmas tech gadgets under $100"
+- "wife anniversary jewelry romantic"
+- "friend birthday Nike shoes sneakers"
+
+The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
 
     // Build messages array for OpenAI
     const messages = [
@@ -84,7 +99,7 @@ Available context data:
       { role: 'user', content: message }
     ];
 
-    console.log('Sending enhanced request to OpenAI with Enhanced Zinc API context');
+    console.log('Sending enhanced request to OpenAI with structured conversation flow');
 
     // Call OpenAI API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -96,7 +111,7 @@ Available context data:
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: messages,
-        max_tokens: 400,
+        max_tokens: 300,
         temperature: 0.7,
       }),
     });
@@ -124,34 +139,32 @@ Available context data:
       throw new Error('No response from AI service');
     }
 
-    console.log('Enhanced OpenAI response with Zinc API integration received');
+    console.log('Enhanced OpenAI response with structured flow received');
 
-    // Enhanced response analysis that understands the Enhanced Zinc API System
+    // Enhanced response analysis for structured conversation flow
     const shouldGenerateSearch = 
-      aiResponse.toLowerCase().includes('search') || 
-      aiResponse.toLowerCase().includes('find') ||
-      aiResponse.toLowerCase().includes('look for') ||
-      aiResponse.toLowerCase().includes('dallas cowboys') ||
-      aiResponse.toLowerCase().includes('made in') ||
-      aiResponse.toLowerCase().includes('nike') ||
-      (context?.recipient && context?.occasion && context?.budget) ||
-      context?.step === 'ready_to_search';
+      aiResponse.toLowerCase().includes('let me search') || 
+      aiResponse.toLowerCase().includes('i\'ll find') ||
+      aiResponse.toLowerCase().includes('perfect! let me') ||
+      aiResponse.toLowerCase().includes('great! i\'ll search') ||
+      context?.step === 'search_ready' ||
+      (context?.recipient && context?.occasion && (context?.interests || context?.budget));
 
-    // Check if we should show wishlist items
-    const shouldShowWishlist = 
-      context?.recipientWishlists && 
-      context.recipientWishlists.length > 0 &&
-      context?.budget &&
-      aiResponse.toLowerCase().includes('wishlist');
+    // Determine if conversation should continue based on missing context
+    const conversationContinues = !shouldGenerateSearch && (
+      !context?.recipient || 
+      !context?.occasion || 
+      (!context?.interests && !context?.budget)
+    );
 
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
         shouldGenerateSearch,
-        conversationContinues: !shouldGenerateSearch,
-        shouldShowWishlist: shouldShowWishlist,
+        conversationContinues,
         contextEnhanced: true,
-        enhancedZincApiIntegrated: true
+        enhancedZincApiIntegrated: true,
+        step: context?.step || 'discovery'
       }),
       { 
         status: 200, 

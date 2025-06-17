@@ -25,6 +25,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const [currentMessage, setCurrentMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [context, setContext] = useState<NicoleContext>({});
+  const [conversationStep, setConversationStep] = useState<string>("greeting");
+  const [hasProcessedInitialQuery, setHasProcessedInitialQuery] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,55 +38,63 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     scrollToBottom();
   }, [messages]);
 
-  // Handle personalized greeting from URL params
+  // Auto-execute initial query
   useEffect(() => {
-    if (initialQuery && initialQuery.startsWith("Hi ")) {
-      // This is a personalized greeting - show it as Nicole's message
-      const greetingMessage: NicoleMessage = {
-        role: "assistant",
-        content: initialQuery
-      };
-      setMessages([greetingMessage]);
-      
-      // Focus input for user to respond
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 500);
-    } else if (initialQuery && !initialQuery.startsWith("Hi ")) {
-      // Regular initial query - set as user input
-      setCurrentMessage(initialQuery);
-    }
-  }, [initialQuery]);
-
-  // Initial greeting if no personalized greeting
-  useEffect(() => {
-    if (!initialQuery || !initialQuery.startsWith("Hi ")) {
+    if (initialQuery && initialQuery.trim() && !hasProcessedInitialQuery) {
+      if (initialQuery.startsWith("Hi ")) {
+        // This is a personalized greeting - show it as Nicole's message
+        const greetingMessage: NicoleMessage = {
+          role: "assistant",
+          content: initialQuery
+        };
+        setMessages([greetingMessage]);
+        setConversationStep("discovery");
+      } else {
+        // Regular initial query - auto-send it
+        setCurrentMessage(initialQuery);
+        setTimeout(() => {
+          handleSendMessage(initialQuery);
+        }, 500);
+      }
+      setHasProcessedInitialQuery(true);
+    } else if (!initialQuery && !hasProcessedInitialQuery) {
+      // Default greeting
       const userName = user?.user_metadata?.name?.split(' ')[0] || "there";
       const welcomeMessage: NicoleMessage = {
         role: "assistant",
         content: `Hi ${userName}! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gifts. What are you looking for today?`
       };
       setMessages([welcomeMessage]);
+      setConversationStep("discovery");
+      setHasProcessedInitialQuery(true);
     }
-  }, [user, initialQuery]);
+  }, [initialQuery, user, hasProcessedInitialQuery]);
 
-  const handleSendMessage = async () => {
-    if (!currentMessage.trim() || isLoading) return;
+  const handleSendMessage = async (messageContent?: string) => {
+    const messageText = messageContent || currentMessage;
+    if (!messageText.trim() || isLoading) return;
 
     const userMessage: NicoleMessage = {
       role: "user",
-      content: currentMessage.trim()
+      content: messageText.trim()
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setCurrentMessage("");
+    if (!messageContent) setCurrentMessage("");
     setIsLoading(true);
 
     try {
+      // Enhanced context with conversation step
+      const enhancedContext = {
+        ...context,
+        step: conversationStep,
+        conversationPhase: conversationStep
+      };
+
       const response = await chatWithNicole(
         userMessage.content,
         messages,
-        context
+        enhancedContext
       );
 
       const assistantMessage: NicoleMessage = {
@@ -94,9 +104,11 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       setMessages(prev => [...prev, assistantMessage]);
 
+      // Update context based on response
+      updateContextFromMessage(userMessage.content, response);
+
       // Handle search generation if Nicole suggests it
       if (response.shouldGenerateSearch) {
-        // Extract search query from context or response
         const searchQuery = extractSearchQuery(response.response, context);
         if (searchQuery) {
           setTimeout(() => {
@@ -117,15 +129,89 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  const extractSearchQuery = (response: string, context: NicoleContext): string => {
-    // Simple extraction logic - this could be enhanced
+  const updateContextFromMessage = (userMessage: string, response: any) => {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    // Extract recipient information
+    if (lowerMessage.includes('mom') || lowerMessage.includes('mother')) {
+      setContext(prev => ({ ...prev, recipient: 'mom', relationship: 'family' }));
+    } else if (lowerMessage.includes('dad') || lowerMessage.includes('father')) {
+      setContext(prev => ({ ...prev, recipient: 'dad', relationship: 'family' }));
+    } else if (lowerMessage.includes('friend')) {
+      setContext(prev => ({ ...prev, relationship: 'friend' }));
+    } else if (lowerMessage.includes('wife') || lowerMessage.includes('husband')) {
+      setContext(prev => ({ ...prev, relationship: 'spouse' }));
+    }
+
+    // Extract occasion information
+    if (lowerMessage.includes('birthday')) {
+      setContext(prev => ({ ...prev, occasion: 'birthday' }));
+    } else if (lowerMessage.includes('christmas') || lowerMessage.includes('holiday')) {
+      setContext(prev => ({ ...prev, occasion: 'christmas' }));
+    } else if (lowerMessage.includes('anniversary')) {
+      setContext(prev => ({ ...prev, occasion: 'anniversary' }));
+    }
+
+    // Extract budget information
+    const budgetMatch = lowerMessage.match(/\$(\d+)/);
+    if (budgetMatch) {
+      const budget = parseInt(budgetMatch[1]);
+      setContext(prev => ({ ...prev, budget: [budget * 0.8, budget * 1.2] }));
+    }
+
+    // Extract interests
+    const interests: string[] = [];
+    if (lowerMessage.includes('cooking') || lowerMessage.includes('kitchen')) {
+      interests.push('cooking');
+    }
+    if (lowerMessage.includes('reading') || lowerMessage.includes('books')) {
+      interests.push('reading');
+    }
+    if (lowerMessage.includes('fitness') || lowerMessage.includes('exercise')) {
+      interests.push('fitness');
+    }
+    if (lowerMessage.includes('tech') || lowerMessage.includes('gadget')) {
+      interests.push('technology');
+    }
+    
+    if (interests.length > 0) {
+      setContext(prev => ({ ...prev, interests }));
+    }
+
+    // Update conversation step based on context completeness
     if (context.recipient && context.occasion) {
-      return `gifts for ${context.recipient} ${context.occasion}`;
+      setConversationStep("preferences");
+    } else if (context.recipient || context.relationship) {
+      setConversationStep("occasion");
     }
+  };
+
+  const extractSearchQuery = (response: string, context: NicoleContext): string => {
+    // Generate search query from context
+    let query = "";
+    
+    if (context.recipient) {
+      query += `gifts for ${context.recipient}`;
+    } else if (context.relationship) {
+      query += `gifts for ${context.relationship}`;
+    } else {
+      query = "gifts";
+    }
+    
+    if (context.occasion) {
+      query += ` ${context.occasion}`;
+    }
+    
     if (context.interests && context.interests.length > 0) {
-      return `gifts ${context.interests.join(" ")}`;
+      query += ` ${context.interests.join(" ")}`;
     }
-    return "gifts";
+    
+    if (context.budget) {
+      const [min, max] = context.budget;
+      query += ` under $${max}`;
+    }
+    
+    return query.trim() || "gifts";
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -144,7 +230,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
   const handleQuickResponse = (response: string) => {
     setCurrentMessage(response);
-    setTimeout(handleSendMessage, 100);
+    setTimeout(() => handleSendMessage(response), 100);
   };
 
   return (
@@ -210,7 +296,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         </div>
 
         {/* Quick Responses */}
-        {messages.length <= 1 && (
+        {messages.length <= 1 && !isLoading && (
           <div className="px-4 pb-2">
             <div className="flex flex-wrap gap-2">
               {quickResponses.map((response, index) => (
@@ -241,7 +327,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               disabled={isLoading}
             />
             <Button
-              onClick={handleSendMessage}
+              onClick={() => handleSendMessage()}
               disabled={!currentMessage.trim() || isLoading}
               size="sm"
               className="bg-purple-500 hover:bg-purple-600"

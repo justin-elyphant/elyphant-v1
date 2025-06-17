@@ -59,6 +59,11 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
 
   const hasActiveFilters = Boolean(urlSearchTerm || categoryParam || brandParam);
 
+  // If there are no active filters or the displayCount is 0, don't render anything
+  if (!hasActiveFilters) {
+    return null;
+  }
+
   const handleClearAll = () => {
     const newParams = new URLSearchParams();
     setSearchParams(newParams, { replace: true });
@@ -89,11 +94,6 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
       return "";
     }
   };
-
-  // Only render if we have active filters or search terms
-  if (!hasActiveFilters) {
-    return null;
-  }
 
   return (
     <div className="bg-white border-b border-gray-200 sticky top-0 z-40">

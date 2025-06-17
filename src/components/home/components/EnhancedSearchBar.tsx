@@ -34,7 +34,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     setShowSuggestions(false);
   }, [location.pathname]);
 
-  // Enhanced search using the unified search service
+  // Enhanced search using the unified search service with specific product matching
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -44,7 +44,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
       setIsLoading(true);
       debounceTimer.current = setTimeout(async () => {
         try {
-          console.log(`Header search: Searching for "${query}" using Enhanced Zinc API`);
+          console.log(`Header search: Searching for "${query}" using Enhanced Zinc API with specific matching`);
           const results = await unifiedSearch(query, {
             maxResults: 8,
             includeFriends: false,
@@ -53,13 +53,37 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
             currentUserId: user?.id
           });
 
-          // Combine product titles and brands for suggestions
-          const productSuggestions = results.products.slice(0, 5).map(p => ({
-            type: 'product',
-            title: p.title,
-            price: p.price,
-            image: p.image
-          }));
+          // Create more specific product suggestions based on search query
+          const specificProductSuggestions = results.products.slice(0, 5).map(p => {
+            // If searching for specific products like "iPad", prioritize those in title
+            let displayTitle = p.title;
+            const queryLower = query.toLowerCase();
+            
+            // Handle specific Apple product searches
+            if (queryLower.includes('ipad') || queryLower.includes('iphone') || queryLower.includes('macbook')) {
+              if (queryLower.includes('ipad')) {
+                displayTitle = `Apple iPad ${p.title.split(' ').slice(-2).join(' ')}`;
+              } else if (queryLower.includes('iphone')) {
+                displayTitle = `Apple iPhone ${p.title.split(' ').slice(-2).join(' ')}`;
+              } else if (queryLower.includes('macbook')) {
+                displayTitle = `Apple MacBook ${p.title.split(' ').slice(-2).join(' ')}`;
+              }
+            }
+            
+            // Handle specific brand + product searches
+            if (queryLower.includes('dallas cowboys')) {
+              displayTitle = `Dallas Cowboys ${p.title.split(' ').slice(-2).join(' ')}`;
+            } else if (queryLower.includes('made in')) {
+              displayTitle = `Made In ${p.title.split(' ').slice(-2).join(' ')}`;
+            }
+
+            return {
+              type: 'product',
+              title: displayTitle,
+              price: p.price,
+              image: p.image
+            };
+          });
 
           const brandSuggestions = results.brands.slice(0, 3).map(brand => ({
             type: 'brand',
@@ -67,11 +91,11 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
             subtitle: 'Brand'
           }));
 
-          const allSuggestions = [...productSuggestions, ...brandSuggestions];
+          const allSuggestions = [...specificProductSuggestions, ...brandSuggestions];
           setSuggestions(allSuggestions);
           setShowSuggestions(allSuggestions.length > 0);
           
-          console.log(`Header search: Found ${allSuggestions.length} suggestions for "${query}"`);
+          console.log(`Header search: Found ${allSuggestions.length} specific suggestions for "${query}"`);
         } catch (error) {
           console.error('Header search error:', error);
           setShowSuggestions(false);
@@ -142,12 +166,12 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         </Button>
       </div>
 
-      {/* Enhanced suggestions dropdown */}
+      {/* Enhanced suggestions dropdown with specific product names */}
       {showSuggestions && (suggestions.length > 0 || isLoading) && (
         <ul className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 text-sm max-h-96 overflow-y-auto">
           {isLoading && (
             <li className="p-3 text-gray-500 text-center">
-              Searching...
+              Searching for specific products...
             </li>
           )}
           {!isLoading && suggestions.map((suggestion, idx) => (

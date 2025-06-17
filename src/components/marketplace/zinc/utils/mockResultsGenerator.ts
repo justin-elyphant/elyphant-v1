@@ -1,10 +1,26 @@
-
 import { ZincProduct } from '../types';
 
 /**
- * Category mappings for different search terms
+ * Category mappings for different search terms with specific product models
  */
 const CATEGORY_MAPPINGS: Record<string, { category: string; brands: string[]; types: string[] }> = {
+  // Apple specific products
+  'ipad': { 
+    category: 'Electronics', 
+    brands: ['Apple'],
+    types: ['iPad Pro', 'iPad Air', 'iPad Mini', 'iPad (9th generation)', 'iPad (10th generation)']
+  },
+  'iphone': { 
+    category: 'Electronics', 
+    brands: ['Apple'],
+    types: ['iPhone 15 Pro', 'iPhone 15', 'iPhone 14 Pro', 'iPhone 14', 'iPhone 13']
+  },
+  'macbook': { 
+    category: 'Electronics', 
+    brands: ['Apple'],
+    types: ['MacBook Pro', 'MacBook Air', 'MacBook Pro 16-inch', 'MacBook Air M2', 'MacBook Pro M3']
+  },
+  
   // Footwear
   'shoes': { 
     category: 'Footwear', 
@@ -60,10 +76,23 @@ const CATEGORY_MAPPINGS: Record<string, { category: string; brands: string[]; ty
 };
 
 /**
- * Detect the most relevant category for a search query
+ * Detect the most relevant category for a search query with enhanced Apple product detection
  */
 const detectCategory = (query: string): { category: string; brands: string[]; types: string[] } => {
   const normalizedQuery = query.toLowerCase();
+  
+  // Enhanced Apple product detection
+  if (normalizedQuery.includes('apple')) {
+    if (normalizedQuery.includes('ipad')) {
+      return CATEGORY_MAPPINGS['ipad'];
+    }
+    if (normalizedQuery.includes('iphone')) {
+      return CATEGORY_MAPPINGS['iphone'];
+    }
+    if (normalizedQuery.includes('macbook')) {
+      return CATEGORY_MAPPINGS['macbook'];
+    }
+  }
   
   // Check for exact matches first
   for (const [keyword, mapping] of Object.entries(CATEGORY_MAPPINGS)) {
@@ -132,7 +161,7 @@ const extractBrandFromQuery = (query: string): string | null => {
 };
 
 /**
- * Generate realistic product titles based on search context
+ * Generate realistic product titles based on search context with specific product names
  */
 const generateRealisticTitle = (
   query: string, 
@@ -142,8 +171,46 @@ const generateRealisticTitle = (
 ): string => {
   const queryBrand = extractBrandFromQuery(query);
   const finalBrand = queryBrand || brand;
+  const queryLower = query.toLowerCase();
   
-  // Generate model variations
+  // Handle specific Apple product searches with real product names
+  if (queryLower.includes('ipad') && finalBrand === 'Apple') {
+    const iPadModels = ['iPad Pro 12.9-inch', 'iPad Air', 'iPad Mini', 'iPad (10th generation)', 'iPad Pro 11-inch'];
+    const storage = ['64GB', '128GB', '256GB', '512GB', '1TB'];
+    const colors = ['Space Gray', 'Silver', 'Rose Gold', 'Sky Blue', 'Purple'];
+    
+    const model = iPadModels[index % iPadModels.length];
+    const storageOption = storage[index % storage.length];
+    const color = colors[index % colors.length];
+    
+    return `${model} ${storageOption} ${color}`;
+  }
+  
+  if (queryLower.includes('iphone') && finalBrand === 'Apple') {
+    const iPhoneModels = ['iPhone 15 Pro Max', 'iPhone 15 Pro', 'iPhone 15 Plus', 'iPhone 15', 'iPhone 14 Pro'];
+    const storage = ['128GB', '256GB', '512GB', '1TB'];
+    const colors = ['Natural Titanium', 'Blue Titanium', 'White Titanium', 'Black Titanium', 'Pink'];
+    
+    const model = iPhoneModels[index % iPhoneModels.length];
+    const storageOption = storage[index % storage.length];
+    const color = colors[index % colors.length];
+    
+    return `${model} ${storageOption} ${color}`;
+  }
+  
+  if (queryLower.includes('macbook') && finalBrand === 'Apple') {
+    const macBookModels = ['MacBook Pro 16-inch M3', 'MacBook Pro 14-inch M3', 'MacBook Air 15-inch M2', 'MacBook Air 13-inch M2', 'MacBook Pro 13-inch M2'];
+    const storage = ['256GB', '512GB', '1TB', '2TB'];
+    const colors = ['Space Gray', 'Silver', 'Midnight', 'Starlight'];
+    
+    const model = macBookModels[index % macBookModels.length];
+    const storageOption = storage[index % storage.length];
+    const color = colors[index % colors.length];
+    
+    return `${model} ${storageOption} ${color}`;
+  }
+  
+  // Generate model variations for other products
   const modelSuffixes = ['Pro', 'Elite', 'Classic', 'Sport', 'Premium', 'Air', 'Max', 'Ultra'];
   const modelNumbers = ['2024', '2023', 'V2', 'V3', 'X', 'Plus'];
   const colors = ['Black', 'White', 'Red', 'Blue', 'Gray', 'Navy'];
@@ -187,12 +254,18 @@ export const generateMockProductResults = (query: string, maxResults: number | s
     // Generate realistic title
     const title = generateRealisticTitle(query, brand, productType, i);
     
-    // Generate realistic pricing based on category
+    // Generate realistic pricing based on category and specific products
     let basePrice = 50;
     if (categoryInfo.category === 'Footwear') {
       basePrice = 80 + (i * 20); // $80-$280 range for shoes
     } else if (categoryInfo.category === 'Electronics') {
-      if (productType.includes('Phone')) {
+      if (productType.includes('iPad')) {
+        basePrice = 300 + (i * 200); // $300-$2300 range for iPads
+      } else if (productType.includes('iPhone')) {
+        basePrice = 400 + (i * 300); // $400-$3400 range for iPhones
+      } else if (productType.includes('MacBook')) {
+        basePrice = 1000 + (i * 500); // $1000-$6000 range for MacBooks
+      } else if (productType.includes('Phone')) {
         basePrice = 200 + (i * 100); // $200-$1200 range for phones
       } else if (productType.includes('Laptop')) {
         basePrice = 500 + (i * 200); // $500-$2500 range for laptops

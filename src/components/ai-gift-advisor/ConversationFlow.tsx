@@ -27,11 +27,11 @@ interface ConversationFlowProps {
   closeBot: () => void;
   resetBot: () => void;
   nextStep: (step: ConversationStep, updates?: any) => void;
-  selectFriend: (friend: any) => void;
-  setRecipientDetails: (details: any) => void;
-  setOccasion: (occasion: string) => void;
-  setBudget: (budget: { min: number; max: number }) => void;
-  generateSearchQuery: () => void;
+  selectFriend: (friend: any) => Promise<void>;
+  setRecipientDetails: (details: any) => Promise<void>;
+  setOccasion: (occasion: string) => Promise<void>;
+  setBudget: (budget: { min: number; max: number }) => Promise<void>;
+  generateSearchQuery: () => Promise<void>;
 }
 
 const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {

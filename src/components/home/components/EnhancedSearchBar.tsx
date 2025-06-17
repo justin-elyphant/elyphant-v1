@@ -4,8 +4,8 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { unifiedSearch } from "@/services/search/unifiedSearchService";
-import { useAuth } from "@/contexts/auth";
+import SimpleSearchSuggestions from "./SimpleSearchSuggestions";
+import { getSearchSuggestions } from "@/services/search/searchSuggestionsService";
 
 interface EnhancedSearchBarProps {
   mobile?: boolean;
@@ -15,11 +15,9 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout>();
 
   // Sync search bar with URL parameters
@@ -34,102 +32,39 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     setShowSuggestions(false);
   }, [location.pathname]);
 
-  // Enhanced search using the unified search service with specific product matching
+  // Generate text-based suggestions (fast, no API calls)
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
-    if (query.length > 2) {
-      setIsLoading(true);
-      debounceTimer.current = setTimeout(async () => {
-        try {
-          console.log(`Header search: Searching for "${query}" using Enhanced Zinc API with specific matching`);
-          const results = await unifiedSearch(query, {
-            maxResults: 8,
-            includeFriends: false,
-            includeProducts: true,
-            includeBrands: true,
-            currentUserId: user?.id
-          });
-
-          // Create more specific product suggestions based on search query
-          const specificProductSuggestions = results.products.slice(0, 5).map(p => {
-            // If searching for specific products like "iPad", prioritize those in title
-            let displayTitle = p.title;
-            const queryLower = query.toLowerCase();
-            
-            // Handle specific Apple product searches
-            if (queryLower.includes('ipad') || queryLower.includes('iphone') || queryLower.includes('macbook')) {
-              if (queryLower.includes('ipad')) {
-                displayTitle = `Apple iPad ${p.title.split(' ').slice(-2).join(' ')}`;
-              } else if (queryLower.includes('iphone')) {
-                displayTitle = `Apple iPhone ${p.title.split(' ').slice(-2).join(' ')}`;
-              } else if (queryLower.includes('macbook')) {
-                displayTitle = `Apple MacBook ${p.title.split(' ').slice(-2).join(' ')}`;
-              }
-            }
-            
-            // Handle specific brand + product searches
-            if (queryLower.includes('dallas cowboys')) {
-              displayTitle = `Dallas Cowboys ${p.title.split(' ').slice(-2).join(' ')}`;
-            } else if (queryLower.includes('made in')) {
-              displayTitle = `Made In ${p.title.split(' ').slice(-2).join(' ')}`;
-            }
-
-            return {
-              type: 'product',
-              title: displayTitle,
-              price: p.price,
-              image: p.image
-            };
-          });
-
-          const brandSuggestions = results.brands.slice(0, 3).map(brand => ({
-            type: 'brand',
-            title: brand,
-            subtitle: 'Brand'
-          }));
-
-          const allSuggestions = [...specificProductSuggestions, ...brandSuggestions];
-          setSuggestions(allSuggestions);
-          setShowSuggestions(allSuggestions.length > 0);
-          
-          console.log(`Header search: Found ${allSuggestions.length} specific suggestions for "${query}"`);
-        } catch (error) {
-          console.error('Header search error:', error);
-          setShowSuggestions(false);
-          setSuggestions([]);
-        } finally {
-          setIsLoading(false);
-        }
-      }, 300);
-    } else {
-      setShowSuggestions(false);
-      setSuggestions([]);
-      setIsLoading(false);
-    }
+    debounceTimer.current = setTimeout(() => {
+      const searchSuggestions = getSearchSuggestions(query);
+      setSuggestions(searchSuggestions);
+      setShowSuggestions(searchSuggestions.length > 0);
+    }, 150); // Faster debounce for text suggestions
 
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [query, user?.id]);
+  }, [query]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const searchParams = new URLSearchParams();
-    searchParams.set("search", query);
-    navigate(`/marketplace?${searchParams.toString()}`);
-    setShowSuggestions(false);
+    if (query.trim()) {
+      const searchParams = new URLSearchParams();
+      searchParams.set("search", query.trim());
+      navigate(`/marketplace?${searchParams.toString()}`);
+      setShowSuggestions(false);
+    }
   };
 
-  const handleSuggestionClick = (suggestion: any) => {
-    const searchQuery = suggestion.type === 'brand' ? suggestion.title : suggestion.title;
-    setQuery(searchQuery);
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
     const searchParams = new URLSearchParams();
-    searchParams.set("search", searchQuery);
+    searchParams.set("search", suggestion);
     navigate(`/marketplace?${searchParams.toString()}`);
     setShowSuggestions(false);
   };
@@ -147,7 +82,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         
         <Input
           type="search"
-          placeholder="Search friends, products, or brands"
+          placeholder="Search for products, brands, or categories"
           className={`pl-10 pr-16 ${
             mobile 
               ? "text-base py-3 h-12 rounded-lg" 
@@ -156,6 +91,10 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => setShowSuggestions(suggestions.length > 0)}
+          onBlur={() => {
+            // Delay hiding to allow clicks on suggestions
+            setTimeout(() => setShowSuggestions(false), 200);
+          }}
         />
 
         <Button
@@ -166,49 +105,14 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         </Button>
       </div>
 
-      {/* Enhanced suggestions dropdown with specific product names */}
-      {showSuggestions && (suggestions.length > 0 || isLoading) && (
-        <ul className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 text-sm max-h-96 overflow-y-auto">
-          {isLoading && (
-            <li className="p-3 text-gray-500 text-center">
-              Searching for specific products...
-            </li>
-          )}
-          {!isLoading && suggestions.map((suggestion, idx) => (
-            <li
-              key={idx}
-              className="p-3 cursor-pointer hover:bg-purple-50 border-b border-gray-100 last:border-b-0 flex items-center gap-3"
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              {suggestion.type === 'product' && suggestion.image && (
-                <img 
-                  src={suggestion.image} 
-                  alt={suggestion.title}
-                  className="w-8 h-8 object-cover rounded"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
-                  }}
-                />
-              )}
-              <div className="flex-1">
-                <div className="font-medium text-gray-900">
-                  {suggestion.title}
-                </div>
-                {suggestion.type === 'product' && suggestion.price && (
-                  <div className="text-sm text-gray-500">
-                    ${suggestion.price}
-                  </div>
-                )}
-                {suggestion.type === 'brand' && (
-                  <div className="text-sm text-gray-500">
-                    {suggestion.subtitle}
-                  </div>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Simple text-based suggestions dropdown */}
+      <SimpleSearchSuggestions
+        query={query}
+        suggestions={suggestions}
+        isVisible={showSuggestions}
+        onSuggestionClick={handleSuggestionClick}
+        mobile={mobile}
+      />
     </form>
   );
 };

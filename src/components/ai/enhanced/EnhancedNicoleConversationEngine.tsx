@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -348,8 +349,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Responses - Only show when there are messages AND no loading */}
-        {messages.length > 0 && messages.length <= 2 && !isLoading && (
+        {/* Quick Responses - Only show when there's exactly 1 message (Nicole's greeting) AND no loading */}
+        {messages.length === 1 && !isLoading && (
           <div className="px-4 pb-2">
             <p className="text-xs text-gray-500 mb-2">Try these suggestions:</p>
             <div className="flex flex-wrap gap-2">

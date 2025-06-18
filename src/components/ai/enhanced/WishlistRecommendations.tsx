@@ -68,7 +68,7 @@ const WishlistRecommendations: React.FC<WishlistRecommendationsProps> = ({
               <div className="w-16 h-16 flex-shrink-0">
                 <img
                   src={recommendation.item.image_url || recommendation.item.image || '/placeholder.svg'}
-                  alt={recommendation.item.title || recommendation.item.name}
+                  alt={recommendation.item.title || recommendation.item.name || 'Product'}
                   className="w-full h-full object-cover rounded-md"
                 />
               </div>
@@ -77,7 +77,7 @@ const WishlistRecommendations: React.FC<WishlistRecommendationsProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-gray-900 truncate pr-2">
-                    {recommendation.item.title || recommendation.item.name}
+                    {recommendation.item.title || recommendation.item.name || 'Product'}
                   </h4>
                   <Badge 
                     className={`${getPriorityColor(recommendation.priority)} flex items-center gap-1 text-xs flex-shrink-0`}

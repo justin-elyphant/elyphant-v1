@@ -33,6 +33,9 @@ export interface NicoleContext {
   detectedBrands?: string[];
   ageGroup?: string;
   exactAge?: number;
+  askedForOccasion?: boolean;
+  askedForInterests?: boolean;
+  askedForBudget?: boolean;
 }
 
 export interface NicoleResponse {
@@ -50,6 +53,7 @@ Key behaviors:
 - Be warm, friendly, and conversational
 - Ask clarifying questions to understand the recipient and occasion
 - Gather comprehensive information before suggesting products
+- NEVER ask the same question twice
 - NEVER suggest searching until you have recipient + occasion + interests/budget
 - Keep responses concise but helpful
 - Guide users through the gift-finding process step by step
@@ -107,7 +111,7 @@ function generateEnhancedContextualResponse(message: string, context: NicoleCont
   }
   
   // Age-aware responses
-  if (context.ageGroup && !context.interests) {
+  if (context.ageGroup && !context.interests && !context.askedForInterests) {
     return `Great! Shopping for a ${context.ageGroup} is exciting. What are they interested in? Any specific hobbies, activities, or things they've mentioned wanting recently?`;
   }
   
@@ -115,16 +119,16 @@ function generateEnhancedContextualResponse(message: string, context: NicoleCont
     return "Hi! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gift. Who are you shopping for today?";
   }
   
-  // Progressive information gathering
-  if (context.recipient && !context.occasion) {
+  // Progressive information gathering with tracking to prevent duplicate questions
+  if (context.recipient && !context.occasion && !context.askedForOccasion) {
     return `Great! You're shopping for your ${context.recipient}. What's the special occasion?`;
   }
   
-  if (context.recipient && context.occasion && !context.interests && !context.detectedBrands) {
+  if (context.recipient && context.occasion && !context.interests && !context.detectedBrands && !context.askedForInterests) {
     return `Perfect! A gift for your ${context.recipient}'s ${context.occasion}. To find something they'll absolutely love, what are they interested in? Any hobbies, favorite activities, or things they've been wanting?`;
   }
   
-  if (context.recipient && context.occasion && (context.interests || context.detectedBrands) && !context.budget) {
+  if (context.recipient && context.occasion && (context.interests || context.detectedBrands) && !context.budget && !context.askedForBudget) {
     const interestText = context.interests ? `their interests in ${context.interests.join(', ')}` : `their love for ${context.detectedBrands?.join(', ')}`;
     return `Excellent! I love that you know about ${interestText}. What's your budget range for this ${context.occasion} gift?`;
   }
@@ -135,6 +139,19 @@ function generateEnhancedContextualResponse(message: string, context: NicoleCont
       `their interests in ${context.interests.join(', ')}` : 
       `their preference for ${context.detectedBrands?.join(', ')}`;
     return `Perfect! I have everything I need now. Let me find some amazing ${context.occasion} gift options for your ${context.recipient} based on ${detailsText} within your $${context.budget[0]}-$${context.budget[1]} budget.`;
+  }
+  
+  // If we've already asked for something but haven't gotten a clear answer, be more specific
+  if (context.askedForOccasion && !context.occasion) {
+    return "I'd love to help you find the perfect gift! Could you tell me what the occasion is? For example, is it a birthday, holiday, anniversary, or something else?";
+  }
+  
+  if (context.askedForInterests && !context.interests) {
+    return "To find the best gift, I'd like to know more about what they enjoy. What are some of their hobbies or favorite activities?";
+  }
+  
+  if (context.askedForBudget && !context.budget) {
+    return "What budget range are you thinking for this gift? This will help me suggest options that work for you.";
   }
   
   return "Tell me more about what you're looking for! Who is this gift for and what's the occasion?";

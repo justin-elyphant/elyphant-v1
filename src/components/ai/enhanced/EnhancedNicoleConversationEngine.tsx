@@ -108,7 +108,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         exactAge: enhancedSearchContext.ageInfo?.exactAge
       };
 
-      // Extract additional context from message
+      // Extract additional context from message with question tracking
       const updatedContext = extractContextFromMessage(messageText, enhancedContext);
 
       const response = await chatWithNicole(
@@ -125,7 +125,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       setMessages(prev => [...prev, assistantMessage]);
 
       // Update context 
-      setContext(updatedContext);
+      setContext(response.context);
 
       // Update contextual links from response
       if (response.contextualLinks && response.contextualLinks.length > 0) {
@@ -137,14 +137,14 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       // Handle search generation with enhanced query - only when truly ready
       if (response.shouldGenerateSearch) {
         const searchQuery = generateEnhancedSearchQuery({
-          recipient: updatedContext.recipient,
-          relationship: updatedContext.relationship,
-          occasion: updatedContext.occasion,
-          interests: updatedContext.interests,
-          detectedBrands: updatedContext.detectedBrands,
-          ageGroup: updatedContext.ageGroup,
-          exactAge: updatedContext.exactAge,
-          budget: updatedContext.budget
+          recipient: response.context.recipient,
+          relationship: response.context.relationship,
+          occasion: response.context.occasion,
+          interests: response.context.interests,
+          detectedBrands: response.context.detectedBrands,
+          ageGroup: response.context.ageGroup,
+          exactAge: response.context.exactAge,
+          budget: response.context.budget
         });
         
         console.log('Enhanced Nicole: Generated search query:', searchQuery);
@@ -173,17 +173,27 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     const lowerMessage = userMessage.toLowerCase();
     let updatedContext = { ...currentContext };
 
-    // Extract occasion information
+    // Extract occasion information and mark that we asked for it
     if (lowerMessage.includes('birthday')) {
       updatedContext.occasion = 'birthday';
+      updatedContext.askedForOccasion = true;
     } else if (lowerMessage.includes('christmas') || lowerMessage.includes('holiday')) {
       updatedContext.occasion = 'christmas';
+      updatedContext.askedForOccasion = true;
     } else if (lowerMessage.includes('anniversary')) {
       updatedContext.occasion = 'anniversary';
+      updatedContext.askedForOccasion = true;
     } else if (lowerMessage.includes('graduation')) {
       updatedContext.occasion = 'graduation';
+      updatedContext.askedForOccasion = true;
     } else if (lowerMessage.includes('wedding')) {
       updatedContext.occasion = 'wedding';
+      updatedContext.askedForOccasion = true;
+    }
+
+    // If we have a recipient but no occasion, mark that we should ask for occasion
+    if (updatedContext.recipient && !updatedContext.occasion && !updatedContext.askedForOccasion) {
+      updatedContext.askedForOccasion = true;
     }
 
     // Extract budget information with various patterns
@@ -208,6 +218,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         } else {
           updatedContext.budget = [num1 * 0.8, num1 * 1.2];
         }
+        updatedContext.askedForBudget = true;
         break;
       }
     }
@@ -225,8 +236,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         const interest = match[1].trim().toLowerCase();
         if (interest && interest.length > 2) {
           updatedContext.interests = [...new Set([...(updatedContext.interests || []), interest])];
+          updatedContext.askedForInterests = true;
         }
       }
+    }
+
+    // If we have recipient and occasion but no interests, mark that we should ask for interests
+    if (updatedContext.recipient && updatedContext.occasion && !updatedContext.interests?.length && !updatedContext.detectedBrands?.length && !updatedContext.askedForInterests) {
+      updatedContext.askedForInterests = true;
+    }
+
+    // If we have recipient, occasion, and interests/brands but no budget, mark that we should ask for budget
+    if (updatedContext.recipient && updatedContext.occasion && (updatedContext.interests?.length || updatedContext.detectedBrands?.length) && !updatedContext.budget && !updatedContext.askedForBudget) {
+      updatedContext.askedForBudget = true;
     }
 
     return updatedContext;

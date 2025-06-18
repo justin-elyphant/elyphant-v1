@@ -19,13 +19,6 @@ const FloatingNicoleWidget: React.FC<FloatingNicoleWidgetProps> = ({
   const [isOpen, setIsOpen] = useState(!defaultMinimized);
   const isMobile = useIsMobile();
 
-  const handleNavigateToResults = (searchQuery: string) => {
-    console.log('FloatingNicoleWidget: Navigation callback triggered with:', searchQuery);
-    onNavigateToResults(searchQuery);
-    // Close the widget after navigation
-    setIsOpen(false);
-  };
-
   const handleClose = () => {
     setIsOpen(false);
   };
@@ -64,8 +57,8 @@ const FloatingNicoleWidget: React.FC<FloatingNicoleWidgetProps> = ({
           : "w-full h-full"
       } relative`}>
         <EnhancedNicoleConversationEngine
+          isOpen={true}
           onClose={handleClose}
-          onNavigateToResults={handleNavigateToResults}
         />
       </div>
     </div>

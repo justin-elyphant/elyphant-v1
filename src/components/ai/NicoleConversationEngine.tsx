@@ -9,8 +9,8 @@ interface NicoleConversationEngineProps {
 }
 
 const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = (props) => {
-  // Use the enhanced version by default
-  return <EnhancedNicoleConversationEngine {...props} />;
+  // Use the enhanced version by default with isOpen defaulting to true
+  return <EnhancedNicoleConversationEngine {...props} isOpen={true} />;
 };
 
 export default NicoleConversationEngine;

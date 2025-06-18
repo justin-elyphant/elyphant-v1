@@ -1,9 +1,10 @@
+
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, MessageCircle, X, Minimize2, Maximize2 } from "lucide-react";
-import { chatWithNicole, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
+import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useSmartCTALogic } from "./hooks/useSmartCTALogic";
@@ -18,7 +19,7 @@ interface ConversationMessage {
 }
 
 interface EnhancedNicoleContext extends NicoleContext {
-  conversationPhase?: string;
+  conversationPhase?: ConversationPhase;
   detectedBrands?: string[];
   ageGroup?: string;
 }
@@ -145,15 +146,15 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
         conversationHistory: conversationHistory.length
       });
 
-      // Get AI response - fix parameter order here
+      // Get AI response with proper parameter order
       const aiResponse = await chatWithNicole(message, updatedContext, conversationHistory);
       
       console.log('✅ Enhanced Nicole: Received AI response', aiResponse);
 
-      // Add Nicole's response - fix property name here
+      // Add Nicole's response
       const nicoleMessage: ConversationMessage = {
         type: "nicole",
-        content: aiResponse.message, // Changed from 'response' to 'message'
+        content: aiResponse.message,
         timestamp: new Date()
       };
       addMessage(nicoleMessage);
@@ -161,7 +162,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       // Update conversation history
       const nicoleAiMessage: NicoleMessage = {
         role: "assistant",
-        content: aiResponse.message // Changed from 'response' to 'message'
+        content: aiResponse.message
       };
       setConversationHistory(prev => [...prev, nicoleAiMessage]);
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,18 +85,18 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
       // Enhanced context for marketplace assistance
       const marketplaceContext = {
         ...context,
-        conversationPhase: 'providing_suggestions' // Remove hasReceivedSuggestions
+        conversationPhase: 'providing_suggestions' as const
       };
 
-      // Get AI response - fix parameter order here
+      // Get AI response with proper parameter order
       const aiResponse = await chatWithNicole(message, marketplaceContext, conversationHistory);
       
       console.log('✅ Nicole Marketplace: Received AI response', aiResponse);
 
-      // Add Nicole's response - fix property name here
+      // Add Nicole's response
       const nicoleMessage: ConversationMessage = {
         type: "nicole",
-        content: aiResponse.message, // Changed from 'response' to 'message'
+        content: aiResponse.message,
         timestamp: new Date()
       };
       addMessage(nicoleMessage);
@@ -103,7 +104,7 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
       // Update conversation history
       const nicoleAiMessage: NicoleMessage = {
         role: "assistant",
-        content: aiResponse.message // Changed from 'response' to 'message'
+        content: aiResponse.message
       };
       setConversationHistory(prev => [...prev, nicoleAiMessage]);
 

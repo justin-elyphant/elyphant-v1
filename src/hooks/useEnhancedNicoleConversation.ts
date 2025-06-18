@@ -69,12 +69,12 @@ export const useEnhancedNicoleConversation = () => {
         recommendations: analysis.recommendations
       };
 
-      const aiResponse = await chatWithNicole(userMessage, conversationHistory, nicoleContext);
+      const aiResponse = await chatWithNicole(userMessage, nicoleContext, conversationHistory);
       
       // Add Nicole's response to conversation
       const nicoleConversationMessage: EnhancedConversationMessage = {
         type: "nicole",
-        content: aiResponse.response,
+        content: aiResponse.message,
         timestamp: new Date()
       };
       addMessage(nicoleConversationMessage);
@@ -114,7 +114,7 @@ export const useEnhancedNicoleConversation = () => {
       // Add to conversation history
       const nicoleAiMessage: NicoleMessage = {
         role: "assistant",
-        content: aiResponse.response
+        content: aiResponse.message
       };
       setConversationHistory(prev => [...prev, nicoleAiMessage]);
 
@@ -123,7 +123,7 @@ export const useEnhancedNicoleConversation = () => {
         case 'gathering_info':
           setCurrentStep("discovery");
           break;
-        case 'providing_suggestions':
+        case 'ready_to_search':
           setCurrentStep("wishlist_review");
           break;
         case 'clarifying_needs':

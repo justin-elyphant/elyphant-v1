@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface NicoleMessage {
@@ -11,7 +12,9 @@ export type ConversationPhase =
   | 'ready_to_search'
   | 'presenting_results'
   | 'closing'
-  | 'error_recovery';
+  | 'error_recovery'
+  | 'providing_suggestions'
+  | 'clarifying_needs';
 
 export interface NicoleContext {
   recipient?: string;
@@ -21,6 +24,8 @@ export interface NicoleContext {
   budget?: [number, number];
   exactAge?: number;
   conversationPhase?: ConversationPhase;
+  detectedBrands?: string[];
+  ageGroup?: string;
 }
 
 export interface NicoleResponse {
@@ -34,6 +39,123 @@ export interface ContextualLink {
   text: string;
   url: string;
   type: string;
+}
+
+/**
+ * Generate a search query based on the conversation context
+ */
+export function generateSearchQuery(context: NicoleContext): string {
+  const {
+    recipient,
+    relationship,
+    occasion,
+    interests = [],
+    detectedBrands = [],
+    budget,
+    exactAge,
+    ageGroup
+  } = context;
+  
+  // Brand-first approach for better results
+  if (detectedBrands.length > 0) {
+    let query = detectedBrands[0]; // Primary brand
+    
+    // Add age-appropriate terms
+    if (ageGroup) {
+      query += ` for ${ageGroup}`;
+    } else if (exactAge) {
+      const ageTerms = getAgeAppropriateTerms(exactAge);
+      query += ` for ${ageTerms}`;
+    }
+    
+    // Add primary interest
+    if (interests.length > 0) {
+      query += ` ${interests[0]}`;
+    }
+    
+    // Add occasion context
+    if (occasion) {
+      query += ` ${occasion}`;
+    }
+    
+    return query.trim();
+  }
+  
+  // Interest-first approach
+  if (interests.length > 0) {
+    let query = interests[0]; // Primary interest
+    
+    // Add secondary interest if available
+    if (interests.length > 1) {
+      query += ` ${interests[1]}`;
+    }
+    
+    // Add demographic context
+    if (ageGroup) {
+      query += ` for ${ageGroup}`;
+    } else if (exactAge) {
+      const ageTerms = getAgeAppropriateTerms(exactAge);
+      query += ` for ${ageTerms}`;
+    } else if (recipient) {
+      query += ` for ${recipient}`;
+    } else if (relationship) {
+      query += ` for ${relationship}`;
+    }
+    
+    // Add occasion
+    if (occasion) {
+      query += ` ${occasion}`;
+    }
+    
+    // Add budget constraint
+    if (budget) {
+      const [, max] = budget;
+      query += ` under $${max}`;
+    }
+    
+    return query.trim();
+  }
+  
+  // Demographic-first approach
+  let query = "gifts";
+  
+  // Add recipient context
+  if (ageGroup) {
+    query += ` for ${ageGroup}`;
+  } else if (exactAge) {
+    const ageTerms = getAgeAppropriateTerms(exactAge);
+    query += ` for ${ageTerms}`;
+  } else if (recipient) {
+    query += ` for ${recipient}`;
+  } else if (relationship) {
+    query += ` for ${relationship}`;
+  }
+  
+  // Add occasion
+  if (occasion) {
+    query += ` ${occasion}`;
+  }
+  
+  // Add budget constraint
+  if (budget) {
+    const [, max] = budget;
+    query += ` under $${max}`;
+  }
+  
+  return query.trim();
+}
+
+/**
+ * Get age-appropriate search terms
+ */
+function getAgeAppropriateTerms(age: number): string {
+  if (age <= 5) return "toddlers";
+  if (age <= 12) return "kids";
+  if (age <= 17) return "teens";
+  if (age <= 25) return "young adults";
+  if (age <= 40) return "adults";
+  if (age <= 60) return "middle aged";
+  return "seniors";
 }
 
 /**

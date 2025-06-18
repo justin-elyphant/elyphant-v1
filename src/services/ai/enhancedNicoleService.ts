@@ -202,7 +202,7 @@ export class EnhancedNicoleService {
         } else if (completeness < 70) { // Require at least 70% completeness
           phase = 'clarifying_needs';
         } else {
-          phase = 'providing_suggestions';
+          phase = 'ready_to_search';
         }
       }
 
@@ -214,7 +214,7 @@ export class EnhancedNicoleService {
       });
 
       // Check if we should show wishlist items (only if very complete context)
-      const shouldShowWishlist = phase === 'providing_suggestions' && 
+      const shouldShowWishlist = phase === 'ready_to_search' && 
         completeness >= 80 &&
         updatedContext.recipientWishlists && updatedContext.recipientWishlists.length > 0;
 
@@ -259,7 +259,7 @@ export class EnhancedNicoleService {
       }
 
       // Enhanced search criteria - require high completeness
-      const shouldSearchProducts = phase === 'providing_suggestions' && 
+      const shouldSearchProducts = phase === 'ready_to_search' && 
         completeness >= 75 && // Require 75% completeness minimum
         Boolean(updatedContext.recipient && updatedContext.occasion);
 

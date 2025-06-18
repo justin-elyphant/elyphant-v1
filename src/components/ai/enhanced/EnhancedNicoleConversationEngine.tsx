@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import ContextualLinks from "../conversation/ContextualLinks";
 import { generateEnhancedSearchContext } from "@/components/marketplace/zinc/utils/search/enhancedProductFiltering";
 import { generateEnhancedSearchQuery } from "@/components/marketplace/zinc/utils/search/enhancedQueryGeneration";
+import SearchButton from "./SearchButton";
 
 interface EnhancedNicoleConversationEngineProps {
   initialQuery?: string;
@@ -33,6 +34,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const [contextualLinks, setContextualLinks] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showSearchButton, setShowSearchButton] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,7 +92,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     setIsLoading(true);
 
     try {
-      // Enhanced context extraction with improved relationship detection
+      // Enhanced context extraction with improved relationship detection (preserve Enhanced Zinc API)
       const enhancedSearchContext = generateEnhancedSearchContext(messageText);
       const relationshipInfo = EnhancedNicoleService.extractRelationshipFromMessage(messageText);
       
@@ -107,16 +109,16 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         exactAge: enhancedSearchContext.ageInfo?.exactAge
       };
 
-      console.log('Enhanced Nicole: Sending comprehensive context to GPT with improved confirmation detection:', enhancedContext);
+      console.log('Enhanced Nicole: Sending comprehensive context to GPT with CTA button system:', enhancedContext);
 
-      // Call the enhanced GPT-powered chatWithNicole function
+      // Call the enhanced GPT-powered chatWithNicole function with CTA button support
       const response = await chatWithNicole(
         userMessage.content,
         messages,
         enhancedContext
-      );
+      ) as any; // Cast to include showSearchButton
 
-      console.log('Enhanced Nicole: GPT response with Enhanced Zinc integration and improved navigation:', response);
+      console.log('Enhanced Nicole: GPT response with CTA button system and Enhanced Zinc integration:', response);
 
       const assistantMessage: NicoleMessage = {
         role: "assistant",
@@ -135,61 +137,21 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         setContextualLinks([]);
       }
 
-      // Enhanced navigation logic with faster trigger and better debugging
-      console.log('Enhanced Nicole: Checking navigation conditions:', {
-        shouldGenerateSearch: response.shouldGenerateSearch,
-        shouldNavigateToMarketplace: response.context.shouldNavigateToMarketplace,
-        conversationPhase: response.context.conversationPhase
-      });
-
-      if (response.shouldGenerateSearch || response.context.shouldNavigateToMarketplace) {
-        console.log('Enhanced Nicole: Triggering Enhanced Zinc API search with context:', response.context);
-        
-        const searchQuery = generateEnhancedSearchQuery({
-          recipient: response.context.recipient,
-          relationship: response.context.relationship,
-          occasion: response.context.occasion,
-          interests: response.context.interests,
-          detectedBrands: response.context.detectedBrands,
-          ageGroup: response.context.ageGroup,
-          exactAge: response.context.exactAge,
-          budget: response.context.budget
-        });
-        
-        console.log('Enhanced Nicole: Generated Enhanced Zinc search query:', searchQuery);
-        
-        if (searchQuery && searchQuery !== 'gifts') {
-          // Add Nicole context to session storage for marketplace continuation
-          const nicoleContext = {
-            searchQuery,
-            context: response.context,
-            conversationSummary: `I helped you find ${searchQuery}`,
-            shouldContinueConversation: true
-          };
-          
-          sessionStorage.setItem('nicoleContext', JSON.stringify(nicoleContext));
-          
-          // Navigate to marketplace with Enhanced Zinc API search - REDUCED DELAY
-          console.log('Enhanced Nicole: Navigating to Enhanced Zinc API results for:', searchQuery);
-          
-          // Use the callback to navigate with faster timing
-          setTimeout(() => {
-            console.log('Enhanced Nicole: Executing navigation callback');
-            onNavigateToResults(searchQuery);
-          }, 500); // Reduced from 1500ms to 500ms
-        } else {
-          console.log('Enhanced Nicole: Search query was empty or generic, not navigating');
-        }
+      // Handle CTA button display
+      if (response.showSearchButton) {
+        console.log('Enhanced Nicole: Showing CTA search button');
+        setShowSearchButton(true);
       }
 
     } catch (error) {
-      console.error("Enhanced Nicole: Error in GPT chat with Enhanced Zinc integration:", error);
+      console.error("Enhanced Nicole: Error in GPT chat with Enhanced Zinc integration and CTA button:", error);
       const errorMessage: NicoleMessage = {
         role: "assistant",
         content: "I'm having trouble connecting right now. Let me help you with a basic search instead. What kind of gift are you looking for?"
       };
       setMessages(prev => [...prev, errorMessage]);
       setContextualLinks([]);
+      setShowSearchButton(false);
     } finally {
       setIsLoading(false);
     }
@@ -199,6 +161,64 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+    }
+  };
+
+  const handleSearchButtonClick = () => {
+    console.log('Enhanced Nicole: CTA search button clicked, generating Enhanced Zinc API search');
+    setShowSearchButton(false);
+    setIsLoading(true);
+
+    try {
+      // Generate Enhanced Zinc API search query from context
+      const searchQuery = generateEnhancedSearchQuery({
+        recipient: context.recipient,
+        relationship: context.relationship,
+        occasion: context.occasion,
+        interests: context.interests,
+        detectedBrands: context.detectedBrands,
+        ageGroup: context.ageGroup,
+        exactAge: context.exactAge,
+        budget: context.budget
+      });
+      
+      console.log('Enhanced Nicole: Generated Enhanced Zinc search query via CTA button:', searchQuery);
+      
+      if (searchQuery && searchQuery !== 'gifts') {
+        // Add Nicole context to session storage for marketplace continuation
+        const nicoleContext = {
+          searchQuery,
+          context: context,
+          conversationSummary: `I helped you find ${searchQuery}`,
+          shouldContinueConversation: true,
+          fromCTAButton: true
+        };
+        
+        sessionStorage.setItem('nicoleContext', JSON.stringify(nicoleContext));
+        
+        // Navigate to marketplace with Enhanced Zinc API search immediately
+        console.log('Enhanced Nicole: Navigating to Enhanced Zinc API results via CTA button:', searchQuery);
+        
+        // Show loading message
+        const loadingMessage: NicoleMessage = {
+          role: "assistant",
+          content: "Perfect! I'm finding the best gift options for you right now..."
+        };
+        setMessages(prev => [...prev, loadingMessage]);
+        
+        // Navigate quickly with CTA button
+        setTimeout(() => {
+          console.log('Enhanced Nicole: Executing CTA navigation callback');
+          onNavigateToResults(searchQuery);
+        }, 300); // Very fast navigation for button clicks
+      } else {
+        console.log('Enhanced Nicole: Search query was empty or generic, not navigating');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Enhanced Nicole: Error in CTA button search generation:', error);
+      setIsLoading(false);
+      setShowSearchButton(true);
     }
   };
 
@@ -256,10 +276,25 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
                 </div>
               </div>
               
+              {/* Show CTA button after last assistant message when ready */}
+              {message.role === "assistant" && 
+               index === messages.length - 1 && 
+               showSearchButton && !isLoading && (
+                <div className="flex justify-start mt-3">
+                  <div className="max-w-xs w-full">
+                    <SearchButton 
+                      onSearch={handleSearchButtonClick}
+                      isLoading={false}
+                    />
+                  </div>
+                </div>
+              )}
+              
               {/* Show contextual links for last assistant message */}
               {message.role === "assistant" && 
                index === messages.length - 1 && 
-               contextualLinks.length > 0 && (
+               contextualLinks.length > 0 && 
+               !showSearchButton && (
                 <div className="flex justify-start">
                   <div className="max-w-xs">
                     <ContextualLinks links={contextualLinks} />
@@ -285,6 +320,11 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
         {/* Input */}
         <div className="p-4 border-t">
+          {showSearchButton && (
+            <div className="mb-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+              🎁 Ready to find your perfect gifts! Click the button above.
+            </div>
+          )}
           {showConfirmationHint && (
             <div className="mb-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
               💡 Say "sounds good" or "yes" to see your gift recommendations
@@ -302,17 +342,18 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={
+                showSearchButton ? "Click 'Ready to See Gifts' above!" :
                 showConfirmationHint ? "Say 'sounds good' to confirm..." : 
                 context.shouldNavigateToMarketplace ? "Navigating to your results..." :
                 "Ask Nicole anything about gifts..."
               }
               className="flex-1"
-              disabled={isLoading || context.shouldNavigateToMarketplace}
+              disabled={isLoading || showSearchButton}
               autoFocus
             />
             <Button
               onClick={() => sendMessage()}
-              disabled={!currentMessage.trim() || isLoading || context.shouldNavigateToMarketplace}
+              disabled={!currentMessage.trim() || isLoading || showSearchButton}
               size="sm"
               className="bg-purple-500 hover:bg-purple-600"
             >

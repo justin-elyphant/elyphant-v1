@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type ConversationPhase = 'greeting' | 'gathering_info' | 'clarifying_needs' | 'ready_to_search' | 'providing_suggestions';
@@ -54,14 +53,14 @@ export async function chatWithNicole(
   message: string,
   conversationHistory: NicoleMessage[],
   context: NicoleContext = {}
-): Promise<NicoleResponse> {
+): Promise<NicoleResponse & { showSearchButton?: boolean }> {
   try {
-    console.log('Nicole: Calling GPT-powered edge function with enhanced confirmation detection:', context);
+    console.log('Nicole: Calling Enhanced Zinc API GPT-powered edge function with CTA button system:', context);
     
-    // Enhanced context extraction with smart relationship detection
+    // Enhanced context extraction with smart relationship detection (preserve Enhanced Zinc API)
     const enhancedContext = extractEnhancedContextFromMessage(message, context);
     
-    // Call the enhanced nicole-chat edge function
+    // Call the enhanced nicole-chat edge function with CTA button support
     const { data, error } = await supabase.functions.invoke('nicole-chat', {
       body: {
         message,
@@ -75,7 +74,7 @@ export async function chatWithNicole(
       throw error;
     }
 
-    console.log('Nicole: Enhanced GPT response with improved confirmation detection:', data);
+    console.log('Nicole: Enhanced Zinc API GPT response with CTA button system:', data);
 
     // Merge contexts with Enhanced Zinc API preservation
     const mergedContext = {
@@ -97,32 +96,22 @@ export async function chatWithNicole(
       ]
     };
 
-    // Enhanced confirmation detection on the frontend
-    const isUserConfirming = detectEnhancedConfirmation(message);
-    console.log('Frontend confirmation detection:', { message, isConfirming: isUserConfirming });
-
-    // Override shouldGenerateSearch if we detect confirmation
-    const shouldGenerateSearch = data.shouldGenerateSearch || isUserConfirming;
-    
-    // Set navigation flag when search is ready
-    if (shouldGenerateSearch) {
-      mergedContext.shouldNavigateToMarketplace = true;
-      mergedContext.conversationPhase = 'providing_suggestions';
-      console.log('Nicole: Setting navigation flag - shouldNavigateToMarketplace = true');
-    }
-
-    console.log('Nicole: Final decision - shouldGenerateSearch:', shouldGenerateSearch);
+    console.log('Nicole: CTA Button Decision:', { 
+      showSearchButton: data.showSearchButton,
+      conversationPhase: mergedContext.conversationPhase 
+    });
 
     return {
       response: data.response || "I'm here to help you find the perfect gift! What are you looking for?",
       context: mergedContext,
       shouldShowProducts: shouldShowProducts(mergedContext),
       contextualLinks: data.contextualLinks || [],
-      shouldGenerateSearch
+      shouldGenerateSearch: false, // CTA button handles this now
+      showSearchButton: data.showSearchButton || false
     };
     
   } catch (error) {
-    console.error('Error in Nicole enhanced chat:', error);
+    console.error('Error in Enhanced Zinc API Nicole chat with CTA button:', error);
     
     // Fallback with context extraction
     const enhancedContext = extractEnhancedContextFromMessage(message, context);
@@ -132,7 +121,8 @@ export async function chatWithNicole(
       context: enhancedContext,
       shouldShowProducts: false,
       contextualLinks: [],
-      shouldGenerateSearch: false
+      shouldGenerateSearch: false,
+      showSearchButton: false
     };
   }
 }

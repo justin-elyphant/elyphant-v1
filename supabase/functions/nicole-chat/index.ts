@@ -16,7 +16,7 @@ serve(async (req) => {
   try {
     const { message, conversationHistory, context } = await req.json();
     
-    console.log('Enhanced Nicole chat request with improved confirmation detection:', { message, context });
+    console.log('Enhanced Nicole chat request with CTA button system:', { message, context });
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     
@@ -38,51 +38,39 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt with improved confirmation detection
-    const systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow.
+    // Enhanced system prompt with CTA button logic and Enhanced Zinc API System integration
+    const systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow with a streamlined CTA button experience.
 
 CONVERSATION FLOW GUIDELINES:
 
 1. GREETING (phase: greeting)
    - Welcome warmly and ask what they're looking for
    - If they mention a specific person, automatically extract relationship info
-   - NO ACTION LINKS during greeting
+   - NO CTA BUTTON during greeting
 
 2. GATHERING_INFO (phase: gathering_info) 
    - SMART RELATIONSHIP DETECTION: If user says "my son", "my daughter", "my mom", "my dad", "my friend", "my wife", "my husband", etc., automatically set both recipient AND relationship
    - NEVER ask "How are they related to you?" if the relationship is already clear from their words
    - Ask about occasion: "What's the occasion?" (birthday, Christmas, anniversary, etc.)
    - If recipient/relationship is clear, move directly to occasion
-   - NO ACTION LINKS during information gathering
+   - NO CTA BUTTON during information gathering
 
 3. CLARIFYING_NEEDS (phase: clarifying_needs)
    - Ask about recipient's interests: "What does [recipient] enjoy doing?"
    - Ask about budget: "What's your budget range?"
    - Listen for specific brands mentioned by user
-   - NO ACTION LINKS until ready for confirmation
+   - NO CTA BUTTON until ready for search
 
-4. READY_TO_SEARCH (phase: ready_to_search)
-   - When you have enough context (recipient + occasion + interests/brands + budget), SUMMARIZE everything
-   - Say something like: "Let me make sure I have this right: you're looking for [summary of context]. Does that sound good, or would you like to adjust anything?"
-   - WAIT for user confirmation before proceeding
-   - NO ACTION LINKS until confirmed
+4. READY_FOR_SEARCH_BUTTON (phase: ready_for_search_button)
+   - When you have enough context (recipient + occasion + interests/brands + budget), SUMMARIZE everything clearly
+   - Say something like: "Perfect! Let me summarize what I understand: you're looking for [summary of all context]. I'm ready to find the perfect gifts for you!"
+   - SET showSearchButton: true to display the CTA button
+   - DO NOT ask for confirmation - the button handles that
 
-5. PROVIDING_SUGGESTIONS (phase: providing_suggestions)
-   - Only after user confirms with phrases like: "yes", "sounds good", "that's right", "perfect", "looks good", "sounds good to me", "that works", "correct", "let's do it", "go ahead", "find them"
-   - Set shouldGenerateSearch: true immediately upon confirmation
-   - Generate specific search query for Enhanced Zinc API System
-   - Prepare to navigate to marketplace with context
-
-ENHANCED CONFIRMATION DETECTION:
-The following phrases should ALWAYS trigger search generation:
-- "yes" / "yeah" / "yep" / "yup"
-- "sounds good" / "sounds great" / "sounds perfect" / "sounds good to me"
-- "that's right" / "that's correct" / "that's perfect" / "that sounds right"
-- "perfect" / "great" / "awesome" / "excellent"
-- "looks good" / "looks great" / "looks perfect"
-- "let's do it" / "let's go" / "go ahead" / "find them"
-- "okay" / "ok" / "sure" / "absolutely"
-- "that works" / "works for me" / "sounds like a plan"
+5. GENERATING_SEARCH (phase: generating_search)
+   - Only reached when user clicks the "Ready to See Gifts" button
+   - Immediately generate Enhanced Zinc API search query
+   - Navigate to marketplace with context
 
 SMART RELATIONSHIP EXTRACTION:
 - "my son" → recipient: "son", relationship: "child"
@@ -95,12 +83,11 @@ SMART RELATIONSHIP EXTRACTION:
 - "my brother" → recipient: "brother", relationship: "sibling"
 - "my sister" → recipient: "sister", relationship: "sibling"
 
-CONFIRMATION PHASE RULES:
-- Always summarize what you understood before searching
-- Include: recipient, occasion, interests/brands, budget in summary
-- Ask "Does that sound right?" or "Are you ready to see your gifts?"
-- Wait for explicit confirmation
-- IMMEDIATELY set shouldGenerateSearch: true when user confirms
+CTA BUTTON LOGIC:
+- ONLY show the search button when you have sufficient context for Enhanced Zinc API
+- Required context: recipient + occasion + (interests OR brands) + budget
+- When ready, set showSearchButton: true and provide clear summary
+- The button will handle the actual search generation and navigation
 
 BUDGET HANDLING:
 - Parse budget carefully to avoid NaN errors
@@ -122,9 +109,9 @@ RESPONSE RULES:
 - Be conversational and warm, not robotic
 - Extract context intelligently from user messages
 - Avoid redundant questions when relationship is obvious
-- IMMEDIATELY proceed to search when user confirms with any confirmation phrase
+- SHOW THE CTA BUTTON when you have sufficient context for Enhanced Zinc API search
 - Use specific terms that work well with Enhanced Zinc API
-- Focus on conversation flow, trigger search fast upon confirmation
+- Focus on conversation flow, trigger CTA button when ready
 
 The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
 
@@ -134,7 +121,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       { role: 'user', content: message }
     ];
 
-    console.log('Sending enhanced request to OpenAI with improved confirmation detection');
+    console.log('Sending Enhanced Zinc API request to OpenAI with CTA button system');
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -173,65 +160,55 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       throw new Error('No response from AI service');
     }
 
-    console.log('Enhanced OpenAI response with improved confirmation detection received');
+    console.log('Enhanced Zinc API OpenAI response with CTA button system received');
 
-    // Enhanced confirmation detection logic
-    const lowerMessage = message.toLowerCase().trim();
-    const confirmationPhrases = [
-      'yes', 'yeah', 'yep', 'yup',
-      'sounds good', 'sounds great', 'sounds perfect', 'sounds good to me',
-      'that\'s right', 'that\'s correct', 'that\'s perfect', 'that sounds right',
-      'perfect', 'great', 'awesome', 'excellent',
-      'looks good', 'looks great', 'looks perfect',
-      'let\'s do it', 'let\'s go', 'go ahead', 'find them',
-      'okay', 'ok', 'sure', 'absolutely',
-      'that works', 'works for me', 'sounds like a plan'
-    ];
-
-    const isConfirmingUser = confirmationPhrases.some(phrase => 
-      lowerMessage === phrase || 
-      lowerMessage.startsWith(phrase + ' ') ||
-      lowerMessage.includes(' ' + phrase + ' ') ||
-      lowerMessage.endsWith(' ' + phrase)
+    // Determine if we should show the search button based on context completeness
+    const hasRequiredContext = Boolean(
+      context?.recipient && 
+      context?.occasion && 
+      (context?.interests?.length > 0 || context?.detectedBrands?.length > 0) &&
+      context?.budget
     );
 
-    // Enhanced response analysis for structured conversation flow
-    const shouldGenerateSearch = 
-      isConfirmingUser ||
-      aiResponse.toLowerCase().includes('let me search') || 
-      aiResponse.toLowerCase().includes('i\'ll find') ||
-      aiResponse.toLowerCase().includes('perfect! let me') ||
-      aiResponse.toLowerCase().includes('great! i\'ll search') ||
-      context?.conversationPhase === 'providing_suggestions';
+    // Check if AI response indicates readiness for search
+    const aiIndicatesReady = 
+      aiResponse.toLowerCase().includes('perfect!') ||
+      aiResponse.toLowerCase().includes('ready to find') ||
+      aiResponse.toLowerCase().includes('let me summarize') ||
+      (hasRequiredContext && aiResponse.toLowerCase().includes('understand'));
 
-    console.log('Confirmation detection:', { 
-      userMessage: lowerMessage, 
-      isConfirming: isConfirmingUser, 
-      shouldGenerateSearch 
+    const showSearchButton = hasRequiredContext && aiIndicatesReady;
+
+    console.log('CTA Button Logic:', { 
+      hasRequiredContext, 
+      aiIndicatesReady, 
+      showSearchButton,
+      context: {
+        recipient: context?.recipient,
+        occasion: context?.occasion,
+        interests: context?.interests,
+        brands: context?.detectedBrands,
+        budget: context?.budget
+      }
     });
 
-    const conversationContinues = !shouldGenerateSearch;
-
-    // Enhanced context updating with smart relationship detection
-    const updatedContext = { ...context };
-    if (shouldGenerateSearch || isConfirmingUser) {
-      updatedContext.hasReceivedSuggestions = true;
-      updatedContext.shouldNavigateToMarketplace = true;
-      updatedContext.conversationPhase = 'providing_suggestions';
-    }
+    // Update context with Enhanced Zinc API preservation
+    const updatedContext = { 
+      ...context,
+      conversationPhase: showSearchButton ? 'ready_for_search_button' : context?.conversationPhase || 'gathering_info'
+    };
 
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
-        shouldGenerateSearch,
-        conversationContinues,
+        showSearchButton,
+        conversationContinues: !showSearchButton,
         contextualLinks: [],
         contextEnhanced: true,
-        improvedConfirmationDetection: true,
-        confirmationFlowEnabled: true,
+        ctaButtonSystem: true,
         enhancedZincApiIntegrated: true,
         step: context?.step || 'discovery',
-        conversationPhase: updatedContext.conversationPhase || context?.conversationPhase || 'greeting',
+        conversationPhase: updatedContext.conversationPhase,
         userIntent: context?.userIntent || 'none',
         context: updatedContext
       }),
@@ -242,7 +219,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
     );
 
   } catch (error) {
-    console.error('Error in enhanced nicole-chat function:', error);
+    console.error('Error in Enhanced Zinc API nicole-chat function with CTA button:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',

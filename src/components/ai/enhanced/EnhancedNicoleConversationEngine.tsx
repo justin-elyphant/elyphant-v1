@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,16 +112,17 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       console.log('🔍 Enhanced Nicole: Generating search with context:', aiContext);
       console.log('🔍 Generated search query:', searchQuery);
       
-      // Store comprehensive context for marketplace continuity
+      // Create comprehensive context with full conversation history
       const contextToStore = {
         fromNicole: true,
         searchQuery,
-        conversationSummary: `I found results for ${searchQuery}`,
+        conversationSummary: `Based on our conversation, I'm searching for: ${searchQuery}`,
         conversationHistory: messages,
         enhancedZincApiPreserved: true,
         marketplaceTransition: true,
         lastNicoleMessage: messages[messages.length - 1]?.content || '',
         timestamp: new Date().toISOString(),
+        originalUserQuery: searchQuery, // Store the exact search query
         debugInfo: {
           originalContext: aiContext,
           searchGenerated: searchQuery,
@@ -130,7 +130,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           hasRecipient: Boolean(aiContext.recipient),
           hasOccasion: Boolean(aiContext.occasion),
           hasInterests: Boolean(aiContext.interests?.length),
-          hasBudget: Boolean(aiContext.budget)
+          hasBudget: Boolean(aiContext.budget),
+          conversationFlow: 'homepage-to-marketplace'
         },
         searchCriteria: {
           recipient: aiContext.recipient,
@@ -145,11 +146,12 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       
       console.log('💾 Enhanced Nicole: Storing context for marketplace:', contextToStore);
       
-      // Store in sessionStorage for marketplace widget
+      // Store in multiple locations to ensure persistence
       sessionStorage.setItem('nicoleContext', JSON.stringify(contextToStore));
-      
-      // Also store in localStorage as backup
       localStorage.setItem('nicoleMarketplaceContext', JSON.stringify(contextToStore));
+      
+      // Also store a flag to indicate fresh context
+      sessionStorage.setItem('nicoleFreshContext', 'true');
       
       // Navigate to marketplace with search query
       onNavigateToResults(searchQuery);

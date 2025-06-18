@@ -22,6 +22,7 @@ interface EnhancedNicoleContext {
   marketplaceTransition: boolean;
   lastNicoleMessage?: string;
   timestamp?: string;
+  originalUserQuery?: string;
   debugInfo?: any;
   searchCriteria: {
     recipient?: string;
@@ -50,6 +51,10 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
     console.log('🔍 NicoleMarketplaceWidget: Initializing...');
     console.log('Props:', { searchQuery, totalResults, isFromNicole });
     
+    // Check for fresh context flag first
+    const isFreshContext = sessionStorage.getItem('nicoleFreshContext') === 'true';
+    console.log('📦 Fresh context flag:', isFreshContext);
+    
     // Check multiple sources for Nicole context
     let storedContext = null;
     
@@ -69,8 +74,8 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
       }
     }
     
-    // Show widget if we have context OR if explicitly told this is from Nicole
-    if (storedContext || isFromNicole) {
+    // Show widget if we have context OR if explicitly told this is from Nicole OR if we have a fresh context
+    if (storedContext || isFromNicole || isFreshContext) {
       try {
         const context: EnhancedNicoleContext = storedContext ? JSON.parse(storedContext) : {
           fromNicole: true,
@@ -79,6 +84,7 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
           conversationHistory: [],
           enhancedZincApiPreserved: true,
           marketplaceTransition: true,
+          originalUserQuery: searchQuery,
           searchCriteria: {}
         };
         
@@ -104,7 +110,7 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
         // Auto-expand and show contextual message
         setIsExpanded(true);
         
-        // Generate smart contextual message
+        // Generate smart contextual message based on actual search query
         const contextualMessage = generateContextualMessage(context, totalResults, searchQuery);
         console.log('💬 Generated contextual message:', contextualMessage);
         
@@ -115,7 +121,8 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
         
         setMessages([initialMessage]);
         
-        // Clear session storage but keep localStorage as backup
+        // Clear fresh context flag and session storage but keep localStorage as backup
+        sessionStorage.removeItem('nicoleFreshContext');
         if (sessionContext) {
           console.log('🧹 Clearing sessionStorage context');
           sessionStorage.removeItem('nicoleContext');
@@ -127,7 +134,9 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
         setIsExpanded(true);
         const fallbackMessage: NicoleMessage = {
           role: "assistant",
-          content: `Perfect! I found ${totalResults} great options for "${searchQuery}". These look like exactly what we discussed! What do you think of these results?`
+          content: totalResults > 0 
+            ? `Perfect! I found ${totalResults} great options for "${searchQuery}". These look like exactly what we discussed! What do you think of these results?`
+            : `I searched for "${searchQuery}" but didn't find any results. Let me help you refine your search - what specific aspects are most important to you?`
         };
         setMessages([fallbackMessage]);
       }
@@ -142,31 +151,42 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
     
     console.log('🎨 Generating contextual message with criteria:', searchCriteria);
     
-    // Create a personalized response based on the conversation
-    if (searchCriteria.recipient && searchCriteria.occasion) {
-      if (searchCriteria.interests && searchCriteria.interests.length > 0) {
-        parts.push(`Perfect! I found ${results} great ${searchCriteria.interests.join(' and ')} options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
-      } else {
-        parts.push(`Perfect! I found ${results} great options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
+    if (results === 0) {
+      // Handle no results case
+      parts.push(`I searched for "${query}" but couldn't find any matching products.`);
+      
+      if (searchCriteria.recipient && searchCriteria.occasion) {
+        parts.push(`Let me help you find alternatives for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
       }
-    } else if (searchCriteria.recipient) {
-      parts.push(`Great! I found ${results} options for your ${searchCriteria.recipient}.`);
+      
+      parts.push("Would you like me to try a broader search or look for similar items?");
     } else {
-      parts.push(`Perfect! I found ${results} options based on our conversation.`);
+      // Handle results found
+      if (searchCriteria.recipient && searchCriteria.occasion) {
+        if (searchCriteria.interests && searchCriteria.interests.length > 0) {
+          parts.push(`Perfect! I found ${results} great ${searchCriteria.interests.join(' and ')} options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
+        } else {
+          parts.push(`Perfect! I found ${results} great options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
+        }
+      } else if (searchCriteria.recipient) {
+        parts.push(`Great! I found ${results} options for your ${searchCriteria.recipient}.`);
+      } else {
+        parts.push(`Perfect! I found ${results} options based on our conversation.`);
+      }
+      
+      // Add age context if available
+      if (searchCriteria.exactAge) {
+        parts.push(`These should be perfect for someone turning ${searchCriteria.exactAge}!`);
+      }
+      
+      // Reference budget if discussed
+      if (searchCriteria.budget && searchCriteria.budget.length === 2) {
+        parts.push(`All within your $${searchCriteria.budget[0]}-$${searchCriteria.budget[1]} budget.`);
+      }
+      
+      // Add engagement question
+      parts.push("What do you think of these options? Do any of them look like perfect matches?");
     }
-    
-    // Add age context if available
-    if (searchCriteria.exactAge) {
-      parts.push(`These should be perfect for someone turning ${searchCriteria.exactAge}!`);
-    }
-    
-    // Reference budget if discussed
-    if (searchCriteria.budget && searchCriteria.budget.length === 2) {
-      parts.push(`All within your $${searchCriteria.budget[0]}-$${searchCriteria.budget[1]} budget.`);
-    }
-    
-    // Add engagement question
-    parts.push("What do you think of these options? Do any of them look like perfect matches?");
     
     const finalMessage = parts.join(' ');
     console.log('✅ Final contextual message:', finalMessage);

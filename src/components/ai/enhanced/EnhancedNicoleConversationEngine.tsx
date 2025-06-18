@@ -263,18 +263,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  const quickResponses = [
-    "I need a gift for my son",
-    "Birthday gift ideas for my daughter",
-    "Gifts under $50 for my mom",
-    "Anniversary presents for my wife"
-  ];
-
-  const handleQuickResponse = (response: string) => {
-    setCurrentMessage(response);
-    setTimeout(() => sendMessage(response), 100);
-  };
-
   return (
     <Card className="h-full max-h-96 flex flex-col">
       <CardContent className="p-0 flex flex-col h-full">
@@ -348,26 +336,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           )}
           <div ref={messagesEndRef} />
         </div>
-
-        {/* Quick Responses - Only show when there's exactly 1 message (Nicole's greeting) AND no loading */}
-        {messages.length === 1 && !isLoading && (
-          <div className="px-4 pb-2">
-            <p className="text-xs text-gray-500 mb-2">Try these suggestions:</p>
-            <div className="flex flex-wrap gap-2">
-              {quickResponses.map((response, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs h-7"
-                  onClick={() => handleQuickResponse(response)}
-                >
-                  {response}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Input */}
         <div className="p-4 border-t">

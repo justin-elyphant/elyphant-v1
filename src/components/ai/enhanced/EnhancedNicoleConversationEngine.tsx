@@ -107,7 +107,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         exactAge: enhancedSearchContext.ageInfo?.exactAge
       };
 
-      console.log('Enhanced Nicole: Sending comprehensive context to GPT with improved relationship detection:', enhancedContext);
+      console.log('Enhanced Nicole: Sending comprehensive context to GPT with improved confirmation detection:', enhancedContext);
 
       // Call the enhanced GPT-powered chatWithNicole function
       const response = await chatWithNicole(
@@ -135,7 +135,13 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         setContextualLinks([]);
       }
 
-      // Enhanced navigation logic with debugging
+      // Enhanced navigation logic with faster trigger and better debugging
+      console.log('Enhanced Nicole: Checking navigation conditions:', {
+        shouldGenerateSearch: response.shouldGenerateSearch,
+        shouldNavigateToMarketplace: response.context.shouldNavigateToMarketplace,
+        conversationPhase: response.context.conversationPhase
+      });
+
       if (response.shouldGenerateSearch || response.context.shouldNavigateToMarketplace) {
         console.log('Enhanced Nicole: Triggering Enhanced Zinc API search with context:', response.context);
         
@@ -163,14 +169,14 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           
           sessionStorage.setItem('nicoleContext', JSON.stringify(nicoleContext));
           
-          // Navigate to marketplace with Enhanced Zinc API search
+          // Navigate to marketplace with Enhanced Zinc API search - REDUCED DELAY
           console.log('Enhanced Nicole: Navigating to Enhanced Zinc API results for:', searchQuery);
           
-          // Use the callback to navigate
+          // Use the callback to navigate with faster timing
           setTimeout(() => {
             console.log('Enhanced Nicole: Executing navigation callback');
             onNavigateToResults(searchQuery);
-          }, 1500);
+          }, 500); // Reduced from 1500ms to 500ms
         } else {
           console.log('Enhanced Nicole: Search query was empty or generic, not navigating');
         }
@@ -196,7 +202,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  // Enhanced confirmation indicator
+  // Enhanced confirmation indicator with better detection
   const showConfirmationHint = context.conversationPhase === 'ready_to_search' && !context.shouldNavigateToMarketplace;
 
   return (
@@ -281,7 +287,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         <div className="p-4 border-t">
           {showConfirmationHint && (
             <div className="mb-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-              💡 Nicole is waiting for your confirmation to search for gifts
+              💡 Say "sounds good" or "yes" to see your gift recommendations
             </div>
           )}
           {context.shouldNavigateToMarketplace && (
@@ -296,7 +302,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={
-                showConfirmationHint ? "Say 'yes' or 'sounds good' to confirm..." : 
+                showConfirmationHint ? "Say 'sounds good' to confirm..." : 
                 context.shouldNavigateToMarketplace ? "Navigating to your results..." :
                 "Ask Nicole anything about gifts..."
               }

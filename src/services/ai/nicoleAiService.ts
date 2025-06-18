@@ -56,42 +56,17 @@ export async function chatWithNicole(
   context: NicoleContext = {}
 ): Promise<NicoleResponse> {
   try {
-    console.log('Nicole: Calling GPT-powered edge function with enhanced context:', context);
+    console.log('Nicole: Calling GPT-powered edge function with enhanced confirmation detection:', context);
     
     // Enhanced context extraction with smart relationship detection
     const enhancedContext = extractEnhancedContextFromMessage(message, context);
-    
-    // Enhanced system prompt with improved relationship detection
-    const systemInstructions = `You are Nicole, an AI gift advisor with smart relationship detection. Follow these phases:
-      
-      1. GREETING: Welcome and ask what they're looking for
-      2. GATHERING_INFO: Smart relationship detection - if they say "my son", automatically know recipient="son" and relationship="child"
-      3. CLARIFYING_NEEDS: Get interests, budget, age details  
-      4. READY_TO_SEARCH: Summarize everything and ask for confirmation
-      5. PROVIDING_SUGGESTIONS: Only after confirmation, proceed with search
-      
-      SMART RELATIONSHIP DETECTION:
-      - "my son/daughter" → don't ask relationship, it's obvious
-      - "my mom/dad" → parent relationship is clear
-      - "my friend" → friendship is obvious
-      - Skip redundant relationship questions when context is clear
-      
-      CONFIRMATION REQUIRED:
-      - Always summarize context before searching
-      - Ask "Does that sound right?" before proceeding
-      - Wait for explicit confirmation
-      
-      Enhanced Zinc API integration maintained with proper budget handling.`;
     
     // Call the enhanced nicole-chat edge function
     const { data, error } = await supabase.functions.invoke('nicole-chat', {
       body: {
         message,
         conversationHistory,
-        context: {
-          ...enhancedContext,
-          systemInstructions
-        }
+        context: enhancedContext
       }
     });
 
@@ -100,7 +75,7 @@ export async function chatWithNicole(
       throw error;
     }
 
-    console.log('Nicole: Enhanced GPT response received:', data);
+    console.log('Nicole: Enhanced GPT response with improved confirmation detection:', data);
 
     // Merge contexts with Enhanced Zinc API preservation
     const mergedContext = {
@@ -122,22 +97,21 @@ export async function chatWithNicole(
       ]
     };
 
-    // Update conversation phase with improved logic
-    const updatedPhase = determineEnhancedPhase(mergedContext, message);
-    mergedContext.conversationPhase = updatedPhase;
+    // Enhanced confirmation detection on the frontend
+    const isUserConfirming = detectEnhancedConfirmation(message);
+    console.log('Frontend confirmation detection:', { message, isConfirming: isUserConfirming });
 
-    // Check for confirmation in ready_to_search phase
-    const isConfirming = updatedPhase === 'ready_to_search' && detectConfirmation(message);
-    
-    // Only generate search after explicit confirmation
-    const shouldGenerateSearch = isConfirming || data.shouldGenerateSearch;
+    // Override shouldGenerateSearch if we detect confirmation
+    const shouldGenerateSearch = data.shouldGenerateSearch || isUserConfirming;
     
     // Set navigation flag when search is ready
     if (shouldGenerateSearch) {
       mergedContext.shouldNavigateToMarketplace = true;
+      mergedContext.conversationPhase = 'providing_suggestions';
+      console.log('Nicole: Setting navigation flag - shouldNavigateToMarketplace = true');
     }
 
-    console.log('Nicole: Enhanced phase:', updatedPhase, 'Should generate search:', shouldGenerateSearch);
+    console.log('Nicole: Final decision - shouldGenerateSearch:', shouldGenerateSearch);
 
     return {
       response: data.response || "I'm here to help you find the perfect gift! What are you looking for?",
@@ -278,6 +252,40 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
   return updatedContext;
 }
 
+function detectEnhancedConfirmation(message: string): boolean {
+  const lowerMessage = message.toLowerCase().trim();
+  const confirmationPhrases = [
+    'yes', 'yeah', 'yep', 'yup',
+    'sounds good', 'sounds great', 'sounds perfect', 'sounds good to me',
+    'that\'s right', 'that\'s correct', 'that\'s perfect', 'that sounds right',
+    'perfect', 'great', 'awesome', 'excellent',
+    'looks good', 'looks great', 'looks perfect',
+    'let\'s do it', 'let\'s go', 'go ahead', 'find them',
+    'okay', 'ok', 'sure', 'absolutely',
+    'that works', 'works for me', 'sounds like a plan'
+  ];
+
+  const isConfirming = confirmationPhrases.some(phrase => 
+    lowerMessage === phrase || 
+    lowerMessage.startsWith(phrase + ' ') ||
+    lowerMessage.includes(' ' + phrase + ' ') ||
+    lowerMessage.endsWith(' ' + phrase)
+  );
+
+  console.log('Enhanced confirmation detection:', { 
+    message: lowerMessage, 
+    isConfirming,
+    matchedPhrases: confirmationPhrases.filter(phrase => 
+      lowerMessage === phrase || 
+      lowerMessage.startsWith(phrase + ' ') ||
+      lowerMessage.includes(' ' + phrase + ' ') ||
+      lowerMessage.endsWith(' ' + phrase)
+    )
+  });
+
+  return isConfirming;
+}
+
 function validateBudgetArray(budget: any): [number, number] | undefined {
   if (!budget || !Array.isArray(budget) || budget.length !== 2) {
     return undefined;
@@ -292,47 +300,6 @@ function validateBudgetArray(budget: any): [number, number] | undefined {
   }
   
   return [numMin, numMax];
-}
-
-function determineEnhancedPhase(context: NicoleContext, userMessage: string): ConversationPhase {
-  // Check for confirmation in ready_to_search phase
-  if (context.conversationPhase === 'ready_to_search' && detectConfirmation(userMessage)) {
-    return 'providing_suggestions';
-  }
-  
-  // Smart phase detection based on context completeness
-  const hasRecipient = Boolean(context.recipient || context.relationship);
-  const hasOccasion = Boolean(context.occasion);
-  const hasPreferences = Boolean(
-    (context.interests && context.interests.length > 0) || 
-    (context.detectedBrands && context.detectedBrands.length > 0)
-  );
-  const hasBudget = Boolean(context.budget);
-  
-  if (!hasRecipient) return 'greeting';
-  if (hasRecipient && !hasOccasion) return 'gathering_info';
-  if (hasRecipient && hasOccasion && !hasPreferences) return 'clarifying_needs';
-  if (hasRecipient && hasOccasion && hasPreferences && !hasBudget) return 'clarifying_needs';
-  
-  // Move to ready_to_search when we have enough context
-  if (hasRecipient && hasOccasion && hasPreferences && hasBudget) {
-    return 'ready_to_search';
-  }
-  
-  return context.conversationPhase || 'greeting';
-}
-
-function detectConfirmation(message: string): boolean {
-  const confirmationPatterns = [
-    /^(yes|yeah|yep|sure|sounds good|perfect|that's right|correct|looks good)/i,
-    /sounds (good|great|perfect|right)/i,
-    /that's (right|correct|perfect|good)/i,
-    /^(ok|okay)\s*[!.]?$/i,
-    /let's go|let's do it|ready/i,
-    /show me|see the gifts|find them/i
-  ];
-  
-  return confirmationPatterns.some(pattern => pattern.test(message.trim()));
 }
 
 function shouldShowProducts(context: NicoleContext): boolean {

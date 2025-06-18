@@ -16,7 +16,7 @@ serve(async (req) => {
   try {
     const { message, conversationHistory, context } = await req.json();
     
-    console.log('Enhanced Nicole chat request with improved relationship detection:', { message, context });
+    console.log('Enhanced Nicole chat request with improved confirmation detection:', { message, context });
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     
@@ -38,8 +38,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt with improved relationship detection and confirmation flow
-    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through intelligent conversation flow.
+    // Enhanced system prompt with improved confirmation detection
+    const systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow.
 
 CONVERSATION FLOW GUIDELINES:
 
@@ -68,9 +68,21 @@ CONVERSATION FLOW GUIDELINES:
    - NO ACTION LINKS until confirmed
 
 5. PROVIDING_SUGGESTIONS (phase: providing_suggestions)
-   - Only after user confirms, set shouldGenerateSearch: true
+   - Only after user confirms with phrases like: "yes", "sounds good", "that's right", "perfect", "looks good", "sounds good to me", "that works", "correct", "let's do it", "go ahead", "find them"
+   - Set shouldGenerateSearch: true immediately upon confirmation
    - Generate specific search query for Enhanced Zinc API System
    - Prepare to navigate to marketplace with context
+
+ENHANCED CONFIRMATION DETECTION:
+The following phrases should ALWAYS trigger search generation:
+- "yes" / "yeah" / "yep" / "yup"
+- "sounds good" / "sounds great" / "sounds perfect" / "sounds good to me"
+- "that's right" / "that's correct" / "that's perfect" / "that sounds right"
+- "perfect" / "great" / "awesome" / "excellent"
+- "looks good" / "looks great" / "looks perfect"
+- "let's do it" / "let's go" / "go ahead" / "find them"
+- "okay" / "ok" / "sure" / "absolutely"
+- "that works" / "works for me" / "sounds like a plan"
 
 SMART RELATIONSHIP EXTRACTION:
 - "my son" → recipient: "son", relationship: "child"
@@ -87,8 +99,8 @@ CONFIRMATION PHASE RULES:
 - Always summarize what you understood before searching
 - Include: recipient, occasion, interests/brands, budget in summary
 - Ask "Does that sound right?" or "Are you ready to see your gifts?"
-- Wait for explicit confirmation (yes, sounds good, perfect, let's go, etc.)
-- NEVER auto-search without user confirmation
+- Wait for explicit confirmation
+- IMMEDIATELY set shouldGenerateSearch: true when user confirms
 
 BUDGET HANDLING:
 - Parse budget carefully to avoid NaN errors
@@ -110,9 +122,9 @@ RESPONSE RULES:
 - Be conversational and warm, not robotic
 - Extract context intelligently from user messages
 - Avoid redundant questions when relationship is obvious
-- Always confirm before searching
+- IMMEDIATELY proceed to search when user confirms with any confirmation phrase
 - Use specific terms that work well with Enhanced Zinc API
-- Focus on conversation flow, not pushing toward actions
+- Focus on conversation flow, trigger search fast upon confirmation
 
 The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
 
@@ -122,7 +134,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       { role: 'user', content: message }
     ];
 
-    console.log('Sending enhanced request to OpenAI with improved relationship detection');
+    console.log('Sending enhanced request to OpenAI with improved confirmation detection');
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -161,23 +173,51 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       throw new Error('No response from AI service');
     }
 
-    console.log('Enhanced OpenAI response with improved relationship detection received');
+    console.log('Enhanced OpenAI response with improved confirmation detection received');
+
+    // Enhanced confirmation detection logic
+    const lowerMessage = message.toLowerCase().trim();
+    const confirmationPhrases = [
+      'yes', 'yeah', 'yep', 'yup',
+      'sounds good', 'sounds great', 'sounds perfect', 'sounds good to me',
+      'that\'s right', 'that\'s correct', 'that\'s perfect', 'that sounds right',
+      'perfect', 'great', 'awesome', 'excellent',
+      'looks good', 'looks great', 'looks perfect',
+      'let\'s do it', 'let\'s go', 'go ahead', 'find them',
+      'okay', 'ok', 'sure', 'absolutely',
+      'that works', 'works for me', 'sounds like a plan'
+    ];
+
+    const isConfirmingUser = confirmationPhrases.some(phrase => 
+      lowerMessage === phrase || 
+      lowerMessage.startsWith(phrase + ' ') ||
+      lowerMessage.includes(' ' + phrase + ' ') ||
+      lowerMessage.endsWith(' ' + phrase)
+    );
 
     // Enhanced response analysis for structured conversation flow
     const shouldGenerateSearch = 
+      isConfirmingUser ||
       aiResponse.toLowerCase().includes('let me search') || 
       aiResponse.toLowerCase().includes('i\'ll find') ||
       aiResponse.toLowerCase().includes('perfect! let me') ||
       aiResponse.toLowerCase().includes('great! i\'ll search') ||
       context?.conversationPhase === 'providing_suggestions';
 
+    console.log('Confirmation detection:', { 
+      userMessage: lowerMessage, 
+      isConfirming: isConfirmingUser, 
+      shouldGenerateSearch 
+    });
+
     const conversationContinues = !shouldGenerateSearch;
 
     // Enhanced context updating with smart relationship detection
     const updatedContext = { ...context };
-    if (shouldGenerateSearch) {
+    if (shouldGenerateSearch || isConfirmingUser) {
       updatedContext.hasReceivedSuggestions = true;
       updatedContext.shouldNavigateToMarketplace = true;
+      updatedContext.conversationPhase = 'providing_suggestions';
     }
 
     return new Response(
@@ -187,11 +227,11 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
         conversationContinues,
         contextualLinks: [],
         contextEnhanced: true,
-        improvedRelationshipDetection: true,
+        improvedConfirmationDetection: true,
         confirmationFlowEnabled: true,
         enhancedZincApiIntegrated: true,
         step: context?.step || 'discovery',
-        conversationPhase: context?.conversationPhase || 'greeting',
+        conversationPhase: updatedContext.conversationPhase || context?.conversationPhase || 'greeting',
         userIntent: context?.userIntent || 'none',
         context: updatedContext
       }),

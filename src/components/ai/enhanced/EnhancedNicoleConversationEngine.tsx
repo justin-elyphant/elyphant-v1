@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Send, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { chatWithNicole, generateSearchQuery, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
 import { cn } from "@/lib/utils";
+import SearchButton from "./SearchButton";
 
 interface EnhancedNicoleConversationEngineProps {
   initialQuery?: string;
@@ -45,6 +47,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const [aiContext, setAiContext] = useState<EnhancedNicoleContext>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showSearchButton, setShowSearchButton] = useState(false);
 
   useEffect(() => {
     if (initialQuery) {
@@ -80,6 +83,12 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       };
       setMessages(prev => [...prev, nicoleResponse]);
       setAiContext(response.context);
+      
+      // Show the search button if the AI indicates it's ready
+      if (response.showSearchButton) {
+        console.log('🎯 Nicole: AI indicates ready for search, showing CTA button');
+        setShowSearchButton(true);
+      }
     } catch (error) {
       console.error("Error in Nicole chat:", error);
       toast.error("Sorry, I had trouble connecting. Please try again.");
@@ -221,36 +230,41 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
                 </div>
               </div>
             )}
+            
+            {/* CTA Search Button - Show when AI indicates readiness */}
+            {showSearchButton && !isGenerating && (
+              <div className="flex justify-center pt-2">
+                <SearchButton 
+                  onSearch={handleSearchButtonClick}
+                  isLoading={isGenerating}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Input */}
-          <div className="p-3 border-t">
-            <div className="flex space-x-2">
-              <Input
-                value={currentMessage}
-                onChange={(e) => setCurrentMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me anything..."
-                className="flex-1 text-sm"
-                disabled={isGenerating}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!currentMessage.trim() || isGenerating}
-                size="sm"
-                className="bg-purple-500 hover:bg-purple-600"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+          {/* Input - Only show if search button is not active */}
+          {!showSearchButton && (
+            <div className="p-3 border-t">
+              <div className="flex space-x-2">
+                <Input
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Ask me anything..."
+                  className="flex-1 text-sm"
+                  disabled={isGenerating}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!currentMessage.trim() || isGenerating}
+                  size="sm"
+                  className="bg-purple-500 hover:bg-purple-600"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={handleSearchButtonClick}
-              disabled={isGenerating}
-              className="mt-2 w-full bg-green-500 hover:bg-green-600 text-white text-sm"
-            >
-              Generate Search
-            </Button>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

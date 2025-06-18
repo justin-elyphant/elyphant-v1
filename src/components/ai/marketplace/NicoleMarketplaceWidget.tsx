@@ -1,366 +1,277 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { MessageCircle, X, Sparkles, Send } from "lucide-react";
-import { NicoleMessage, NicoleContext, chatWithNicole } from "@/services/ai/nicoleAiService";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Send, Loader2, MessageCircle, X, Minimize2, Maximize2, Gift } from "lucide-react";
+import { chatWithNicole, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
+import { useAuth } from "@/contexts/auth";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-interface NicoleMarketplaceWidgetProps {
-  searchQuery: string;
-  totalResults: number;
-  isFromNicole?: boolean;
+interface ConversationMessage {
+  type: "nicole" | "user";
+  content: string;
+  timestamp: Date;
 }
 
-interface EnhancedNicoleContext {
-  fromNicole: boolean;
-  searchQuery: string;
-  conversationSummary: string;
-  conversationHistory: NicoleMessage[];
-  enhancedZincApiPreserved: boolean;
-  marketplaceTransition: boolean;
-  lastNicoleMessage?: string;
-  timestamp?: string;
-  originalUserQuery?: string;
-  debugInfo?: any;
-  searchCriteria: {
-    recipient?: string;
-    relationship?: string;
-    occasion?: string;
-    exactAge?: number;
-    interests?: string[];
-    budget?: [number, number];
-    detectedBrands?: string[];
-  };
+interface NicoleMarketplaceWidgetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSearchSuggestion?: (query: string) => void;
+  onMinimize?: () => void;
+  isMinimized?: boolean;
+  onMaximize?: () => void;
 }
 
 const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
-  searchQuery,
-  totalResults,
-  isFromNicole = false
+  isOpen,
+  onClose,
+  onSearchSuggestion,
+  onMinimize,
+  isMinimized = false,
+  onMaximize
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [messages, setMessages] = useState<NicoleMessage[]>([]);
+  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
-  const [nicoleContext, setNicoleContext] = useState<EnhancedNicoleContext | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [aiContext, setAiContext] = useState<NicoleContext>({});
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [context, setContext] = useState<NicoleContext>({});
+  const [conversationHistory, setConversationHistory] = useState<NicoleMessage[]>([]);
+  
+  const { user } = useAuth();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log('🔍 NicoleMarketplaceWidget: Initializing...');
-    console.log('Props:', { searchQuery, totalResults, isFromNicole });
-    
-    // Check for fresh context flag first
-    const isFreshContext = sessionStorage.getItem('nicoleFreshContext') === 'true';
-    console.log('📦 Fresh context flag:', isFreshContext);
-    
-    // Check multiple sources for Nicole context
-    let storedContext = null;
-    
-    // First check sessionStorage (primary)
-    const sessionContext = sessionStorage.getItem('nicoleContext');
-    if (sessionContext) {
-      console.log('📦 Found context in sessionStorage:', sessionContext);
-      storedContext = sessionContext;
-    }
-    
-    // Fallback to localStorage
-    if (!storedContext) {
-      const localContext = localStorage.getItem('nicoleMarketplaceContext');
-      if (localContext) {
-        console.log('📦 Found context in localStorage:', localContext);
-        storedContext = localContext;
-      }
-    }
-    
-    // Show widget if we have context OR if explicitly told this is from Nicole OR if we have a fresh context
-    if (storedContext || isFromNicole || isFreshContext) {
-      try {
-        const context: EnhancedNicoleContext = storedContext ? JSON.parse(storedContext) : {
-          fromNicole: true,
-          searchQuery,
-          conversationSummary: `I found ${totalResults} options for your search`,
-          conversationHistory: [],
-          enhancedZincApiPreserved: true,
-          marketplaceTransition: true,
-          originalUserQuery: searchQuery,
-          searchCriteria: {}
-        };
-        
-        console.log('✨ Using context:', context);
-        console.log('🎯 Context debug info:', context.debugInfo);
-        
-        setNicoleContext(context);
-        
-        // Reconstruct AI context for Enhanced Zinc API continuity
-        setAiContext({
-          recipient: context.searchCriteria.recipient,
-          relationship: context.searchCriteria.relationship,
-          occasion: context.searchCriteria.occasion,
-          exactAge: context.searchCriteria.exactAge,
-          interests: context.searchCriteria.interests,
-          budget: context.searchCriteria.budget,
-          detectedBrands: context.searchCriteria.detectedBrands,
-          conversationPhase: 'providing_suggestions',
-          hasReceivedSuggestions: true,
-          shouldNavigateToMarketplace: false
-        });
-        
-        // Auto-expand and show contextual message
-        setIsExpanded(true);
-        
-        // Generate smart contextual message based on actual search query
-        const contextualMessage = generateContextualMessage(context, totalResults, searchQuery);
-        console.log('💬 Generated contextual message:', contextualMessage);
-        
-        const initialMessage: NicoleMessage = {
-          role: "assistant",
-          content: contextualMessage
-        };
-        
-        setMessages([initialMessage]);
-        
-        // Clear fresh context flag and session storage but keep localStorage as backup
-        sessionStorage.removeItem('nicoleFreshContext');
-        if (sessionContext) {
-          console.log('🧹 Clearing sessionStorage context');
-          sessionStorage.removeItem('nicoleContext');
-        }
-        
-      } catch (error) {
-        console.error('❌ Error parsing Nicole context:', error);
-        // Enhanced fallback with context awareness
-        setIsExpanded(true);
-        const fallbackMessage: NicoleMessage = {
-          role: "assistant",
-          content: totalResults > 0 
-            ? `Perfect! I found ${totalResults} great options for "${searchQuery}". These look like exactly what we discussed! What do you think of these results?`
-            : `I searched for "${searchQuery}" but didn't find any results. Let me help you refine your search - what specific aspects are most important to you?`
-        };
-        setMessages([fallbackMessage]);
-      }
-    } else {
-      console.log('ℹ️ No Nicole context found, widget will remain collapsed');
-    }
-  }, [searchQuery, totalResults, isFromNicole]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversation]);
 
-  const generateContextualMessage = (context: EnhancedNicoleContext, results: number, query: string): string => {
-    const { searchCriteria } = context;
-    const parts = [];
-    
-    console.log('🎨 Generating contextual message with criteria:', searchCriteria);
-    
-    if (results === 0) {
-      // Handle no results case
-      parts.push(`I searched for "${query}" but couldn't find any matching products.`);
-      
-      if (searchCriteria.recipient && searchCriteria.occasion) {
-        parts.push(`Let me help you find alternatives for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
-      }
-      
-      parts.push("Would you like me to try a broader search or look for similar items?");
-    } else {
-      // Handle results found
-      if (searchCriteria.recipient && searchCriteria.occasion) {
-        if (searchCriteria.interests && searchCriteria.interests.length > 0) {
-          parts.push(`Perfect! I found ${results} great ${searchCriteria.interests.join(' and ')} options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
-        } else {
-          parts.push(`Perfect! I found ${results} great options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
-        }
-      } else if (searchCriteria.recipient) {
-        parts.push(`Great! I found ${results} options for your ${searchCriteria.recipient}.`);
-      } else {
-        parts.push(`Perfect! I found ${results} options based on our conversation.`);
-      }
-      
-      // Add age context if available
-      if (searchCriteria.exactAge) {
-        parts.push(`These should be perfect for someone turning ${searchCriteria.exactAge}!`);
-      }
-      
-      // Reference budget if discussed
-      if (searchCriteria.budget && searchCriteria.budget.length === 2) {
-        parts.push(`All within your $${searchCriteria.budget[0]}-$${searchCriteria.budget[1]} budget.`);
-      }
-      
-      // Add engagement question
-      parts.push("What do you think of these options? Do any of them look like perfect matches?");
-    }
-    
-    const finalMessage = parts.join(' ');
-    console.log('✅ Final contextual message:', finalMessage);
-    return finalMessage;
-  };
+  const addMessage = useCallback((message: ConversationMessage) => {
+    setConversation(prev => [...prev, message]);
+  }, []);
 
-  const handleSendMessage = async () => {
-    if (!currentMessage.trim()) return;
-
-    const userMessage: NicoleMessage = {
-      role: "user",
-      content: currentMessage.trim()
+  const startConversation = useCallback(() => {
+    const greetingMessage: ConversationMessage = {
+      type: "nicole",
+      content: "Hi! I'm Nicole, your marketplace shopping assistant. I can help you find specific products or refine your search. What are you looking for today?",
+      timestamp: new Date()
     };
+    addMessage(greetingMessage);
+  }, [addMessage]);
 
-    setMessages(prev => [...prev, userMessage]);
+  const handleSendMessage = useCallback(async (messageText?: string) => {
+    const message = messageText || currentMessage.trim();
+    if (!message) return;
+
+    // Add user message
+    const userMessage: ConversationMessage = {
+      type: "user",
+      content: message,
+      timestamp: new Date()
+    };
+    addMessage(userMessage);
+
+    // Update conversation history for AI
+    const userAiMessage: NicoleMessage = {
+      role: "user",
+      content: message
+    };
+    setConversationHistory(prev => [...prev, userAiMessage]);
+
     setCurrentMessage("");
-    setIsLoading(true);
+    setIsGenerating(true);
 
     try {
-      // Use the Enhanced Zinc API service to maintain context continuity
-      const response = await chatWithNicole(
-        currentMessage.trim(),
-        messages.concat(userMessage),
-        {
-          ...aiContext,
-          conversationPhase: 'providing_suggestions',
-          hasReceivedSuggestions: true,
-          shouldNavigateToMarketplace: false
+      console.log('🛍️ Nicole Marketplace: Processing message', { message, context });
+
+      // Enhanced context for marketplace assistance
+      const marketplaceContext = {
+        ...context,
+        conversationPhase: 'providing_suggestions' // Remove hasReceivedSuggestions
+      };
+
+      // Get AI response - fix parameter order here
+      const aiResponse = await chatWithNicole(message, marketplaceContext, conversationHistory);
+      
+      console.log('✅ Nicole Marketplace: Received AI response', aiResponse);
+
+      // Add Nicole's response - fix property name here
+      const nicoleMessage: ConversationMessage = {
+        type: "nicole",
+        content: aiResponse.message, // Changed from 'response' to 'message'
+        timestamp: new Date()
+      };
+      addMessage(nicoleMessage);
+
+      // Update conversation history
+      const nicoleAiMessage: NicoleMessage = {
+        role: "assistant",
+        content: aiResponse.message // Changed from 'response' to 'message'
+      };
+      setConversationHistory(prev => [...prev, nicoleAiMessage]);
+
+      // Update context with AI response
+      if (aiResponse.context) {
+        setContext(aiResponse.context);
+      }
+
+      // Handle search suggestions
+      if (aiResponse.generateSearch && onSearchSuggestion) {
+        // Generate a search query based on the conversation
+        const searchQuery = extractSearchQuery(message, aiResponse.message);
+        if (searchQuery) {
+          setTimeout(() => {
+            onSearchSuggestion(searchQuery);
+          }, 1000);
         }
-      );
+      }
 
-      const nicoleResponse: NicoleMessage = {
-        role: "assistant",
-        content: response.response
-      };
-      
-      setMessages(prev => [...prev, nicoleResponse]);
-      
-      // Update AI context to preserve Enhanced Zinc API state
-      setAiContext(response.context);
-      
     } catch (error) {
-      console.error('Error in marketplace Nicole chat:', error);
+      console.error('💥 Nicole Marketplace: Error in conversation', error);
       
-      // Fallback responses that reference the Enhanced Zinc API context
-      const fallbackResponses = [
-        `I can help you narrow down these ${totalResults} options! What's most important to you - price, brand, or specific features?`,
-        "Would you like me to filter these results by a specific price range or brand?",
-        "I notice there are several great options here. Are you looking for something more specific?",
-        "These look like great choices! Do any of these match what you had in mind from our conversation?"
-      ];
-      
-      const response: NicoleMessage = {
-        role: "assistant",
-        content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+      // Add fallback message
+      const fallbackMessage: ConversationMessage = {
+        type: "nicole",
+        content: "I'm having trouble right now, but I can still help you search! Try describing what you're looking for and I'll suggest some search terms.",
+        timestamp: new Date()
       };
-      
-      setMessages(prev => [...prev, response]);
+      addMessage(fallbackMessage);
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
-  };
+  }, [currentMessage, addMessage, conversationHistory, context, onSearchSuggestion]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const extractSearchQuery = useCallback((userMessage: string, aiResponse: string): string | null => {
+    // Simple search query extraction logic
+    const lowerMessage = userMessage.toLowerCase();
+    
+    // Look for product-related keywords
+    const productKeywords = ['looking for', 'need', 'want', 'searching for', 'find'];
+    const hasProductIntent = productKeywords.some(keyword => lowerMessage.includes(keyword));
+    
+    if (hasProductIntent) {
+      // Extract potential search terms
+      const words = userMessage.split(' ').filter(word => word.length > 2);
+      return words.slice(-3).join(' '); // Take last few words as search query
     }
-  };
+    
+    return null;
+  }, []);
 
-  if (!nicoleContext && !isExpanded) {
-    return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <Button
-          onClick={() => setIsExpanded(true)}
-          className="bg-purple-500 hover:bg-purple-600 rounded-full w-12 h-12 shadow-lg"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (isOpen && conversation.length === 0) {
+      startConversation();
+    }
+  }, [isOpen, conversation.length, startConversation]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <Card className="w-80 h-96 flex flex-col shadow-xl">
-        <CardContent className="p-0 flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
-            <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/ai-avatar.png" />
-                <AvatarFallback className="bg-purple-100 text-purple-700">N</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-semibold text-sm text-gray-900">Nicole</h3>
-                <p className="text-xs text-purple-600 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  {nicoleContext?.enhancedZincApiPreserved ? 'Enhanced gift advisor' : 'Here to help with your search'}
-                </p>
-              </div>
-            </div>
+      <Card className={`w-96 bg-white shadow-2xl transition-all duration-300 ${
+        isMinimized ? "h-16" : "h-[500px]"
+      }`}>
+        <CardHeader className="pb-2 border-b flex flex-row items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Gift className="h-5 w-5 text-purple-600" />
+            <h3 className="font-semibold text-gray-900">Marketplace Assistant</h3>
+          </div>
+          <div className="flex items-center space-x-2">
+            {onMinimize && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onMinimize}
+                className="h-8 w-8 p-0"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+            )}
+            {isMinimized && onMaximize && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onMaximize}
+                className="h-8 w-8 p-0"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsExpanded(false)}
+              onClick={onClose}
               className="h-8 w-8 p-0"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
+        </CardHeader>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[80%] px-3 py-2 rounded-lg text-sm",
-                    message.role === "user"
-                      ? "bg-purple-500 text-white"
-                      : "bg-gray-100 text-gray-900"
-                  )}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            
-            {/* Loading indicator */}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg px-3 py-2 max-w-[80%]">
-                  <div className="flex items-center space-x-2">
-                    <div className="flex space-x-1">
-                      <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce"></div>
-                      <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        {!isMinimized && (
+          <>
+            <CardContent className="flex-1 p-0">
+              <ScrollArea className="h-[360px] p-4">
+                <div className="space-y-4">
+                  {conversation.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[80%] p-3 rounded-lg ${
+                          msg.type === "user"
+                            ? "bg-purple-600 text-white"
+                            : "bg-gray-100 text-gray-900"
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
                     </div>
-                    <span className="text-xs text-gray-600">Nicole is thinking...</span>
-                  </div>
+                  ))}
+                  
+                  {isGenerating && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 text-gray-900 p-3 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Nicole is thinking...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+                <div ref={messagesEndRef} />
+              </ScrollArea>
+            </CardContent>
 
-          {/* Input */}
-          <div className="p-3 border-t">
-            <div className="flex space-x-2">
-              <Input
-                value={currentMessage}
-                onChange={(e) => setCurrentMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask Nicole about these results..."
-                className="flex-1 text-sm"
-                disabled={isLoading}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!currentMessage.trim() || isLoading}
-                size="sm"
-                className="bg-purple-500 hover:bg-purple-600"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+            <div className="p-4 border-t">
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  placeholder="What can I help you find?"
+                  className="flex-1"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  disabled={isGenerating}
+                />
+                <Button
+                  onClick={() => handleSendMessage()}
+                  disabled={isGenerating || !currentMessage.trim()}
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
+          </>
+        )}
       </Card>
     </div>
   );

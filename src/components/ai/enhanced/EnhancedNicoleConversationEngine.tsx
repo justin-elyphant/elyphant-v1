@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,14 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   }, [initialQuery]);
 
+  const shouldShowSearchButton = (context: EnhancedNicoleContext, messageCount: number) => {
+    // Show button if we have basic gift information OR after a few exchanges
+    const hasBasicInfo = context.recipient || context.occasion || context.budget || context.interests?.length;
+    const hasEnoughConversation = messageCount >= 3; // After user, assistant, user exchanges
+    
+    return hasBasicInfo || hasEnoughConversation;
+  };
+
   const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
 
@@ -91,14 +100,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         role: "assistant",
         content: cleanResponse
       };
-      setMessages(prev => [...prev, nicoleResponse]);
+      
+      const updatedMessages = [...messages, userMessage, nicoleResponse];
+      setMessages(updatedMessages);
       setAiContext(response.context);
       
-      // Show the search button if the AI indicates it's ready
-      if (response.showSearchButton) {
-        console.log('🎯 Nicole: AI indicates ready for search, showing CTA button');
+      // Check if we should show the search button based on context and conversation length
+      const shouldShow = shouldShowSearchButton(response.context, updatedMessages.length);
+      
+      if (shouldShow) {
+        console.log('🎯 Nicole: Showing CTA button based on context:', response.context);
         setShowSearchButton(true);
       }
+      
     } catch (error) {
       console.error("Error in Nicole chat:", error);
       toast.error("Sorry, I had trouble connecting. Please try again.");
@@ -244,7 +258,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               </div>
             )}
             
-            {/* CTA Search Button - Show when AI indicates readiness */}
+            {/* CTA Search Button - Show when we have enough context */}
             {showSearchButton && !isGenerating && (
               <div className="flex justify-center pt-2">
                 <SearchButton 
@@ -285,3 +299,4 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 };
 
 export default EnhancedNicoleConversationEngine;
+

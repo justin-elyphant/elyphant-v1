@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,9 +77,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         aiContext
       );
 
+      // Clean the response to remove any embedded button text
+      let cleanResponse = response.response;
+      
+      // Remove various forms of the embedded button text
+      cleanResponse = cleanResponse.replace(/\[Ready to See Gifts\]/gi, '');
+      cleanResponse = cleanResponse.replace(/Ready to See Gifts/gi, '');
+      cleanResponse = cleanResponse.replace(/\*Ready to See Gifts\*/gi, '');
+      cleanResponse = cleanResponse.replace(/\**Ready to See Gifts\**/gi, '');
+      cleanResponse = cleanResponse.trim();
+
       const nicoleResponse: NicoleMessage = {
         role: "assistant",
-        content: response.response
+        content: cleanResponse
       };
       setMessages(prev => [...prev, nicoleResponse]);
       setAiContext(response.context);

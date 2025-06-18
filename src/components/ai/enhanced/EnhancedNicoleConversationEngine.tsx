@@ -49,6 +49,158 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const [isExpanded, setIsExpanded] = useState(true);
   const [showSearchButton, setShowSearchButton] = useState(false);
 
+  // Smart fallback logic to determine if CTA button should show
+  const shouldShowCTAButton = useCallback((context: EnhancedNicoleContext, lastMessage?: string): boolean => {
+    console.log('🧠 Smart CTA Logic Check:', {
+      context,
+      lastMessage: lastMessage?.substring(0, 100) + '...',
+      aiFlag: showSearchButton
+    });
+
+    // Primary: Trust AI's decision if it says to show button
+    if (showSearchButton) {
+      console.log('✅ AI Flag: Showing CTA button');
+      return true;
+    }
+
+    // Fallback 1: Check if Nicole gave a summary/confirmation message
+    if (lastMessage) {
+      const summaryIndicators = [
+        'perfect! so',
+        'great! so',
+        'excellent! so',
+        'to summarize',
+        'so, to recap',
+        'i\'m ready to find',
+        'let me find',
+        'ready to search',
+        'let\'s find some',
+        'here\'s what i have',
+        'i have everything i need'
+      ];
+      
+      const lowerMessage = lastMessage.toLowerCase();
+      const hasSummaryIndicator = summaryIndicators.some(indicator => 
+        lowerMessage.includes(indicator)
+      );
+      
+      if (hasSummaryIndicator) {
+        console.log('✅ Summary Indicator: Showing CTA button');
+        return true;
+      }
+    }
+
+    // Fallback 2: Smart context validation - has essential information
+    const hasRecipient = Boolean(context.recipient || context.relationship);
+    const hasOccasionOrAge = Boolean(context.occasion || context.exactAge);
+    const hasInterestsOrBrands = Boolean(
+      (context.interests && context.interests.length > 0) || 
+      (context.detectedBrands && context.detectedBrands.length > 0)
+    );
+    const hasBudget = Boolean(context.budget && Array.isArray(context.budget) && context.budget.length === 2);
+
+    // Essential info threshold: Need recipient + occasion + (interests OR budget)
+    const hasEssentialInfo = hasRecipient && hasOccasionOrAge && (hasInterestsOrBrands || hasBudget);
+    
+    console.log('🔍 Context Validation:', {
+      hasRecipient,
+      hasOccasionOrAge,
+      hasInterestsOrBrands,
+      hasBudget,
+      hasEssentialInfo
+    });
+
+    if (hasEssentialInfo) {
+      console.log('✅ Essential Info Complete: Showing CTA button');
+      return true;
+    }
+
+    // Fallback 3: Check conversation phase
+    if (context.conversationPhase === 'ready_to_search') {
+      console.log('✅ Conversation Phase Ready: Showing CTA button');
+      return true;
+    }
+
+    console.log('❌ No conditions met: Hiding CTA button');
+    return false;
+  }, [showSearchButton]);
+
+  // Enhanced context extraction with better validation
+  const extractEnhancedContext = useCallback((message: string, currentContext: EnhancedNicoleContext): EnhancedNicoleContext => {
+    const lowerMessage = message.toLowerCase();
+    let updatedContext = { ...currentContext };
+
+    // Enhanced relationship detection
+    const relationshipPatterns = [
+      { pattern: /\bmy (?:wife|husband|spouse|partner)\b/i, recipient: 'spouse', relationship: 'spouse' },
+      { pattern: /\bmy (?:mom|mother|dad|father)\b/i, recipient: 'parent', relationship: 'parent' },
+      { pattern: /\bmy (?:son|daughter|child|kid)\b/i, recipient: 'child', relationship: 'child' },
+      { pattern: /\bmy (?:friend|buddy|pal)\b/i, recipient: 'friend', relationship: 'friend' },
+      { pattern: /\bmy (?:brother|sister|sibling)\b/i, recipient: 'sibling', relationship: 'sibling' }
+    ];
+
+    for (const { pattern, recipient, relationship } of relationshipPatterns) {
+      if (pattern.test(message)) {
+        updatedContext.recipient = recipient;
+        updatedContext.relationship = relationship;
+        break;
+      }
+    }
+
+    // Enhanced occasion detection
+    const occasionPatterns = [
+      { pattern: /birthday|turning \d+|\d+th birthday/i, occasion: 'birthday' },
+      { pattern: /christmas|holiday/i, occasion: 'christmas' },
+      { pattern: /anniversary/i, occasion: 'anniversary' },
+      { pattern: /valentine/i, occasion: 'valentine\'s day' }
+    ];
+
+    for (const { pattern, occasion } of occasionPatterns) {
+      if (pattern.test(message)) {
+        updatedContext.occasion = occasion;
+        break;
+      }
+    }
+
+    // Enhanced budget extraction
+    const budgetPatterns = [
+      /around \$(\d+)/i,
+      /about \$(\d+)/i,
+      /\$(\d+)(?:\s*-\s*\$?(\d+))?/g,
+      /under \$(\d+)/i,
+      /up to \$(\d+)/i
+    ];
+
+    for (const pattern of budgetPatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        const amount = parseInt(match[1]);
+        if (!isNaN(amount) && amount > 0) {
+          // Create a reasonable range around the stated amount
+          const min = Math.max(10, Math.floor(amount * 0.7));
+          const max = Math.ceil(amount * 1.3);
+          updatedContext.budget = [min, max];
+          console.log('💰 Budget extracted:', updatedContext.budget);
+          break;
+        }
+      }
+    }
+
+    // Enhanced interest detection
+    const interestKeywords = ['yoga', 'cooking', 'fitness', 'reading', 'music', 'art', 'sports', 'gaming', 'travel'];
+    const foundInterests = interestKeywords.filter(interest => 
+      lowerMessage.includes(interest)
+    );
+
+    if (foundInterests.length > 0) {
+      updatedContext.interests = [
+        ...new Set([...(updatedContext.interests || []), ...foundInterests])
+      ];
+    }
+
+    return updatedContext;
+  }, []);
+
   useEffect(() => {
     if (initialQuery) {
       setMessages([{ role: "user", content: initialQuery }]);
@@ -58,6 +210,13 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   }, [initialQuery]);
 
+  // Update CTA button visibility when context or messages change
+  useEffect(() => {
+    const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop();
+    const shouldShow = shouldShowCTAButton(aiContext, lastAssistantMessage?.content);
+    setShowSearchButton(shouldShow);
+  }, [aiContext, messages, shouldShowCTAButton]);
+
   const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
 
@@ -65,6 +224,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       role: "user",
       content: currentMessage.trim()
     };
+
+    // Extract context from user message
+    const enhancedContext = extractEnhancedContext(currentMessage.trim(), aiContext);
 
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
@@ -74,7 +236,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       const response = await chatWithNicole(
         currentMessage.trim(),
         messages.concat(userMessage),
-        aiContext
+        enhancedContext
       );
 
       // Clean the response to remove any embedded button text
@@ -94,13 +256,28 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       
       const updatedMessages = [...messages, userMessage, nicoleResponse];
       setMessages(updatedMessages);
-      setAiContext(response.context);
       
-      // Trust the AI's decision on when to show the search button
-      if (response.showSearchButton) {
-        console.log('🎯 Nicole: AI indicates ready for search, showing CTA button');
-        setShowSearchButton(true);
-      }
+      // Merge contexts with Enhanced Zinc API preservation
+      const mergedContext = {
+        ...enhancedContext,
+        ...(response.context || {}),
+        // Preserve Enhanced Zinc fields
+        detectedBrands: response.context?.detectedBrands || enhancedContext.detectedBrands || aiContext.detectedBrands,
+        ageGroup: response.context?.ageGroup || enhancedContext.ageGroup || aiContext.ageGroup,
+        exactAge: response.context?.exactAge || enhancedContext.exactAge || aiContext.exactAge,
+        // Merge interests arrays
+        interests: [
+          ...new Set([
+            ...(aiContext.interests || []),
+            ...(enhancedContext.interests || []),
+            ...(response.context?.interests || [])
+          ])
+        ]
+      };
+      
+      setAiContext(mergedContext);
+      
+      console.log('🎯 Nicole: AI response received, context updated:', mergedContext);
       
     } catch (error) {
       console.error("Error in Nicole chat:", error);
@@ -318,7 +495,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               </div>
             )}
             
-            {/* CTA Search Button - Show only when AI indicates readiness */}
+            {/* Smart CTA Button - Show based on intelligent fallback logic */}
             {showSearchButton && !isGenerating && (
               <div className="flex justify-center pt-2">
                 <SearchButton 

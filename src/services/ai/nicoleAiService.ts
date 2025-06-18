@@ -47,7 +47,10 @@ export interface NicoleResponse {
   suggestedQueries?: string[];
   shouldShowProducts?: boolean;
   contextualLinks?: ContextualLink[];
-  shouldGenerateSearch?: boolean;
+  shoul
+
+
+generateSearch?: boolean;
 }
 
 export async function chatWithNicole(
@@ -56,12 +59,21 @@ export async function chatWithNicole(
   context: NicoleContext = {}
 ): Promise<NicoleResponse & { showSearchButton?: boolean }> {
   try {
-    console.log('Nicole: Calling Enhanced Zinc API GPT-powered edge function with CTA button system:', context);
+    console.log('🤖 Nicole: Enhanced Zinc API GPT request with smart CTA system:', {
+      message: message.substring(0, 100) + '...',
+      contextSummary: {
+        recipient: context.recipient,
+        occasion: context.occasion,
+        interests: context.interests,
+        budget: context.budget,
+        conversationPhase: context.conversationPhase
+      }
+    });
     
     // Enhanced context extraction with smart relationship detection (preserve Enhanced Zinc API)
     const enhancedContext = extractEnhancedContextFromMessage(message, context);
     
-    // Call the enhanced nicole-chat edge function with CTA button support
+    // Call the enhanced nicole-chat edge function with improved CTA logic
     const { data, error } = await supabase.functions.invoke('nicole-chat', {
       body: {
         message,
@@ -71,11 +83,21 @@ export async function chatWithNicole(
     });
 
     if (error) {
-      console.error('Nicole: Edge function error:', error);
+      console.error('❌ Nicole: Edge function error:', error);
       throw error;
     }
 
-    console.log('Nicole: Enhanced Zinc API GPT response with CTA button system:', data);
+    console.log('✅ Nicole: Enhanced Zinc API GPT response received:', {
+      hasResponse: Boolean(data?.response),
+      hasContext: Boolean(data?.context),
+      showSearchButton: data?.showSearchButton,
+      contextUpdate: data?.context ? {
+        recipient: data.context.recipient,
+        occasion: data.context.occasion,
+        interests: data.context.interests,
+        conversationPhase: data.context.conversationPhase
+      } : null
+    });
 
     // Merge contexts with Enhanced Zinc API preservation
     const mergedContext = {
@@ -97,9 +119,13 @@ export async function chatWithNicole(
       ]
     };
 
-    console.log('Nicole: CTA Button Decision:', { 
-      showSearchButton: data.showSearchButton,
-      conversationPhase: mergedContext.conversationPhase 
+    console.log('🎯 Nicole: Final context merge completed:', {
+      hasRecipient: Boolean(mergedContext.recipient),
+      hasOccasion: Boolean(mergedContext.occasion),
+      hasInterests: Boolean(mergedContext.interests?.length),
+      hasBudget: Boolean(mergedContext.budget),
+      conversationPhase: mergedContext.conversationPhase,
+      showSearchButton: data.showSearchButton
     });
 
     return {
@@ -112,9 +138,9 @@ export async function chatWithNicole(
     };
     
   } catch (error) {
-    console.error('Error in Enhanced Zinc API Nicole chat with CTA button:', error);
+    console.error('❌ Error in Enhanced Zinc API Nicole chat with smart CTA:', error);
     
-    // Fallback with context extraction
+    // Enhanced fallback with context extraction
     const enhancedContext = extractEnhancedContextFromMessage(message, context);
     
     return {
@@ -152,7 +178,7 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
     if (pattern.test(userMessage)) {
       updatedContext.recipient = recipient;
       updatedContext.relationship = relationship;
-      console.log(`Smart relationship detected: ${recipient} (${relationship}) from: "${userMessage}"`);
+      console.log(`🎯 Smart relationship detected: ${recipient} (${relationship}) from: "${userMessage}"`);
       break;
     }
   }
@@ -174,7 +200,7 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
     if (pattern.test(userMessage)) {
       updatedContext.occasion = occasion;
       updatedContext.askedForOccasion = true;
-      console.log(`Occasion detected: ${occasion} from: "${userMessage}"`);
+      console.log(`🎉 Occasion detected: ${occasion} from: "${userMessage}"`);
       break;
     }
   }
@@ -200,7 +226,7 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
           updatedContext.occasion = 'birthday';
           updatedContext.askedForOccasion = true;
         }
-        console.log(`Age detected: ${age} from: "${userMessage}"`);
+        console.log(`🎂 Age detected: ${age} from: "${userMessage}"`);
         break;
       }
     }
@@ -211,9 +237,10 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
     /no more than \$(\d+)/i,
     /under \$(\d+)/i,
     /up to \$(\d+)/i,
+    /around \$(\d+)/i,
+    /about \$(\d+)/i,
     /\$(\d+)(?:\s*-\s*\$?(\d+))?/g,
     /between\s+\$?(\d+)\s+and\s+\$?(\d+)/i,
-    /around\s+\$(\d+)/i,
     /budget.*?\$(\d+)/i
   ];
 
@@ -232,7 +259,7 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
           updatedContext.budget = [Math.floor(num1 * 0.8), Math.ceil(num1 * 1.2)];
         }
         updatedContext.askedForBudget = true;
-        console.log('Enhanced budget detected:', updatedContext.budget);
+        console.log('💰 Enhanced budget detected:', updatedContext.budget);
       }
       break;
     }
@@ -293,7 +320,7 @@ function detectEnhancedConfirmation(message: string): boolean {
     lowerMessage.endsWith(' ' + phrase)
   );
 
-  console.log('Enhanced confirmation detection:', { 
+  console.log('✅ Enhanced confirmation detection:', { 
     message: lowerMessage, 
     isConfirming,
     matchedPhrases: confirmationPhrases.filter(phrase => 

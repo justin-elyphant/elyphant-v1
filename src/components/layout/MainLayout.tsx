@@ -2,6 +2,7 @@
 import React from "react";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
+import FloatingNicoleWidget from "@/components/ai/enhanced/FloatingNicoleWidget";
 import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
@@ -17,6 +18,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   headerClassName,
   footerClassName
 }) => {
+  const handleNavigateToResults = (searchQuery: string) => {
+    // Navigate to marketplace with search query
+    const searchParams = new URLSearchParams();
+    searchParams.set("search", searchQuery);
+    window.location.href = `/marketplace?${searchParams.toString()}`;
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header className={headerClassName} />
@@ -24,6 +32,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         {children}
       </main>
       <Footer className={footerClassName} />
+      
+      {/* Floating Nicole Chat Widget */}
+      <FloatingNicoleWidget 
+        position="bottom-right"
+        defaultMinimized={true}
+        onNavigateToResults={handleNavigateToResults}
+      />
     </div>
   );
 };

@@ -10,12 +10,14 @@ interface FloatingNicoleWidgetProps {
   className?: string;
   position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   defaultMinimized?: boolean;
+  onNavigateToResults?: (searchQuery: string) => void;
 }
 
 const FloatingNicoleWidget: React.FC<FloatingNicoleWidgetProps> = ({
   className,
   position = "bottom-right",
-  defaultMinimized = true
+  defaultMinimized = true,
+  onNavigateToResults
 }) => {
   const [isOpen, setIsOpen] = useState(!defaultMinimized);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -59,8 +61,14 @@ const FloatingNicoleWidget: React.FC<FloatingNicoleWidgetProps> = ({
   };
 
   const handleNavigateToResults = (searchQuery: string) => {
-    // Navigation will be handled by parent components
-    console.log("Navigate to results:", searchQuery);
+    if (onNavigateToResults) {
+      onNavigateToResults(searchQuery);
+    } else {
+      // Fallback navigation
+      const searchParams = new URLSearchParams();
+      searchParams.set("search", searchQuery);
+      window.location.href = `/marketplace?${searchParams.toString()}`;
+    }
   };
 
   const widgetStyle = dragPosition.x !== 0 || dragPosition.y !== 0 

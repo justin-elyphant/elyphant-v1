@@ -85,51 +85,43 @@ export class EnhancedNicoleService {
     
     // Enhanced relationship detection patterns with more comprehensive coverage
     const relationshipPatterns = [
-      // Son variations - including possessive forms
+      // Direct "for my X" patterns - these should match first
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)son(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'son' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)daughter(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'daughter' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)mom(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'mom' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)mother(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'mom' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)dad(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'dad' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)father(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'dad' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)wife(?:\s|$|[.,!?])/i, relationship: 'spouse', recipientType: 'wife' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)husband(?:\s|$|[.,!?])/i, relationship: 'spouse', recipientType: 'husband' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)brother(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'brother' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)sister(?:\s|$|[.,!?])/i, relationship: 'family', recipientType: 'sister' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)friend(?:\s|$|[.,!?])/i, relationship: 'friend', recipientType: 'friend' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)boyfriend(?:\s|$|[.,!?])/i, relationship: 'romantic', recipientType: 'boyfriend' },
+      { pattern: /(?:for\s+my\s+|gift\s+for\s+my\s+)girlfriend(?:\s|$|[.,!?])/i, relationship: 'romantic', recipientType: 'girlfriend' },
+      
+      // Possessive patterns - "my son's", "my daughter's", etc.
       { pattern: /(?:for\s+)?my\s+(son|boy)(?:'s)?/i, relationship: 'family', recipientType: 'son' },
-      { pattern: /(?:for\s+)?my\s+(son's)/i, relationship: 'family', recipientType: 'son' },
-      
-      // Daughter variations - including possessive forms
       { pattern: /(?:for\s+)?my\s+(daughter|girl)(?:'s)?/i, relationship: 'family', recipientType: 'daughter' },
-      { pattern: /(?:for\s+)?my\s+(daughter's)/i, relationship: 'family', recipientType: 'daughter' },
-      
-      // Spouse variations
       { pattern: /(?:for\s+)?my\s+(wife|spouse)(?:'s)?/i, relationship: 'spouse', recipientType: 'wife' },
       { pattern: /(?:for\s+)?my\s+(husband|spouse)(?:'s)?/i, relationship: 'spouse', recipientType: 'husband' },
-      { pattern: /(?:for\s+)?my\s+(wife's)/i, relationship: 'spouse', recipientType: 'wife' },
-      { pattern: /(?:for\s+)?my\s+(husband's)/i, relationship: 'spouse', recipientType: 'husband' },
-      
-      // Parent variations
       { pattern: /(?:for\s+)?my\s+(mom|mother|mama)(?:'s)?/i, relationship: 'family', recipientType: 'mom' },
       { pattern: /(?:for\s+)?my\s+(dad|father|papa)(?:'s)?/i, relationship: 'family', recipientType: 'dad' },
-      { pattern: /(?:for\s+)?my\s+(mom's|mother's)/i, relationship: 'family', recipientType: 'mom' },
-      { pattern: /(?:for\s+)?my\s+(dad's|father's)/i, relationship: 'family', recipientType: 'dad' },
-      
-      // Sibling variations
       { pattern: /(?:for\s+)?my\s+(brother|bro)(?:'s)?/i, relationship: 'family', recipientType: 'brother' },
       { pattern: /(?:for\s+)?my\s+(sister|sis)(?:'s)?/i, relationship: 'family', recipientType: 'sister' },
-      { pattern: /(?:for\s+)?my\s+(brother's|bro's)/i, relationship: 'family', recipientType: 'brother' },
-      { pattern: /(?:for\s+)?my\s+(sister's|sis's)/i, relationship: 'family', recipientType: 'sister' },
-      
-      // Friend and romantic variations
       { pattern: /(?:for\s+)?my\s+(friend|buddy|pal)(?:'s)?/i, relationship: 'friend', recipientType: 'friend' },
       { pattern: /(?:for\s+)?my\s+(boyfriend|bf)(?:'s)?/i, relationship: 'romantic', recipientType: 'boyfriend' },
       { pattern: /(?:for\s+)?my\s+(girlfriend|gf)(?:'s)?/i, relationship: 'romantic', recipientType: 'girlfriend' },
-      { pattern: /(?:for\s+)?my\s+(friend's|buddy's)/i, relationship: 'friend', recipientType: 'friend' },
-      { pattern: /(?:for\s+)?my\s+(boyfriend's|bf's)/i, relationship: 'romantic', recipientType: 'boyfriend' },
-      { pattern: /(?:for\s+)?my\s+(girlfriend's|gf's)/i, relationship: 'romantic', recipientType: 'girlfriend' },
       
       // Professional variations
       { pattern: /(?:for\s+)?my\s+(boss|manager)(?:'s)?/i, relationship: 'professional', recipientType: 'boss' },
       { pattern: /(?:for\s+)?my\s+(colleague|coworker)(?:'s)?/i, relationship: 'professional', recipientType: 'colleague' },
-      { pattern: /(?:for\s+)?my\s+(boss's|manager's)/i, relationship: 'professional', recipientType: 'boss' },
-      { pattern: /(?:for\s+)?my\s+(colleague's|coworker's)/i, relationship: 'professional', recipientType: 'colleague' },
     ];
 
     for (const { pattern, relationship, recipientType } of relationshipPatterns) {
       const match = message.match(pattern);
       if (match) {
-        console.log(`Relationship detected: ${recipientType} (${relationship}) from pattern: ${pattern}`);
+        console.log(`Relationship detected: ${recipientType} (${relationship}) from pattern: ${pattern} in message: "${message}"`);
         return {
           recipient: recipientType,
           relationship: relationship

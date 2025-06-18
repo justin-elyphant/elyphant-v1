@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,14 +58,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   }, [initialQuery]);
 
-  const shouldShowSearchButton = (context: EnhancedNicoleContext, messageCount: number) => {
-    // Show button if we have basic gift information OR after a few exchanges
-    const hasBasicInfo = context.recipient || context.occasion || context.budget || context.interests?.length;
-    const hasEnoughConversation = messageCount >= 3; // After user, assistant, user exchanges
-    
-    return hasBasicInfo || hasEnoughConversation;
-  };
-
   const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
 
@@ -105,11 +96,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       setMessages(updatedMessages);
       setAiContext(response.context);
       
-      // Check if we should show the search button based on context and conversation length
-      const shouldShow = shouldShowSearchButton(response.context, updatedMessages.length);
-      
-      if (shouldShow) {
-        console.log('🎯 Nicole: Showing CTA button based on context:', response.context);
+      // Trust the AI's decision on when to show the search button
+      if (response.showSearchButton) {
+        console.log('🎯 Nicole: AI indicates ready for search, showing CTA button');
         setShowSearchButton(true);
       }
       
@@ -129,11 +118,81 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
+  const generateEnhancedSearchQuery = (context: EnhancedNicoleContext): string => {
+    const {
+      recipient,
+      relationship,
+      occasion,
+      interests = [],
+      detectedBrands = [],
+      budget,
+      exactAge
+    } = context;
+    
+    // Enhanced brand-first query generation
+    if (detectedBrands.length > 0) {
+      let query = detectedBrands[0]; // Start with the first brand
+      
+      if (interests.length > 0) {
+        query += ` ${interests[0]}`;
+      }
+      
+      if (exactAge) {
+        if (exactAge <= 12) query += " kids";
+        else if (exactAge <= 19) query += " teens";
+        else if (exactAge <= 35) query += " young adults";
+        else if (exactAge <= 55) query += " adults";
+        else query += " seniors";
+      }
+      
+      if (occasion) {
+        query += ` ${occasion}`;
+      }
+      
+      return query.trim();
+    }
+    
+    // Enhanced non-brand query generation
+    let query = "";
+    
+    if (interests.length > 0) {
+      query = interests.join(" ");
+    }
+    
+    if (recipient && !exactAge) {
+      query += query ? ` for ${recipient}` : `gifts for ${recipient}`;
+    } else if (relationship && !recipient && !exactAge) {
+      query += query ? ` for ${relationship}` : `gifts for ${relationship}`;
+    }
+    
+    if (exactAge) {
+      let ageGroup = "";
+      if (exactAge <= 12) ageGroup = "kids";
+      else if (exactAge <= 19) ageGroup = "teens";
+      else if (exactAge <= 35) ageGroup = "young adults";
+      else if (exactAge <= 55) ageGroup = "adults";
+      else ageGroup = "seniors";
+      
+      query += query ? ` for ${ageGroup}` : `gifts for ${ageGroup}`;
+    }
+    
+    if (occasion) {
+      query += ` ${occasion}`;
+    }
+    
+    if (budget) {
+      const [min, max] = budget;
+      query += ` under $${max}`;
+    }
+    
+    return query.trim() || "gifts";
+  };
+
   const handleSearchButtonClick = async () => {
     setIsGenerating(true);
     
     try {
-      const searchQuery = generateSearchQuery(aiContext);
+      const searchQuery = generateEnhancedSearchQuery(aiContext);
       console.log('🔍 Enhanced Nicole: Generating search with context:', aiContext);
       console.log('🔍 Generated search query:', searchQuery);
       
@@ -147,7 +206,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         marketplaceTransition: true,
         lastNicoleMessage: messages[messages.length - 1]?.content || '',
         timestamp: new Date().toISOString(),
-        originalUserQuery: searchQuery, // Store the exact search query
+        originalUserQuery: searchQuery,
         debugInfo: {
           originalContext: aiContext,
           searchGenerated: searchQuery,
@@ -156,6 +215,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           hasOccasion: Boolean(aiContext.occasion),
           hasInterests: Boolean(aiContext.interests?.length),
           hasBudget: Boolean(aiContext.budget),
+          hasDetectedBrands: Boolean(aiContext.detectedBrands?.length),
           conversationFlow: 'homepage-to-marketplace'
         },
         searchCriteria: {
@@ -258,7 +318,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               </div>
             )}
             
-            {/* CTA Search Button - Show when we have enough context */}
+            {/* CTA Search Button - Show only when AI indicates readiness */}
             {showSearchButton && !isGenerating && (
               <div className="flex justify-center pt-2">
                 <SearchButton 
@@ -299,4 +359,3 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 };
 
 export default EnhancedNicoleConversationEngine;
-

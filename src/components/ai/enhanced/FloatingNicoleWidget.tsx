@@ -7,12 +7,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FloatingNicoleWidgetProps {
   onNavigateToResults: (searchQuery: string) => void;
+  position?: string;
+  defaultMinimized?: boolean;
 }
 
 const FloatingNicoleWidget: React.FC<FloatingNicoleWidgetProps> = ({
-  onNavigateToResults
+  onNavigateToResults,
+  position = "bottom-right",
+  defaultMinimized = true
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(!defaultMinimized);
   const isMobile = useIsMobile();
 
   const handleNavigateToResults = (searchQuery: string) => {

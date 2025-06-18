@@ -11,11 +11,13 @@ import { cn } from "@/lib/utils";
 interface NicoleMarketplaceWidgetProps {
   searchQuery: string;
   totalResults: number;
+  isFromNicole?: boolean;
 }
 
 const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   searchQuery,
-  totalResults
+  totalResults,
+  isFromNicole = false
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<NicoleMessage[]>([]);
@@ -25,9 +27,9 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   useEffect(() => {
     // Check if Nicole brought the user here
     const storedContext = sessionStorage.getItem('nicoleContext');
-    if (storedContext) {
-      const context = JSON.parse(storedContext);
-      setNicoleContext(context);
+    if (storedContext || isFromNicole) {
+      const context = storedContext ? JSON.parse(storedContext) : null;
+      setNicoleContext(context || { fromNicole: true });
       
       // Auto-expand and show initial message
       setIsExpanded(true);
@@ -40,9 +42,11 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
       setMessages([initialMessage]);
       
       // Clear the context so it doesn't auto-show again
-      sessionStorage.removeItem('nicoleContext');
+      if (storedContext) {
+        sessionStorage.removeItem('nicoleContext');
+      }
     }
-  }, [searchQuery, totalResults]);
+  }, [searchQuery, totalResults, isFromNicole]);
 
   const handleSendMessage = () => {
     if (!currentMessage.trim()) return;

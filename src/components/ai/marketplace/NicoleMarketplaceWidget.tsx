@@ -47,13 +47,29 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   const [aiContext, setAiContext] = useState<NicoleContext>({});
 
   useEffect(() => {
-    console.log('🔍 NicoleMarketplaceWidget: Checking for context...');
+    console.log('🔍 NicoleMarketplaceWidget: Initializing...');
     console.log('Props:', { searchQuery, totalResults, isFromNicole });
     
-    // Check if Nicole brought the user here with Enhanced Zinc API context
-    const storedContext = sessionStorage.getItem('nicoleContext');
-    console.log('📦 Stored context raw:', storedContext);
+    // Check multiple sources for Nicole context
+    let storedContext = null;
     
+    // First check sessionStorage (primary)
+    const sessionContext = sessionStorage.getItem('nicoleContext');
+    if (sessionContext) {
+      console.log('📦 Found context in sessionStorage:', sessionContext);
+      storedContext = sessionContext;
+    }
+    
+    // Fallback to localStorage
+    if (!storedContext) {
+      const localContext = localStorage.getItem('nicoleMarketplaceContext');
+      if (localContext) {
+        console.log('📦 Found context in localStorage:', localContext);
+        storedContext = localContext;
+      }
+    }
+    
+    // Show widget if we have context OR if explicitly told this is from Nicole
     if (storedContext || isFromNicole) {
       try {
         const context: EnhancedNicoleContext = storedContext ? JSON.parse(storedContext) : {
@@ -66,12 +82,12 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
           searchCriteria: {}
         };
         
-        console.log('✨ Parsed context:', context);
+        console.log('✨ Using context:', context);
         console.log('🎯 Context debug info:', context.debugInfo);
         
         setNicoleContext(context);
         
-        // Reconstruct AI context from stored search criteria for Enhanced Zinc API continuity
+        // Reconstruct AI context for Enhanced Zinc API continuity
         setAiContext({
           recipient: context.searchCriteria.recipient,
           relationship: context.searchCriteria.relationship,
@@ -85,10 +101,10 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
           shouldNavigateToMarketplace: false
         });
         
-        // Auto-expand and show contextual initial message
+        // Auto-expand and show contextual message
         setIsExpanded(true);
         
-        // Generate a smart contextual message based on the Enhanced Zinc API context
+        // Generate smart contextual message
         const contextualMessage = generateContextualMessage(context, totalResults, searchQuery);
         console.log('💬 Generated contextual message:', contextualMessage);
         
@@ -99,18 +115,19 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
         
         setMessages([initialMessage]);
         
-        // Clear the context after using it so it doesn't auto-show again
-        if (storedContext) {
-          console.log('🧹 Clearing stored context');
+        // Clear session storage but keep localStorage as backup
+        if (sessionContext) {
+          console.log('🧹 Clearing sessionStorage context');
           sessionStorage.removeItem('nicoleContext');
         }
+        
       } catch (error) {
         console.error('❌ Error parsing Nicole context:', error);
-        // Fallback for Enhanced Zinc API preservation
+        // Enhanced fallback with context awareness
         setIsExpanded(true);
         const fallbackMessage: NicoleMessage = {
           role: "assistant",
-          content: `Great! I found ${totalResults} results for "${searchQuery}". What do you think of these options?`
+          content: `Perfect! I found ${totalResults} great options for "${searchQuery}". These look like exactly what we discussed! What do you think of these results?`
         };
         setMessages([fallbackMessage]);
       }
@@ -125,34 +142,31 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
     
     console.log('🎨 Generating contextual message with criteria:', searchCriteria);
     
-    // Reference the specific conversation details
-    if (searchCriteria.recipient && searchCriteria.relationship) {
-      if (searchCriteria.occasion) {
-        parts.push(`Perfect! I found ${results} great options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}`);
+    // Create a personalized response based on the conversation
+    if (searchCriteria.recipient && searchCriteria.occasion) {
+      if (searchCriteria.interests && searchCriteria.interests.length > 0) {
+        parts.push(`Perfect! I found ${results} great ${searchCriteria.interests.join(' and ')} options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
       } else {
-        parts.push(`Perfect! I found ${results} great options for your ${searchCriteria.recipient}`);
+        parts.push(`Perfect! I found ${results} great options for your ${searchCriteria.recipient}'s ${searchCriteria.occasion}.`);
       }
+    } else if (searchCriteria.recipient) {
+      parts.push(`Great! I found ${results} options for your ${searchCriteria.recipient}.`);
     } else {
-      parts.push(`Great! I found ${results} options based on our conversation`);
+      parts.push(`Perfect! I found ${results} options based on our conversation.`);
     }
     
     // Add age context if available
     if (searchCriteria.exactAge) {
-      parts.push(`(turning ${searchCriteria.exactAge})`);
-    }
-    
-    // Reference interests if discussed
-    if (searchCriteria.interests && searchCriteria.interests.length > 0) {
-      const mainInterests = searchCriteria.interests.slice(0, 2);
-      parts.push(`Since they love ${mainInterests.join(' and ')}, I think you'll find some perfect matches here.`);
+      parts.push(`These should be perfect for someone turning ${searchCriteria.exactAge}!`);
     }
     
     // Reference budget if discussed
-    if (searchCriteria.budget) {
+    if (searchCriteria.budget && searchCriteria.budget.length === 2) {
       parts.push(`All within your $${searchCriteria.budget[0]}-$${searchCriteria.budget[1]} budget.`);
     }
     
-    parts.push("What do you think of these options? Are you seeing anything that catches your eye?");
+    // Add engagement question
+    parts.push("What do you think of these options? Do any of them look like perfect matches?");
     
     const finalMessage = parts.join(' ');
     console.log('✅ Final contextual message:', finalMessage);

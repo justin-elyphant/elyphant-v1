@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,8 @@ interface EnhancedNicoleContext {
   enhancedZincApiPreserved: boolean;
   marketplaceTransition: boolean;
   lastNicoleMessage?: string;
+  timestamp?: string;
+  debugInfo?: any;
   searchCriteria: {
     recipient?: string;
     relationship?: string;
@@ -46,8 +47,13 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   const [aiContext, setAiContext] = useState<NicoleContext>({});
 
   useEffect(() => {
+    console.log('🔍 NicoleMarketplaceWidget: Checking for context...');
+    console.log('Props:', { searchQuery, totalResults, isFromNicole });
+    
     // Check if Nicole brought the user here with Enhanced Zinc API context
     const storedContext = sessionStorage.getItem('nicoleContext');
+    console.log('📦 Stored context raw:', storedContext);
+    
     if (storedContext || isFromNicole) {
       try {
         const context: EnhancedNicoleContext = storedContext ? JSON.parse(storedContext) : {
@@ -59,6 +65,9 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
           marketplaceTransition: true,
           searchCriteria: {}
         };
+        
+        console.log('✨ Parsed context:', context);
+        console.log('🎯 Context debug info:', context.debugInfo);
         
         setNicoleContext(context);
         
@@ -81,6 +90,7 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
         
         // Generate a smart contextual message based on the Enhanced Zinc API context
         const contextualMessage = generateContextualMessage(context, totalResults, searchQuery);
+        console.log('💬 Generated contextual message:', contextualMessage);
         
         const initialMessage: NicoleMessage = {
           role: "assistant",
@@ -91,24 +101,29 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
         
         // Clear the context after using it so it doesn't auto-show again
         if (storedContext) {
+          console.log('🧹 Clearing stored context');
           sessionStorage.removeItem('nicoleContext');
         }
       } catch (error) {
-        console.error('Error parsing Nicole context:', error);
+        console.error('❌ Error parsing Nicole context:', error);
         // Fallback for Enhanced Zinc API preservation
         setIsExpanded(true);
         const fallbackMessage: NicoleMessage = {
           role: "assistant",
-          content: `Great! I found ${totalResults} ${searchQuery} for you. What do you think of these options?`
+          content: `Great! I found ${totalResults} results for "${searchQuery}". What do you think of these options?`
         };
         setMessages([fallbackMessage]);
       }
+    } else {
+      console.log('ℹ️ No Nicole context found, widget will remain collapsed');
     }
   }, [searchQuery, totalResults, isFromNicole]);
 
   const generateContextualMessage = (context: EnhancedNicoleContext, results: number, query: string): string => {
-    const { searchCriteria, conversationSummary } = context;
+    const { searchCriteria } = context;
     const parts = [];
+    
+    console.log('🎨 Generating contextual message with criteria:', searchCriteria);
     
     // Reference the specific conversation details
     if (searchCriteria.recipient && searchCriteria.relationship) {
@@ -139,7 +154,9 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
     
     parts.push("What do you think of these options? Are you seeing anything that catches your eye?");
     
-    return parts.join(' ');
+    const finalMessage = parts.join(' ');
+    console.log('✅ Final contextual message:', finalMessage);
+    return finalMessage;
   };
 
   const handleSendMessage = async () => {

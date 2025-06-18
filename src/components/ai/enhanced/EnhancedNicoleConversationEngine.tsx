@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -146,20 +147,24 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   };
 
   const handleSearchButtonClick = async () => {
-    console.log('Search button clicked, generating Enhanced Zinc API search query...');
+    console.log('🚀 Search button clicked, generating Enhanced Zinc API search query...');
     setIsLoading(true);
     setShowSearchButton(false);
 
     try {
       // Generate search query from current Enhanced Zinc API context
       const searchQuery = generateSearchQuery(context);
-      console.log('Generated Enhanced Zinc API search query:', searchQuery);
+      console.log('🔍 Generated Enhanced Zinc API search query:', searchQuery);
 
       // Create a comprehensive conversation summary for marketplace continuity
       const conversationSummary = createConversationSummary(context, conversationHistory, searchQuery);
+      console.log('📝 Created conversation summary:', conversationSummary);
 
+      // Get the last Nicole message for context
+      const lastNicoleMessage = messages.filter(m => m.type === "nicole").pop()?.content || "";
+      
       // Store enhanced context for marketplace continuity with Enhanced Zinc API preservation
-      sessionStorage.setItem('nicoleContext', JSON.stringify({
+      const contextToStore = {
         ...context,
         fromNicole: true,
         searchQuery,
@@ -167,7 +172,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         conversationHistory: conversationHistory.slice(-6), // Keep last 6 messages for context
         enhancedZincApiPreserved: true,
         marketplaceTransition: true,
-        lastNicoleMessage: messages[messages.length - 1]?.content,
+        lastNicoleMessage,
         searchCriteria: {
           recipient: context.recipient,
           relationship: context.relationship,
@@ -176,8 +181,25 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           interests: context.interests,
           budget: context.budget,
           detectedBrands: context.detectedBrands
+        },
+        // Add current timestamp for debugging
+        timestamp: new Date().toISOString(),
+        // Add debugging info
+        debugInfo: {
+          hasRecipient: Boolean(context.recipient),
+          hasOccasion: Boolean(context.occasion),
+          hasInterests: Boolean(context.interests && context.interests.length > 0),
+          hasBudget: Boolean(context.budget),
+          contextKeys: Object.keys(context)
         }
-      }));
+      };
+
+      console.log('💾 Storing context in sessionStorage:', contextToStore);
+      sessionStorage.setItem('nicoleContext', JSON.stringify(contextToStore));
+      
+      // Verify storage
+      const storedContext = sessionStorage.getItem('nicoleContext');
+      console.log('✅ Verified stored context:', storedContext ? JSON.parse(storedContext) : 'FAILED TO STORE');
 
       // Add a final message from Nicole
       const finalMessage: ConversationMessage = {
@@ -189,11 +211,12 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       // Navigate after a short delay to show the message
       setTimeout(() => {
+        console.log('🧭 Navigating to marketplace with query:', searchQuery);
         onNavigateToResults(searchQuery);
-      }, 300);
+      }, 500);
 
     } catch (error) {
-      console.error('Error generating Enhanced Zinc API search:', error);
+      console.error('❌ Error generating Enhanced Zinc API search:', error);
       toast.error("Sorry, I had trouble generating your search. Please try again.");
       setShowSearchButton(true); // Show button again
     } finally {

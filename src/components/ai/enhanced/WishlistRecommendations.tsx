@@ -17,7 +17,7 @@ const WishlistRecommendations: React.FC<WishlistRecommendationsProps> = ({
   onSelectItem,
   userBudget
 }) => {
-  const getPriorityColor = (priority?: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-green-100 text-green-800 border-green-200';
       case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -26,7 +26,7 @@ const WishlistRecommendations: React.FC<WishlistRecommendationsProps> = ({
     }
   };
 
-  const getPriorityIcon = (priority?: string) => {
+  const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'high': return <Star className="h-3 w-3 fill-current" />;
       case 'medium': return <Heart className="h-3 w-3" />;
@@ -68,7 +68,7 @@ const WishlistRecommendations: React.FC<WishlistRecommendationsProps> = ({
               <div className="w-16 h-16 flex-shrink-0">
                 <img
                   src={recommendation.item.image_url || recommendation.item.image || '/placeholder.svg'}
-                  alt={recommendation.item.title || recommendation.item.name || 'Product'}
+                  alt={recommendation.item.title || recommendation.item.name}
                   className="w-full h-full object-cover rounded-md"
                 />
               </div>
@@ -77,13 +77,13 @@ const WishlistRecommendations: React.FC<WishlistRecommendationsProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-gray-900 truncate pr-2">
-                    {recommendation.item.title || recommendation.item.name || 'Wishlist Item'}
+                    {recommendation.item.title || recommendation.item.name}
                   </h4>
                   <Badge 
                     className={`${getPriorityColor(recommendation.priority)} flex items-center gap-1 text-xs flex-shrink-0`}
                   >
                     {getPriorityIcon(recommendation.priority)}
-                    {recommendation.priority || 'medium'}
+                    {recommendation.priority}
                   </Badge>
                 </div>
 

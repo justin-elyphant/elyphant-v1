@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect, useRef } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Send, X, MessageCircle } from "lucide-react";
-import { useEnhancedNicoleConversation } from "@/hooks/useEnhancedNicoleConversation";
-import WishlistRecommendations from "./WishlistRecommendations";
-import ProductSuggestions from "./ProductSuggestions";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Send, X } from "lucide-react";
+import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase, UserIntent } from "@/services/ai/nicoleAiService";
+import { useAuth } from "@/contexts/auth";
+import { cn } from "@/lib/utils";
+import ContextualLinks from "../conversation/ContextualLinks";
 
 interface EnhancedNicoleConversationEngineProps {
   initialQuery?: string;
@@ -15,99 +17,250 @@ interface EnhancedNicoleConversationEngineProps {
 }
 
 const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngineProps> = ({
-  initialQuery,
+  initialQuery = "",
   onClose,
   onNavigateToResults
 }) => {
-  const [userInput, setUserInput] = useState("");
-  const [isVisible, setIsVisible] = useState(false);
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<NicoleMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [context, setContext] = useState<NicoleContext>({});
+  const [conversationStep, setConversationStep] = useState<string>("greeting");
+  const [hasProcessedInitialQuery, setHasProcessedInitialQuery] = useState(false);
+  const [contextualLinks, setContextualLinks] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    conversation,
-    currentStep,
-    context,
-    isGenerating,
-    sendMessage,
-    generateSearchQuery,
-    resetConversation,
-    startConversation,
-    selectWishlistItem,
-    searchByQuery
-  } = useEnhancedNicoleConversation();
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation]);
+  };
 
-  // Handle initial query and start conversation
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-      startConversation(initialQuery);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [initialQuery, startConversation]);
+    scrollToBottom();
+  }, [messages]);
 
-  // Auto-focus input after sending message and when not generating
+  // Auto-execute initial query
   useEffect(() => {
-    if (!isGenerating && inputRef.current) {
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
+    if (initialQuery && initialQuery.trim() && !hasProcessedInitialQuery) {
+      if (initialQuery.startsWith("Hi ")) {
+        // This is a personalized greeting - show it as Nicole's message
+        const greetingMessage: NicoleMessage = {
+          role: "assistant",
+          content: initialQuery
+        };
+        setMessages([greetingMessage]);
+        setConversationStep("discovery");
+      } else {
+        // Regular initial query - auto-send it
+        setCurrentMessage(initialQuery);
+        setTimeout(() => {
+          sendMessage(initialQuery);
+        }, 500);
+      }
+      setHasProcessedInitialQuery(true);
+    } else if (!initialQuery && !hasProcessedInitialQuery) {
+      // Default greeting
+      const userName = user?.user_metadata?.name?.split(' ')[0] || "there";
+      const welcomeMessage: NicoleMessage = {
+        role: "assistant",
+        content: `Hi ${userName}! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gifts. What are you looking for today?`
+      };
+      setMessages([welcomeMessage]);
+      setConversationStep("discovery");
+      setHasProcessedInitialQuery(true);
     }
-  }, [isGenerating, conversation.length]);
+  }, [initialQuery, user, hasProcessedInitialQuery]);
 
-  const handleSendMessage = async () => {
-    if (!userInput.trim() || isGenerating) return;
-    
-    const message = userInput.trim();
-    setUserInput(""); // Clear input immediately
-    
+  const sendMessage = async (messageContent?: string) => {
+    const messageText = messageContent || currentMessage;
+    if (!messageText.trim() || isLoading) return;
+
+    const userMessage: NicoleMessage = {
+      role: "user",
+      content: messageText.trim()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    if (!messageContent) setCurrentMessage("");
+    setIsLoading(true);
+
     try {
-      await sendMessage(message);
+      // Enhanced context with conversation step - ensure proper type casting
+      const enhancedContext: NicoleContext = {
+        ...context,
+        step: conversationStep,
+        conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase
+      };
+
+      const response = await chatWithNicole(
+        userMessage.content,
+        messages,
+        enhancedContext
+      );
+
+      const assistantMessage: NicoleMessage = {
+        role: "assistant",
+        content: response.response
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Update context based on response
+      updateContextFromMessage(userMessage.content, response);
+
+      // Update contextual links from response (using conservative logic)
+      if (response.contextualLinks && response.contextualLinks.length > 0) {
+        setContextualLinks(response.contextualLinks);
+      } else {
+        setContextualLinks([]); // Clear links if none should be shown
+      }
+
+      // Handle search generation if Nicole suggests it
+      if (response.shouldGenerateSearch) {
+        const searchQuery = extractSearchQuery(response.response, context);
+        if (searchQuery) {
+          setTimeout(() => {
+            onNavigateToResults(searchQuery);
+          }, 2000);
+        }
+      }
+
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error chatting with Nicole:", error);
+      const errorMessage: NicoleMessage = {
+        role: "assistant",
+        content: "I'm having trouble connecting right now. Let me help you with a basic search instead. What kind of gift are you looking for?"
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      setContextualLinks([]); // No links during error state
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const updateContextFromMessage = (userMessage: string, response: any) => {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    // Extract recipient information
+    if (lowerMessage.includes('mom') || lowerMessage.includes('mother')) {
+      setContext(prev => ({ ...prev, recipient: 'mom', relationship: 'family' }));
+    } else if (lowerMessage.includes('dad') || lowerMessage.includes('father')) {
+      setContext(prev => ({ ...prev, recipient: 'dad', relationship: 'family' }));
+    } else if (lowerMessage.includes('friend')) {
+      setContext(prev => ({ ...prev, relationship: 'friend' }));
+    } else if (lowerMessage.includes('wife') || lowerMessage.includes('husband')) {
+      setContext(prev => ({ ...prev, relationship: 'spouse' }));
+    }
+
+    // Extract occasion information
+    if (lowerMessage.includes('birthday')) {
+      setContext(prev => ({ ...prev, occasion: 'birthday' }));
+    } else if (lowerMessage.includes('christmas') || lowerMessage.includes('holiday')) {
+      setContext(prev => ({ ...prev, occasion: 'christmas' }));
+    } else if (lowerMessage.includes('anniversary')) {
+      setContext(prev => ({ ...prev, occasion: 'anniversary' }));
+    }
+
+    // Extract budget information
+    const budgetMatch = lowerMessage.match(/\$(\d+)/);
+    if (budgetMatch) {
+      const budget = parseInt(budgetMatch[1]);
+      setContext(prev => ({ ...prev, budget: [budget * 0.8, budget * 1.2] }));
+    }
+
+    // Extract interests
+    const interests: string[] = [];
+    if (lowerMessage.includes('cooking') || lowerMessage.includes('kitchen')) {
+      interests.push('cooking');
+    }
+    if (lowerMessage.includes('reading') || lowerMessage.includes('books')) {
+      interests.push('reading');
+    }
+    if (lowerMessage.includes('fitness') || lowerMessage.includes('exercise')) {
+      interests.push('fitness');
+    }
+    if (lowerMessage.includes('tech') || lowerMessage.includes('gadget')) {
+      interests.push('technology');
+    }
+    
+    if (interests.length > 0) {
+      setContext(prev => ({ ...prev, interests }));
+    }
+
+    // Update conversation step based on context completeness
+    if (context.recipient && context.occasion) {
+      setConversationStep("preferences");
+    } else if (context.recipient || context.relationship) {
+      setConversationStep("occasion");
+    }
+
+    // Update conversation phase based on response
+    if (response.conversationPhase) {
+      setContext(prev => ({ ...prev, conversationPhase: response.conversationPhase as ConversationPhase }));
+    }
+  };
+
+  const extractSearchQuery = (response: string, context: NicoleContext): string => {
+    let query = "";
+    
+    if (context.recipient) {
+      query += `gifts for ${context.recipient}`;
+    } else if (context.relationship) {
+      query += `gifts for ${context.relationship}`;
+    } else {
+      query = "gifts";
+    }
+    
+    if (context.occasion) {
+      query += ` ${context.occasion}`;
+    }
+    
+    if (context.interests && context.interests.length > 0) {
+      query += ` ${context.interests.join(" ")}`;
+    }
+    
+    if (context.budget) {
+      const [min, max] = context.budget;
+      query += ` under $${max}`;
+    }
+    
+    return query.trim() || "gifts";
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      sendMessage();
     }
   };
 
-  const handleSearchByQuery = async (query: string) => {
-    try {
-      searchByQuery(query);
-      const searchQuery = await generateSearchQuery();
-      onNavigateToResults(searchQuery || query);
-    } catch (error) {
-      console.error("Error searching by query:", error);
-      onNavigateToResults(query);
-    }
-  };
+  const quickResponses = [
+    "I need a gift for my mom",
+    "Birthday gift ideas",
+    "Gifts under $50",
+    "Anniversary presents"
+  ];
 
-  const getStepProgress = () => {
-    const steps = ["greeting", "discovery", "wishlist_review", "alternatives", "generating", "complete"];
-    const currentIndex = steps.indexOf(currentStep);
-    return ((currentIndex + 1) / steps.length) * 100;
+  const handleQuickResponse = (response: string) => {
+    setCurrentMessage(response);
+    setTimeout(() => sendMessage(response), 100);
   };
 
   return (
-    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-opacity duration-300 ${
-      isVisible ? 'opacity-100' : 'opacity-0'
-    }`}>
-      <Card className="w-full max-w-2xl h-[80vh] flex flex-col mx-4 transform transition-transform duration-300">
+    <Card className="h-full max-h-96 flex flex-col">
+      <CardContent className="p-0 flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-purple-600" />
-            <h2 className="text-lg font-semibold">Nicole AI Gift Assistant</h2>
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="/ai-avatar.png" />
+              <AvatarFallback className="bg-purple-100 text-purple-700">N</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-gray-900">Nicole</h3>
+              <p className="text-xs text-purple-600">AI Gift Advisor</p>
+            </div>
           </div>
           <Button
             variant="ghost"
@@ -119,143 +272,98 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           </Button>
         </div>
 
-        {/* Progress Bar */}
-        <div className="px-4 py-2 border-b">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${getStepProgress()}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-600 mt-1 capitalize">
-            {currentStep.replace('_', ' ')} phase
-          </p>
-        </div>
-
-        {/* Conversation Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {conversation.map((message, index) => (
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+          {messages.map((message, index) => (
             <div key={index}>
-              {/* Regular Messages */}
-              {(message.type === "nicole" || message.type === "user") && (
-                <div className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      message.type === "user"
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-100 text-gray-900"
-                    }`}
-                  >
-                    <p className="text-sm">{message.content}</p>
-                    <p className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
+              <div
+                className={cn(
+                  "flex",
+                  message.role === "user" ? "justify-end" : "justify-start"
+                )}
+              >
+                <div
+                  className={cn(
+                    "max-w-xs px-3 py-2 rounded-lg text-sm",
+                    message.role === "user"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-900"
+                  )}
+                >
+                  {message.content}
                 </div>
-              )}
-
-              {/* Wishlist Recommendations */}
-              {message.type === "wishlist_display" && message.data?.recommendations && (
-                <div className="space-y-2">
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] p-3 rounded-lg bg-gray-100 text-gray-900">
-                      <p className="text-sm">{message.content}</p>
-                    </div>
+              </div>
+              
+              {/* Show contextual links only for the last assistant message and when appropriate */}
+              {message.role === "assistant" && 
+               index === messages.length - 1 && 
+               contextualLinks.length > 0 && (
+                <div className="flex justify-start">
+                  <div className="max-w-xs">
+                    <ContextualLinks links={contextualLinks} />
                   </div>
-                  <WishlistRecommendations
-                    recommendations={message.data.recommendations}
-                    onSelectItem={selectWishlistItem}
-                    userBudget={context.budget}
-                  />
-                </div>
-              )}
-
-              {/* Product Suggestions */}
-              {message.type === "product_suggestions" && message.data?.searchSuggestions && (
-                <div className="space-y-2">
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] p-3 rounded-lg bg-gray-100 text-gray-900">
-                      <p className="text-sm">{message.content}</p>
-                    </div>
-                  </div>
-                  <ProductSuggestions
-                    searchSuggestions={message.data.searchSuggestions}
-                    onSearchQuery={handleSearchByQuery}
-                    recipientName={context.recipient}
-                  />
                 </div>
               )}
             </div>
           ))}
-
-          {/* Loading indicator */}
-          {isGenerating && (
+          
+          {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm text-gray-600">Nicole is thinking...</span>
+              <div className="bg-gray-100 px-3 py-2 rounded-lg">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                 </div>
               </div>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="border-t p-4">
-          <div className="flex gap-2">
-            <Input
-              ref={inputRef}
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask Nicole anything about gifts..."
-              disabled={isGenerating}
-              className="flex-1"
-              autoFocus
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!userInput.trim() || isGenerating}
-              size="sm"
-              className="px-3"
-            >
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-          
-          {/* Quick Actions */}
-          {conversation.length > 0 && (
-            <div className="flex gap-2 mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetConversation}
-                disabled={isGenerating}
-              >
-                Start Over
-              </Button>
-              {currentStep === "complete" && (
+        {/* Quick Responses */}
+        {messages.length <= 1 && !isLoading && (
+          <div className="px-4 pb-2">
+            <div className="flex flex-wrap gap-2">
+              {quickResponses.map((response, index) => (
                 <Button
+                  key={index}
                   variant="outline"
                   size="sm"
-                  onClick={() => handleSearchByQuery("gifts")}
-                  disabled={isGenerating}
+                  className="text-xs h-7"
+                  onClick={() => handleQuickResponse(response)}
                 >
-                  Browse All Gifts
+                  {response}
                 </Button>
-              )}
+              ))}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="p-4 border-t">
+          <div className="flex space-x-2">
+            <Input
+              ref={inputRef}
+              value={currentMessage}
+              onChange={(e) => setCurrentMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask Nicole anything about gifts..."
+              className="flex-1"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={() => sendMessage()}
+              disabled={!currentMessage.trim() || isLoading}
+              size="sm"
+              className="bg-purple-500 hover:bg-purple-600"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

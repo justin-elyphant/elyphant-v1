@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Send, X } from "lucide-react";
 import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase, UserIntent } from "@/services/ai/nicoleAiService";
+import { EnhancedNicoleService } from "@/services/ai/enhancedNicoleService";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
 import ContextualLinks from "../conversation/ContextualLinks";
@@ -86,9 +87,13 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     setIsLoading(true);
 
     try {
+      // Enhanced context extraction with relationship detection
+      const relationshipInfo = EnhancedNicoleService.extractRelationshipFromMessage(messageText);
+      
       // Enhanced context with conversation step - ensure proper type casting
       const enhancedContext: NicoleContext = {
         ...context,
+        ...relationshipInfo,
         step: conversationStep,
         conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase
       };
@@ -106,8 +111,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Update context based on response
-      updateContextFromMessage(userMessage.content, response);
+      // Update context based on response AND relationship detection
+      updateContextFromMessage(userMessage.content, response, relationshipInfo);
 
       // Update contextual links from response (using conservative logic)
       if (response.contextualLinks && response.contextualLinks.length > 0) {
@@ -118,7 +123,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       // Handle search generation if Nicole suggests it
       if (response.shouldGenerateSearch) {
-        const searchQuery = extractSearchQuery(response.response, context);
+        const searchQuery = extractSearchQuery(response.response, enhancedContext);
         if (searchQuery) {
           setTimeout(() => {
             onNavigateToResults(searchQuery);
@@ -139,18 +144,30 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  const updateContextFromMessage = (userMessage: string, response: any) => {
+  const updateContextFromMessage = (userMessage: string, response: any, relationshipInfo: any) => {
     const lowerMessage = userMessage.toLowerCase();
     
-    // Extract recipient information
-    if (lowerMessage.includes('mom') || lowerMessage.includes('mother')) {
-      setContext(prev => ({ ...prev, recipient: 'mom', relationship: 'family' }));
-    } else if (lowerMessage.includes('dad') || lowerMessage.includes('father')) {
-      setContext(prev => ({ ...prev, recipient: 'dad', relationship: 'family' }));
-    } else if (lowerMessage.includes('friend')) {
-      setContext(prev => ({ ...prev, relationship: 'friend' }));
-    } else if (lowerMessage.includes('wife') || lowerMessage.includes('husband')) {
-      setContext(prev => ({ ...prev, relationship: 'spouse' }));
+    // First, apply the enhanced relationship detection
+    if (relationshipInfo.recipient || relationshipInfo.relationship) {
+      setContext(prev => ({
+        ...prev,
+        recipient: relationshipInfo.recipient || prev.recipient,
+        relationship: relationshipInfo.relationship || prev.relationship
+      }));
+    }
+
+    // Then apply existing logic for other extractions
+    if (!relationshipInfo.recipient) {
+      // Only run legacy detection if enhanced detection didn't find anything
+      if (lowerMessage.includes('mom') || lowerMessage.includes('mother')) {
+        setContext(prev => ({ ...prev, recipient: 'mom', relationship: 'family' }));
+      } else if (lowerMessage.includes('dad') || lowerMessage.includes('father')) {
+        setContext(prev => ({ ...prev, recipient: 'dad', relationship: 'family' }));
+      } else if (lowerMessage.includes('friend')) {
+        setContext(prev => ({ ...prev, relationship: 'friend' }));
+      } else if (lowerMessage.includes('wife') || lowerMessage.includes('husband')) {
+        setContext(prev => ({ ...prev, relationship: 'spouse' }));
+      }
     }
 
     // Extract occasion information
@@ -188,10 +205,14 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       setContext(prev => ({ ...prev, interests }));
     }
 
-    // Update conversation step based on context completeness
-    if (context.recipient && context.occasion) {
+    // Update conversation step based on context completeness - but be smarter about it
+    const currentContext = { ...context };
+    if (relationshipInfo.recipient) currentContext.recipient = relationshipInfo.recipient;
+    if (relationshipInfo.relationship) currentContext.relationship = relationshipInfo.relationship;
+    
+    if (currentContext.recipient && currentContext.occasion) {
       setConversationStep("preferences");
-    } else if (context.recipient || context.relationship) {
+    } else if (currentContext.recipient || currentContext.relationship) {
       setConversationStep("occasion");
     }
 
@@ -236,10 +257,10 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   };
 
   const quickResponses = [
-    "I need a gift for my mom",
-    "Birthday gift ideas",
-    "Gifts under $50",
-    "Anniversary presents"
+    "I need a gift for my son",
+    "Birthday gift ideas for my daughter",
+    "Gifts under $50 for my mom",
+    "Anniversary presents for my wife"
   ];
 
   const handleQuickResponse = (response: string) => {

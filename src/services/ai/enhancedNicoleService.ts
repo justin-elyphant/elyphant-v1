@@ -65,16 +65,53 @@ export class EnhancedNicoleService {
 
       if (error) throw error;
 
-      return data?.map(conn => ({
-        id: conn.connected_user_id,
-        name: conn.profiles?.name || 'Unknown',
-        relationship: conn.relationship_type,
-        wishlists: conn.profiles?.wishlists || []
-      })) || [];
+      return data?.map(conn => {
+        // Fix: Properly access the profiles object with null checking
+        const profile = Array.isArray(conn.profiles) ? conn.profiles[0] : conn.profiles;
+        return {
+          id: conn.connected_user_id,
+          name: profile?.name || 'Unknown',
+          relationship: conn.relationship_type,
+          wishlists: profile?.wishlists || []
+        };
+      }) || [];
     } catch (error) {
       console.error('Error fetching user connections:', error);
       return [];
     }
+  }
+
+  static extractRelationshipFromMessage(message: string): { recipient?: string; relationship?: string } {
+    const lowerMessage = message.toLowerCase();
+    
+    // Enhanced relationship detection patterns
+    const relationshipPatterns = [
+      { pattern: /(?:for\s+)?my\s+(son|boy)\b/i, relationship: 'family', recipientType: 'son' },
+      { pattern: /(?:for\s+)?my\s+(daughter|girl)\b/i, relationship: 'family', recipientType: 'daughter' },
+      { pattern: /(?:for\s+)?my\s+(wife|spouse)\b/i, relationship: 'spouse', recipientType: 'wife' },
+      { pattern: /(?:for\s+)?my\s+(husband|spouse)\b/i, relationship: 'spouse', recipientType: 'husband' },
+      { pattern: /(?:for\s+)?my\s+(mom|mother|mama)\b/i, relationship: 'family', recipientType: 'mom' },
+      { pattern: /(?:for\s+)?my\s+(dad|father|papa)\b/i, relationship: 'family', recipientType: 'dad' },
+      { pattern: /(?:for\s+)?my\s+(brother|bro)\b/i, relationship: 'family', recipientType: 'brother' },
+      { pattern: /(?:for\s+)?my\s+(sister|sis)\b/i, relationship: 'family', recipientType: 'sister' },
+      { pattern: /(?:for\s+)?my\s+(friend|buddy|pal)\b/i, relationship: 'friend', recipientType: 'friend' },
+      { pattern: /(?:for\s+)?my\s+(boyfriend|bf)\b/i, relationship: 'romantic', recipientType: 'boyfriend' },
+      { pattern: /(?:for\s+)?my\s+(girlfriend|gf)\b/i, relationship: 'romantic', recipientType: 'girlfriend' },
+      { pattern: /(?:for\s+)?my\s+(boss|manager)\b/i, relationship: 'professional', recipientType: 'boss' },
+      { pattern: /(?:for\s+)?my\s+(colleague|coworker)\b/i, relationship: 'professional', recipientType: 'colleague' },
+    ];
+
+    for (const { pattern, relationship, recipientType } of relationshipPatterns) {
+      const match = message.match(pattern);
+      if (match) {
+        return {
+          recipient: recipientType,
+          relationship: relationship
+        };
+      }
+    }
+
+    return {};
   }
 
   static async analyzeConversation(
@@ -83,31 +120,40 @@ export class EnhancedNicoleService {
     userId: string
   ): Promise<ConversationAnalysis> {
     try {
-      // Determine conversation phase based on context
+      // Extract relationship information from the message
+      const relationshipInfo = this.extractRelationshipFromMessage(message);
+      
+      // Merge with existing context
+      const updatedContext = {
+        ...context,
+        ...relationshipInfo
+      };
+
+      // Determine conversation phase based on enhanced context
       let phase: ConversationPhase = 'greeting';
       
-      if (context.recipient && context.occasion && (context.interests || context.budget)) {
+      if (updatedContext.recipient && updatedContext.occasion && (updatedContext.interests || updatedContext.budget)) {
         phase = 'providing_suggestions';
-      } else if (context.recipient && context.occasion) {
+      } else if (updatedContext.recipient && updatedContext.occasion) {
         phase = 'clarifying_needs';
-      } else if (context.recipient || context.relationship) {
+      } else if (updatedContext.recipient || updatedContext.relationship) {
         phase = 'gathering_info';
       }
 
       // Check if we should show wishlist items
       const shouldShowWishlist = phase === 'providing_suggestions' && 
-        context.recipientWishlists && context.recipientWishlists.length > 0;
+        updatedContext.recipientWishlists && updatedContext.recipientWishlists.length > 0;
 
       // Generate recommendations if we have wishlist data
       const recommendations: WishlistRecommendation[] = [];
-      if (shouldShowWishlist && context.recipientWishlists) {
+      if (shouldShowWishlist && updatedContext.recipientWishlists) {
         // Simple scoring based on context matching
-        for (const wishlist of context.recipientWishlists) {
+        for (const wishlist of updatedContext.recipientWishlists) {
           if (wishlist.items) {
             for (const item of wishlist.items.slice(0, 3)) {
               const itemPrice = item.price || 0;
-              const inBudget = context.budget ? 
-                itemPrice >= context.budget[0] && itemPrice <= context.budget[1] : 
+              const inBudget = updatedContext.budget ? 
+                itemPrice >= updatedContext.budget[0] && itemPrice <= updatedContext.budget[1] : 
                 true;
               
               recommendations.push({
@@ -120,7 +166,7 @@ export class EnhancedNicoleService {
                   image: item.image || item.image_url,
                   brand: item.brand
                 },
-                reasoning: `This matches their interests in ${context.interests?.join(', ') || 'their preferences'}`,
+                reasoning: `This matches their interests in ${updatedContext.interests?.join(', ') || 'their preferences'}`,
                 matchScore: Math.random() * 0.3 + 0.7, // 0.7-1.0 range
                 priority: inBudget ? 'high' : 'medium',
                 inBudget
@@ -130,8 +176,9 @@ export class EnhancedNicoleService {
         }
       }
 
+      // Fix: Ensure boolean assignment
       const shouldSearchProducts = phase === 'providing_suggestions' && 
-        context.recipient && context.occasion;
+        Boolean(updatedContext.recipient && updatedContext.occasion);
 
       return {
         phase,

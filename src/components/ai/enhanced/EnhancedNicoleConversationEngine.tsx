@@ -95,20 +95,20 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       const enhancedSearchContext = generateEnhancedSearchContext(messageText);
       const relationshipInfo = EnhancedNicoleService.extractRelationshipFromMessage(messageText);
       
-      // Enhanced context with brand and age information
+      // Build comprehensive context for GPT
       const enhancedContext: NicoleContext = {
         ...context,
         ...relationshipInfo,
         step: conversationStep,
         conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase,
-        // Add enhanced context fields
+        // Add enhanced context fields from Enhanced Zinc API System
         detectedBrands: enhancedSearchContext.detectedBrands,
         interests: [...new Set([...(context.interests || []), ...enhancedSearchContext.interests])],
         ageGroup: enhancedSearchContext.ageInfo?.ageGroup,
         exactAge: enhancedSearchContext.ageInfo?.exactAge
       };
 
-      console.log('Enhanced Nicole: Calling GPT with context:', enhancedContext);
+      console.log('Enhanced Nicole: Sending comprehensive context to GPT:', enhancedContext);
 
       // Call the GPT-powered chatWithNicole function
       const response = await chatWithNicole(
@@ -117,7 +117,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         enhancedContext
       );
 
-      console.log('Enhanced Nicole: GPT response received:', response);
+      console.log('Enhanced Nicole: GPT response with Enhanced Zinc integration:', response);
 
       const assistantMessage: NicoleMessage = {
         role: "assistant",
@@ -126,7 +126,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Update context from GPT response
+      // Update context from merged response (GPT + Enhanced Zinc API)
       setContext(response.context);
 
       // Update contextual links from response
@@ -136,8 +136,10 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         setContextualLinks([]);
       }
 
-      // Handle search generation with enhanced query - only when GPT indicates readiness
+      // Handle Enhanced Zinc API search generation when GPT indicates readiness
       if (response.shouldGenerateSearch) {
+        console.log('Enhanced Nicole: Triggering Enhanced Zinc API search with context:', response.context);
+        
         const searchQuery = generateEnhancedSearchQuery({
           recipient: response.context.recipient,
           relationship: response.context.relationship,
@@ -149,17 +151,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           budget: response.context.budget
         });
         
-        console.log('Enhanced Nicole: Generated search query:', searchQuery);
+        console.log('Enhanced Nicole: Generated Enhanced Zinc search query:', searchQuery);
         
         if (searchQuery && searchQuery !== 'gifts') {
+          // Add a brief delay to let user see the response before navigating
           setTimeout(() => {
+            console.log('Enhanced Nicole: Navigating to Enhanced Zinc API results for:', searchQuery);
             onNavigateToResults(searchQuery);
           }, 2000);
         }
       }
 
     } catch (error) {
-      console.error("Error chatting with Nicole:", error);
+      console.error("Enhanced Nicole: Error in GPT chat with Enhanced Zinc integration:", error);
       const errorMessage: NicoleMessage = {
         role: "assistant",
         content: "I'm having trouble connecting right now. Let me help you with a basic search instead. What kind of gift are you looking for?"

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type ConversationPhase = 'greeting' | 'gathering_info' | 'clarifying_needs' | 'providing_suggestions';
@@ -74,20 +73,46 @@ export async function chatWithNicole(
     // Extract enhanced context from the message if GPT didn't process it
     const enhancedContext = extractContextFromMessage(message, context);
     
-    // Merge the context from GPT response with our enhanced context detection
-    const finalContext = {
+    // Properly merge contexts - GPT context takes precedence, but preserve enhanced fields
+    const mergedContext = {
       ...enhancedContext,
       ...context,
-      // Preserve any context updates from the GPT response
-      conversationPhase: determinePhase(enhancedContext),
+      // Preserve GPT updates while keeping enhanced fields
+      ...(data.context || {}),
+      // Ensure enhanced fields are preserved
+      detectedBrands: data.context?.detectedBrands || enhancedContext.detectedBrands || context.detectedBrands,
+      ageGroup: data.context?.ageGroup || enhancedContext.ageGroup || context.ageGroup,
+      exactAge: data.context?.exactAge || enhancedContext.exactAge || context.exactAge,
+      // Merge interests arrays properly
+      interests: [
+        ...new Set([
+          ...(context.interests || []),
+          ...(enhancedContext.interests || []),
+          ...(data.context?.interests || [])
+        ])
+      ]
     };
+
+    // Update conversation phase based on merged context
+    mergedContext.conversationPhase = determinePhase(mergedContext);
+
+    // Determine if we should generate search based on GPT response AND context completeness
+    const shouldGenerateSearch = data.shouldGenerateSearch || 
+      (data.response && (
+        data.response.toLowerCase().includes('let me search') ||
+        data.response.toLowerCase().includes('i\'ll find') ||
+        data.response.toLowerCase().includes('searching for') ||
+        shouldGenerateSearchBasedOnContext(mergedContext)
+      ));
+
+    console.log('Nicole: Should generate search:', shouldGenerateSearch, 'Context completeness check:', shouldGenerateSearchBasedOnContext(mergedContext));
 
     return {
       response: data.response || "I'm here to help you find the perfect gift! What are you looking for?",
-      context: finalContext,
-      shouldShowProducts: shouldShowProducts(finalContext),
+      context: mergedContext,
+      shouldShowProducts: shouldShowProducts(mergedContext),
       contextualLinks: data.contextualLinks || [],
-      shouldGenerateSearch: data.shouldGenerateSearch || shouldGenerateSearch(finalContext)
+      shouldGenerateSearch
     };
     
   } catch (error) {
@@ -203,13 +228,31 @@ function shouldShowProducts(context: NicoleContext): boolean {
   );
 }
 
-function shouldGenerateSearch(context: NicoleContext): boolean {
-  return Boolean(
-    context.recipient && 
-    context.occasion && 
-    (context.interests || context.detectedBrands) && 
-    context.budget
+function shouldGenerateSearchBasedOnContext(context: NicoleContext): boolean {
+  // Enhanced logic for determining when to trigger search
+  const hasBasicInfo = Boolean(context.recipient || context.relationship);
+  const hasOccasion = Boolean(context.occasion);
+  const hasPreferences = Boolean(
+    (context.interests && context.interests.length > 0) || 
+    (context.detectedBrands && context.detectedBrands.length > 0)
   );
+  const hasBudget = Boolean(context.budget);
+  
+  // Trigger search when we have enough context (at least 3 of 4 key pieces)
+  let contextScore = 0;
+  if (hasBasicInfo) contextScore++;
+  if (hasOccasion) contextScore++;
+  if (hasPreferences) contextScore++;
+  if (hasBudget) contextScore++;
+  
+  console.log('Context completeness score:', contextScore, {
+    hasBasicInfo,
+    hasOccasion,
+    hasPreferences,
+    hasBudget
+  });
+  
+  return contextScore >= 3; // Trigger when we have at least 3/4 context pieces
 }
 
 export function generateSearchQuery(context: NicoleContext): string {

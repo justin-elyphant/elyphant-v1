@@ -33,6 +33,9 @@ const MarketplaceWrapper = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Nicole widget state
+  const [isNicoleOpen, setIsNicoleOpen] = useState(false);
+
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
@@ -187,6 +190,13 @@ const MarketplaceWrapper = () => {
     window.location.reload();
   };
 
+  const handleNicoleSearchSuggestion = (query: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("search", query);
+    newParams.delete("category");
+    setSearchParams(newParams, { replace: true });
+  };
+
   return (
     <MarketplaceErrorBoundary>
       <div className="min-h-screen bg-gray-50">
@@ -220,6 +230,9 @@ const MarketplaceWrapper = () => {
         {/* Nicole Marketplace Widget - show when there are search results or user came from Nicole */}
         {(searchTerm && products.length > 0) && (
           <NicoleMarketplaceWidget 
+            isOpen={isNicoleOpen}
+            onClose={() => setIsNicoleOpen(false)}
+            onSearchSuggestion={handleNicoleSearchSuggestion}
             searchQuery={searchTerm}
             totalResults={products.length}
             isFromNicole={isFromNicole}

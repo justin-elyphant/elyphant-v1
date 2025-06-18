@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,9 @@ interface NicoleMarketplaceWidgetProps {
   onMinimize?: () => void;
   isMinimized?: boolean;
   onMaximize?: () => void;
+  searchQuery?: string;
+  totalResults?: number;
+  isFromNicole?: boolean;
 }
 
 const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
@@ -29,7 +31,10 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   onSearchSuggestion,
   onMinimize,
   isMinimized = false,
-  onMaximize
+  onMaximize,
+  searchQuery,
+  totalResults,
+  isFromNicole
 }) => {
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -49,13 +54,22 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   }, []);
 
   const startConversation = useCallback(() => {
+    let greetingContent = "Hi! I'm Nicole, your marketplace shopping assistant. I can help you find specific products or refine your search. What are you looking for today?";
+    
+    // Customize greeting based on context
+    if (searchQuery && totalResults) {
+      greetingContent = `Hi! I see you're searching for "${searchQuery}" and found ${totalResults} results. I can help you refine your search or find something more specific. What would you like to explore?`;
+    } else if (isFromNicole) {
+      greetingContent = "Hi again! I'm here to help you explore the marketplace. Based on our previous conversation, I can help you find the perfect products. What would you like to look for?";
+    }
+    
     const greetingMessage: ConversationMessage = {
       type: "nicole",
-      content: "Hi! I'm Nicole, your marketplace shopping assistant. I can help you find specific products or refine your search. What are you looking for today?",
+      content: greetingContent,
       timestamp: new Date()
     };
     addMessage(greetingMessage);
-  }, [addMessage]);
+  }, [addMessage, searchQuery, totalResults, isFromNicole]);
 
   const handleSendMessage = useCallback(async (messageText?: string) => {
     const message = messageText || currentMessage.trim();

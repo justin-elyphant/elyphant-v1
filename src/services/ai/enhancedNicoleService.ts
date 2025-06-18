@@ -130,7 +130,7 @@ export class EnhancedNicoleService {
       }
 
       const shouldSearchProducts = phase === 'providing_suggestions' && 
-        context.recipient && context.occasion;
+        context.recipient && context.occasion && !shouldShowWishlist;
 
       return {
         phase,

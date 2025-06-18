@@ -165,9 +165,14 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           
           // Navigate to marketplace with Enhanced Zinc API search
           console.log('Enhanced Nicole: Navigating to Enhanced Zinc API results for:', searchQuery);
+          
+          // Use the callback to navigate
           setTimeout(() => {
+            console.log('Enhanced Nicole: Executing navigation callback');
             onNavigateToResults(searchQuery);
           }, 1500);
+        } else {
+          console.log('Enhanced Nicole: Search query was empty or generic, not navigating');
         }
       }
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -22,8 +21,9 @@ const MarketplaceWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addSearch } = useUserSearchHistory();
 
-  // Check if this is a fresh navigation from home page
+  // Check if this is a fresh navigation from home page or Nicole
   const isFromHomePage = location.state?.fromHome || false;
+  const isFromNicole = location.state?.fromNicole || false;
 
   // Initialize showFilters state - always default to false
   const [showFilters, setShowFilters] = useState(false);
@@ -42,11 +42,11 @@ const MarketplaceWrapper = () => {
 
   // Clear the fromHome state after initial load to allow normal behavior
   useEffect(() => {
-    if (isFromHomePage) {
-      // Replace the current history entry to remove the fromHome state
+    if (isFromHomePage || isFromNicole) {
+      // Replace the current history entry to remove the fromHome/fromNicole state
       window.history.replaceState({}, '', window.location.pathname + window.location.search);
     }
-  }, [isFromHomePage]);
+  }, [isFromHomePage, isFromNicole]);
 
   // Mark as no longer initial load after first render
   useEffect(() => {
@@ -217,11 +217,12 @@ const MarketplaceWrapper = () => {
           </div>
         </FullWidthSection>
 
-        {/* Nicole Marketplace Widget - only show when there are search results */}
-        {searchTerm && products.length > 0 && (
+        {/* Nicole Marketplace Widget - show when there are search results or user came from Nicole */}
+        {(searchTerm && products.length > 0) && (
           <NicoleMarketplaceWidget 
             searchQuery={searchTerm}
             totalResults={products.length}
+            isFromNicole={isFromNicole}
           />
         )}
       </div>

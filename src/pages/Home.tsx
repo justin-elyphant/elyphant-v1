@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,6 +13,7 @@ import PopularBrandsSection from "@/components/home/sections/PopularBrandsSectio
 import NicoleIntroSection from "@/components/home/sections/NicoleIntroSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
 import MainLayout from "@/components/layout/MainLayout";
+import FloatingNicoleWidget from "@/components/ai/enhanced/FloatingNicoleWidget";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -22,6 +22,24 @@ const Home = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+
+  // Handle Nicole navigation to marketplace
+  const handleNicoleNavigateToResults = (searchQuery: string) => {
+    console.log('Home: Nicole navigation triggered with search query:', searchQuery);
+    
+    // Navigate to marketplace with search parameters
+    const searchParams = new URLSearchParams();
+    searchParams.set('search', searchQuery);
+    
+    const marketplaceUrl = `/marketplace?${searchParams.toString()}`;
+    console.log('Home: Navigating to:', marketplaceUrl);
+    
+    // Add fromHome state to indicate navigation from homepage
+    navigate(marketplaceUrl, { 
+      state: { fromHome: true, fromNicole: true },
+      replace: false 
+    });
+  };
 
   // Sample collections data
   const collections = [
@@ -167,6 +185,13 @@ const Home = () => {
 
           {/* Call to Action */}
           <HomeCTA />
+
+          {/* Floating Nicole Widget - only show when user is logged in */}
+          {user && (
+            <FloatingNicoleWidget 
+              onNavigateToResults={handleNicoleNavigateToResults}
+            />
+          )}
         </div>
       </ProductProvider>
     </MainLayout>

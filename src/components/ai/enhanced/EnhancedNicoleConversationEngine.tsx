@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -85,7 +84,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     setShowSearchButton(false); // Hide button while processing
 
     try {
-      // Call Nicole's AI service
+      // Call Nicole's AI service with Enhanced Zinc API System
       const response = await chatWithNicole(content, conversationHistory, context);
       
       // Update conversation history
@@ -93,7 +92,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       const newNicoleMessage: NicoleMessage = { role: "assistant", content: response.response };
       setConversationHistory(prev => [...prev, newUserMessage, newNicoleMessage]);
       
-      // Update context
+      // Update context (preserving Enhanced Zinc API fields)
       setContext(response.context);
 
       // Clean the response content to remove any button-related text
@@ -147,21 +146,37 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   };
 
   const handleSearchButtonClick = async () => {
-    console.log('Search button clicked, generating search query...');
+    console.log('Search button clicked, generating Enhanced Zinc API search query...');
     setIsLoading(true);
     setShowSearchButton(false);
 
     try {
-      // Generate search query from current context
+      // Generate search query from current Enhanced Zinc API context
       const searchQuery = generateSearchQuery(context);
-      console.log('Generated search query:', searchQuery);
+      console.log('Generated Enhanced Zinc API search query:', searchQuery);
 
-      // Store context for marketplace continuity
+      // Create a comprehensive conversation summary for marketplace continuity
+      const conversationSummary = createConversationSummary(context, conversationHistory, searchQuery);
+
+      // Store enhanced context for marketplace continuity with Enhanced Zinc API preservation
       sessionStorage.setItem('nicoleContext', JSON.stringify({
         ...context,
         fromNicole: true,
         searchQuery,
-        conversationSummary: "I've found some great gift options based on our conversation!"
+        conversationSummary,
+        conversationHistory: conversationHistory.slice(-6), // Keep last 6 messages for context
+        enhancedZincApiPreserved: true,
+        marketplaceTransition: true,
+        lastNicoleMessage: messages[messages.length - 1]?.content,
+        searchCriteria: {
+          recipient: context.recipient,
+          relationship: context.relationship,
+          occasion: context.occasion,
+          exactAge: context.exactAge,
+          interests: context.interests,
+          budget: context.budget,
+          detectedBrands: context.detectedBrands
+        }
       }));
 
       // Add a final message from Nicole
@@ -178,12 +193,38 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       }, 300);
 
     } catch (error) {
-      console.error('Error generating search:', error);
+      console.error('Error generating Enhanced Zinc API search:', error);
       toast.error("Sorry, I had trouble generating your search. Please try again.");
       setShowSearchButton(true); // Show button again
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const createConversationSummary = (context: NicoleContext, history: NicoleMessage[], searchQuery: string): string => {
+    const parts = [];
+    
+    if (context.recipient && context.relationship) {
+      parts.push(`gifts for your ${context.recipient}`);
+    }
+    
+    if (context.occasion) {
+      parts.push(`for ${context.occasion}`);
+    }
+    
+    if (context.exactAge) {
+      parts.push(`(turning ${context.exactAge})`);
+    }
+    
+    if (context.interests && context.interests.length > 0) {
+      parts.push(`who loves ${context.interests.slice(0, 2).join(' and ')}`);
+    }
+    
+    if (context.budget) {
+      parts.push(`within your $${context.budget[0]}-$${context.budget[1]} budget`);
+    }
+    
+    return `Based on our conversation about ${parts.join(' ')}, I've found some great options!`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

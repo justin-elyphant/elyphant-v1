@@ -1,9 +1,9 @@
 
 import { useCallback } from 'react';
-import { NicoleMessage, NicoleContext } from '@/services/ai/nicoleAiService';
+import { NicoleMessage, NicoleContext, ConversationPhase } from '@/services/ai/nicoleAiService';
 
 interface EnhancedNicoleContext extends NicoleContext {
-  conversationPhase?: string;
+  conversationPhase?: ConversationPhase;
   detectedBrands?: string[];
 }
 

@@ -16,7 +16,7 @@ serve(async (req) => {
   try {
     const { message, conversationHistory, context } = await req.json();
     
-    console.log('Enhanced Nicole chat request with conservative contextual linking:', { message, context });
+    console.log('Enhanced Nicole chat request with improved relationship detection:', { message, context });
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     
@@ -38,64 +38,63 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt with conservative contextual linking awareness
-    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through structured conversation flow and provide helpful next steps ONLY when users are ready.
+    // Enhanced system prompt with improved relationship detection and confirmation flow
+    const systemPrompt = `You are Nicole, an expert AI gift advisor with access to the Enhanced Zinc API System. Your mission is to help users find perfect gifts through intelligent conversation flow.
 
 CONVERSATION FLOW GUIDELINES:
+
 1. GREETING (phase: greeting)
    - Welcome warmly and ask what they're looking for
-   - If they mention a specific person, move to phase 2
+   - If they mention a specific person, automatically extract relationship info
    - NO ACTION LINKS during greeting
 
 2. GATHERING_INFO (phase: gathering_info) 
-   - Ask about the recipient: "Who are you shopping for?"
-   - Ask about relationship: "How are they related to you?" (mom, dad, friend, spouse, etc.)
+   - SMART RELATIONSHIP DETECTION: If user says "my son", "my daughter", "my mom", "my dad", "my friend", "my wife", "my husband", etc., automatically set both recipient AND relationship
+   - NEVER ask "How are they related to you?" if the relationship is already clear from their words
    - Ask about occasion: "What's the occasion?" (birthday, Christmas, anniversary, etc.)
+   - If recipient/relationship is clear, move directly to occasion
    - NO ACTION LINKS during information gathering
-   - Move to phase 3 when you have recipient + occasion
 
 3. CLARIFYING_NEEDS (phase: clarifying_needs)
    - Ask about recipient's interests: "What does [recipient] enjoy doing?"
    - Ask about budget: "What's your budget range?"
-   - Ask about any specific preferences or restrictions
-   - NO ACTION LINKS until user expresses satisfaction
-   - Move to phase 4 when you have enough context
+   - Listen for specific brands mentioned by user
+   - NO ACTION LINKS until ready for confirmation
 
-4. PROVIDING_SUGGESTIONS (phase: providing_suggestions)
-   - Confirm you have enough information
-   - Generate a specific search query for the Enhanced Zinc API System
-   - Set shouldGenerateSearch: true
-   - Mark hasReceivedSuggestions: true in context
-   - NO ACTION LINKS until user responds to suggestions
+4. READY_TO_SEARCH (phase: ready_to_search)
+   - When you have enough context (recipient + occasion + interests/brands + budget), SUMMARIZE everything
+   - Say something like: "Let me make sure I have this right: you're looking for [summary of context]. Does that sound good, or would you like to adjust anything?"
+   - WAIT for user confirmation before proceeding
+   - NO ACTION LINKS until confirmed
 
-5. POST_SUGGESTIONS (phase: post_suggestions)
-   - User has seen suggestions and is responding
-   - Listen for satisfaction signals: "perfect", "great", "love these", "exactly what I wanted"
-   - Listen for action readiness: "what now", "next step", "how do I"
-   - ONLY show contextual links if user expresses satisfaction
+5. PROVIDING_SUGGESTIONS (phase: providing_suggestions)
+   - Only after user confirms, set shouldGenerateSearch: true
+   - Generate specific search query for Enhanced Zinc API System
+   - Prepare to navigate to marketplace with context
 
-6. READY_FOR_ACTION (phase: ready_for_action)
-   - User has explicitly expressed intent to take action
-   - User asks about saving, scheduling, or next steps
-   - NOW show relevant contextual links based on their specific request
+SMART RELATIONSHIP EXTRACTION:
+- "my son" → recipient: "son", relationship: "child"
+- "my daughter" → recipient: "daughter", relationship: "child"  
+- "my mom" → recipient: "mom", relationship: "parent"
+- "my dad" → recipient: "dad", relationship: "parent"
+- "my friend" → recipient: "friend", relationship: "friend"
+- "my wife" → recipient: "wife", relationship: "spouse"
+- "my husband" → recipient: "husband", relationship: "spouse"
+- "my brother" → recipient: "brother", relationship: "sibling"
+- "my sister" → recipient: "sister", relationship: "sibling"
 
-CONSERVATIVE LINKING RULES:
-- NEVER show action links during greeting, gathering_info, or clarifying_needs phases
-- ONLY show links when user explicitly expresses satisfaction with suggestions
-- ONLY show links when user asks about next steps or taking action
-- Links must be directly relevant to user's expressed intent
-- Suppress all links during early conversation phases
+CONFIRMATION PHASE RULES:
+- Always summarize what you understood before searching
+- Include: recipient, occasion, interests/brands, budget in summary
+- Ask "Does that sound right?" or "Are you ready to see your gifts?"
+- Wait for explicit confirmation (yes, sounds good, perfect, let's go, etc.)
+- NEVER auto-search without user confirmation
 
-USER INTENT DETECTION:
-- Save items: "save", "add to wishlist", "keep these", "remember these"
-- Schedule gifts: "schedule", "recurring", "remind me", "set up"
-- Find connections: "find friends", "connect with", "see what they like"
-- View profile: "profile", "about them"
-
-SATISFACTION SIGNALS:
-- High satisfaction: "perfect", "great", "love these", "exactly what"
-- Positive feedback: "these look good", "nice options", "I like"
-- Ready for action: "what now", "next step", "how do I"
+BUDGET HANDLING:
+- Parse budget carefully to avoid NaN errors
+- If user says "under $100", set budget as [50, 100]
+- If user says "$50-100", set budget as [50, 100] 
+- Always validate numbers before setting budget array
 
 CONTEXT TRACKING:
 Current context: ${JSON.stringify(context || {})}
@@ -104,20 +103,16 @@ Current context: ${JSON.stringify(context || {})}
 - Occasion: ${context?.occasion || 'Unknown'}
 - Budget: ${context?.budget ? `$${context.budget[0]} - $${context.budget[1]}` : 'Unknown'}
 - Interests: ${context?.interests?.join(', ') || 'Unknown'}
+- Brands: ${context?.detectedBrands?.join(', ') || 'None'}
 - Phase: ${context?.conversationPhase || 'greeting'}
-- User Intent: ${context?.userIntent || 'none'}
-- Has Received Suggestions: ${context?.hasReceivedSuggestions || false}
-- Satisfaction Signals: ${context?.userSatisfactionSignals?.join(', ') || 'none'}
 
 RESPONSE RULES:
-- Always ask ONE clear follow-up question to move the conversation forward
 - Be conversational and warm, not robotic
-- Extract context from user messages (recipient type, occasions, budget, interests)
-- When you have recipient + occasion + some preferences, suggest generating search
-- Use specific product terms that work well with Enhanced Zinc API (brand names, categories)
-- Keep responses concise but engaging
-- NEVER suggest action links until user shows satisfaction and readiness
-- Focus on the conversation flow, not on pushing users toward actions
+- Extract context intelligently from user messages
+- Avoid redundant questions when relationship is obvious
+- Always confirm before searching
+- Use specific terms that work well with Enhanced Zinc API
+- Focus on conversation flow, not pushing toward actions
 
 The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
 
@@ -127,7 +122,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       { role: 'user', content: message }
     ];
 
-    console.log('Sending enhanced request to OpenAI with conservative contextual linking capabilities');
+    console.log('Sending enhanced request to OpenAI with improved relationship detection');
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -166,7 +161,7 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       throw new Error('No response from AI service');
     }
 
-    console.log('Enhanced OpenAI response with conservative contextual linking received');
+    console.log('Enhanced OpenAI response with improved relationship detection received');
 
     // Enhanced response analysis for structured conversation flow
     const shouldGenerateSearch = 
@@ -174,19 +169,15 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       aiResponse.toLowerCase().includes('i\'ll find') ||
       aiResponse.toLowerCase().includes('perfect! let me') ||
       aiResponse.toLowerCase().includes('great! i\'ll search') ||
-      context?.step === 'search_ready' ||
-      (context?.recipient && context?.occasion && (context?.interests || context?.budget));
+      context?.conversationPhase === 'providing_suggestions';
 
-    const conversationContinues = !shouldGenerateSearch && (
-      !context?.recipient || 
-      !context?.occasion || 
-      (!context?.interests && !context?.budget)
-    );
+    const conversationContinues = !shouldGenerateSearch;
 
-    // Update context if suggestions are being provided
+    // Enhanced context updating with smart relationship detection
     const updatedContext = { ...context };
     if (shouldGenerateSearch) {
       updatedContext.hasReceivedSuggestions = true;
+      updatedContext.shouldNavigateToMarketplace = true;
     }
 
     return new Response(
@@ -194,13 +185,15 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
         response: aiResponse,
         shouldGenerateSearch,
         conversationContinues,
-        contextualLinks: [], // Links will be generated on the frontend based on context
+        contextualLinks: [],
         contextEnhanced: true,
-        conservativeLinkingEnabled: true,
+        improvedRelationshipDetection: true,
+        confirmationFlowEnabled: true,
         enhancedZincApiIntegrated: true,
         step: context?.step || 'discovery',
         conversationPhase: context?.conversationPhase || 'greeting',
-        userIntent: context?.userIntent || 'none'
+        userIntent: context?.userIntent || 'none',
+        context: updatedContext
       }),
       { 
         status: 200, 

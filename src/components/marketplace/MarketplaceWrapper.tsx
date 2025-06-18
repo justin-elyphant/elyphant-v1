@@ -6,6 +6,7 @@ import IntegratedSearchSection from "./IntegratedSearchSection";
 import SubtleCountdownBanner from "./SubtleCountdownBanner";
 import ResultsSummaryBar from "./ResultsSummaryBar";
 import MarketplaceErrorBoundary from "./error/ErrorBoundary";
+import NicoleMarketplaceWidget from "@/components/ai/marketplace/NicoleMarketplaceWidget";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
@@ -215,6 +216,14 @@ const MarketplaceWrapper = () => {
             />
           </div>
         </FullWidthSection>
+
+        {/* Nicole Marketplace Widget - only show when there are search results */}
+        {searchTerm && products.length > 0 && (
+          <NicoleMarketplaceWidget 
+            searchQuery={searchTerm}
+            totalResults={products.length}
+          />
+        )}
       </div>
     </MarketplaceErrorBoundary>
   );

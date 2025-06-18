@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type ConversationPhase = 'greeting' | 'gathering_info' | 'clarifying_needs' | 'ready_to_search' | 'providing_suggestions';
@@ -36,6 +37,8 @@ export interface NicoleContext {
   askedForInterests?: boolean;
   askedForBudget?: boolean;
   awaitingConfirmation?: boolean;
+  hasReceivedSuggestions?: boolean;
+  shouldNavigateToMarketplace?: boolean;
 }
 
 export interface NicoleResponse {
@@ -53,34 +56,42 @@ export async function chatWithNicole(
   context: NicoleContext = {}
 ): Promise<NicoleResponse> {
   try {
-    console.log('Nicole: Calling GPT-powered edge function with context:', context);
+    console.log('Nicole: Calling GPT-powered edge function with enhanced context:', context);
     
-    // Enhanced system prompt with confirmation phase
-    const enhancedContext = {
-      ...context,
-      systemInstructions: `You are Nicole, an AI gift advisor. Follow these conversation phases:
+    // Enhanced context extraction with smart relationship detection
+    const enhancedContext = extractEnhancedContextFromMessage(message, context);
+    
+    // Enhanced system prompt with improved relationship detection
+    const systemInstructions = `You are Nicole, an AI gift advisor with smart relationship detection. Follow these phases:
       
       1. GREETING: Welcome and ask what they're looking for
-      2. GATHERING_INFO: Collect recipient, relationship, occasion
-      3. CLARIFYING_NEEDS: Get interests, budget, age details
-      4. READY_TO_SEARCH: When you have enough info (recipient/relationship + occasion + interests/brands + budget), SUMMARIZE what you understood and ask for confirmation before searching. Say something like "Let me make sure I have this right: you're looking for [summary]. Does that sound good, or would you like to adjust anything?"
-      5. PROVIDING_SUGGESTIONS: Only after user confirms, proceed with search
+      2. GATHERING_INFO: Smart relationship detection - if they say "my son", automatically know recipient="son" and relationship="child"
+      3. CLARIFYING_NEEDS: Get interests, budget, age details  
+      4. READY_TO_SEARCH: Summarize everything and ask for confirmation
+      5. PROVIDING_SUGGESTIONS: Only after confirmation, proceed with search
       
-      NEVER automatically search without confirmation. Always ask "Does that sound right?" or "Are you ready to see your gifts?" when you have enough context.
+      SMART RELATIONSHIP DETECTION:
+      - "my son/daughter" → don't ask relationship, it's obvious
+      - "my mom/dad" → parent relationship is clear
+      - "my friend" → friendship is obvious
+      - Skip redundant relationship questions when context is clear
       
-      Enhanced features:
-      - Detect brands mentioned by user (Nike, Apple, Lululemon, etc.)
-      - Identify age groups (teens, young adults, adults, seniors)
-      - Parse budget amounts carefully to avoid NaN values
-      - Preserve all detected context throughout conversation`
-    };
+      CONFIRMATION REQUIRED:
+      - Always summarize context before searching
+      - Ask "Does that sound right?" before proceeding
+      - Wait for explicit confirmation
+      
+      Enhanced Zinc API integration maintained with proper budget handling.`;
     
-    // Call the existing nicole-chat edge function
+    // Call the enhanced nicole-chat edge function
     const { data, error } = await supabase.functions.invoke('nicole-chat', {
       body: {
         message,
         conversationHistory,
-        context: enhancedContext
+        context: {
+          ...enhancedContext,
+          systemInstructions
+        }
       }
     });
 
@@ -89,45 +100,44 @@ export async function chatWithNicole(
       throw error;
     }
 
-    console.log('Nicole: GPT response received:', data);
+    console.log('Nicole: Enhanced GPT response received:', data);
 
-    // Extract enhanced context from the message if GPT didn't process it
-    const enhancedContextFromMessage = extractContextFromMessage(message, context);
-    
-    // Properly merge contexts - GPT context takes precedence, but preserve enhanced fields
+    // Merge contexts with Enhanced Zinc API preservation
     const mergedContext = {
-      ...enhancedContextFromMessage,
-      ...context,
-      // Preserve GPT updates while keeping enhanced fields
+      ...enhancedContext,
       ...(data.context || {}),
-      // Ensure enhanced fields are preserved
-      detectedBrands: data.context?.detectedBrands || enhancedContextFromMessage.detectedBrands || context.detectedBrands,
-      ageGroup: data.context?.ageGroup || enhancedContextFromMessage.ageGroup || context.ageGroup,
-      exactAge: data.context?.exactAge || enhancedContextFromMessage.exactAge || context.exactAge,
-      // Merge interests arrays properly
+      // Preserve Enhanced Zinc fields
+      detectedBrands: data.context?.detectedBrands || enhancedContext.detectedBrands || context.detectedBrands,
+      ageGroup: data.context?.ageGroup || enhancedContext.ageGroup || context.ageGroup,
+      exactAge: data.context?.exactAge || enhancedContext.exactAge || context.exactAge,
+      // Fix budget array properly
+      budget: validateBudgetArray(data.context?.budget || enhancedContext.budget || context.budget),
+      // Merge interests arrays
       interests: [
         ...new Set([
           ...(context.interests || []),
-          ...(enhancedContextFromMessage.interests || []),
+          ...(enhancedContext.interests || []),
           ...(data.context?.interests || [])
         ])
       ]
     };
 
-    // Update conversation phase based on merged context and check for confirmation
-    const updatedPhase = determinePhase(mergedContext, message);
+    // Update conversation phase with improved logic
+    const updatedPhase = determineEnhancedPhase(mergedContext, message);
     mergedContext.conversationPhase = updatedPhase;
 
-    // Check if user is confirming search (only in ready_to_search phase)
+    // Check for confirmation in ready_to_search phase
     const isConfirming = updatedPhase === 'ready_to_search' && detectConfirmation(message);
     
-    // Determine if we should generate search
-    const shouldGenerateSearch = isConfirming || (
-      data.shouldGenerateSearch && 
-      updatedPhase === 'providing_suggestions'
-    );
+    // Only generate search after explicit confirmation
+    const shouldGenerateSearch = isConfirming || data.shouldGenerateSearch;
+    
+    // Set navigation flag when search is ready
+    if (shouldGenerateSearch) {
+      mergedContext.shouldNavigateToMarketplace = true;
+    }
 
-    console.log('Nicole: Phase:', updatedPhase, 'Should generate search:', shouldGenerateSearch, 'Is confirming:', isConfirming);
+    console.log('Nicole: Enhanced phase:', updatedPhase, 'Should generate search:', shouldGenerateSearch);
 
     return {
       response: data.response || "I'm here to help you find the perfect gift! What are you looking for?",
@@ -138,10 +148,10 @@ export async function chatWithNicole(
     };
     
   } catch (error) {
-    console.error('Error in Nicole GPT chat:', error);
+    console.error('Error in Nicole enhanced chat:', error);
     
-    // Fallback response with context extraction
-    const enhancedContext = extractContextFromMessage(message, context);
+    // Fallback with context extraction
+    const enhancedContext = extractEnhancedContextFromMessage(message, context);
     
     return {
       response: "I'm having trouble connecting right now, but I'm here to help you find the perfect gift! What are you looking for?",
@@ -153,11 +163,36 @@ export async function chatWithNicole(
   }
 }
 
-function extractContextFromMessage(userMessage: string, currentContext: NicoleContext): NicoleContext {
+function extractEnhancedContextFromMessage(userMessage: string, currentContext: NicoleContext): NicoleContext {
   const lowerMessage = userMessage.toLowerCase();
   let updatedContext = { ...currentContext };
 
-  // Enhanced occasion detection with more comprehensive patterns
+  // Enhanced relationship detection with smart mapping
+  const relationshipPatterns = [
+    { pattern: /\bmy son\b/i, recipient: 'son', relationship: 'child' },
+    { pattern: /\bmy daughter\b/i, recipient: 'daughter', relationship: 'child' },
+    { pattern: /\bmy mom\b|\bmy mother\b/i, recipient: 'mom', relationship: 'parent' },
+    { pattern: /\bmy dad\b|\bmy father\b/i, recipient: 'dad', relationship: 'parent' },
+    { pattern: /\bmy friend\b/i, recipient: 'friend', relationship: 'friend' },
+    { pattern: /\bmy wife\b/i, recipient: 'wife', relationship: 'spouse' },
+    { pattern: /\bmy husband\b/i, recipient: 'husband', relationship: 'spouse' },
+    { pattern: /\bmy brother\b/i, recipient: 'brother', relationship: 'sibling' },
+    { pattern: /\bmy sister\b/i, recipient: 'sister', relationship: 'sibling' },
+    { pattern: /\bmy girlfriend\b/i, recipient: 'girlfriend', relationship: 'partner' },
+    { pattern: /\bmy boyfriend\b/i, recipient: 'boyfriend', relationship: 'partner' }
+  ];
+
+  // Check for relationship patterns
+  for (const { pattern, recipient, relationship } of relationshipPatterns) {
+    if (pattern.test(userMessage)) {
+      updatedContext.recipient = recipient;
+      updatedContext.relationship = relationship;
+      console.log(`Smart relationship detected: ${recipient} (${relationship}) from: "${userMessage}"`);
+      break;
+    }
+  }
+
+  // Enhanced occasion detection
   const occasionPatterns = [
     { pattern: /birthday/i, occasion: 'birthday' },
     { pattern: /christmas|holiday|holidays/i, occasion: 'christmas' },
@@ -167,25 +202,18 @@ function extractContextFromMessage(userMessage: string, currentContext: NicoleCo
     { pattern: /valentine|valentine's/i, occasion: 'valentine\'s day' },
     { pattern: /mother's day|mothers day/i, occasion: 'mother\'s day' },
     { pattern: /father's day|fathers day/i, occasion: 'father\'s day' },
-    { pattern: /housewarming|house warming/i, occasion: 'housewarming' },
-    { pattern: /retirement|retiring/i, occasion: 'retirement' },
-    { pattern: /promotion|new job/i, occasion: 'promotion' },
-    { pattern: /baby shower|baby|newborn/i, occasion: 'baby shower' },
-    { pattern: /thanksgiving/i, occasion: 'thanksgiving' },
-    { pattern: /easter/i, occasion: 'easter' }
+    { pattern: /housewarming|house warming/i, occasion: 'housewarming' }
   ];
 
-  // Check for occasion patterns
   for (const { pattern, occasion } of occasionPatterns) {
     if (pattern.test(userMessage)) {
       updatedContext.occasion = occasion;
       updatedContext.askedForOccasion = true;
-      console.log(`Detected occasion: ${occasion} from message: "${userMessage}"`);
       break;
     }
   }
 
-  // Enhanced budget extraction with better number parsing
+  // Enhanced budget extraction with proper validation
   const budgetPatterns = [
     /\$(\d+)(?:\s*-\s*\$?(\d+))?/g,
     /between\s+\$?(\d+)\s+and\s+\$?(\d+)/i,
@@ -200,9 +228,8 @@ function extractContextFromMessage(userMessage: string, currentContext: NicoleCo
       const num1 = parseInt(match[1]);
       const num2 = match[2] ? parseInt(match[2]) : null;
       
-      // Ensure we have valid numbers
-      if (!isNaN(num1)) {
-        if (num2 && !isNaN(num2)) {
+      if (!isNaN(num1) && num1 > 0) {
+        if (num2 && !isNaN(num2) && num2 > 0) {
           updatedContext.budget = [Math.min(num1, num2), Math.max(num1, num2)];
         } else if (lowerMessage.includes('under')) {
           updatedContext.budget = [Math.max(10, Math.floor(num1 * 0.5)), num1];
@@ -210,17 +237,31 @@ function extractContextFromMessage(userMessage: string, currentContext: NicoleCo
           updatedContext.budget = [Math.floor(num1 * 0.8), Math.ceil(num1 * 1.2)];
         }
         updatedContext.askedForBudget = true;
-        console.log('Detected budget:', updatedContext.budget);
+        console.log('Enhanced budget detected:', updatedContext.budget);
       }
       break;
+    }
+  }
+
+  // Enhanced brand detection
+  const brandPatterns = [
+    /\b(nike|adidas|lululemon|apple|samsung|sony|microsoft|google)\b/gi
+  ];
+
+  for (const pattern of brandPatterns) {
+    const matches = userMessage.match(pattern);
+    if (matches) {
+      updatedContext.detectedBrands = [...new Set([
+        ...(updatedContext.detectedBrands || []),
+        ...matches.map(brand => brand.toLowerCase())
+      ])];
     }
   }
 
   // Enhanced interest detection
   const interestPatterns = [
     /(?:likes?|loves?|enjoys?|interested in|into)\s+([^,.!?]+)/gi,
-    /(?:hobby|hobbies).*?([^,.!?]+)/gi,
-    /(reading|gaming|cooking|sports|music|art|fitness|travel|photography|gardening|tech|technology)/gi
+    /(yoga|fitness|gaming|reading|cooking|music|art|sports|travel|photography)/gi
   ];
 
   for (const pattern of interestPatterns) {
@@ -237,26 +278,44 @@ function extractContextFromMessage(userMessage: string, currentContext: NicoleCo
   return updatedContext;
 }
 
-function determinePhase(context: NicoleContext, userMessage: string): ConversationPhase {
-  // Check if user is confirming in ready_to_search phase
+function validateBudgetArray(budget: any): [number, number] | undefined {
+  if (!budget || !Array.isArray(budget) || budget.length !== 2) {
+    return undefined;
+  }
+  
+  const [min, max] = budget;
+  const numMin = typeof min === 'number' ? min : parseFloat(min);
+  const numMax = typeof max === 'number' ? max : parseFloat(max);
+  
+  if (isNaN(numMin) || isNaN(numMax) || numMin <= 0 || numMax <= 0) {
+    return undefined;
+  }
+  
+  return [numMin, numMax];
+}
+
+function determineEnhancedPhase(context: NicoleContext, userMessage: string): ConversationPhase {
+  // Check for confirmation in ready_to_search phase
   if (context.conversationPhase === 'ready_to_search' && detectConfirmation(userMessage)) {
     return 'providing_suggestions';
   }
   
-  if (!context.recipient && !context.relationship) return 'greeting';
-  if ((context.recipient || context.relationship) && !context.occasion) return 'gathering_info';
-  if (context.recipient && context.occasion && (!context.interests && !context.detectedBrands)) return 'clarifying_needs';
-  if (context.recipient && context.occasion && (context.interests || context.detectedBrands) && !context.budget) return 'clarifying_needs';
-  
-  // Move to ready_to_search when we have enough context but haven't confirmed yet
-  const hasEnoughContext = Boolean(
-    (context.recipient || context.relationship) && 
-    context.occasion && 
-    (context.interests || context.detectedBrands) && 
-    context.budget
+  // Smart phase detection based on context completeness
+  const hasRecipient = Boolean(context.recipient || context.relationship);
+  const hasOccasion = Boolean(context.occasion);
+  const hasPreferences = Boolean(
+    (context.interests && context.interests.length > 0) || 
+    (context.detectedBrands && context.detectedBrands.length > 0)
   );
+  const hasBudget = Boolean(context.budget);
   
-  if (hasEnoughContext && !context.awaitingConfirmation) {
+  if (!hasRecipient) return 'greeting';
+  if (hasRecipient && !hasOccasion) return 'gathering_info';
+  if (hasRecipient && hasOccasion && !hasPreferences) return 'clarifying_needs';
+  if (hasRecipient && hasOccasion && hasPreferences && !hasBudget) return 'clarifying_needs';
+  
+  // Move to ready_to_search when we have enough context
+  if (hasRecipient && hasOccasion && hasPreferences && hasBudget) {
     return 'ready_to_search';
   }
   
@@ -269,7 +328,8 @@ function detectConfirmation(message: string): boolean {
     /sounds (good|great|perfect|right)/i,
     /that's (right|correct|perfect|good)/i,
     /^(ok|okay)\s*[!.]?$/i,
-    /let's go|let's do it|ready/i
+    /let's go|let's do it|ready/i,
+    /show me|see the gifts|find them/i
   ];
   
   return confirmationPatterns.some(pattern => pattern.test(message.trim()));
@@ -284,37 +344,10 @@ function shouldShowProducts(context: NicoleContext): boolean {
   );
 }
 
-function shouldGenerateSearchBasedOnContext(context: NicoleContext): boolean {
-  // Enhanced logic for determining when to trigger search
-  const hasBasicInfo = Boolean(context.recipient || context.relationship);
-  const hasOccasion = Boolean(context.occasion);
-  const hasPreferences = Boolean(
-    (context.interests && context.interests.length > 0) || 
-    (context.detectedBrands && context.detectedBrands.length > 0)
-  );
-  const hasBudget = Boolean(context.budget);
-  
-  // Trigger search when we have enough context (at least 3 of 4 key pieces)
-  let contextScore = 0;
-  if (hasBasicInfo) contextScore++;
-  if (hasOccasion) contextScore++;
-  if (hasPreferences) contextScore++;
-  if (hasBudget) contextScore++;
-  
-  console.log('Context completeness score:', contextScore, {
-    hasBasicInfo,
-    hasOccasion,
-    hasPreferences,
-    hasBudget
-  });
-  
-  return contextScore >= 3; // Trigger when we have at least 3/4 context pieces
-}
-
 export function generateSearchQuery(context: NicoleContext): string {
   const parts: string[] = [];
   
-  // Brand-first approach (preserving Enhanced Zinc API System logic)
+  // Brand-first approach (Enhanced Zinc API System)
   if (context.detectedBrands && context.detectedBrands.length > 0) {
     parts.push(context.detectedBrands[0]);
   }
@@ -333,6 +366,7 @@ export function generateSearchQuery(context: NicoleContext): string {
     parts.push(context.occasion);
   }
   
+  // Fix budget formatting to avoid NaN
   if (context.budget && Array.isArray(context.budget) && context.budget.length === 2) {
     const [min, max] = context.budget;
     if (!isNaN(max) && max > 0) {
@@ -341,35 +375,4 @@ export function generateSearchQuery(context: NicoleContext): string {
   }
   
   return parts.join(' ') || 'gifts';
-}
-
-function generateContextSummary(context: NicoleContext): string {
-  const parts: string[] = [];
-  
-  if (context.detectedBrands && context.detectedBrands.length > 0) {
-    parts.push(context.detectedBrands[0]);
-  }
-  
-  if (context.interests && context.interests.length > 0) {
-    parts.push(context.interests.join(' and '));
-  }
-  
-  if (context.recipient) {
-    parts.push(`for your ${context.recipient}`);
-  } else if (context.relationship) {
-    parts.push(`for your ${context.relationship}`);
-  }
-  
-  if (context.occasion) {
-    parts.push(`for ${context.occasion}`);
-  }
-  
-  if (context.budget && Array.isArray(context.budget) && context.budget.length === 2) {
-    const [min, max] = context.budget;
-    if (!isNaN(max) && max > 0) {
-      parts.push(`under $${max}`);
-    }
-  }
-  
-  return parts.join(' ');
 }

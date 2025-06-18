@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,33 +90,33 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     setIsLoading(true);
 
     try {
-      // Enhanced context extraction with brand and age detection
+      // Enhanced context extraction with improved relationship detection
       const enhancedSearchContext = generateEnhancedSearchContext(messageText);
       const relationshipInfo = EnhancedNicoleService.extractRelationshipFromMessage(messageText);
       
-      // Build comprehensive context for GPT
+      // Build comprehensive context for GPT with Enhanced Zinc API integration
       const enhancedContext: NicoleContext = {
         ...context,
         ...relationshipInfo,
         step: conversationStep,
         conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase,
-        // Add enhanced context fields from Enhanced Zinc API System
+        // Enhanced Zinc API System fields
         detectedBrands: enhancedSearchContext.detectedBrands,
         interests: [...new Set([...(context.interests || []), ...enhancedSearchContext.interests])],
         ageGroup: enhancedSearchContext.ageInfo?.ageGroup,
         exactAge: enhancedSearchContext.ageInfo?.exactAge
       };
 
-      console.log('Enhanced Nicole: Sending comprehensive context to GPT:', enhancedContext);
+      console.log('Enhanced Nicole: Sending comprehensive context to GPT with improved relationship detection:', enhancedContext);
 
-      // Call the GPT-powered chatWithNicole function
+      // Call the enhanced GPT-powered chatWithNicole function
       const response = await chatWithNicole(
         userMessage.content,
         messages,
         enhancedContext
       );
 
-      console.log('Enhanced Nicole: GPT response with Enhanced Zinc integration:', response);
+      console.log('Enhanced Nicole: GPT response with Enhanced Zinc integration and improved navigation:', response);
 
       const assistantMessage: NicoleMessage = {
         role: "assistant",
@@ -126,18 +125,18 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Update context from merged response (GPT + Enhanced Zinc API)
+      // Update context from merged response
       setContext(response.context);
 
-      // Update contextual links from response
+      // Update contextual links
       if (response.contextualLinks && response.contextualLinks.length > 0) {
         setContextualLinks(response.contextualLinks);
       } else {
         setContextualLinks([]);
       }
 
-      // Handle Enhanced Zinc API search generation when GPT indicates readiness
-      if (response.shouldGenerateSearch) {
+      // Enhanced navigation logic with debugging
+      if (response.shouldGenerateSearch || response.context.shouldNavigateToMarketplace) {
         console.log('Enhanced Nicole: Triggering Enhanced Zinc API search with context:', response.context);
         
         const searchQuery = generateEnhancedSearchQuery({
@@ -154,11 +153,21 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         console.log('Enhanced Nicole: Generated Enhanced Zinc search query:', searchQuery);
         
         if (searchQuery && searchQuery !== 'gifts') {
-          // Add a brief delay to let user see the response before navigating
+          // Add Nicole context to session storage for marketplace continuation
+          const nicoleContext = {
+            searchQuery,
+            context: response.context,
+            conversationSummary: `I helped you find ${searchQuery}`,
+            shouldContinueConversation: true
+          };
+          
+          sessionStorage.setItem('nicoleContext', JSON.stringify(nicoleContext));
+          
+          // Navigate to marketplace with Enhanced Zinc API search
+          console.log('Enhanced Nicole: Navigating to Enhanced Zinc API results for:', searchQuery);
           setTimeout(() => {
-            console.log('Enhanced Nicole: Navigating to Enhanced Zinc API results for:', searchQuery);
             onNavigateToResults(searchQuery);
-          }, 2000);
+          }, 1500);
         }
       }
 
@@ -182,8 +191,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  // Show confirmation indicator when in ready_to_search phase
-  const showConfirmationHint = context.conversationPhase === 'ready_to_search';
+  // Enhanced confirmation indicator
+  const showConfirmationHint = context.conversationPhase === 'ready_to_search' && !context.shouldNavigateToMarketplace;
 
   return (
     <Card className="h-full max-h-96 flex flex-col">
@@ -198,7 +207,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
             <div>
               <h3 className="font-semibold text-gray-900">Nicole</h3>
               <p className="text-xs text-purple-600">
-                {showConfirmationHint ? "Waiting for confirmation..." : "AI Gift Advisor"}
+                {showConfirmationHint ? "Ready to search - confirm details" : 
+                 context.shouldNavigateToMarketplace ? "Preparing your results..." : 
+                 "AI Gift Advisor"}
               </p>
             </div>
           </div>
@@ -234,7 +245,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
                 </div>
               </div>
               
-              {/* Show contextual links only for the last assistant message and when appropriate */}
+              {/* Show contextual links for last assistant message */}
               {message.role === "assistant" && 
                index === messages.length - 1 && 
                contextualLinks.length > 0 && (
@@ -265,7 +276,12 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         <div className="p-4 border-t">
           {showConfirmationHint && (
             <div className="mb-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-              💡 Nicole is waiting for your confirmation to proceed with the search
+              💡 Nicole is waiting for your confirmation to search for gifts
+            </div>
+          )}
+          {context.shouldNavigateToMarketplace && (
+            <div className="mb-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+              🎁 Preparing your personalized gift recommendations...
             </div>
           )}
           <div className="flex space-x-2">
@@ -274,14 +290,18 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={showConfirmationHint ? "Say 'yes' or 'sounds good' to confirm..." : "Ask Nicole anything about gifts..."}
+              placeholder={
+                showConfirmationHint ? "Say 'yes' or 'sounds good' to confirm..." : 
+                context.shouldNavigateToMarketplace ? "Navigating to your results..." :
+                "Ask Nicole anything about gifts..."
+              }
               className="flex-1"
-              disabled={isLoading}
+              disabled={isLoading || context.shouldNavigateToMarketplace}
               autoFocus
             />
             <Button
               onClick={() => sendMessage()}
-              disabled={!currentMessage.trim() || isLoading}
+              disabled={!currentMessage.trim() || isLoading || context.shouldNavigateToMarketplace}
               size="sm"
               className="bg-purple-500 hover:bg-purple-600"
             >

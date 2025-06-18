@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -173,27 +172,32 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     const lowerMessage = userMessage.toLowerCase();
     let updatedContext = { ...currentContext };
 
-    // Extract occasion information and mark that we asked for it
-    if (lowerMessage.includes('birthday')) {
-      updatedContext.occasion = 'birthday';
-      updatedContext.askedForOccasion = true;
-    } else if (lowerMessage.includes('christmas') || lowerMessage.includes('holiday')) {
-      updatedContext.occasion = 'christmas';
-      updatedContext.askedForOccasion = true;
-    } else if (lowerMessage.includes('anniversary')) {
-      updatedContext.occasion = 'anniversary';
-      updatedContext.askedForOccasion = true;
-    } else if (lowerMessage.includes('graduation')) {
-      updatedContext.occasion = 'graduation';
-      updatedContext.askedForOccasion = true;
-    } else if (lowerMessage.includes('wedding')) {
-      updatedContext.occasion = 'wedding';
-      updatedContext.askedForOccasion = true;
-    }
+    // Enhanced occasion detection with more comprehensive patterns
+    const occasionPatterns = [
+      { pattern: /birthday/i, occasion: 'birthday' },
+      { pattern: /christmas|holiday|holidays/i, occasion: 'christmas' },
+      { pattern: /anniversary|anniversaries/i, occasion: 'anniversary' },
+      { pattern: /graduation|graduating/i, occasion: 'graduation' },
+      { pattern: /wedding|marriage/i, occasion: 'wedding' },
+      { pattern: /valentine|valentine's/i, occasion: 'valentine\'s day' },
+      { pattern: /mother's day|mothers day/i, occasion: 'mother\'s day' },
+      { pattern: /father's day|fathers day/i, occasion: 'father\'s day' },
+      { pattern: /housewarming|house warming/i, occasion: 'housewarming' },
+      { pattern: /retirement|retiring/i, occasion: 'retirement' },
+      { pattern: /promotion|new job/i, occasion: 'promotion' },
+      { pattern: /baby shower|baby|newborn/i, occasion: 'baby shower' },
+      { pattern: /thanksgiving/i, occasion: 'thanksgiving' },
+      { pattern: /easter/i, occasion: 'easter' }
+    ];
 
-    // If we have a recipient but no occasion, mark that we should ask for occasion
-    if (updatedContext.recipient && !updatedContext.occasion && !updatedContext.askedForOccasion) {
-      updatedContext.askedForOccasion = true;
+    // Check for occasion patterns
+    for (const { pattern, occasion } of occasionPatterns) {
+      if (pattern.test(userMessage)) {
+        updatedContext.occasion = occasion;
+        updatedContext.askedForOccasion = true;
+        console.log(`Detected occasion: ${occasion} from message: "${userMessage}"`);
+        break;
+      }
     }
 
     // Extract budget information with various patterns
@@ -227,7 +231,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     const interestPatterns = [
       /(?:likes?|loves?|enjoys?|interested in|into)\s+([^,.!?]+)/gi,
       /(?:hobby|hobbies).*?([^,.!?]+)/gi,
-      /(reading|gaming|cooking|sports|music|art|fitness|travel|photography|gardening)/gi
+      /(reading|gaming|cooking|sports|music|art|fitness|travel|photography|gardening|tech|technology)/gi
     ];
 
     for (const pattern of interestPatterns) {
@@ -239,16 +243,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           updatedContext.askedForInterests = true;
         }
       }
-    }
-
-    // If we have recipient and occasion but no interests, mark that we should ask for interests
-    if (updatedContext.recipient && updatedContext.occasion && !updatedContext.interests?.length && !updatedContext.detectedBrands?.length && !updatedContext.askedForInterests) {
-      updatedContext.askedForInterests = true;
-    }
-
-    // If we have recipient, occasion, and interests/brands but no budget, mark that we should ask for budget
-    if (updatedContext.recipient && updatedContext.occasion && (updatedContext.interests?.length || updatedContext.detectedBrands?.length) && !updatedContext.budget && !updatedContext.askedForBudget) {
-      updatedContext.askedForBudget = true;
     }
 
     return updatedContext;

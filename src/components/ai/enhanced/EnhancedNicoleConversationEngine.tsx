@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,13 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Focus input when component mounts and after sending messages
+  useEffect(() => {
+    if (inputRef.current && !isLoading) {
+      inputRef.current.focus();
+    }
+  }, [isLoading, messages]);
 
   // Auto-execute initial query
   useEffect(() => {
@@ -342,9 +348,10 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Responses */}
-        {messages.length <= 1 && !isLoading && (
+        {/* Quick Responses - Only show when there are messages AND no loading */}
+        {messages.length > 0 && messages.length <= 2 && !isLoading && (
           <div className="px-4 pb-2">
+            <p className="text-xs text-gray-500 mb-2">Try these suggestions:</p>
             <div className="flex flex-wrap gap-2">
               {quickResponses.map((response, index) => (
                 <Button
@@ -372,6 +379,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               placeholder="Ask Nicole anything about gifts..."
               className="flex-1"
               disabled={isLoading}
+              autoFocus
             />
             <Button
               onClick={() => sendMessage()}

@@ -67,9 +67,9 @@ export class EnhancedNicoleService {
 
       return data?.map(conn => ({
         id: conn.connected_user_id,
-        name: conn.profiles?.name || 'Unknown',
+        name: (conn.profiles as any)?.name || 'Unknown',
         relationship: conn.relationship_type,
-        wishlists: conn.profiles?.wishlists || []
+        wishlists: (conn.profiles as any)?.wishlists || []
       })) || [];
     } catch (error) {
       console.error('Error fetching user connections:', error);
@@ -107,7 +107,7 @@ export class EnhancedNicoleService {
             for (const item of wishlist.items.slice(0, 3)) {
               const price = item.price || 0;
               const isInBudget = context.budget ? 
-                price >= context.budget[0] && price <= context.budget[1] : true;
+                (price >= context.budget[0] && price <= context.budget[1]) : true;
               
               recommendations.push({
                 item: {

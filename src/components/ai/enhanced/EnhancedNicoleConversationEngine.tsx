@@ -182,6 +182,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
+  // Show confirmation indicator when in ready_to_search phase
+  const showConfirmationHint = context.conversationPhase === 'ready_to_search';
+
   return (
     <Card className="h-full max-h-96 flex flex-col">
       <CardContent className="p-0 flex flex-col h-full">
@@ -194,7 +197,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
             </Avatar>
             <div>
               <h3 className="font-semibold text-gray-900">Nicole</h3>
-              <p className="text-xs text-purple-600">AI Gift Advisor</p>
+              <p className="text-xs text-purple-600">
+                {showConfirmationHint ? "Waiting for confirmation..." : "AI Gift Advisor"}
+              </p>
             </div>
           </div>
           <Button
@@ -258,13 +263,18 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
         {/* Input */}
         <div className="p-4 border-t">
+          {showConfirmationHint && (
+            <div className="mb-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+              💡 Nicole is waiting for your confirmation to proceed with the search
+            </div>
+          )}
           <div className="flex space-x-2">
             <Input
               ref={inputRef}
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask Nicole anything about gifts..."
+              placeholder={showConfirmationHint ? "Say 'yes' or 'sounds good' to confirm..." : "Ask Nicole anything about gifts..."}
               className="flex-1"
               disabled={isLoading}
               autoFocus

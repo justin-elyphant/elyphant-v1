@@ -1,6 +1,6 @@
 
 /**
- * Main product search service implementation
+ * Main product search service implementation with enhanced brand-first logic
  */
 import { ZincProduct } from "../../types";
 import { getSpecialCaseProducts } from "../../utils/specialCaseHandler";
@@ -9,12 +9,13 @@ import { validateSearchQuery, enhanceSearchQuery, correctSearchQuery, getPadresH
 import { getMockResults } from "./mockResultsHandler";
 import { searchZincApi } from "./zincApiService";
 import { validateProductImages, filterRelevantProducts } from "./productValidationUtils";
+import { filterAndSortProductsBrandFirst, generateEnhancedSearchContext } from "../enhancedProductFiltering";
 
 // Track whether we've shown token error toast
 let hasShownTokenError = false;
 
 /**
- * Search for products using the Zinc API
+ * Search for products using the Zinc API with enhanced brand-first logic
  * @param query Search query string
  * @param maxResults Maximum results to return (optional, defaults to 10)
  * @returns Promise with array of product results
@@ -35,7 +36,11 @@ export const searchProducts = async (
   
   console.log(`Searching for products with query: "${normalizedQuery}", max results: ${maxResults}`);
   
-  // Enhance query with category hints
+  // Generate enhanced search context from query
+  const enhancedContext = generateEnhancedSearchContext(normalizedQuery);
+  console.log('Enhanced search context:', enhancedContext);
+  
+  // Enhance query with category hints and brand-first logic
   const enhancedQuery = enhanceSearchQuery(normalizedQuery);
   
   // Check for special case queries
@@ -58,8 +63,20 @@ export const searchProducts = async (
           validateProductImages(product, finalQuery)
         );
         
-        // Filter and return relevant results
-        return filterRelevantProducts(validatedResults, finalQuery, numResults);
+        // Apply brand-first filtering and sorting
+        const brandFirstResults = filterAndSortProductsBrandFirst(
+          validatedResults,
+          finalQuery,
+          {
+            detectedBrands: enhancedContext.detectedBrands,
+            interests: enhancedContext.interests,
+            ageGroup: enhancedContext.ageInfo?.ageGroup,
+            prioritizeBrands: enhancedContext.prioritizeBrands
+          }
+        );
+        
+        // Return top results
+        return brandFirstResults.slice(0, numResults);
       }
       
       // Try with spelling correction
@@ -77,8 +94,19 @@ export const searchProducts = async (
             validateProductImages(product, correctedQuery)
           );
           
-          // Filter and return relevant results
-          return filterRelevantProducts(validatedResults, correctedQuery, numResults);
+          // Apply brand-first filtering and sorting
+          const brandFirstResults = filterAndSortProductsBrandFirst(
+            validatedResults,
+            correctedQuery,
+            {
+              detectedBrands: enhancedContext.detectedBrands,
+              interests: enhancedContext.interests,
+              ageGroup: enhancedContext.ageInfo?.ageGroup,
+              prioritizeBrands: enhancedContext.prioritizeBrands
+            }
+          );
+          
+          return brandFirstResults.slice(0, numResults);
         }
       }
     }
@@ -93,14 +121,37 @@ export const searchProducts = async (
         validateProductImages(product, finalQuery)
       );
       
-      // Filter and return relevant results
-      return filterRelevantProducts(validatedResults, finalQuery, numResults);
+      // Apply brand-first filtering and sorting
+      const brandFirstResults = filterAndSortProductsBrandFirst(
+        validatedResults,
+        finalQuery,
+        {
+          detectedBrands: enhancedContext.detectedBrands,
+          interests: enhancedContext.interests,
+          ageGroup: enhancedContext.ageInfo?.ageGroup,
+          prioritizeBrands: enhancedContext.prioritizeBrands
+        }
+      );
+      
+      return brandFirstResults.slice(0, numResults);
     }
     
     // Last resort - if we have no token or if set to test mode, use mock data
     if (!hasValidZincToken() || isTestMode()) {
       console.log(`Using mock data for product search: ${finalQuery}`);
-      return getMockResults(finalQuery, numResults);
+      const mockResults = getMockResults(finalQuery, numResults);
+      
+      // Apply brand-first filtering to mock results too
+      return filterAndSortProductsBrandFirst(
+        mockResults,
+        finalQuery,
+        {
+          detectedBrands: enhancedContext.detectedBrands,
+          interests: enhancedContext.interests,
+          ageGroup: enhancedContext.ageInfo?.ageGroup,
+          prioritizeBrands: enhancedContext.prioritizeBrands
+        }
+      );
     }
     
     // If we reached here, we tried everything and found no results
@@ -112,7 +163,19 @@ export const searchProducts = async (
     
     // Only use mock results for fallback in case of errors
     if (isTestMode() || !hasValidZincToken()) {
-      return getMockResults(finalQuery, numResults);
+      const mockResults = getMockResults(finalQuery, numResults);
+      
+      // Apply brand-first filtering to mock results
+      return filterAndSortProductsBrandFirst(
+        mockResults,
+        finalQuery,
+        {
+          detectedBrands: enhancedContext.detectedBrands,
+          interests: enhancedContext.interests,
+          ageGroup: enhancedContext.ageInfo?.ageGroup,
+          prioritizeBrands: enhancedContext.prioritizeBrands
+        }
+      );
     }
     
     // Return empty array to indicate error with real API

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,8 @@ import { EnhancedNicoleService } from "@/services/ai/enhancedNicoleService";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
 import ContextualLinks from "../conversation/ContextualLinks";
+import { generateEnhancedSearchContext } from "@/components/marketplace/zinc/utils/search/enhancedProductFiltering";
+import { generateEnhancedSearchQuery } from "@/components/marketplace/zinc/utils/search/enhancedQueryGeneration";
 
 interface EnhancedNicoleConversationEngineProps {
   initialQuery?: string;
@@ -41,18 +42,15 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     scrollToBottom();
   }, [messages]);
 
-  // Focus input when component mounts and after sending messages
   useEffect(() => {
     if (inputRef.current && !isLoading) {
       inputRef.current.focus();
     }
   }, [isLoading, messages]);
 
-  // Auto-execute initial query
   useEffect(() => {
     if (initialQuery && initialQuery.trim() && !hasProcessedInitialQuery) {
       if (initialQuery.startsWith("Hi ")) {
-        // This is a personalized greeting - show it as Nicole's message
         const greetingMessage: NicoleMessage = {
           role: "assistant",
           content: initialQuery
@@ -60,7 +58,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         setMessages([greetingMessage]);
         setConversationStep("discovery");
       } else {
-        // Regular initial query - auto-send it
         setCurrentMessage(initialQuery);
         setTimeout(() => {
           sendMessage(initialQuery);
@@ -68,7 +65,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       }
       setHasProcessedInitialQuery(true);
     } else if (!initialQuery && !hasProcessedInitialQuery) {
-      // Default greeting
       const userName = user?.user_metadata?.name?.split(' ')[0] || "there";
       const welcomeMessage: NicoleMessage = {
         role: "assistant",
@@ -94,15 +90,21 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     setIsLoading(true);
 
     try {
-      // Enhanced context extraction with relationship detection
+      // Enhanced context extraction with brand and age detection
+      const enhancedSearchContext = generateEnhancedSearchContext(messageText);
       const relationshipInfo = EnhancedNicoleService.extractRelationshipFromMessage(messageText);
       
-      // Enhanced context with conversation step - ensure proper type casting
+      // Enhanced context with brand and age information
       const enhancedContext: NicoleContext = {
         ...context,
         ...relationshipInfo,
         step: conversationStep,
-        conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase
+        conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase,
+        // Add enhanced context fields
+        detectedBrands: enhancedSearchContext.detectedBrands,
+        interests: [...(context.interests || []), ...enhancedSearchContext.interests],
+        ageGroup: enhancedSearchContext.ageInfo?.ageGroup,
+        exactAge: enhancedSearchContext.ageInfo?.exactAge
       };
 
       const response = await chatWithNicole(
@@ -118,19 +120,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Update context based on response AND relationship detection
-      updateContextFromMessage(userMessage.content, response, relationshipInfo);
+      // Update context with enhanced information
+      updateContextFromMessage(messageText, response, relationshipInfo, enhancedSearchContext);
 
-      // Update contextual links from response (using conservative logic)
+      // Update contextual links from response
       if (response.contextualLinks && response.contextualLinks.length > 0) {
         setContextualLinks(response.contextualLinks);
       } else {
-        setContextualLinks([]); // Clear links if none should be shown
+        setContextualLinks([]);
       }
 
-      // Handle search generation if Nicole suggests it
+      // Handle search generation with enhanced query
       if (response.shouldGenerateSearch) {
-        const searchQuery = extractSearchQuery(response.response, enhancedContext);
+        const searchQuery = extractEnhancedSearchQuery(response.response, enhancedContext);
         if (searchQuery) {
           setTimeout(() => {
             onNavigateToResults(searchQuery);
@@ -145,16 +147,16 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         content: "I'm having trouble connecting right now. Let me help you with a basic search instead. What kind of gift are you looking for?"
       };
       setMessages(prev => [...prev, errorMessage]);
-      setContextualLinks([]); // No links during error state
+      setContextualLinks([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateContextFromMessage = (userMessage: string, response: any, relationshipInfo: any) => {
+  const updateContextFromMessage = (userMessage: string, response: any, relationshipInfo: any, enhancedSearchContext: any) => {
     const lowerMessage = userMessage.toLowerCase();
     
-    // First, apply the enhanced relationship detection
+    // Apply enhanced relationship detection first
     if (relationshipInfo.recipient || relationshipInfo.relationship) {
       setContext(prev => ({
         ...prev,
@@ -163,18 +165,28 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       }));
     }
 
-    // Then apply existing logic for other extractions
-    if (!relationshipInfo.recipient) {
-      // Only run legacy detection if enhanced detection didn't find anything
-      if (lowerMessage.includes('mom') || lowerMessage.includes('mother')) {
-        setContext(prev => ({ ...prev, recipient: 'mom', relationship: 'family' }));
-      } else if (lowerMessage.includes('dad') || lowerMessage.includes('father')) {
-        setContext(prev => ({ ...prev, recipient: 'dad', relationship: 'family' }));
-      } else if (lowerMessage.includes('friend')) {
-        setContext(prev => ({ ...prev, relationship: 'friend' }));
-      } else if (lowerMessage.includes('wife') || lowerMessage.includes('husband')) {
-        setContext(prev => ({ ...prev, relationship: 'spouse' }));
-      }
+    // Apply enhanced brand and age detection
+    if (enhancedSearchContext.detectedBrands.length > 0) {
+      setContext(prev => ({
+        ...prev,
+        detectedBrands: enhancedSearchContext.detectedBrands
+      }));
+    }
+
+    if (enhancedSearchContext.ageInfo) {
+      setContext(prev => ({
+        ...prev,
+        ageGroup: enhancedSearchContext.ageInfo.ageGroup,
+        exactAge: enhancedSearchContext.ageInfo.exactAge
+      }));
+    }
+
+    // Enhanced interest detection
+    if (enhancedSearchContext.interests.length > 0) {
+      setContext(prev => ({
+        ...prev,
+        interests: [...new Set([...(prev.interests || []), ...enhancedSearchContext.interests])]
+      }));
     }
 
     // Extract occasion information
@@ -193,29 +205,11 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       setContext(prev => ({ ...prev, budget: [budget * 0.8, budget * 1.2] }));
     }
 
-    // Extract interests
-    const interests: string[] = [];
-    if (lowerMessage.includes('cooking') || lowerMessage.includes('kitchen')) {
-      interests.push('cooking');
-    }
-    if (lowerMessage.includes('reading') || lowerMessage.includes('books')) {
-      interests.push('reading');
-    }
-    if (lowerMessage.includes('fitness') || lowerMessage.includes('exercise')) {
-      interests.push('fitness');
-    }
-    if (lowerMessage.includes('tech') || lowerMessage.includes('gadget')) {
-      interests.push('technology');
-    }
-    
-    if (interests.length > 0) {
-      setContext(prev => ({ ...prev, interests }));
-    }
-
-    // Update conversation step based on context completeness - but be smarter about it
+    // Update conversation step based on enhanced context completeness
     const currentContext = { ...context };
     if (relationshipInfo.recipient) currentContext.recipient = relationshipInfo.recipient;
     if (relationshipInfo.relationship) currentContext.relationship = relationshipInfo.relationship;
+    if (enhancedSearchContext.detectedBrands.length > 0) currentContext.detectedBrands = enhancedSearchContext.detectedBrands;
     
     if (currentContext.recipient && currentContext.occasion) {
       setConversationStep("preferences");
@@ -229,31 +223,18 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  const extractSearchQuery = (response: string, context: NicoleContext): string => {
-    let query = "";
-    
-    if (context.recipient) {
-      query += `gifts for ${context.recipient}`;
-    } else if (context.relationship) {
-      query += `gifts for ${context.relationship}`;
-    } else {
-      query = "gifts";
-    }
-    
-    if (context.occasion) {
-      query += ` ${context.occasion}`;
-    }
-    
-    if (context.interests && context.interests.length > 0) {
-      query += ` ${context.interests.join(" ")}`;
-    }
-    
-    if (context.budget) {
-      const [min, max] = context.budget;
-      query += ` under $${max}`;
-    }
-    
-    return query.trim() || "gifts";
+  const extractEnhancedSearchQuery = (response: string, context: NicoleContext): string => {
+    // Use enhanced query generation
+    return generateEnhancedSearchQuery({
+      recipient: context.recipient,
+      relationship: context.relationship,
+      occasion: context.occasion,
+      interests: context.interests,
+      detectedBrands: context.detectedBrands,
+      ageGroup: context.ageGroup,
+      exactAge: context.exactAge,
+      budget: context.budget
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

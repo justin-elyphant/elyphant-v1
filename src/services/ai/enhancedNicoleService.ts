@@ -36,6 +36,9 @@ export interface EnhancedNicoleContext {
   connections?: ConnectionProfile[];
   recipientWishlists?: any[];
   recipientProfile?: ConnectionProfile;
+  detectedBrands?: string[];
+  ageGroup?: string;
+  exactAge?: number;
 }
 
 export interface ConversationAnalysis {
@@ -65,7 +68,6 @@ export class EnhancedNicoleService {
       if (error) throw error;
 
       return data?.map(conn => {
-        // Fix: Properly access the profiles object with null checking
         const profile = Array.isArray(conn.profiles) ? conn.profiles[0] : conn.profiles;
         return {
           id: conn.connected_user_id,
@@ -142,7 +144,7 @@ export class EnhancedNicoleService {
       // Extract relationship information from the message
       const relationshipInfo = this.extractRelationshipFromMessage(message);
       
-      // Merge with existing context
+      // Merge with existing context, including enhanced fields
       const updatedContext = {
         ...context,
         ...relationshipInfo
@@ -151,7 +153,9 @@ export class EnhancedNicoleService {
       // Determine conversation phase based on enhanced context
       let phase: ConversationPhase = 'greeting';
       
-      if (updatedContext.recipient && updatedContext.occasion && (updatedContext.interests || updatedContext.budget)) {
+      // Enhanced phase detection considering brands and age
+      if (updatedContext.recipient && updatedContext.occasion && 
+          (updatedContext.interests || updatedContext.budget || updatedContext.detectedBrands)) {
         phase = 'providing_suggestions';
       } else if (updatedContext.recipient && updatedContext.occasion) {
         phase = 'clarifying_needs';
@@ -166,7 +170,6 @@ export class EnhancedNicoleService {
       // Generate recommendations if we have wishlist data
       const recommendations: WishlistRecommendation[] = [];
       if (shouldShowWishlist && updatedContext.recipientWishlists) {
-        // Simple scoring based on context matching
         for (const wishlist of updatedContext.recipientWishlists) {
           if (wishlist.items) {
             for (const item of wishlist.items.slice(0, 3)) {
@@ -174,6 +177,15 @@ export class EnhancedNicoleService {
               const inBudget = updatedContext.budget ? 
                 itemPrice >= updatedContext.budget[0] && itemPrice <= updatedContext.budget[1] : 
                 true;
+              
+              // Enhanced reasoning with brand and age context
+              let reasoning = `This matches their interests`;
+              if (updatedContext.detectedBrands && updatedContext.detectedBrands.length > 0) {
+                reasoning += ` and includes their preferred brands (${updatedContext.detectedBrands.join(', ')})`;
+              }
+              if (updatedContext.ageGroup) {
+                reasoning += ` and is age-appropriate for ${updatedContext.ageGroup}`;
+              }
               
               recommendations.push({
                 item: {
@@ -185,7 +197,7 @@ export class EnhancedNicoleService {
                   image: item.image || item.image_url,
                   brand: item.brand
                 },
-                reasoning: `This matches their interests in ${updatedContext.interests?.join(', ') || 'their preferences'}`,
+                reasoning,
                 matchScore: Math.random() * 0.3 + 0.7, // 0.7-1.0 range
                 priority: inBudget ? 'high' : 'medium',
                 inBudget
@@ -195,9 +207,9 @@ export class EnhancedNicoleService {
         }
       }
 
-      // Fix: Ensure boolean assignment
+      // Enhanced search criteria with brand and age context
       const shouldSearchProducts = phase === 'providing_suggestions' && 
-        Boolean(updatedContext.recipient && updatedContext.occasion);
+        Boolean(updatedContext.recipient && (updatedContext.occasion || updatedContext.detectedBrands));
 
       return {
         phase,
@@ -223,25 +235,53 @@ export class EnhancedNicoleService {
     context: EnhancedNicoleContext,
     wishlists: any[]
   ): Promise<string[]> {
-    // Generate contextual suggestions based on recipient profile
     const suggestions: string[] = [];
     
+    // Brand-first suggestions
+    if (context.detectedBrands && context.detectedBrands.length > 0) {
+      for (const brand of context.detectedBrands) {
+        if (context.ageGroup) {
+          suggestions.push(`${brand} gifts for ${context.ageGroup}`);
+        } else {
+          suggestions.push(`${brand} gifts for ${context.relationship || 'them'}`);
+        }
+      }
+    }
+    
+    // Age-aware suggestions
+    if (context.ageGroup && context.interests) {
+      for (const interest of context.interests) {
+        suggestions.push(`${interest} for ${context.ageGroup}`);
+      }
+    }
+    
+    // Enhanced interest-based suggestions
     if (context.interests) {
       for (const interest of context.interests) {
-        suggestions.push(`${interest} gifts for ${context.relationship || 'them'}`);
+        if (context.ageGroup) {
+          suggestions.push(`age-appropriate ${interest} for ${context.ageGroup}`);
+        } else {
+          suggestions.push(`${interest} gifts for ${context.relationship || 'them'}`);
+        }
       }
     }
     
     if (context.occasion) {
-      suggestions.push(`${context.occasion} gifts for ${context.relationship || 'them'}`);
+      const occasionSuggestion = context.ageGroup 
+        ? `${context.occasion} gifts for ${context.ageGroup}`
+        : `${context.occasion} gifts for ${context.relationship || 'them'}`;
+      suggestions.push(occasionSuggestion);
     }
     
     // Add budget-aware suggestions
     if (context.budget) {
       const [min, max] = context.budget;
-      suggestions.push(`thoughtful gifts under $${max}`);
+      const budgetSuggestion = context.ageGroup
+        ? `thoughtful gifts under $${max} for ${context.ageGroup}`
+        : `thoughtful gifts under $${max}`;
+      suggestions.push(budgetSuggestion);
     }
     
-    return suggestions.slice(0, 3); // Return top 3 suggestions
+    return suggestions.slice(0, 5); // Return top 5 suggestions
   }
 }

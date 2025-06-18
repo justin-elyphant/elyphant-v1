@@ -96,19 +96,38 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       // Update context
       setContext(response.context);
 
-      // Add Nicole's response
+      // Clean the response content to remove any button-related text
+      let cleanResponse = response.response;
+      
+      // Remove common button text patterns that might appear in the response
+      const buttonPatterns = [
+        /\[Ready to See Gifts\]/gi,
+        /Ready to See Gifts/gi,
+        /\*Ready to See Gifts\*/gi,
+        /- Ready to See Gifts/gi,
+        /\n\nReady to See Gifts/gi,
+        /Ready to See Gifts\n/gi
+      ];
+      
+      buttonPatterns.forEach(pattern => {
+        cleanResponse = cleanResponse.replace(pattern, '').trim();
+      });
+
+      // Add Nicole's response (cleaned)
       const nicoleMessage: ConversationMessage = {
         type: "nicole",
-        content: response.response,
+        content: cleanResponse,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, nicoleMessage]);
 
-      // Check if we should show the search button
+      // Check if we should show the search button - do this AFTER adding the message
       if (response.showSearchButton) {
         console.log('Nicole: Showing search button after response');
-        setShowSearchButton(true);
+        setTimeout(() => {
+          setShowSearchButton(true);
+        }, 500); // Small delay to ensure message is rendered first
       }
 
     } catch (error) {
@@ -227,12 +246,12 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               </div>
             ))}
 
-            {/* Search Button - Show after Nicole's last message when ready */}
-            {showSearchButton && (
-              <div className="flex justify-center py-2">
+            {/* Search Button - Show as a separate element after Nicole's messages */}
+            {showSearchButton && !isLoading && (
+              <div className="flex justify-center py-4">
                 <SearchButton 
                   onSearch={handleSearchButtonClick}
-                  isLoading={isLoading}
+                  isLoading={false}
                 />
               </div>
             )}

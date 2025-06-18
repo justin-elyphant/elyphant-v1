@@ -12,8 +12,9 @@ export interface NicoleMessage {
 
 export interface ContextualLink {
   label: string;
+  text: string;
   url: string;
-  type: 'search' | 'product' | 'category' | 'action';
+  type: 'search' | 'product' | 'category' | 'action' | 'connections' | 'wishlist' | 'schedule';
 }
 
 export interface NicoleContext {

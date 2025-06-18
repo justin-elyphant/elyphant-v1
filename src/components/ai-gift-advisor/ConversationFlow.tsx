@@ -44,6 +44,7 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
     switch (botState.step) {
       case "recipient-selection":
         links.push({
+          label: "Browse your connections",
           text: "Browse your connections",
           url: "/connections",
           type: "connections"
@@ -52,6 +53,7 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
       case "occasion":
         if (botState.selectedFriend || botState.recipientDetails) {
           links.push({
+            label: "View their wishlist",
             text: "View their wishlist",
             url: botState.selectedFriend ? `/profile/${botState.selectedFriend.id}` : "/wishlists",
             type: "wishlist"
@@ -60,6 +62,7 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
         break;
       case "budget":
         links.push({
+          label: "Set up recurring gifts",
           text: "Set up recurring gifts",
           url: "/gift-scheduling/create",
           type: "schedule"
@@ -69,11 +72,13 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
         if (botState.searchQuery) {
           links.push(
             {
+              label: "Save these to a wishlist",
               text: "Save these to a wishlist",
               url: `/wishlists/create?query=${encodeURIComponent(botState.searchQuery)}`,
               type: "wishlist"
             },
             {
+              label: "Schedule as recurring gift",
               text: "Schedule as recurring gift",
               url: `/gift-scheduling/create?query=${encodeURIComponent(botState.searchQuery)}`,
               type: "schedule"

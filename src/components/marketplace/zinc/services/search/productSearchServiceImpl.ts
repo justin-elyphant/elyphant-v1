@@ -9,7 +9,7 @@ import { validateSearchQuery, enhanceSearchQuery, correctSearchQuery, getPadresH
 import { getMockResults } from "./mockResultsHandler";
 import { searchZincApi } from "./zincApiService";
 import { validateProductImages, filterRelevantProducts } from "./productValidationUtils";
-import { filterAndSortProductsBrandFirst, generateEnhancedSearchContext } from "../enhancedProductFiltering";
+import { filterAndSortProductsBrandFirst, generateEnhancedSearchContext } from "../../utils/search/enhancedProductFiltering";
 
 // Track whether we've shown token error toast
 let hasShownTokenError = false;

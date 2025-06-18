@@ -10,6 +10,12 @@ export interface NicoleMessage {
   content: string;
 }
 
+export interface ContextualLink {
+  label: string;
+  url: string;
+  type: 'search' | 'product' | 'category' | 'action';
+}
+
 export interface NicoleContext {
   recipient?: string;
   relationship?: string;
@@ -33,6 +39,8 @@ export interface NicoleResponse {
   context: NicoleContext;
   suggestedQueries?: string[];
   shouldShowProducts?: boolean;
+  contextualLinks?: ContextualLink[];
+  shouldGenerateSearch?: boolean;
 }
 
 const NICOLE_SYSTEM_PROMPT = `You are Nicole, a helpful AI gift advisor. You help users find perfect gifts by understanding their needs and providing personalized recommendations.
@@ -69,7 +77,9 @@ export async function chatWithNicole(
         ...context,
         conversationPhase: determinePhase(context),
       },
-      shouldShowProducts: shouldShowProducts(context)
+      shouldShowProducts: shouldShowProducts(context),
+      contextualLinks: [],
+      shouldGenerateSearch: false
     };
     
   } catch (error) {
@@ -77,7 +87,9 @@ export async function chatWithNicole(
     return {
       response: "I'm having trouble right now, but I'm here to help you find the perfect gift! What are you looking for?",
       context,
-      shouldShowProducts: false
+      shouldShowProducts: false,
+      contextualLinks: [],
+      shouldGenerateSearch: false
     };
   }
 }

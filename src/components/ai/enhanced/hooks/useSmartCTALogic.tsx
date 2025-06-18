@@ -25,84 +25,60 @@ export const useSmartCTALogic = () => {
       aiFlag: aiShowFlag
     });
 
-    // Primary: Trust AI's decision if it says to show button
-    if (aiShowFlag) {
+    // Much more conservative approach - require explicit AI confirmation
+    if (aiShowFlag === true) {
       console.log('✅ AI Flag: Showing CTA button');
       return true;
     }
 
-    // Fallback 1: Check if Nicole gave a summary/confirmation message
+    // Very conservative fallback - only show if Nicole explicitly indicates readiness
     if (lastMessage) {
-      const summaryIndicators = [
-        'perfect! so',
-        'great! so',
-        'excellent! so',
-        'to summarize',
-        'so, to recap',
-        'i\'m ready to find',
-        'let me find',
-        'ready to search',
-        'let\'s find some',
-        'here\'s what i have',
-        'i have everything i need',
-        'sounds like a great plan',
-        'i can definitely help',
-        'perfect! let me search'
+      const explicitReadinessIndicators = [
+        'i have everything i need to help you find',
+        'let me search for some perfect options',
+        'i\'m ready to find some great gifts',
+        'perfect! let me find some options',
+        'i can definitely help you find',
+        'let me search for the perfect gift',
+        'ready to see what i can find',
+        'i think i have enough information to help'
       ];
       
       const lowerMessage = lastMessage.toLowerCase();
-      const hasSummaryIndicator = summaryIndicators.some(indicator => 
+      const hasExplicitReadiness = explicitReadinessIndicators.some(indicator => 
         lowerMessage.includes(indicator)
       );
       
-      if (hasSummaryIndicator) {
-        console.log('✅ Summary Indicator Found: Showing CTA button');
+      if (hasExplicitReadiness) {
+        console.log('✅ Explicit Readiness Found: Showing CTA button');
         return true;
       }
     }
 
-    // Fallback 2: Smart context validation - has essential information
+    // Very strict context validation - need comprehensive information
     const hasRecipient = Boolean(context.recipient || context.relationship);
-    const hasOccasionOrAge = Boolean(context.occasion || context.exactAge);
-    const hasInterestsOrBrands = Boolean(
-      (context.interests && context.interests.length > 0) || 
-      (context.detectedBrands && context.detectedBrands.length > 0)
-    );
+    const hasOccasion = Boolean(context.occasion);
+    const hasMultipleInterests = Boolean(context.interests && context.interests.length >= 2);
     const hasBudget = Boolean(context.budget && Array.isArray(context.budget) && context.budget.length === 2);
-
-    // Essential info threshold: Need recipient + occasion + (interests OR budget)
-    const hasEssentialInfo = hasRecipient && hasOccasionOrAge && (hasInterestsOrBrands || hasBudget);
     
-    console.log('🔍 Context Validation:', {
+    // Only show if we have ALL essential information AND Nicole indicated readiness
+    const hasComprehensiveInfo = hasRecipient && hasOccasion && hasMultipleInterests && hasBudget;
+    
+    console.log('🔍 Comprehensive Context Check:', {
       hasRecipient,
-      hasOccasionOrAge,
-      hasInterestsOrBrands,
+      hasOccasion,
+      hasMultipleInterests,
       hasBudget,
-      hasEssentialInfo
+      hasComprehensiveInfo
     });
 
-    if (hasEssentialInfo) {
-      console.log('✅ Essential Info Complete: Showing CTA button');
+    // Even with comprehensive info, be conservative
+    if (hasComprehensiveInfo && context.conversationPhase === 'ready_to_search') {
+      console.log('✅ Comprehensive Info + Ready Phase: Showing CTA button');
       return true;
     }
 
-    // Fallback 3: Check conversation phase
-    if (context.conversationPhase === 'ready_to_search') {
-      console.log('✅ Conversation Phase Ready: Showing CTA button');
-      return true;
-    }
-
-    // Fallback 4: Check if we have enough partial info and context suggests readiness
-    const hasPartialInfo = hasRecipient && (hasOccasionOrAge || hasInterestsOrBrands);
-    const contextSuggestsReady = context.conversationPhase === 'gathering_info' && 
-                                 lastMessage && lastMessage.length > 50; // Nicole gave a substantial response
-
-    if (hasPartialInfo && contextSuggestsReady) {
-      console.log('✅ Partial Info + Context Ready: Showing CTA button');
-      return true;
-    }
-
-    console.log('❌ No conditions met: Hiding CTA button');
+    console.log('❌ Conservative check failed: Hiding CTA button');
     return false;
   }, []);
 

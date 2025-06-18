@@ -229,18 +229,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     }
   }, [isOpen, conversation.length, initialQuery, startConversation]);
 
+  // Much more conservative CTA logic - require substantial conversation
   const showCTAButton = shouldShowCTAButton(
     context,
     conversation[conversation.length - 1]?.content,
-    false // We'll let the hook determine this
-  );
+    false // Let the hook determine this, but we'll be more conservative
+  ) && conversation.length >= 6; // Require at least 3 exchanges (6 total messages)
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className={`w-full max-w-2xl bg-white shadow-2xl transition-all duration-300 ${
-        isMinimized ? "h-16" : "h-[600px]"
+    <div className="fixed bottom-4 right-4 z-50">
+      <Card className={`w-96 bg-white shadow-2xl transition-all duration-300 ${
+        isMinimized ? "h-16" : "h-[500px]"
       }`}>
         <CardHeader className="pb-2 border-b flex flex-row items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -282,7 +283,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
         {!isMinimized && (
           <>
             <CardContent className="flex-1 p-0">
-              <ScrollArea className="h-[460px] p-4">
+              <ScrollArea className="h-[360px] p-4">
                 <div className="space-y-4">
                   {conversation.map((msg, index) => (
                     <div

@@ -1,14 +1,17 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Send, X } from "lucide-react";
-import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase, UserIntent } from "@/services/ai/nicoleAiService";
+import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase } from "@/services/ai/nicoleAiService";
+import { EnhancedNicoleService, EnhancedNicoleContext } from "@/services/ai/enhancedNicoleService";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
 import ContextualLinks from "../conversation/ContextualLinks";
+import WishlistRecommendations from "./WishlistRecommendations";
+import ProductSuggestions from "./ProductSuggestions";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 interface EnhancedNicoleConversationEngineProps {
   initialQuery?: string;
@@ -25,10 +28,15 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const [messages, setMessages] = useState<NicoleMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [context, setContext] = useState<NicoleContext>({});
+  const [context, setContext] = useState<EnhancedNicoleContext>({});
   const [conversationStep, setConversationStep] = useState<string>("greeting");
   const [hasProcessedInitialQuery, setHasProcessedInitialQuery] = useState(false);
   const [contextualLinks, setContextualLinks] = useState<any[]>([]);
+  const [showWishlistRecommendations, setShowWishlistRecommendations] = useState(false);
+  const [wishlistRecommendations, setWishlistRecommendations] = useState<any[]>([]);
+  const [showProductSuggestions, setShowProductSuggestions] = useState(false);
+  const [productSuggestions, setProductSuggestions] = useState<string[]>([]);
+  const [isSearchingProducts, setIsSearchingProducts] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,13 +46,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, showWishlistRecommendations, showProductSuggestions]);
+
+  // Auto-focus input after message is sent
+  useEffect(() => {
+    if (!isLoading && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isLoading, messages]);
 
   // Auto-execute initial query
   useEffect(() => {
     if (initialQuery && initialQuery.trim() && !hasProcessedInitialQuery) {
       if (initialQuery.startsWith("Hi ")) {
-        // This is a personalized greeting - show it as Nicole's message
         const greetingMessage: NicoleMessage = {
           role: "assistant",
           content: initialQuery
@@ -52,7 +66,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         setMessages([greetingMessage]);
         setConversationStep("discovery");
       } else {
-        // Regular initial query - auto-send it
         setCurrentMessage(initialQuery);
         setTimeout(() => {
           sendMessage(initialQuery);
@@ -60,7 +73,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       }
       setHasProcessedInitialQuery(true);
     } else if (!initialQuery && !hasProcessedInitialQuery) {
-      // Default greeting
       const userName = user?.user_metadata?.name?.split(' ')[0] || "there";
       const welcomeMessage: NicoleMessage = {
         role: "assistant",
@@ -85,13 +97,30 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     if (!messageContent) setCurrentMessage("");
     setIsLoading(true);
 
+    // Clear previous suggestions
+    setShowWishlistRecommendations(false);
+    setShowProductSuggestions(false);
+
     try {
-      // Enhanced context with conversation step - ensure proper type casting
-      const enhancedContext: NicoleContext = {
+      // Load user connections if not already loaded
+      if (!context.connections && user) {
+        const connections = await EnhancedNicoleService.getUserConnections(user.id);
+        setContext(prev => ({ ...prev, connections }));
+      }
+
+      // Enhanced context with conversation step
+      const enhancedContext: EnhancedNicoleContext = {
         ...context,
         step: conversationStep,
         conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase
       };
+
+      // Analyze conversation for enhanced features
+      const analysis = await EnhancedNicoleService.analyzeConversation(
+        userMessage.content,
+        enhancedContext,
+        user?.id || ''
+      );
 
       const response = await chatWithNicole(
         userMessage.content,
@@ -109,21 +138,22 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
       // Update context based on response
       updateContextFromMessage(userMessage.content, response);
 
-      // Update contextual links from response (using conservative logic)
+      // Handle enhanced features based on analysis
+      if (analysis.shouldShowWishlist && analysis.recommendations.length > 0) {
+        setWishlistRecommendations(analysis.recommendations);
+        setShowWishlistRecommendations(true);
+      }
+
+      // Handle product suggestions with Enhanced Zinc API integration
+      if (analysis.shouldSearchProducts || response.shouldGenerateSearch) {
+        await handleProductSearch(enhancedContext);
+      }
+
+      // Update contextual links
       if (response.contextualLinks && response.contextualLinks.length > 0) {
         setContextualLinks(response.contextualLinks);
       } else {
-        setContextualLinks([]); // Clear links if none should be shown
-      }
-
-      // Handle search generation if Nicole suggests it
-      if (response.shouldGenerateSearch) {
-        const searchQuery = extractSearchQuery(response.response, context);
-        if (searchQuery) {
-          setTimeout(() => {
-            onNavigateToResults(searchQuery);
-          }, 2000);
-        }
+        setContextualLinks([]);
       }
 
     } catch (error) {
@@ -133,10 +163,79 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         content: "I'm having trouble connecting right now. Let me help you with a basic search instead. What kind of gift are you looking for?"
       };
       setMessages(prev => [...prev, errorMessage]);
-      setContextualLinks([]); // No links during error state
+      setContextualLinks([]);
     } finally {
       setIsLoading(false);
+      // Ensure input stays focused after message is sent
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
     }
+  };
+
+  const handleProductSearch = async (context: EnhancedNicoleContext) => {
+    setIsSearchingProducts(true);
+    try {
+      // Generate search suggestions using Enhanced Zinc API integration
+      if (context.recipientProfile) {
+        const suggestions = await EnhancedNicoleService.generateGPTSuggestions(
+          context.recipientProfile,
+          context,
+          context.recipientWishlists || []
+        );
+        setProductSuggestions(suggestions);
+        setShowProductSuggestions(true);
+      } else {
+        // Fallback to basic search query generation
+        const searchQuery = generateSearchQuery(context);
+        
+        // Use Enhanced Zinc API to search for products
+        const searchResults = await enhancedZincApiService.searchProducts(searchQuery, 1, 6);
+        
+        if (searchResults.results && searchResults.results.length > 0) {
+          // Convert search results to suggestions
+          const suggestions = searchResults.results.slice(0, 3).map(product => 
+            product.title || product.name || 'Gift suggestion'
+          );
+          setProductSuggestions(suggestions);
+          setShowProductSuggestions(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error searching for products:', error);
+      // Show fallback suggestions
+      setProductSuggestions(['Popular gifts', 'Trending items', 'Gift cards']);
+      setShowProductSuggestions(true);
+    } finally {
+      setIsSearchingProducts(false);
+    }
+  };
+
+  const generateSearchQuery = (context: EnhancedNicoleContext): string => {
+    let query = "gifts";
+    
+    if (context.recipient) {
+      query += ` for ${context.recipient}`;
+    } else if (context.relationship) {
+      query += ` for ${context.relationship}`;
+    }
+    
+    if (context.occasion) {
+      query += ` ${context.occasion}`;
+    }
+    
+    if (context.interests && context.interests.length > 0) {
+      query += ` ${context.interests.join(" ")}`;
+    }
+    
+    if (context.budget) {
+      const [min, max] = context.budget;
+      query += ` under $${max}`;
+    }
+    
+    return query.trim() || "gifts";
   };
 
   const updateContextFromMessage = (userMessage: string, response: any) => {
@@ -201,33 +300,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  const extractSearchQuery = (response: string, context: NicoleContext): string => {
-    let query = "";
-    
-    if (context.recipient) {
-      query += `gifts for ${context.recipient}`;
-    } else if (context.relationship) {
-      query += `gifts for ${context.relationship}`;
-    } else {
-      query = "gifts";
-    }
-    
-    if (context.occasion) {
-      query += ` ${context.occasion}`;
-    }
-    
-    if (context.interests && context.interests.length > 0) {
-      query += ` ${context.interests.join(" ")}`;
-    }
-    
-    if (context.budget) {
-      const [min, max] = context.budget;
-      query += ` under $${max}`;
-    }
-    
-    return query.trim() || "gifts";
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -245,6 +317,20 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
   const handleQuickResponse = (response: string) => {
     setCurrentMessage(response);
     setTimeout(() => sendMessage(response), 100);
+  };
+
+  const handleSelectWishlistItem = (recommendation: any) => {
+    const message = `Great choice! "${recommendation.item.title}" ${recommendation.reasoning}. Would you like me to help you find this item or look for similar alternatives?`;
+    const assistantMessage: NicoleMessage = {
+      role: "assistant",
+      content: message
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+    setShowWishlistRecommendations(false);
+  };
+
+  const handleSearchByQuery = (query: string) => {
+    onNavigateToResults(query);
   };
 
   return (
@@ -306,6 +392,32 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               )}
             </div>
           ))}
+
+          {/* Wishlist Recommendations */}
+          {showWishlistRecommendations && (
+            <div className="flex justify-start">
+              <div className="max-w-xs">
+                <WishlistRecommendations
+                  recommendations={wishlistRecommendations}
+                  onSelectItem={handleSelectWishlistItem}
+                  userBudget={context.budget}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Product Suggestions */}
+          {showProductSuggestions && (
+            <div className="flex justify-start">
+              <div className="max-w-xs">
+                <ProductSuggestions
+                  suggestions={productSuggestions}
+                  onSearchByQuery={handleSearchByQuery}
+                  isLoading={isSearchingProducts}
+                />
+              </div>
+            </div>
+          )}
           
           {isLoading && (
             <div className="flex justify-start">
@@ -351,6 +463,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
               placeholder="Ask Nicole anything about gifts..."
               className="flex-1"
               disabled={isLoading}
+              autoFocus
             />
             <Button
               onClick={() => sendMessage()}

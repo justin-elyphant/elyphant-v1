@@ -38,7 +38,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Enhanced system prompt with CTA button logic and Enhanced Zinc API System integration
+    // Enhanced system prompt with more flexible CTA button logic
     const systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow with a streamlined CTA button experience.
 
 CONVERSATION FLOW GUIDELINES:
@@ -62,7 +62,7 @@ CONVERSATION FLOW GUIDELINES:
    - NO CTA BUTTON until ready for search
 
 4. READY_FOR_SEARCH_BUTTON (phase: ready_for_search_button)
-   - When you have enough context (recipient + occasion + interests/brands + budget), SUMMARIZE everything clearly
+   - When you have enough context (recipient + (occasion OR age) + interests + budget), SUMMARIZE everything clearly
    - Say something like: "Perfect! Let me summarize what I understand: you're looking for [summary of all context]. I'm ready to find the perfect gifts for you!"
    - SET showSearchButton: true to display the CTA button
    - DO NOT ask for confirmation - the button handles that
@@ -71,6 +71,12 @@ CONVERSATION FLOW GUIDELINES:
    - Only reached when user clicks the "Ready to See Gifts" button
    - Immediately generate Enhanced Zinc API search query
    - Navigate to marketplace with context
+
+FLEXIBLE CONTEXT REQUIREMENTS:
+- MINIMUM REQUIRED: recipient + (interests OR age/occasion) + budget
+- Age detection: "turning 60", "60th birthday", "he's turning 60" = age context
+- Budget detection: "no more than $100", "under $100", "up to $100" = budget context
+- Interest detection: "Dallas Cowboys", "golf", "cooking BBQ" = interests context
 
 SMART RELATIONSHIP EXTRACTION:
 - "my son" → recipient: "son", relationship: "child"
@@ -84,14 +90,14 @@ SMART RELATIONSHIP EXTRACTION:
 - "my sister" → recipient: "sister", relationship: "sibling"
 
 CTA BUTTON LOGIC:
-- ONLY show the search button when you have sufficient context for Enhanced Zinc API
-- Required context: recipient + occasion + (interests OR brands) + budget
+- Show the search button when you have sufficient context for Enhanced Zinc API
+- Required context: recipient + (occasion OR exactAge) + (interests OR detectedBrands) + budget
 - When ready, set showSearchButton: true and provide clear summary
 - The button will handle the actual search generation and navigation
 
 BUDGET HANDLING:
 - Parse budget carefully to avoid NaN errors
-- If user says "under $100", set budget as [50, 100]
+- If user says "under $100", "no more than $100", "up to $100", set budget as [50, 100]
 - If user says "$50-100", set budget as [50, 100] 
 - Always validate numbers before setting budget array
 
@@ -100,6 +106,7 @@ Current context: ${JSON.stringify(context || {})}
 - Recipient: ${context?.recipient || 'Unknown'}
 - Relationship: ${context?.relationship || 'Unknown'}
 - Occasion: ${context?.occasion || 'Unknown'}
+- Exact Age: ${context?.exactAge || 'Unknown'}
 - Budget: ${context?.budget ? `$${context.budget[0]} - $${context.budget[1]}` : 'Unknown'}
 - Interests: ${context?.interests?.join(', ') || 'Unknown'}
 - Brands: ${context?.detectedBrands?.join(', ') || 'None'}
@@ -162,30 +169,38 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
 
     console.log('Enhanced Zinc API OpenAI response with CTA button system received');
 
-    // Determine if we should show the search button based on context completeness
-    const hasRequiredContext = Boolean(
-      context?.recipient && 
-      context?.occasion && 
-      (context?.interests?.length > 0 || context?.detectedBrands?.length > 0) &&
-      context?.budget
+    // More flexible CTA button logic - check for minimum viable context
+    const hasRecipient = Boolean(context?.recipient);
+    const hasOccasionOrAge = Boolean(context?.occasion || context?.exactAge);
+    const hasInterestsOrBrands = Boolean(
+      (context?.interests && context.interests.length > 0) || 
+      (context?.detectedBrands && context.detectedBrands.length > 0)
     );
+    const hasBudget = Boolean(context?.budget && Array.isArray(context.budget) && context.budget.length === 2);
+
+    const hasMinimumContext = hasRecipient && hasOccasionOrAge && hasInterestsOrBrands && hasBudget;
 
     // Check if AI response indicates readiness for search
     const aiIndicatesReady = 
       aiResponse.toLowerCase().includes('perfect!') ||
       aiResponse.toLowerCase().includes('ready to find') ||
       aiResponse.toLowerCase().includes('let me summarize') ||
-      (hasRequiredContext && aiResponse.toLowerCase().includes('understand'));
+      (hasMinimumContext && aiResponse.toLowerCase().includes('understand'));
 
-    const showSearchButton = hasRequiredContext && aiIndicatesReady;
+    const showSearchButton = hasMinimumContext && aiIndicatesReady;
 
     console.log('CTA Button Logic:', { 
-      hasRequiredContext, 
+      hasRecipient,
+      hasOccasionOrAge, 
+      hasInterestsOrBrands,
+      hasBudget,
+      hasMinimumContext,
       aiIndicatesReady, 
       showSearchButton,
       context: {
         recipient: context?.recipient,
         occasion: context?.occasion,
+        exactAge: context?.exactAge,
         interests: context?.interests,
         brands: context?.detectedBrands,
         budget: context?.budget

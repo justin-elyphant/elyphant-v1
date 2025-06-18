@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type ConversationPhase = 'greeting' | 'gathering_info' | 'clarifying_needs' | 'ready_to_search' | 'providing_suggestions';
@@ -156,9 +157,9 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
     }
   }
 
-  // Enhanced occasion detection
+  // Enhanced occasion detection with age patterns
   const occasionPatterns = [
-    { pattern: /birthday/i, occasion: 'birthday' },
+    { pattern: /birthday|turning \d+|he's turning|she's turning|\d+th birthday|\d+st birthday|\d+nd birthday|\d+rd birthday/i, occasion: 'birthday' },
     { pattern: /christmas|holiday|holidays/i, occasion: 'christmas' },
     { pattern: /anniversary|anniversaries/i, occasion: 'anniversary' },
     { pattern: /graduation|graduating/i, occasion: 'graduation' },
@@ -173,16 +174,46 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
     if (pattern.test(userMessage)) {
       updatedContext.occasion = occasion;
       updatedContext.askedForOccasion = true;
+      console.log(`Occasion detected: ${occasion} from: "${userMessage}"`);
       break;
+    }
+  }
+
+  // Enhanced age detection for birthday context
+  const agePatterns = [
+    /turning (\d+)/i,
+    /he's turning (\d+)/i,
+    /she's turning (\d+)/i,
+    /(\d+)th birthday/i,
+    /(\d+)st birthday/i,  
+    /(\d+)nd birthday/i,
+    /(\d+)rd birthday/i
+  ];
+
+  for (const pattern of agePatterns) {
+    const match = userMessage.match(pattern);
+    if (match) {
+      const age = parseInt(match[1]);
+      if (!isNaN(age) && age > 0 && age < 120) {
+        updatedContext.exactAge = age;
+        if (!updatedContext.occasion) {
+          updatedContext.occasion = 'birthday';
+          updatedContext.askedForOccasion = true;
+        }
+        console.log(`Age detected: ${age} from: "${userMessage}"`);
+        break;
+      }
     }
   }
 
   // Enhanced budget extraction with proper validation
   const budgetPatterns = [
+    /no more than \$(\d+)/i,
+    /under \$(\d+)/i,
+    /up to \$(\d+)/i,
     /\$(\d+)(?:\s*-\s*\$?(\d+))?/g,
     /between\s+\$?(\d+)\s+and\s+\$?(\d+)/i,
     /around\s+\$(\d+)/i,
-    /under\s+\$(\d+)/i,
     /budget.*?\$(\d+)/i
   ];
 
@@ -195,7 +226,7 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
       if (!isNaN(num1) && num1 > 0) {
         if (num2 && !isNaN(num2) && num2 > 0) {
           updatedContext.budget = [Math.min(num1, num2), Math.max(num1, num2)];
-        } else if (lowerMessage.includes('under')) {
+        } else if (lowerMessage.includes('no more than') || lowerMessage.includes('under') || lowerMessage.includes('up to')) {
           updatedContext.budget = [Math.max(10, Math.floor(num1 * 0.5)), num1];
         } else {
           updatedContext.budget = [Math.floor(num1 * 0.8), Math.ceil(num1 * 1.2)];
@@ -225,7 +256,7 @@ function extractEnhancedContextFromMessage(userMessage: string, currentContext: 
   // Enhanced interest detection
   const interestPatterns = [
     /(?:likes?|loves?|enjoys?|interested in|into)\s+([^,.!?]+)/gi,
-    /(yoga|fitness|gaming|reading|cooking|music|art|sports|travel|photography)/gi
+    /(dallas cowboys|golf|cooking|bbq|barbecue|yoga|fitness|gaming|reading|music|art|sports|travel|photography)/gi
   ];
 
   for (const pattern of interestPatterns) {

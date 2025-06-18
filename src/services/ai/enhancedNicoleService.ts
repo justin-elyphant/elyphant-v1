@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ConversationPhase } from "./nicoleAiService";
 
@@ -47,6 +48,8 @@ export interface ConversationAnalysis {
   shouldSearchProducts: boolean;
   recommendations: WishlistRecommendation[];
   confidence: number;
+  contextCompleteness: number;
+  missingInfo: string[];
 }
 
 export class EnhancedNicoleService {
@@ -135,6 +138,41 @@ export class EnhancedNicoleService {
     return {};
   }
 
+  static calculateContextCompleteness(context: EnhancedNicoleContext): { completeness: number; missingInfo: string[] } {
+    const requiredFields = {
+      recipient: context.recipient || context.relationship,
+      occasion: context.occasion,
+      interests: context.interests && context.interests.length > 0,
+      budget: context.budget,
+      detectedBrands: context.detectedBrands && context.detectedBrands.length > 0,
+      ageGroup: context.ageGroup
+    };
+
+    const missingInfo: string[] = [];
+    let score = 0;
+    
+    // Core requirements (higher weight)
+    if (requiredFields.recipient) score += 30;
+    else missingInfo.push('recipient');
+    
+    if (requiredFields.occasion) score += 20;
+    else missingInfo.push('occasion');
+    
+    // Important context (medium weight)
+    if (requiredFields.interests) score += 25;
+    else missingInfo.push('interests');
+    
+    if (requiredFields.budget) score += 15;
+    else missingInfo.push('budget');
+    
+    // Enhanced context (lower weight but valuable)
+    if (requiredFields.detectedBrands) score += 5;
+    
+    if (requiredFields.ageGroup) score += 5;
+    
+    return { completeness: score, missingInfo };
+  }
+
   static async analyzeConversation(
     message: string, 
     context: EnhancedNicoleContext, 
@@ -150,21 +188,34 @@ export class EnhancedNicoleService {
         ...relationshipInfo
       };
 
-      // Determine conversation phase based on enhanced context
+      // Calculate context completeness
+      const { completeness, missingInfo } = this.calculateContextCompleteness(updatedContext);
+      
+      // Enhanced phase detection with stricter requirements
       let phase: ConversationPhase = 'greeting';
       
-      // Enhanced phase detection considering brands and age
-      if (updatedContext.recipient && updatedContext.occasion && 
-          (updatedContext.interests || updatedContext.budget || updatedContext.detectedBrands)) {
-        phase = 'providing_suggestions';
-      } else if (updatedContext.recipient && updatedContext.occasion) {
-        phase = 'clarifying_needs';
+      if (!updatedContext.recipient && !updatedContext.relationship) {
+        phase = 'greeting';
       } else if (updatedContext.recipient || updatedContext.relationship) {
-        phase = 'gathering_info';
+        if (!updatedContext.occasion) {
+          phase = 'gathering_info';
+        } else if (completeness < 70) { // Require at least 70% completeness
+          phase = 'clarifying_needs';
+        } else {
+          phase = 'providing_suggestions';
+        }
       }
 
-      // Check if we should show wishlist items
+      console.log(`Enhanced Nicole Analysis:`, {
+        phase,
+        completeness,
+        missingInfo,
+        context: updatedContext
+      });
+
+      // Check if we should show wishlist items (only if very complete context)
       const shouldShowWishlist = phase === 'providing_suggestions' && 
+        completeness >= 80 &&
         updatedContext.recipientWishlists && updatedContext.recipientWishlists.length > 0;
 
       // Generate recommendations if we have wishlist data
@@ -207,16 +258,19 @@ export class EnhancedNicoleService {
         }
       }
 
-      // Enhanced search criteria with brand and age context
+      // Enhanced search criteria - require high completeness
       const shouldSearchProducts = phase === 'providing_suggestions' && 
-        Boolean(updatedContext.recipient && (updatedContext.occasion || updatedContext.detectedBrands));
+        completeness >= 75 && // Require 75% completeness minimum
+        Boolean(updatedContext.recipient && updatedContext.occasion);
 
       return {
         phase,
         shouldShowWishlist,
         shouldSearchProducts,
         recommendations,
-        confidence: 0.8
+        confidence: completeness / 100,
+        contextCompleteness: completeness,
+        missingInfo
       };
     } catch (error) {
       console.error('Error analyzing conversation:', error);
@@ -225,7 +279,9 @@ export class EnhancedNicoleService {
         shouldShowWishlist: false,
         shouldSearchProducts: false,
         recommendations: [],
-        confidence: 0.1
+        confidence: 0.1,
+        contextCompleteness: 0,
+        missingInfo: ['recipient', 'occasion', 'interests', 'budget']
       };
     }
   }

@@ -49,7 +49,8 @@ const NICOLE_SYSTEM_PROMPT = `You are Nicole, a helpful AI gift advisor. You hel
 Key behaviors:
 - Be warm, friendly, and conversational
 - Ask clarifying questions to understand the recipient and occasion
-- Suggest specific products and categories when appropriate
+- Gather comprehensive information before suggesting products
+- NEVER suggest searching until you have recipient + occasion + interests/budget
 - Keep responses concise but helpful
 - Guide users through the gift-finding process step by step
 
@@ -68,19 +69,19 @@ export async function chatWithNicole(
       { role: 'user', content: message }
     ];
 
-    // For now, return a contextual response
-    // This would be replaced with actual AI service call
-    const response = generateContextualResponse(message, context);
+    // Enhanced contextual response generation
+    const response = generateEnhancedContextualResponse(message, context);
+    const updatedPhase = determineEnhancedPhase(context);
     
     return {
       response,
       context: {
         ...context,
-        conversationPhase: determinePhase(context),
+        conversationPhase: updatedPhase,
       },
       shouldShowProducts: shouldShowProducts(context),
       contextualLinks: [],
-      shouldGenerateSearch: false
+      shouldGenerateSearch: shouldGenerateSearch(context)
     };
     
   } catch (error) {
@@ -95,54 +96,82 @@ export async function chatWithNicole(
   }
 }
 
-function generateContextualResponse(message: string, context: NicoleContext): string {
+function generateEnhancedContextualResponse(message: string, context: NicoleContext): string {
   const lowerMessage = message.toLowerCase();
   
   // Enhanced brand detection
   if (context.detectedBrands && context.detectedBrands.length > 0) {
-    const brands = context.detectedBrands.join(', ');
-    return `I see you're interested in ${brands}! That's a great choice. Can you tell me more about who this gift is for and what the occasion is?`;
+    if (!context.interests && !context.budget) {
+      return `I see you're interested in ${context.detectedBrands.join(', ')}! That's a great choice. To help me find the perfect ${context.detectedBrands[0]} gift, what are ${context.recipient || 'they'} interested in? Any hobbies or activities they love?`;
+    }
   }
   
   // Age-aware responses
-  if (context.ageGroup) {
-    return `Great! Shopping for a ${context.ageGroup} is exciting. What are they interested in? Any specific hobbies or activities they love?`;
+  if (context.ageGroup && !context.interests) {
+    return `Great! Shopping for a ${context.ageGroup} is exciting. What are they interested in? Any specific hobbies, activities, or things they've mentioned wanting recently?`;
   }
   
   if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
     return "Hi! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gift. Who are you shopping for today?";
   }
   
+  // Progressive information gathering
   if (context.recipient && !context.occasion) {
-    return `Great! You're shopping for your ${context.recipient}. What's the occasion?`;
+    return `Great! You're shopping for your ${context.recipient}. What's the special occasion?`;
   }
   
-  if (context.recipient && context.occasion && !context.interests) {
-    return `Perfect! A gift for your ${context.recipient}'s ${context.occasion}. What are they interested in? Any hobbies, favorite activities, or things they've mentioned wanting?`;
+  if (context.recipient && context.occasion && !context.interests && !context.detectedBrands) {
+    return `Perfect! A gift for your ${context.recipient}'s ${context.occasion}. To find something they'll absolutely love, what are they interested in? Any hobbies, favorite activities, or things they've been wanting?`;
   }
   
-  if (context.recipient && context.occasion && context.interests) {
-    return `Excellent! I have a good understanding now. Let me find some perfect gift options for your ${context.recipient}'s ${context.occasion} based on their interests in ${context.interests?.join(', ')}.`;
+  if (context.recipient && context.occasion && (context.interests || context.detectedBrands) && !context.budget) {
+    const interestText = context.interests ? `their interests in ${context.interests.join(', ')}` : `their love for ${context.detectedBrands?.join(', ')}`;
+    return `Excellent! I love that you know about ${interestText}. What's your budget range for this ${context.occasion} gift?`;
+  }
+  
+  // Only proceed to suggestions when we have comprehensive information
+  if (context.recipient && context.occasion && (context.interests || context.detectedBrands) && context.budget) {
+    const detailsText = context.interests ? 
+      `their interests in ${context.interests.join(', ')}` : 
+      `their preference for ${context.detectedBrands?.join(', ')}`;
+    return `Perfect! I have everything I need now. Let me find some amazing ${context.occasion} gift options for your ${context.recipient} based on ${detailsText} within your $${context.budget[0]}-$${context.budget[1]} budget.`;
   }
   
   return "Tell me more about what you're looking for! Who is this gift for and what's the occasion?";
 }
 
-function determinePhase(context: NicoleContext): ConversationPhase {
-  if (!context.recipient) return 'greeting';
-  if (context.recipient && !context.occasion) return 'gathering_info';
-  if (context.recipient && context.occasion && !context.interests && !context.detectedBrands) return 'clarifying_needs';
+function determineEnhancedPhase(context: NicoleContext): ConversationPhase {
+  if (!context.recipient && !context.relationship) return 'greeting';
+  if ((context.recipient || context.relationship) && !context.occasion) return 'gathering_info';
+  if (context.recipient && context.occasion && (!context.interests && !context.detectedBrands)) return 'clarifying_needs';
+  if (context.recipient && context.occasion && (context.interests || context.detectedBrands) && !context.budget) return 'clarifying_needs';
   return 'providing_suggestions';
 }
 
 function shouldShowProducts(context: NicoleContext): boolean {
-  return Boolean(context.recipient && (context.occasion || context.interests || context.detectedBrands));
+  // Only show products when we have comprehensive information
+  return Boolean(
+    context.recipient && 
+    context.occasion && 
+    (context.interests || context.detectedBrands) && 
+    context.budget
+  );
+}
+
+function shouldGenerateSearch(context: NicoleContext): boolean {
+  // Only generate search when we have all necessary information
+  return Boolean(
+    context.recipient && 
+    context.occasion && 
+    (context.interests || context.detectedBrands) && 
+    context.budget
+  );
 }
 
 export function generateSearchQuery(context: NicoleContext): string {
   const parts: string[] = [];
   
-  // Brand-first approach
+  // Brand-first approach (preserving Enhanced Zinc API System logic)
   if (context.detectedBrands && context.detectedBrands.length > 0) {
     parts.push(context.detectedBrands[0]);
   }

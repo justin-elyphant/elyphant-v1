@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,15 +103,18 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         conversationPhase: context.conversationPhase || 'greeting' as ConversationPhase,
         // Add enhanced context fields
         detectedBrands: enhancedSearchContext.detectedBrands,
-        interests: [...(context.interests || []), ...enhancedSearchContext.interests],
+        interests: [...new Set([...(context.interests || []), ...enhancedSearchContext.interests])],
         ageGroup: enhancedSearchContext.ageInfo?.ageGroup,
         exactAge: enhancedSearchContext.ageInfo?.exactAge
       };
 
+      // Extract additional context from message
+      const updatedContext = extractContextFromMessage(messageText, enhancedContext);
+
       const response = await chatWithNicole(
         userMessage.content,
         messages,
-        enhancedContext
+        updatedContext
       );
 
       const assistantMessage: NicoleMessage = {
@@ -120,8 +124,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Update context with enhanced information
-      updateContextFromMessage(messageText, response, relationshipInfo, enhancedSearchContext);
+      // Update context 
+      setContext(updatedContext);
 
       // Update contextual links from response
       if (response.contextualLinks && response.contextualLinks.length > 0) {
@@ -130,10 +134,22 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
         setContextualLinks([]);
       }
 
-      // Handle search generation with enhanced query
+      // Handle search generation with enhanced query - only when truly ready
       if (response.shouldGenerateSearch) {
-        const searchQuery = extractEnhancedSearchQuery(response.response, enhancedContext);
-        if (searchQuery) {
+        const searchQuery = generateEnhancedSearchQuery({
+          recipient: updatedContext.recipient,
+          relationship: updatedContext.relationship,
+          occasion: updatedContext.occasion,
+          interests: updatedContext.interests,
+          detectedBrands: updatedContext.detectedBrands,
+          ageGroup: updatedContext.ageGroup,
+          exactAge: updatedContext.exactAge,
+          budget: updatedContext.budget
+        });
+        
+        console.log('Enhanced Nicole: Generated search query:', searchQuery);
+        
+        if (searchQuery && searchQuery !== 'gifts') {
           setTimeout(() => {
             onNavigateToResults(searchQuery);
           }, 2000);
@@ -153,88 +169,67 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationEngin
     }
   };
 
-  const updateContextFromMessage = (userMessage: string, response: any, relationshipInfo: any, enhancedSearchContext: any) => {
+  const extractContextFromMessage = (userMessage: string, currentContext: NicoleContext): NicoleContext => {
     const lowerMessage = userMessage.toLowerCase();
-    
-    // Apply enhanced relationship detection first
-    if (relationshipInfo.recipient || relationshipInfo.relationship) {
-      setContext(prev => ({
-        ...prev,
-        recipient: relationshipInfo.recipient || prev.recipient,
-        relationship: relationshipInfo.relationship || prev.relationship
-      }));
-    }
-
-    // Apply enhanced brand and age detection
-    if (enhancedSearchContext.detectedBrands.length > 0) {
-      setContext(prev => ({
-        ...prev,
-        detectedBrands: enhancedSearchContext.detectedBrands
-      }));
-    }
-
-    if (enhancedSearchContext.ageInfo) {
-      setContext(prev => ({
-        ...prev,
-        ageGroup: enhancedSearchContext.ageInfo.ageGroup,
-        exactAge: enhancedSearchContext.ageInfo.exactAge
-      }));
-    }
-
-    // Enhanced interest detection
-    if (enhancedSearchContext.interests.length > 0) {
-      setContext(prev => ({
-        ...prev,
-        interests: [...new Set([...(prev.interests || []), ...enhancedSearchContext.interests])]
-      }));
-    }
+    let updatedContext = { ...currentContext };
 
     // Extract occasion information
     if (lowerMessage.includes('birthday')) {
-      setContext(prev => ({ ...prev, occasion: 'birthday' }));
+      updatedContext.occasion = 'birthday';
     } else if (lowerMessage.includes('christmas') || lowerMessage.includes('holiday')) {
-      setContext(prev => ({ ...prev, occasion: 'christmas' }));
+      updatedContext.occasion = 'christmas';
     } else if (lowerMessage.includes('anniversary')) {
-      setContext(prev => ({ ...prev, occasion: 'anniversary' }));
+      updatedContext.occasion = 'anniversary';
+    } else if (lowerMessage.includes('graduation')) {
+      updatedContext.occasion = 'graduation';
+    } else if (lowerMessage.includes('wedding')) {
+      updatedContext.occasion = 'wedding';
     }
 
-    // Extract budget information
-    const budgetMatch = lowerMessage.match(/\$(\d+)/);
-    if (budgetMatch) {
-      const budget = parseInt(budgetMatch[1]);
-      setContext(prev => ({ ...prev, budget: [budget * 0.8, budget * 1.2] }));
+    // Extract budget information with various patterns
+    const budgetPatterns = [
+      /\$(\d+)(?:\s*-\s*\$?(\d+))?/g,
+      /between\s+\$?(\d+)\s+and\s+\$?(\d+)/i,
+      /around\s+\$(\d+)/i,
+      /under\s+\$(\d+)/i,
+      /budget.*?\$(\d+)/i
+    ];
+
+    for (const pattern of budgetPatterns) {
+      const match = userMessage.match(pattern);
+      if (match) {
+        const num1 = parseInt(match[1]);
+        const num2 = match[2] ? parseInt(match[2]) : null;
+        
+        if (num2) {
+          updatedContext.budget = [Math.min(num1, num2), Math.max(num1, num2)];
+        } else if (lowerMessage.includes('under')) {
+          updatedContext.budget = [Math.max(10, num1 * 0.5), num1];
+        } else {
+          updatedContext.budget = [num1 * 0.8, num1 * 1.2];
+        }
+        break;
+      }
     }
 
-    // Update conversation step based on enhanced context completeness
-    const currentContext = { ...context };
-    if (relationshipInfo.recipient) currentContext.recipient = relationshipInfo.recipient;
-    if (relationshipInfo.relationship) currentContext.relationship = relationshipInfo.relationship;
-    if (enhancedSearchContext.detectedBrands.length > 0) currentContext.detectedBrands = enhancedSearchContext.detectedBrands;
-    
-    if (currentContext.recipient && currentContext.occasion) {
-      setConversationStep("preferences");
-    } else if (currentContext.recipient || currentContext.relationship) {
-      setConversationStep("occasion");
+    // Enhanced interest detection
+    const interestPatterns = [
+      /(?:likes?|loves?|enjoys?|interested in|into)\s+([^,.!?]+)/gi,
+      /(?:hobby|hobbies).*?([^,.!?]+)/gi,
+      /(reading|gaming|cooking|sports|music|art|fitness|travel|photography|gardening)/gi
+    ];
+
+    for (const pattern of interestPatterns) {
+      let match;
+      while ((match = pattern.exec(userMessage)) !== null) {
+        const interest = match[1].trim().toLowerCase();
+        if (interest && interest.length > 2) {
+          updatedContext.interests = [...new Set([...(updatedContext.interests || []), interest])];
+        }
+      }
     }
 
-    // Update conversation phase based on response
-    if (response.conversationPhase) {
-      setContext(prev => ({ ...prev, conversationPhase: response.conversationPhase as ConversationPhase }));
-    }
-  };
-
-  const extractEnhancedSearchQuery = (response: string, context: NicoleContext): string => {
-    // Use enhanced query generation
-    return generateEnhancedSearchQuery({
-      recipient: context.recipient,
-      relationship: context.relationship,
-      occasion: context.occasion,
-      interests: context.interests,
-      detectedBrands: context.detectedBrands,
-      ageGroup: context.ageGroup,
-      exactAge: context.exactAge,
-      budget: context.budget
-    });
+    return updatedContext;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

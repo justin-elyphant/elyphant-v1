@@ -97,11 +97,12 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
       {/* Modal */}
       <div
         ref={modalRef}
-        className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out flex flex-col ${
+        className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{
           height: 'calc(85vh - env(safe-area-inset-bottom))',
+          maxHeight: '85vh',
           paddingBottom: 'env(safe-area-inset-bottom)',
           ...transformStyle
         }}
@@ -130,8 +131,14 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
           </Button>
         </div>
         
-        {/* Content - Takes remaining space */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        {/* Content - Fixed height with proper constraints */}
+        <div 
+          className="overflow-hidden"
+          style={{
+            height: 'calc(100% - 80px)', // Subtract handle + header height
+            maxHeight: 'calc(85vh - 80px - env(safe-area-inset-bottom))'
+          }}
+        >
           <NicoleConversationEngine
             isOpen={true}
             initialMessage={initialQuery}

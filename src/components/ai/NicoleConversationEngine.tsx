@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (initialMessage && messages.length === 0) {
@@ -41,23 +43,23 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }
   }, [initialMessage]);
 
-  // Auto-scroll to bottom when messages change
+  // Enhanced auto-scroll logic
   useEffect(() => {
     const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'end'
-        });
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        container.scrollTop = container.scrollHeight;
       }
     };
 
-    // Use requestAnimationFrame to ensure DOM is updated
-    const timeoutId = setTimeout(() => {
-      requestAnimationFrame(scrollToBottom);
-    }, 100);
+    // Multiple scroll attempts for better reliability
+    const timeoutIds = [
+      setTimeout(scrollToBottom, 50),
+      setTimeout(scrollToBottom, 150),
+      setTimeout(scrollToBottom, 300)
+    ];
 
-    return () => clearTimeout(timeoutId);
+    return () => timeoutIds.forEach(id => clearTimeout(id));
   }, [messages, isLoading, groupedResults]);
 
   // Maintain input focus
@@ -91,6 +93,13 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
     setIsLoading(true);
+
+    // Scroll after sending message
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
+    }, 100);
 
     try {
       const response = await chatWithNicole(messageToSend, context, messages);
@@ -172,54 +181,63 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
         </Button>
       </div>
 
-      {/* Messages - Takes available space minus header and footer */}
-      <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
-          <div className="space-y-4">
-            {messages.map((message, index) => (
+      {/* Messages - Constrained height with proper scrolling */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto"
+        style={{
+          height: showSearchButton 
+            ? 'calc(100% - 200px)' // Header + search button + input
+            : 'calc(100% - 140px)', // Header + input
+          maxHeight: showSearchButton 
+            ? 'calc(100% - 200px)'
+            : 'calc(100% - 140px)'
+        }}
+      >
+        <div className="p-4 space-y-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
               <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`max-w-[85%] p-3 rounded-lg ${
+                  message.role === 'user'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-100 text-gray-900'
+                }`}
               >
-                <div
-                  className={`max-w-[85%] p-3 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              </div>
+            </div>
+          ))}
+
+          {/* Grouped Results Display */}
+          {groupedResults && (
+            <div className="mt-4">
+              <GroupedSearchResultsComponent
+                groupedResults={groupedResults}
+                onProductSelect={handleProductSelect}
+                onCategoryExpand={handleCategoryExpand}
+                onFollowUpRequest={handleFollowUpRequest}
+              />
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+                  <span className="text-sm text-gray-600">Nicole is thinking...</span>
                 </div>
               </div>
-            ))}
+            </div>
+          )}
 
-            {/* Grouped Results Display */}
-            {groupedResults && (
-              <div className="mt-4">
-                <GroupedSearchResultsComponent
-                  groupedResults={groupedResults}
-                  onProductSelect={handleProductSelect}
-                  onCategoryExpand={handleCategoryExpand}
-                  onFollowUpRequest={handleFollowUpRequest}
-                />
-              </div>
-            )}
-
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-                    <span className="text-sm text-gray-600">Nicole is thinking...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Scroll anchor */}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+          {/* Scroll anchor */}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Search Button */}
@@ -236,7 +254,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       )}
 
       {/* Input - Fixed at bottom */}
-      <div className="p-4 border-t flex-shrink-0">
+      <div className="p-4 border-t flex-shrink-0 bg-white">
         <div className="flex gap-2">
           <Input
             ref={inputRef}

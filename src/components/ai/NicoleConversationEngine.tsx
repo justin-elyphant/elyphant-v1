@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,18 +33,43 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [groupedResults, setGroupedResults] = useState<GroupedSearchResults | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (initialMessage) {
+    if (initialMessage && messages.length === 0) {
       handleSendMessage(initialMessage);
     }
   }, [initialMessage]);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }
+    };
+
+    // Use requestAnimationFrame to ensure DOM is updated
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(scrollToBottom);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [messages, isLoading, groupedResults]);
+
+  // Maintain input focus
+  useEffect(() => {
+    if (isOpen && inputRef.current && !isLoading) {
+      const focusTimeout = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(focusTimeout);
     }
-  }, [messages]);
+  }, [isOpen, isLoading, messages]);
 
   const handleSearchInMarketplace = () => {
     if (onNavigateToMarketplace) {
@@ -122,6 +148,13 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -182,6 +215,9 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
               </div>
             </div>
           )}
+
+          {/* Scroll anchor */}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
@@ -202,9 +238,10 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       <div className="p-4 border-t">
         <div className="flex gap-2">
           <Input
+            ref={inputRef}
             value={currentMessage}
             onChange={(e) => setCurrentMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            onKeyPress={handleKeyPress}
             placeholder="Tell me about the gift you're looking for..."
             disabled={isLoading}
             className="flex-1"

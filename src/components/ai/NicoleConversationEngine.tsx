@@ -72,9 +72,17 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }
   }, [isOpen, isLoading, messages]);
 
+  // Debug logging for search button state
+  useEffect(() => {
+    console.log('🔍 Search button state changed:', showSearchButton);
+    console.log('🔍 Current context:', context);
+  }, [showSearchButton, context]);
+
   const handleSearchInMarketplace = () => {
+    console.log('🎯 Search button clicked, navigating to marketplace');
     if (onNavigateToMarketplace) {
       const searchQuery = generateSearchQuery(context);
+      console.log('🔍 Generated search query:', searchQuery);
       onNavigateToMarketplace(searchQuery);
       onClose();
     }
@@ -84,6 +92,8 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     const messageToSend = messageText || currentMessage.trim();
     
     if (!messageToSend || isLoading) return;
+
+    console.log('📤 Sending message:', messageToSend);
 
     const userMessage: NicoleMessage = {
       role: 'user',
@@ -102,7 +112,10 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }, 100);
 
     try {
+      console.log('🤖 Calling chatWithNicole with context:', context);
       const response = await chatWithNicole(messageToSend, context, messages);
+      console.log('✅ Received response from Nicole:', response);
+      console.log('🔍 Response showSearchButton:', response.showSearchButton);
       
       const assistantMessage: NicoleMessage = {
         role: 'assistant',
@@ -111,10 +124,15 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
 
       setMessages(prev => [...prev, assistantMessage]);
       setContext(response.context);
-      setShowSearchButton(response.showSearchButton || false);
+      
+      // Enhanced search button logic with debugging
+      const shouldShow = Boolean(response.showSearchButton);
+      console.log('🎯 Setting showSearchButton to:', shouldShow);
+      setShowSearchButton(shouldShow);
       
       // Handle grouped results
       if (response.groupedResults) {
+        console.log('📊 Setting grouped results:', response.groupedResults);
         setGroupedResults(response.groupedResults);
       }
 
@@ -124,7 +142,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       }
 
     } catch (error) {
-      console.error('Error in Nicole conversation:', error);
+      console.error('💥 Error in Nicole conversation:', error);
       const errorMessage: NicoleMessage = {
         role: 'assistant',
         content: "I'm having trouble right now. Could you try rephrasing your question?"
@@ -240,15 +258,15 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
         </div>
       </div>
 
-      {/* Search Button */}
+      {/* Enhanced Search Button with Debug Info */}
       {showSearchButton && (
         <div className="p-4 border-t bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
           <Button
             onClick={handleSearchInMarketplace}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Ready to See Your Gifts
+            <Sparkles className="w-5 h-5 mr-2" />
+            Ready to See Your Gifts!
           </Button>
         </div>
       )}

@@ -164,6 +164,23 @@ function getAgeAppropriateTerms(age: number): string {
 }
 
 /**
+ * Detect readiness phrases in AI response for fallback button logic
+ */
+function detectReadinessInResponse(message: string): boolean {
+  const readinessPatterns = [
+    /ready to see (your )?gifts/i,
+    /let's find (some )?gifts/i,
+    /search for gifts/i,
+    /show you (some )?options/i,
+    /browse (the )?marketplace/i,
+    /time to shop/i,
+    /perfect.*let's go/i
+  ];
+  
+  return readinessPatterns.some(pattern => pattern.test(message));
+}
+
+/**
  * Enhanced chat with Nicole that supports multi-category search and conversation enhancement
  */
 export async function chatWithNicole(
@@ -239,9 +256,39 @@ export async function chatWithNicole(
     }
 
     console.log('✅ Enhanced Nicole AI Response received:', data);
+    console.log('🔍 AI Response showSearchButton:', data.showSearchButton);
+    console.log('🔍 AI Response conversationPhase:', data.conversationPhase);
+
+    // Enhanced search button logic with fallback detection
+    let shouldShowSearchButton = Boolean(data.showSearchButton);
+    
+    // Fallback: detect readiness in AI response message
+    if (!shouldShowSearchButton && data.response) {
+      const hasReadinessPhrase = detectReadinessInResponse(data.response);
+      console.log('🔍 Fallback readiness detection:', hasReadinessPhrase);
+      if (hasReadinessPhrase) {
+        shouldShowSearchButton = true;
+        console.log('✅ Fallback logic activated search button');
+      }
+    }
+
+    // Additional fallback: check if we have sufficient context
+    const hasMinimumContext = Boolean(
+      (parsedContext.recipient || parsedContext.relationship) &&
+      (parsedContext.interests?.length > 0 || parsedContext.detectedBrands?.length > 0) &&
+      parsedContext.occasion
+    );
+    
+    if (!shouldShowSearchButton && hasMinimumContext) {
+      console.log('🔍 Context-based fallback triggered:', { hasMinimumContext });
+      shouldShowSearchButton = true;
+      console.log('✅ Context fallback activated search button');
+    }
+
+    console.log('🎯 Final showSearchButton decision:', shouldShowSearchButton);
 
     // Check if we should perform multi-category search
-    const shouldPerformGroupedSearch = data.showSearchButton && 
+    const shouldPerformGroupedSearch = shouldShowSearchButton && 
       (parsedContext.categoryMappings.length > 1 || parsedContext.detectedBrands.length > 0);
 
     let groupedResults: GroupedSearchResults | undefined;
@@ -267,12 +314,12 @@ export async function chatWithNicole(
         ...data.context || parsedContext,
         conversationPhase: data.conversationPhase || determineConversationPhase(parsedContext)
       },
-      generateSearch: data.showSearchButton || false,
-      showSearchButton: data.showSearchButton || false,
+      generateSearch: shouldShowSearchButton,
+      showSearchButton: shouldShowSearchButton,
       groupedResults
     };
 
-    console.log('🎯 Enhanced Mapped Response:', mappedResponse);
+    console.log('🎯 Final Mapped Response:', mappedResponse);
 
     return mappedResponse;
 

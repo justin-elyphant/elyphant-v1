@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 interface Category {
   id: string;
@@ -102,6 +103,9 @@ const GiftingCategories = () => {
   };
 
   const handleCategoryClick = (searchTerm: string) => {
+    // Dismiss all existing toasts before starting new search
+    toast.dismiss();
+    
     const params = new URLSearchParams(searchParams);
     // Set both search and category parameters so the search term gets saved to recent searches
     params.set("search", searchTerm);

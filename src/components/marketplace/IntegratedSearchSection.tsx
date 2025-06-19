@@ -10,6 +10,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { Smartphone, Home, Shirt, Dumbbell, Gamepad2, Heart, Baby, Coffee, BookOpen, Music } from "lucide-react";
+import { toast } from "sonner";
 
 const categories = [
   { name: "Tech", icon: Smartphone, param: "electronics", searchTerm: "best selling electronics" },
@@ -38,6 +39,9 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
   const currentSearch = searchParams.get("search");
 
   const handleCategoryClick = (categoryParam: string, searchTerm: string) => {
+    // Dismiss all existing toasts before starting new search
+    toast.dismiss();
+    
     const newParams = new URLSearchParams(searchParams);
     
     // If clicking the same category, remove it (toggle off)
@@ -56,6 +60,9 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
   };
 
   const handleRecentSearchClick = (term: string) => {
+    // Dismiss all existing toasts before starting new search
+    toast.dismiss();
+    
     const newParams = new URLSearchParams(searchParams);
     newParams.set("search", term);
     // Clear category when performing a search to avoid conflicts

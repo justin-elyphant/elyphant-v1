@@ -20,13 +20,16 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const debounceTimer = useRef<NodeJS.Timeout>();
 
-  // Sync search bar with URL parameters
+  // Enhanced sync with URL parameters - listen for all changes
   useEffect(() => {
     const searchParam = searchParams.get("search");
     if (searchParam && searchParam !== query) {
       setQuery(searchParam);
+    } else if (!searchParam && query) {
+      // Clear query if no search param
+      setQuery("");
     }
-  }, [searchParams]);
+  }, [searchParams, location.pathname, location.search]);
 
   useEffect(() => {
     setShowSuggestions(false);

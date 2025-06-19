@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
@@ -9,6 +8,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { Smartphone, Home, Shirt, Dumbbell, Gamepad2, Heart, Baby, Coffee, Book, Music } from "lucide-react";
+import { toast } from "sonner";
 
 const categories = [
   { name: "Tech", icon: Smartphone, param: "electronics", searchTerm: "best selling electronics" },
@@ -33,6 +33,9 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ className = "" }) =
   const selectedCategory = searchParams.get("category");
 
   const handleCategoryClick = (categoryParam: string, searchTerm: string) => {
+    // Dismiss all existing toasts before starting new search
+    toast.dismiss();
+    
     const newParams = new URLSearchParams(searchParams);
     
     // If clicking the same category, remove it (toggle off)

@@ -80,7 +80,7 @@ const MarketplaceWrapper = () => {
     // Note: Removed auto-show logic for desktop with active search parameters
   }, [searchTerm, categoryParam, brandParam, isMobile, isInitialLoad]);
 
-  // Clean up conflicting URL parameters
+  // Clean up conflicting URL parameters and dismiss lingering toasts
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
     let shouldUpdate = false;
@@ -91,6 +91,18 @@ const MarketplaceWrapper = () => {
       params.delete("category");
       shouldUpdate = true;
     }
+
+    // Enhanced toast cleanup - dismiss any brand or category related toasts
+    const allBrands = ["Apple", "Nike", "Lululemon", "Made In", "Stanley", "Lego"];
+    allBrands.forEach(brand => {
+      toast.dismiss(`brand-loading-${brand}`);
+      toast.dismiss(`brand-loading-${brand.toLowerCase()}`);
+    });
+
+    const allCategories = ["electronics", "fashion", "home", "sports", "gaming", "beauty", "baby", "kitchen", "books", "music"];
+    allCategories.forEach(category => {
+      toast.dismiss(`category-search-${category}`);
+    });
 
     if (shouldUpdate) {
       setSearchParams(params, { replace: true });
@@ -128,12 +140,17 @@ const MarketplaceWrapper = () => {
         
         setProducts(results);
         
-        // Dismiss loading toasts
+        // Enhanced toast dismissal for all specific scenarios
         if (categoryParam && !searchTerm) {
           toast.dismiss(`category-search-${categoryParam}`);
         }
         if (brandParam) {
           toast.dismiss(`brand-loading-${brandParam}`);
+        }
+        if (searchTerm) {
+          // Dismiss any search-related toasts
+          toast.dismiss("search-loading");
+          toast.dismiss("search-error");
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load products";
@@ -181,6 +198,9 @@ const MarketplaceWrapper = () => {
   }, [searchTerm, addSearch, location.state]);
 
   const handleRecentSearchClick = (term: string) => {
+    // Dismiss all toasts before new search
+    toast.dismiss();
+    
     const newParams = new URLSearchParams(searchParams);
     newParams.set("search", term);
     // Clear category when doing a search

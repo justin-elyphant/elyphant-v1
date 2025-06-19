@@ -134,9 +134,10 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-hidden">
           <NicoleConversationEngine
-            initialQuery={initialQuery}
+            isOpen={true}
+            initialMessage={initialQuery}
             onClose={onClose}
-            onNavigateToResults={onNavigateToResults}
+            onNavigateToMarketplace={onNavigateToResults}
           />
         </div>
         

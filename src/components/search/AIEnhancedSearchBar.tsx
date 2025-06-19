@@ -234,9 +234,10 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           className="absolute top-full left-0 right-0 z-50 bg-white shadow-xl border rounded-lg mt-1 max-h-96 overflow-hidden"
         >
           <NicoleConversationEngine
-            initialQuery={query}
+            isOpen={true}
+            initialMessage={query}
             onClose={handleCloseNicole}
-            onNavigateToResults={handleNicoleNavigateToResults}
+            onNavigateToMarketplace={handleNicoleNavigateToResults}
           />
         </div>
       )}

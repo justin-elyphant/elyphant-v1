@@ -271,9 +271,10 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
           className="absolute top-full left-0 right-0 z-50 bg-white shadow-xl border rounded-lg mt-1 max-h-96 overflow-hidden"
         >
           <NicoleConversationEngine
-            initialQuery={query}
+            isOpen={true}
+            initialMessage={query}
             onClose={() => setShowNicoleDropdown(false)}
-            onNavigateToResults={(searchQuery) => {
+            onNavigateToMarketplace={(searchQuery) => {
               navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&mode=nicole`);
               setShowNicoleDropdown(false);
             }}

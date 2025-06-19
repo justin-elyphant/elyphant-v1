@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +15,7 @@ const occasions = [
     id: 1,
     name: "Valentine's Day",
     icon: Heart,
-    searchTerm: "valentines day gifts",
+    searchTerm: "best selling valentines day gifts",
     color: "bg-red-500",
     description: "Show your love with romantic gifts"
   },
@@ -24,7 +23,7 @@ const occasions = [
     id: 2,
     name: "Birthdays",
     icon: Cake,
-    searchTerm: "birthday gifts",
+    searchTerm: "best selling birthday gifts",
     color: "bg-pink-500",
     description: "Make their special day unforgettable"
   },
@@ -32,7 +31,7 @@ const occasions = [
     id: 3,
     name: "Graduation",
     icon: GraduationCap,
-    searchTerm: "graduation gifts",
+    searchTerm: "best selling graduation gifts",
     color: "bg-blue-500",
     description: "Celebrate their achievements"
   },
@@ -40,7 +39,7 @@ const occasions = [
     id: 4,
     name: "Baby Shower",
     icon: Baby,
-    searchTerm: "baby shower gifts",
+    searchTerm: "best selling baby shower gifts",
     color: "bg-green-500",
     description: "Welcome the new arrival"
   },
@@ -48,7 +47,7 @@ const occasions = [
     id: 5,
     name: "Anniversaries",
     icon: Calendar,
-    searchTerm: "anniversary gifts",
+    searchTerm: "best selling anniversary gifts",
     color: "bg-purple-500",
     description: "Commemorate your journey together"
   },
@@ -56,7 +55,7 @@ const occasions = [
     id: 6,
     name: "Mother's Day",
     icon: Heart,
-    searchTerm: "mothers day gifts",
+    searchTerm: "best selling mothers day gifts",
     color: "bg-rose-500",
     description: "Honor the special mom in your life"
   },
@@ -64,7 +63,7 @@ const occasions = [
     id: 7,
     name: "Father's Day",
     icon: Calendar,
-    searchTerm: "fathers day gifts",
+    searchTerm: "best selling fathers day gifts",
     color: "bg-indigo-500",
     description: "Celebrate dad with thoughtful gifts"
   },
@@ -72,7 +71,7 @@ const occasions = [
     id: 8,
     name: "Christmas",
     icon: Calendar,
-    searchTerm: "christmas gifts",
+    searchTerm: "best selling christmas gifts",
     color: "bg-emerald-500",
     description: "Spread holiday joy and cheer"
   }

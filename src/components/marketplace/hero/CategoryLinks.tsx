@@ -9,13 +9,13 @@ interface CategoryLinksProps {
 }
 
 const categorySearchTerms: { [key: string]: string } = {
-  "Electronics": "best electronics",
-  "Fashion": "best fashion", 
-  "Home & Garden": "best home products",
-  "Sports": "best sports equipment",
-  "Beauty": "best beauty products",
-  "Books": "best books",
-  "Toys": "best toys",
+  "Electronics": "best selling electronics",
+  "Fashion": "best selling fashion", 
+  "Home & Garden": "best selling home products",
+  "Sports": "best selling sports equipment",
+  "Beauty": "best selling beauty products",
+  "Books": "best selling books",
+  "Toys": "best selling toys",
 };
 
 const CategoryLinks: React.FC<CategoryLinksProps> = ({ categories }) => {

@@ -14,21 +14,21 @@ import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { useProducts } from "@/contexts/ProductContext";
 
 export const categories = [
-  { name: "Accessories", url: "accessories", searchTerm: "accessories" },
-  { name: "Art & Collectibles", url: "art-collectibles", searchTerm: "art collectibles" },
-  { name: "Baby", url: "baby", searchTerm: "baby products" },
-  { name: "Bags & Purses", url: "bags-purses", searchTerm: "bags purses" },
-  { name: "Bath & Beauty", url: "bath-beauty", searchTerm: "bath beauty products" },
-  { name: "Books, Movies & Music", url: "books-movies-music", searchTerm: "books movies music" },
-  { name: "Clothing", url: "clothing", searchTerm: "clothing" },
-  { name: "Craft Supplies & Tools", url: "craft-supplies", searchTerm: "craft supplies" },
-  { name: "Electronics & Accessories", url: "electronics", searchTerm: "electronics" },
-  { name: "Experiences", url: "experiences", searchTerm: "experience gifts" },
-  { name: "Gifts", url: "gifts", searchTerm: "gifts" },
-  { name: "Home & Living", url: "home-living", searchTerm: "home living" },
-  { name: "Jewelry", url: "jewelry", searchTerm: "jewelry" },
-  { name: "Toys & Games", url: "toys-games", searchTerm: "toys games" },
-  { name: "Wedding & Party", url: "wedding-party", searchTerm: "wedding party" }
+  { name: "Accessories", url: "accessories", searchTerm: "best selling accessories" },
+  { name: "Art & Collectibles", url: "art-collectibles", searchTerm: "best selling art collectibles" },
+  { name: "Baby", url: "baby", searchTerm: "best selling baby products" },
+  { name: "Bags & Purses", url: "bags-purses", searchTerm: "best selling bags purses" },
+  { name: "Bath & Beauty", url: "bath-beauty", searchTerm: "best selling bath beauty products" },
+  { name: "Books, Movies & Music", url: "books-movies-music", searchTerm: "best selling books movies music" },
+  { name: "Clothing", url: "clothing", searchTerm: "best selling clothing" },
+  { name: "Craft Supplies & Tools", url: "craft-supplies", searchTerm: "best selling craft supplies" },
+  { name: "Electronics & Accessories", url: "electronics", searchTerm: "best selling electronics" },
+  { name: "Experiences", url: "experiences", searchTerm: "best selling experience gifts" },
+  { name: "Gifts", url: "gifts", searchTerm: "best selling gifts" },
+  { name: "Home & Living", url: "home-living", searchTerm: "best selling home living" },
+  { name: "Jewelry", url: "jewelry", searchTerm: "best selling jewelry" },
+  { name: "Toys & Games", url: "toys-games", searchTerm: "best selling toys games" },
+  { name: "Wedding & Party", url: "wedding-party", searchTerm: "best selling wedding party" }
 ];
 
 interface CategoriesDropdownProps {

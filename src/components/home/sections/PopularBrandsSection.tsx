@@ -48,6 +48,9 @@ const PopularBrandsSection = () => {
     const loadingToastId = `brand-loading-${brandName}`;
     toast.loading(`Loading ${brandName} products...`, { id: loadingToastId });
     
+    // Enhanced search term with "best selling" prefix
+    const enhancedSearchTerm = `best selling ${brandName} products`;
+    
     try {
       await handleBrandProducts(brandName, products, setProducts);
       toast.dismiss(loadingToastId);
@@ -56,7 +59,7 @@ const PopularBrandsSection = () => {
       toast.error(`Failed to load ${brandName} products`);
     } finally {
       setLoadingBrand(null);
-      navigate(`/marketplace?search=${encodeURIComponent(brandName)}`);
+      navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
     }
   };
 

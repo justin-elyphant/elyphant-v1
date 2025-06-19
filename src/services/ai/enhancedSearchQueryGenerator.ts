@@ -1,7 +1,7 @@
 
 /**
  * Enhanced search query generator for Nicole's AI conversations
- * Preserves Enhanced Zinc API System compatibility
+ * Preserves Enhanced Zinc API System compatibility with "best selling" optimization
  */
 
 export interface SearchContext {
@@ -15,7 +15,7 @@ export interface SearchContext {
 }
 
 /**
- * Generate enhanced search query with brand-first logic
+ * Generate enhanced search query with brand-first logic and "best selling" optimization
  */
 export const generateEnhancedSearchQuery = (context: SearchContext): string => {
   const {
@@ -43,12 +43,12 @@ export const generateEnhancedSearchQuery = (context: SearchContext): string => {
 };
 
 /**
- * Generate brand-focused search query
+ * Generate brand-focused search query with "best selling" optimization
  */
 const generateBrandBasedQuery = (context: SearchContext): string => {
   const { detectedBrands = [], interests = [], exactAge, occasion } = context;
   
-  let query = detectedBrands[0]; // Primary brand
+  let query = `best selling ${detectedBrands[0]}`; // Primary brand with "best selling"
   
   // Add age-appropriate terms
   if (exactAge) {
@@ -70,12 +70,12 @@ const generateBrandBasedQuery = (context: SearchContext): string => {
 };
 
 /**
- * Generate interest-focused search query
+ * Generate interest-focused search query with "best selling" optimization
  */
 const generateInterestBasedQuery = (context: SearchContext): string => {
   const { interests = [], recipient, relationship, exactAge, occasion, budget } = context;
   
-  let query = interests[0]; // Primary interest
+  let query = `best selling ${interests[0]}`; // Primary interest with "best selling"
   
   // Add secondary interest if available
   if (interests.length > 1) {
@@ -107,12 +107,12 @@ const generateInterestBasedQuery = (context: SearchContext): string => {
 };
 
 /**
- * Generate demographic-focused search query
+ * Generate demographic-focused search query with "best selling" optimization
  */
 const generateDemographicBasedQuery = (context: SearchContext): string => {
   const { recipient, relationship, exactAge, occasion, budget } = context;
   
-  let query = "gifts";
+  let query = "best selling gifts"; // Start with "best selling"
   
   // Add recipient context
   if (exactAge) {
@@ -152,7 +152,7 @@ const getAgeAppropriateTerms = (age: number): string => {
 };
 
 /**
- * Generate multiple query variations for better search coverage
+ * Generate multiple query variations for better search coverage with "best selling" optimization
  */
 export const generateQueryVariations = (context: SearchContext): string[] => {
   const variations: string[] = [];
@@ -160,24 +160,24 @@ export const generateQueryVariations = (context: SearchContext): string[] => {
   // Primary query
   variations.push(generateEnhancedSearchQuery(context));
   
-  // Brand variations
+  // Brand variations with "best selling"
   if (context.detectedBrands && context.detectedBrands.length > 0) {
     context.detectedBrands.forEach(brand => {
       if (context.interests && context.interests.length > 0) {
-        variations.push(`${brand} ${context.interests[0]}`);
+        variations.push(`best selling ${brand} ${context.interests[0]}`);
       }
       if (context.occasion) {
-        variations.push(`${brand} ${context.occasion} gifts`);
+        variations.push(`best selling ${brand} ${context.occasion} gifts`);
       }
     });
   }
   
-  // Interest + demographic variations
+  // Interest + demographic variations with "best selling"
   if (context.interests && context.interests.length > 0) {
     const interest = context.interests[0];
     if (context.exactAge) {
       const ageTerms = getAgeAppropriateTerms(context.exactAge);
-      variations.push(`${interest} for ${ageTerms}`);
+      variations.push(`best selling ${interest} for ${ageTerms}`);
     }
   }
   

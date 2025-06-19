@@ -31,6 +31,14 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
     navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, { state: { fromHome: true } });
   };
 
+  // Enhanced collections with "best selling" keywords
+  const enhancedCollections = collections.map(collection => ({
+    ...collection,
+    searchTerm: collection.searchTerm.startsWith('best selling') 
+      ? collection.searchTerm 
+      : `best selling ${collection.searchTerm}`
+  }));
+
   return (
     <FullWidthSection className="py-16 bg-white">
       <ResponsiveContainer>
@@ -45,7 +53,7 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
 
         {/* Desktop Grid View */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {collections.map((collection) => (
+          {enhancedCollections.map((collection) => (
             <div
               key={collection.id}
               className="group relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
@@ -74,7 +82,7 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
           ))}
         </div>
 
-        {/* Mobile Carousel View */}
+        {/* Mobile Carousel */}
         <div className="md:hidden">
           <Carousel
             opts={{
@@ -83,14 +91,14 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
             }}
             className="w-full"
           >
-            <CarouselContent className="-ml-3">
-              {collections.map((collection) => (
-                <CarouselItem key={collection.id} className="pl-3 basis-2/3 sm:basis-1/2">
+            <CarouselContent className="-ml-2">
+              {enhancedCollections.map((collection) => (
+                <CarouselItem key={collection.id} className="pl-2 basis-4/5">
                   <div
-                    className="group relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    className="group relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer h-64"
                     onClick={() => handleCollectionClick(collection.searchTerm)}
                   >
-                    <div className="aspect-square overflow-hidden">
+                    <div className="h-full overflow-hidden">
                       <img
                         src={collection.image}
                         alt={collection.name}

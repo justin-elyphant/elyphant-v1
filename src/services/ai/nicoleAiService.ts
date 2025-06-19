@@ -1,5 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { parseEnhancedContext, ParsedContext } from "./enhancedContextParser";
+import { performMultiCategorySearch, GroupedSearchResults } from "./multiCategorySearchService";
 
 export interface NicoleMessage {
   role: 'user' | 'assistant';
@@ -32,6 +34,8 @@ export interface NicoleResponse {
   message: string;
   context: NicoleContext;
   generateSearch: boolean;
+  showSearchButton?: boolean;
+  groupedResults?: GroupedSearchResults;
 }
 
 export interface ContextualLink {
@@ -159,65 +163,79 @@ function getAgeAppropriateTerms(age: number): string {
 }
 
 /**
- * Simulates a chat with Nicole, the AI gift advisor.
- * @param message The user's message.
- * @param context The current context of the conversation.
- * @param conversationHistory The history of the conversation.
- * @returns A promise that resolves with Nicole's response.
+ * Enhanced chat with Nicole that supports multi-category search
  */
 export async function chatWithNicole(
   message: string,
   context: NicoleContext,
   conversationHistory: NicoleMessage[] = []
-): Promise<NicoleResponse & { showSearchButton?: boolean }> {
-  console.log('🤖 Nicole AI Service - Processing message:', message);
+): Promise<NicoleResponse & { showSearchButton?: boolean; groupedResults?: GroupedSearchResults }> {
+  console.log('🤖 Enhanced Nicole AI Service - Processing message:', message);
   console.log('📊 Current context:', context);
 
   try {
-    // Enhanced context analysis for better CTA decisions
-    const contextAnalysis = analyzeContext(context, message);
-    console.log('🔍 Context Analysis:', contextAnalysis);
+    // Enhanced context parsing
+    const parsedContext = parseEnhancedContext(message, context);
+    console.log('🔍 Enhanced context analysis:', parsedContext);
 
     const { data, error } = await supabase.functions.invoke('nicole-chat', {
       body: {
         message,
         context: {
-          ...context,
-          conversationPhase: contextAnalysis.phase
+          ...parsedContext,
+          conversationPhase: determineConversationPhase(parsedContext)
         },
         conversationHistory,
         enhancedFeatures: {
-          smartCTALogic: true,
-          contextAnalysis: contextAnalysis,
-          showSearchButton: contextAnalysis.shouldShowCTA
+          multiCategorySearch: true,
+          brandCategoryMapping: true,
+          groupedResults: true
         }
       }
     });
 
     if (error) {
-      console.error('🚨 Nicole AI Service Error:', error);
+      console.error('🚨 Enhanced Nicole AI Service Error:', error);
       throw error;
     }
 
-    console.log('✅ Nicole AI Response received:', data);
+    console.log('✅ Enhanced Nicole AI Response received:', data);
+
+    // Check if we should perform multi-category search
+    const shouldPerformGroupedSearch = data.showSearchButton && 
+      (parsedContext.categoryMappings.length > 1 || parsedContext.detectedBrands.length > 0);
+
+    let groupedResults: GroupedSearchResults | undefined;
+    
+    if (shouldPerformGroupedSearch) {
+      console.log('🔍 Performing multi-category search...');
+      try {
+        groupedResults = await performMultiCategorySearch(parsedContext, 4);
+        console.log('✅ Multi-category search complete:', groupedResults);
+      } catch (searchError) {
+        console.error('❌ Multi-category search error:', searchError);
+        // Continue without grouped results
+      }
+    }
 
     // Map the response from the edge function to our expected format
     const mappedResponse = {
       message: data.response || data.message || "I'm here to help you find the perfect gift! What are you looking for?",
       context: {
-        ...data.context || context,
-        conversationPhase: data.conversationPhase || contextAnalysis.phase
+        ...data.context || parsedContext,
+        conversationPhase: data.conversationPhase || determineConversationPhase(parsedContext)
       },
       generateSearch: data.showSearchButton || false,
-      showSearchButton: data.showSearchButton || false
+      showSearchButton: data.showSearchButton || false,
+      groupedResults
     };
 
-    console.log('🎯 Mapped Response:', mappedResponse);
+    console.log('🎯 Enhanced Mapped Response:', mappedResponse);
 
     return mappedResponse;
 
   } catch (error) {
-    console.error('💥 Nicole chat error:', error);
+    console.error('💥 Enhanced Nicole chat error:', error);
     
     // Enhanced fallback response
     return {
@@ -232,41 +250,24 @@ export async function chatWithNicole(
   }
 }
 
-// Enhanced context analysis for better CTA decisions
-function analyzeContext(context: NicoleContext, userMessage: string) {
-  const hasRecipient = Boolean(context.recipient || context.relationship);
-  const hasOccasion = Boolean(context.occasion);
-  const hasInterests = Boolean(context.interests && context.interests.length > 0);
-  const hasBudget = Boolean(context.budget && Array.isArray(context.budget) && context.budget.length === 2);
+// Enhanced context analysis for better conversation flow
+function determineConversationPhase(parsedContext: ParsedContext): ConversationPhase {
+  const hasRecipient = Boolean(parsedContext.recipient || parsedContext.relationship);
+  const hasOccasion = Boolean(parsedContext.occasion);
+  const hasInterests = Boolean(parsedContext.interests && parsedContext.interests.length > 0);
+  const hasBudget = Boolean(parsedContext.budget && Array.isArray(parsedContext.budget) && parsedContext.budget.length === 2);
+  const hasBrands = Boolean(parsedContext.detectedBrands && parsedContext.detectedBrands.length > 0);
   
-  // Check for summary indicators in user message
-  const summaryIndicators = [
-    'perfect! so', 'great! so', 'excellent! so', 'to summarize', 'so, to recap',
-    'i\'m ready to find', 'let me find', 'ready to search', 'let\'s find some'
-  ];
-  
-  const hasSummaryIndicator = summaryIndicators.some(indicator => 
-    userMessage.toLowerCase().includes(indicator)
-  );
-
-  // Determine conversation phase
-  let phase: ConversationPhase = 'greeting';
-  
-  if (hasRecipient && hasOccasion && (hasInterests || hasBudget)) {
-    phase = 'ready_to_search';
-  } else if (hasRecipient || hasOccasion) {
-    phase = 'gathering_info';
+  // Ready for search if we have multiple categories or sufficient context
+  if ((hasRecipient && hasOccasion && (hasInterests || hasBrands)) || 
+      parsedContext.categoryMappings.length > 1) {
+    return 'ready_to_search';
   }
-
-  // Determine if CTA should show
-  const shouldShowCTA = phase === 'ready_to_search' || 
-                       hasSummaryIndicator || 
-                       (hasRecipient && hasOccasion && hasInterests);
-
-  return {
-    phase,
-    shouldShowCTA,
-    hasEssentialInfo: hasRecipient && hasOccasion && (hasInterests || hasBudget),
-    completionScore: [hasRecipient, hasOccasion, hasInterests, hasBudget].filter(Boolean).length / 4
-  };
+  
+  // Gathering info if we have some context but not enough
+  if (hasRecipient || hasOccasion || hasInterests || hasBrands) {
+    return 'gathering_info';
+  }
+  
+  return 'greeting';
 }

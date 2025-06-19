@@ -97,12 +97,11 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
       {/* Modal */}
       <div
         ref={modalRef}
-        className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out flex flex-col ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{
-          maxHeight: '85vh',
-          minHeight: '60vh',
+          height: 'calc(85vh - env(safe-area-inset-bottom))',
           paddingBottom: 'env(safe-area-inset-bottom)',
           ...transformStyle
         }}
@@ -111,12 +110,12 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
         onTouchEnd={handleTouchEnd}
       >
         {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-1">
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-12 h-1 bg-gray-300 rounded-full" />
         </div>
         
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b">
+        <div className="flex items-center justify-between px-4 py-2 border-b flex-shrink-0">
           <h3 className="text-lg font-semibold text-gray-900">Ask Nicole</h3>
           <Button 
             variant="ghost" 
@@ -131,8 +130,8 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
           </Button>
         </div>
         
-        {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        {/* Content - Takes remaining space */}
+        <div className="flex-1 min-h-0 overflow-hidden">
           <NicoleConversationEngine
             isOpen={true}
             initialMessage={initialQuery}

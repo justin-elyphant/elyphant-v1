@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,7 +157,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-50 to-pink-50">
+      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-white" />
@@ -173,57 +172,59 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
         </Button>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
+      {/* Messages - Takes available space minus header and footer */}
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
+          <div className="space-y-4">
+            {messages.map((message, index) => (
               <div
-                className={`max-w-[85%] p-3 rounded-lg ${
-                  message.role === 'user'
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-              </div>
-            </div>
-          ))}
-
-          {/* Grouped Results Display */}
-          {groupedResults && (
-            <div className="mt-4">
-              <GroupedSearchResultsComponent
-                groupedResults={groupedResults}
-                onProductSelect={handleProductSelect}
-                onCategoryExpand={handleCategoryExpand}
-                onFollowUpRequest={handleFollowUpRequest}
-              />
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-                  <span className="text-sm text-gray-600">Nicole is thinking...</span>
+                <div
+                  className={`max-w-[85%] p-3 rounded-lg ${
+                    message.role === 'user'
+                      ? 'bg-purple-500 text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 </div>
               </div>
-            </div>
-          )}
+            ))}
 
-          {/* Scroll anchor */}
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+            {/* Grouped Results Display */}
+            {groupedResults && (
+              <div className="mt-4">
+                <GroupedSearchResultsComponent
+                  groupedResults={groupedResults}
+                  onProductSelect={handleProductSelect}
+                  onCategoryExpand={handleCategoryExpand}
+                  onFollowUpRequest={handleFollowUpRequest}
+                />
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 p-3 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+                    <span className="text-sm text-gray-600">Nicole is thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Scroll anchor */}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Search Button */}
       {showSearchButton && (
-        <div className="p-4 border-t bg-gradient-to-r from-purple-50 to-pink-50">
+        <div className="p-4 border-t bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
           <Button
             onClick={handleSearchInMarketplace}
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
@@ -234,8 +235,8 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
         </div>
       )}
 
-      {/* Input */}
-      <div className="p-4 border-t">
+      {/* Input - Fixed at bottom */}
+      <div className="p-4 border-t flex-shrink-0">
         <div className="flex gap-2">
           <Input
             ref={inputRef}

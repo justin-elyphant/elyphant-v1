@@ -1,4 +1,5 @@
 
+
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
     <div className="flex items-center gap-3">
       <span className="text-sm text-gray-600 flex-shrink-0">Shop by:</span>
       
-      {/* Category Dropdown - more compact and consistent */}
+      {/* Category Dropdown - with proper scrolling */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
@@ -83,12 +84,15 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
             <ChevronDown className="h-3 w-3 ml-1.5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg z-50">
+        <DropdownMenuContent 
+          align="start" 
+          className="w-56 bg-white border shadow-lg z-50 max-h-80 overflow-y-auto"
+        >
           {categories.map((category) => (
             <DropdownMenuItem
               key={category.value}
               onClick={() => handleCategorySelect(category.value)}
-              className="cursor-pointer hover:bg-gray-100 text-sm"
+              className="cursor-pointer hover:bg-gray-100 text-sm py-2.5 px-3"
             >
               {category.name}
             </DropdownMenuItem>
@@ -121,3 +125,4 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
 };
 
 export default CategoryFilterBar;
+

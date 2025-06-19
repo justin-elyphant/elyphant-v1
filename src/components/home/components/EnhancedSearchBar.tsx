@@ -19,41 +19,61 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [userInteracted, setUserInteracted] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout>();
+  const previousSearchParam = useRef<string | null>(null);
 
   // Enhanced sync with URL parameters - listen for all changes
   useEffect(() => {
     const searchParam = searchParams.get("search");
-    if (searchParam && searchParam !== query) {
-      setQuery(searchParam);
-      // Don't show suggestions for URL-populated queries
-      setUserInteracted(false);
-      setShowSuggestions(false);
-    } else if (!searchParam && query) {
-      // Clear query if no search param
+    const categoryParam = searchParams.get("category");
+    
+    // Only update if the search param actually changed
+    if (searchParam !== previousSearchParam.current) {
+      previousSearchParam.current = searchParam;
+      
+      if (searchParam && searchParam !== query) {
+        setQuery(searchParam);
+        // Reset user interaction flags for URL-populated queries
+        setUserInteracted(false);
+        setIsTyping(false);
+        setShowSuggestions(false);
+      } else if (!searchParam && query) {
+        // Clear query if no search param
+        setQuery("");
+        setUserInteracted(false);
+        setIsTyping(false);
+        setShowSuggestions(false);
+      }
+    }
+    
+    // If there's a category but no search, clear the search bar
+    if (categoryParam && !searchParam && query) {
       setQuery("");
       setUserInteracted(false);
+      setIsTyping(false);
       setShowSuggestions(false);
     }
-  }, [searchParams, location.pathname, location.search]);
+  }, [searchParams, location.pathname, location.search, query]);
 
   // Hide suggestions when navigating to different pages
   useEffect(() => {
     setShowSuggestions(false);
     setUserInteracted(false);
+    setIsTyping(false);
   }, [location.pathname]);
 
-  // Generate simple text-based suggestions only when user interacts
+  // Generate simple text-based suggestions only when user actively types
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
     debounceTimer.current = setTimeout(() => {
-      if (userInteracted && query.length > 0) {
+      // Only show suggestions if user is actively typing (not from URL changes)
+      if (userInteracted && isTyping && query.length > 0) {
         const searchSuggestions = getSearchSuggestions(query);
         setSuggestions(searchSuggestions);
-        // Only show suggestions if we have a query, suggestions, and user interacted
         setShowSuggestions(searchSuggestions.length > 0);
       } else {
         setSuggestions([]);
@@ -66,7 +86,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [query, userInteracted]);
+  }, [query, userInteracted, isTyping]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +96,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
       navigate(`/marketplace?${searchParams.toString()}`);
       setShowSuggestions(false);
       setUserInteracted(false);
+      setIsTyping(false);
     }
   };
 
@@ -86,16 +107,19 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     navigate(`/marketplace?${searchParams.toString()}`);
     setShowSuggestions(false);
     setUserInteracted(false);
+    setIsTyping(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
-    setUserInteracted(true); // Mark as user interaction
+    setUserInteracted(true);
+    setIsTyping(true); // Mark as actively typing
   };
 
   const handleInputFocus = () => {
-    setUserInteracted(true); // Mark as user interaction
-    if (suggestions.length > 0 && query.length > 0) {
+    setUserInteracted(true);
+    // Only show suggestions if user has been typing and we have suggestions
+    if (isTyping && suggestions.length > 0 && query.length > 0) {
       setShowSuggestions(true);
     }
   };
@@ -104,6 +128,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     // Delay hiding to allow clicks on suggestions
     setTimeout(() => {
       setShowSuggestions(false);
+      setIsTyping(false);
     }, 200);
   };
 
@@ -140,11 +165,11 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         </Button>
       </div>
 
-      {/* Simple text-based suggestions dropdown - only show on user interaction */}
+      {/* Simple text-based suggestions dropdown - only show when user is actively typing */}
       <SimpleSearchSuggestions
         query={query}
         suggestions={suggestions}
-        isVisible={showSuggestions && userInteracted}
+        isVisible={showSuggestions && userInteracted && isTyping}
         onSuggestionClick={handleSuggestionClick}
         mobile={mobile}
       />

@@ -1,7 +1,6 @@
-
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { Product } from "@/contexts/ProductContext";
-import type { ParsedContext, generateMultiCategoryQueries } from "./enhancedContextParser";
+import { ParsedContext, generateMultiCategoryQueries } from "./enhancedContextParser";
 
 export interface CategoryResults {
   categoryName: string;

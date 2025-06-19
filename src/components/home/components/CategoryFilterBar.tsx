@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,12 +17,19 @@ interface CategoryFilterBarProps {
 
 const categories = [
   { name: "All Categories", value: "", searchTerm: "" },
+  { name: "Baby", value: "baby", searchTerm: "best selling baby products" },
+  { name: "Beauty", value: "beauty", searchTerm: "best selling beauty products" },
+  { name: "Beauty & Personal Care", value: "beauty-personal-care", searchTerm: "best selling beauty products" },
+  { name: "Books", value: "books", searchTerm: "best selling books" },
+  { name: "Books & Media", value: "books-media", searchTerm: "best selling books" },
   { name: "Electronics", value: "electronics", searchTerm: "best selling electronics" },
   { name: "Fashion", value: "fashion", searchTerm: "best selling fashion" },
+  { name: "Gaming", value: "gaming", searchTerm: "best selling gaming" },
   { name: "Home & Garden", value: "home", searchTerm: "best selling home products" },
+  { name: "Kitchen", value: "kitchen", searchTerm: "best selling kitchen products" },
+  { name: "Music", value: "music", searchTerm: "best selling music" },
   { name: "Sports & Outdoors", value: "sports", searchTerm: "best selling sports equipment" },
-  { name: "Beauty & Personal Care", value: "beauty", searchTerm: "best selling beauty products" },
-  { name: "Books & Media", value: "books", searchTerm: "best selling books" },
+  { name: "Tech", value: "tech", searchTerm: "best selling tech products" },
   { name: "Toys & Games", value: "toys", searchTerm: "best selling toys" },
 ];
 

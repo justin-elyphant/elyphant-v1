@@ -17,6 +17,7 @@ export const useSearchState = () => {
   const [isListening, setIsListening] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSuggestionVisible, setIsSuggestionVisible] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionRef = useRef<HTMLDivElement>(null);
@@ -43,6 +44,8 @@ export const useSearchState = () => {
     suggestionRef,
     nicoleDropdownRef,
     isSuggestionVisible,
-    setIsSuggestionVisible
+    setIsSuggestionVisible,
+    hasUserInteracted,
+    setHasUserInteracted
   };
 };

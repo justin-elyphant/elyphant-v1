@@ -1,10 +1,9 @@
 
-import React, { useEffect } from "react";
-import { Input } from "@/components/ui/input";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Search, Bot, Sparkles } from "lucide-react";
-import { IOSSwitch } from "@/components/ui/ios-switch";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Search, Mic, MicOff } from "lucide-react";
 import VoiceInputButton from "../VoiceInputButton";
 
 interface SearchInputProps {
@@ -15,8 +14,10 @@ interface SearchInputProps {
   handleSubmit: (e: React.FormEvent) => void;
   handleVoiceInput: () => void;
   isListening: boolean;
-  mobile: boolean;
+  mobile?: boolean;
   inputRef: React.RefObject<HTMLInputElement>;
+  onFocus?: () => void;
+  onInput?: () => void;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({
@@ -27,74 +28,99 @@ const SearchInput: React.FC<SearchInputProps> = ({
   handleSubmit,
   handleVoiceInput,
   isListening,
-  mobile,
-  inputRef
+  mobile = false,
+  inputRef,
+  onFocus,
+  onInput
 }) => {
-  const placeholderText = isNicoleMode 
-    ? "Ask Nicole anything about gifts..." 
-    : "Search friends, products, or brands";
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    if (onInput) {
+      onInput();
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (onFocus) {
+      onFocus();
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="relative flex items-center w-full" autoComplete="off">
-      <div className={`relative flex-1 flex items-center transition-all duration-300 ${
-        isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
-      }`}>
-        {/* AI Mode Toggle */}
-        <div className="absolute left-3 flex items-center gap-2 z-10">
-          <Search className={`h-4 w-4 transition-colors duration-200 ${
-            isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-          }`} />
-          <IOSSwitch
-            size="sm"
-            checked={isNicoleMode}
-            onCheckedChange={handleModeToggle}
-            className="touch-manipulation"
-          />
-          <Bot className={`h-4 w-4 transition-colors duration-200 ${
-            isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-          }`} />
-          {isNicoleMode && (
-            <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
-          )}
-        </div>
-        
+    <form onSubmit={handleSubmit} className="relative flex items-center w-full">
+      <div className="relative flex-1 flex items-center">
+        {/* Nicole Mode Toggle - Desktop */}
+        {!mobile && (
+          <div className="absolute left-3 flex items-center gap-2 z-10">
+            <div className="flex items-center gap-1">
+              <span className={`text-xs font-medium ${isNicoleMode ? 'text-purple-600' : 'text-gray-500'}`}>
+                AI
+              </span>
+              <Switch
+                checked={isNicoleMode}
+                onCheckedChange={handleModeToggle}
+                className="scale-75"
+              />
+            </div>
+          </div>
+        )}
+
         <Input
           ref={inputRef}
           type="search"
-          placeholder={placeholderText}
-          className={`pl-32 pr-24 transition-all duration-300 ${
-            mobile ? "text-base py-3 h-12" : ""
-          } rounded-full border-gray-300 ${
+          placeholder={
             isNicoleMode 
-              ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
-              : 'focus:border-blue-500'
-          }`}
+              ? "Ask Nicole to find the perfect gift..." 
+              : "Search for products, brands, or friends"
+          }
+          className={`${
+            mobile 
+              ? "pl-4 pr-24 text-base py-3 h-12 rounded-lg" 
+              : `${isNicoleMode ? 'pl-16' : 'pl-10'} pr-24 h-10 rounded-lg`
+          } border-gray-300 focus:border-${isNicoleMode ? 'purple' : 'blue'}-500 focus:ring-${isNicoleMode ? 'purple' : 'blue'}-500`}
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
         />
+
+        {/* Search Icon - for non-mobile without Nicole mode */}
+        {!mobile && !isNicoleMode && (
+          <div className="absolute left-3 flex items-center">
+            <Search className="h-4 w-4 text-gray-400" />
+          </div>
+        )}
+
+        {/* Mobile Nicole Mode Toggle */}
+        {mobile && (
+          <div className="absolute right-16 flex items-center gap-1">
+            <span className={`text-xs font-medium ${isNicoleMode ? 'text-purple-600' : 'text-gray-500'}`}>
+              AI
+            </span>
+            <Switch
+              checked={isNicoleMode}
+              onCheckedChange={handleModeToggle}
+              className="scale-75"
+            />
+          </div>
+        )}
 
         {/* Voice Input Button */}
-        <VoiceInputButton
-          isListening={isListening}
-          onVoiceInput={handleVoiceInput}
-          mobile={mobile}
-        />
+        <div className="absolute right-12 flex items-center">
+          <VoiceInputButton
+            onVoiceInput={handleVoiceInput}
+            isListening={isListening}
+            className="h-6 w-6"
+          />
+        </div>
 
+        {/* Search Button */}
         <Button
           type="submit"
-          size="sm"
-          className={`absolute right-2 rounded-full px-3 py-1 text-xs font-medium h-5 transition-all duration-300 touch-manipulation ${
-            mobile ? "h-8 px-4" : ""
-          } ${
-            isNicoleMode 
-              ? "bg-transparent hover:bg-purple-50 text-purple-500 hover:text-purple-600 border-0"
-              : "bg-transparent hover:bg-blue-50 text-blue-500 hover:text-blue-600 border-0"
+          className={`absolute right-2 bg-${isNicoleMode ? 'purple' : 'blue'}-600 hover:bg-${isNicoleMode ? 'purple' : 'blue'}-700 text-white rounded-md px-3 py-1 text-sm font-medium ${
+            mobile ? 'h-8' : 'h-7'
           }`}
         >
-          {isNicoleMode ? "Ask" : "Search"}
-          {isNicoleMode && (
-            <Badge variant="secondary" className="ml-1 text-xs bg-white/20 h-4 px-1">AI</Badge>
-          )}
+          {isNicoleMode ? 'Ask' : 'Search'}
         </Button>
       </div>
     </form>

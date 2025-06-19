@@ -49,12 +49,16 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     suggestionRef,
     isSuggestionVisible,
     setIsSuggestionVisible,
-    nicoleDropdownRef
+    nicoleDropdownRef,
+    hasUserInteracted,
+    setHasUserInteracted
   } = useSearchState();
 
   // Handle location changes - clear state when navigating
   useEffect(() => {
     setShowSuggestions(false);
+    setHasUserInteracted(false);
+    setIsSuggestionVisible(false);
     const searchParams = new URLSearchParams(location.search);
     let urlSearchTerm = searchParams.get("search") || "";
     setQuery(urlSearchTerm);
@@ -98,7 +102,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       inputRef.current && !inputRef.current.contains(event.target) &&
       suggestionRef.current && !suggestionRef.current.contains(event.target)
     ) {
-      setIsSuggestionVisible(false); // Hide suggestions
+      setIsSuggestionVisible(false);
+      setHasUserInteracted(false);
     } 
   };
 
@@ -109,9 +114,24 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    setIsSuggestionVisible(true);
-  }, [query]);
+  // Only show suggestions when user has interacted AND we have results
+  const handleUserInteraction = () => {
+    setHasUserInteracted(true);
+    if (query.length > 1) {
+      setIsSuggestionVisible(true);
+    }
+  };
+
+  // Enhanced query change handler that tracks user interaction
+  const handleQueryChange = (newQuery: string) => {
+    setQuery(newQuery);
+    if (newQuery.length > 1) {
+      setHasUserInteracted(true);
+      setIsSuggestionVisible(true);
+    } else {
+      setIsSuggestionVisible(false);
+    }
+  };
 
   // Check URL params for AI mode activation with personalized greeting
   useEffect(() => {
@@ -160,23 +180,25 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setShowSuggestions(false);
     setShowNicoleDropdown(false);
     setShowMobileModal(false);
+    setHasUserInteracted(false);
+    setIsSuggestionVisible(false);
     if (inputRef.current) {
       inputRef.current.focus();
     }
   };
 
-  // Show unified search results when not in Nicole mode and have query
-  const shouldShowUnifiedSuggestions = !isNicoleMode && showSuggestions && (
+  // Show unified search results only when user has interacted and we have results
+  const shouldShowUnifiedSuggestions = hasUserInteracted && isSuggestionVisible && !isNicoleMode && showSuggestions && (
     unifiedResults.friends.length > 0 || 
     unifiedResults.products.length > 0 || 
     unifiedResults.brands.length > 0
   );
 
-  // Show Nicole suggestions when in Nicole mode
-  const shouldShowNicoleSuggestions = isNicoleMode && showSuggestions && suggestions.length > 0;
+  // Show Nicole suggestions when in Nicole mode and user has interacted
+  const shouldShowNicoleSuggestions = hasUserInteracted && isSuggestionVisible && isNicoleMode && showSuggestions && suggestions.length > 0;
 
-  // Show no results message when query exists but no results
-  const shouldShowNoResults = !isNicoleMode && query.length > 1 && !searchLoading && 
+  // Show no results message when query exists but no results and user has interacted
+  const shouldShowNoResults = hasUserInteracted && isSuggestionVisible && !isNicoleMode && query.length > 1 && !searchLoading && 
     unifiedResults.friends.length === 0 && 
     unifiedResults.products.length === 0 && 
     unifiedResults.brands.length === 0;
@@ -186,7 +208,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       {/* Search Bar */}
       <SearchInput
         query={query}
-        setQuery={setQuery}
+        setQuery={handleQueryChange}
         isNicoleMode={isNicoleMode}
         handleModeToggle={handleModeToggle}
         handleSubmit={(e) => handleSubmit(e, query)}
@@ -194,6 +216,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         isListening={isListening}
         mobile={mobile}
         inputRef={inputRef}
+        onFocus={handleUserInteraction}
+        onInput={handleUserInteraction}
       />
 
       {/* Mode Description */}
@@ -206,7 +230,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       )}
 
       {/* Search Results */}
-      {isSuggestionVisible && (
+      {(shouldShowUnifiedSuggestions || shouldShowNicoleSuggestions || shouldShowNoResults) && (
         <div ref={suggestionRef}>
           <SearchResults
             shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}

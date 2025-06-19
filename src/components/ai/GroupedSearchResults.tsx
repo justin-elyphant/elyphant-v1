@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Product } from "@/contexts/ProductContext";
 import type { GroupedSearchResults, CategoryResults } from "@/services/ai/multiCategorySearchService";
 import { useIsMobile } from "@/hooks/use-mobile";
+import ProductGrid from "@/components/marketplace/product-grid/ProductGrid";
+import { useProductInteractions } from "@/components/marketplace/product-grid/hooks/useProductInteractions";
 
 interface GroupedSearchResultsProps {
   groupedResults: GroupedSearchResults;
@@ -41,7 +43,7 @@ const GroupedSearchResultsComponent: React.FC<GroupedSearchResultsProps> = ({
         )}
       </div>
 
-      {/* Category Results */}
+      {/* Category Results using existing ProductGrid components */}
       {groupedResults.categories.map((category) => (
         <CategorySection
           key={category.categoryName}
@@ -68,18 +70,56 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   onCategoryExpand,
   isMobile
 }) => {
+  // Use existing product interactions hook for consistency
+  const { renderProductCard } = useProductInteractions(
+    category.products,
+    isMobile ? "grid" : "grid",
+    (productId: string) => {
+      const product = category.products.find(p => p.product_id === productId || p.id === productId);
+      if (product && onProductSelect) {
+        onProductSelect(product);
+      }
+    }
+  );
+
   const handleSeeMore = () => {
     if (onCategoryExpand) {
       onCategoryExpand(category.categoryName);
     }
   };
 
+  // Generate dynamic section title
+  const generateSectionTitle = (categoryName: string, displayName: string): string => {
+    const titleMap: Record<string, string> = {
+      'kitchen': 'Cooking Essentials',
+      'athletic-wear': 'Athletic Favorites',
+      'fitness': 'Fitness Gear',
+      'travel': 'Travel Essentials',
+      'electronics': 'Tech Favorites',
+      'books': 'Reading Corner',
+      'art-supplies': 'Creative Tools',
+      'outdoor-gear': 'Outdoor Adventures'
+    };
+
+    // Check if it's a brand-based category
+    if (displayName.toLowerCase().includes('lululemon')) return 'Lululemon Favorites';
+    if (displayName.toLowerCase().includes('apple')) return 'Apple Essentials';
+    if (displayName.toLowerCase().includes('nike')) return 'Nike Collection';
+    if (displayName.toLowerCase().includes('patagonia')) return 'Patagonia Gear';
+    if (displayName.toLowerCase().includes('vitamix')) return 'Vitamix Kitchen';
+    if (displayName.toLowerCase().includes('kitchenaid')) return 'KitchenAid Collection';
+
+    return titleMap[categoryName] || displayName;
+  };
+
+  const sectionTitle = generateSectionTitle(category.categoryName, category.displayName);
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-medium text-gray-900">
-            {category.displayName}
+            {sectionTitle}
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
@@ -108,20 +148,19 @@ const CategorySection: React.FC<CategorySectionProps> = ({
       </CardHeader>
       
       <CardContent className="pt-0">
-        <div className={`grid gap-3 ${
-          isMobile 
-            ? 'grid-cols-2' 
-            : 'grid-cols-4'
-        }`}>
-          {category.products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onSelect={onProductSelect}
-              compact={isMobile}
-            />
-          ))}
-        </div>
+        {/* Use existing ProductGrid component for consistency */}
+        <ProductGrid
+          products={category.products}
+          viewMode="grid"
+          renderProductCard={renderProductCard}
+          showGroupedSections={false}
+          onProductView={(productId: string) => {
+            const product = category.products.find(p => p.product_id === productId || p.id === productId);
+            if (product && onProductSelect) {
+              onProductSelect(product);
+            }
+          }}
+        />
         
         {category.products.length >= 4 && (
           <div className="mt-4 text-center">
@@ -129,79 +168,12 @@ const CategorySection: React.FC<CategorySectionProps> = ({
               onClick={handleSeeMore}
               className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
             >
-              See more {category.displayName.toLowerCase()} →
+              See more {sectionTitle.toLowerCase()} →
             </button>
           </div>
         )}
       </CardContent>
     </Card>
-  );
-};
-
-interface ProductCardProps {
-  product: Product;
-  onSelect?: (product: Product) => void;
-  compact: boolean;
-}
-
-const ProductCard: React.FC<ProductCardProps> = ({
-  product,
-  onSelect,
-  compact
-}) => {
-  const handleClick = () => {
-    if (onSelect) {
-      onSelect(product);
-    }
-  };
-
-  return (
-    <div
-      onClick={handleClick}
-      className="group cursor-pointer bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-purple-200 transition-all duration-200"
-    >
-      <div className={`aspect-square bg-gray-100 ${compact ? 'h-20' : 'h-32'}`}>
-        <img
-          src={product.image || "/placeholder.svg"}
-          alt={product.title || product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/placeholder.svg";
-          }}
-        />
-      </div>
-      
-      <div className="p-2">
-        <h4 className={`font-medium text-gray-900 line-clamp-2 ${
-          compact ? 'text-xs' : 'text-sm'
-        }`}>
-          {product.title || product.name}
-        </h4>
-        
-        <div className="flex items-center justify-between mt-1">
-          <span className={`font-semibold text-purple-600 ${
-            compact ? 'text-xs' : 'text-sm'
-          }`}>
-            ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
-          </span>
-          
-          {product.rating && (
-            <div className="flex items-center">
-              <span className="text-yellow-400 text-xs">★</span>
-              <span className="text-xs text-gray-500 ml-1">
-                {product.rating}
-              </span>
-            </div>
-          )}
-        </div>
-        
-        <p className={`text-gray-500 mt-1 ${
-          compact ? 'text-xs' : 'text-xs'
-        }`}>
-          {product.vendor}
-        </p>
-      </div>
-    </div>
   );
 };
 

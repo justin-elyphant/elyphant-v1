@@ -1,9 +1,10 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Product } from "@/contexts/ProductContext";
 import type { GroupedSearchResults, CategoryResults } from "@/services/ai/multiCategorySearchService";
+import { ConversationEnhancementService } from "@/services/ai/conversationEnhancementService";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ProductGrid from "@/components/marketplace/product-grid/ProductGrid";
 import { useProductInteractions } from "@/components/marketplace/product-grid/hooks/useProductInteractions";
@@ -12,12 +13,14 @@ interface GroupedSearchResultsProps {
   groupedResults: GroupedSearchResults;
   onProductSelect?: (product: Product) => void;
   onCategoryExpand?: (categoryName: string) => void;
+  onFollowUpRequest?: (message: string) => void;
 }
 
 const GroupedSearchResultsComponent: React.FC<GroupedSearchResultsProps> = ({
   groupedResults,
   onProductSelect,
-  onCategoryExpand
+  onCategoryExpand,
+  onFollowUpRequest
 }) => {
   const isMobile = useIsMobile();
 
@@ -50,9 +53,18 @@ const GroupedSearchResultsComponent: React.FC<GroupedSearchResultsProps> = ({
           category={category}
           onProductSelect={onProductSelect}
           onCategoryExpand={onCategoryExpand}
+          onFollowUpRequest={onFollowUpRequest}
           isMobile={isMobile}
         />
       ))}
+
+      {/* Cross-Category Suggestions */}
+      {groupedResults.categories.length > 1 && (
+        <CrossCategorySuggestionsSection 
+          categories={groupedResults.categories}
+          onFollowUpRequest={onFollowUpRequest}
+        />
+      )}
     </div>
   );
 };
@@ -61,6 +73,7 @@ interface CategorySectionProps {
   category: CategoryResults;
   onProductSelect?: (product: Product) => void;
   onCategoryExpand?: (categoryName: string) => void;
+  onFollowUpRequest?: (message: string) => void;
   isMobile: boolean;
 }
 
@@ -68,6 +81,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   category,
   onProductSelect,
   onCategoryExpand,
+  onFollowUpRequest,
   isMobile
 }) => {
   // Use existing product interactions hook for consistency
@@ -85,6 +99,23 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   const handleSeeMore = () => {
     if (onCategoryExpand) {
       onCategoryExpand(category.categoryName);
+    }
+  };
+
+  const handleShowMoreItems = () => {
+    const categoryDisplayName = generateSectionTitle(category.categoryName, category.displayName);
+    const followUpMessage = `Show me more ${categoryDisplayName.toLowerCase()} items`;
+    
+    // Track the interaction
+    ConversationEnhancementService.trackCategoryInteraction({
+      categoryName: category.categoryName,
+      action: 'requested_more',
+      timestamp: new Date(),
+      products: category.products
+    });
+
+    if (onFollowUpRequest) {
+      onFollowUpRequest(followUpMessage);
     }
   };
 
@@ -162,16 +193,101 @@ const CategorySection: React.FC<CategorySectionProps> = ({
           }}
         />
         
-        {category.products.length >= 4 && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={handleSeeMore}
-              className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
+        {/* Enhanced Action Buttons */}
+        <div className="mt-4 flex flex-col sm:flex-row gap-2">
+          {category.products.length >= 4 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShowMoreItems}
+              className="flex-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50 border-purple-200"
             >
-              See more {sectionTitle.toLowerCase()} →
-            </button>
-          </div>
-        )}
+              Show more {sectionTitle.toLowerCase()}
+            </Button>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSeeMore}
+            className="flex-1 text-gray-600 hover:text-gray-700"
+          >
+            View all in marketplace →
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+interface CrossCategorySuggestionsProps {
+  categories: CategoryResults[];
+  onFollowUpRequest?: (message: string) => void;
+}
+
+const CrossCategorySuggestionsSection: React.FC<CrossCategorySuggestionsProps> = ({
+  categories,
+  onFollowUpRequest
+}) => {
+  // Generate cross-category suggestions based on current categories
+  const suggestions = React.useMemo(() => {
+    const allSuggestions: any[] = [];
+    
+    categories.forEach(category => {
+      const crossSuggestions = ConversationEnhancementService.generateCrossCategorySuggestions(
+        category.categoryName,
+        { interests: [], detectedBrands: [], categoryMappings: [] } // Simplified context
+      );
+      allSuggestions.push(...crossSuggestions);
+    });
+
+    // Remove duplicates and get top 2
+    const uniqueSuggestions = allSuggestions
+      .filter((suggestion, index, self) => 
+        index === self.findIndex(s => s.fromCategory === suggestion.fromCategory && s.toCategory === suggestion.toCategory)
+      )
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 2);
+
+    return uniqueSuggestions;
+  }, [categories]);
+
+  if (suggestions.length === 0) return null;
+
+  return (
+    <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-medium text-purple-900 flex items-center gap-2">
+          <span className="text-purple-500">✨</span>
+          You might also like
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          {suggestions.map((suggestion, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-purple-100">
+              <div className="flex-1">
+                <p className="text-sm text-gray-700">
+                  Since you're interested in <span className="font-medium text-purple-700">{suggestion.fromCategory}</span>, 
+                  you might enjoy <span className="font-medium text-purple-700">{suggestion.toCategory}</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">{suggestion.reasoning}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (onFollowUpRequest) {
+                    onFollowUpRequest(`Show me ${suggestion.toCategory} items that would work for ${suggestion.fromCategory} enthusiasts`);
+                  }
+                }}
+                className="ml-3 text-purple-600 border-purple-200 hover:bg-purple-50"
+              >
+                Explore
+              </Button>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

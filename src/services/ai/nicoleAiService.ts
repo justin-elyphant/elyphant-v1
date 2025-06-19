@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { parseEnhancedContext, ParsedContext } from "./enhancedContextParser";
 import { performMultiCategorySearch, GroupedSearchResults } from "./multiCategorySearchService";
+import { ConversationEnhancementService, CategoryFollowUpRequest } from "./conversationEnhancementService";
 
 export interface NicoleMessage {
   role: 'user' | 'assistant';
@@ -36,6 +36,7 @@ export interface NicoleResponse {
   generateSearch: boolean;
   showSearchButton?: boolean;
   groupedResults?: GroupedSearchResults;
+  followUpRequest?: CategoryFollowUpRequest;
 }
 
 export interface ContextualLink {
@@ -163,17 +164,53 @@ function getAgeAppropriateTerms(age: number): string {
 }
 
 /**
- * Enhanced chat with Nicole that supports multi-category search
+ * Enhanced chat with Nicole that supports multi-category search and conversation enhancement
  */
 export async function chatWithNicole(
   message: string,
   context: NicoleContext,
   conversationHistory: NicoleMessage[] = []
-): Promise<NicoleResponse & { showSearchButton?: boolean; groupedResults?: GroupedSearchResults }> {
+): Promise<NicoleResponse & { showSearchButton?: boolean; groupedResults?: GroupedSearchResults; followUpRequest?: CategoryFollowUpRequest }> {
   console.log('🤖 Enhanced Nicole AI Service - Processing message:', message);
   console.log('📊 Current context:', context);
 
   try {
+    // Check for category-specific follow-up requests first
+    const followUpRequest = ConversationEnhancementService.parseFollowUpRequest(
+      message, 
+      ConversationEnhancementService['conversationState']?.previousSearchResults
+    );
+
+    if (followUpRequest) {
+      console.log('🎯 Detected category follow-up request:', followUpRequest);
+      
+      // Generate follow-up message
+      const followUpMessage = ConversationEnhancementService.generateFollowUpMessage(followUpRequest);
+      
+      // Track the interaction
+      ConversationEnhancementService.trackCategoryInteraction({
+        categoryName: followUpRequest.categoryName,
+        action: 'requested_more',
+        timestamp: new Date()
+      });
+
+      // Perform refined search based on the request
+      const parsedContext = parseEnhancedContext(message, context);
+      const refinedResults = await performMultiCategorySearch(parsedContext, 6); // More items for follow-ups
+      
+      return {
+        message: followUpMessage,
+        context: {
+          ...context,
+          conversationPhase: 'presenting_results' as ConversationPhase
+        },
+        generateSearch: true,
+        showSearchButton: false,
+        groupedResults: refinedResults,
+        followUpRequest
+      };
+    }
+
     // Enhanced context parsing
     const parsedContext = parseEnhancedContext(message, context);
     console.log('🔍 Enhanced context analysis:', parsedContext);
@@ -183,13 +220,15 @@ export async function chatWithNicole(
         message,
         context: {
           ...parsedContext,
-          conversationPhase: determineConversationPhase(parsedContext)
+          conversationPhase: determineConversationPhase(parsedContext),
+          preferredCategories: ConversationEnhancementService.getPreferredCategories()
         },
         conversationHistory,
         enhancedFeatures: {
           multiCategorySearch: true,
           brandCategoryMapping: true,
-          groupedResults: true
+          groupedResults: true,
+          conversationEnhancement: true
         }
       }
     });
@@ -212,6 +251,9 @@ export async function chatWithNicole(
       try {
         groupedResults = await performMultiCategorySearch(parsedContext, 4);
         console.log('✅ Multi-category search complete:', groupedResults);
+        
+        // Update conversation state with results
+        ConversationEnhancementService.updateConversationState(groupedResults);
       } catch (searchError) {
         console.error('❌ Multi-category search error:', searchError);
         // Continue without grouped results

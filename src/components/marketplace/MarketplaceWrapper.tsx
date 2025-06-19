@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MarketplaceContent from "./MarketplaceContent";
@@ -5,7 +6,8 @@ import IntegratedSearchSection from "./IntegratedSearchSection";
 import SubtleCountdownBanner from "./SubtleCountdownBanner";
 import ResultsSummaryBar from "./ResultsSummaryBar";
 import MarketplaceErrorBoundary from "./error/ErrorBoundary";
-import NicoleMarketplaceWidget from "@/components/ai/marketplace/NicoleMarketplaceWidget";
+// TEMPORARILY DISABLED: NicoleMarketplaceWidget - Re-enable when technical issues are resolved
+// import NicoleMarketplaceWidget from "@/components/ai/marketplace/NicoleMarketplaceWidget";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
@@ -33,8 +35,8 @@ const MarketplaceWrapper = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Nicole widget state
-  const [isNicoleOpen, setIsNicoleOpen] = useState(false);
+  // TEMPORARILY DISABLED: Nicole widget state - Re-enable when technical issues are resolved
+  // const [isNicoleOpen, setIsNicoleOpen] = useState(false);
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
@@ -190,12 +192,13 @@ const MarketplaceWrapper = () => {
     window.location.reload();
   };
 
-  const handleNicoleSearchSuggestion = (query: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("search", query);
-    newParams.delete("category");
-    setSearchParams(newParams, { replace: true });
-  };
+  // TEMPORARILY DISABLED: Nicole search suggestion handler - Re-enable when technical issues are resolved
+  // const handleNicoleSearchSuggestion = (query: string) => {
+  //   const newParams = new URLSearchParams(searchParams);
+  //   newParams.set("search", query);
+  //   newParams.delete("category");
+  //   setSearchParams(newParams, { replace: true });
+  // };
 
   return (
     <MarketplaceErrorBoundary>
@@ -227,7 +230,8 @@ const MarketplaceWrapper = () => {
           </div>
         </FullWidthSection>
 
-        {/* Nicole Marketplace Widget - show when there are search results or user came from Nicole */}
+        {/* TEMPORARILY DISABLED: Nicole Marketplace Widget - Re-enable when technical issues are resolved */}
+        {/* To re-enable, uncomment the following block and restore the associated state and handlers above:
         {(searchTerm && products.length > 0) && (
           <NicoleMarketplaceWidget 
             isOpen={isNicoleOpen}
@@ -238,6 +242,7 @@ const MarketplaceWrapper = () => {
             isFromNicole={isFromNicole}
           />
         )}
+        */}
       </div>
     </MarketplaceErrorBoundary>
   );

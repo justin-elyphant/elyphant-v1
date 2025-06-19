@@ -2,7 +2,8 @@
 import React from "react";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
-import FloatingNicoleWidget from "@/components/ai/enhanced/FloatingNicoleWidget";
+// TEMPORARILY DISABLED: FloatingNicoleWidget - Re-enable when technical issues are resolved
+// import FloatingNicoleWidget from "@/components/ai/enhanced/FloatingNicoleWidget";
 import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
@@ -18,12 +19,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   headerClassName,
   footerClassName
 }) => {
-  const handleNavigateToResults = (searchQuery: string) => {
-    // Navigate to marketplace with search query
-    const searchParams = new URLSearchParams();
-    searchParams.set("search", searchQuery);
-    window.location.href = `/marketplace?${searchParams.toString()}`;
-  };
+  // TEMPORARILY DISABLED: NavigateToResults handler for FloatingNicoleWidget
+  // const handleNavigateToResults = (searchQuery: string) => {
+  //   // Navigate to marketplace with search query
+  //   const searchParams = new URLSearchParams();
+  //   searchParams.set("search", searchQuery);
+  //   window.location.href = `/marketplace?${searchParams.toString()}`;
+  // };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -33,12 +35,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       </main>
       <Footer className={footerClassName} />
       
-      {/* Floating Nicole Chat Widget */}
+      {/* TEMPORARILY DISABLED: Floating Nicole Chat Widget - Re-enable when technical issues are resolved */}
+      {/* 
       <FloatingNicoleWidget 
         position="bottom-right"
         defaultMinimized={true}
         onNavigateToResults={handleNavigateToResults}
       />
+      */}
     </div>
   );
 };

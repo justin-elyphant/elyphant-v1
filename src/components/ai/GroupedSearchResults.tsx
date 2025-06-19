@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ const GroupedSearchResultsComponent: React.FC<GroupedSearchResultsProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Enhanced Header with Search Metrics */}
       <div className="text-center">
         <h3 className="text-lg font-semibold text-gray-900">
           Gift Ideas by Category
@@ -31,8 +33,15 @@ const GroupedSearchResultsComponent: React.FC<GroupedSearchResultsProps> = ({
         <p className="text-sm text-gray-600 mt-1">
           Found {groupedResults.totalResults} products across {groupedResults.categories.length} categories
         </p>
+        {groupedResults.searchMetrics && (
+          <p className="text-xs text-gray-500 mt-1">
+            Search completed in {(groupedResults.searchMetrics.totalSearchTime / 1000).toFixed(2)}s • 
+            {groupedResults.searchMetrics.successfulSearches} successful searches
+          </p>
+        )}
       </div>
 
+      {/* Category Results */}
       {groupedResults.categories.map((category) => (
         <CategorySection
           key={category.categoryName}
@@ -72,13 +81,30 @@ const CategorySection: React.FC<CategorySectionProps> = ({
           <CardTitle className="text-lg font-medium text-gray-900">
             {category.displayName}
           </CardTitle>
-          <Badge variant="secondary" className="text-xs">
-            {category.resultCount} items
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">
+              {category.resultCount} items
+            </Badge>
+            {category.relevanceScore && (
+              <Badge 
+                variant="outline" 
+                className="text-xs text-green-600 border-green-200"
+              >
+                {Math.round(category.relevanceScore)}% match
+              </Badge>
+            )}
+          </div>
         </div>
-        <p className="text-xs text-gray-500">
-          Search: "{category.searchQuery}"
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            Search: "{category.searchQuery}"
+          </p>
+          {category.searchTime && (
+            <p className="text-xs text-gray-400">
+              {category.searchTime}ms
+            </p>
+          )}
+        </div>
       </CardHeader>
       
       <CardContent className="pt-0">
@@ -101,7 +127,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
           <div className="mt-4 text-center">
             <button
               onClick={handleSeeMore}
-              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+              className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
             >
               See more {category.displayName.toLowerCase()} →
             </button>
@@ -132,7 +158,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={handleClick}
-      className="group cursor-pointer bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
+      className="group cursor-pointer bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-purple-200 transition-all duration-200"
     >
       <div className={`aspect-square bg-gray-100 ${compact ? 'h-20' : 'h-32'}`}>
         <img

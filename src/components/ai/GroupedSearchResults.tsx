@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/contexts/ProductContext";
-import { GroupedSearchResults, CategoryResults } from "@/services/ai/multiCategorySearchService";
+import type { GroupedSearchResults, CategoryResults } from "@/services/ai/multiCategorySearchService";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GroupedSearchResultsProps {
@@ -12,7 +11,7 @@ interface GroupedSearchResultsProps {
   onCategoryExpand?: (categoryName: string) => void;
 }
 
-const GroupedSearchResults: React.FC<GroupedSearchResultsProps> = ({
+const GroupedSearchResultsComponent: React.FC<GroupedSearchResultsProps> = ({
   groupedResults,
   onProductSelect,
   onCategoryExpand
@@ -180,4 +179,4 @@ const ProductCard: React.FC<ProductCardProps> = ({
   );
 };
 
-export default GroupedSearchResults;
+export default GroupedSearchResultsComponent;

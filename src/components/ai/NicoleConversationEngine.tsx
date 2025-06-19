@@ -36,6 +36,8 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
 
   useEffect(() => {
     if (initialMessage && messages.length === 0) {
@@ -43,24 +45,48 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }
   }, [initialMessage]);
 
-  // Enhanced auto-scroll logic
+  // Smart auto-scroll logic - only scroll when new messages are added and user is near bottom
   useEffect(() => {
-    const scrollToBottom = () => {
-      if (scrollContainerRef.current) {
-        const container = scrollContainerRef.current;
-        container.scrollTop = container.scrollHeight;
+    const shouldAutoScroll = messages.length > lastMessageCount && !isUserScrolling;
+    
+    if (shouldAutoScroll && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      
+      if (isNearBottom) {
+        console.log('🔄 Auto-scrolling to bottom for new message');
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          }
+        }, 100);
       }
+    }
+    
+    setLastMessageCount(messages.length);
+  }, [messages, isLoading, groupedResults, lastMessageCount, isUserScrolling]);
+
+  // Handle scroll events to detect user scrolling
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+    
+    const handleScroll = () => {
+      setIsUserScrolling(true);
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        setIsUserScrolling(false);
+      }, 1000);
     };
 
-    // Multiple scroll attempts for better reliability
-    const timeoutIds = [
-      setTimeout(scrollToBottom, 50),
-      setTimeout(scrollToBottom, 150),
-      setTimeout(scrollToBottom, 300)
-    ];
-
-    return () => timeoutIds.forEach(id => clearTimeout(id));
-  }, [messages, isLoading, groupedResults]);
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
 
   // Maintain input focus
   useEffect(() => {
@@ -72,19 +98,78 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }
   }, [isOpen, isLoading, messages]);
 
-  // Debug logging for search button state
+  // Enhanced button display logic with comprehensive fallback
   useEffect(() => {
-    console.log('🔍 Search button state changed:', showSearchButton);
-    console.log('🔍 Current context:', context);
-  }, [showSearchButton, context]);
+    console.log('🔍 Button display logic check:', {
+      showSearchButton,
+      context,
+      lastMessage: messages[messages.length - 1]?.content
+    });
+
+    if (showSearchButton) {
+      console.log('✅ Search button already shown via AI response');
+      return;
+    }
+
+    // Fallback 1: Pattern detection in last AI message
+    const lastAiMessage = messages.filter(m => m.role === 'assistant').pop();
+    if (lastAiMessage) {
+      const hasReadinessPhrase = detectReadinessPatterns(lastAiMessage.content);
+      if (hasReadinessPhrase) {
+        console.log('🎯 Fallback pattern detection activated search button');
+        setShowSearchButton(true);
+        return;
+      }
+    }
+
+    // Fallback 2: Context-based logic
+    const hasMinimumContext = Boolean(
+      (context.recipient || context.relationship) &&
+      (context.interests?.length > 0 || context.detectedBrands?.length > 0) &&
+      context.occasion
+    );
+
+    if (hasMinimumContext) {
+      console.log('🎯 Context-based fallback activated search button');
+      setShowSearchButton(true);
+    }
+  }, [showSearchButton, context, messages]);
+
+  // Enhanced pattern detection for readiness phrases
+  const detectReadinessPatterns = (message: string): boolean => {
+    const readinessPatterns = [
+      /ready to see (your )?gifts/i,
+      /let's find (some )?gifts/i,
+      /search for gifts/i,
+      /show you (some )?options/i,
+      /browse (the )?marketplace/i,
+      /time to shop/i,
+      /perfect.*let's go/i,
+      /ready to explore/i,
+      /ready to search/i,
+      /find the perfect gift/i,
+      /great choices ahead/i
+    ];
+    
+    return readinessPatterns.some(pattern => pattern.test(message));
+  };
 
   const handleSearchInMarketplace = () => {
-    console.log('🎯 Search button clicked, navigating to marketplace');
+    console.log('🎯 Search button clicked - navigating to marketplace');
+    console.log('🔍 onNavigateToMarketplace prop:', onNavigateToMarketplace);
+    console.log('🔍 Current context:', context);
+    
     if (onNavigateToMarketplace) {
-      const searchQuery = generateSearchQuery(context);
-      console.log('🔍 Generated search query:', searchQuery);
-      onNavigateToMarketplace(searchQuery);
-      onClose();
+      try {
+        const searchQuery = generateSearchQuery(context);
+        console.log('🔍 Generated search query:', searchQuery);
+        onNavigateToMarketplace(searchQuery);
+        onClose();
+      } catch (error) {
+        console.error('❌ Error navigating to marketplace:', error);
+      }
+    } else {
+      console.error('❌ onNavigateToMarketplace prop not provided');
     }
   };
 
@@ -103,13 +188,6 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
     setIsLoading(true);
-
-    // Scroll after sending message
-    setTimeout(() => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-      }
-    }, 100);
 
     try {
       console.log('🤖 Calling chatWithNicole with context:', context);
@@ -258,7 +336,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
         </div>
       </div>
 
-      {/* Enhanced Search Button with Debug Info */}
+      {/* Enhanced Search Button with improved click handler */}
       {showSearchButton && (
         <div className="p-4 border-t bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
           <Button

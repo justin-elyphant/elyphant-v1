@@ -79,6 +79,16 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
     ? { transform: `translateY(${Math.max(0, currentY - startY)}px)` }
     : {};
 
+  // Enhanced navigation handler with error handling
+  const handleNavigateToMarketplace = (searchQuery: string) => {
+    console.log('📱 Mobile modal - navigating to marketplace:', searchQuery);
+    try {
+      onNavigateToResults(searchQuery);
+    } catch (error) {
+      console.error('❌ Mobile navigation error:', error);
+    }
+  };
+
   if (!isMobile) return null;
 
   return (
@@ -143,7 +153,7 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
             isOpen={true}
             initialMessage={initialQuery}
             onClose={onClose}
-            onNavigateToMarketplace={onNavigateToResults}
+            onNavigateToMarketplace={handleNavigateToMarketplace}
           />
         </div>
         

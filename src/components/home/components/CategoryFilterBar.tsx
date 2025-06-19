@@ -1,5 +1,4 @@
 
-
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -100,10 +99,17 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Quick category buttons for popular categories - more compact */}
+      {/* Quick category buttons for popular categories - expanded to 6 */}
       {!mobile && !isMobile && (
         <div className="flex items-center gap-1.5 ml-1">
-          {categories.slice(1, 5).map((category) => (
+          {[
+            categories.find(cat => cat.value === "electronics"),
+            categories.find(cat => cat.value === "fashion"),
+            categories.find(cat => cat.value === "beauty-personal-care"),
+            categories.find(cat => cat.value === "gaming"),
+            categories.find(cat => cat.value === "tech"),
+            categories.find(cat => cat.value === "toys")
+          ].filter(Boolean).map((category) => (
             <Button
               key={category.value}
               variant="ghost"
@@ -125,4 +131,3 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
 };
 
 export default CategoryFilterBar;
-

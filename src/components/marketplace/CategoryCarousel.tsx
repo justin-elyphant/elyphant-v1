@@ -11,16 +11,16 @@ import {
 import { Smartphone, Home, Shirt, Dumbbell, Gamepad2, Heart, Baby, Coffee, Book, Music } from "lucide-react";
 
 const categories = [
-  { name: "Tech", icon: Smartphone, param: "electronics", searchTerm: "best selling electronics" },
-  { name: "Home", icon: Home, param: "home", searchTerm: "best selling home products" },
-  { name: "Fashion", icon: Shirt, param: "fashion", searchTerm: "best selling fashion" },
-  { name: "Sports", icon: Dumbbell, param: "sports", searchTerm: "best selling sports equipment" },
-  { name: "Gaming", icon: Gamepad2, param: "gaming", searchTerm: "best selling gaming" },
-  { name: "Beauty", icon: Heart, param: "beauty", searchTerm: "best selling beauty products" },
-  { name: "Baby", icon: Baby, param: "baby", searchTerm: "best selling baby products" },
-  { name: "Kitchen", icon: Coffee, param: "kitchen", searchTerm: "best selling kitchen products" },
-  { name: "Books", icon: Book, param: "books", searchTerm: "best selling books" },
-  { name: "Music", icon: Music, param: "music", searchTerm: "best selling music" },
+  { name: "Tech", icon: Smartphone, param: "electronics" },
+  { name: "Home", icon: Home, param: "home" },
+  { name: "Fashion", icon: Shirt, param: "fashion" },
+  { name: "Sports", icon: Dumbbell, param: "sports" },
+  { name: "Gaming", icon: Gamepad2, param: "gaming" },
+  { name: "Beauty", icon: Heart, param: "beauty" },
+  { name: "Baby", icon: Baby, param: "baby" },
+  { name: "Kitchen", icon: Coffee, param: "kitchen" },
+  { name: "Books", icon: Book, param: "books" },
+  { name: "Music", icon: Music, param: "music" },
 ];
 
 interface CategoryCarouselProps {
@@ -32,17 +32,16 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ className = "" }) =
   const isMobile = useIsMobile();
   const selectedCategory = searchParams.get("category");
 
-  const handleCategoryClick = (categoryParam: string, searchTerm: string) => {
+  const handleCategoryClick = (categoryParam: string) => {
     const newParams = new URLSearchParams(searchParams);
     
     // If clicking the same category, remove it (toggle off)
     if (selectedCategory === categoryParam) {
       newParams.delete("category");
-      newParams.delete("search");
     } else {
-      // Use the enhanced search term for better results
-      newParams.set("search", searchTerm);
       newParams.set("category", categoryParam);
+      // Clear search when selecting a category
+      newParams.delete("search");
     }
     
     setSearchParams(newParams, { replace: true });
@@ -65,7 +64,7 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ className = "" }) =
                   variant={selectedCategory === category.param ? "default" : "outline"}
                   size="sm"
                   className="whitespace-nowrap h-10 px-4 flex items-center gap-2"
-                  onClick={() => handleCategoryClick(category.param, category.searchTerm)}
+                  onClick={() => handleCategoryClick(category.param)}
                 >
                   <category.icon className="h-4 w-4" />
                   {category.name}
@@ -88,7 +87,7 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ className = "" }) =
             variant={selectedCategory === category.param ? "default" : "outline"}
             size="sm"
             className="h-10 px-4 flex items-center gap-2"
-            onClick={() => handleCategoryClick(category.param, category.searchTerm)}
+            onClick={() => handleCategoryClick(category.param)}
           >
             <category.icon className="h-4 w-4" />
             {category.name}

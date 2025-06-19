@@ -201,19 +201,20 @@ export async function chatWithNicole(
 
     console.log('✅ Nicole AI Response received:', data);
 
-    // Enhanced response with smart CTA logic
-    const enhancedResponse = {
-      ...data,
-      showSearchButton: data.showSearchButton || contextAnalysis.shouldShowCTA,
+    // Map the response from the edge function to our expected format
+    const mappedResponse = {
+      message: data.response || data.message || "I'm here to help you find the perfect gift! What are you looking for?",
       context: {
-        ...data.context,
-        conversationPhase: contextAnalysis.phase
-      }
+        ...data.context || context,
+        conversationPhase: data.conversationPhase || contextAnalysis.phase
+      },
+      generateSearch: data.showSearchButton || false,
+      showSearchButton: data.showSearchButton || false
     };
 
-    console.log('🎯 Enhanced Response with CTA Logic:', enhancedResponse);
+    console.log('🎯 Mapped Response:', mappedResponse);
 
-    return enhancedResponse;
+    return mappedResponse;
 
   } catch (error) {
     console.error('💥 Nicole chat error:', error);

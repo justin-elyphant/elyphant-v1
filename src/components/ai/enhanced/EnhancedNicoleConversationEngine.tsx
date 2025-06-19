@@ -7,7 +7,6 @@ import { Send, Loader2, MessageCircle, X, Minimize2, Maximize2 } from "lucide-re
 import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useSmartCTALogic } from "./hooks/useSmartCTALogic";
 import SearchButton from "./SearchButton";
 import { useNavigate } from "react-router-dom";
 import { generateEnhancedSearchQuery } from "@/services/ai/enhancedSearchQueryGenerator";
@@ -47,11 +46,11 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   const [context, setContext] = useState<EnhancedNicoleContext>({});
   const [conversationHistory, setConversationHistory] = useState<NicoleMessage[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showCTAButton, setShowCTAButton] = useState(false);
   
   const { user } = useAuth();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { shouldShowCTAButton, extractContextFromMessage } = useSmartCTALogic();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,42 +66,42 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     setConversation(prev => [...prev, message]);
   }, []);
 
-  const detectBrands = useCallback((message: string): string[] => {
-    const brands = ['Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'Microsoft', 'Google'];
-    return brands.filter(brand => 
-      message.toLowerCase().includes(brand.toLowerCase())
-    );
-  }, []);
+  // Simplified context extraction from user messages
+  const extractContextFromMessage = useCallback((message: string, currentContext: EnhancedNicoleContext): EnhancedNicoleContext => {
+    const lowerMessage = message.toLowerCase();
+    let updatedContext = { ...currentContext };
 
-  const detectAgeGroup = useCallback((message: string): string | undefined => {
-    const agePatterns = [
-      { pattern: /toddler|baby|infant/i, group: 'toddlers' },
-      { pattern: /kid|child|children/i, group: 'kids' },
-      { pattern: /teen|teenager|adolescent/i, group: 'teens' },
-      { pattern: /young adult|college/i, group: 'young adults' },
-      { pattern: /adult|grown.?up/i, group: 'adults' },
-      { pattern: /senior|elderly|older/i, group: 'seniors' }
+    // Basic relationship detection
+    const relationshipPatterns = [
+      { pattern: /\bmy (?:wife|husband|spouse|partner)\b/i, recipient: 'spouse', relationship: 'spouse' },
+      { pattern: /\bmy (?:mom|mother|dad|father)\b/i, recipient: 'parent', relationship: 'parent' },
+      { pattern: /\bmy (?:son|daughter|child|kid)\b/i, recipient: 'child', relationship: 'child' },
+      { pattern: /\bmy (?:friend|buddy|pal)\b/i, recipient: 'friend', relationship: 'friend' },
+      { pattern: /\bmy (?:brother|sister|sibling)\b/i, recipient: 'sibling', relationship: 'sibling' }
     ];
 
-    for (const { pattern, group } of agePatterns) {
+    for (const { pattern, recipient, relationship } of relationshipPatterns) {
       if (pattern.test(message)) {
-        return group;
+        updatedContext.recipient = recipient;
+        updatedContext.relationship = relationship;
+        break;
       }
     }
-    return undefined;
+
+    // Basic occasion detection
+    if (lowerMessage.includes('birthday')) updatedContext.occasion = 'birthday';
+    if (lowerMessage.includes('christmas')) updatedContext.occasion = 'christmas';
+    if (lowerMessage.includes('anniversary')) updatedContext.occasion = 'anniversary';
+
+    // Basic interest detection
+    const interests = ['yoga', 'cooking', 'fitness', 'reading', 'music', 'art', 'sports', 'gaming', 'travel'];
+    const foundInterests = interests.filter(interest => lowerMessage.includes(interest));
+    if (foundInterests.length > 0) {
+      updatedContext.interests = [...new Set([...(updatedContext.interests || []), ...foundInterests])];
+    }
+
+    return updatedContext;
   }, []);
-
-  const updateContextFromMessage = useCallback((message: string, currentContext: EnhancedNicoleContext): EnhancedNicoleContext => {
-    const extractedContext = extractContextFromMessage(message, currentContext);
-    const detectedBrands = [...(currentContext.detectedBrands || []), ...detectBrands(message)];
-    const ageGroup = detectAgeGroup(message) || currentContext.ageGroup;
-
-    return {
-      ...extractedContext,
-      detectedBrands: [...new Set(detectedBrands)],
-      ageGroup
-    };
-  }, [extractContextFromMessage, detectBrands, detectAgeGroup]);
 
   const startConversation = useCallback(() => {
     const greetingMessage: ConversationMessage = {
@@ -136,25 +135,25 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     setIsGenerating(true);
 
     try {
-      // Update context based on user message
-      const updatedContext = updateContextFromMessage(message, context);
-      setContext(updatedContext);
+      // Extract context from user message (as backup)
+      const extractedContext = extractContextFromMessage(message, context);
+      setContext(extractedContext);
 
-      console.log('🔄 Enhanced Nicole: Sending message with updated context', {
+      console.log('🔄 Enhanced Nicole: Sending message with context', {
         message,
-        context: updatedContext,
+        context: extractedContext,
         conversationHistory: conversationHistory.length
       });
 
-      // Get AI response with proper parameter order
-      const aiResponse = await chatWithNicole(message, updatedContext, conversationHistory);
+      // Get AI response - fix the response property name issue
+      const aiResponse = await chatWithNicole(message, extractedContext, conversationHistory);
       
       console.log('✅ Enhanced Nicole: Received AI response', aiResponse);
 
-      // Add Nicole's response
+      // Add Nicole's response - use the correct property name
       const nicoleMessage: ConversationMessage = {
         type: "nicole",
-        content: aiResponse.message,
+        content: aiResponse.message, // This should work now
         timestamp: new Date()
       };
       addMessage(nicoleMessage);
@@ -166,15 +165,19 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       };
       setConversationHistory(prev => [...prev, nicoleAiMessage]);
 
-      // Update context with AI response
+      // Update context with AI response and show CTA based on AI decision
       if (aiResponse.context) {
-        const contextWithBrands = {
+        const mergedContext = {
+          ...extractedContext,
           ...aiResponse.context,
-          detectedBrands: updatedContext.detectedBrands || [],
-          ageGroup: updatedContext.ageGroup
+          detectedBrands: extractedContext.detectedBrands || [],
+          ageGroup: extractedContext.ageGroup
         };
-        setContext(contextWithBrands);
+        setContext(mergedContext);
       }
+
+      // Use ONLY the AI's decision for showing the CTA button
+      setShowCTAButton(aiResponse.showSearchButton || false);
 
     } catch (error) {
       console.error('💥 Enhanced Nicole: Error in conversation', error);
@@ -189,7 +192,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     } finally {
       setIsGenerating(false);
     }
-  }, [currentMessage, addMessage, conversationHistory, context, updateContextFromMessage]);
+  }, [currentMessage, addMessage, conversationHistory, context, extractContextFromMessage]);
 
   const handleSearchClick = useCallback(async () => {
     setIsSearching(true);
@@ -228,13 +231,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       startConversation();
     }
   }, [isOpen, conversation.length, initialQuery, startConversation]);
-
-  // Much more conservative CTA logic - require substantial conversation
-  const showCTAButton = shouldShowCTAButton(
-    context,
-    conversation[conversation.length - 1]?.content,
-    false // Let the hook determine this, but we'll be more conservative
-  ) && conversation.length >= 6; // Require at least 3 exchanges (6 total messages)
 
   if (!isOpen) return null;
 

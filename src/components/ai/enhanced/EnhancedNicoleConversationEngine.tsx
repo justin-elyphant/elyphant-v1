@@ -145,15 +145,16 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
         conversationHistory: conversationHistory.length
       });
 
-      // Get AI response - fix the response property name issue
+      // Get AI response
       const aiResponse = await chatWithNicole(message, extractedContext, conversationHistory);
       
       console.log('✅ Enhanced Nicole: Received AI response', aiResponse);
+      console.log('🎯 CTA Button Debug - showSearchButton from API:', aiResponse.showSearchButton);
 
-      // Add Nicole's response - use the correct property name
+      // Add Nicole's response
       const nicoleMessage: ConversationMessage = {
         type: "nicole",
-        content: aiResponse.message, // This should work now
+        content: aiResponse.message,
         timestamp: new Date()
       };
       addMessage(nicoleMessage);
@@ -177,7 +178,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       }
 
       // Use ONLY the AI's decision for showing the CTA button
-      setShowCTAButton(aiResponse.showSearchButton || false);
+      const shouldShowButton = aiResponse.showSearchButton === true;
+      console.log('🎯 CTA Button Debug - Setting showCTAButton to:', shouldShowButton);
+      setShowCTAButton(shouldShowButton);
 
     } catch (error) {
       console.error('💥 Enhanced Nicole: Error in conversation', error);
@@ -231,6 +234,11 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       startConversation();
     }
   }, [isOpen, conversation.length, initialQuery, startConversation]);
+
+  // Debug effect to monitor CTA button state
+  useEffect(() => {
+    console.log('🎯 CTA Button State Changed:', showCTAButton);
+  }, [showCTAButton]);
 
   if (!isOpen) return null;
 

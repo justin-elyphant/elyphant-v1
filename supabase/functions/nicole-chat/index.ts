@@ -38,6 +38,67 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Enhanced budget parsing function
+    const parseBudgetFromMessage = (message: string, currentContext: any) => {
+      const lowerMessage = message.toLowerCase();
+      let budget = currentContext?.budget;
+      
+      // Enhanced budget patterns
+      const budgetPatterns = [
+        // "no more than $300", "under $300", "up to $300"
+        { pattern: /(?:no more than|under|up to|maximum|max)\s*\$?(\d+)/i, type: 'max' },
+        // "$100-200", "$100 to $200", "$100-$200"
+        { pattern: /\$?(\d+)\s*(?:-|to)\s*\$?(\d+)/i, type: 'range' },
+        // "around $150", "about $150"
+        { pattern: /(?:around|about|roughly)\s*\$?(\d+)/i, type: 'around' },
+        // "$50 budget", "budget of $50"
+        { pattern: /(?:budget.*?\$?(\d+)|\$?(\d+).*?budget)/i, type: 'exact' }
+      ];
+
+      for (const { pattern, type } of budgetPatterns) {
+        const match = message.match(pattern);
+        if (match) {
+          if (type === 'max') {
+            const maxAmount = parseInt(match[1]);
+            if (!isNaN(maxAmount) && maxAmount > 0) {
+              const minAmount = Math.max(10, Math.floor(maxAmount * 0.5));
+              budget = [minAmount, maxAmount];
+              console.log(`Budget parsed (max): ${budget}`);
+              break;
+            }
+          } else if (type === 'range') {
+            const min = parseInt(match[1]);
+            const max = parseInt(match[2]);
+            if (!isNaN(min) && !isNaN(max) && min > 0 && max > min) {
+              budget = [min, max];
+              console.log(`Budget parsed (range): ${budget}`);
+              break;
+            }
+          } else if (type === 'around') {
+            const amount = parseInt(match[1]);
+            if (!isNaN(amount) && amount > 0) {
+              const min = Math.max(10, Math.floor(amount * 0.7));
+              const max = Math.ceil(amount * 1.3);
+              budget = [min, max];
+              console.log(`Budget parsed (around): ${budget}`);
+              break;
+            }
+          } else if (type === 'exact') {
+            const amount = parseInt(match[1] || match[2]);
+            if (!isNaN(amount) && amount > 0) {
+              const min = Math.max(10, Math.floor(amount * 0.8));
+              const max = Math.ceil(amount * 1.2);
+              budget = [min, max];
+              console.log(`Budget parsed (exact): ${budget}`);
+              break;
+            }
+          }
+        }
+      }
+
+      return budget;
+    };
+
     // Enhanced system prompt with more flexible CTA button logic
     const systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow with a streamlined CTA button experience.
 
@@ -169,14 +230,23 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
 
     console.log('Enhanced Zinc API OpenAI response with CTA button system received');
 
+    // Parse budget from the current message
+    const updatedBudget = parseBudgetFromMessage(message, context);
+
+    // Enhanced context parsing with budget
+    const enhancedContext = {
+      ...context,
+      budget: updatedBudget || context?.budget
+    };
+
     // More flexible CTA button logic - check for minimum viable context
-    const hasRecipient = Boolean(context?.recipient);
-    const hasOccasionOrAge = Boolean(context?.occasion || context?.exactAge);
+    const hasRecipient = Boolean(enhancedContext?.recipient);
+    const hasOccasionOrAge = Boolean(enhancedContext?.occasion || enhancedContext?.exactAge);
     const hasInterestsOrBrands = Boolean(
-      (context?.interests && context.interests.length > 0) || 
-      (context?.detectedBrands && context.detectedBrands.length > 0)
+      (enhancedContext?.interests && enhancedContext.interests.length > 0) || 
+      (enhancedContext?.detectedBrands && enhancedContext.detectedBrands.length > 0)
     );
-    const hasBudget = Boolean(context?.budget && Array.isArray(context.budget) && context.budget.length === 2);
+    const hasBudget = Boolean(enhancedContext?.budget && Array.isArray(enhancedContext.budget) && enhancedContext.budget.length === 2);
 
     const hasMinimumContext = hasRecipient && hasOccasionOrAge && hasInterestsOrBrands && hasBudget;
 
@@ -198,33 +268,34 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
       aiIndicatesReady, 
       showSearchButton,
       context: {
-        recipient: context?.recipient,
-        occasion: context?.occasion,
-        exactAge: context?.exactAge,
-        interests: context?.interests,
-        brands: context?.detectedBrands,
-        budget: context?.budget
+        recipient: enhancedContext?.recipient,
+        occasion: enhancedContext?.occasion,
+        exactAge: enhancedContext?.exactAge,
+        interests: enhancedContext?.interests,
+        brands: enhancedContext?.detectedBrands,
+        budget: enhancedContext?.budget
       }
     });
 
     // Update context with Enhanced Zinc API preservation
     const updatedContext = { 
-      ...context,
-      conversationPhase: showSearchButton ? 'ready_for_search_button' : context?.conversationPhase || 'gathering_info'
+      ...enhancedContext,
+      conversationPhase: showSearchButton ? 'ready_for_search_button' : enhancedContext?.conversationPhase || 'gathering_info'
     };
 
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
+        message: aiResponse,
         showSearchButton,
         conversationContinues: !showSearchButton,
         contextualLinks: [],
         contextEnhanced: true,
         ctaButtonSystem: true,
         enhancedZincApiIntegrated: true,
-        step: context?.step || 'discovery',
+        step: enhancedContext?.step || 'discovery',
         conversationPhase: updatedContext.conversationPhase,
-        userIntent: context?.userIntent || 'none',
+        userIntent: enhancedContext?.userIntent || 'none',
         context: updatedContext
       }),
       { 

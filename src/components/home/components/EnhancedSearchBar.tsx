@@ -18,6 +18,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [userInteracted, setUserInteracted] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout>();
 
   // Enhanced sync with URL parameters - listen for all changes
@@ -25,27 +26,39 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     const searchParam = searchParams.get("search");
     if (searchParam && searchParam !== query) {
       setQuery(searchParam);
+      // Don't show suggestions for URL-populated queries
+      setUserInteracted(false);
+      setShowSuggestions(false);
     } else if (!searchParam && query) {
       // Clear query if no search param
       setQuery("");
+      setUserInteracted(false);
+      setShowSuggestions(false);
     }
   }, [searchParams, location.pathname, location.search]);
 
+  // Hide suggestions when navigating to different pages
   useEffect(() => {
     setShowSuggestions(false);
+    setUserInteracted(false);
   }, [location.pathname]);
 
-  // Generate simple text-based suggestions only (no API calls)
+  // Generate simple text-based suggestions only when user interacts
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
     debounceTimer.current = setTimeout(() => {
-      const searchSuggestions = getSearchSuggestions(query);
-      setSuggestions(searchSuggestions);
-      // Only show suggestions if we have a query and suggestions
-      setShowSuggestions(query.length > 0 && searchSuggestions.length > 0);
+      if (userInteracted && query.length > 0) {
+        const searchSuggestions = getSearchSuggestions(query);
+        setSuggestions(searchSuggestions);
+        // Only show suggestions if we have a query, suggestions, and user interacted
+        setShowSuggestions(searchSuggestions.length > 0);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
     }, 150);
 
     return () => {
@@ -53,7 +66,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [query]);
+  }, [query, userInteracted]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +75,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
       searchParams.set("search", query.trim());
       navigate(`/marketplace?${searchParams.toString()}`);
       setShowSuggestions(false);
+      setUserInteracted(false);
     }
   };
 
@@ -71,17 +85,26 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
     searchParams.set("search", suggestion);
     navigate(`/marketplace?${searchParams.toString()}`);
     setShowSuggestions(false);
+    setUserInteracted(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    setUserInteracted(true); // Mark as user interaction
   };
 
   const handleInputFocus = () => {
-    if (suggestions.length > 0) {
+    setUserInteracted(true); // Mark as user interaction
+    if (suggestions.length > 0 && query.length > 0) {
       setShowSuggestions(true);
     }
   };
 
   const handleInputBlur = () => {
     // Delay hiding to allow clicks on suggestions
-    setTimeout(() => setShowSuggestions(false), 200);
+    setTimeout(() => {
+      setShowSuggestions(false);
+    }, 200);
   };
 
   return (
@@ -104,7 +127,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
               : "h-10 rounded-lg"
           } border-gray-300 focus:border-purple-500 focus:ring-purple-500`}
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
         />
@@ -117,11 +140,11 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         </Button>
       </div>
 
-      {/* Simple text-based suggestions dropdown - no product cards */}
+      {/* Simple text-based suggestions dropdown - only show on user interaction */}
       <SimpleSearchSuggestions
         query={query}
         suggestions={suggestions}
-        isVisible={showSuggestions}
+        isVisible={showSuggestions && userInteracted}
         onSuggestionClick={handleSuggestionClick}
         mobile={mobile}
       />

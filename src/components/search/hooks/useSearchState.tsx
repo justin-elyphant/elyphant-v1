@@ -16,7 +16,7 @@ export const useSearchState = () => {
   const [showMobileModal, setShowMobileModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [isSuggestionVisible, setIsSuggestionVisible] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionRef = useRef<HTMLDivElement>(null);
@@ -39,10 +39,10 @@ export const useSearchState = () => {
     setIsListening,
     searchLoading,
     setSearchLoading,
+    hasUserInteracted,
+    setHasUserInteracted,
     inputRef,
     suggestionRef,
-    nicoleDropdownRef,
-    isSuggestionVisible,
-    setIsSuggestionVisible
+    nicoleDropdownRef
   };
 };

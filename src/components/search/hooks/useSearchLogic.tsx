@@ -66,12 +66,9 @@ export const useSearchLogic = ({
             brands: results.brands
           });
           
-          const hasResults = results.friends.length > 0 || results.products.length > 0 || results.brands.length > 0;
-          console.log('Enhanced Search Logic: Has unified results:', hasResults);
-          setShowSuggestions(hasResults);
+          // Don't automatically show suggestions here - let the component handle it based on user interaction
         } catch (error) {
           console.error('Enhanced Search Logic: Unified search error:', error);
-          setShowSuggestions(false);
         } finally {
           setSearchLoading(false);
         }
@@ -82,9 +79,8 @@ export const useSearchLogic = ({
           .filter(s => s.toLowerCase().includes(q))
           .slice(0, 5);
         setSuggestions(matches);
-        setShowSuggestions(matches.length > 0);
+        // Don't automatically show suggestions here - let the component handle it based on user interaction
       } else {
-        setShowSuggestions(false);
         setSuggestions([]);
         setUnifiedResults({ friends: [], products: [], brands: [] });
       }

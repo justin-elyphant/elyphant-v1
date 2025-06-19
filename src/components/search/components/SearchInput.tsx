@@ -17,6 +17,7 @@ interface SearchInputProps {
   isListening: boolean;
   mobile: boolean;
   inputRef: React.RefObject<HTMLInputElement>;
+  onUserInteraction?: () => void;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({
@@ -28,11 +29,25 @@ const SearchInput: React.FC<SearchInputProps> = ({
   handleVoiceInput,
   isListening,
   mobile,
-  inputRef
+  inputRef,
+  onUserInteraction
 }) => {
   const placeholderText = isNicoleMode 
     ? "Ask Nicole anything about gifts..." 
     : "Search friends, products, or brands";
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    if (onUserInteraction) {
+      onUserInteraction();
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (onUserInteraction) {
+      onUserInteraction();
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="relative flex items-center w-full" autoComplete="off">
@@ -70,7 +85,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
               : 'focus:border-blue-500'
           }`}
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
         />
 
         {/* Voice Input Button */}

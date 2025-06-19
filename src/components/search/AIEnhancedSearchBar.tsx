@@ -45,16 +45,17 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setIsListening,
     searchLoading,
     setSearchLoading,
+    hasUserInteracted,
+    setHasUserInteracted,
     inputRef,
     suggestionRef,
-    isSuggestionVisible,
-    setIsSuggestionVisible,
     nicoleDropdownRef
   } = useSearchState();
 
   // Handle location changes - clear state when navigating
   useEffect(() => {
     setShowSuggestions(false);
+    setHasUserInteracted(false);
     const searchParams = new URLSearchParams(location.search);
     let urlSearchTerm = searchParams.get("search") || "";
     setQuery(urlSearchTerm);
@@ -98,7 +99,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       inputRef.current && !inputRef.current.contains(event.target) &&
       suggestionRef.current && !suggestionRef.current.contains(event.target)
     ) {
-      setIsSuggestionVisible(false); // Hide suggestions
+      setShowSuggestions(false);
     } 
   };
 
@@ -109,9 +110,18 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    setIsSuggestionVisible(true);
-  }, [query]);
+  // Handle user interaction to show suggestions
+  const handleUserInteraction = () => {
+    setHasUserInteracted(true);
+    if (query.length > 1 && !isNicoleMode) {
+      const hasResults = unifiedResults.friends.length > 0 || 
+                        unifiedResults.products.length > 0 || 
+                        unifiedResults.brands.length > 0;
+      setShowSuggestions(hasResults);
+    } else if (query.length > 0 && isNicoleMode) {
+      setShowSuggestions(suggestions.length > 0);
+    }
+  };
 
   // Check URL params for AI mode activation with personalized greeting
   useEffect(() => {
@@ -158,6 +168,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setMode(newMode);
     setQuery("");
     setShowSuggestions(false);
+    setHasUserInteracted(false);
     setShowNicoleDropdown(false);
     setShowMobileModal(false);
     if (inputRef.current) {
@@ -165,18 +176,18 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     }
   };
 
-  // Show unified search results when not in Nicole mode and have query
-  const shouldShowUnifiedSuggestions = !isNicoleMode && showSuggestions && (
+  // Show unified search results when not in Nicole mode, have query, and user has interacted
+  const shouldShowUnifiedSuggestions = !isNicoleMode && hasUserInteracted && showSuggestions && (
     unifiedResults.friends.length > 0 || 
     unifiedResults.products.length > 0 || 
     unifiedResults.brands.length > 0
   );
 
-  // Show Nicole suggestions when in Nicole mode
-  const shouldShowNicoleSuggestions = isNicoleMode && showSuggestions && suggestions.length > 0;
+  // Show Nicole suggestions when in Nicole mode and user has interacted
+  const shouldShowNicoleSuggestions = isNicoleMode && hasUserInteracted && showSuggestions && suggestions.length > 0;
 
-  // Show no results message when query exists but no results
-  const shouldShowNoResults = !isNicoleMode && query.length > 1 && !searchLoading && 
+  // Show no results message when query exists, user has interacted, but no results
+  const shouldShowNoResults = !isNicoleMode && hasUserInteracted && query.length > 1 && !searchLoading && 
     unifiedResults.friends.length === 0 && 
     unifiedResults.products.length === 0 && 
     unifiedResults.brands.length === 0;
@@ -194,6 +205,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         isListening={isListening}
         mobile={mobile}
         inputRef={inputRef}
+        onUserInteraction={handleUserInteraction}
       />
 
       {/* Mode Description */}
@@ -206,7 +218,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       )}
 
       {/* Search Results */}
-      {isSuggestionVisible && (
+      {(shouldShowUnifiedSuggestions || shouldShowNicoleSuggestions || shouldShowNoResults) && (
         <div ref={suggestionRef}>
           <SearchResults
             shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}

@@ -12,16 +12,16 @@ import {
 import { Smartphone, Home, Shirt, Dumbbell, Gamepad2, Heart, Baby, Coffee, BookOpen, Music } from "lucide-react";
 
 const categories = [
-  { name: "Tech", icon: Smartphone, param: "electronics", searchTerm: "best electronics" },
-  { name: "Home", icon: Home, param: "home", searchTerm: "best home products" },
-  { name: "Fashion", icon: Shirt, param: "fashion", searchTerm: "best fashion" },
-  { name: "Sports", icon: Dumbbell, param: "sports", searchTerm: "best sports equipment" },
-  { name: "Gaming", icon: Gamepad2, param: "gaming", searchTerm: "best gaming" },
-  { name: "Beauty", icon: Heart, param: "beauty", searchTerm: "best beauty products" },
-  { name: "Baby", icon: Baby, param: "baby", searchTerm: "best baby products" },
-  { name: "Kitchen", icon: Coffee, param: "kitchen", searchTerm: "best kitchen products" },
-  { name: "Books", icon: BookOpen, param: "books", searchTerm: "best books" },
-  { name: "Music", icon: Music, param: "music", searchTerm: "best music" },
+  { name: "Tech", icon: Smartphone, param: "electronics", searchTerm: "best selling electronics" },
+  { name: "Home", icon: Home, param: "home", searchTerm: "best selling home products" },
+  { name: "Fashion", icon: Shirt, param: "fashion", searchTerm: "best selling fashion" },
+  { name: "Sports", icon: Dumbbell, param: "sports", searchTerm: "best selling sports equipment" },
+  { name: "Gaming", icon: Gamepad2, param: "gaming", searchTerm: "best selling gaming" },
+  { name: "Beauty", icon: Heart, param: "beauty", searchTerm: "best selling beauty products" },
+  { name: "Baby", icon: Baby, param: "baby", searchTerm: "best selling baby products" },
+  { name: "Kitchen", icon: Coffee, param: "kitchen", searchTerm: "best selling kitchen products" },
+  { name: "Books", icon: BookOpen, param: "books", searchTerm: "best selling books" },
+  { name: "Music", icon: Music, param: "music", searchTerm: "best selling music" },
 ];
 
 interface IntegratedSearchSectionProps {

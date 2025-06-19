@@ -24,62 +24,62 @@ const GiftingCategories = () => {
     ? userInterests.map(pref => typeof pref === 'string' ? pref : pref.category).filter(Boolean)
     : [];
   
-  // Enhanced categories with color coding
+  // Enhanced categories with color coding and "best selling" search terms
   const categories: Category[] = [
     {
       id: "travelers",
       name: "For Travelers",
       image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-      searchTerm: "travel gift",
+      searchTerm: "best selling travel gifts",
       color: "from-blue-50 to-blue-100 border-blue-200"
     },
     {
       id: "pet-lovers",
       name: "For Pet Lovers",
       image: "https://images.unsplash.com/photo-1543852786-1cf6624b9987",
-      searchTerm: "pet gift",
+      searchTerm: "best selling pet gifts",
       color: "from-amber-50 to-amber-100 border-amber-200"
     },
     {
       id: "foodies",
       name: "For Foodies",
       image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
-      searchTerm: "cooking gift",
+      searchTerm: "best selling cooking gifts",
       color: "from-green-50 to-green-100 border-green-200"
     },
     {
       id: "tech-enthusiasts",
       name: "For Tech Enthusiasts",
       image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
-      searchTerm: "tech gift",
+      searchTerm: "best selling tech gifts",
       color: "from-indigo-50 to-indigo-100 border-indigo-200"
     },
     {
       id: "fitness-fans",
       name: "For Fitness Fans",
       image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
-      searchTerm: "fitness gift",
+      searchTerm: "best selling fitness gifts",
       color: "from-purple-50 to-purple-100 border-purple-200"
     },
     {
       id: "self-care",
       name: "Self-Care Gifts",
       image: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881",
-      searchTerm: "self care gift",
+      searchTerm: "best selling self care gifts",
       color: "from-pink-50 to-pink-100 border-pink-200"
     },
     {
       id: "sustainable",
       name: "Sustainable Gifts",
       image: "https://placehold.co/300x300/e2e8f0/64748b?text=Eco+Friendly",
-      searchTerm: "eco friendly gift",
+      searchTerm: "best selling eco friendly gifts",
       color: "from-teal-50 to-teal-100 border-teal-200"
     },
     {
       id: "budget-friendly",
       name: "Under $50",
       image: "https://placehold.co/300x300/e2e8f0/64748b?text=$50",
-      searchTerm: "affordable gift",
+      searchTerm: "best selling affordable gifts",
       color: "from-gray-50 to-gray-100 border-gray-200"
     },
   ];

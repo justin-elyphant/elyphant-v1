@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OptimizedImage from "@/components/ui/optimized-image";
+import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
 import { useVirtualInfiniteScroll } from "@/hooks/useVirtualScroll";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
@@ -19,7 +20,7 @@ interface MobileProductGridProps {
   onLoadMore?: () => void;
 }
 
-const ITEM_HEIGHT = 280; // Approximate height of each product card
+const ITEM_HEIGHT = 320; // Increased height to accommodate the add to cart button
 const CONTAINER_HEIGHT = typeof window !== 'undefined' ? window.innerHeight - 200 : 600;
 
 const MobileProductGrid = ({
@@ -42,6 +43,10 @@ const MobileProductGrid = ({
     e.stopPropagation();
     triggerHapticFeedback(HapticPatterns.addToCart);
     console.log('Add to wishlist:', productId);
+  };
+
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
   
   // Memoize product pairs for 2-column layout
@@ -80,6 +85,7 @@ const MobileProductGrid = ({
               <div className="h-4 bg-gray-200 rounded"></div>
               <div className="h-3 bg-gray-200 rounded w-2/3"></div>
               <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-8 bg-gray-200 rounded"></div>
             </div>
           </CardContent>
         </Card>
@@ -172,7 +178,7 @@ const MobileProductGrid = ({
           </div>
 
           {/* Product Info */}
-          <div className="p-3">
+          <div className="p-3 space-y-2">
             <h3 className="font-medium text-sm line-clamp-2 mb-1 leading-tight">
               {productName}
             </h3>
@@ -197,9 +203,18 @@ const MobileProductGrid = ({
             )}
 
             {/* Price */}
-            <div className="font-semibold text-lg text-green-600" aria-label={`Price: $${product.price?.toFixed(2)}`}>
+            <div className="font-semibold text-lg text-green-600 mb-2" aria-label={`Price: $${product.price?.toFixed(2)}`}>
               ${product.price?.toFixed(2)}
             </div>
+
+            {/* Add to Cart Button */}
+            <AddToCartButton
+              product={product}
+              variant="outline"
+              size="sm"
+              className="w-full h-9 text-sm font-medium border-gray-200 hover:border-gray-300 active:scale-[0.96] transition-transform duration-100"
+              onClick={handleAddToCartClick}
+            />
           </div>
         </CardContent>
       </Card>

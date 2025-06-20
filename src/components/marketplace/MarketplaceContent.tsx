@@ -57,7 +57,7 @@ const MarketplaceContent = ({
   if (isMobile) {
     return (
       <MobileMarketplaceLayout
-        products={products}
+        products={filteredProducts} // Use filteredProducts from enhanced search
         isLoading={isLoading}
         searchTerm={externalSearchTerm}
         onProductView={onProductView}

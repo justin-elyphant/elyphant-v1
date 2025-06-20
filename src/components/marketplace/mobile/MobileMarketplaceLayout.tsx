@@ -40,6 +40,11 @@ const MobileMarketplaceLayout = ({
     return null;
   };
 
+  // Debug log to see what products we're receiving
+  useEffect(() => {
+    console.log('MobileMarketplaceLayout products:', products?.length || 0, products);
+  }, [products]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Search Header */}
@@ -69,7 +74,7 @@ const MobileMarketplaceLayout = ({
           </div>
 
           <div className="text-sm text-gray-500">
-            {products.length} {products.length === 1 ? 'item' : 'items'}
+            {products?.length || 0} {(products?.length || 0) === 1 ? 'item' : 'items'}
           </div>
         </div>
       </div>
@@ -93,7 +98,7 @@ const MobileMarketplaceLayout = ({
           </div>
         ) : (
           <MobileProductGrid
-            products={products}
+            products={products || []} // Ensure we always pass an array
             onProductClick={onProductView}
             getProductStatus={getProductStatus}
             isLoading={isLoading}
@@ -107,7 +112,7 @@ const MobileMarketplaceLayout = ({
       <MobileFilterBottomSheet
         open={showFilters}
         onOpenChange={setShowFilters}
-        products={products}
+        products={products || []} // Ensure we always pass an array
         sortOption={sortOption}
         setSortOption={setSortOption}
         onFiltersChange={(count) => setActiveFilterCount(count)}

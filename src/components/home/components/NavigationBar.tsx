@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Search } from "lucide-react";
+import { Menu, X, Search, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthButtons from "./AuthButtons";
 import UserButton from "@/components/auth/UserButton";
@@ -46,8 +46,43 @@ const NavigationBar = () => {
   };
 
   const navItems = [
-    // Removed wishlists and connections/friends nav items
+    // Shopping Section
+    { label: "Marketplace", path: "/marketplace", section: "shopping" },
+    { label: "Categories", path: "/marketplace/categories", section: "shopping" },
+    { label: "Trending", path: "/marketplace/trending", section: "shopping" },
+    
+    // Account Section (authenticated users only)
+    { label: "Dashboard", path: "/dashboard", section: "account", requireAuth: true },
+    { label: "My Orders", path: "/orders", section: "account", requireAuth: true },
+    { label: "My Wishlists", path: "/wishlists", section: "account", requireAuth: true },
+    { label: "Profile", path: "/profile-setup", section: "account", requireAuth: true },
+    
+    // Social Section (authenticated users only)
+    { label: "Friends", path: "/connections/friends", section: "social", requireAuth: true },
+    { label: "Find Friends", path: "/connections/find", section: "social", requireAuth: true },
+    
+    // Support Section
+    { label: "Help", path: "/help", section: "support" },
+    { label: "Contact", path: "/contact", section: "support" },
   ];
+
+  const groupedNavItems = navItems.reduce((acc, item) => {
+    if (!acc[item.section]) {
+      acc[item.section] = [];
+    }
+    acc[item.section].push(item);
+    return acc;
+  }, {} as Record<string, typeof navItems>);
+
+  const getSectionTitle = (section: string) => {
+    switch (section) {
+      case 'shopping': return 'Shopping';
+      case 'account': return 'My Account';
+      case 'social': return 'Social';
+      case 'support': return 'Support';
+      default: return '';
+    }
+  };
 
   return (
     <>
@@ -88,6 +123,22 @@ const NavigationBar = () => {
               )}
               
               <ShoppingCartButton />
+              
+              {/* Mobile Sign In Button */}
+              {isMobile && !user && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  asChild
+                  className="h-10 w-10"
+                  aria-label="Sign In"
+                >
+                  <Link to="/signin">
+                    <LogIn size={20} />
+                  </Link>
+                </Button>
+              )}
+              
               <div className="hidden md:flex">
                 {user ? (
                   <UserButton />
@@ -118,7 +169,7 @@ const NavigationBar = () => {
           
           {/* Mobile navigation */}
           {isMenuOpen && (
-            <div className="fixed inset-0 top-[64px] bg-white z-50 flex flex-col p-4 md:hidden">
+            <div className="fixed inset-0 top-[64px] bg-white z-50 flex flex-col p-4 md:hidden overflow-y-auto">
               {/* Mobile Search Bar */}
               <div className="mb-4">
                 <AIEnhancedSearchBar mobile={true} />
@@ -127,25 +178,36 @@ const NavigationBar = () => {
                 </div>
               </div>
               
-              <div className="flex flex-col space-y-4 mb-6">
-                {navItems.map((item) => (
-                  (!item.requireAuth || user) && (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`text-base font-medium py-3 px-4 rounded-md min-h-[48px] flex items-center ${
-                        location.pathname === item.path
-                          ? "bg-purple-50 text-purple-700"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  )
+              {/* Navigation Items by Section */}
+              <div className="flex-1 space-y-6">
+                {Object.entries(groupedNavItems).map(([section, items]) => (
+                  <div key={section}>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      {getSectionTitle(section)}
+                    </h3>
+                    <div className="space-y-1">
+                      {items.map((item) => (
+                        (!item.requireAuth || user) && (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`block text-base font-medium py-3 px-4 rounded-md min-h-[48px] flex items-center ${
+                              location.pathname === item.path
+                                ? "bg-purple-50 text-purple-700"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {item.label}
+                          </Link>
+                        )
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
               
+              {/* Authentication Section */}
               <div className="mt-auto px-4 py-4 border-t">
                 {user ? (
                   <UserButton />

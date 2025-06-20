@@ -1,297 +1,175 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Heart, Share2, Plus, Minus } from "lucide-react";
+import { Heart, Share2, ShoppingBag, Minus, Plus } from "lucide-react";
 import { Product } from "@/types/product";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
-import ProductCarousel from "./ProductCarousel";
-import ProductRating from "@/components/shared/ProductRating";
-import { formatProductPrice } from "../product-item/productUtils";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
+import { useAuth } from "@/contexts/auth";
 
 interface MobileProductSheetProps {
   product: Product;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  isWishlisted: boolean;
-  onWishlistChange: () => Promise<void>;
+  isWishlisted?: boolean;
+  onWishlistChange?: () => void;
 }
 
-const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
+const MobileProductSheet = ({
   product,
   open,
   onOpenChange,
-  isWishlisted,
+  isWishlisted = false,
   onWishlistChange
-}) => {
+}: MobileProductSheetProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [isHeartAnimating, setIsHeartAnimating] = useState(false);
-  const [enhancedProduct, setEnhancedProduct] = useState<any>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [currentProductId, setCurrentProductId] = useState<string | null>(null);
-  const isMobile = useIsMobile();
+  const { addToCart } = useCart();
   const { user } = useAuth();
 
-  // Reset state when product changes
-  useEffect(() => {
-    const newProductId = product.product_id || product.id;
+  const increaseQuantity = () => setQuantity(prev => Math.min(prev + 1, 10));
+  const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
+
+  const handleAddToCart = () => {
+    triggerHapticFeedback(HapticPatterns.addToCart);
     
-    // If product changed, reset all state
-    if (newProductId !== currentProductId) {
-      console.log('Product changed, resetting mobile sheet state:', { 
-        old: currentProductId, 
-        new: newProductId 
-      });
-      
-      setCurrentProductId(newProductId);
-      setEnhancedProduct(null);
-      setQuantity(1);
-      setIsLoadingDetails(false);
+    // Add items to cart based on quantity
+    for (let i = 0; i < quantity; i++) {
+      addToCart(product);
     }
-  }, [product.product_id, product.id, currentProductId]);
-
-  // Fetch enhanced product details when sheet opens or product changes
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      if (!open || !product.product_id) return;
-      
-      const productId = product.product_id || product.id;
-      
-      // Always fetch details for new products or when we don't have enhanced data
-      const shouldFetchDetails = !enhancedProduct || 
-                                enhancedProduct.product_id !== productId ||
-                                (!enhancedProduct.product_description && !enhancedProduct.images?.length);
-      
-      if (!shouldFetchDetails) {
-        console.log('Enhanced product data already available');
-        return;
-      }
-      
-      try {
-        setIsLoadingDetails(true);
-        console.log(`Fetching enhanced details for product: ${productId}`);
-        
-        const detailedProduct = await enhancedZincApiService.getProductDetails(productId);
-        
-        if (detailedProduct) {
-          console.log('Enhanced product details fetched:', detailedProduct);
-          setEnhancedProduct({
-            ...product,
-            ...detailedProduct,
-            // Ensure we keep the original image as fallback
-            images: detailedProduct.images?.length > 0 ? detailedProduct.images : [product.image],
-            product_description: detailedProduct.product_description || product.description,
-            feature_bullets: detailedProduct.feature_bullets || [],
-            product_details: detailedProduct.product_details || []
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching product details:', error);
-        // Keep the original product data on error
-        setEnhancedProduct({
-          ...product,
-          images: [product.image]
-        });
-      } finally {
-        setIsLoadingDetails(false);
-      }
-    };
-
-    fetchProductDetails();
-  }, [open, product.product_id, product.id, product, enhancedProduct]);
-
-  const increaseQuantity = () => {
-    setQuantity(prev => Math.min(prev + 1, 10));
-    if (isMobile) triggerHapticFeedback(HapticPatterns.buttonTap);
-  };
-
-  const decreaseQuantity = () => {
-    setQuantity(prev => Math.max(prev - 1, 1));
-    if (isMobile) triggerHapticFeedback(HapticPatterns.buttonTap);
-  };
-
-  const handleWishlistClick = async () => {
-    if (!user) {
-      toast("Please sign in to add items to your wishlist");
-      return;
-    }
-
-    setIsHeartAnimating(true);
     
-    try {
-      await onWishlistChange();
-      
-      toast(isWishlisted 
-        ? "Item removed from your wishlist" 
-        : "Item added to your wishlist"
-      );
-    } catch (error) {
-      console.error('Wishlist action failed:', error);
-      toast("Failed to update wishlist");
-    } finally {
-      setTimeout(() => setIsHeartAnimating(false), 300);
-    }
+    toast.success(`Added ${quantity} ${product.title || product.name}(s) to cart`);
   };
 
   const handleShare = () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
     if (navigator.share) {
       navigator.share({
+        title: product.title || product.name || "Check out this product",
+        text: `Check out this product: ${product.title || product.name}`,
         url: window.location.href,
       });
     }
-    if (isMobile) triggerHapticFeedback(HapticPatterns.shareAction);
   };
 
-  // Use enhanced product data if available, otherwise fall back to original product
-  const displayProduct = enhancedProduct || product;
-
-  // Generate images array for carousel
-  const productImages = displayProduct?.images?.length > 0 
-    ? displayProduct.images 
-    : [product.image];
-
-  // Generate description if none exists
-  let description = displayProduct?.product_description || displayProduct?.description || "";
-  if ((!description || description.trim() === "") && displayProduct?.title) {
-    const productType = displayProduct.title.split(' ').slice(1).join(' ');
-    const brand = displayProduct.title.split(' ')[0];
-    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This item features premium materials and exceptional craftsmanship for long-lasting use.`;
-  }
-
-  const features = displayProduct?.feature_bullets || displayProduct?.product_details || [];
+  const handleWishlistAdded = () => {
+    if (onWishlistChange) {
+      onWishlistChange();
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] flex flex-col">
-        <SheetHeader className="flex-shrink-0">
-          <SheetTitle className="text-left">
-            {product.title || product.name}
-          </SheetTitle>
+      <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+        <SheetHeader className="pb-4">
+          <SheetTitle className="text-left">{product.title || product.name}</SheetTitle>
         </SheetHeader>
         
-        <div className="flex-1 overflow-y-auto space-y-4">
-          {/* Product Images Carousel */}
-          <div className="relative">
-            <ProductCarousel 
-              images={productImages}
-              productName={product.title || product.name || "Product"}
-            />
-            
-            {/* Action buttons overlay */}
-            <div className="absolute top-2 right-2 flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 bg-white/90 backdrop-blur-sm"
-                onClick={handleWishlistClick}
-              >
-                <Heart 
-                  className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''} ${isHeartAnimating ? 'animate-pulse' : ''}`} 
-                />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 bg-white/90 backdrop-blur-sm"
-                onClick={handleShare}
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </div>
+        <div className="space-y-6">
+          {/* Product Image */}
+          <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
+            {product.image ? (
+              <img
+                src={product.image}
+                alt={product.title || product.name || "Product"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <span>No Image Available</span>
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">${formatProductPrice(product.price)}</div>
+              <div className="text-2xl font-bold">${product.price?.toFixed(2)}</div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleShare}
+                  className="flex-shrink-0"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                
+                {user ? (
+                  <WishlistSelectionPopoverButton
+                    product={{
+                      id: String(product.product_id || product.id),
+                      name: product.title || product.name || "",
+                      image: product.image || "",
+                      price: product.price,
+                      brand: product.brand || "",
+                    }}
+                    triggerClassName="p-2"
+                    onAdded={handleWishlistAdded}
+                  />
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="flex-shrink-0"
+                  >
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
-            
-            <ProductRating 
-              rating={product.rating || product.stars} 
-              reviewCount={product.reviewCount || product.num_reviews} 
-              size="lg" 
-            />
-            
-            {product.vendor && (
-              <div className="text-sm text-muted-foreground">
-                By {product.vendor}
-              </div>
-            )}
-            
-            <span className="text-green-600 text-sm block">Free shipping</span>
-            
-            {/* Loading indicator for details */}
-            {isLoadingDetails && (
-              <div className="text-sm text-muted-foreground animate-pulse">
-                Loading product details...
-              </div>
-            )}
-            
-            {/* Description */}
-            {description && (
-              <div>
-                <h4 className="font-medium mb-2">Description</h4>
-                <p className="text-sm text-muted-foreground max-h-32 overflow-y-auto">
-                  {description}
-                </p>
-              </div>
+
+            {product.description && (
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {product.description}
+              </p>
             )}
 
-            {/* Features */}
-            {features.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2">Features</h4>
-                <ul className="list-disc list-inside text-sm text-muted-foreground max-h-32 overflow-y-auto space-y-1">
-                  {features.map((feature, idx) => (
-                    <li key={idx}>{feature}</li>
-                  ))}
-                </ul>
+            {product.brand && (
+              <div className="text-sm text-gray-500">
+                Brand: {product.brand}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Bottom Actions */}
-        <div className="flex-shrink-0 pt-4 border-t space-y-3">
           {/* Quantity Selector */}
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Quantity:</span>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">Quantity:</span>
+            <div className="flex items-center border rounded-md">
               <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
+                variant="ghost"
+                size="sm"
                 onClick={decreaseQuantity}
                 disabled={quantity <= 1}
+                className="h-8 w-8 p-0"
               >
-                <Minus className="h-4 w-4" />
+                <Minus className="h-3 w-3" />
               </Button>
-              <span className="font-medium min-w-[2rem] text-center">{quantity}</span>
+              <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
+                {quantity}
+              </span>
               <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
+                variant="ghost"
+                size="sm"
                 onClick={increaseQuantity}
                 disabled={quantity >= 10}
+                className="h-8 w-8 p-0"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3 w-3" />
               </Button>
             </div>
           </div>
 
           {/* Add to Cart Button */}
           <Button 
-            className="w-full h-12 text-lg font-semibold"
-            onClick={() => {
-              if (isMobile) triggerHapticFeedback(HapticPatterns.addToCart);
-              // Add to cart logic here
-            }}
+            onClick={handleAddToCart}
+            className="w-full h-12 text-base font-medium"
+            size="lg"
           >
-            Add to Cart • ${(product.price * quantity).toFixed(2)}
+            <ShoppingBag className="h-5 w-5 mr-2" />
+            Add to Cart
           </Button>
         </div>
       </SheetContent>

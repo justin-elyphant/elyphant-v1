@@ -36,14 +36,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   const isMobile = useIsMobile();
 
   return (
-    <div className="space-y-3 md:space-y-4">
+    <div className="space-y-3 md:space-y-4 safe-area-inset mobile-grid-optimized">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search gifts..."
-            className="w-full pl-8 h-9 md:h-10"
+            className="w-full pl-8 h-9 md:h-10 touch-target-44 touch-manipulation"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -53,7 +53,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           size={isMobile ? "sm" : "default"}
           type="button"
           onClick={() => setFiltersVisible(!filtersVisible)}
-          className="flex items-center whitespace-nowrap min-h-9 md:min-h-10 px-2 md:px-3"
+          className="flex items-center whitespace-nowrap min-h-9 md:min-h-10 px-2 md:px-3 touch-target-44 touch-manipulation tap-feedback no-select"
         >
           <SlidersHorizontal className="h-4 w-4 mr-1 md:mr-2" />
           <span>{filtersVisible ? "Hide Filters" : "Filters"}</span>
@@ -61,14 +61,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       </div>
 
       {filtersVisible && (
-        <div className="grid gap-3 sm:gap-4 rounded-lg border p-3 sm:p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 rounded-lg border p-3 sm:p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3 safe-area-inset">
           <div>
-            <Label htmlFor="category" className="text-sm font-medium mb-1.5 block">Category</Label>
+            <Label htmlFor="category" className="text-sm font-medium mb-1.5 block leading-relaxed">Category</Label>
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger id="category" className="w-full h-9 md:h-10">
+              <SelectTrigger id="category" className="w-full h-9 md:h-10 touch-target-44 touch-manipulation">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent className="z-50">
@@ -83,12 +83,12 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="priceRange" className="text-sm font-medium mb-1.5 block">Price Range</Label>
+            <Label htmlFor="priceRange" className="text-sm font-medium mb-1.5 block leading-relaxed">Price Range</Label>
             <Select
               value={priceRange}
               onValueChange={setPriceRange}
             >
-              <SelectTrigger id="priceRange" className="w-full h-9 md:h-10">
+              <SelectTrigger id="priceRange" className="w-full h-9 md:h-10 touch-target-44 touch-manipulation">
                 <SelectValue placeholder="Select price range" />
               </SelectTrigger>
               <SelectContent className="z-50">
@@ -106,7 +106,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             <Button 
               variant="outline" 
               size={isMobile ? "sm" : "default"}
-              className="w-full h-9 md:h-10" 
+              className="w-full h-9 md:h-10 touch-target-44 touch-manipulation tap-feedback no-select" 
               onClick={clearFilters}
             >
               Clear Filters

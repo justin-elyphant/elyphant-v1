@@ -161,7 +161,7 @@ const ProductGrid = ({
   }, [selectedProduct, products]);
 
   return (
-    <>
+    <div className="safe-area-inset mobile-grid-optimized">
       <ProductGridDisplay
         products={sortedProducts}
         viewMode={viewMode}
@@ -184,7 +184,7 @@ const ProductGrid = ({
         open={showSignUpDialog}
         onOpenChange={setShowSignUpDialog}
       />
-    </>
+    </div>
   );
 };
 

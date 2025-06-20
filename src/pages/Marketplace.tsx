@@ -13,7 +13,9 @@ const Marketplace = () => {
           <title>Gift Marketplace | Find Perfect Gifts</title>
           <meta name="description" content="Browse thousands of thoughtful gifts for every occasion, interest, and relationship." />
         </Helmet>
-        <MarketplaceWrapper />
+        <div className="safe-area-top safe-area-bottom mobile-grid-optimized">
+          <MarketplaceWrapper />
+        </div>
       </MainLayout>
     </ProductProvider>
   );

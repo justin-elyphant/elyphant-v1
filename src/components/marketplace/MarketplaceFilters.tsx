@@ -36,14 +36,14 @@ const MarketplaceFilters = ({
   };
 
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between mb-4 safe-area-inset">
+      <div className="flex items-center gap-2 mobile-grid-optimized">
         {/* View mode toggle */}
         <div className="flex items-center border rounded-md overflow-hidden">
           <Button
             variant="ghost"
             size="sm"
-            className={`rounded-none px-2.5 ${
+            className={`rounded-none px-2.5 touch-target-44 touch-manipulation tap-feedback no-select ${
               viewMode === "grid" ? "bg-muted" : ""
             }`}
             onClick={() => setViewMode("grid")}
@@ -53,7 +53,7 @@ const MarketplaceFilters = ({
           <Button
             variant="ghost"
             size="sm"
-            className={`rounded-none px-2.5 ${
+            className={`rounded-none px-2.5 touch-target-44 touch-manipulation tap-feedback no-select ${
               viewMode === "list" ? "bg-muted" : ""
             }`}
             onClick={() => setViewMode("list")}
@@ -68,7 +68,7 @@ const MarketplaceFilters = ({
             variant="outline"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 h-8"
+            className="flex items-center gap-2 h-8 touch-target-44 touch-manipulation tap-feedback no-select"
           >
             <Filter className="h-4 w-4" />
             Filters
@@ -78,7 +78,7 @@ const MarketplaceFilters = ({
             variant="default"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white touch-target-44 touch-manipulation tap-feedback no-select"
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             {showFilters ? "Hide Filters" : "Show Filters"}
@@ -94,7 +94,7 @@ const MarketplaceFilters = ({
                   variant={savedFiltersActive ? "default" : "outline"}
                   size="sm"
                   onClick={onSavedFiltersToggle}
-                  className="relative"
+                  className="relative touch-target-44 touch-manipulation tap-feedback no-select"
                 >
                   <BookmarkPlus className="h-4 w-4 mr-1" />
                   Saved Filters
@@ -121,10 +121,10 @@ const MarketplaceFilters = ({
             Sort by:
           </span>
           <Select value={sortOption} onValueChange={handleSortChange}>
-            <SelectTrigger className="h-8 w-[130px] sm:w-[160px]">
+            <SelectTrigger className="h-8 w-[130px] sm:w-[160px] touch-target-44 touch-manipulation">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-50">
               <SelectItem value="relevance">Relevance</SelectItem>
               <SelectItem value="price-asc">Price: Low to High</SelectItem>
               <SelectItem value="price-desc">Price: High to Low</SelectItem>

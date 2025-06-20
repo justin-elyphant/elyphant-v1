@@ -27,25 +27,25 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
 
   if (products.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No products found</p>
+      <div className="text-center py-12 safe-area-inset">
+        <p className="text-gray-500 leading-relaxed">No products found</p>
       </div>
     );
   }
 
-  // Enhanced mobile grid layout for better visual impact
+  // Enhanced mobile grid layout for better visual impact and iOS optimization
   const getGridClasses = () => {
     if (isMobile) {
-      // Mobile: Edge-to-edge with minimal gaps for maximum visual impact
+      // Mobile: Edge-to-edge with minimal gaps for maximum visual impact and iOS touch optimization
       return viewMode === "list" 
-        ? "grid grid-cols-1 gap-3" 
-        : "grid grid-cols-2 gap-2 px-2";
+        ? "grid grid-cols-1 gap-3 mobile-grid-optimized safe-area-inset will-change-scroll" 
+        : "grid grid-cols-2 gap-2 px-2 mobile-grid-optimized safe-area-inset will-change-scroll";
     }
     
-    // Desktop: Standard responsive grid
+    // Desktop: Standard responsive grid with performance optimizations
     return viewMode === "list" 
-      ? "grid grid-cols-1 gap-4" 
-      : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4";
+      ? "grid grid-cols-1 gap-4 intersection-target" 
+      : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 intersection-target";
   };
 
   const handleWishlistUpdate = async () => {
@@ -60,15 +60,16 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
         const statusBadge = getProductStatus(product);
         
         return (
-          <ProductItem
-            key={productId}
-            product={product}
-            viewMode={viewMode}
-            onProductClick={() => handleProductClick(productId)}
-            onWishlistClick={handleWishlistUpdate}
-            isFavorited={isProductWishlisted(productId)}
-            statusBadge={statusBadge}
-          />
+          <div key={productId} className="intersection-target">
+            <ProductItem
+              product={product}
+              viewMode={viewMode}
+              onProductClick={() => handleProductClick(productId)}
+              onWishlistClick={handleWishlistUpdate}
+              isFavorited={isProductWishlisted(productId)}
+              statusBadge={statusBadge}
+            />
+          </div>
         );
       })}
     </div>

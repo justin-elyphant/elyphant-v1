@@ -74,7 +74,7 @@ const ProductItem = ({
   return (
     <>
       <div
-        className={`group cursor-pointer bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md overflow-hidden relative ${
+        className={`group cursor-pointer bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md overflow-hidden relative touch-manipulation tap-feedback gpu-accelerated ${
           isListView ? "flex gap-4 p-4" : "flex flex-col"
         }`}
         onClick={handleProductClick}
@@ -99,7 +99,7 @@ const ProductItem = ({
                 price: productPrice,
                 brand: product.brand,
               }}
-              triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-1.5 rounded-full transition-colors shadow-sm"
+              triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-1.5 rounded-full transition-colors shadow-sm touch-target-44 touch-manipulation tap-feedback"
               onAdded={handleWishlistAdded}
               isWishlisted={isActuallyWishlisted}
             />
@@ -107,7 +107,7 @@ const ProductItem = ({
             <Button
               variant="ghost"
               size="icon"
-              className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 rounded-full p-1.5 shadow-sm"
+              className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 rounded-full p-1.5 shadow-sm touch-target-44 touch-manipulation tap-feedback no-select"
               onClick={(e) => {
                 e.stopPropagation();
                 handleWishlistClick();
@@ -119,12 +119,13 @@ const ProductItem = ({
         </div>
 
         {/* Product Image */}
-        <div className={`${isListView ? "w-32 h-32 flex-shrink-0" : "aspect-square"} bg-gray-100 overflow-hidden ${isListView ? "rounded-md" : ""}`}>
+        <div className={`${isListView ? "w-32 h-32 flex-shrink-0" : "aspect-square"} bg-gray-100 overflow-hidden ${isListView ? "rounded-md" : ""} intersection-target`}>
           {product.image ? (
             <img
               src={product.image}
               alt={productName}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 gpu-accelerated"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -134,14 +135,14 @@ const ProductItem = ({
         </div>
 
         {/* Product Info */}
-        <div className={`${isListView ? "flex-1" : "p-4"} flex flex-col`}>
+        <div className={`${isListView ? "flex-1" : "p-4"} flex flex-col safe-area-inset`}>
           <div className="flex-1">
-            <h3 className="font-medium text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="font-medium text-gray-900 line-clamp-2 group-hover:text-primary transition-colors leading-relaxed">
               {productName}
             </h3>
             
             {product.brand && (
-              <p className="text-sm text-gray-500 mt-1">{product.brand}</p>
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">{product.brand}</p>
             )}
             
             {/* Product Rating */}
@@ -152,12 +153,12 @@ const ProductItem = ({
               className="mt-2"
             />
             
-            <p className="text-lg font-semibold text-gray-900 mt-2">
+            <p className="text-lg font-semibold text-gray-900 mt-2 leading-relaxed">
               {formatPrice(product.price)}
             </p>
 
             {product.description && isListView && (
-              <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+              <p className="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed">
                 {product.description}
               </p>
             )}
@@ -169,7 +170,7 @@ const ProductItem = ({
               product={product}
               variant="outline"
               size="sm"
-              className="w-full h-9 text-sm font-medium"
+              className="w-full h-9 text-sm font-medium touch-target-48 touch-manipulation tap-feedback no-select"
               onClick={handleAddToCartClick}
             />
           </div>

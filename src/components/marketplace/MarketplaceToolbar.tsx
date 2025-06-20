@@ -1,9 +1,10 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SlidersHorizontal, Grid3X3, List, BookmarkPlus, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Grid, List, SlidersHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MarketplaceToolbarProps {
   viewMode: "grid" | "list";
@@ -15,10 +16,10 @@ interface MarketplaceToolbarProps {
   setShowFilters: (show: boolean) => void;
   isMobile: boolean;
   currentPage: number;
-  setCurrentPage: (pageNumber: number) => void;
+  setCurrentPage: (page: number) => void;
 }
 
-const MarketplaceToolbar: React.FC<MarketplaceToolbarProps> = ({
+const MarketplaceToolbar = ({
   viewMode,
   setViewMode,
   sortOption,
@@ -28,133 +29,125 @@ const MarketplaceToolbar: React.FC<MarketplaceToolbarProps> = ({
   setShowFilters,
   isMobile,
   currentPage,
-  setCurrentPage
-}) => {
-  const sortOptions = [
-    { value: "relevance", label: "Relevance" },
-    { value: "price-low", label: "Price: Low to High" },
-    { value: "price-high", label: "Price: High to Low" },
-    { value: "rating", label: "Customer Rating" },
-    { value: "newest", label: "Newest" }
-  ];
+  setCurrentPage,
+}: MarketplaceToolbarProps) => {
+  const handleSortChange = (value: string) => {
+    setSortOption(value);
+  };
+
+  const itemsPerPage = 20;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="flex items-center justify-between gap-4 py-4 border-b">
-      {/* Results count */}
-      <div className="text-sm text-muted-foreground">
-        {totalItems} {totalItems === 1 ? 'result' : 'results'}
-      </div>
-
-      <div className="flex items-center gap-3">
-        {/* Pagination controls */}
-        <div className="flex items-center gap-2 ml-auto">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 safe-area-inset mobile-grid-optimized">
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        {/* View mode toggle */}
+        <div className="flex items-center border rounded-md overflow-hidden">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="px-4 py-2"
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1} // Optional: Disable if on the first page
+            className={`rounded-none px-2.5 touch-target-44 touch-manipulation tap-feedback no-select ${
+              viewMode === "grid" ? "bg-muted" : ""
+            }`}
+            onClick={() => setViewMode("grid")}
           >
-            Previous
+            <Grid3X3 className="h-4 w-4" />
           </Button>
-
-          {/* Page numbers */}
-          {!isMobile && (
-            <>
-              {currentPage > 1 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="px-4 py-2"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                >
-                  {currentPage - 1}
-                </Button>
-              )}
-              
-              <Button
-                variant="default"
-                size="sm"
-                className="px-4 py-2"
-                onClick={() => setCurrentPage(currentPage)}
-              >
-                {currentPage}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="px-4 py-2"
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                {currentPage + 1}
-              </Button>
-            </>
-          )}
-
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="px-4 py-2"
-            onClick={() => setCurrentPage(currentPage + 1)}
+            className={`rounded-none px-2.5 touch-target-44 touch-manipulation tap-feedback no-select ${
+              viewMode === "list" ? "bg-muted" : ""
+            }`}
+            onClick={() => setViewMode("list")}
           >
-            Next
+            <List className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Sort dropdown */}
-        <Select value={sortOption} onValueChange={setSortOption}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            {sortOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Filter toggle button */}
+        {isMobile ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 h-8 touch-target-44 touch-manipulation tap-feedback no-select"
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </Button>
+        ) : (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white touch-target-44 touch-manipulation tap-feedback no-select"
+          >
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+        )}
 
-        {/* View mode toggle */}
-        {!isMobile && (
-          <div className="flex border rounded-md">
+        {/* Results count */}
+        <div className="text-sm text-muted-foreground whitespace-nowrap leading-relaxed">
+          {totalItems > 0 ? (
+            <>
+              Showing {startItem}-{endItem} of {totalItems} results
+            </>
+          ) : (
+            "No results found"
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
             <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
+              variant="outline"
               size="sm"
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "rounded-r-none border-r",
-                viewMode === "grid" && "bg-primary text-primary-foreground"
-              )}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="touch-target-44 touch-manipulation tap-feedback no-select"
             >
-              <Grid className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
+            <span className="text-sm text-muted-foreground px-2 leading-relaxed">
+              {currentPage} of {totalPages}
+            </span>
             <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
+              variant="outline"
               size="sm"
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "rounded-l-none",
-                viewMode === "list" && "bg-primary text-primary-foreground"
-              )}
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="touch-target-44 touch-manipulation tap-feedback no-select"
             >
-              <List className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         )}
 
-        {/* Filters toggle for desktop */}
-        {!isMobile && (
-          <Button
-            variant={showFilters ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filters
-          </Button>
-        )}
+        {/* Sort dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground hidden sm:inline leading-relaxed">
+            Sort by:
+          </span>
+          <Select value={sortOption} onValueChange={handleSortChange}>
+            <SelectTrigger className="h-8 w-[130px] sm:w-[160px] touch-target-44 touch-manipulation">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent className="z-50">
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="price-asc">Price: Low to High</SelectItem>
+              <SelectItem value="price-desc">Price: High to Low</SelectItem>
+              <SelectItem value="rating">Highest Rated</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );

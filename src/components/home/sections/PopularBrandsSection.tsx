@@ -45,13 +45,35 @@ const PopularBrandsSection = () => {
     },
   ];
 
-  // Cleanup loading state when component unmounts or brand changes
+  // Aggressive cleanup of loading state and toasts on unmount
   useEffect(() => {
     return () => {
       if (loadingBrand) {
+        console.log('Component unmounting, cleaning up loading state:', loadingBrand);
+        setLoadingBrand(null);
+        // Dismiss all toasts aggressively
+        toast.dismiss();
+      }
+    };
+  }, [loadingBrand]);
+
+  // Additional cleanup when route changes
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (loadingBrand) {
+        console.log('Route changing, cleaning up loading state:', loadingBrand);
         setLoadingBrand(null);
         toast.dismiss();
       }
+    };
+
+    // Listen for route changes
+    window.addEventListener('beforeunload', handleRouteChange);
+    window.addEventListener('popstate', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleRouteChange);
+      window.removeEventListener('popstate', handleRouteChange);
     };
   }, [loadingBrand]);
 
@@ -63,27 +85,33 @@ const PopularBrandsSection = () => {
     }
     
     console.log(`Loading brand: ${brandName}`);
+    
+    // Clear any existing toasts first
+    toast.dismiss();
+    
     setLoadingBrand(brandName);
     
     const loadingToastId = `brand-loading-${brandName}-${Date.now()}`;
     const enhancedSearchTerm = `best selling ${brandName} products`;
     
-    // Set up timeout for cleanup
+    // Set up aggressive timeout for cleanup - shorter for mobile
+    const timeoutDuration = isMobile ? 3000 : 5000;
     const timeoutId = setTimeout(() => {
-      console.log(`Timeout reached for ${brandName}, cleaning up`);
+      console.log(`Timeout reached for ${brandName}, cleaning up aggressively`);
       setLoadingBrand(null);
-      toast.dismiss(loadingToastId);
+      toast.dismiss(); // Dismiss all toasts
       toast.error(`Loading ${brandName} products took too long`, { 
-        id: `error-${brandName}-${Date.now()}` 
+        id: `error-${brandName}-${Date.now()}`,
+        duration: 2000
       });
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
-    }, 5000); // 5 second timeout
+    }, timeoutDuration);
     
     try {
-      // Show loading toast
-      toast.loading(`Loading ${brandName} products...`, { 
+      // Show loading toast with shorter duration for mobile
+      const loadingToast = toast.loading(`Loading ${brandName} products...`, { 
         id: loadingToastId,
-        duration: Infinity // Keep toast until manually dismissed
+        duration: isMobile ? 2000 : Infinity
       });
       
       await handleBrandProducts(brandName, products, setProducts);
@@ -92,11 +120,14 @@ const PopularBrandsSection = () => {
       clearTimeout(timeoutId);
       setLoadingBrand(null);
       
-      // Clear loading toast and show success
+      // Aggressively clear loading toast
       toast.dismiss(loadingToastId);
-      toast.success(`${brandName} products loaded successfully`, {
+      toast.dismiss(); // Clear all toasts as backup
+      
+      // Show brief success message
+      toast.success(`${brandName} products loaded`, {
         id: `success-${brandName}-${Date.now()}`,
-        duration: 2000
+        duration: 1500
       });
       
       // Navigate to marketplace
@@ -109,11 +140,13 @@ const PopularBrandsSection = () => {
       clearTimeout(timeoutId);  
       setLoadingBrand(null);
       
-      // Clear loading toast and show error
+      // Aggressively clear loading toast
       toast.dismiss(loadingToastId);
+      toast.dismiss(); // Clear all toasts as backup
+      
       toast.error(`Failed to load ${brandName} products`, {
         id: `error-${brandName}-${Date.now()}`,
-        duration: 3000
+        duration: 2000
       });
       
       // Still navigate to allow user to see available products

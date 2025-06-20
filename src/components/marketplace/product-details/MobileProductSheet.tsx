@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -33,22 +32,48 @@ const MobileProductSheet = ({
   const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
 
   const handleAddToCart = () => {
-    console.log('MobileProductSheet - Adding to cart:', {
-      product: product,
-      productId: product.product_id || product.id,
-      quantity: quantity,
-      productName: product.title || product.name
-    });
-    
-    triggerHapticFeedback(HapticPatterns.addToCart);
-    
-    // Add item to cart with the specified quantity (fixed: call once instead of loop)
-    addToCart(product, quantity);
-    
-    const itemCount = getItemCount();
-    console.log('MobileProductSheet - Cart updated, new item count:', itemCount);
-    
-    toast.success(`Added ${quantity} ${product.title || product.name}(s) to cart`);
+    try {
+      // Normalize product object to ensure it has the required product_id field
+      const normalizedProduct = {
+        ...product,
+        product_id: product.product_id || product.id || String(Math.random()), // Fallback ID if none exists
+        title: product.title || product.name || "Unknown Product",
+        name: product.name || product.title || "Unknown Product"
+      };
+
+      console.log('MobileProductSheet - Adding to cart:', {
+        originalProduct: product,
+        normalizedProduct: normalizedProduct,
+        quantity: quantity,
+        hasProductId: !!normalizedProduct.product_id
+      });
+
+      // Validate required fields
+      if (!normalizedProduct.product_id) {
+        console.error('MobileProductSheet - No product ID found');
+        toast.error('Unable to add item to cart - product ID missing');
+        return;
+      }
+
+      if (!normalizedProduct.price) {
+        console.error('MobileProductSheet - No product price found');
+        toast.error('Unable to add item to cart - price missing');
+        return;
+      }
+      
+      triggerHapticFeedback(HapticPatterns.addToCart);
+      
+      // Add item to cart with the specified quantity
+      addToCart(normalizedProduct, quantity);
+      
+      const itemCount = getItemCount();
+      console.log('MobileProductSheet - Cart updated, new item count:', itemCount);
+      
+      toast.success(`Added ${quantity} ${normalizedProduct.title}(s) to cart`);
+    } catch (error) {
+      console.error('MobileProductSheet - Error adding to cart:', error);
+      toast.error('Failed to add item to cart. Please try again.');
+    }
   };
 
   const handleShare = () => {

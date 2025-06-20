@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Search } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthButtons from "./AuthButtons";
 import UserButton from "@/components/auth/UserButton";
@@ -14,7 +14,6 @@ import ShoppingCartButton from "@/components/marketplace/components/ShoppingCart
 
 const NavigationBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const { user } = useAuth();
   const { profile } = useProfile();
   const location = useLocation();
@@ -23,26 +22,21 @@ const NavigationBar = () => {
   // Close mobile menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
-    setIsSearchModalOpen(false);
   }, [location.pathname]);
   
-  // Prevent body scroll when mobile menu or search modal is open
+  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (isMobile) {
-      document.body.style.overflow = (isMenuOpen || isSearchModalOpen) ? 'hidden' : '';
+      document.body.style.overflow = isMenuOpen ? 'hidden' : '';
       
       return () => {
         document.body.style.overflow = '';
       };
     }
-  }, [isMenuOpen, isSearchModalOpen, isMobile]);
+  }, [isMenuOpen, isMobile]);
   
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-  };
-
-  const toggleSearchModal = () => {
-    setIsSearchModalOpen(!isSearchModalOpen);
   };
 
   const navItems = [
@@ -55,14 +49,14 @@ const NavigationBar = () => {
         <div className="container mx-auto px-4">
           {/* Main navigation row - reduced height */}
           <div className="flex justify-between items-center h-16">
-            {/* Logo - more compact */}
+            {/* Logo - more compact on mobile */}
             <Link to="/" className="flex items-center cursor-pointer flex-shrink-0">
               <img 
                 src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
                 alt="Elyphant" 
-                className="h-10 w-10 mr-2" 
+                className={`mr-2 ${isMobile ? 'h-8 w-8' : 'h-10 w-10'}`}
               />
-              <h1 className="text-xl font-bold text-purple-700">Elyphant</h1>
+              <h1 className={`font-bold text-purple-700 ${isMobile ? 'text-lg' : 'text-xl'}`}>Elyphant</h1>
             </Link>
             
             {/* Desktop Search Bar - better proportions */}
@@ -72,21 +66,18 @@ const NavigationBar = () => {
               </div>
             )}
             
+            {/* Mobile Compact Search Bar */}
+            {isMobile && (
+              <div className="flex-1 mx-4 max-w-sm">
+                <AIEnhancedSearchBar 
+                  mobile={true} 
+                  className="h-9"
+                />
+              </div>
+            )}
+            
             {/* Right side actions - more compact */}
             <div className="flex items-center space-x-3 flex-shrink-0">
-              {/* Mobile Search Icon */}
-              {isMobile && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={toggleSearchModal}
-                  className="h-10 w-10"
-                  aria-label="Search"
-                >
-                  <Search size={20} />
-                </Button>
-              )}
-              
               <ShoppingCartButton />
               <div className="hidden md:flex">
                 {user ? (
@@ -119,12 +110,9 @@ const NavigationBar = () => {
           {/* Mobile navigation */}
           {isMenuOpen && (
             <div className="fixed inset-0 top-[64px] bg-white z-50 flex flex-col p-4 md:hidden">
-              {/* Mobile Search Bar */}
+              {/* Mobile Category Filter */}
               <div className="mb-4">
-                <AIEnhancedSearchBar mobile={true} />
-                <div className="mt-2">
-                  <CategoryFilterBar mobile={true} />
-                </div>
+                <CategoryFilterBar mobile={true} />
               </div>
               
               <div className="flex flex-col space-y-4 mb-6">
@@ -157,31 +145,6 @@ const NavigationBar = () => {
           )}
         </div>
       </nav>
-
-      {/* Mobile Search Modal */}
-      {isMobile && isSearchModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-start justify-center pt-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">Search</h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleSearchModal}
-                className="h-8 w-8"
-              >
-                <X size={16} />
-              </Button>
-            </div>
-            
-            {/* Search Content */}
-            <div className="p-4">
-              <AIEnhancedSearchBar mobile={true} />
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

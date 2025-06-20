@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+
+import React, { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Heart, Share2, ShoppingBag, Minus, Plus } from "lucide-react";
+import { Heart, Share2, ShoppingBag, Minus, Plus, Star } from "lucide-react";
 import { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { useAuth } from "@/contexts/auth";
+import ProductCarousel from "./ProductCarousel";
 
 interface MobileProductSheetProps {
   product: Product;
@@ -30,6 +32,14 @@ const MobileProductSheet = ({
 
   const increaseQuantity = () => setQuantity(prev => Math.min(prev + 1, 10));
   const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
+
+  // Process images for carousel
+  const processedImages = useMemo(() => {
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      return product.images.filter(Boolean);
+    }
+    return product.image ? [product.image] : [];
+  }, [product]);
 
   const handleAddToCart = () => {
     try {
@@ -93,6 +103,52 @@ const MobileProductSheet = ({
     }
   };
 
+  // Format rating display
+  const renderRating = () => {
+    const rating = product.rating || product.stars || 0;
+    const reviewCount = product.reviewCount || product.num_reviews || 0;
+    
+    if (!rating && !reviewCount) return null;
+
+    return (
+      <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={`h-4 w-4 ${
+                i < Math.floor(rating) 
+                  ? "fill-yellow-400 text-yellow-400" 
+                  : "fill-gray-200 text-gray-200"
+              }`}
+            />
+          ))}
+          <span className="ml-1 text-sm font-medium">{rating.toFixed(1)}</span>
+        </div>
+        {reviewCount > 0 && (
+          <span className="text-sm text-gray-500">({reviewCount.toLocaleString()})</span>
+        )}
+      </div>
+    );
+  };
+
+  // Format brand/vendor display
+  const renderBrandInfo = () => {
+    const brand = product.brand;
+    if (brand && brand !== "Amazon via Zinc") {
+      return (
+        <div className="text-sm text-gray-600 mt-1">
+          by {brand}
+        </div>
+      );
+    }
+    return (
+      <div className="text-sm text-gray-600 mt-1">
+        Sold by Amazon
+      </div>
+    );
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
@@ -101,14 +157,21 @@ const MobileProductSheet = ({
         </SheetHeader>
         
         <div className="space-y-6">
-          {/* Product Image */}
+          {/* Product Images - Use Carousel for multiple images */}
           <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
-            {product.image ? (
-              <img
-                src={product.image}
-                alt={product.title || product.name || "Product"}
-                className="w-full h-full object-cover"
-              />
+            {processedImages.length > 0 ? (
+              processedImages.length === 1 ? (
+                <img
+                  src={processedImages[0]}
+                  alt={product.title || product.name || "Product"}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <ProductCarousel
+                  images={processedImages}
+                  productName={product.title || product.name || "Product"}
+                />
+              )
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
                 <span>No Image Available</span>
@@ -119,7 +182,11 @@ const MobileProductSheet = ({
           {/* Product Info */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">${product.price?.toFixed(2)}</div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold">${product.price?.toFixed(2)}</div>
+                {renderBrandInfo()}
+                {renderRating()}
+              </div>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -154,15 +221,43 @@ const MobileProductSheet = ({
               </div>
             </div>
 
+            {/* Product Description */}
             {product.description && (
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {product.description}
-              </p>
+              <div className="space-y-3">
+                <h4 className="font-medium text-base">Description</h4>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {product.description}
+                </p>
+              </div>
             )}
 
-            {product.brand && (
-              <div className="text-sm text-gray-500">
-                Brand: {product.brand}
+            {/* Product Features */}
+            {product.features && Array.isArray(product.features) && product.features.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="font-medium text-base">Features</h4>
+                <ul className="text-sm space-y-1">
+                  {product.features.slice(0, 5).map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-green-500 mt-1 flex-shrink-0">•</span>
+                      <span className="text-gray-600">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Product Details */}
+            {product.product_details && Array.isArray(product.product_details) && product.product_details.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="font-medium text-base">Product Details</h4>
+                <ul className="text-sm space-y-1">
+                  {product.product_details.slice(0, 5).map((detail, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-green-500 mt-1 flex-shrink-0">•</span>
+                      <span className="text-gray-600">{String(detail)}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

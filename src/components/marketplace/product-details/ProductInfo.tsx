@@ -19,12 +19,21 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   const features = product.product_details || [];
   const specifications = product.variant_specifics || [];
 
+  // Format brand/vendor display - show actual brand instead of "Amazon via Zinc"
+  const renderBrandInfo = () => {
+    const brand = product.brand;
+    if (brand && brand !== "Amazon via Zinc") {
+      return <span className="text-green-600 text-sm block mt-2">by {brand}</span>;
+    }
+    return <span className="text-green-600 text-sm block mt-2">Sold by Amazon</span>;
+  };
+
   return (
     <div className="flex flex-col space-y-4">
       <div>
         <h3 className="text-2xl font-bold">${formatProductPrice(product.price)}</h3>
         <ProductRating rating={product.stars} reviewCount={product.review_count} size="lg" />
-        <span className="text-green-600 text-sm block mt-2">Free shipping</span>
+        {renderBrandInfo()}
       </div>
       
       <div className="space-y-4">

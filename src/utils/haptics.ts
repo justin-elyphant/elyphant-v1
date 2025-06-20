@@ -80,6 +80,13 @@ export const HapticPatterns = {
   errorAction: 'error' as const,
   navigationTap: 'light' as const,
   pullRefresh: 'medium' as const,
+  zoomIn: 'light' as const,
+  zoomOut: 'light' as const,
+  imageSwipe: 'selection' as const,
+  wishlistAdd: 'success' as const,
+  wishlistRemove: 'warning' as const,
+  shareAction: 'light' as const,
+  focusChange: 'selection' as const
 };
 
 // Long press gesture handler with haptic feedback
@@ -140,4 +147,14 @@ export const requestHapticPermission = async (): Promise<boolean> => {
     console.warn('Could not request haptic permission:', error);
     return false;
   }
+};
+
+// Accessibility-aware haptic feedback
+export const triggerAccessibleHaptic = (type: keyof typeof HapticPatterns, skipIfReducedMotion = true) => {
+  // Check for reduced motion preference
+  if (skipIfReducedMotion && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+  
+  triggerHapticFeedback(HapticPatterns[type]);
 };

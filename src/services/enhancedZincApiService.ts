@@ -23,10 +23,39 @@ export interface ZincProductDetail {
   product_description: string;
   feature_bullets: string[];
   product_details: string[];
+  // Enhanced best seller fields
+  isBestSeller?: boolean;
+  bestSellerType?: 'amazon_choice' | 'best_seller' | 'popular' | 'top_rated' | 'highly_rated' | null;
+  badgeText?: string | null;
+  best_seller_rank?: number;
 }
 
 class EnhancedZincApiService {
   private cache = new Map();
+
+  /**
+   * Process and enhance product data with best seller information
+   */
+  private enhanceProductData(product: any): any {
+    // Ensure best seller data is properly mapped
+    const enhanced = {
+      ...product,
+      isBestSeller: product.isBestSeller || false,
+      bestSellerType: product.bestSellerType || null,
+      badgeText: product.badgeText || null,
+    };
+
+    // Log best seller detection for debugging
+    if (enhanced.isBestSeller) {
+      console.log(`Best seller detected: ${enhanced.title}`, {
+        type: enhanced.bestSellerType,
+        badge: enhanced.badgeText,
+        rank: enhanced.best_seller_rank || enhanced.sales_rank
+      });
+    }
+
+    return enhanced;
+  }
 
   /**
    * Search for products using the enhanced Zinc API via Supabase Edge Function
@@ -60,8 +89,11 @@ class EnhancedZincApiService {
         };
       }
 
+      // Enhance product data with best seller information
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
       return {
-        results: data.results || [],
+        results: enhancedResults || [],
         cached: false
       };
 
@@ -93,7 +125,8 @@ class EnhancedZincApiService {
         throw new Error(`Product details fetch failed: ${error.message}`);
       }
 
-      return data;
+      // Enhance the detailed product data
+      return this.enhanceProductData(data);
 
     } catch (error) {
       console.error('Product details error:', error);
@@ -115,9 +148,6 @@ class EnhancedZincApiService {
     return this.searchProducts(`category:${category}`, page, limit);
   }
 
-  /**
-   * Search products with price range
-   */
   async searchWithPriceRange(query: string, minPrice: number, maxPrice: number, page: number = 1): Promise<ZincSearchResponse> {
     return this.searchProducts(query, page, 20, {
       min_price: minPrice,
@@ -125,9 +155,6 @@ class EnhancedZincApiService {
     });
   }
 
-  /**
-   * Clear search cache
-   */
   clearCache(): void {
     this.cache.clear();
     console.log('Search cache cleared');

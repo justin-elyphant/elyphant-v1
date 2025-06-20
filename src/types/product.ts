@@ -37,6 +37,13 @@ export type Product = {
   isBestSeller?: boolean;
   variants?: string[];
   
+  // Enhanced best seller fields from Zinc API
+  bestSellerType?: 'amazon_choice' | 'best_seller' | 'popular' | 'top_rated' | 'highly_rated' | null;
+  badgeText?: string | null;
+  best_seller_rank?: number;
+  sales_rank?: number;
+  badges?: string[];
+  
   // New fields for wishlist and preference tracking
   tags?: string[];
   fromWishlist?: boolean;

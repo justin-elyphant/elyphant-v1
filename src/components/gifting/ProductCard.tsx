@@ -19,7 +19,7 @@ import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 interface ProductCardProps {
   product: any;
   isWishlisted?: boolean;
-  isGifteeView?: boolean;
+  isGifteeView?: boolean; 
   onToggleWishlist?: () => void;
   onClick?: () => void;
 }
@@ -44,6 +44,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
       id: product.product_id || product.id,
       title: product.title || product.name,
       isWishlisted: actuallyWishlisted,
+      isBestSeller: product.isBestSeller,
+      bestSellerType: product.bestSellerType,
+      badgeText: product.badgeText,
       isMock: (product.retailer && typeof product.retailer === "string" && product.retailer.toLowerCase().includes("zinc")) ||
               (product.product_id && String(product.product_id).toUpperCase().startsWith("MOCK"))
     });
@@ -91,11 +94,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="aspect-square relative overflow-hidden">
         <ProductCardImageSection product={product} productName={getProductName()} />
 
-        {/* Refactored Status Badges */}
+        {/* Enhanced Status Badges with best seller data */}
         <ProductStatusBadges
           isBestSeller={isBestSeller()}
           isNewArrival={isNewArrival()}
           isRecentlyViewed={isRecentlyViewed()}
+          bestSellerType={product.bestSellerType}
+          badgeText={product.badgeText}
         />
 
         {/* Always popover-based wishlist - no more 1-click */}

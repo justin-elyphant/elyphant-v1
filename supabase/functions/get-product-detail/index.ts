@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -29,6 +30,68 @@ const fetchApiKey = async () => {
   return data.key;
 }
 
+// Process best seller indicators from detailed product response
+const processBestSellerData = (product: any) => {
+  let isBestSeller = false;
+  let bestSellerType = null;
+  let badgeText = null;
+
+  // Check for Amazon's Choice badge
+  if (product.is_amazon_choice || 
+      product.amazon_choice || 
+      product.choice_badge ||
+      (product.badges && product.badges.some((badge: any) => 
+        badge?.toLowerCase().includes('choice') || 
+        badge?.toLowerCase().includes('amazon')))) {
+    isBestSeller = true;
+    bestSellerType = 'amazon_choice';
+    badgeText = "Amazon's Choice";
+  }
+
+  // Check for Best Seller indicators
+  if (product.is_best_seller ||
+      product.best_seller ||
+      product.bestseller ||
+      (product.badges && product.badges.some((badge: any) => 
+        badge?.toLowerCase().includes('best') && badge?.toLowerCase().includes('seller'))) ||
+      (product.best_seller_rank && product.best_seller_rank <= 100)) {
+    isBestSeller = true;
+    bestSellerType = bestSellerType || 'best_seller';
+    badgeText = badgeText || 'Best Seller';
+  }
+
+  // Check sales rank for popular items
+  if (product.sales_rank && product.sales_rank <= 50) {
+    isBestSeller = true;
+    bestSellerType = bestSellerType || 'top_rated';
+    badgeText = badgeText || 'Top Rated';
+  }
+
+  // Check for high review count + rating combination
+  if (product.num_reviews && product.num_reviews > 500 && 
+      product.rating && product.rating >= 4.5) {
+    isBestSeller = true;
+    bestSellerType = bestSellerType || 'highly_rated';
+    badgeText = badgeText || 'Highly Rated';
+  }
+
+  // Check for badge text in product details
+  if (product.badge_text) {
+    const badgeTextLower = product.badge_text.toLowerCase();
+    if (badgeTextLower.includes('choice') || badgeTextLower.includes('best') || badgeTextLower.includes('seller')) {
+      isBestSeller = true;
+      bestSellerType = badgeTextLower.includes('choice') ? 'amazon_choice' : 'best_seller';
+      badgeText = product.badge_text;
+    }
+  }
+
+  return {
+    isBestSeller,
+    bestSellerType,
+    badgeText
+  };
+};
+
 serve(async (req) => {
   const {method} = req;
   if (method === 'OPTIONS') {
@@ -49,8 +112,15 @@ serve(async (req) => {
       });
 
       const data = await response.json();
+      
+      // Process best seller data for the product detail
+      const bestSellerData = processBestSellerData(data);
+      const enhancedData = {
+        ...data,
+        ...bestSellerData
+      };
 
-      return new Response(JSON.stringify(data), {
+      return new Response(JSON.stringify(enhancedData), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });      

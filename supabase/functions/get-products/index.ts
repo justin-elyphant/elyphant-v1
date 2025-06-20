@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -29,6 +30,60 @@ const fetchApiKey = async () => {
   return data.key;
 }
 
+// Process best seller indicators from Zinc response
+const processBestSellerData = (product: any) => {
+  let isBestSeller = false;
+  let bestSellerType = null;
+  let badgeText = null;
+
+  // Check for Amazon's Choice badge
+  if (product.is_amazon_choice || 
+      product.amazon_choice || 
+      product.choice_badge ||
+      (product.badges && product.badges.some((badge: any) => 
+        badge?.toLowerCase().includes('choice') || 
+        badge?.toLowerCase().includes('amazon')))) {
+    isBestSeller = true;
+    bestSellerType = 'amazon_choice';
+    badgeText = "Amazon's Choice";
+  }
+
+  // Check for Best Seller rank/badge
+  if (product.is_best_seller ||
+      product.best_seller ||
+      product.bestseller ||
+      (product.badges && product.badges.some((badge: any) => 
+        badge?.toLowerCase().includes('best') && badge?.toLowerCase().includes('seller'))) ||
+      (product.best_seller_rank && product.best_seller_rank <= 100)) {
+    isBestSeller = true;
+    bestSellerType = bestSellerType || 'best_seller';
+    badgeText = badgeText || 'Best Seller';
+  }
+
+  // Check for high sales volume indicators
+  if (product.num_sales && product.num_sales > 1000) {
+    isBestSeller = true;
+    bestSellerType = bestSellerType || 'popular';
+    badgeText = badgeText || 'Popular';
+  }
+
+  // Check for badge text in various fields
+  if (product.badge_text) {
+    const badgeTextLower = product.badge_text.toLowerCase();
+    if (badgeTextLower.includes('choice') || badgeTextLower.includes('best') || badgeTextLower.includes('seller')) {
+      isBestSeller = true;
+      bestSellerType = badgeTextLower.includes('choice') ? 'amazon_choice' : 'best_seller';
+      badgeText = product.badge_text;
+    }
+  }
+
+  return {
+    isBestSeller,
+    bestSellerType,
+    badgeText
+  };
+};
+
 serve(async (req) => {
   const {method} = req;
   if (method === 'OPTIONS') {
@@ -51,6 +106,17 @@ serve(async (req) => {
       });
   
       const data = await response.json();
+      
+      // Process best seller data for each product
+      if (data.results && Array.isArray(data.results)) {
+        data.results = data.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return {
+            ...product,
+            ...bestSellerData
+          };
+        });
+      }
   
       return new Response(JSON.stringify(data), {
         status: 200,

@@ -179,9 +179,23 @@ const ProductDetailsDialog = ({
                 {product.vendor && `By ${product.vendor}`}
               </div>
             </DialogHeader>
+            
             <Separator className="my-4" />
             
-            {/* Product Description - Fixed display */}
+            {/* Quantity and Add to Cart Actions - Moved to top */}
+            <ProductDetailsActionsSection
+              product={product}
+              quantity={quantity}
+              onIncrease={increaseQuantity}
+              onDecrease={decreaseQuantity}
+              isHeartAnimating={isHeartAnimating}
+              isWishlisted={isWishlisted}
+              reloadWishlists={handleWishlistChange}
+            />
+            
+            <Separator className="my-4" />
+            
+            {/* Product Description */}
             <div className="mb-6">
               <p className="text-sm text-muted-foreground">
                 {productDescription}
@@ -211,15 +225,6 @@ const ProductDetailsDialog = ({
                 </ul>
               </div>
             )}
-            <ProductDetailsActionsSection
-              product={product}
-              quantity={quantity}
-              onIncrease={increaseQuantity}
-              onDecrease={decreaseQuantity}
-              isHeartAnimating={isHeartAnimating}
-              isWishlisted={isWishlisted}
-              reloadWishlists={handleWishlistChange}
-            />
           </div>
         </div>
       </DialogContent>

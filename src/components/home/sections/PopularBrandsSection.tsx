@@ -64,10 +64,10 @@ const PopularBrandsSection = () => {
   };
 
   return (
-    <div className="py-16 bg-white">
-      <div className="container px-4">
-        <h2 className="text-3xl font-bold mb-3 text-center">Popular Brands</h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+    <div className="py-12 md:py-16 bg-white intersection-target">
+      <div className="container px-4 md:px-6">
+        <h2 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3 text-center">Popular Brands</h2>
+        <p className="text-center text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
           Shop from trusted brands our customers love
         </p>
         
@@ -77,23 +77,23 @@ const PopularBrandsSection = () => {
               align: "start",
               loop: false,
             }}
-            className="w-full"
+            className="w-full swipe-container will-change-scroll"
           >
             <CarouselContent className="-ml-2 md:-ml-4">
               {brands.map((brand) => (
-                <CarouselItem key={brand.name} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
+                <CarouselItem key={brand.name} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6 swipe-item">
                   <div
-                    className={`relative flex flex-col items-center justify-center p-4 md:p-6 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-manipulation min-h-[100px] ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
+                    className={`relative flex flex-col items-center justify-center p-3 md:p-4 lg:p-6 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback min-h-[100px] ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
                     onClick={() => handleBrandClick(brand.name)}
                   >
                     <img
                       src={brand.logo}
                       alt={`${brand.name} logo`}
-                      className={`max-h-8 md:max-h-12 max-w-16 md:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
+                      className={`max-h-6 md:max-h-8 lg:max-h-12 max-w-12 md:max-w-16 lg:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
                       loading="lazy"
                       style={{ aspectRatio: "3/1", objectFit: "contain" }}
                     />
-                    <span className="text-xs md:text-sm font-medium text-gray-700 mt-2 md:mt-3 text-center">{brand.name}</span>
+                    <span className="text-xs md:text-sm font-medium text-gray-700 mt-2 md:mt-3 text-center leading-tight">{brand.name}</span>
                     {loadingBrand === brand.name && (
                       <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-16">
                         Loading...

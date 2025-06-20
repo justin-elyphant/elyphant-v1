@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -33,10 +34,10 @@ const Hero = () => {
   };
 
   return (
-    <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] overflow-hidden">
+    <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] overflow-hidden safe-area-top">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat gpu-accelerated"
         style={{
           backgroundImage: `url('/lovable-uploads/71b54185-9bbb-41d9-a722-df038ac4de04.png')`,
           backgroundSize: 'cover',
@@ -49,14 +50,14 @@ const Hero = () => {
 
       {/* Holiday Countdown Overlay */}
       {nextHoliday && (
-        <div className="absolute top-4 right-4 z-20 hidden md:block">
+        <div className="absolute top-4 right-4 z-20 hidden md:block intersection-target">
           <GiftCountdown event={nextHoliday} />
         </div>
       )}
 
       {/* Mobile Countdown Banner - Optimized positioning */}
       {nextHoliday && (
-        <div className="absolute top-4 left-0 right-0 z-20 md:hidden">
+        <div className="absolute top-4 left-0 right-0 z-20 md:hidden safe-area-inset">
           <div className="mx-4">
             <ResponsiveContainer padding="minimal">
               <div className="text-center">
@@ -72,7 +73,7 @@ const Hero = () => {
 
       {/* Hero Content - Optimized mobile padding */}
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
-        <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'}`}>
+        <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'} safe-area-inset`}>
           <div className="max-w-2xl text-white">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg">
               Connecting Through Gifting
@@ -84,7 +85,7 @@ const Hero = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg"
+                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg touch-target-48 touch-manipulation tap-feedback no-select"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftor");
@@ -96,7 +97,7 @@ const Hero = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg"
+                className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg touch-target-48 touch-manipulation tap-feedback no-select"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftee");

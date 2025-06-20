@@ -24,7 +24,7 @@ const SearchResults = ({
   const navigate = useNavigate();
   
   // Get search suggestions for the current term
-  const { searchSuggestion } = useSearchSuggestions(searchTerm);
+  const { suggestions } = useSearchSuggestions(searchTerm);
   
   // Get grouped results based on search term and results
   const { groupedResults } = useResultGrouping(searchTerm, zincResults);
@@ -57,6 +57,9 @@ const SearchResults = ({
     { id: "exp-2", name: "Spa Day Package" },
     { id: "exp-3", name: "San Diego Padres Game" }
   ];
+
+  // Use the first suggestion as the search suggestion, or empty string if none
+  const searchSuggestion = suggestions.length > 0 ? suggestions[0].text : "";
 
   return (
     <Command onKeyDown={handleKeyDown}>

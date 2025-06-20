@@ -42,10 +42,7 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
 
   const handleWishlistClick = async () => {
     if (!user) {
-      toast({
-        description: "Please sign in to add items to your wishlist",
-        variant: "destructive"
-      });
+      toast("Please sign in to add items to your wishlist");
       return;
     }
 
@@ -54,17 +51,13 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
     try {
       await onWishlistChange();
       
-      toast({
-        description: isWishlisted 
-          ? "Item removed from your wishlist" 
-          : "Item added to your wishlist"
-      });
+      toast(isWishlisted 
+        ? "Item removed from your wishlist" 
+        : "Item added to your wishlist"
+      );
     } catch (error) {
       console.error('Wishlist action failed:', error);
-      toast({
-        description: "Failed to update wishlist",
-        variant: "destructive"
-      });
+      toast("Failed to update wishlist");
     } finally {
       setTimeout(() => setIsHeartAnimating(false), 300);
     }

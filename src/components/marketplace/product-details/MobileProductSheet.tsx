@@ -8,23 +8,25 @@ import { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { toast } from "sonner";
 
 interface MobileProductSheetProps {
   product: Product | null;
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  isWishlisted?: boolean;
+  onWishlistChange?: () => Promise<void>;
 }
 
 const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
   product,
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
+  isWishlisted = false,
+  onWishlistChange,
 }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
-  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -32,7 +34,6 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
 
   const productId = String(product.product_id || product.id);
   const productName = product.title || product.name || "";
-  const isWishlisted = user ? isProductWishlisted(productId) : false;
 
   const handleAddToCart = async () => {
     if (isAdding) return;
@@ -50,7 +51,9 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
   };
 
   const handleWishlistAdded = async () => {
-    await loadWishlists();
+    if (onWishlistChange) {
+      await onWishlistChange();
+    }
   };
 
   const formatPrice = (price: number | undefined) => {
@@ -78,7 +81,7 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[90vh] p-0">
         <div className="flex flex-col h-full">
           {/* Header */}

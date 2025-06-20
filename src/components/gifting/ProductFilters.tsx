@@ -3,10 +3,10 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, Filter, SlidersHorizontal } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useIsMobile } from "@/hooks/use-mobile";
+import MobileFilterSheet from "@/components/marketplace/mobile/MobileFilterSheet";
 
 interface ProductFiltersProps {
   searchTerm: string;
@@ -35,6 +35,12 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
+  const activeFilterCount = [
+    selectedCategory !== "all" ? 1 : 0,
+    priceRange !== "all" ? 1 : 0,
+    searchTerm ? 1 : 0
+  ].reduce((sum, val) => sum + val, 0);
+
   return (
     <div className="space-y-3 md:space-y-4 safe-area-inset mobile-grid-optimized">
       <div className="flex items-center gap-2">
@@ -43,35 +49,49 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           <Input
             type="search"
             placeholder="Search gifts..."
-            className="w-full pl-8 h-9 md:h-10 touch-target-44 touch-manipulation"
+            className="w-full pl-8 h-10 md:h-10 touch-target-48 touch-manipulation bg-white border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button
-          variant="outline"
-          size={isMobile ? "sm" : "default"}
-          type="button"
-          onClick={() => setFiltersVisible(!filtersVisible)}
-          className="flex items-center whitespace-nowrap min-h-9 md:min-h-10 px-2 md:px-3 touch-target-44 touch-manipulation tap-feedback no-select"
-        >
-          <SlidersHorizontal className="h-4 w-4 mr-1 md:mr-2" />
-          <span>{filtersVisible ? "Hide Filters" : "Filters"}</span>
-        </Button>
+        
+        {isMobile ? (
+          <MobileFilterSheet
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            categories={categories}
+            clearFilters={clearFilters}
+            activeFilterCount={activeFilterCount - (searchTerm ? 1 : 0)} // Exclude search from mobile filter count
+          />
+        ) : (
+          <Button
+            variant="outline"
+            size="default"
+            type="button"
+            onClick={() => setFiltersVisible(!filtersVisible)}
+            className="flex items-center whitespace-nowrap h-10 px-4 touch-target-48 touch-manipulation tap-feedback no-select border-gray-200 hover:border-gray-300"
+          >
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            <span>{filtersVisible ? "Hide Filters" : "Filters"}</span>
+          </Button>
+        )}
       </div>
 
-      {filtersVisible && (
-        <div className="grid gap-3 sm:gap-4 rounded-lg border p-3 sm:p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3 safe-area-inset">
+      {/* Desktop filters - only show when not mobile and filters are visible */}
+      {!isMobile && filtersVisible && (
+        <div className="grid gap-4 rounded-lg border border-gray-200 p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3 safe-area-inset bg-white">
           <div>
-            <Label htmlFor="category" className="text-sm font-medium mb-1.5 block leading-relaxed">Category</Label>
+            <Label htmlFor="category" className="text-sm font-medium mb-2 block leading-relaxed">Category</Label>
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger id="category" className="w-full h-9 md:h-10 touch-target-44 touch-manipulation">
+              <SelectTrigger id="category" className="w-full h-10 touch-target-48 touch-manipulation border-gray-200">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
-              <SelectContent className="z-50">
+              <SelectContent className="z-50 bg-white border-gray-200">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.sort().map((category) => (
                   <SelectItem key={category} value={category}>
@@ -83,15 +103,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="priceRange" className="text-sm font-medium mb-1.5 block leading-relaxed">Price Range</Label>
+            <Label htmlFor="priceRange" className="text-sm font-medium mb-2 block leading-relaxed">Price Range</Label>
             <Select
               value={priceRange}
               onValueChange={setPriceRange}
             >
-              <SelectTrigger id="priceRange" className="w-full h-9 md:h-10 touch-target-44 touch-manipulation">
+              <SelectTrigger id="priceRange" className="w-full h-10 touch-target-48 touch-manipulation border-gray-200">
                 <SelectValue placeholder="Select price range" />
               </SelectTrigger>
-              <SelectContent className="z-50">
+              <SelectContent className="z-50 bg-white border-gray-200">
                 <SelectItem value="all">All Prices</SelectItem>
                 <SelectItem value="under25">Under $25</SelectItem>
                 <SelectItem value="25to50">$25 to $50</SelectItem>
@@ -101,12 +121,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             </Select>
           </div>
 
-          <div className={isMobile ? "" : "md:col-span-2 lg:col-span-1"}>
-            <Label className="text-sm font-medium mb-1.5 invisible">Action</Label>
+          <div className="md:col-span-2 lg:col-span-1 flex items-end">
             <Button 
               variant="outline" 
-              size={isMobile ? "sm" : "default"}
-              className="w-full h-9 md:h-10 touch-target-44 touch-manipulation tap-feedback no-select" 
+              size="default"
+              className="w-full h-10 touch-target-48 touch-manipulation tap-feedback no-select border-gray-200 hover:border-gray-300" 
               onClick={clearFilters}
             >
               Clear Filters

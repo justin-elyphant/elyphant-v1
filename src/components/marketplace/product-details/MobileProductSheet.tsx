@@ -124,37 +124,53 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
             </div>
           </div>
 
-          {/* Content Section */}
+          {/* Content Section with Actions at Top */}
           <div className="flex-1 flex flex-col">
-            <ScrollArea className="flex-1">
-              <div className="p-6 space-y-4">
-                <SheetHeader>
-                  <SheetTitle className="text-xl font-semibold text-left">
-                    {product.title || product.name}
-                  </SheetTitle>
-                </SheetHeader>
+            <div className="p-6 space-y-4">
+              <SheetHeader>
+                <SheetTitle className="text-xl font-semibold text-left">
+                  {product.title || product.name}
+                </SheetTitle>
+              </SheetHeader>
 
-                <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold text-green-600">
-                    ${product.price?.toFixed(2)}
-                  </div>
-                  {product.rating && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span>{product.rating}</span>
-                      {product.reviewCount && (
-                        <span>({product.reviewCount} reviews)</span>
-                      )}
-                    </div>
-                  )}
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-green-600">
+                  ${product.price?.toFixed(2)}
                 </div>
-
-                {product.vendor && (
-                  <div className="text-sm text-muted-foreground">
-                    By {product.vendor}
+                {product.rating && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span>{product.rating}</span>
+                    {product.reviewCount && (
+                      <span>({product.reviewCount} reviews)</span>
+                    )}
                   </div>
                 )}
+              </div>
 
+              {product.vendor && (
+                <div className="text-sm text-muted-foreground">
+                  By {product.vendor}
+                </div>
+              )}
+
+              {/* Actions Section moved to top */}
+              <div className="border-t border-b py-4 my-4">
+                <ProductDetailsActionsSection
+                  product={product}
+                  quantity={quantity}
+                  onIncrease={increaseQuantity}
+                  onDecrease={decreaseQuantity}
+                  isHeartAnimating={isHeartAnimating}
+                  isWishlisted={isWishlisted}
+                  reloadWishlists={onWishlistChange}
+                />
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <ScrollArea className="flex-1 px-6 pb-6">
+              <div className="space-y-4">
                 {product.description && (
                   <div>
                     <h4 className="font-medium mb-2">Description</h4>
@@ -193,19 +209,6 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
                 )}
               </div>
             </ScrollArea>
-
-            {/* Fixed bottom actions */}
-            <div className="border-t bg-white p-6 space-y-4">
-              <ProductDetailsActionsSection
-                product={product}
-                quantity={quantity}
-                onIncrease={increaseQuantity}
-                onDecrease={decreaseQuantity}
-                isHeartAnimating={isHeartAnimating}
-                isWishlisted={isWishlisted}
-                reloadWishlists={onWishlistChange}
-              />
-            </div>
           </div>
         </div>
       </SheetContent>

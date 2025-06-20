@@ -45,25 +45,41 @@ const PopularBrandsSection = () => {
   ];
 
   const handleBrandClick = async (brandName: string) => {
+    // Prevent multiple clicks
+    if (loadingBrand) return;
+    
     setLoadingBrand(brandName);
     const loadingToastId = `brand-loading-${brandName}`;
-    toast.loading(`Loading ${brandName} products...`, { id: loadingToastId });
     
     // Enhanced search term with "best selling" prefix
     const enhancedSearchTerm = `best selling ${brandName} products`;
     
     try {
+      // Show loading toast
+      toast.loading(`Loading ${brandName} products...`, { id: loadingToastId });
+      
       await handleBrandProducts(brandName, products, setProducts);
+      
+      // Clear loading toast and show success
       toast.dismiss(loadingToastId);
       toast.success(`${brandName} products loaded successfully`);
+      
+      // Navigate to marketplace
+      navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
+      
     } catch (err) {
+      console.error(`Error loading ${brandName} products:`, err);
+      
+      // Clear loading toast and show error
       toast.dismiss(loadingToastId);
       toast.error(`Failed to load ${brandName} products`);
+      
+      // Still navigate to allow user to see available products
+      navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
+      
     } finally {
       // Always clear loading state
       setLoadingBrand(null);
-      // Navigate after clearing loading state
-      navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
     }
   };
 

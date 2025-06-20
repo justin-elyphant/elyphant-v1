@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { handleBrandProducts } from "@/utils/brandUtils";
@@ -17,6 +17,8 @@ const PopularBrandsSection = () => {
   const { products, setProducts } = useProducts();
   const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const mountedRef = useRef(true);
+  const toastIdsRef = useRef<string[]>([]);
   
   const brands = [
     {
@@ -45,95 +47,125 @@ const PopularBrandsSection = () => {
     },
   ];
 
-  // Aggressive cleanup of loading state and toasts on unmount
+  // Cleanup function to dismiss all tracked toasts
+  const cleanupToasts = () => {
+    console.log('Cleaning up toasts, total tracked:', toastIdsRef.current.length);
+    toastIdsRef.current.forEach(toastId => {
+      toast.dismiss(toastId);
+    });
+    toast.dismiss(); // Dismiss all as backup
+    toastIdsRef.current = [];
+  };
+
+  // Aggressive cleanup on unmount and route changes
   useEffect(() => {
+    mountedRef.current = true;
+    
     return () => {
+      console.log('PopularBrandsSection unmounting, cleaning up');
+      mountedRef.current = false;
       if (loadingBrand) {
-        console.log('Component unmounting, cleaning up loading state:', loadingBrand);
         setLoadingBrand(null);
-        // Dismiss all toasts aggressively
-        toast.dismiss();
       }
+      cleanupToasts();
     };
   }, [loadingBrand]);
 
-  // Additional cleanup when route changes
+  // Listen for route changes and clean up
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      console.log('Page unloading, cleaning up toasts');
+      cleanupToasts();
+    };
+
     const handleRouteChange = () => {
       if (loadingBrand) {
         console.log('Route changing, cleaning up loading state:', loadingBrand);
         setLoadingBrand(null);
-        toast.dismiss();
+        cleanupToasts();
       }
     };
 
-    // Listen for route changes
-    window.addEventListener('beforeunload', handleRouteChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', handleRouteChange);
     
     return () => {
-      window.removeEventListener('beforeunload', handleRouteChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handleRouteChange);
     };
   }, [loadingBrand]);
 
   const handleBrandClick = async (brandName: string) => {
     // Prevent multiple clicks and ensure clean state
-    if (loadingBrand) {
-      console.log('Another brand is loading, ignoring click');
+    if (loadingBrand || !mountedRef.current) {
+      console.log('Click ignored - loading or unmounted');
       return;
     }
     
     console.log(`Loading brand: ${brandName}`);
     
     // Clear any existing toasts first
-    toast.dismiss();
+    cleanupToasts();
     
     setLoadingBrand(brandName);
     
     const loadingToastId = `brand-loading-${brandName}-${Date.now()}`;
+    toastIdsRef.current.push(loadingToastId);
+    
     const enhancedSearchTerm = `best selling ${brandName} products`;
     
     // Set up aggressive timeout for cleanup - shorter for mobile
-    const timeoutDuration = isMobile ? 3000 : 5000;
+    const timeoutDuration = isMobile ? 2500 : 4000;
     const timeoutId = setTimeout(() => {
+      if (!mountedRef.current) return;
+      
       console.log(`Timeout reached for ${brandName}, cleaning up aggressively`);
       setLoadingBrand(null);
-      toast.dismiss(); // Dismiss all toasts
+      cleanupToasts();
+      
+      const errorToastId = `error-${brandName}-${Date.now()}`;
+      toastIdsRef.current.push(errorToastId);
       toast.error(`Loading ${brandName} products took too long`, { 
-        id: `error-${brandName}-${Date.now()}`,
+        id: errorToastId,
         duration: 2000
       });
+      
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
     }, timeoutDuration);
     
     try {
       // Show loading toast with shorter duration for mobile
-      const loadingToast = toast.loading(`Loading ${brandName} products...`, { 
+      toast.loading(`Loading ${brandName} products...`, { 
         id: loadingToastId,
-        duration: isMobile ? 2000 : Infinity
+        duration: isMobile ? 1500 : 2500
       });
       
       await handleBrandProducts(brandName, products, setProducts);
+      
+      // Only proceed if component is still mounted
+      if (!mountedRef.current) return;
       
       // Clear timeout and loading state immediately on success
       clearTimeout(timeoutId);
       setLoadingBrand(null);
       
       // Aggressively clear loading toast
-      toast.dismiss(loadingToastId);
-      toast.dismiss(); // Clear all toasts as backup
+      cleanupToasts();
       
       // Show brief success message
+      const successToastId = `success-${brandName}-${Date.now()}`;
+      toastIdsRef.current.push(successToastId);
       toast.success(`${brandName} products loaded`, {
-        id: `success-${brandName}-${Date.now()}`,
-        duration: 1500
+        id: successToastId,
+        duration: 1000
       });
       
       // Navigate to marketplace
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
       
     } catch (err) {
+      if (!mountedRef.current) return;
+      
       console.error(`Error loading ${brandName} products:`, err);
       
       // Clear timeout and loading state on error
@@ -141,11 +173,12 @@ const PopularBrandsSection = () => {
       setLoadingBrand(null);
       
       // Aggressively clear loading toast
-      toast.dismiss(loadingToastId);
-      toast.dismiss(); // Clear all toasts as backup
+      cleanupToasts();
       
+      const errorToastId = `error-${brandName}-${Date.now()}`;
+      toastIdsRef.current.push(errorToastId);
       toast.error(`Failed to load ${brandName} products`, {
-        id: `error-${brandName}-${Date.now()}`,
+        id: errorToastId,
         duration: 2000
       });
       

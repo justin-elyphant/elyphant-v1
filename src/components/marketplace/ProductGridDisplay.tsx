@@ -51,9 +51,9 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
       <MobileProductGrid
         products={products}
         onProductClick={handleProductClick}
-        onWishlistClick={handleWishlistUpdate}
         getProductStatus={getProductStatus}
-        hasMore={false} // Can be enhanced with actual pagination logic
+        isLoading={false}
+        hasMore={false}
       />
     );
   }

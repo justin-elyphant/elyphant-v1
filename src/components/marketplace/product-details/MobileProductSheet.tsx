@@ -1,298 +1,216 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Heart, Share2, Plus, Minus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Star, Heart, Plus, Minus } from "lucide-react";
 import { Product } from "@/types/product";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/auth";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { toast } from "sonner";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
-import ProductCarousel from "./ProductCarousel";
-import ProductRating from "@/components/shared/ProductRating";
-import { formatProductPrice } from "../product-item/productUtils";
 
 interface MobileProductSheetProps {
-  product: Product;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  isWishlisted: boolean;
-  onWishlistChange: () => Promise<void>;
+  product: Product | null;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
   product,
-  open,
-  onOpenChange,
-  isWishlisted,
-  onWishlistChange
+  isOpen,
+  onClose,
 }) => {
-  const [quantity, setQuantity] = useState(1);
-  const [isHeartAnimating, setIsHeartAnimating] = useState(false);
-  const [enhancedProduct, setEnhancedProduct] = useState<any>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [currentProductId, setCurrentProductId] = useState<string | null>(null);
-  const isMobile = useIsMobile();
+  const { addToCart } = useCart();
   const { user } = useAuth();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
 
-  // Reset state when product changes
-  useEffect(() => {
-    const newProductId = product.product_id || product.id;
+  if (!product) return null;
+
+  const productId = String(product.product_id || product.id);
+  const productName = product.title || product.name || "";
+  const isWishlisted = user ? isProductWishlisted(productId) : false;
+
+  const handleAddToCart = async () => {
+    if (isAdding) return;
     
-    // If product changed, reset all state
-    if (newProductId !== currentProductId) {
-      console.log('Product changed, resetting mobile sheet state:', { 
-        old: currentProductId, 
-        new: newProductId 
-      });
-      
-      setCurrentProductId(newProductId);
-      setEnhancedProduct(null);
-      setQuantity(1);
-      setIsLoadingDetails(false);
-    }
-  }, [product.product_id, product.id, currentProductId]);
-
-  // Fetch enhanced product details when sheet opens or product changes
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      if (!open || !product.product_id) return;
-      
-      const productId = product.product_id || product.id;
-      
-      // Always fetch details for new products or when we don't have enhanced data
-      const shouldFetchDetails = !enhancedProduct || 
-                                enhancedProduct.product_id !== productId ||
-                                (!enhancedProduct.product_description && !enhancedProduct.images?.length);
-      
-      if (!shouldFetchDetails) {
-        console.log('Enhanced product data already available');
-        return;
-      }
-      
-      try {
-        setIsLoadingDetails(true);
-        console.log(`Fetching enhanced details for product: ${productId}`);
-        
-        const detailedProduct = await enhancedZincApiService.getProductDetails(productId);
-        
-        if (detailedProduct) {
-          console.log('Enhanced product details fetched:', detailedProduct);
-          setEnhancedProduct({
-            ...product,
-            ...detailedProduct,
-            // Ensure we keep the original image as fallback
-            images: detailedProduct.images?.length > 0 ? detailedProduct.images : [product.image],
-            product_description: detailedProduct.product_description || product.description,
-            feature_bullets: detailedProduct.feature_bullets || [],
-            product_details: detailedProduct.product_details || []
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching product details:', error);
-        // Keep the original product data on error
-        setEnhancedProduct({
-          ...product,
-          images: [product.image]
-        });
-      } finally {
-        setIsLoadingDetails(false);
-      }
-    };
-
-    fetchProductDetails();
-  }, [open, product.product_id, product.id, product, enhancedProduct]);
-
-  const increaseQuantity = () => {
-    setQuantity(prev => Math.min(prev + 1, 10));
-    if (isMobile) triggerHapticFeedback(HapticPatterns.buttonTap);
-  };
-
-  const decreaseQuantity = () => {
-    setQuantity(prev => Math.max(prev - 1, 1));
-    if (isMobile) triggerHapticFeedback(HapticPatterns.buttonTap);
-  };
-
-  const handleWishlistClick = async () => {
-    if (!user) {
-      toast("Please sign in to add items to your wishlist");
-      return;
-    }
-
-    setIsHeartAnimating(true);
-    
+    setIsAdding(true);
     try {
-      await onWishlistChange();
-      
-      toast(isWishlisted 
-        ? "Item removed from your wishlist" 
-        : "Item added to your wishlist"
-      );
+      addToCart(product, quantity);
+      toast.success(`Added ${quantity} ${productName} to cart`);
     } catch (error) {
-      console.error('Wishlist action failed:', error);
-      toast("Failed to update wishlist");
+      toast.error("Failed to add to cart");
+      console.error("Add to cart error:", error);
     } finally {
-      setTimeout(() => setIsHeartAnimating(false), 300);
+      setIsAdding(false);
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        url: window.location.href,
-      });
-    }
-    if (isMobile) triggerHapticFeedback(HapticPatterns.shareAction);
+  const handleWishlistAdded = async () => {
+    await loadWishlists();
   };
 
-  // Use enhanced product data if available, otherwise fall back to original product
-  const displayProduct = enhancedProduct || product;
+  const formatPrice = (price: number | undefined) => {
+    if (!price) return "Price not available";
+    return `$${price.toFixed(2)}`;
+  };
 
-  // Generate images array for carousel
-  const productImages = displayProduct?.images?.length > 0 
-    ? displayProduct.images 
-    : [product.image];
+  const renderRating = () => {
+    const rating = product.rating || product.stars || 0;
+    const reviewCount = product.reviewCount || product.num_reviews || 0;
+    
+    if (!rating) return null;
 
-  // Generate description if none exists
-  let description = displayProduct?.product_description || displayProduct?.description || "";
-  if ((!description || description.trim() === "") && displayProduct?.title) {
-    const productType = displayProduct.title.split(' ').slice(1).join(' ');
-    const brand = displayProduct.title.split(' ')[0];
-    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This item features premium materials and exceptional craftsmanship for long-lasting use.`;
-  }
-
-  const features = displayProduct?.feature_bullets || displayProduct?.product_details || [];
+    return (
+      <div className="flex items-center gap-1">
+        <div className="flex items-center">
+          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+          <span className="text-sm font-medium ml-1">{rating.toFixed(1)}</span>
+        </div>
+        {reviewCount > 0 && (
+          <span className="text-sm text-gray-500">({reviewCount} reviews)</span>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] flex flex-col">
-        <SheetHeader className="flex-shrink-0">
-          <SheetTitle className="text-left">
-            {product.title || product.name}
-          </SheetTitle>
-        </SheetHeader>
-        
-        <div className="flex-1 overflow-y-auto space-y-4">
-          {/* Product Images Carousel */}
-          <div className="relative">
-            <ProductCarousel 
-              images={productImages}
-              productName={product.title || product.name || "Product"}
-            />
-            
-            {/* Action buttons overlay */}
-            <div className="absolute top-2 right-2 flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 bg-white/90 backdrop-blur-sm"
-                onClick={handleWishlistClick}
-              >
-                <Heart 
-                  className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''} ${isHeartAnimating ? 'animate-pulse' : ''}`} 
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="bottom" className="h-[90vh] p-0">
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <SheetHeader className="p-4 border-b">
+            <SheetTitle className="text-left text-lg font-semibold">
+              {productName}
+            </SheetTitle>
+          </SheetHeader>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Product Image */}
+            <div className="aspect-square bg-gray-50 relative">
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt={productName}
+                  className="w-full h-full object-cover"
                 />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 bg-white/90 backdrop-blur-sm"
-                onClick={handleShare}
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  No Image Available
+                </div>
+              )}
+              
+              {/* Wishlist Button */}
+              <div className="absolute top-4 right-4">
+                {user ? (
+                  <WishlistSelectionPopoverButton
+                    product={{
+                      id: productId,
+                      name: productName,
+                      image: product.image,
+                      price: product.price,
+                      brand: product.brand,
+                    }}
+                    triggerClassName="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 hover:text-pink-500 p-2 rounded-full transition-colors shadow-sm"
+                    onAdded={handleWishlistAdded}
+                    isWishlisted={isWishlisted}
+                  />
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 hover:text-pink-500 rounded-full p-2 shadow-sm"
+                  >
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Product Details */}
+            <div className="p-4 space-y-4">
+              {/* Brand */}
+              {product.brand && (
+                <Badge variant="secondary" className="text-xs">
+                  {product.brand}
+                </Badge>
+              )}
+
+              {/* Price */}
+              <div className="text-2xl font-bold text-gray-900">
+                {formatPrice(product.price)}
+              </div>
+
+              {/* Rating */}
+              {renderRating()}
+
+              {/* Description */}
+              {product.description && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">Description</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Features */}
+              {product.features && product.features.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">Features</h3>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    {product.features.slice(0, 5).map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-gray-400 mr-2">•</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Product Info */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">${formatProductPrice(product.price)}</div>
+          {/* Footer with Add to Cart */}
+          <div className="border-t bg-white p-4 space-y-3">
+            {/* Quantity Selector */}
+            <div className="flex items-center justify-center gap-4">
+              <span className="text-sm font-medium">Quantity:</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                  className="h-8 w-8"
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+                <span className="w-8 text-center font-medium">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="h-8 w-8"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
-            
-            <ProductRating 
-              rating={product.rating || product.stars} 
-              reviewCount={product.reviewCount || product.num_reviews} 
-              size="lg" 
-            />
-            
-            {product.vendor && (
-              <div className="text-sm text-muted-foreground">
-                By {product.vendor}
-              </div>
-            )}
-            
-            <span className="text-green-600 text-sm block">Free shipping</span>
-            
-            {/* Loading indicator for details */}
-            {isLoadingDetails && (
-              <div className="text-sm text-muted-foreground animate-pulse">
-                Loading product details...
-              </div>
-            )}
-            
-            {/* Description */}
-            {description && (
-              <div>
-                <h4 className="font-medium mb-2">Description</h4>
-                <p className="text-sm text-muted-foreground max-h-32 overflow-y-auto">
-                  {description}
-                </p>
-              </div>
-            )}
 
-            {/* Features */}
-            {features.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2">Features</h4>
-                <ul className="list-disc list-inside text-sm text-muted-foreground max-h-32 overflow-y-auto space-y-1">
-                  {features.map((feature, idx) => (
-                    <li key={idx}>{feature}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {/* Add to Cart Button */}
+            <Button
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              className="w-full h-12 text-base font-medium"
+            >
+              {isAdding ? "Adding..." : `Add ${quantity} to Cart • ${formatPrice((product.price || 0) * quantity)}`}
+            </Button>
           </div>
-        </div>
-
-        {/* Bottom Actions */}
-        <div className="flex-shrink-0 pt-4 border-t space-y-3">
-          {/* Quantity Selector */}
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Quantity:</span>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={decreaseQuantity}
-                disabled={quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="font-medium min-w-[2rem] text-center">{quantity}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={increaseQuantity}
-                disabled={quantity >= 10}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Add to Cart Button */}
-          <Button 
-            className="w-full h-12 text-lg font-semibold"
-            onClick={() => {
-              if (isMobile) triggerHapticFeedback(HapticPatterns.addToCart);
-              // Add to cart logic here
-            }}
-          >
-            Add to Cart • ${(product.price * quantity).toFixed(2)}
-          </Button>
         </div>
       </SheetContent>
     </Sheet>

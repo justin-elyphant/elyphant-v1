@@ -50,10 +50,6 @@ const MobileProductCard = ({
     onProductClick(productId);
   };
 
-  const handleAddToCartClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const formatPrice = (price: number | undefined) => {
     if (!price) return "Price not available";
     return `$${price.toFixed(2)}`;
@@ -161,14 +157,13 @@ const MobileProductCard = ({
             </p>
           </div>
 
-          {/* Add to Cart Button */}
+          {/* Add to Cart Button - Let it handle its own click events */}
           <div className="pt-2">
             <AddToCartButton
               product={product}
               variant="outline"
               size="sm"
               className="w-full h-9 text-sm font-medium border-gray-200 hover:border-gray-300 active:scale-[0.96] transition-transform duration-100"
-              onClick={handleAddToCartClick}
             />
           </div>
         </div>

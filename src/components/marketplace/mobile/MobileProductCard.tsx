@@ -66,10 +66,10 @@ const MobileProductCard = ({
     if (!rating) return null;
 
     return (
-      <div className="flex items-center gap-1 mt-2">
+      <div className="flex items-center gap-1 mt-1">
         <div className="flex items-center">
           <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-          <span className="text-sm font-medium ml-1">{rating.toFixed(1)}</span>
+          <span className="text-xs font-medium ml-1">{rating.toFixed(1)}</span>
         </div>
         {reviewCount > 0 && (
           <span className="text-xs text-gray-500">({reviewCount})</span>
@@ -81,16 +81,16 @@ const MobileProductCard = ({
   return (
     <>
       <Card
-        className="overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation tap-feedback gpu-accelerated"
+        className="overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98] touch-manipulation"
         onClick={handleProductClick}
       >
-        {/* Image Section with improved aspect ratio for mobile */}
+        {/* Image Section */}
         <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
           {product.image ? (
             <img
               src={product.image}
               alt={productName}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 gpu-accelerated"
+              className="w-full h-full object-cover"
               loading="lazy"
             />
           ) : (
@@ -119,7 +119,7 @@ const MobileProductCard = ({
                   price: product.price,
                   brand: product.brand,
                 }}
-                triggerClassName="bg-white/90 hover:bg-white text-gray-600 hover:text-pink-500 p-2 rounded-full transition-colors shadow-sm touch-target-44 touch-manipulation tap-feedback"
+                triggerClassName="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 hover:text-pink-500 p-2 rounded-full transition-colors shadow-sm"
                 onAdded={handleWishlistAdded}
                 isWishlisted={isWishlisted}
               />
@@ -127,7 +127,7 @@ const MobileProductCard = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="bg-white/90 hover:bg-white text-gray-600 hover:text-pink-500 rounded-full p-2 shadow-sm touch-target-44 touch-manipulation tap-feedback no-select"
+                className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-600 hover:text-pink-500 rounded-full p-2 shadow-sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleWishlistClick();
@@ -139,24 +139,24 @@ const MobileProductCard = ({
           </div>
         </div>
 
-        {/* Content Section with improved mobile spacing */}
+        {/* Content Section */}
         <div className="p-3 space-y-2">
           {/* Product Name */}
-          <h3 className="font-medium text-sm leading-snug line-clamp-2 text-gray-900 min-h-[2.5rem]">
+          <h3 className="font-medium text-sm leading-tight line-clamp-2 text-gray-900 min-h-[2.5rem]">
             {productName}
           </h3>
 
           {/* Brand */}
           {product.brand && (
-            <p className="text-xs text-gray-500 leading-relaxed">{product.brand}</p>
+            <p className="text-xs text-gray-500">{product.brand}</p>
           )}
 
           {/* Rating */}
           {renderRating()}
 
           {/* Price */}
-          <div className="flex items-center justify-between">
-            <p className="text-base font-semibold text-gray-900 leading-relaxed">
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-base font-semibold text-gray-900">
               {formatPrice(product.price)}
             </p>
           </div>
@@ -167,7 +167,7 @@ const MobileProductCard = ({
               product={product}
               variant="outline"
               size="sm"
-              className="w-full h-9 text-sm font-medium touch-target-48 touch-manipulation tap-feedback no-select border-gray-200 hover:border-gray-300"
+              className="w-full h-9 text-sm font-medium border-gray-200 hover:border-gray-300 active:scale-[0.96] transition-transform duration-100"
               onClick={handleAddToCartClick}
             />
           </div>

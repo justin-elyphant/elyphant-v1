@@ -6,6 +6,7 @@ import ProductGrid from "./ProductGrid";
 import ProductSkeleton from "./loading/ProductSkeleton";
 import MarketplaceToolbar from "./MarketplaceToolbar";
 import AdvancedFilterDrawer from "./filters/AdvancedFilterDrawer";
+import MobileMarketplaceLayout from "./mobile/MobileMarketplaceLayout";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { useEnhancedMarketplaceSearch } from "./hooks/useEnhancedMarketplaceSearch";
@@ -47,12 +48,26 @@ const MarketplaceContent = ({
     error: searchError,
     handleRetrySearch
   } = useEnhancedMarketplaceSearch(currentPage);
-  console.log("marketplacecontent: ", filteredProducts);
 
   // Combine loading states
   const isLoading = externalLoading || isSearching;
   const error = externalError || searchError;
 
+  // Use mobile layout for mobile devices
+  if (isMobile) {
+    return (
+      <MobileMarketplaceLayout
+        products={products}
+        isLoading={isLoading}
+        searchTerm={externalSearchTerm}
+        onProductView={onProductView}
+        error={error}
+        onRefresh={onRefresh}
+      />
+    );
+  }
+
+  // Desktop layout continues as before
   // Error state
   if (error) {
     return (
@@ -92,12 +107,12 @@ const MarketplaceContent = ({
     );
   }
 
-  // Main content
+  // Desktop content
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex gap-6">
         {/* Desktop Filters Sidebar */}
-        {!isMobile && showFilters && (
+        {showFilters && (
           <AdvancedFilterDrawer
             filters={filters}
             availableCategories={availableCategories}
@@ -111,43 +126,18 @@ const MarketplaceContent = ({
         <div className="flex-1">
           {/* Toolbar */}
           <div className="mb-6">
-            {isMobile ? (
-              <div className="flex items-center justify-between gap-4">
-                <AdvancedFilterDrawer
-                  filters={filters}
-                  availableCategories={availableCategories}
-                  activeFilterCount={activeFilterCount}
-                  onUpdateFilters={updateFilters}
-                  onClearFilters={clearFilters}
-                />
-                
-                <MarketplaceToolbar
-                  viewMode={viewMode}
-                  setViewMode={setViewMode}
-                  sortOption={filters.sortBy}
-                  setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                  totalItems={filteredProducts.length}
-                  showFilters={showFilters}
-                  setShowFilters={setShowFilters}
-                  isMobile={isMobile}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                />
-              </div>
-            ) : (
-              <MarketplaceToolbar
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                sortOption={filters.sortBy}
-                setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                totalItems={filteredProducts.length}
-                showFilters={showFilters}
-                setShowFilters={setShowFilters}
-                isMobile={isMobile}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-              />
-            )}
+            <MarketplaceToolbar
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              sortOption={filters.sortBy}
+              setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
+              totalItems={filteredProducts.length}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              isMobile={isMobile}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+            />
           </div>
 
           {/* Active Filters Display */}
@@ -177,47 +167,6 @@ const MarketplaceContent = ({
               sortOption={filters.sortBy}
               onProductView={onProductView}
             />
-          </div>
-
-          {/* Toolbar */}
-          <div className="mb-6">
-            {isMobile ? (
-              <div className="flex items-center justify-between gap-4">
-                <AdvancedFilterDrawer
-                  filters={filters}
-                  availableCategories={availableCategories}
-                  activeFilterCount={activeFilterCount}
-                  onUpdateFilters={updateFilters}
-                  onClearFilters={clearFilters}
-                />
-                
-                <MarketplaceToolbar
-                  viewMode={viewMode}
-                  setViewMode={setViewMode}
-                  sortOption={filters.sortBy}
-                  setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                  totalItems={filteredProducts.length}
-                  showFilters={showFilters}
-                  setShowFilters={setShowFilters}
-                  isMobile={isMobile}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                />
-              </div>
-            ) : (
-              <MarketplaceToolbar
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                sortOption={filters.sortBy}
-                setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-                totalItems={filteredProducts.length}
-                showFilters={showFilters}
-                setShowFilters={setShowFilters}
-                isMobile={isMobile}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-              />
-            )}
           </div>
         </div>
       </div>

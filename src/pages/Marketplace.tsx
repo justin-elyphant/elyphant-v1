@@ -4,8 +4,11 @@ import MarketplaceWrapper from "@/components/marketplace/MarketplaceWrapper";
 import { Helmet } from "react-helmet";
 import MainLayout from "@/components/layout/MainLayout";
 import { ProductProvider } from "@/contexts/ProductContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Marketplace = () => {
+  const isMobile = useIsMobile();
+
   return (
     <ProductProvider>
       <MainLayout>
@@ -14,10 +17,8 @@ const Marketplace = () => {
           <meta name="description" content="Browse thousands of thoughtful gifts for every occasion, interest, and relationship." />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         </Helmet>
-        <div className="safe-area-top safe-area-bottom mobile-grid-optimized min-h-screen bg-gray-50">
-          <div className="bg-white shadow-sm">
-            <MarketplaceWrapper />
-          </div>
+        <div className={`min-h-screen bg-gray-50 ${isMobile ? 'safe-area-inset pb-safe' : ''}`}>
+          <MarketplaceWrapper />
         </div>
       </MainLayout>
     </ProductProvider>

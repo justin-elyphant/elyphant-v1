@@ -157,7 +157,7 @@ const MobileProductCard = ({
             </p>
           </div>
 
-          {/* Add to Cart Button - Let it handle its own click events */}
+          {/* Add to Cart Button */}
           <div className="pt-2">
             <AddToCartButton
               product={product}

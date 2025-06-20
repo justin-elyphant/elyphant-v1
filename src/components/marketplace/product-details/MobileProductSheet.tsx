@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -29,26 +30,52 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
-  const [enhancedProduct, setEnhancedProduct] = useState<any>(product);
+  const [enhancedProduct, setEnhancedProduct] = useState<any>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [currentProductId, setCurrentProductId] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { user } = useAuth();
 
-  // Fetch enhanced product details when sheet opens
+  // Reset state when product changes
+  useEffect(() => {
+    const newProductId = product.product_id || product.id;
+    
+    // If product changed, reset all state
+    if (newProductId !== currentProductId) {
+      console.log('Product changed, resetting mobile sheet state:', { 
+        old: currentProductId, 
+        new: newProductId 
+      });
+      
+      setCurrentProductId(newProductId);
+      setEnhancedProduct(null);
+      setQuantity(1);
+      setIsLoadingDetails(false);
+    }
+  }, [product.product_id, product.id, currentProductId]);
+
+  // Fetch enhanced product details when sheet opens or product changes
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!open || !product.product_id) return;
       
-      // If we already have detailed data, don't fetch again
-      if (enhancedProduct?.product_description || enhancedProduct?.images?.length > 1) {
+      const productId = product.product_id || product.id;
+      
+      // Always fetch details for new products or when we don't have enhanced data
+      const shouldFetchDetails = !enhancedProduct || 
+                                enhancedProduct.product_id !== productId ||
+                                (!enhancedProduct.product_description && !enhancedProduct.images?.length);
+      
+      if (!shouldFetchDetails) {
+        console.log('Enhanced product data already available');
         return;
       }
       
       try {
         setIsLoadingDetails(true);
-        console.log(`Fetching enhanced details for product: ${product.product_id}`);
+        console.log(`Fetching enhanced details for product: ${productId}`);
         
-        const detailedProduct = await enhancedZincApiService.getProductDetails(product.product_id);
+        const detailedProduct = await enhancedZincApiService.getProductDetails(productId);
         
         if (detailedProduct) {
           console.log('Enhanced product details fetched:', detailedProduct);
@@ -75,7 +102,7 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
     };
 
     fetchProductDetails();
-  }, [open, product.product_id, product]);
+  }, [open, product.product_id, product.id, product, enhancedProduct]);
 
   const increaseQuantity = () => {
     setQuantity(prev => Math.min(prev + 1, 10));
@@ -119,20 +146,23 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
     if (isMobile) triggerHapticFeedback(HapticPatterns.shareAction);
   };
 
+  // Use enhanced product data if available, otherwise fall back to original product
+  const displayProduct = enhancedProduct || product;
+
   // Generate images array for carousel
-  const productImages = enhancedProduct?.images?.length > 0 
-    ? enhancedProduct.images 
+  const productImages = displayProduct?.images?.length > 0 
+    ? displayProduct.images 
     : [product.image];
 
   // Generate description if none exists
-  let description = enhancedProduct?.product_description || enhancedProduct?.description || "";
-  if ((!description || description.trim() === "") && enhancedProduct?.title) {
-    const productType = enhancedProduct.title.split(' ').slice(1).join(' ');
-    const brand = enhancedProduct.title.split(' ')[0];
+  let description = displayProduct?.product_description || displayProduct?.description || "";
+  if ((!description || description.trim() === "") && displayProduct?.title) {
+    const productType = displayProduct.title.split(' ').slice(1).join(' ');
+    const brand = displayProduct.title.split(' ')[0];
     description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This item features premium materials and exceptional craftsmanship for long-lasting use.`;
   }
 
-  const features = enhancedProduct?.feature_bullets || enhancedProduct?.product_details || [];
+  const features = displayProduct?.feature_bullets || displayProduct?.product_details || [];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { handleBrandProducts } from "@/utils/brandUtils";
 import { toast } from "sonner";
@@ -14,6 +13,7 @@ import {
 
 const PopularBrandsSection = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { products, setProducts } = useProducts();
   const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -47,22 +47,29 @@ const PopularBrandsSection = () => {
     },
   ];
 
-  // Cleanup function to dismiss all tracked toasts
+  // Enhanced cleanup function with more aggressive dismissal
   const cleanupToasts = () => {
-    console.log('Cleaning up toasts, total tracked:', toastIdsRef.current.length);
+    console.log('Cleaning up toasts aggressively, total tracked:', toastIdsRef.current.length);
+    
+    // Dismiss all tracked toasts
     toastIdsRef.current.forEach(toastId => {
       toast.dismiss(toastId);
     });
-    toast.dismiss(); // Dismiss all as backup
+    
+    // Multiple aggressive cleanup attempts
+    toast.dismiss(); // Dismiss all
+    setTimeout(() => toast.dismiss(), 100); // Delayed cleanup
+    setTimeout(() => toast.dismiss(), 300); // Second delayed cleanup
+    
     toastIdsRef.current = [];
   };
 
-  // Aggressive cleanup on unmount and route changes
+  // Cleanup on unmount and route changes
   useEffect(() => {
     mountedRef.current = true;
     
     return () => {
-      console.log('PopularBrandsSection unmounting, cleaning up');
+      console.log('PopularBrandsSection unmounting, cleaning up aggressively');
       mountedRef.current = false;
       if (loadingBrand) {
         setLoadingBrand(null);
@@ -71,10 +78,21 @@ const PopularBrandsSection = () => {
     };
   }, [loadingBrand]);
 
-  // Listen for route changes and clean up
+  // Enhanced route change detection and cleanup
   useEffect(() => {
+    const currentPath = location.pathname;
+    
+    // If we're no longer on the home page, clean up everything
+    if (currentPath !== '/') {
+      console.log('Route changed away from home, cleaning up all toasts');
+      cleanupToasts();
+      if (loadingBrand) {
+        setLoadingBrand(null);
+      }
+    }
+
     const handleBeforeUnload = () => {
-      console.log('Page unloading, cleaning up toasts');
+      console.log('Page unloading, cleaning up toasts aggressively');
       cleanupToasts();
     };
 
@@ -86,14 +104,17 @@ const PopularBrandsSection = () => {
       }
     };
 
+    // Add multiple event listeners for better cleanup coverage
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('pagehide', handleBeforeUnload);
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('pagehide', handleBeforeUnload);
     };
-  }, [loadingBrand]);
+  }, [location.pathname, loadingBrand]);
 
   const handleBrandClick = async (brandName: string) => {
     // Prevent multiple clicks and ensure clean state
@@ -104,7 +125,7 @@ const PopularBrandsSection = () => {
     
     console.log(`Loading brand: ${brandName}`);
     
-    // Clear any existing toasts first
+    // Aggressive cleanup of any existing toasts first
     cleanupToasts();
     
     setLoadingBrand(brandName);
@@ -114,8 +135,8 @@ const PopularBrandsSection = () => {
     
     const enhancedSearchTerm = `best selling ${brandName} products`;
     
-    // Set up aggressive timeout for cleanup - shorter for mobile
-    const timeoutDuration = isMobile ? 2500 : 4000;
+    // Set up shorter timeout for mobile with aggressive cleanup
+    const timeoutDuration = isMobile ? 2000 : 3500;
     const timeoutId = setTimeout(() => {
       if (!mountedRef.current) return;
       
@@ -124,20 +145,20 @@ const PopularBrandsSection = () => {
       cleanupToasts();
       
       const errorToastId = `error-${brandName}-${Date.now()}`;
-      toastIdsRef.current.push(errorToastId);
       toast.error(`Loading ${brandName} products took too long`, { 
         id: errorToastId,
-        duration: 2000
+        duration: 1500
       });
       
+      // Navigate anyway
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
     }, timeoutDuration);
     
     try {
-      // Show loading toast with shorter duration for mobile
+      // Show loading toast with shorter duration
       toast.loading(`Loading ${brandName} products...`, { 
         id: loadingToastId,
-        duration: isMobile ? 1500 : 2500
+        duration: isMobile ? 1200 : 2000
       });
       
       await handleBrandProducts(brandName, products, setProducts);
@@ -149,15 +170,14 @@ const PopularBrandsSection = () => {
       clearTimeout(timeoutId);
       setLoadingBrand(null);
       
-      // Aggressively clear loading toast
+      // Aggressive cleanup of loading toast
       cleanupToasts();
       
-      // Show brief success message
+      // Very brief success message
       const successToastId = `success-${brandName}-${Date.now()}`;
-      toastIdsRef.current.push(successToastId);
       toast.success(`${brandName} products loaded`, {
         id: successToastId,
-        duration: 1000
+        duration: 800
       });
       
       // Navigate to marketplace
@@ -172,14 +192,13 @@ const PopularBrandsSection = () => {
       clearTimeout(timeoutId);  
       setLoadingBrand(null);
       
-      // Aggressively clear loading toast
+      // Aggressive cleanup of loading toast
       cleanupToasts();
       
       const errorToastId = `error-${brandName}-${Date.now()}`;
-      toastIdsRef.current.push(errorToastId);
       toast.error(`Failed to load ${brandName} products`, {
         id: errorToastId,
-        duration: 2000
+        duration: 1500
       });
       
       // Still navigate to allow user to see available products

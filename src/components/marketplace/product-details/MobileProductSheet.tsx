@@ -1,358 +1,317 @@
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
+import React, { useState, useEffect } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { X, Share2, Heart, ShoppingCart, RefreshCw } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Separator } from "@/components/ui/separator";
+import { Star, Minus, Plus, Heart, Share2, ShoppingCart, Zap } from "lucide-react";
+import { Product } from "@/types/product";
+import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 import { prefersReducedMotion, announceToScreenReader } from "@/utils/accessibility";
-import { Product } from "@/types/product";
 
 interface MobileProductSheetProps {
-  product: Product | null;
+  product: Product;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddToWishlist?: (productId: string) => void;
-  onShare?: (product: Product) => void;
-  isWishlisted?: boolean;
+  isWishlisted: boolean;
+  onWishlistChange?: () => void;
 }
 
-const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
+const MobileProductSheet = ({
   product,
   open,
   onOpenChange,
-  onAddToWishlist,
-  onShare,
-  isWishlisted = false
-}) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  isWishlisted,
+  onWishlistChange
+}: MobileProductSheetProps) => {
+  const [quantity, setQuantity] = useState(1);
+  const [isHeartAnimating, setIsHeartAnimating] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const { addToWishlist, removeFromWishlist } = useUnifiedWishlist();
+  const { toast } = useToast();
   const reducedMotion = prefersReducedMotion();
-  
-  // Get product images
-  const images = product?.images && product.images.length > 0 
-    ? product.images 
-    : product?.image 
-      ? [product.image] 
-      : ['/placeholder.svg'];
-  
-  const validImages = images.filter((_, index) => !imageErrors[index]);
 
-  // Reset state when product changes
+  // Reset states when sheet opens/closes
   useEffect(() => {
-    if (product) {
-      setCurrentImageIndex(0);
-      setImageErrors({});
+    if (!open) {
+      setQuantity(1);
+      setIsHeartAnimating(false);
+      setImageError(false);
       setIsZoomed(false);
-      setZoomLevel(1);
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
     }
-  }, [product?.product_id]);
-
-  // Handle image error
-  const handleImageError = useCallback((index: number) => {
-    setImageErrors(prev => ({ ...prev, [index]: true }));
-    announceToScreenReader(`Image ${index + 1} failed to load`, 'assertive');
-  }, []);
-
-  // Pull to refresh handler
-  const handlePullToRefresh = useCallback(async () => {
-    if (isRefreshing || !product) return;
-    
-    setIsRefreshing(true);
-    triggerHapticFeedback(HapticPatterns.pullRefresh);
-    
-    try {
-      // Simulate refresh - in real implementation, this would refetch product data
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Product details refreshed");
-      announceToScreenReader("Product details have been refreshed");
-    } catch (error) {
-      toast.error("Failed to refresh product details");
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [isRefreshing, product]);
-
-  // Handle close with haptic feedback
-  const handleClose = useCallback(() => {
-    triggerHapticFeedback(HapticPatterns.buttonTap);
-    onOpenChange(false);
-  }, [onOpenChange]);
+  }, [open]);
 
   // Handle wishlist toggle
-  const handleWishlistToggle = useCallback(() => {
+  const handleWishlistToggle = async () => {
     if (!product) return;
     
+    setIsHeartAnimating(true);
     triggerHapticFeedback(isWishlisted ? HapticPatterns.wishlistRemove : HapticPatterns.wishlistAdd);
-    onAddToWishlist?.(product.product_id);
     
-    const message = isWishlisted 
-      ? `Removed ${product.name || product.title} from wishlist`
-      : `Added ${product.name || product.title} to wishlist`;
-    
-    toast.success(message);
-    announceToScreenReader(message);
-  }, [product, isWishlisted, onAddToWishlist]);
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(product.product_id || product.id || '');
+        announceToScreenReader(`${product.title || product.name} removed from wishlist`);
+      } else {
+        await addToWishlist(product);
+        announceToScreenReader(`${product.title || product.name} added to wishlist`);
+      }
+      
+      // Call the parent's wishlist change handler
+      if (onWishlistChange) {
+        onWishlistChange();
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update wishlist",
+        variant: "destructive",
+      });
+    } finally {
+      setTimeout(() => setIsHeartAnimating(false), 300);
+    }
+  };
+
+  // Handle add to cart
+  const handleAddToCart = () => {
+    triggerHapticFeedback(HapticPatterns.addToCart);
+    announceToScreenReader(`Added ${quantity} ${product.title || product.name} to cart`);
+    toast({
+      title: "Added to Cart",
+      description: `${quantity}x ${product.title || product.name}`,
+    });
+  };
+
+  // Handle buy now
+  const handleBuyNow = () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    announceToScreenReader(`Proceeding to checkout with ${product.title || product.name}`);
+    // Navigate to checkout logic would go here
+  };
 
   // Handle share
-  const handleShare = useCallback(() => {
-    if (!product) return;
-    
+  const handleShare = async () => {
     triggerHapticFeedback(HapticPatterns.shareAction);
-    onShare?.(product);
-  }, [product, onShare]);
-
-  // Pinch to zoom handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const distance = Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) + 
-        Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
-      
-      // Store initial pinch distance
-      if (imageContainerRef.current) {
-        imageContainerRef.current.dataset.initialPinchDistance = distance.toString();
-      }
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2 && imageContainerRef.current) {
-      e.preventDefault();
-      
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const currentDistance = Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) + 
-        Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
-      
-      const initialDistance = parseFloat(imageContainerRef.current.dataset.initialPinchDistance || '0');
-      
-      if (initialDistance > 0) {
-        const scale = Math.max(1, Math.min(3, currentDistance / initialDistance));
-        setZoomLevel(scale);
-        setIsZoomed(scale > 1);
-        
-        // Calculate zoom center point
-        const rect = imageContainerRef.current.getBoundingClientRect();
-        const centerX = ((touch1.clientX + touch2.clientX) / 2 - rect.left) / rect.width * 100;
-        const centerY = ((touch1.clientY + touch2.clientY) / 2 - rect.top) / rect.height * 100;
-        
-        setZoomPosition({ x: centerX, y: centerY });
-      }
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (imageContainerRef.current) {
-      delete imageContainerRef.current.dataset.initialPinchDistance;
-    }
     
-    // Reset zoom if scale is less than 1.2
-    if (zoomLevel < 1.2) {
-      setZoomLevel(1);
-      setIsZoomed(false);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.title || product.name || "Check out this product",
+          text: `Check out this product: ${product.title || product.name}`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        // User cancelled sharing or error occurred
+        console.log('Share cancelled or failed:', error);
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link Copied",
+        description: "Product link copied to clipboard",
+      });
     }
-  }, [zoomLevel]);
+  };
+
+  // Handle image error
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Handle image zoom (pinch-to-zoom simulation)
+  const handleImageInteraction = (event: React.TouchEvent | React.MouseEvent) => {
+    if (event.type === 'touchstart' && 'touches' in event && event.touches.length === 2) {
+      // Pinch zoom detected
+      setIsZoomed(true);
+    } else if (event.type === 'click') {
+      // Toggle zoom on click/tap
+      setIsZoomed(!isZoomed);
+      setScale(isZoomed ? 1 : 2);
+    }
+  };
+
+  // Quantity controls
+  const increaseQuantity = () => {
+    if (quantity < 10) {
+      setQuantity(prev => prev + 1);
+      triggerHapticFeedback(HapticPatterns.buttonTap);
+    }
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(prev => prev - 1);
+      triggerHapticFeedback(HapticPatterns.buttonTap);
+    }
+  };
 
   if (!product) return null;
-
-  const productName = product.name || product.title || 'Unknown Product';
-  const productPrice = product.price || 0;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
-        ref={sheetRef}
         side="bottom" 
-        className="h-[90vh] rounded-t-xl safe-area-bottom"
-        onInteractOutside={(e) => e.preventDefault()}
+        className="h-[85vh] p-0 rounded-t-xl overflow-hidden safe-area-bottom"
       >
-        <SheetHeader className="flex-row items-center justify-between py-4 border-b">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold truncate">{productName}</h2>
-            <p className="text-sm text-muted-foreground">
-              By {product.brand || product.vendor || 'Unknown Brand'}
-            </p>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="touch-target-44 ml-2"
-            aria-label="Close product details"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </SheetHeader>
-
-        {/* Pull to refresh indicator */}
-        {isRefreshing && (
-          <div className="flex items-center justify-center py-2 border-b bg-blue-50">
-            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-            <span className="text-sm text-blue-600">Refreshing...</span>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto">
-          {/* Image Carousel */}
-          <div className="relative">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full"
-              setApi={(api) => {
-                if (api) {
-                  api.on('select', () => {
-                    setCurrentImageIndex(api.selectedScrollSnap());
-                    triggerHapticFeedback(HapticPatterns.imageSwipe);
-                  });
-                }
-              }}
-            >
-              <CarouselContent>
-                {validImages.map((image, index) => (
-                  <CarouselItem key={`${image}-${index}`}>
-                    <div 
-                      ref={imageContainerRef}
-                      className="aspect-square relative overflow-hidden bg-gray-50 rounded-lg"
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={handleTouchEnd}
-                    >
-                      <img
-                        src={image}
-                        alt={`${productName} - Image ${index + 1}`}
-                        className={cn(
-                          "w-full h-full object-contain",
-                          !reducedMotion && "transition-transform duration-200"
-                        )}
-                        style={isZoomed ? {
-                          transform: `scale(${zoomLevel})`,
-                          transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
-                        } : {}}
-                        onError={() => handleImageError(index)}
-                        loading={index === 0 ? "eager" : "lazy"}
-                      />
-                      
-                      {/* Image counter */}
-                      <Badge 
-                        variant="secondary" 
-                        className="absolute top-3 left-3 bg-black/70 text-white"
-                      >
-                        {currentImageIndex + 1} of {validImages.length}
-                      </Badge>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              
-              {validImages.length > 1 && (
-                <>
-                  <CarouselPrevious className="absolute left-3 top-1/2 -translate-y-1/2" />
-                  <CarouselNext className="absolute right-3 top-1/2 -translate-y-1/2" />
-                </>
-              )}
-            </Carousel>
-
-            {/* Larger navigation dots */}
-            {validImages.length > 1 && (
-              <div className="flex justify-center mt-4 gap-2">
-                {validImages.map((_, index) => (
-                  <button
-                    key={index}
-                    className={cn(
-                      "w-3 h-3 rounded-full transition-all touch-target-44",
-                      index === currentImageIndex
-                        ? "bg-purple-600 scale-125"
-                        : "bg-gray-300 hover:bg-gray-400"
-                    )}
-                    onClick={() => setCurrentImageIndex(index)}
-                    aria-label={`Go to image ${index + 1}`}
-                  />
-                ))}
+        {/* Pull indicator */}
+        <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mt-2 mb-4" />
+        
+        <div className="flex flex-col h-full">
+          {/* Product Image */}
+          <div className="relative bg-gray-50 flex-shrink-0" style={{ height: '40vh' }}>
+            {imageError ? (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📷</div>
+                  <div className="text-sm">Image not available</div>
+                </div>
               </div>
+            ) : (
+              <img
+                src={product.image}
+                alt={product.title || product.name || "Product"}
+                className={cn(
+                  "w-full h-full object-contain transition-transform duration-300",
+                  isZoomed && "cursor-zoom-out",
+                  !isZoomed && "cursor-zoom-in"
+                )}
+                style={{
+                  transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+                }}
+                onError={handleImageError}
+                onClick={handleImageInteraction}
+                onTouchStart={handleImageInteraction}
+              />
             )}
+            
+            {/* Action buttons overlay */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full bg-white/90 backdrop-blur-sm shadow-sm border-0"
+                onClick={handleShare}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn(
+                  "rounded-full bg-white/90 backdrop-blur-sm shadow-sm border-0",
+                  isWishlisted && "bg-red-50 text-red-600",
+                  isHeartAnimating && !reducedMotion && "animate-pulse"
+                )}
+                onClick={handleWishlistToggle}
+              >
+                <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
+              </Button>
+            </div>
           </div>
 
-          {/* Product Details */}
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-green-600">
-                ${productPrice.toFixed(2)}
-              </div>
-              
-              {product.rating && (
-                <div className="flex items-center gap-1">
-                  <span className="text-yellow-500">★</span>
-                  <span className="text-sm font-medium">{product.rating}</span>
-                  {product.reviewCount && (
-                    <span className="text-sm text-muted-foreground">
-                      ({product.reviewCount})
-                    </span>
+          {/* Product Details - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-6 space-y-6">
+              <SheetHeader>
+                <SheetTitle className="text-xl font-semibold text-left">
+                  {product.title || product.name}
+                </SheetTitle>
+                <div className="flex items-center justify-between">
+                  <div className="text-2xl font-bold text-green-600">
+                    ${product.price?.toFixed(2)}
+                  </div>
+                  {product.rating && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span>{product.rating}</span>
+                      {product.reviewCount && (
+                        <span>({product.reviewCount})</span>
+                      )}
+                    </div>
                   )}
+                </div>
+                {product.vendor && (
+                  <div className="text-sm text-muted-foreground">
+                    By {product.vendor}
+                  </div>
+                )}
+              </SheetHeader>
+
+              <Separator />
+
+              {/* Quantity Selector */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Quantity</label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={decreaseQuantity}
+                    disabled={quantity <= 1}
+                    className="h-10 w-10 rounded-full"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="text-lg font-medium min-w-[2rem] text-center">
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={increaseQuantity}
+                    disabled={quantity >= 10}
+                    className="h-10 w-10 rounded-full"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Product Description */}
+              {product.description && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Description</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {product.description}
+                  </p>
                 </div>
               )}
             </div>
+          </div>
 
-            {product.description && (
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {product.description}
-              </p>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
+          {/* Bottom Actions - Fixed */}
+          <div className="border-t bg-white p-4 space-y-3 safe-area-bottom">
+            <div className="flex gap-3">
               <Button
                 variant="outline"
-                size="icon"
-                onClick={handleWishlistToggle}
-                className={cn(
-                  "touch-target-44",
-                  isWishlisted && "text-red-500 border-red-200 bg-red-50"
-                )}
-                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              >
-                <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleShare}
-                className="touch-target-44"
-                aria-label="Share product"
-              >
-                <Share2 className="h-5 w-5" />
-              </Button>
-              
-              <Button 
-                className="flex-1 touch-target-44"
-                onClick={() => {
-                  triggerHapticFeedback(HapticPatterns.addToCart);
-                  toast.success("Added to cart!");
-                }}
+                onClick={handleAddToCart}
+                className="flex-1 h-12"
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Add to Cart
               </Button>
+              <Button
+                onClick={handleBuyNow}
+                className="flex-1 h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Buy Now
+              </Button>
+            </div>
+            <div className="text-xs text-center text-muted-foreground">
+              Free shipping on orders over $35
             </div>
           </div>
         </div>

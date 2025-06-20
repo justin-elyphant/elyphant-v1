@@ -27,7 +27,7 @@ const EnhancedMobileSearch: React.FC<EnhancedMobileSearchProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   
-  const { addToHistory } = useUserSearchHistory();
+  const { addSearch } = useUserSearchHistory();
   const { suggestions, isLoading } = useEnhancedSearchSuggestions(inputValue);
   const {
     isListening,
@@ -70,7 +70,7 @@ const EnhancedMobileSearch: React.FC<EnhancedMobileSearchProps> = ({
     e.preventDefault();
     if (inputValue.trim()) {
       triggerHapticFeedback(HapticPatterns.buttonTap);
-      addToHistory(inputValue.trim());
+      addSearch(inputValue.trim());
       onSearchSubmit(inputValue.trim());
       setShowSuggestions(false);
       inputRef.current?.blur();
@@ -81,7 +81,7 @@ const EnhancedMobileSearch: React.FC<EnhancedMobileSearchProps> = ({
     triggerHapticFeedback(HapticPatterns.cardTap);
     setInputValue(suggestion);
     onSearchChange(suggestion);
-    addToHistory(suggestion);
+    addSearch(suggestion);
     onSearchSubmit(suggestion);
     setShowSuggestions(false);
     inputRef.current?.blur();

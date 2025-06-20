@@ -9,7 +9,7 @@ interface SearchSuggestion {
   popularity?: number;
 }
 
-export const useEnhancedSearchSuggestions = (query: string) => {
+export const useSearchSuggestions = (query: string) => {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { recentSearches } = useUserSearchHistory();
@@ -141,3 +141,5 @@ export const useEnhancedSearchSuggestions = (query: string) => {
     isLoading
   };
 };
+
+export const useEnhancedSearchSuggestions = useSearchSuggestions;

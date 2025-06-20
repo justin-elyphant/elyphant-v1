@@ -21,7 +21,7 @@ interface ProductShareButtonProps {
     brand?: string;
   };
   variant?: 'default' | 'ghost' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'default' | 'lg';
   showLabel?: boolean;
 }
 

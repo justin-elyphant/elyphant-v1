@@ -9,6 +9,7 @@ import { Heart } from "lucide-react";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import SignUpDialog from "../SignUpDialog";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
+import ProductRating from "./ProductRating";
 
 interface ProductItemProps {
   product: Product;
@@ -142,6 +143,14 @@ const ProductItem = ({
             {product.brand && (
               <p className="text-sm text-gray-500 mt-1">{product.brand}</p>
             )}
+            
+            {/* Product Rating */}
+            <ProductRating
+              rating={product.rating || product.stars}
+              reviewCount={product.reviewCount || product.num_reviews}
+              size="sm"
+              className="mt-2"
+            />
             
             <p className="text-lg font-semibold text-gray-900 mt-2">
               {formatPrice(product.price)}

@@ -1,10 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { handleBrandProducts } from "@/utils/brandUtils";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import {
   Carousel,
   CarouselContent,
@@ -44,25 +45,59 @@ const PopularBrandsSection = () => {
     },
   ];
 
+  // Cleanup loading state when component unmounts or brand changes
+  useEffect(() => {
+    return () => {
+      if (loadingBrand) {
+        setLoadingBrand(null);
+        toast.dismiss();
+      }
+    };
+  }, [loadingBrand]);
+
   const handleBrandClick = async (brandName: string) => {
-    // Prevent multiple clicks
-    if (loadingBrand) return;
+    // Prevent multiple clicks and ensure clean state
+    if (loadingBrand) {
+      console.log('Another brand is loading, ignoring click');
+      return;
+    }
     
+    console.log(`Loading brand: ${brandName}`);
     setLoadingBrand(brandName);
-    const loadingToastId = `brand-loading-${brandName}`;
     
-    // Enhanced search term with "best selling" prefix
+    const loadingToastId = `brand-loading-${brandName}-${Date.now()}`;
     const enhancedSearchTerm = `best selling ${brandName} products`;
+    
+    // Set up timeout for cleanup
+    const timeoutId = setTimeout(() => {
+      console.log(`Timeout reached for ${brandName}, cleaning up`);
+      setLoadingBrand(null);
+      toast.dismiss(loadingToastId);
+      toast.error(`Loading ${brandName} products took too long`, { 
+        id: `error-${brandName}-${Date.now()}` 
+      });
+      navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
+    }, 5000); // 5 second timeout
     
     try {
       // Show loading toast
-      toast.loading(`Loading ${brandName} products...`, { id: loadingToastId });
+      toast.loading(`Loading ${brandName} products...`, { 
+        id: loadingToastId,
+        duration: Infinity // Keep toast until manually dismissed
+      });
       
       await handleBrandProducts(brandName, products, setProducts);
       
+      // Clear timeout and loading state immediately on success
+      clearTimeout(timeoutId);
+      setLoadingBrand(null);
+      
       // Clear loading toast and show success
       toast.dismiss(loadingToastId);
-      toast.success(`${brandName} products loaded successfully`);
+      toast.success(`${brandName} products loaded successfully`, {
+        id: `success-${brandName}-${Date.now()}`,
+        duration: 2000
+      });
       
       // Navigate to marketplace
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
@@ -70,16 +105,19 @@ const PopularBrandsSection = () => {
     } catch (err) {
       console.error(`Error loading ${brandName} products:`, err);
       
+      // Clear timeout and loading state on error
+      clearTimeout(timeoutId);  
+      setLoadingBrand(null);
+      
       // Clear loading toast and show error
       toast.dismiss(loadingToastId);
-      toast.error(`Failed to load ${brandName} products`);
+      toast.error(`Failed to load ${brandName} products`, {
+        id: `error-${brandName}-${Date.now()}`,
+        duration: 3000
+      });
       
       // Still navigate to allow user to see available products
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
-      
-    } finally {
-      // Always clear loading state
-      setLoadingBrand(null);
     }
   };
 
@@ -103,20 +141,33 @@ const PopularBrandsSection = () => {
               {brands.map((brand) => (
                 <CarouselItem key={brand.name} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6 swipe-item">
                   <div
-                    className={`relative flex flex-col items-center justify-center p-3 md:p-4 lg:p-6 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback min-h-[100px] ${loadingBrand === brand.name ? "pointer-events-none opacity-60" : ""}`}
+                    className={cn(
+                      "relative flex flex-col items-center justify-center p-3 md:p-4 lg:p-6 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback min-h-[100px]",
+                      loadingBrand === brand.name ? "pointer-events-none opacity-60 bg-gray-50" : ""
+                    )}
                     onClick={() => handleBrandClick(brand.name)}
                   >
                     <img
                       src={brand.logo}
                       alt={`${brand.name} logo`}
-                      className={`max-h-6 md:max-h-8 lg:max-h-12 max-w-12 md:max-w-16 lg:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ${loadingBrand === brand.name ? "grayscale" : ""}`}
+                      className={cn(
+                        "max-h-6 md:max-h-8 lg:max-h-12 max-w-12 md:max-w-16 lg:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity",
+                        loadingBrand === brand.name ? "grayscale animate-pulse" : ""
+                      )}
                       loading="lazy"
                       style={{ aspectRatio: "3/1", objectFit: "contain" }}
                     />
-                    <span className="text-xs md:text-sm font-medium text-gray-700 mt-2 md:mt-3 text-center leading-tight">{brand.name}</span>
+                    <span className={cn(
+                      "text-xs md:text-sm font-medium text-gray-700 mt-2 md:mt-3 text-center leading-tight",
+                      loadingBrand === brand.name ? "text-gray-500" : ""
+                    )}>
+                      {brand.name}
+                    </span>
                     {loadingBrand === brand.name && (
-                      <div className="absolute text-xs text-purple-700 font-medium left-1/2 -translate-x-1/2 mt-16">
-                        Loading...
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-xs text-purple-700 font-medium px-2 py-1 bg-white/80 rounded">
+                          Loading...
+                        </div>
                       </div>
                     )}
                   </div>

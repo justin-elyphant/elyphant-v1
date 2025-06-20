@@ -6,7 +6,6 @@ import { Heart, Share2, Plus, Minus } from "lucide-react";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
-import { handleWishlistAction } from "@/utils/wishlistUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,7 +43,6 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
   const handleWishlistClick = async () => {
     if (!user) {
       toast({
-        title: "Sign in required",
         description: "Please sign in to add items to your wishlist",
         variant: "destructive"
       });
@@ -54,16 +52,9 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
     setIsHeartAnimating(true);
     
     try {
-      await handleWishlistAction(
-        product,
-        user,
-        isWishlisted ? 'remove' : 'add'
-      );
-      
       await onWishlistChange();
       
       toast({
-        title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
         description: isWishlisted 
           ? "Item removed from your wishlist" 
           : "Item added to your wishlist"
@@ -71,7 +62,6 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
     } catch (error) {
       console.error('Wishlist action failed:', error);
       toast({
-        title: "Error",
         description: "Failed to update wishlist",
         variant: "destructive"
       });
@@ -83,8 +73,6 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: product.title || product.name || "Check out this product",
-        text: `Check out this product: ${product.title || product.name}`,
         url: window.location.href,
       });
     }

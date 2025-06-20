@@ -4,7 +4,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Product } from "@/types/product";
 import MobileProductGrid from "./MobileProductGrid";
 import MobileFilterBottomSheet from "./MobileFilterBottomSheet";
-import MobileSearchHeader from "./MobileSearchHeader";
+import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
+import ProductDetailsDialog from "../ProductDetailsDialog";
 import { Button } from "@/components/ui/button";
 import { Filter, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,8 @@ const MobileMarketplaceLayout = ({
   const [showFilters, setShowFilters] = useState(false);
   const [sortOption, setSortOption] = useState("relevance");
   const [activeFilterCount, setActiveFilterCount] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showProductDetails, setShowProductDetails] = useState(false);
 
   const getProductStatus = (product: Product) => {
     if (product.isBestSeller) {
@@ -40,6 +43,19 @@ const MobileMarketplaceLayout = ({
     return null;
   };
 
+  // Handle product click to open details
+  const handleProductClick = (productId: string) => {
+    const product = products.find(p => (p.product_id || p.id) === productId);
+    if (product) {
+      setSelectedProduct(product);
+      setShowProductDetails(true);
+      // Also call the parent handler if provided
+      if (onProductView) {
+        onProductView(productId);
+      }
+    }
+  };
+
   // Debug log to see what products we're receiving
   useEffect(() => {
     console.log('MobileMarketplaceLayout products:', products?.length || 0, products);
@@ -47,8 +63,10 @@ const MobileMarketplaceLayout = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Search Header */}
-      <MobileSearchHeader searchTerm={searchTerm} />
+      {/* Mobile Enhanced Search Header */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3 safe-area-top">
+        <AIEnhancedSearchBar mobile={true} className="w-full" />
+      </div>
 
       {/* Filter Toggle Bar */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 safe-area-inset">
@@ -99,7 +117,7 @@ const MobileMarketplaceLayout = ({
         ) : (
           <MobileProductGrid
             products={products || []} // Ensure we always pass an array
-            onProductClick={onProductView}
+            onProductClick={handleProductClick} // Use our custom handler
             getProductStatus={getProductStatus}
             isLoading={isLoading}
             hasMore={false}
@@ -116,6 +134,18 @@ const MobileMarketplaceLayout = ({
         sortOption={sortOption}
         setSortOption={setSortOption}
         onFiltersChange={(count) => setActiveFilterCount(count)}
+      />
+
+      {/* Product Details Dialog */}
+      <ProductDetailsDialog
+        product={selectedProduct}
+        open={showProductDetails}
+        onOpenChange={setShowProductDetails}
+        userData={null} // You can pass user data here if available
+        onWishlistChange={() => {
+          // Handle wishlist changes if needed
+          console.log('Wishlist changed');
+        }}
       />
     </div>
   );

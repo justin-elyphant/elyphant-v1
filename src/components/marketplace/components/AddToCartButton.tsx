@@ -25,33 +25,18 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
 }) => {
   const { addToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
   
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Always stop propagation to prevent card clicks
-    
+  const handleAddToCart = (e: React.MouseEvent) => {
     if (onClick) {
-      onClick(e);
+      onClick(e); // Let parent stop propagation if needed
     }
-    
-    // Prevent multiple rapid clicks
-    if (isAdded || isAdding) return;
-    
-    setIsAdding(true);
-    
-    try {
-      addToCart(product, quantity);
-      setIsAdded(true);
-      
-      // Reset the added state after animation
-      setTimeout(() => {
-        setIsAdded(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
-    } finally {
-      setIsAdding(false);
-    }
+    // Don't add if button is disabled
+    if (isAdded) return;
+    addToCart(product, quantity);
+    setIsAdded(true);
+    setTimeout(() => {
+      setIsAdded(false);
+    }, 2000);
   };
   
   return (
@@ -60,17 +45,12 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
       variant={variant}
       size={size}
       className={cn(className)}
-      disabled={isAdded || isAdding}
+      disabled={isAdded}
     >
       {isAdded ? (
         <>
           <Check className="h-4 w-4 mr-2" />
           Added
-        </>
-      ) : isAdding ? (
-        <>
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Adding...
         </>
       ) : (
         <>

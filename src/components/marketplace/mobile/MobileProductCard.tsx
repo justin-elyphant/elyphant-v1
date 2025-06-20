@@ -46,13 +46,12 @@ const MobileProductCard = ({
     }
   };
 
-  const handleProductClick = (e: React.MouseEvent) => {
-    // Only trigger product click if not clicking on interactive elements
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('[role="button"]')) {
-      return;
-    }
+  const handleProductClick = () => {
     onProductClick(productId);
+  };
+
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const formatPrice = (price: number | undefined) => {
@@ -169,6 +168,7 @@ const MobileProductCard = ({
               variant="outline"
               size="sm"
               className="w-full h-9 text-sm font-medium border-gray-200 hover:border-gray-300 active:scale-[0.96] transition-transform duration-100"
+              onClick={handleAddToCartClick}
             />
           </div>
         </div>

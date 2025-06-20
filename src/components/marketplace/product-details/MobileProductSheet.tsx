@@ -26,19 +26,27 @@ const MobileProductSheet = ({
   onWishlistChange
 }: MobileProductSheetProps) => {
   const [quantity, setQuantity] = useState(1);
-  const { addToCart } = useCart();
+  const { addToCart, getItemCount } = useCart();
   const { user } = useAuth();
 
   const increaseQuantity = () => setQuantity(prev => Math.min(prev + 1, 10));
   const decreaseQuantity = () => setQuantity(prev => Math.max(prev - 1, 1));
 
   const handleAddToCart = () => {
+    console.log('MobileProductSheet - Adding to cart:', {
+      product: product,
+      productId: product.product_id || product.id,
+      quantity: quantity,
+      productName: product.title || product.name
+    });
+    
     triggerHapticFeedback(HapticPatterns.addToCart);
     
-    // Add items to cart based on quantity
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
-    }
+    // Add item to cart with the specified quantity (fixed: call once instead of loop)
+    addToCart(product, quantity);
+    
+    const itemCount = getItemCount();
+    console.log('MobileProductSheet - Cart updated, new item count:', itemCount);
     
     toast.success(`Added ${quantity} ${product.title || product.name}(s) to cart`);
   };

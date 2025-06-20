@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -162,14 +163,14 @@ const Home = () => {
             <FeaturedCollections collections={collections} />
           </div>
 
-          {/* Categories section - NEW */}
+          {/* Popular Brands section moved here - above Categories */}
+          <PopularBrandsSection />
+
+          {/* Categories section - now below Popular Brands */}
           <FeaturedCategories />
 
           {/* Occasions-Based Gift Collections */}
           <FeaturedOccasions />
-
-          {/* Popular Brands section moved above Featured Products */}
-          <PopularBrandsSection />
 
           {/* Nicole Introduction Section */}
           <NicoleIntroSection />

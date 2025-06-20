@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
@@ -54,11 +55,14 @@ const PopularBrandsSection = () => {
     try {
       await handleBrandProducts(brandName, products, setProducts);
       toast.dismiss(loadingToastId);
+      toast.success(`${brandName} products loaded successfully`);
     } catch (err) {
       toast.dismiss(loadingToastId);
       toast.error(`Failed to load ${brandName} products`);
     } finally {
+      // Always clear loading state
       setLoadingBrand(null);
+      // Navigate after clearing loading state
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);
     }
   };

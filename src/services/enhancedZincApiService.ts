@@ -81,10 +81,10 @@ class EnhancedZincApiService {
     console.log(`Getting product details for: ${productId}`);
     
     try {
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      const { data, error } = await supabase.functions.invoke('get-product-detail', {
         body: {
-          productId,
-          action: 'details'
+          product_id: productId,
+          retailer: 'amazon'
         }
       });
 

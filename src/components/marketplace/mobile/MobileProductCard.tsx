@@ -46,7 +46,12 @@ const MobileProductCard = ({
     }
   };
 
-  const handleProductClick = () => {
+  const handleProductClick = (e: React.MouseEvent) => {
+    // Only trigger product click if not clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]')) {
+      return;
+    }
     onProductClick(productId);
   };
 

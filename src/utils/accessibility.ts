@@ -104,8 +104,9 @@ export const isNavigationKey = (key: string): boolean => {
   return ['Enter', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'].includes(key);
 };
 
+// Updated to handle React keyboard events
 export const handleKeyboardNavigation = (
-  event: KeyboardEvent,
+  event: React.KeyboardEvent | KeyboardEvent,
   handlers: {
     onEnter?: () => void;
     onSpace?: () => void;

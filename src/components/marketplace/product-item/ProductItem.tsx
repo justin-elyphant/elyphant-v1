@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import SignUpDialog from "../SignUpDialog";
+import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
 
 interface ProductItemProps {
   product: Product;
@@ -55,6 +56,11 @@ const ProductItem = ({
 
   const handleProductClick = () => {
     onProductClick(productId);
+  };
+
+  // Prevent cart button clicks from triggering product modal
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const formatPrice = (price: number | undefined) => {
@@ -127,24 +133,37 @@ const ProductItem = ({
         </div>
 
         {/* Product Info */}
-        <div className={`${isListView ? "flex-1" : "p-4"}`}>
-          <h3 className="font-medium text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
-            {productName}
-          </h3>
-          
-          {product.brand && (
-            <p className="text-sm text-gray-500 mt-1">{product.brand}</p>
-          )}
-          
-          <p className="text-lg font-semibold text-gray-900 mt-2">
-            {formatPrice(product.price)}
-          </p>
-
-          {product.description && isListView && (
-            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-              {product.description}
+        <div className={`${isListView ? "flex-1" : "p-4"} flex flex-col`}>
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
+              {productName}
+            </h3>
+            
+            {product.brand && (
+              <p className="text-sm text-gray-500 mt-1">{product.brand}</p>
+            )}
+            
+            <p className="text-lg font-semibold text-gray-900 mt-2">
+              {formatPrice(product.price)}
             </p>
-          )}
+
+            {product.description && isListView && (
+              <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                {product.description}
+              </p>
+            )}
+          </div>
+
+          {/* Add to Cart Button */}
+          <div className="mt-3">
+            <AddToCartButton
+              product={product}
+              variant="outline"
+              size="sm"
+              className="w-full h-9 text-sm font-medium"
+              onClick={handleAddToCartClick}
+            />
+          </div>
         </div>
       </div>
 

@@ -133,9 +133,29 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Enhanced accessibility
     const accessibilityProps = {
       'aria-label': ariaLabel || (typeof children === 'string' ? children : undefined),
-      'aria-pressed': isLongPressing ? 'true' : undefined,
+      'aria-pressed': isLongPressing ? 'true' as const : undefined,
       'data-long-press': longPressAction ? 'true' : undefined,
     }
+    
+    // Handle children based on asChild prop
+    const buttonContent = React.useMemo(() => {
+      if (asChild) {
+        // When using asChild, return children as-is to avoid React.Children.only error
+        return children
+      }
+      
+      // When not using asChild, we can add additional elements
+      return (
+        <>
+          {children}
+          {longPressAction && (
+            <span className="sr-only">
+              Long press for additional options
+            </span>
+          )}
+        </>
+      )
+    }, [asChild, children, longPressAction])
     
     return (
       <Comp
@@ -154,12 +174,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...accessibilityProps}
         {...props}
       >
-        {children}
-        {longPressAction && (
-          <span className="sr-only">
-            Long press for additional options
-          </span>
-        )}
+        {buttonContent}
       </Comp>
     )
   }

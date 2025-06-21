@@ -207,12 +207,15 @@ const PopularBrandsSection = () => {
   };
 
   return (
-    <div className="py-12 md:py-16 bg-white intersection-target">
-      <div className="container px-4 md:px-6">
-        <h2 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3 text-center">Popular Brands</h2>
-        <p className="text-center text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
-          Shop from trusted brands our customers love
-        </p>
+    <div className="py-12 md:py-16 bg-white intersection-target overflow-hidden">
+      {/* Full bleed container for mobile */}
+      <div className={isMobile ? "" : "container mx-auto px-4 md:px-6"}>
+        <div className={isMobile ? "px-4 mb-8" : "mb-12"}>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3 text-center">Popular Brands</h2>
+          <p className="text-center text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Shop from trusted brands our customers love
+          </p>
+        </div>
         
         <div className="relative">
           <Carousel
@@ -222,12 +225,13 @@ const PopularBrandsSection = () => {
             }}
             className="w-full swipe-container will-change-scroll"
           >
-            <CarouselContent className="-ml-2 md:-ml-4">
+            <CarouselContent className={isMobile ? "-ml-1" : "-ml-4"}>
               {brands.map((brand) => (
-                <CarouselItem key={brand.name} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6 swipe-item">
+                <CarouselItem key={brand.name} className={`${isMobile ? "pl-1 basis-1/2.5" : "pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6"} swipe-item`}>
                   <div
                     className={cn(
-                      "relative flex flex-col items-center justify-center p-3 md:p-4 lg:p-6 rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback min-h-[100px]",
+                      "relative flex flex-col items-center justify-center rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback min-h-[100px]",
+                      isMobile ? "p-3 mx-1" : "p-3 md:p-4 lg:p-6",
                       loadingBrand === brand.name ? "pointer-events-none opacity-60 bg-gray-50" : ""
                     )}
                     onClick={() => handleBrandClick(brand.name)}
@@ -236,14 +240,16 @@ const PopularBrandsSection = () => {
                       src={brand.logo}
                       alt={`${brand.name} logo`}
                       className={cn(
-                        "max-h-6 md:max-h-8 lg:max-h-12 max-w-12 md:max-w-16 lg:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity",
+                        "max-w-12 md:max-w-16 lg:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity",
+                        isMobile ? "max-h-8" : "max-h-6 md:max-h-8 lg:max-h-12",
                         loadingBrand === brand.name ? "grayscale animate-pulse" : ""
                       )}
                       loading="lazy"
                       style={{ aspectRatio: "3/1", objectFit: "contain" }}
                     />
                     <span className={cn(
-                      "text-xs md:text-sm font-medium text-gray-700 mt-2 md:mt-3 text-center leading-tight",
+                      "font-medium text-gray-700 text-center leading-tight",
+                      isMobile ? "text-xs mt-2" : "text-xs md:text-sm mt-2 md:mt-3",
                       loadingBrand === brand.name ? "text-gray-500" : ""
                     )}>
                       {brand.name}
@@ -260,6 +266,14 @@ const PopularBrandsSection = () => {
               ))}
             </CarouselContent>
           </Carousel>
+          
+          {/* Mobile edge gradients for visual depth */}
+          {isMobile && (
+            <>
+              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent pointer-events-none z-10" />
+            </>
+          )}
         </div>
       </div>
     </div>

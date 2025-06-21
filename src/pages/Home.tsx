@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,6 +12,8 @@ import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import NicoleIntroSection from "@/components/home/sections/NicoleIntroSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
+import SocialProofSection from "@/components/home/sections/SocialProofSection";
+import MobileQuickActions from "@/components/home/sections/MobileQuickActions";
 import MainLayout from "@/components/layout/MainLayout";
 import FloatingNicoleWidget from "@/components/ai/enhanced/FloatingNicoleWidget";
 import { useNavigate } from "react-router-dom";
@@ -167,29 +168,35 @@ const Home = () => {
             <FeaturedCollections collections={collections} />
           </div>
 
-          {/* Popular Brands section moved here - above Categories */}
+          {/* Popular Brands section - now with full bleed */}
           <PopularBrandsSection />
 
-          {/* Categories section - now below Popular Brands */}
+          {/* Categories section */}
           <FeaturedCategories />
 
           {/* Occasions-Based Gift Collections */}
           <FeaturedOccasions />
 
-          {/* Nicole Introduction Section */}
+          {/* Nicole Introduction Section - now with full bleed */}
           <NicoleIntroSection />
 
           {/* Trending Products Carousel */}
           <FeaturedProductsSection />
 
-          {/* Seasonal Gift Guide */}
+          {/* Seasonal Gift Guide - enhanced for mobile */}
           <SeasonalGiftGuide />
+
+          {/* Social Proof Section - new full bleed section */}
+          <SocialProofSection />
 
           {/* Features Section */}
           <FeaturesSection />
 
           {/* Call to Action */}
           <HomeCTA />
+
+          {/* Mobile Quick Actions - floating bottom bar */}
+          <MobileQuickActions />
 
           {/* Floating Nicole Widget - only show when user is logged in */}
           {user && (

@@ -59,7 +59,7 @@ const HomeContent = () => {
 
   return (
     <ProductProvider>
-      <div className="smooth-scroll">
+      <div className="smooth-scroll will-change-scroll">
         {/* Hero Section */}
         <HeroSection />
 
@@ -67,66 +67,70 @@ const HomeContent = () => {
         {showJourneyGuide && (
           <div className="container mx-auto py-6 md:py-8 px-4 md:px-6 safe-area-inset">
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 md:p-6 mb-6 md:mb-8">
-              <h2 className="text-xl md:text-2xl font-bold text-purple-800 mb-3 md:mb-4">Welcome to Gift Giver!</h2>
-              <p className="text-purple-700 mb-3 md:mb-4 text-sm md:text-base leading-relaxed">
+              <h2 className="text-xl md:text-2xl font-bold text-purple-800 mb-3 md:mb-4 no-select">Welcome to Gift Giver!</h2>
+              <p className="text-purple-700 mb-3 md:mb-4 text-sm md:text-base leading-relaxed no-select">
                 Now that you've created your account, here's what you can do next:
               </p>
               <div className="space-y-3 md:space-y-4">
                 <div className="flex items-start">
-                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0">1</div>
+                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0 no-select">1</div>
                   <div>
-                    <h3 className="font-semibold text-purple-800 text-sm md:text-base">Complete your profile</h3>
-                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed">Add your interests and preferences to help others find perfect gifts for you.</p>
+                    <h3 className="font-semibold text-purple-800 text-sm md:text-base no-select">Complete your profile</h3>
+                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed no-select">Add your interests and preferences to help others find perfect gifts for you.</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation"
+                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation tap-feedback"
                       onClick={() => navigate("/profile-setup")}
+                      aria-label="Set up your profile"
                     >
                       Set up profile <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0">2</div>
+                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0 no-select">2</div>
                   <div>
-                    <h3 className="font-semibold text-purple-800 text-sm md:text-base">Create your first wishlist</h3>
-                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed">Start adding items you'd love to receive to your wishlist.</p>
+                    <h3 className="font-semibold text-purple-800 text-sm md:text-base no-select">Create your first wishlist</h3>
+                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed no-select">Start adding items you'd love to receive to your wishlist.</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation"
+                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation tap-feedback"
                       onClick={() => navigate("/wishlists")}
+                      aria-label="Create your first wishlist"
                     >
                       Create wishlist <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0">3</div>
+                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0 no-select">3</div>
                   <div>
-                    <h3 className="font-semibold text-purple-800 text-sm md:text-base">Explore gift ideas</h3>
-                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed">Browse our curated gift suggestions.</p>
+                    <h3 className="font-semibold text-purple-800 text-sm md:text-base no-select">Explore gift ideas</h3>
+                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed no-select">Browse our curated gift suggestions.</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation"
+                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation tap-feedback"
                       onClick={() => navigate("/marketplace?search=gift ideas")}
+                      aria-label="Find gift ideas"
                     >
                       Find gift ideas <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0">4</div>
+                  <div className="bg-purple-200 rounded-full w-6 h-6 flex items-center justify-center text-purple-800 font-bold mr-3 mt-0.5 flex-shrink-0 no-select">4</div>
                   <div>
-                    <h3 className="font-semibold text-purple-800 text-sm md:text-base">Take the interactive tour</h3>
-                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed">Learn about all features with our guided onboarding experience.</p>
+                    <h3 className="font-semibold text-purple-800 text-sm md:text-base no-select">Take the interactive tour</h3>
+                    <p className="text-purple-700 text-xs md:text-sm mb-2 leading-relaxed no-select">Learn about all features with our guided onboarding experience.</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation"
+                      className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation tap-feedback"
                       onClick={() => navigate("/onboarding")}
+                      aria-label="Start interactive onboarding tour"
                     >
                       Start onboarding <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>

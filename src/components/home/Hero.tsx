@@ -34,10 +34,10 @@ const Hero = () => {
   };
 
   return (
-    <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] overflow-hidden safe-area-top">
+    <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] overflow-hidden safe-area-top intersection-target">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat gpu-accelerated"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat gpu-accelerated will-change-transform"
         style={{
           backgroundImage: `url('/lovable-uploads/71b54185-9bbb-41d9-a722-df038ac4de04.png')`,
           backgroundSize: 'cover',
@@ -50,19 +50,19 @@ const Hero = () => {
 
       {/* Holiday Countdown Overlay */}
       {nextHoliday && (
-        <div className="absolute top-4 right-4 z-20 hidden md:block intersection-target">
+        <div className="absolute top-4 right-4 z-20 hidden md:block intersection-target safe-area-inset">
           <GiftCountdown event={nextHoliday} />
         </div>
       )}
 
       {/* Mobile Countdown Banner - Optimized positioning */}
       {nextHoliday && (
-        <div className="absolute top-4 left-0 right-0 z-20 md:hidden safe-area-inset">
+        <div className="absolute top-4 left-0 right-0 z-20 md:hidden safe-area-inset safe-area-inset-top">
           <div className="mx-4">
             <ResponsiveContainer padding="minimal">
               <div className="text-center">
                 <GiftCountdown event={nextHoliday} />
-                <p className="text-white text-sm mt-2 font-medium bg-black/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block">
+                <p className="text-white text-sm mt-2 font-medium bg-black/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block ios-modal-backdrop">
                   {format(nextHoliday.date, "EEEE, MMMM d, yyyy")}
                 </p>
               </div>
@@ -73,23 +73,24 @@ const Hero = () => {
 
       {/* Hero Content - Optimized mobile padding */}
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
-        <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'} safe-area-inset`}>
+        <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'} safe-area-inset safe-area-inset-top`}>
           <div className="max-w-2xl text-white">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg no-select">
               Connecting Through Gifting
             </h1>
-            <p className="text-lg md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl text-shadow-md">
+            <p className="text-lg md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl text-shadow-md no-select">
               Create wishlists, automate gift-giving, and never miss 
               an important celebration again. Our platform handles everything from selection to delivery.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg touch-target-48 touch-manipulation tap-feedback no-select"
+                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg touch-target-48 touch-manipulation tap-feedback no-select gpu-accelerated"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftor");
                 }}
+                aria-label="Find Perfect Gifts"
               >
                 <ShoppingBag className="mr-2 h-5 w-5" />
                 Find Perfect Gifts
@@ -97,11 +98,12 @@ const Hero = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg touch-target-48 touch-manipulation tap-feedback no-select"
+                className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg touch-target-48 touch-manipulation tap-feedback no-select gpu-accelerated ios-modal-backdrop"
                 onClick={(e) => {
                   e.preventDefault();
                   handleCta("giftee");
                 }}
+                aria-label="Create Wishlist"
               >
                 <Gift className="mr-2 h-5 w-5" />
                 Create Wishlist

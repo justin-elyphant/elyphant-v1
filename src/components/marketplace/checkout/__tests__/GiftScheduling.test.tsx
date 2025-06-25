@@ -5,11 +5,12 @@ import GiftScheduling from '../GiftScheduling';
 
 describe('GiftScheduling Component (Checkout)', () => {
   const defaultProps = {
-    giftScheduling: {
+    giftOptions: {
+      isGift: false,
       scheduleDelivery: false,
       sendGiftMessage: false
     },
-    onUpdate: jest.fn()
+    onChange: jest.fn()
   };
 
   beforeEach(() => {
@@ -24,38 +25,37 @@ describe('GiftScheduling Component (Checkout)', () => {
     expect(screen.getByText('Send gift message ahead of delivery')).toBeInTheDocument();
   });
 
-  it('calls onUpdate when checkboxes are clicked', () => {
+  it('calls onChange when checkboxes are clicked', () => {
     render(<GiftScheduling {...defaultProps} />);
     
     // Find and click the first checkbox
     const scheduleDeliveryCheckbox = screen.getByLabelText('Schedule delivery for a specific date');
     fireEvent.click(scheduleDeliveryCheckbox);
     
-    // Check that onUpdate was called with the correct value
-    expect(defaultProps.onUpdate).toHaveBeenCalledWith({
-      scheduleDelivery: true,
-      sendGiftMessage: false
+    // Check that onChange was called with the correct value
+    expect(defaultProps.onChange).toHaveBeenCalledWith({
+      scheduleDelivery: true
     });
     
     // Find and click the second checkbox
     const sendMessageCheckbox = screen.getByLabelText('Send gift message ahead of delivery');
     fireEvent.click(sendMessageCheckbox);
     
-    // Check that onUpdate was called with the correct value
-    expect(defaultProps.onUpdate).toHaveBeenCalledWith({
-      scheduleDelivery: false,
+    // Check that onChange was called with the correct value
+    expect(defaultProps.onChange).toHaveBeenCalledWith({
       sendGiftMessage: true
     });
   });
 
   it('renders the surprise option when provided', () => {
     const propsWithSurprise = {
-      giftScheduling: {
+      giftOptions: {
+        isGift: false,
         scheduleDelivery: false,
         sendGiftMessage: false,
         isSurprise: false
       },
-      onUpdate: jest.fn()
+      onChange: jest.fn()
     };
     
     render(<GiftScheduling {...propsWithSurprise} />);
@@ -66,10 +66,8 @@ describe('GiftScheduling Component (Checkout)', () => {
     const surpriseCheckbox = screen.getByLabelText("Keep as a surprise (don't notify recipient)");
     fireEvent.click(surpriseCheckbox);
     
-    // Check that onUpdate was called with the correct value
-    expect(propsWithSurprise.onUpdate).toHaveBeenCalledWith({
-      scheduleDelivery: false,
-      sendGiftMessage: false,
+    // Check that onChange was called with the correct value
+    expect(propsWithSurprise.onChange).toHaveBeenCalledWith({
       isSurprise: true
     });
   });

@@ -19,12 +19,12 @@ import { PersonalInfoFields } from "./PersonalInfoFields";
 import { AddressFields } from "./AddressFields";
 import { z } from "zod";
 import ContextualHelp from "@/components/help/ContextualHelp";
-import { GiftSchedulingOptions } from "@/components/marketplace/checkout/GiftScheduling";
+import { GiftOptions } from "@/components/marketplace/checkout/GiftScheduling";
 
 export type RecipientInfoFormData = z.infer<typeof formSchema>;
 
 interface RecipientInfoFormProps {
-  onSubmit: (data: RecipientInfoFormData & { giftScheduling?: GiftSchedulingOptions }) => void;
+  onSubmit: (data: RecipientInfoFormData & { giftScheduling?: GiftOptions }) => void;
   onCancel: () => void;
   productName: string;
 }
@@ -51,7 +51,8 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
   });
 
   // Gift scheduling options state with proper boolean types
-  const [giftScheduling, setGiftScheduling] = React.useState<GiftSchedulingOptions>({
+  const [giftScheduling, setGiftScheduling] = React.useState<GiftOptions>({
+    isGift: true,
     scheduleDelivery: false,
     sendGiftMessage: false,
     isSurprise: false

@@ -116,7 +116,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                             onClick={() => updateQuantity(item.product.product_id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
                             className="h-9 w-9 p-0 touch-target-44"
-                            hapticFeedback="light"
+                            hapticFeedback="buttonTap"
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -129,7 +129,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                             onClick={() => updateQuantity(item.product.product_id, item.quantity + 1)}
                             disabled={item.quantity >= 10}
                             className="h-9 w-9 p-0 touch-target-44"
-                            hapticFeedback="light"
+                            hapticFeedback="buttonTap"
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -140,7 +140,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                           size="sm"
                           onClick={() => removeFromCart(item.product.product_id)}
                           className="text-red-500 hover:text-red-700 p-2 touch-target-44"
-                          hapticFeedback="warning"
+                          hapticFeedback="removeItem"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

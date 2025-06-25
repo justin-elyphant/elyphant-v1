@@ -1,364 +1,269 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
-import { TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { createOrder } from "@/services/orderService";
-import { createZincOrderRequest } from "@/components/marketplace/zinc/services/orderProcessingService";
-import { getTransparentPricing } from "@/utils/transparentPricing";
+import { supabase } from "@/integrations/supabase/client";
 
-// Import our components
-import CheckoutHeader from "./CheckoutHeader";
-import CheckoutTabs from "./CheckoutTabs";
+// Import optimized components
+import ExpressCheckoutFlow from "./ExpressCheckoutFlow";
+import SmartCheckoutForm from "./SmartCheckoutForm";
+import CheckoutSummary from "./CheckoutSummary";
+import ShippingOptionsForm from "./ShippingOptionsForm";
 import PaymentSection from "./PaymentSection";
-import GiftScheduleForm from "./GiftScheduleForm";
-import GuestSignupPrompt from "./GuestSignupPrompt";
-import UnifiedDeliverySection from "./UnifiedDeliverySection";
-import OrderSummary from "./OrderSummary";
+import GiftScheduling from "./GiftScheduling";
 import { useCheckoutState } from "./useCheckoutState";
 import { useAdaptiveCheckout } from "./useAdaptiveCheckout";
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, clearCart, deliveryGroups } = useCart();
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [showGuestSignup, setShowGuestSignup] = useState(false);
-  const [completedOrderNumber, setCompletedOrderNumber] = useState("");
+  const { cartItems, clearCart } = useCart();
+  const { user } = useAuth();
+  const [isExpressMode, setIsExpressMode] = useState(false);
   
-  const { 
-    activeTab, 
-    isProcessing, 
+  const {
+    activeTab,
+    isProcessing,
     isLoadingShipping,
-    checkoutData, 
+    checkoutData,
     setIsProcessing,
-    handleTabChange, 
-    handleUpdateShippingInfo, 
-    handleShippingMethodChange, 
+    handleTabChange,
+    handleUpdateShippingInfo,
+    handleShippingMethodChange,
     handlePaymentMethodChange,
     handleGiftOptionsChange,
     canPlaceOrder,
     getShippingCost
   } = useCheckoutState();
 
-  const { adaptiveFlow, deliveryScenario, getScenarioDescription } = useAdaptiveCheckout();
+  const { deliveryScenario, adaptiveFlow } = useAdaptiveCheckout();
 
-  // Initialize tab to first available tab in adaptive flow
-  useEffect(() => {
-    if (adaptiveFlow.tabs.length > 0 && !adaptiveFlow.tabs.includes(activeTab)) {
-      handleTabChange(adaptiveFlow.tabs[0]);
+  // Calculate totals
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const shippingCost = getShippingCost();
+  const taxAmount = subtotal * 0.08; // 8% tax estimate
+  const totalAmount = subtotal + shippingCost + taxAmount;
+
+  const handleExpressCheckout = (type: 'self' | 'gift') => {
+    setIsExpressMode(true);
+    
+    if (type === 'self') {
+      // Skip to payment for self-purchase
+      handleTabChange('payment');
+    } else {
+      // Go to gift setup
+      handleTabChange('schedule');
+      handleGiftOptionsChange({ isGift: true });
     }
-  }, [adaptiveFlow.tabs, activeTab, handleTabChange]);
-
-  // Redirect if cart is empty
-  useEffect(() => {
-    if (cartItems.length === 0) {
-      toast.error("Your cart is empty");
-      navigate("/marketplace");
-    }
-  }, [cartItems.length, navigate]);
-
-  const canProceedToNext = (tab: string): boolean => {
-    switch (tab) {
-      case 'shipping':
-        const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-        return !!(name && email && address && city && state && zipCode && !isLoadingShipping);
-      case 'delivery':
-        return canProceedToNext('shipping');
-      case 'recipients':
-        return deliveryScenario === 'gift' ? deliveryGroups.length > 0 : true;
-      case 'schedule':
-        return true;
-      default:
-        return true;
-    }
-  };
-
-  const getNextTab = (currentTab: string): string | null => {
-    const currentIndex = adaptiveFlow.tabs.indexOf(currentTab);
-    return currentIndex < adaptiveFlow.tabs.length - 1 ? adaptiveFlow.tabs[currentIndex + 1] : null;
-  };
-
-  const getPreviousTab = (currentTab: string): string | null => {
-    const currentIndex = adaptiveFlow.tabs.indexOf(currentTab);
-    return currentIndex > 0 ? adaptiveFlow.tabs[currentIndex - 1] : null;
-  };
-
-  const getTaxAmount = () => {
-    return cartTotal * 0.0825;
-  };
-
-  const getGiftingFee = async () => {
-    const pricing = await getTransparentPricing(cartTotal);
-    return pricing.giftingFee;
-  };
-
-  const getTotalAmount = async () => {
-    const giftingFee = await getGiftingFee();
-    return cartTotal + getShippingCost() + getTaxAmount() + giftingFee;
+    
+    toast.success(`Express ${type === 'self' ? 'purchase' : 'gift'} mode activated`);
   };
 
   const handlePlaceOrder = async (paymentIntentId?: string) => {
-    if (cartItems.length === 0) {
-      toast.error("Your cart is empty");
-      return;
-    }
-
-    if (!checkoutData.selectedShippingOption && checkoutData.paymentMethod !== 'demo') {
-      toast.error("Please select a shipping method");
+    if (!user) {
+      toast.error('Please sign in to place an order');
       return;
     }
 
     setIsProcessing(true);
     
     try {
-      if (paymentIntentId) {
-        const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
-          'confirm-payment',
-          {
-            body: {
-              payment_intent_id: paymentIntentId
-            }
-          }
-        );
+      // For demo mode, create order without payment
+      if (checkoutData.paymentMethod === 'demo') {
+        const order = await createOrder({
+          cartItems,
+          subtotal,
+          shippingCost,
+          taxAmount,
+          totalAmount,
+          shippingInfo: checkoutData.shippingInfo,
+          giftOptions: checkoutData.giftOptions,
+        });
 
-        if (confirmError) {
-          throw new Error(`Payment confirmation failed: ${confirmError.message}`);
-        }
-
-        console.log("Payment confirmed:", confirmData);
-      }
-
-      const giftingFee = await getGiftingFee();
-      const totalAmount = await getTotalAmount();
-      
-      const order = await createOrder({
-        cartItems: cartItems,
-        subtotal: cartTotal,
-        shippingCost: getShippingCost(),
-        taxAmount: getTaxAmount(),
-        totalAmount: totalAmount,
-        shippingInfo: checkoutData.shippingInfo,
-        giftOptions: checkoutData.giftOptions,
-        paymentIntentId: paymentIntentId,
-        deliveryGroups: deliveryGroups
-      });
-
-      if (paymentIntentId || checkoutData.paymentMethod === "demo") {
-        try {
-          const zincProducts = cartItems.map(item => ({
-            product_id: item.product.product_id,
-            quantity: item.quantity
-          }));
-
-          const zincOrderRequest = createZincOrderRequest(
-            zincProducts,
-            checkoutData.shippingInfo,
-            checkoutData.shippingInfo,
-            checkoutData.paymentMethod,
-            checkoutData.giftOptions,
-            "amazon",
-            checkoutData.paymentMethod === "demo"
-          );
-
-          if (checkoutData.selectedShippingOption) {
-            zincOrderRequest.shipping_method = checkoutData.selectedShippingOption.id;
-          }
-          
-          console.log("Processing order through Zinc API");
-          
-          const { data: zincResult, error: zincError } = await supabase.functions.invoke(
-            'process-zinc-order',
-            {
-              body: {
-                orderRequest: zincOrderRequest,
-                orderId: order.id,
-                paymentIntentId: paymentIntentId
-              }
-            }
-          );
-
-          if (zincError || !zincResult?.success) {
-            console.error("Zinc processing error:", zincError);
-            
-            if (zincResult?.requiresAdminSetup) {
-              toast.warning("Order placed successfully, but fulfillment requires admin setup.");
-            } else if (zincResult?.invalidCredentials) {
-              toast.warning("Order placed successfully, but there's an issue with fulfillment credentials.");
-            } else {
-              toast.warning("Order placed successfully, but fulfillment may be delayed.");
-            }
-          } else {
-            console.log("Zinc order processed successfully:", zincResult.zincOrderId);
-            toast.success("Order placed and sent for fulfillment!");
-          }
-        } catch (zincError) {
-          console.error("Zinc order processing error:", zincError);
-          toast.warning("Order placed successfully, but fulfillment processing encountered an issue.");
-        }
-      }
-
-      clearCart();
-      
-      if (paymentIntentId) {
-        toast.success("Order placed and payment processed successfully!");
-      } else {
-        toast.success("Demo order placed successfully!");
-      }
-
-      if (!user) {
-        setCompletedOrderNumber(order.order_number);
-        setShowGuestSignup(true);
-        setTimeout(() => {
-          navigate(`/order-confirmation/${order.id}`);
-        }, 500);
-      } else {
+        clearCart();
+        toast.success('Demo order created successfully!');
         navigate(`/order-confirmation/${order.id}`);
+        return;
       }
-      
+
+      // For real payments, create order with payment intent
+      if (paymentIntentId) {
+        const order = await createOrder({
+          cartItems,
+          subtotal,
+          shippingCost,
+          taxAmount,
+          totalAmount,
+          shippingInfo: checkoutData.shippingInfo,
+          giftOptions: checkoutData.giftOptions,
+          paymentIntentId,
+        });
+
+        clearCart();
+        toast.success('Order placed successfully!');
+        navigate(`/order-confirmation/${order.id}`);
+      } else {
+        toast.error('Payment information is required');
+      }
     } catch (error) {
-      console.error("Checkout error:", error);
-      
-      let errorMessage = "Failed to process order. Please try again.";
-      if (error instanceof Error) {
-        if (error.message.includes('payment')) {
-          errorMessage = "Payment processing failed. Please check your payment details.";
-        } else if (error.message.includes('shipping')) {
-          errorMessage = "Shipping validation failed. Please check your address.";
-        }
-      }
-      
-      toast.error(errorMessage);
+      console.error('Error placing order:', error);
+      toast.error('Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const handlePrevious = () => {
+    const currentIndex = adaptiveFlow.tabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      handleTabChange(adaptiveFlow.tabs[currentIndex - 1]);
+    }
+  };
+
   if (cartItems.length === 0) {
-    return null;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
+          <Button onClick={() => navigate('/marketplace')}>
+            Continue Shopping
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <CheckoutHeader title="Checkout" />
-
-      <div className="mb-4 flex items-center justify-between">
-        <Badge variant="outline" className="text-sm">
-          {getScenarioDescription()}
-        </Badge>
-        <div className="text-sm text-muted-foreground">
-          {adaptiveFlow.tabs.length} step checkout
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/cart')}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Cart
+        </Button>
+        
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Checkout</h1>
+          {isExpressMode && (
+            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
+              <Clock className="h-4 w-4" />
+              Express Mode
+            </div>
+          )}
         </div>
+        
+        <p className="text-muted-foreground mt-2">
+          {deliveryScenario === 'gift' ? 'Complete your gift purchase' : 
+           deliveryScenario === 'mixed' ? 'Complete your mixed order' : 
+           'Complete your purchase'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <CheckoutTabs 
-            activeTab={activeTab} 
-            onTabChange={handleTabChange}
-            availableTabs={adaptiveFlow.tabs}
-            canProceedToNext={canProceedToNext}
-          >
-            {(adaptiveFlow.tabs.includes('shipping') || adaptiveFlow.tabs.includes('delivery') || adaptiveFlow.tabs.includes('recipients')) && (
-              <TabsContent value={adaptiveFlow.tabs.includes('delivery') ? 'delivery' : adaptiveFlow.tabs.includes('shipping') ? 'shipping' : 'recipients'} className="space-y-6">
-                <UnifiedDeliverySection
-                  scenario={deliveryScenario}
-                  shippingInfo={checkoutData.shippingInfo}
-                  onUpdateShippingInfo={handleUpdateShippingInfo}
-                  selectedShippingMethod={checkoutData.shippingMethod}
-                  onShippingMethodChange={handleShippingMethodChange}
-                  shippingOptions={checkoutData.shippingOptions}
-                  isLoadingShipping={isLoadingShipping}
-                />
-                
-                <div className="flex justify-between mt-6">
-                  {getPreviousTab(activeTab) && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleTabChange(getPreviousTab(activeTab)!)}
-                    >
-                      Back
-                    </Button>
-                  )}
-                  {getNextTab(activeTab) && (
-                    <Button 
-                      onClick={() => handleTabChange(getNextTab(activeTab)!)}
-                      disabled={!canProceedToNext(activeTab)}
-                      className={!getPreviousTab(activeTab) ? "ml-auto" : ""}
-                    >
-                      Continue
-                    </Button>
-                  )}
-                </div>
-              </TabsContent>
-            )}
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Express Checkout Option */}
+          <ExpressCheckoutFlow onExpressCheckout={handleExpressCheckout} />
 
-            {adaptiveFlow.tabs.includes('schedule') && (
-              <TabsContent value="schedule" className="space-y-6">
-                <GiftScheduleForm
-                  giftOptions={checkoutData.giftOptions}
-                  onUpdate={handleGiftOptionsChange}
-                />
-                
-                <div className="flex justify-between mt-6">
-                  {getPreviousTab('schedule') && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleTabChange(getPreviousTab('schedule')!)}
-                    >
-                      Back
-                    </Button>
-                  )}
-                  <Button 
-                    onClick={() => handleTabChange('payment')}
-                    disabled={!canProceedToNext('schedule')}
-                  >
-                    Continue to Payment
-                  </Button>
-                </div>
-              </TabsContent>
-            )}
+          {/* Main Checkout Flow */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
+              {adaptiveFlow.tabs.map((tab) => (
+                <TabsTrigger 
+                  key={tab} 
+                  value={tab}
+                  className="capitalize"
+                >
+                  {tab === 'delivery' ? 'Delivery' : 
+                   tab === 'recipients' ? 'Recipients' :
+                   tab === 'schedule' ? 'Schedule' :
+                   tab === 'shipping' ? 'Shipping' : 
+                   tab === 'payment' ? 'Payment' : tab}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
+            {/* Shipping Tab */}
+            <TabsContent value="shipping" className="space-y-6">
+              <SmartCheckoutForm
+                shippingInfo={checkoutData.shippingInfo}
+                onUpdate={handleUpdateShippingInfo}
+                showBillingAddress={false}
+                isGift={false}
+              />
+              
+              <ShippingOptionsForm
+                selectedMethod={checkoutData.shippingMethod}
+                onSelect={handleShippingMethodChange}
+                shippingOptions={checkoutData.shippingOptions}
+                isLoading={isLoadingShipping}
+              />
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={() => handleTabChange('payment')}
+                  disabled={!checkoutData.selectedShippingOption}
+                >
+                  Continue to Payment
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Schedule Tab */}
+            <TabsContent value="schedule" className="space-y-6">
+              <GiftScheduling 
+                giftOptions={checkoutData.giftOptions}
+                onChange={handleGiftOptionsChange}
+              />
+              
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevious}>
+                  Back
+                </Button>
+                <Button onClick={() => handleTabChange('payment')}>
+                  Continue to Payment
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Payment Tab */}
             <TabsContent value="payment" className="space-y-6">
               <PaymentSection
                 paymentMethod={checkoutData.paymentMethod}
                 onPaymentMethodChange={handlePaymentMethodChange}
                 onPlaceOrder={handlePlaceOrder}
-                isProcessing={Boolean(isProcessing)}
-                canPlaceOrder={Boolean(canPlaceOrder())}
-                onPrevious={() => {
-                  const prevTab = getPreviousTab('payment');
-                  if (prevTab) handleTabChange(prevTab);
-                }}
-                totalAmount={cartTotal + getShippingCost() + getTaxAmount()}
+                isProcessing={isProcessing}
+                canPlaceOrder={canPlaceOrder}
+                onPrevious={handlePrevious}
+                totalAmount={totalAmount}
                 cartItems={cartItems}
                 shippingInfo={checkoutData.shippingInfo}
                 giftOptions={checkoutData.giftOptions}
               />
             </TabsContent>
-          </CheckoutTabs>
+          </Tabs>
         </div>
-        
+
+        {/* Order Summary Sidebar */}
         <div className="lg:col-span-1">
-          <OrderSummary 
-            cartItems={cartItems}
-            cartTotal={cartTotal}
-            shippingCost={getShippingCost()}
-            selectedShippingOption={checkoutData.selectedShippingOption}
-            giftOptions={checkoutData.giftOptions}
+          <CheckoutSummary
+            shippingCost={shippingCost}
+            taxAmount={taxAmount}
+            estimatedDelivery={checkoutData.selectedShippingOption?.delivery_time}
+            shippingMethod={checkoutData.selectedShippingOption?.name}
+            showPriceLock={!isExpressMode}
           />
         </div>
       </div>
-
-      <GuestSignupPrompt
-        isOpen={showGuestSignup}
-        onClose={() => setShowGuestSignup(false)}
-        shippingInfo={checkoutData.shippingInfo}
-        orderNumber={completedOrderNumber}
-      />
     </div>
   );
 };

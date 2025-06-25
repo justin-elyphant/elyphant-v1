@@ -7,11 +7,9 @@ import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/Wishli
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
-import { useCart } from "@/contexts/CartContext";
 import SignUpDialog from "../SignUpDialog";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
 import ProductRating from "./ProductRating";
-import ConnectionDropdown from "./ConnectionDropdown";
 
 interface ProductItemProps {
   product: Product;
@@ -32,16 +30,11 @@ const ProductItem = ({
 }: ProductItemProps) => {
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
-  const { cartItems, assignToConnection } = useCart();
   const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
 
   const productId = String(product.product_id || product.id);
   const productName = product.title || product.name || "";
   const productPrice = product.price || 0;
-
-  // Find current assignment for this product in cart
-  const cartItem = cartItems.find(item => item.product.product_id === productId);
-  const currentConnectionId = cartItem?.assignedConnectionId;
 
   // Use the unified wishlist system to check if product is wishlisted
   const isActuallyWishlisted = user ? isProductWishlisted(productId) : false;
@@ -64,10 +57,6 @@ const ProductItem = ({
 
   const handleProductClick = () => {
     onProductClick(productId);
-  };
-
-  const handleConnectionAssign = (connectionId: string | null) => {
-    assignToConnection(productId, connectionId);
   };
 
   // Prevent cart button clicks from triggering product modal
@@ -174,18 +163,6 @@ const ProductItem = ({
               </p>
             )}
           </div>
-
-          {/* Connection Assignment - Only show if item is in cart */}
-          {cartItem && (
-            <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-              <ConnectionDropdown
-                productId={productId}
-                currentConnectionId={currentConnectionId}
-                onAssign={handleConnectionAssign}
-                className="mb-2"
-              />
-            </div>
-          )}
 
           {/* Add to Cart Button */}
           <div className="mt-3">

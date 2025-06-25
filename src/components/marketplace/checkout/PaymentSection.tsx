@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Smartphone } from "lucide-react";
 import { CartItem } from "@/contexts/CartContext";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from "@/integrations/stripe/client";
 import StripePaymentForm from "./StripePaymentForm";
+import ExpressCheckoutButton from "./ExpressCheckoutButton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -89,6 +90,14 @@ const PaymentSection = ({
         <CardContent className="space-y-4">
           <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
             <div className="flex items-center space-x-2 p-3 border rounded-lg">
+              <RadioGroupItem value="express" id="express" />
+              <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer">
+                <Smartphone className="h-4 w-4" />
+                Express Checkout (Stripe)
+              </Label>
+            </div>
+            
+            <div className="flex items-center space-x-2 p-3 border rounded-lg">
               <RadioGroupItem value="card" id="card" />
               <Label htmlFor="card" className="flex items-center gap-2 flex-1 cursor-pointer">
                 <CreditCard className="h-4 w-4" />
@@ -103,6 +112,19 @@ const PaymentSection = ({
               </Label>
             </div>
           </RadioGroup>
+
+          {paymentMethod === 'express' && (
+            <div className="mt-4">
+              <ExpressCheckoutButton
+                cartItems={cartItems}
+                totalAmount={totalAmount}
+                shippingInfo={shippingInfo}
+                giftOptions={giftOptions}
+                onProcessing={() => {}}
+                onSuccess={() => {}}
+              />
+            </div>
+          )}
 
           {paymentMethod === 'card' && (
             <div className="mt-4">
@@ -136,7 +158,7 @@ const PaymentSection = ({
               </div>
               <div className="flex justify-between">
                 <Button variant="outline" onClick={onPrevious}>
-                  Back
+                  Back to Schedule
                 </Button>
                 <Button 
                   onClick={() => onPlaceOrder()}
@@ -148,10 +170,10 @@ const PaymentSection = ({
             </div>
           )}
 
-          {paymentMethod === 'card' && (
+          {paymentMethod !== 'demo' && paymentMethod !== 'express' && (
             <div className="flex justify-between mt-6">
               <Button variant="outline" onClick={onPrevious}>
-                Back
+                Back to Schedule
               </Button>
             </div>
           )}

@@ -13,28 +13,34 @@ export interface AdaptiveCheckoutFlow {
 }
 
 export const useAdaptiveCheckout = () => {
-  const { cartItems, cartGroups } = useCart();
+  const cartContext = useCart();
+  
+  // Safely access cart methods with fallbacks
+  const cartItems = cartContext?.cartItems || [];
+  const deliveryGroups = cartContext?.deliveryGroups || [];
+  const getUnassignedItems = cartContext?.getUnassignedItems || (() => cartItems);
   
   const deliveryScenario: DeliveryScenario = useMemo(() => {
     try {
-      const selfItems = cartItems.filter(item => !item.assignedConnectionId);
-      const giftItems = cartItems.filter(item => item.assignedConnectionId);
+      const unassignedItems = getUnassignedItems();
+      const hasAssignedItems = deliveryGroups.length > 0;
       
-      if (giftItems.length === 0) {
-        // All items for self
+      if (unassignedItems.length === cartItems.length) {
+        // All items unassigned - likely self purchase
         return 'self';
-      } else if (selfItems.length === 0) {
-        // All items are gifts
+      } else if (unassignedItems.length === 0) {
+        // All items assigned to recipients - pure gift scenario
         return 'gift';
       } else {
-        // Mix of self and gift items
+        // Mix of assigned and unassigned items
         return 'mixed';
       }
     } catch (error) {
       console.error('Error determining delivery scenario:', error);
+      // Default to self purchase if there's any error
       return 'self';
     }
-  }, [cartItems]);
+  }, [cartItems, deliveryGroups, getUnassignedItems]);
 
   const adaptiveFlow: AdaptiveCheckoutFlow = useMemo(() => {
     switch (deliveryScenario) {
@@ -49,7 +55,7 @@ export const useAdaptiveCheckout = () => {
       case 'gift':
         return {
           scenario: 'gift',
-          tabs: ['gift-options', 'payment'],
+          tabs: ['recipients', 'schedule', 'payment'],
           requiresShipping: false,
           requiresRecipients: true,
           requiresScheduling: true,
@@ -57,7 +63,7 @@ export const useAdaptiveCheckout = () => {
       case 'mixed':
         return {
           scenario: 'mixed',
-          tabs: ['shipping', 'gift-options', 'payment'],
+          tabs: ['delivery', 'schedule', 'payment'],
           requiresShipping: true,
           requiresRecipients: true,
           requiresScheduling: true,

@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
+import { DeliveryGroup } from "@/types/recipient";
 
 export interface CreateOrderData {
   cartItems: CartItem[];
@@ -12,6 +12,7 @@ export interface CreateOrderData {
   shippingInfo: ShippingInfo;
   giftOptions: GiftOptions;
   paymentIntentId?: string;
+  deliveryGroups?: DeliveryGroup[];
 }
 
 export interface Order {
@@ -61,8 +62,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
     throw new Error('User must be authenticated to create an order');
   }
 
-  // Check if any items are assigned to connections (gifts)
-  const hasGifts = orderData.cartItems.some(item => item.assignedConnectionId);
+  const hasMultipleRecipients = orderData.deliveryGroups && orderData.deliveryGroups.length > 0;
 
   // Create the order with proper schema alignment
   const { data: order, error: orderError } = await supabase
@@ -75,13 +75,14 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       total_amount: orderData.totalAmount,
       shipping_info: orderData.shippingInfo,
       gift_message: orderData.giftOptions.giftMessage || null,
-      is_gift: orderData.giftOptions.isGift || hasGifts,
+      is_gift: orderData.giftOptions.isGift,
       scheduled_delivery_date: orderData.giftOptions.scheduledDeliveryDate || null,
       is_surprise_gift: orderData.giftOptions.isSurpriseGift,
       stripe_payment_intent_id: orderData.paymentIntentId,
       status: 'pending',
       payment_status: 'pending',
-      has_multiple_recipients: hasGifts
+      has_multiple_recipients: hasMultipleRecipients,
+      delivery_groups: orderData.deliveryGroups || []
     })
     .select()
     .single();
@@ -91,8 +92,10 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
     throw new Error('Failed to create order');
   }
 
-  // Create order items with connection assignments
+  // Create order items with recipient assignments
   const orderItems = orderData.cartItems.map(item => {
+    const recipientAssignment = item.recipientAssignment;
+    
     return {
       order_id: order.id,
       product_id: item.product.product_id,
@@ -102,7 +105,10 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       quantity: item.quantity,
       unit_price: item.product.price,
       total_price: item.product.price * item.quantity,
-      recipient_connection_id: item.assignedConnectionId || null
+      recipient_connection_id: recipientAssignment?.connectionId || null,
+      delivery_group_id: recipientAssignment?.deliveryGroupId || null,
+      recipient_gift_message: recipientAssignment?.giftMessage || null,
+      scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null
     };
   });
 

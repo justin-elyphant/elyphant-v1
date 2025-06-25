@@ -6,6 +6,7 @@ import { Truck, Users, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import CheckoutForm from './CheckoutForm';
 import ShippingOptionsForm from './ShippingOptionsForm';
+import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSection';
 import { ShippingInfo } from './useCheckoutState';
 import { ShippingOption } from '@/components/marketplace/zinc/services/shippingQuoteService';
 import { DeliveryScenario } from './useAdaptiveCheckout';
@@ -45,7 +46,7 @@ const UnifiedDeliverySection: React.FC<UnifiedDeliverySectionProps> = ({
           <Alert>
             <Users className="h-4 w-4" />
             <AlertDescription>
-              Items assigned to recipients will be shipped to their addresses. You can assign items to recipients in your cart.
+              Assign items to recipients. Each recipient's shipping address will be collected separately.
             </AlertDescription>
           </Alert>
         );
@@ -102,10 +103,7 @@ const UnifiedDeliverySection: React.FC<UnifiedDeliverySectionProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground">
-              <p>Items assigned to connections as gifts will be shipped directly to their addresses.</p>
-              <p className="mt-2">You can assign items to recipients directly in your shopping cart using the connection dropdown on each item.</p>
-            </div>
+            <RecipientAssignmentSection />
           </CardContent>
         </Card>
       )}

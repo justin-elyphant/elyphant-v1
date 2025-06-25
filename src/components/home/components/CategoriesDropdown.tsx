@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
@@ -11,31 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { searchProducts } from "@/components/marketplace/zinc/zincService";
 import { useProducts } from "@/contexts/ProductContext";
-
-export const categories = [
-  { name: "Accessories", url: "accessories", searchTerm: "best selling accessories" },
-  { name: "Art & Collectibles", url: "art-collectibles", searchTerm: "best selling art collectibles" },
-  { name: "Baby", url: "baby", searchTerm: "best selling baby products" },
-  { name: "Bags & Purses", url: "bags-purses", searchTerm: "best selling bags purses" },
-  { name: "Bath & Beauty", url: "bath-beauty", searchTerm: "best selling bath beauty products" },
-  { name: "Beauty", url: "beauty", searchTerm: "best selling beauty products" },
-  { name: "Books, Movies & Music", url: "books-movies-music", searchTerm: "best selling books movies music" },
-  { name: "Books", url: "books", searchTerm: "best selling books" },
-  { name: "Clothing", url: "clothing", searchTerm: "best selling clothing" },
-  { name: "Craft Supplies & Tools", url: "craft-supplies", searchTerm: "best selling craft supplies" },
-  { name: "Electronics & Accessories", url: "electronics", searchTerm: "best selling electronics" },
-  { name: "Experiences", url: "experiences", searchTerm: "best selling experience gifts" },
-  { name: "Flowers", url: "flowers", searchTerm: "flowers for delivery" },
-  { name: "Gaming", url: "gaming", searchTerm: "best selling gaming" },
-  { name: "Gifts", url: "gifts", searchTerm: "best selling gifts" },
-  { name: "Home & Living", url: "home-living", searchTerm: "best selling home living" },
-  { name: "Jewelry", url: "jewelry", searchTerm: "best selling jewelry" },
-  { name: "Kitchen", url: "kitchen", searchTerm: "best selling kitchen products" },
-  { name: "Music", url: "music", searchTerm: "best selling music" },
-  { name: "Tech", url: "tech", searchTerm: "best selling tech products" },
-  { name: "Toys & Games", url: "toys-games", searchTerm: "best selling toys games" },
-  { name: "Wedding & Party", url: "wedding-party", searchTerm: "best selling wedding party" }
-];
+import { UNIVERSAL_CATEGORIES } from "@/constants/categories";
 
 interface CategoriesDropdownProps {
   open: boolean;
@@ -78,11 +55,11 @@ const CategoriesDropdownWithoutProvider: React.FC<CategoriesDropdownProps> = ({
         align="start"
       >
         <div className="grid grid-cols-1 gap-0.5">
-          {categories.map((category, index) => (
+          {UNIVERSAL_CATEGORIES.map((category, index) => (
             <DropdownMenuItem 
               key={index} 
               className="px-4 py-2.5 cursor-pointer hover:bg-accent hover:text-accent-foreground"
-              onClick={() => handleCategorySelect(category.url, category.searchTerm)}
+              onClick={() => handleCategorySelect(category.value, category.searchTerm)}
             >
               {category.name}
             </DropdownMenuItem>

@@ -10,34 +10,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getDropdownCategories, getQuickAccessCategories, getCategoryName } from "@/constants/categories";
 
 interface CategoryFilterBarProps {
   mobile?: boolean;
 }
-
-const categories = [
-  { name: "All Categories", value: "", searchTerm: "" },
-  { name: "Baby", value: "baby", searchTerm: "best selling baby products" },
-  { name: "Beauty & Personal Care", value: "beauty-personal-care", searchTerm: "best selling beauty products" },
-  { name: "Books", value: "books", searchTerm: "best selling books" },
-  { name: "Electronics", value: "electronics", searchTerm: "best selling electronics" },
-  { name: "Fashion", value: "fashion", searchTerm: "best selling fashion" },
-  { name: "Gaming", value: "gaming", searchTerm: "best selling gaming" },
-  { name: "Home & Garden", value: "home", searchTerm: "best selling home products" },
-  { name: "Kitchen", value: "kitchen", searchTerm: "best selling kitchen products" },
-  { name: "Movies", value: "movies", searchTerm: "best selling movies" },
-  { name: "Music", value: "music", searchTerm: "best selling music" },
-  { name: "Sports & Outdoors", value: "sports", searchTerm: "best selling sports equipment" },
-  { name: "Tech", value: "tech", searchTerm: "best selling tech products" },
-  { name: "Toys & Games", value: "toys", searchTerm: "best selling toys" },
-  { name: "Video Games", value: "video-games", searchTerm: "best selling video games" },
-];
 
 const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState("");
+
+  const categories = getDropdownCategories();
+  const quickAccessCategories = getQuickAccessCategories();
 
   const handleCategorySelect = (categoryValue: string) => {
     setSelectedCategory(categoryValue);
@@ -62,7 +48,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
     navigate(`/marketplace?${params.toString()}`);
   };
 
-  const selectedCategoryName = categories.find(cat => cat.value === selectedCategory)?.name || "All Categories";
+  const selectedCategoryName = getCategoryName(selectedCategory);
 
   return (
     <div className="flex items-center gap-3">
@@ -99,17 +85,10 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Quick category buttons for popular categories - expanded to 6 */}
+      {/* Quick category buttons for popular categories */}
       {!mobile && !isMobile && (
         <div className="flex items-center gap-1.5 ml-1">
-          {[
-            categories.find(cat => cat.value === "electronics"),
-            categories.find(cat => cat.value === "fashion"),
-            categories.find(cat => cat.value === "beauty-personal-care"),
-            categories.find(cat => cat.value === "gaming"),
-            categories.find(cat => cat.value === "tech"),
-            categories.find(cat => cat.value === "toys")
-          ].filter(Boolean).map((category) => (
+          {quickAccessCategories.map((category) => (
             <Button
               key={category.value}
               variant="ghost"

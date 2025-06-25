@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Smartphone, Shirt, Home, Heart, Dumbbell, BookOpen, Gamepad2, Coffee, Palette, Pill, Flower } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import {
@@ -12,100 +12,11 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
-const categories = [
-  {
-    id: 1,
-    name: "Electronics",
-    icon: Smartphone,
-    category: "electronics",
-    searchTerm: "best electronics",
-    description: "Latest tech and gadgets"
-  },
-  {
-    id: 2,
-    name: "Flowers",
-    icon: Flower,
-    category: "flowers",
-    searchTerm: "flowers for delivery",
-    description: "Fresh flowers and arrangements"
-  },
-  {
-    id: 3,
-    name: "Fashion",
-    icon: Shirt,
-    category: "fashion",
-    searchTerm: "best fashion",
-    description: "Clothing and accessories"
-  },
-  {
-    id: 4,
-    name: "Home & Living",
-    icon: Home,
-    category: "home",
-    searchTerm: "best home products",
-    description: "Decor and household items"
-  },
-  {
-    id: 5,
-    name: "Beauty",
-    icon: Heart,
-    category: "beauty",
-    searchTerm: "best beauty products",
-    description: "Skincare and cosmetics"
-  },
-  {
-    id: 6,
-    name: "Sports",
-    icon: Dumbbell,
-    category: "sports",
-    searchTerm: "best sports equipment",
-    description: "Fitness and outdoor gear"
-  },
-  {
-    id: 7,
-    name: "Books",
-    icon: BookOpen,
-    category: "books",
-    searchTerm: "best books",
-    description: "Literature and educational"
-  },
-  {
-    id: 8,
-    name: "Toys & Games",
-    icon: Gamepad2,
-    category: "toys",
-    searchTerm: "best toys",
-    description: "Fun for all ages"
-  },
-  {
-    id: 9,
-    name: "Food & Drinks",
-    icon: Coffee,
-    category: "food",
-    searchTerm: "best gourmet food",
-    description: "Gourmet and specialty items"
-  },
-  {
-    id: 10,
-    name: "Arts & Crafts",
-    icon: Palette,
-    category: "arts",
-    searchTerm: "best arts crafts",
-    description: "Creative supplies and tools"
-  },
-  {
-    id: 11,
-    name: "Health",
-    icon: Pill,
-    category: "health",
-    searchTerm: "best wellness products",
-    description: "Wellness and self-care"
-  }
-];
+import { getFeaturedCategories } from "@/constants/categories";
 
 const FeaturedCategories: React.FC = () => {
   const navigate = useNavigate();
+  const categories = getFeaturedCategories();
 
   const handleCategoryClick = (category: string, searchTerm: string) => {
     // Use search terms for better gift-focused results
@@ -142,11 +53,11 @@ const FeaturedCategories: React.FC = () => {
                 <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 swipe-item">
                   <div
                     className="group relative p-3 md:p-4 lg:p-6 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 h-full touch-target-48 touch-manipulation tap-feedback"
-                    onClick={() => handleCategoryClick(category.category, category.searchTerm)}
+                    onClick={() => handleCategoryClick(category.value, category.searchTerm)}
                   >
                     <div className="text-center">
                       <div className="text-gray-600 mb-2 md:mb-3 lg:mb-4 group-hover:scale-110 transition-transform duration-300 flex justify-center gpu-accelerated">
-                        <category.icon className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10" />
+                        {category.icon && <category.icon className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10" />}
                       </div>
                       <h3 className="text-sm md:text-base lg:text-lg font-semibold text-gray-900 mb-2">
                         {category.name}

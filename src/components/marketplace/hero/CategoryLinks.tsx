@@ -3,29 +3,26 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Box } from "lucide-react";
+import { UNIVERSAL_CATEGORIES } from "@/constants/categories";
 
 interface CategoryLinksProps {
   categories: string[];
 }
 
-const categorySearchTerms: { [key: string]: string } = {
-  "Electronics": "best selling electronics",
-  "Fashion": "best selling fashion", 
-  "Home & Garden": "best selling home products",
-  "Sports": "best selling sports equipment",
-  "Beauty": "best selling beauty products",
-  "Books": "best selling books",
-  "Toys": "best selling toys",
-};
-
 const CategoryLinks: React.FC<CategoryLinksProps> = ({ categories }) => {
   const navigate = useNavigate();
 
   const handleCategoryClick = (category: string) => {
-    const searchTerm = categorySearchTerms[category];
+    // Find the category data from our universal categories
+    const categoryData = UNIVERSAL_CATEGORIES.find(cat => 
+      cat.name.toLowerCase() === category.toLowerCase() ||
+      cat.displayName?.toLowerCase() === category.toLowerCase()
+    );
+    
+    const searchTerm = categoryData?.searchTerm;
     if (searchTerm) {
       // Navigate to marketplace with the search term
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(category.toLowerCase())}`);
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(categoryData.value)}`);
     } else {
       // Fallback to category-only navigation
       navigate(`/marketplace?category=${encodeURIComponent(category.toLowerCase())}`);

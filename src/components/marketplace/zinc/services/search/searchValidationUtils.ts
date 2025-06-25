@@ -1,120 +1,98 @@
 
 /**
- * Enhanced search validation and query enhancement utilities
- * with intelligent category mapping
+ * Search query validation and enhancement utilities
  */
-
-import { getEnhancedCategorySearch, isBroadCategorySearch, extractCategoryFromQuery } from './categoryProductMapping';
-
-// Common search term corrections
-const SEARCH_CORRECTIONS: Record<string, string> = {
-  "iphone": "iPhone smartphone",
-  "macbook": "MacBook laptop",
-  "airpods": "AirPods wireless earbuds",
-  "ipad": "iPad tablet",
-  "nintendo": "Nintendo Switch gaming console",
-  "playstation": "PlayStation gaming console",
-  "xbox": "Xbox gaming console"
-};
-
-// Brand-specific enhancements
-const BRAND_ENHANCEMENTS: Record<string, string> = {
-  "apple": "iPhone MacBook iPad AirPods Apple Watch",
-  "samsung": "Samsung Galaxy smartphone tablet",
-  "sony": "Sony PlayStation headphones camera",
-  "nintendo": "Nintendo Switch games gaming",
-  "microsoft": "Microsoft Xbox Surface laptop"
-};
 
 /**
  * Validate and normalize search query
  */
-export const validateSearchQuery = (query: string): string => {
+export const validateSearchQuery = (query: string): string | null => {
   if (!query || typeof query !== 'string') {
-    return '';
+    return null;
   }
   
   const trimmed = query.trim();
   if (trimmed.length === 0 || trimmed.length > 200) {
-    return '';
+    return null;
   }
   
   return trimmed;
 };
 
 /**
- * Enhanced query enhancement with category mapping
+ * Enhance search query with category hints and brand-specific logic
  */
 export const enhanceSearchQuery = (query: string): string => {
-  console.log(`Enhancing search query: "${query}"`);
+  const lowerQuery = query.toLowerCase();
   
-  // First check if this is a broad category search that needs specific product mapping
-  if (isBroadCategorySearch(query)) {
-    const category = extractCategoryFromQuery(query);
-    if (category) {
-      const enhancedQuery = getEnhancedCategorySearch(category, query);
-      console.log(`Category-enhanced query: "${query}" -> "${enhancedQuery}"`);
-      return enhancedQuery;
-    }
+  // Brand-specific enhancements
+  if (lowerQuery.includes('apple') && !lowerQuery.includes('fruit') && !lowerQuery.includes('food')) {
+    return "Apple iPhone iPad MacBook AirPods Apple Watch electronics technology";
   }
   
-  let enhancedQuery = query.toLowerCase();
-  
-  // Apply search corrections
-  for (const [original, correction] of Object.entries(SEARCH_CORRECTIONS)) {
-    if (enhancedQuery.includes(original)) {
-      enhancedQuery = enhancedQuery.replace(original, correction);
-      console.log(`Applied correction: ${original} -> ${correction}`);
-    }
+  if (lowerQuery.includes('samsung')) {
+    return "Samsung Galaxy phone tablet electronics technology";
   }
   
-  // Apply brand enhancements
-  for (const [brand, enhancement] of Object.entries(BRAND_ENHANCEMENTS)) {
-    if (enhancedQuery.includes(brand)) {
-      enhancedQuery = `${enhancedQuery} ${enhancement}`;
-      console.log(`Applied brand enhancement for: ${brand}`);
-      break; // Only apply one brand enhancement
-    }
+  if (lowerQuery.includes('sony')) {
+    return "Sony electronics headphones camera PlayStation technology";
   }
   
-  // Add gift context for better results
-  if (!enhancedQuery.includes('gift') && !enhancedQuery.includes('present')) {
-    enhancedQuery = `${enhancedQuery} gifts`;
+  if (lowerQuery.includes('nike')) {
+    return "Nike shoes sneakers athletic wear sports";
   }
   
-  console.log(`Final enhanced query: "${query}" -> "${enhancedQuery}"`);
-  return enhancedQuery;
+  if (lowerQuery.includes('adidas')) {
+    return "Adidas shoes sneakers athletic wear sports";
+  }
+  
+  // Category-based enhancements
+  if (lowerQuery.includes('gift') || lowerQuery.includes('present')) {
+    return `${query} popular bestseller`;
+  }
+  
+  if (lowerQuery.includes('dallas cowboys')) {
+    return "Dallas Cowboys NFL merchandise jersey hat";
+  }
+  
+  if (lowerQuery.includes('made in')) {
+    return "Made In cookware kitchen utensils";
+  }
+  
+  // Default enhancement
+  return query;
 };
 
 /**
- * Correct common spelling mistakes
+ * Correct common spelling mistakes in search queries
  */
 export const correctSearchQuery = (query: string): string => {
   const corrections: Record<string, string> = {
-    "eletronic": "electronic",
-    "celphone": "cellphone",
-    "compuer": "computer",
-    "labtop": "laptop",
-    "headfones": "headphones",
-    "watche": "watch",
-    "jewelery": "jewelry"
+    'iphone': 'iPhone',
+    'ipad': 'iPad',
+    'macbook': 'MacBook',
+    'airpods': 'AirPods',
+    'samsung': 'Samsung',
+    'nike': 'Nike',
+    'adidas': 'Adidas'
   };
   
   let corrected = query;
-  for (const [wrong, right] of Object.entries(corrections)) {
-    corrected = corrected.replace(new RegExp(wrong, 'gi'), right);
-  }
+  Object.entries(corrections).forEach(([wrong, right]) => {
+    const regex = new RegExp(`\\b${wrong}\\b`, 'gi');
+    corrected = corrected.replace(regex, right);
+  });
   
   return corrected;
 };
 
 /**
- * Special case for Padres hat searches
+ * Get special Padres hat query if applicable
  */
 export const getPadresHatQuery = (query: string): string | null => {
-  const normalizedQuery = query.toLowerCase();
-  if (normalizedQuery.includes('padres') && (normalizedQuery.includes('hat') || normalizedQuery.includes('cap'))) {
-    return "San Diego Padres baseball cap hat MLB merchandise";
+  const lowerQuery = query.toLowerCase();
+  if (lowerQuery.includes('padres') && (lowerQuery.includes('hat') || lowerQuery.includes('cap'))) {
+    return "San Diego Padres baseball cap hat MLB";
   }
   return null;
 };

@@ -1,152 +1,117 @@
 
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { Product } from "@/contexts/ProductContext";
-import { useProducts } from "@/contexts/ProductContext";
-import ProductRating from "@/components/shared/ProductRating";
-import { searchZincProducts } from "@/components/marketplace/zinc/zincService";
-import { Badge } from "@/components/ui/badge";
+import { searchProducts } from "@/components/marketplace/zinc/services/search/productSearchServiceImpl";
+import { ZincProduct } from "@/components/marketplace/zinc/types";
+import { ProductCard } from "@/components/gifting/ProductCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const FeaturedProductsSection = () => {
-  const navigate = useNavigate();
-  const { products, setProducts } = useProducts();
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
+interface FeaturedProductsProps {
+  searchTerm?: string;
+  title?: string;
+  maxProducts?: number;
+}
+
+const FeaturedProducts = ({ 
+  searchTerm = "gift box", 
+  title = "Featured Products",
+  maxProducts = 35
+}: FeaturedProductsProps) => {
+  const [products, setProducts] = useState<ZincProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    const loadProducts = async () => {
-      setIsLoading(true);
-      
+    const loadFeaturedProducts = async () => {
       try {
-        // First check if we already have products loaded in the context
-        if (products && products.length > 8) {
-          // Filter for products with good images and ratings
-          const filtered = products
-            .filter(p => p.image && p.image !== "/placeholder.svg")
-            .filter(p => p.rating && p.rating >= 4)
-            .sort(() => 0.5 - Math.random()) // Randomly sort
-            .slice(0, 12); // Take 12 products
-          
-          if (filtered.length >= 8) {
-            setFeaturedProducts(filtered);
-            setIsLoading(false);
-            return;
-          }
-        }
+        setLoading(true);
+        setError(null);
+        console.log(`Loading featured products with search term: ${searchTerm}`);
         
-        // If not enough products in context, load from Zinc API
-        const popularSearchTerms = ["gift box", "gift set", "birthday gift", "anniversary gift"];
-        const randomTerm = popularSearchTerms[Math.floor(Math.random() * popularSearchTerms.length)];
+        // Request more products to ensure good selection
+        const fetchedProducts = await searchProducts(searchTerm, maxProducts.toString());
         
-        console.log(`Loading featured products with search term: ${randomTerm}`);
-        const newProducts = await searchZincProducts(randomTerm, "12");
-        
-        if (newProducts && newProducts.length > 0) {
-          // Add these to our global product context
-          setProducts(prev => {
-            // Filter out duplicates
-            const existingIds = new Set(prev.map(p => p.id));
-            const uniqueNewProducts = newProducts.filter(p => !existingIds.has(p.id));
-            return [...prev, ...uniqueNewProducts];
-          });
-          
-          setFeaturedProducts(newProducts);
+        if (fetchedProducts && fetchedProducts.length > 0) {
+          setProducts(fetchedProducts);
+          console.log(`Loaded ${fetchedProducts.length} featured products for "${searchTerm}"`);
         } else {
-          // Fallback to existing products if API call fails
-          setFeaturedProducts(products.slice(0, 12));
+          console.log(`No products found for search term: ${searchTerm}`);
+          setError(`No products found for "${searchTerm}"`);
         }
-      } catch (error) {
-        console.error("Error loading featured products:", error);
-        // Fallback to existing products if available
-        setFeaturedProducts(products.slice(0, 12));
+      } catch (err) {
+        console.error("Error loading featured products:", err);
+        setError("Failed to load products");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    
-    loadProducts();
-  }, [products, setProducts]);
-  
-  const handleProductClick = (productId: string) => {
-    navigate(`/marketplace?productId=${productId}`);
-  };
-  
-  if (isLoading) {
+
+    loadFeaturedProducts();
+  }, [searchTerm, maxProducts]);
+
+  if (loading) {
     return (
-      <div className="py-16 bg-white">
-        <div className="container px-4">
-          <h2 className="text-3xl font-bold mb-8 text-center">Most Gifted Products This Week</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="overflow-hidden animate-pulse">
-                <div className="aspect-square bg-slate-200"></div>
-                <CardContent className="p-4">
-                  <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">{title}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="space-y-3">
+              <Skeleton className="h-48 w-full rounded-lg" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
-  
+
+  if (error) {
+    return (
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">{title}</h2>
+        <div className="text-center py-8 text-muted-foreground">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">{title}</h2>
+        <div className="text-center py-8 text-muted-foreground">
+          No featured products available
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="py-16 bg-white">
-      <div className="container px-4">
-        <h2 className="text-3xl font-bold mb-8 text-center">Most Gifted Products This Week</h2>
-        
-        <Carousel className="w-full">
-          <CarouselContent>
-            {featuredProducts.map((product) => (
-              <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/4">
-                <div className="p-1">
-                  <Card 
-                    className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => handleProductClick(product.id)}
-                  >
-                    <div className="aspect-square relative">
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="object-cover w-full h-full"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder.svg";
-                        }}
-                      />
-                      {product.isBestSeller && (
-                        <Badge className="absolute top-2 right-2 bg-amber-500">Best Seller</Badge>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-medium mb-1 line-clamp-1">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-1 line-clamp-1">{product.brand || product.vendor}</p>
-                      <p className="font-semibold mb-1">${product.price.toFixed(2)}</p>
-                      <ProductRating rating={product.rating} reviewCount={product.reviewCount} size="sm" />
-                    </CardContent>
-                  </Card>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <div className="hidden md:block">
-            <CarouselPrevious />
-            <CarouselNext />
-          </div>
-        </Carousel>
+    <div className="mb-12">
+      <h2 className="text-2xl font-bold mb-6">{title}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {products.slice(0, 12).map((product) => (
+          <ProductCard 
+            key={product.product_id} 
+            product={{
+              id: product.product_id,
+              product_id: product.product_id,
+              title: product.title,
+              name: product.title,
+              price: product.price,
+              category: product.category,
+              image: product.image,
+              vendor: product.retailer || "Amazon via Zinc",
+              description: product.description,
+              rating: product.rating,
+              reviewCount: product.review_count
+            }}
+          />
+        ))}
       </div>
     </div>
   );
 };
 
-export default FeaturedProductsSection;
+export default FeaturedProducts;

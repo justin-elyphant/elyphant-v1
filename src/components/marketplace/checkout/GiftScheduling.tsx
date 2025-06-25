@@ -1,6 +1,6 @@
 
 import React from "react";
-import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export interface GiftOptions {
@@ -10,6 +10,7 @@ export interface GiftOptions {
   scheduleDelivery?: boolean;
   sendGiftMessage?: boolean;
   isSurprise?: boolean;
+  isSurpriseGift?: boolean;
 }
 
 interface GiftSchedulingProps {
@@ -26,7 +27,6 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
   const handleCheckboxChange = (field: keyof GiftOptions) => {
     console.log(`Toggling ${field} from ${giftOptions[field]} to ${!giftOptions[field]}`);
     
-    // Create a simple update object with just the changed field
     const updates = {
       [field]: !giftOptions[field]
     };
@@ -46,9 +46,9 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
             checked={Boolean(giftOptions.scheduleDelivery)}
             onCheckedChange={() => handleCheckboxChange('scheduleDelivery')}
           />
-          <FormLabel htmlFor="scheduleDelivery" className="cursor-pointer">
+          <Label htmlFor="scheduleDelivery" className="cursor-pointer">
             Schedule delivery for a specific date
-          </FormLabel>
+          </Label>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -57,21 +57,21 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
             checked={Boolean(giftOptions.sendGiftMessage)}
             onCheckedChange={() => handleCheckboxChange('sendGiftMessage')}
           />
-          <FormLabel htmlFor="sendGiftMessage" className="cursor-pointer">
+          <Label htmlFor="sendGiftMessage" className="cursor-pointer">
             Send gift message ahead of delivery
-          </FormLabel>
+          </Label>
         </div>
         
-        {giftOptions.isSurprise !== undefined && (
+        {(giftOptions.isSurprise !== undefined || giftOptions.isSurpriseGift !== undefined) && (
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="isSurprise" 
-              checked={Boolean(giftOptions.isSurprise)}
-              onCheckedChange={() => handleCheckboxChange('isSurprise')}
+              checked={Boolean(giftOptions.isSurprise || giftOptions.isSurpriseGift)}
+              onCheckedChange={() => handleCheckboxChange(giftOptions.isSurprise !== undefined ? 'isSurprise' : 'isSurpriseGift')}
             />
-            <FormLabel htmlFor="isSurprise" className="cursor-pointer">
+            <Label htmlFor="isSurprise" className="cursor-pointer">
               Keep as a surprise (don't notify recipient)
-            </FormLabel>
+            </Label>
           </div>
         )}
       </div>

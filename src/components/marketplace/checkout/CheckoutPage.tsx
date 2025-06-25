@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import CheckoutSummary from "./CheckoutSummary";
 import ShippingOptionsForm from "./ShippingOptionsForm";
 import PaymentSection from "./PaymentSection";
 import GiftScheduling from "./GiftScheduling";
+import CheckoutErrorBoundary from "./CheckoutErrorBoundary";
 import { useCheckoutState } from "./useCheckoutState";
 import { useAdaptiveCheckout } from "./useAdaptiveCheckout";
 
@@ -140,131 +140,133 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/cart')}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Cart
-        </Button>
-        
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Checkout</h1>
-          {isExpressMode && (
-            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
-              <Clock className="h-4 w-4" />
-              Express Mode
-            </div>
-          )}
-        </div>
-        
-        <p className="text-muted-foreground mt-2">
-          {deliveryScenario === 'gift' ? 'Complete your gift purchase' : 
-           deliveryScenario === 'mixed' ? 'Complete your mixed order' : 
-           'Complete your purchase'}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Express Checkout Option */}
-          <ExpressCheckoutFlow onExpressCheckout={handleExpressCheckout} />
-
-          {/* Main Checkout Flow */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
-              {adaptiveFlow.tabs.map((tab) => (
-                <TabsTrigger 
-                  key={tab} 
-                  value={tab}
-                  className="capitalize"
-                >
-                  {tab === 'delivery' ? 'Delivery' : 
-                   tab === 'recipients' ? 'Recipients' :
-                   tab === 'schedule' ? 'Schedule' :
-                   tab === 'shipping' ? 'Shipping' : 
-                   tab === 'payment' ? 'Payment' : tab}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {/* Shipping Tab */}
-            <TabsContent value="shipping" className="space-y-6">
-              <SmartCheckoutForm
-                shippingInfo={checkoutData.shippingInfo}
-                onUpdate={handleUpdateShippingInfo}
-                showBillingAddress={false}
-                isGift={false}
-              />
-              
-              <ShippingOptionsForm
-                selectedMethod={checkoutData.shippingMethod}
-                onSelect={handleShippingMethodChange}
-                shippingOptions={checkoutData.shippingOptions}
-                isLoading={isLoadingShipping}
-              />
-
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => handleTabChange('payment')}
-                  disabled={!checkoutData.selectedShippingOption}
-                >
-                  Continue to Payment
-                </Button>
+    <CheckoutErrorBoundary>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/cart')}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Cart
+          </Button>
+          
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Checkout</h1>
+            {isExpressMode && (
+              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                <Clock className="h-4 w-4" />
+                Express Mode
               </div>
-            </TabsContent>
-
-            {/* Schedule Tab */}
-            <TabsContent value="schedule" className="space-y-6">
-              <GiftScheduling 
-                giftOptions={checkoutData.giftOptions}
-                onChange={handleGiftOptionsChange}
-              />
-              
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handlePrevious}>
-                  Back
-                </Button>
-                <Button onClick={() => handleTabChange('payment')}>
-                  Continue to Payment
-                </Button>
-              </div>
-            </TabsContent>
-
-            {/* Payment Tab */}
-            <TabsContent value="payment" className="space-y-6">
-              <PaymentSection
-                paymentMethod={checkoutData.paymentMethod}
-                onPaymentMethodChange={handlePaymentMethodChange}
-                onPlaceOrder={handlePlaceOrder}
-                isProcessing={isProcessing}
-                canPlaceOrder={canPlaceOrder()}
-                onPrevious={handlePrevious}
-                totalAmount={totalAmount}
-                cartItems={cartItems}
-                shippingInfo={checkoutData.shippingInfo}
-                giftOptions={checkoutData.giftOptions}
-              />
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
+          
+          <p className="text-muted-foreground mt-2">
+            {deliveryScenario === 'gift' ? 'Complete your gift purchase' : 
+             deliveryScenario === 'mixed' ? 'Complete your mixed order' : 
+             'Complete your purchase'}
+          </p>
         </div>
 
-        {/* Order Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <CheckoutSummary
-            shippingCost={shippingCost}
-            taxAmount={taxAmount}
-            estimatedDelivery={checkoutData.selectedShippingOption?.delivery_time}
-            shippingMethod={checkoutData.selectedShippingOption?.name}
-            showPriceLock={!isExpressMode}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Express Checkout Option */}
+            <ExpressCheckoutFlow onExpressCheckout={handleExpressCheckout} />
+
+            {/* Main Checkout Flow */}
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
+                {adaptiveFlow.tabs.map((tab) => (
+                  <TabsTrigger 
+                    key={tab} 
+                    value={tab}
+                    className="capitalize"
+                  >
+                    {tab === 'delivery' ? 'Delivery' : 
+                     tab === 'recipients' ? 'Recipients' :
+                     tab === 'schedule' ? 'Schedule' :
+                     tab === 'shipping' ? 'Shipping' : 
+                     tab === 'payment' ? 'Payment' : tab}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {/* Shipping Tab */}
+              <TabsContent value="shipping" className="space-y-6">
+                <SmartCheckoutForm
+                  shippingInfo={checkoutData.shippingInfo}
+                  onUpdate={handleUpdateShippingInfo}
+                  showBillingAddress={false}
+                  isGift={false}
+                />
+                
+                <ShippingOptionsForm
+                  selectedMethod={checkoutData.shippingMethod}
+                  onSelect={handleShippingMethodChange}
+                  shippingOptions={checkoutData.shippingOptions}
+                  isLoading={isLoadingShipping}
+                />
+
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={() => handleTabChange('payment')}
+                    disabled={!checkoutData.selectedShippingOption}
+                  >
+                    Continue to Payment
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Schedule Tab */}
+              <TabsContent value="schedule" className="space-y-6">
+                <GiftScheduling 
+                  giftOptions={checkoutData.giftOptions}
+                  onChange={handleGiftOptionsChange}
+                />
+                
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={handlePrevious}>
+                    Back
+                  </Button>
+                  <Button onClick={() => handleTabChange('payment')}>
+                    Continue to Payment
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Payment Tab */}
+              <TabsContent value="payment" className="space-y-6">
+                <PaymentSection
+                  paymentMethod={checkoutData.paymentMethod}
+                  onPaymentMethodChange={handlePaymentMethodChange}
+                  onPlaceOrder={handlePlaceOrder}
+                  isProcessing={isProcessing}
+                  canPlaceOrder={canPlaceOrder()}
+                  onPrevious={handlePrevious}
+                  totalAmount={totalAmount}
+                  cartItems={cartItems}
+                  shippingInfo={checkoutData.shippingInfo}
+                  giftOptions={checkoutData.giftOptions}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Order Summary Sidebar */}
+          <div className="lg:col-span-1">
+            <CheckoutSummary
+              shippingCost={shippingCost}
+              taxAmount={taxAmount}
+              estimatedDelivery={checkoutData.selectedShippingOption?.delivery_time}
+              shippingMethod={checkoutData.selectedShippingOption?.name}
+              showPriceLock={!isExpressMode}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </CheckoutErrorBoundary>
   );
 };
 

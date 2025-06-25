@@ -13,21 +13,32 @@ export interface AdaptiveCheckoutFlow {
 }
 
 export const useAdaptiveCheckout = () => {
-  const { cartItems, deliveryGroups, getUnassignedItems } = useCart();
+  const cartContext = useCart();
+  
+  // Safely access cart methods with fallbacks
+  const cartItems = cartContext?.cartItems || [];
+  const deliveryGroups = cartContext?.deliveryGroups || [];
+  const getUnassignedItems = cartContext?.getUnassignedItems || (() => cartItems);
   
   const deliveryScenario: DeliveryScenario = useMemo(() => {
-    const unassignedItems = getUnassignedItems();
-    const hasAssignedItems = deliveryGroups.length > 0;
-    
-    if (unassignedItems.length === cartItems.length) {
-      // All items unassigned - likely self purchase
+    try {
+      const unassignedItems = getUnassignedItems();
+      const hasAssignedItems = deliveryGroups.length > 0;
+      
+      if (unassignedItems.length === cartItems.length) {
+        // All items unassigned - likely self purchase
+        return 'self';
+      } else if (unassignedItems.length === 0) {
+        // All items assigned to recipients - pure gift scenario
+        return 'gift';
+      } else {
+        // Mix of assigned and unassigned items
+        return 'mixed';
+      }
+    } catch (error) {
+      console.error('Error determining delivery scenario:', error);
+      // Default to self purchase if there's any error
       return 'self';
-    } else if (unassignedItems.length === 0) {
-      // All items assigned to recipients - pure gift scenario
-      return 'gift';
-    } else {
-      // Mix of assigned and unassigned items
-      return 'mixed';
     }
   }, [cartItems, deliveryGroups, getUnassignedItems]);
 

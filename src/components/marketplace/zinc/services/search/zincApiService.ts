@@ -17,13 +17,16 @@ export const searchZincApi = async (
   maxResults: string
 ): Promise<ZincProduct[] | null> => {
   try {
-    console.log(`Making API call via Supabase Edge Function for query: "${query}", max results: ${maxResults}`);
+    // Ensure we request enough products for better filtering
+    const requestedResults = Math.max(parseInt(maxResults), 50).toString();
     
-    // Use Supabase edge function instead of direct API calls
+    console.log(`Making API call via Supabase Edge Function for query: "${query}", max results: ${requestedResults}`);
+    
+    // Use Supabase edge function with improved error handling
     const { data, error } = await supabase.functions.invoke('zinc-search', {
       body: {
         query: query.trim(),
-        maxResults: maxResults
+        maxResults: requestedResults
       }
     });
 
@@ -44,8 +47,12 @@ export const searchZincApi = async (
     console.log('Zinc API response via edge function:', data);
     
     // If we get results, return them
-    if (data.results && data.results.length > 0) {
+    if (data?.results && data.results.length > 0) {
       console.log(`Found ${data.results.length} results from Zinc API for "${query}"`);
+      
+      // Reset the error toast flag on successful response
+      hasShownTokenErrorToast = false;
+      
       return data.results;
     }
     

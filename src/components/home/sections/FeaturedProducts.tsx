@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from "react";
 import { searchProducts } from "@/components/marketplace/zinc/services/search/productSearchServiceImpl";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
-import { ProductCard } from "@/components/gifting/ProductCard";
+import ProductCard from "@/components/gifting/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface FeaturedProductsProps {

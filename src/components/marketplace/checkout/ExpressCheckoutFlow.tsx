@@ -17,6 +17,7 @@ const ExpressCheckoutFlow: React.FC<ExpressCheckoutFlowProps> = ({ onExpressChec
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedType, setSelectedType] = useState<'self' | 'gift'>('gift'); // Default to gift
 
   const handleExpressSelf = async () => {
     if (!user) {
@@ -26,6 +27,7 @@ const ExpressCheckoutFlow: React.FC<ExpressCheckoutFlowProps> = ({ onExpressChec
     }
 
     setIsProcessing(true);
+    setSelectedType('self');
     try {
       // Auto-fill with user's saved address and payment method
       onExpressCheckout('self');
@@ -39,6 +41,7 @@ const ExpressCheckoutFlow: React.FC<ExpressCheckoutFlowProps> = ({ onExpressChec
 
   const handleExpressGift = () => {
     setIsProcessing(true);
+    setSelectedType('gift');
     onExpressCheckout('gift');
     toast.success('Express gift checkout initiated');
     setIsProcessing(false);
@@ -66,7 +69,7 @@ const ExpressCheckoutFlow: React.FC<ExpressCheckoutFlowProps> = ({ onExpressChec
             onClick={handleExpressSelf}
             disabled={isProcessing || !user}
             className="flex items-center gap-2 h-12"
-            variant="default"
+            variant={selectedType === 'self' ? 'default' : 'outline'}
           >
             <ShoppingCart className="h-4 w-4" />
             <div className="text-left">
@@ -81,7 +84,7 @@ const ExpressCheckoutFlow: React.FC<ExpressCheckoutFlowProps> = ({ onExpressChec
             onClick={handleExpressGift}
             disabled={isProcessing}
             className="flex items-center gap-2 h-12"
-            variant="outline"
+            variant={selectedType === 'gift' ? 'default' : 'outline'}
           >
             <Gift className="h-4 w-4" />
             <div className="text-left">

@@ -5,6 +5,36 @@
 import { ZincProduct } from "../../types";
 
 /**
+ * Validate product price to ensure it's above zero
+ */
+export const validateProductPrice = (product: ZincProduct): boolean => {
+  const price = typeof product.price === 'number' ? product.price : parseFloat(product.price?.toString() || '0');
+  
+  // Filter out products with invalid or zero pricing
+  if (isNaN(price) || price <= 0) {
+    console.log(`Filtered out product with invalid price: ${product.title} - Price: ${product.price}`);
+    return false;
+  }
+  
+  return true;
+};
+
+/**
+ * Filter products by valid pricing before other validations
+ */
+export const filterProductsByPrice = (products: ZincProduct[]): ZincProduct[] => {
+  if (!products || products.length === 0) {
+    return [];
+  }
+  
+  const validPricedProducts = products.filter(validateProductPrice);
+  
+  console.log(`Price filtering: ${products.length} -> ${validPricedProducts.length} products (filtered out ${products.length - validPricedProducts.length} zero-price items)`);
+  
+  return validPricedProducts;
+};
+
+/**
  * Validate and ensure product has proper image URLs
  */
 export const validateProductImages = (product: ZincProduct, query: string): ZincProduct => {
@@ -73,13 +103,21 @@ export const filterRelevantProducts = (products: ZincProduct[], query: string, m
     return [];
   }
   
+  // FIRST: Filter out products with invalid pricing
+  const validPricedProducts = filterProductsByPrice(products);
+  
+  if (validPricedProducts.length === 0) {
+    console.log('No products remain after price filtering');
+    return [];
+  }
+  
   const normalizedQuery = query.toLowerCase().trim();
-  console.log(`Filtering ${products.length} products for query: "${normalizedQuery}"`);
+  console.log(`Filtering ${validPricedProducts.length} valid-priced products for query: "${normalizedQuery}"`);
   
   // Special case: if query contains specific brands/teams, be more lenient
   const isSpecialQuery = isSpecialBrandOrTeamQuery(normalizedQuery);
   
-  const relevantProducts = products.filter(product => {
+  const relevantProducts = validPricedProducts.filter(product => {
     const title = (product.title || '').toLowerCase();
     const description = (product.description || '').toLowerCase();
     const brand = (product.brand || '').toLowerCase();
@@ -94,7 +132,7 @@ export const filterRelevantProducts = (products: ZincProduct[], query: string, m
     return isRelevantProduct(normalizedQuery, { title, description, brand, category });
   });
   
-  console.log(`Filtered from ${products.length} to ${relevantProducts.length} relevant results`);
+  console.log(`Final filtering: ${validPricedProducts.length} -> ${relevantProducts.length} relevant results`);
   return relevantProducts.slice(0, maxResults);
 };
 

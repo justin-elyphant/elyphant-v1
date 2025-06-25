@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Plus, Minus, Trash2, CreditCard } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Gift, Zap } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 
 interface CartDrawerProps {
   children: React.ReactNode;
@@ -17,15 +19,37 @@ interface CartDrawerProps {
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   const { cartItems, cartTotal, updateQuantity, removeFromCart, getItemCount } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const itemCount = getItemCount();
 
-  const handleCheckout = () => {
+  const handleExpressCheckout = (type: 'self' | 'gift') => {
+    if (!user && type === 'self') {
+      toast.error('Please sign in to use express checkout');
+      navigate('/sign-in');
+      return;
+    }
+
+    // Navigate directly to checkout with the express mode and type
+    navigate('/checkout', { 
+      state: { 
+        expressMode: true, 
+        expressType: type 
+      } 
+    });
+    
+    toast.success(`Express ${type === 'self' ? 'purchase' : 'gift'} mode activated`);
+  };
+
+  const handleRegularCheckout = () => {
     navigate("/checkout");
   };
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+
+  const isSingleItem = cartItems.length === 1;
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <Sheet>
@@ -50,7 +74,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
             )}
           </SheetTitle>
           <SheetDescription>
-            {itemCount === 0 ? "Your cart is empty" : "Review your items before checkout"}
+            {itemCount === 0 ? "Your cart is empty" : "Review your items and choose your checkout method"}
           </SheetDescription>
         </SheetHeader>
 
@@ -130,15 +154,65 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                   {formatPrice(cartTotal)}
                 </span>
               </div>
-              
+
+              {/* Express Checkout Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Zap className="h-4 w-4 text-yellow-500" />
+                  <span className="font-medium">Express Checkout</span>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    onClick={() => handleExpressCheckout('gift')}
+                    className="flex items-center gap-2 h-11 bg-primary hover:bg-primary/90"
+                    size={isMobile ? "lg" : "default"}
+                  >
+                    <Gift className="h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-medium">Send as Gift</div>
+                      <div className="text-xs opacity-90">
+                        {isSingleItem ? '1 item' : `${totalItems} items`} • Quick gift setup
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    onClick={() => handleExpressCheckout('self')}
+                    disabled={!user}
+                    variant="outline"
+                    className="flex items-center gap-2 h-11"
+                    size={isMobile ? "lg" : "default"}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-medium">Buy for Myself</div>
+                      <div className="text-xs opacity-70">
+                        {isSingleItem ? '1 item' : `${totalItems} items`} • Ship to me
+                      </div>
+                    </div>
+                  </Button>
+                </div>
+
+                {!user && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Sign in to use "Buy for Myself" with saved information
+                  </p>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Regular Checkout */}
               <Button 
-                onClick={handleCheckout}
+                onClick={handleRegularCheckout}
+                variant="outline"
                 className="w-full"
                 size={isMobile ? "lg" : "default"}
                 disabled={cartItems.length === 0}
               >
                 <CreditCard className="h-4 w-4 mr-2" />
-                Proceed to Checkout
+                Standard Checkout
               </Button>
             </div>
           </div>

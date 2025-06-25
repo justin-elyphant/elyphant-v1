@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Clock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
@@ -23,9 +23,11 @@ import { useAdaptiveCheckout } from "./useAdaptiveCheckout";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { cartItems, clearCart } = useCart();
   const { user } = useAuth();
   const [isExpressMode, setIsExpressMode] = useState(false);
+  const [expressType, setExpressType] = useState<'self' | 'gift'>('gift');
   
   const {
     activeTab,
@@ -44,6 +46,24 @@ const CheckoutPage = () => {
 
   const { deliveryScenario, adaptiveFlow } = useAdaptiveCheckout();
 
+  // Handle express mode from cart navigation
+  useEffect(() => {
+    const state = location.state as { expressMode?: boolean; expressType?: 'self' | 'gift' } | null;
+    if (state?.expressMode) {
+      setIsExpressMode(true);
+      setExpressType(state.expressType || 'gift');
+      
+      if (state.expressType === 'self') {
+        // Skip to payment for self-purchase
+        handleTabChange('payment');
+      } else {
+        // Go to gift setup
+        handleTabChange('schedule');
+        handleGiftOptionsChange({ isGift: true });
+      }
+    }
+  }, [location.state, handleTabChange, handleGiftOptionsChange]);
+
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const shippingCost = getShippingCost();
@@ -52,6 +72,7 @@ const CheckoutPage = () => {
 
   const handleExpressCheckout = (type: 'self' | 'gift') => {
     setIsExpressMode(true);
+    setExpressType(type);
     
     if (type === 'self') {
       // Skip to payment for self-purchase
@@ -157,23 +178,25 @@ const CheckoutPage = () => {
             {isExpressMode && (
               <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
                 <Clock className="h-4 w-4" />
-                Express Mode
+                Express {expressType === 'self' ? 'Purchase' : 'Gift'} Mode
               </div>
             )}
           </div>
           
           <p className="text-muted-foreground mt-2">
-            {deliveryScenario === 'gift' ? 'Complete your gift purchase' : 
-             deliveryScenario === 'mixed' ? 'Complete your mixed order' : 
-             'Complete your purchase'}
+            {isExpressMode 
+              ? `Complete your express ${expressType === 'self' ? 'purchase' : 'gift order'}`
+              : deliveryScenario === 'gift' ? 'Complete your gift purchase' : 
+                deliveryScenario === 'mixed' ? 'Complete your mixed order' : 
+                'Complete your purchase'}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Express Checkout Option */}
-            <ExpressCheckoutFlow onExpressCheckout={handleExpressCheckout} />
+            {/* Show Express Checkout only if not already in express mode */}
+            {!isExpressMode && <ExpressCheckoutFlow onExpressCheckout={handleExpressCheckout} />}
 
             {/* Main Checkout Flow */}
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">

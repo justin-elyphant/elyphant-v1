@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -169,7 +170,7 @@ export const useCheckoutState = () => {
   };
   
   const canPlaceOrder = () => {
-    return activeTab === "payment" && checkoutData.selectedShippingOption;
+    return activeTab === "payment" && checkoutData.selectedShippingOption !== null;
   };
 
   const getShippingCost = () => {

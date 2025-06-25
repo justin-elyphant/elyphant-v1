@@ -242,7 +242,7 @@ const CheckoutPage = () => {
                 onPaymentMethodChange={handlePaymentMethodChange}
                 onPlaceOrder={handlePlaceOrder}
                 isProcessing={isProcessing}
-                canPlaceOrder={canPlaceOrder}
+                canPlaceOrder={canPlaceOrder()}
                 onPrevious={handlePrevious}
                 totalAmount={totalAmount}
                 cartItems={cartItems}

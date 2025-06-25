@@ -3,33 +3,36 @@ import React from "react";
 import { FormLabel } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export interface GiftSchedulingOptions {
-  scheduleDelivery: boolean;
-  sendGiftMessage: boolean;
+export interface GiftOptions {
+  isGift: boolean;
+  giftMessage?: string;
+  giftWrapping?: boolean;
+  scheduleDelivery?: boolean;
+  sendGiftMessage?: boolean;
   isSurprise?: boolean;
 }
 
 interface GiftSchedulingProps {
-  giftScheduling: GiftSchedulingOptions;
-  onUpdate: (options: Partial<GiftSchedulingOptions>) => void;
+  giftOptions: GiftOptions;
+  onChange: (options: Partial<GiftOptions>) => void;
 }
 
 const GiftScheduling: React.FC<GiftSchedulingProps> = ({ 
-  giftScheduling, 
-  onUpdate 
+  giftOptions, 
+  onChange 
 }) => {
-  console.log("GiftScheduling component rendered with props:", giftScheduling);
+  console.log("GiftScheduling component rendered with props:", giftOptions);
 
-  const handleCheckboxChange = (field: keyof GiftSchedulingOptions) => {
-    console.log(`Toggling ${field} from ${giftScheduling[field]} to ${!giftScheduling[field]}`);
+  const handleCheckboxChange = (field: keyof GiftOptions) => {
+    console.log(`Toggling ${field} from ${giftOptions[field]} to ${!giftOptions[field]}`);
     
     // Create a simple update object with just the changed field
     const updates = {
-      [field]: !giftScheduling[field]
+      [field]: !giftOptions[field]
     };
     
     console.log("Sending updates:", updates);
-    onUpdate(updates);
+    onChange(updates);
   };
 
   return (
@@ -40,7 +43,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="scheduleDelivery" 
-            checked={Boolean(giftScheduling.scheduleDelivery)}
+            checked={Boolean(giftOptions.scheduleDelivery)}
             onCheckedChange={() => handleCheckboxChange('scheduleDelivery')}
           />
           <FormLabel htmlFor="scheduleDelivery" className="cursor-pointer">
@@ -51,7 +54,7 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="sendGiftMessage" 
-            checked={Boolean(giftScheduling.sendGiftMessage)}
+            checked={Boolean(giftOptions.sendGiftMessage)}
             onCheckedChange={() => handleCheckboxChange('sendGiftMessage')}
           />
           <FormLabel htmlFor="sendGiftMessage" className="cursor-pointer">
@@ -59,11 +62,11 @@ const GiftScheduling: React.FC<GiftSchedulingProps> = ({
           </FormLabel>
         </div>
         
-        {giftScheduling.isSurprise !== undefined && (
+        {giftOptions.isSurprise !== undefined && (
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="isSurprise" 
-              checked={Boolean(giftScheduling.isSurprise)}
+              checked={Boolean(giftOptions.isSurprise)}
               onCheckedChange={() => handleCheckboxChange('isSurprise')}
             />
             <FormLabel htmlFor="isSurprise" className="cursor-pointer">

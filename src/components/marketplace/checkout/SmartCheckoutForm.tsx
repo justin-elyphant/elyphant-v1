@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, User, Mail, Phone } from 'lucide-react';
+import { MapPin, User, Mail, Phone, Gift } from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
 import { StandardizedAddress } from '@/services/googlePlacesService';
 import { standardizedToForm } from '@/utils/addressStandardization';
@@ -236,7 +236,7 @@ const SmartCheckoutForm: React.FC<SmartCheckoutFormProps> = ({
               <Checkbox
                 id="sameAsBilling"
                 checked={sameAsBilling}
-                onCheckedChange={setSameAsBilling}
+                onCheckedChange={(checked) => setSameAsBilling(checked === true)}
               />
               <Label htmlFor="sameAsBilling" className="text-sm cursor-pointer">
                 Same as shipping address

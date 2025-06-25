@@ -1,16 +1,21 @@
-
 import React from "react";
 import { getPrimaryProductImage } from "@/components/marketplace/product-item/getPrimaryProductImage";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileOptimizedImage from "@/components/marketplace/ui/MobileOptimizedImage";
 
 interface ProductCardImageSectionProps {
   product: any;
   productName: string;
+  priority?: boolean;
 }
 
 const ProductCardImageSection: React.FC<ProductCardImageSectionProps> = ({
   product,
   productName,
+  priority = false
 }) => {
+  const isMobile = useIsMobile();
+  
   // Select the best image with full debug log
   const selectedImg = getPrimaryProductImage(product);
 
@@ -37,16 +42,41 @@ const ProductCardImageSection: React.FC<ProductCardImageSectionProps> = ({
     );
   }
 
+  const handleImageError = () => {
+    console.warn("[ProductCardImageSection] Image failed to load, using placeholder.", { src: selectedImg });
+  };
+
+  const handleImageLoad = () => {
+    console.log("[ProductCardImageSection] Image loaded successfully:", selectedImg);
+  };
+
+  // Use mobile-optimized component for mobile devices
+  if (isMobile) {
+    return (
+      <MobileOptimizedImage
+        src={selectedImg}
+        alt={productName}
+        aspectRatio="square"
+        priority={priority}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+        className="transition-transform group-hover:scale-105"
+      />
+    );
+  }
+
+  // Desktop version (unchanged)
   return (
     <img
       src={selectedImg}
       alt={productName}
       className="object-cover w-full h-full transition-transform group-hover:scale-105"
       onError={(e) => {
-        console.warn("[ProductCardImageSection] Image failed to load, using placeholder.", { src: selectedImg });
+        handleImageError();
         (e.target as HTMLImageElement).src = "/placeholder.svg";
       }}
-      loading="lazy"
+      onLoad={handleImageLoad}
+      loading={priority ? "eager" : "lazy"}
     />
   );
 };

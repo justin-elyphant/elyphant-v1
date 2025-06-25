@@ -146,7 +146,7 @@ img {
   }
 }
 
-/* Enhanced loading states with better performance */
+/* Enhanced loading states with better performance - includes shimmer animation */
 .skeleton-loading {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
@@ -160,6 +160,33 @@ img {
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+/* Shimmer effect for mobile image loading */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Mobile-specific image loading optimizations */
+@media (max-width: 768px) {
+  .image-loading-container {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    .image-loading-container {
+      animation: none;
+      background: #f3f4f6;
+    }
   }
 }
 

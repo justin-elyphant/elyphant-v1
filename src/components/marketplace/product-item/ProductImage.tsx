@@ -1,8 +1,9 @@
-
 import React, { useState } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
 import { getProductFallbackImage } from "./productImageUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileOptimizedImage from "../ui/MobileOptimizedImage";
 
 interface ProductImageProps {
   product: {
@@ -15,15 +16,18 @@ interface ProductImageProps {
   aspectRatio?: "square" | "portrait" | "wide";
   className?: string;
   useMock?: boolean;
+  priority?: boolean;
 }
 
 const ProductImage = ({ 
   product, 
   aspectRatio = "square", 
   className,
-  useMock = false
+  useMock = false,
+  priority = false
 }: ProductImageProps) => {
   const [imageError, setImageError] = useState(false);
+  const isMobile = useIsMobile();
 
   // Determine the appropriate aspect ratio value
   const getAspectRatioValue = (ratio: string): number => {
@@ -75,14 +79,33 @@ const ProductImage = ({
   const imageUrl = getPrimaryImage();
   const productName = product?.title || product?.name || "Product";
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageError = () => {
     console.error("Image failed to load:", imageUrl);
     setImageError(true);
-    // If image fails to load, use category-specific fallback
-    const fallback = getProductFallbackImage(productName, product?.category || "");
-    (e.target as HTMLImageElement).src = fallback;
   };
 
+  const handleImageLoad = () => {
+    console.log("Image loaded successfully:", imageUrl);
+  };
+
+  // Use mobile-optimized image component for mobile devices
+  if (isMobile) {
+    return (
+      <div className={cn("bg-slate-100 overflow-hidden rounded-t-md", className)}>
+        <MobileOptimizedImage
+          src={imageUrl}
+          alt={productName}
+          aspectRatio={aspectRatio}
+          priority={priority}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          className="transition-all hover:scale-105"
+        />
+      </div>
+    );
+  }
+
+  // Desktop version (unchanged)
   return (
     <AspectRatio 
       ratio={getAspectRatioValue(aspectRatio)} 
@@ -93,7 +116,7 @@ const ProductImage = ({
         alt={productName}
         className="h-full w-full object-cover transition-all hover:scale-105"
         onError={handleImageError}
-        loading="lazy" 
+        loading={priority ? "eager" : "lazy"} 
       />
     </AspectRatio>
   );

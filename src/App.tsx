@@ -29,7 +29,15 @@ import PaymentCancel from "./pages/PaymentCancel";
 import Trunkline from "./pages/Trunkline";
 import Events from "./pages/Events";
 
-const queryClient = new QueryClient();
+// Create query client with stable configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

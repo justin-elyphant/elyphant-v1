@@ -2,12 +2,14 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-// When the pathname changes, scroll to top
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
   }, [pathname]);
 
   return null;

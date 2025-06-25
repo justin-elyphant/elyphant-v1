@@ -8,7 +8,7 @@ import { ZincProduct } from "../../types";
  * Validate product price to ensure it's above zero
  */
 export const validateProductPrice = (product: ZincProduct): boolean => {
-  const price = typeof product.price === 'number' ? product.price : parseFloat(product.price?.toString() || '0');
+  const price = typeof product.price === 'number' ? product.price : parseFloat(String(product.price) || '0');
   
   // Filter out products with invalid or zero pricing
   if (isNaN(price) || price <= 0) {

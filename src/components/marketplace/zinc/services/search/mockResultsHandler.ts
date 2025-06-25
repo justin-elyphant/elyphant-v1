@@ -126,7 +126,7 @@ export const getMockResults = (query: string, maxResults: number): ZincProduct[]
     description: product.description || "High-quality product",
     image: generateMockImage(product.category || "General"),
     images: [generateMockImage(product.category || "General")],
-    vendor: "Amazon via Zinc",
+    retailer: "Amazon", // Required retailer property
     isBestSeller: index < 2, // First two products are "best sellers"
     bestSellerType: index === 0 ? 'amazon_choice' : (index === 1 ? 'best_seller' : null),
     badgeText: index === 0 ? "Amazon's Choice" : (index === 1 ? "Best Seller" : null)

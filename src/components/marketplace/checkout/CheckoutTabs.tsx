@@ -4,11 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
 import { useAdaptiveCheckout } from "./useAdaptiveCheckout";
+import { useCheckoutState } from "./useCheckoutState";
 import ShippingOptionsForm from "./ShippingOptionsForm";
 import PaymentSection from "./PaymentSection";
 import GiftOptionsForm from "./GiftOptionsForm";
 import UnifiedDeliverySection from "./UnifiedDeliverySection";
 import GiftScheduleForm from "./GiftScheduleForm";
+import { toast } from "sonner";
 
 interface CheckoutTabsProps {
   expressMode?: boolean;
@@ -19,14 +21,22 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
   expressMode = false, 
   expressType = null 
 }) => {
-  const { cartItems } = useCart();
+  const { cartItems, clearCart } = useCart();
   const { adaptiveFlow } = useAdaptiveCheckout();
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    if (expressMode) {
-      return expressType === 'gift' ? 'gift-options' : 'shipping';
-    }
-    return adaptiveFlow.tabs[0];
-  });
+  const {
+    activeTab,
+    isProcessing,
+    isLoadingShipping,
+    checkoutData,
+    setIsProcessing,
+    handleTabChange,
+    handleUpdateShippingInfo,
+    handleShippingMethodChange,
+    handlePaymentMethodChange,
+    handleGiftOptionsChange,
+    canPlaceOrder,
+    getShippingCost
+  } = useCheckoutState();
 
   // Determine tabs based on express mode
   const getTabsForMode = () => {
@@ -65,6 +75,34 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
 
   const tabs = getTabsForMode();
 
+  const handlePlaceOrder = async (paymentIntentId?: string) => {
+    setIsProcessing(true);
+    try {
+      // Demo order processing
+      console.log('Placing order with:', {
+        checkoutData,
+        paymentIntentId,
+        expressMode,
+        expressType
+      });
+      
+      toast.success('Order placed successfully!');
+      clearCart();
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast.error('Failed to place order. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePrevious = () => {
+    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+    if (currentIndex > 0) {
+      handleTabChange(tabs[currentIndex - 1].id);
+    }
+  };
+
   if (cartItems.length === 0) {
     return (
       <Card>
@@ -74,6 +112,8 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
       </Card>
     );
   }
+
+  const totalAmount = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) + getShippingCost();
 
   return (
     <Card>
@@ -86,7 +126,7 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
             {tabs.map((tab) => (
               <TabsTrigger key={tab.id} value={tab.id} className="text-xs">
@@ -98,12 +138,70 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
 
           {tabs.map((tab) => (
             <TabsContent key={tab.id} value={tab.id} className="mt-6">
-              {tab.id === 'shipping' && <ShippingOptionsForm />}
-              {tab.id === 'recipients' && <UnifiedDeliverySection />}
-              {tab.id === 'schedule' && <GiftScheduleForm />}
-              {tab.id === 'delivery' && <UnifiedDeliverySection />}
-              {tab.id === 'gift-options' && <GiftOptionsForm />}
-              {tab.id === 'payment' && <PaymentSection />}
+              {tab.id === 'shipping' && (
+                <ShippingOptionsForm
+                  selectedMethod={checkoutData.shippingMethod}
+                  onSelect={handleShippingMethodChange}
+                  shippingOptions={checkoutData.shippingOptions}
+                  isLoading={isLoadingShipping}
+                />
+              )}
+              {tab.id === 'recipients' && (
+                <UnifiedDeliverySection
+                  scenario={adaptiveFlow.scenario}
+                  shippingInfo={checkoutData.shippingInfo}
+                  onUpdateShippingInfo={handleUpdateShippingInfo}
+                  selectedShippingMethod={checkoutData.shippingMethod}
+                  onShippingMethodChange={handleShippingMethodChange}
+                  shippingOptions={checkoutData.shippingOptions}
+                  isLoadingShipping={isLoadingShipping}
+                />
+              )}
+              {tab.id === 'schedule' && (
+                <GiftScheduleForm
+                  giftOptions={checkoutData.giftOptions}
+                  onUpdate={handleGiftOptionsChange}
+                />
+              )}
+              {tab.id === 'delivery' && (
+                <UnifiedDeliverySection
+                  scenario={adaptiveFlow.scenario}
+                  shippingInfo={checkoutData.shippingInfo}
+                  onUpdateShippingInfo={handleUpdateShippingInfo}
+                  selectedShippingMethod={checkoutData.shippingMethod}
+                  onShippingMethodChange={handleShippingMethodChange}
+                  shippingOptions={checkoutData.shippingOptions}
+                  isLoadingShipping={isLoadingShipping}
+                />
+              )}
+              {tab.id === 'gift-options' && (
+                <GiftOptionsForm
+                  giftOptions={{
+                    isGift: checkoutData.giftOptions.isGift,
+                    recipientName: '',
+                    giftMessage: checkoutData.giftOptions.giftMessage,
+                    giftWrapping: false
+                  }}
+                  onUpdate={(options) => handleGiftOptionsChange({
+                    isGift: options.isGift,
+                    giftMessage: options.giftMessage || ''
+                  })}
+                />
+              )}
+              {tab.id === 'payment' && (
+                <PaymentSection
+                  paymentMethod={checkoutData.paymentMethod}
+                  onPaymentMethodChange={handlePaymentMethodChange}
+                  onPlaceOrder={handlePlaceOrder}
+                  isProcessing={isProcessing}
+                  canPlaceOrder={canPlaceOrder()}
+                  onPrevious={handlePrevious}
+                  totalAmount={totalAmount}
+                  cartItems={cartItems}
+                  shippingInfo={checkoutData.shippingInfo}
+                  giftOptions={checkoutData.giftOptions}
+                />
+              )}
             </TabsContent>
           ))}
         </Tabs>

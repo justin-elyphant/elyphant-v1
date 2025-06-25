@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { categories } from "@/components/home/components/CategoriesDropdown";
+import { UNIVERSAL_CATEGORIES } from "@/constants/categories";
 
 const FindGiftsCard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,8 +25,12 @@ const FindGiftsCard = () => {
     }
   };
 
-  const handleCategorySelect = (categoryUrl: string) => {
-    navigate(`/marketplace?category=${categoryUrl}`);
+  const handleCategorySelect = (category: any) => {
+    if (category.searchTerm) {
+      navigate(`/marketplace?search=${encodeURIComponent(category.searchTerm)}&category=${encodeURIComponent(category.value)}`);
+    } else {
+      navigate(`/marketplace?category=${encodeURIComponent(category.value)}`);
+    }
     setIsCategoriesOpen(false);
   };
 
@@ -59,11 +63,11 @@ const FindGiftsCard = () => {
                   className="w-56 bg-white p-0 max-h-[40vh] overflow-y-auto z-50" 
                   align="start"
                 >
-                  {categories.map((category, index) => (
+                  {UNIVERSAL_CATEGORIES.map((category) => (
                     <DropdownMenuItem 
-                      key={index} 
+                      key={category.id} 
                       className="px-4 py-2 hover:bg-accent cursor-pointer"
-                      onClick={() => handleCategorySelect(category.url)}
+                      onClick={() => handleCategorySelect(category)}
                     >
                       {category.name}
                     </DropdownMenuItem>

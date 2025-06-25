@@ -12,7 +12,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
-import MobileExpressCheckout from "./MobileExpressCheckout";
 
 interface CartDrawerProps {
   children: React.ReactNode;
@@ -60,8 +59,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
       <SheetContent 
         side="right" 
         className={cn(
-          "w-full sm:max-w-lg flex flex-col h-full prevent-bounce",
-          isMobile ? "p-4 safe-area-inset" : "p-6"
+          "w-full sm:max-w-lg flex flex-col h-full",
+          isMobile ? "p-4" : "p-6"
         )}
       >
         <SheetHeader className="space-y-2 flex-shrink-0">
@@ -87,15 +86,15 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
           </div>
         ) : (
           <div className="flex flex-col flex-1 min-h-0">
-            <ScrollArea className="flex-1 pr-2 smooth-scroll">
-              <div className="space-y-3 py-4">
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-4 py-4">
                 {cartItems.map((item) => (
-                  <div key={item.product.product_id} className="flex gap-3 p-3 border rounded-lg touch-target-44">
+                  <div key={item.product.product_id} className="flex gap-3 p-3 border rounded-lg">
                     <div className="flex-shrink-0">
                       <img 
                         src={item.product.image || "/placeholder.svg"} 
                         alt={item.product.name || item.product.title}
-                        className="w-16 h-16 object-cover rounded-md bg-gray-100 will-change-transform"
+                        className="w-16 h-16 object-cover rounded-md bg-gray-100"
                         loading="lazy"
                       />
                     </div>
@@ -108,19 +107,18 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                         {formatPrice(item.product.price)}
                       </p>
                       
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center border rounded touch-target-44">
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center border rounded">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => updateQuantity(item.product.product_id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
-                            className="h-9 w-9 p-0 touch-target-44"
-                            hapticFeedback="buttonTap"
+                            className="h-8 w-8 p-0"
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="px-3 text-sm font-medium min-w-[2.5rem] text-center">
+                          <span className="px-2 text-sm font-medium min-w-[2rem] text-center">
                             {item.quantity}
                           </span>
                           <Button
@@ -128,8 +126,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                             size="sm"
                             onClick={() => updateQuantity(item.product.product_id, item.quantity + 1)}
                             disabled={item.quantity >= 10}
-                            className="h-9 w-9 p-0 touch-target-44"
-                            hapticFeedback="buttonTap"
+                            className="h-8 w-8 p-0"
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -139,8 +136,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeFromCart(item.product.product_id)}
-                          className="text-red-500 hover:text-red-700 p-2 touch-target-44"
-                          hapticFeedback="removeItem"
+                          className="text-red-500 hover:text-red-700 p-1"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -152,7 +148,6 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
             </ScrollArea>
 
             <div className="flex-shrink-0 border-t pt-4 space-y-4 bg-background">
-              {/* Total */}
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold">Total:</span>
                 <span className="text-lg font-bold text-green-600">
@@ -160,74 +155,65 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                 </span>
               </div>
 
-              {/* Mobile Express Checkout */}
-              {isMobile ? (
-                <MobileExpressCheckout
-                  onCheckout={handleExpressCheckout}
-                  cartTotal={cartTotal}
-                  itemCount={totalItems}
-                />
-              ) : (
-                // Desktop Express Checkout (existing design)
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Zap className="h-4 w-4 text-yellow-500" />
-                    <span className="font-medium">Express Checkout</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-2">
-                    <Button
-                      onClick={() => handleExpressCheckout('gift')}
-                      className="flex items-center gap-2 h-11 bg-primary hover:bg-primary/90"
-                      size="default"
-                    >
-                      <Gift className="h-4 w-4" />
-                      <div className="text-left">
-                        <div className="font-medium">Send as Gift</div>
-                        <div className="text-xs opacity-90">
-                          {isSingleItem ? '1 item' : `${totalItems} items`} • Quick gift setup
-                        </div>
-                      </div>
-                    </Button>
-
-                    <Button
-                      onClick={() => handleExpressCheckout('self')}
-                      disabled={!user}
-                      variant="outline"
-                      className="flex items-center gap-2 h-11"
-                      size="default"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                      <div className="text-left">
-                        <div className="font-medium">Buy for Myself</div>
-                        <div className="text-xs opacity-70">
-                          {isSingleItem ? '1 item' : `${totalItems} items`} • Ship to me
-                        </div>
-                      </div>
-                    </Button>
-                  </div>
-
-                  {!user && (
-                    <p className="text-xs text-muted-foreground text-center">
-                      Sign in to use "Buy for Myself" with saved information
-                    </p>
-                  )}
-
-                  <Separator />
-
-                  {/* Regular Checkout */}
-                  <Button 
-                    onClick={handleRegularCheckout}
-                    variant="outline"
-                    className="w-full"
-                    size="default"
-                    disabled={cartItems.length === 0}
+              {/* Express Checkout Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Zap className="h-4 w-4 text-yellow-500" />
+                  <span className="font-medium">Express Checkout</span>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    onClick={() => handleExpressCheckout('gift')}
+                    className="flex items-center gap-2 h-11 bg-primary hover:bg-primary/90"
+                    size={isMobile ? "lg" : "default"}
                   >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Standard Checkout
+                    <Gift className="h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-medium">Send as Gift</div>
+                      <div className="text-xs opacity-90">
+                        {isSingleItem ? '1 item' : `${totalItems} items`} • Quick gift setup
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    onClick={() => handleExpressCheckout('self')}
+                    disabled={!user}
+                    variant="outline"
+                    className="flex items-center gap-2 h-11"
+                    size={isMobile ? "lg" : "default"}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-medium">Buy for Myself</div>
+                      <div className="text-xs opacity-70">
+                        {isSingleItem ? '1 item' : `${totalItems} items`} • Ship to me
+                      </div>
+                    </div>
                   </Button>
                 </div>
-              )}
+
+                {!user && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Sign in to use "Buy for Myself" with saved information
+                  </p>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Regular Checkout */}
+              <Button 
+                onClick={handleRegularCheckout}
+                variant="outline"
+                className="w-full"
+                size={isMobile ? "lg" : "default"}
+                disabled={cartItems.length === 0}
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Standard Checkout
+              </Button>
             </div>
           </div>
         )}

@@ -1,9 +1,14 @@
 
 import React from "react";
-import Home from "./Home";
+import HomeContent from "@/components/home/HomeContent";
+import MainLayout from "@/components/layout/MainLayout";
 
 const Index = () => {
-  return <Home />;
+  return (
+    <MainLayout>
+      <HomeContent />
+    </MainLayout>
+  );
 };
 
 export default Index;

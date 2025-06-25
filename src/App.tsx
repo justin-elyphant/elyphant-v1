@@ -28,16 +28,9 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Trunkline from "./pages/Trunkline";
 import Events from "./pages/Events";
+import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
-// Create query client with stable configuration
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -73,6 +66,7 @@ const App = () => (
                 <Route path="/trunkline-login" element={<Trunkline />} />
                 <Route path="/trunkline" element={<Trunkline />} />
               </Routes>
+              <SearchOptimizationMonitor />
             </CartProvider>
           </ProfileProvider>
         </AuthProvider>

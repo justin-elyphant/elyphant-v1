@@ -12,16 +12,8 @@ import UnifiedDeliverySection from "./UnifiedDeliverySection";
 import GiftScheduleForm from "./GiftScheduleForm";
 import { toast } from "sonner";
 
-interface CheckoutTabsProps {
-  expressMode?: boolean;
-  expressType?: 'self' | 'gift' | null;
-}
-
-const CheckoutTabs: React.FC<CheckoutTabsProps> = ({ 
-  expressMode = false, 
-  expressType = null 
-}) => {
-  const { cartItems, clearCart } = useCart();
+const CheckoutTabs: React.FC = () => {
+  const { cartItems, cartGroups, clearCart } = useCart();
   const { adaptiveFlow } = useAdaptiveCheckout();
   const {
     activeTab,
@@ -38,42 +30,25 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
     getShippingCost
   } = useCheckoutState();
 
-  // Determine tabs based on express mode
-  const getTabsForMode = () => {
-    if (expressMode) {
-      if (expressType === 'gift') {
-        return [
-          { id: 'gift-options', label: 'Gift Options', icon: '🎁' },
-          { id: 'payment', label: 'Payment', icon: '💳' }
-        ];
-      } else {
-        return [
-          { id: 'shipping', label: 'Shipping', icon: '📦' },
-          { id: 'payment', label: 'Payment', icon: '💳' }
-        ];
-      }
+  // Determine if we have any gifts in the cart
+  const hasGifts = cartGroups.some(group => group.connectionId !== null);
+
+  // Determine tabs based on cart contents
+  const getTabsForCheckout = () => {
+    const baseTabs = [
+      { id: 'shipping', label: 'Shipping', icon: '📦' },
+      { id: 'payment', label: 'Payment', icon: '💳' }
+    ];
+
+    // Add gift options if there are gifts
+    if (hasGifts) {
+      baseTabs.splice(1, 0, { id: 'gift-options', label: 'Gift Options', icon: '🎁' });
     }
-    
-    // Standard checkout tabs based on adaptive flow
-    return adaptiveFlow.tabs.map(tab => {
-      switch (tab) {
-        case 'shipping':
-          return { id: 'shipping', label: 'Shipping', icon: '📦' };
-        case 'recipients':
-          return { id: 'recipients', label: 'Recipients', icon: '👥' };
-        case 'schedule':
-          return { id: 'schedule', label: 'Schedule', icon: '📅' };
-        case 'delivery':
-          return { id: 'delivery', label: 'Delivery', icon: '🚚' };
-        case 'payment':
-          return { id: 'payment', label: 'Payment', icon: '💳' };
-        default:
-          return { id: tab, label: tab, icon: '⚙️' };
-      }
-    });
+
+    return baseTabs;
   };
 
-  const tabs = getTabsForMode();
+  const tabs = getTabsForCheckout();
 
   const handlePlaceOrder = async (paymentIntentId?: string) => {
     setIsProcessing(true);
@@ -82,8 +57,7 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
       console.log('Placing order with:', {
         checkoutData,
         paymentIntentId,
-        expressMode,
-        expressType
+        cartGroups
       });
       
       toast.success('Order placed successfully!');
@@ -118,12 +92,7 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">
-          {expressMode 
-            ? `Express ${expressType === 'gift' ? 'Gift' : 'Checkout'}`
-            : 'Checkout'
-          }
-        </CardTitle>
+        <CardTitle className="text-xl">Checkout</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -144,34 +113,6 @@ const CheckoutTabs: React.FC<CheckoutTabsProps> = ({
                   onSelect={handleShippingMethodChange}
                   shippingOptions={checkoutData.shippingOptions}
                   isLoading={isLoadingShipping}
-                />
-              )}
-              {tab.id === 'recipients' && (
-                <UnifiedDeliverySection
-                  scenario={adaptiveFlow.scenario}
-                  shippingInfo={checkoutData.shippingInfo}
-                  onUpdateShippingInfo={handleUpdateShippingInfo}
-                  selectedShippingMethod={checkoutData.shippingMethod}
-                  onShippingMethodChange={handleShippingMethodChange}
-                  shippingOptions={checkoutData.shippingOptions}
-                  isLoadingShipping={isLoadingShipping}
-                />
-              )}
-              {tab.id === 'schedule' && (
-                <GiftScheduleForm
-                  giftOptions={checkoutData.giftOptions}
-                  onUpdate={handleGiftOptionsChange}
-                />
-              )}
-              {tab.id === 'delivery' && (
-                <UnifiedDeliverySection
-                  scenario={adaptiveFlow.scenario}
-                  shippingInfo={checkoutData.shippingInfo}
-                  onUpdateShippingInfo={handleUpdateShippingInfo}
-                  selectedShippingMethod={checkoutData.shippingMethod}
-                  onShippingMethodChange={handleShippingMethodChange}
-                  shippingOptions={checkoutData.shippingOptions}
-                  isLoadingShipping={isLoadingShipping}
                 />
               )}
               {tab.id === 'gift-options' && (

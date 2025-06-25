@@ -220,9 +220,9 @@ export const getFeaturedCategories = (): Category[] => {
 };
 
 export const getQuickAccessCategories = (): Category[] => {
-  // Return popular categories for quick access buttons
+  // Return popular categories for quick access buttons, including Flowers as second
   return UNIVERSAL_CATEGORIES.filter(cat => 
-    ['electronics', 'fashion', 'beauty', 'gaming', 'tech', 'toys'].includes(cat.value)
+    ['electronics', 'flowers', 'fashion', 'beauty', 'gaming', 'tech'].includes(cat.value)
   );
 };
 

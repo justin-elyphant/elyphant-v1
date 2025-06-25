@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +9,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
 
 const categories = [
@@ -21,6 +24,14 @@ const categories = [
   },
   {
     id: 2,
+    name: "Flowers",
+    icon: Flower,
+    category: "flowers",
+    searchTerm: "flowers for delivery",
+    description: "Fresh flowers and arrangements"
+  },
+  {
+    id: 3,
     name: "Fashion",
     icon: Shirt,
     category: "fashion",
@@ -28,7 +39,7 @@ const categories = [
     description: "Clothing and accessories"
   },
   {
-    id: 3,
+    id: 4,
     name: "Home & Living",
     icon: Home,
     category: "home",
@@ -36,7 +47,7 @@ const categories = [
     description: "Decor and household items"
   },
   {
-    id: 4,
+    id: 5,
     name: "Beauty",
     icon: Heart,
     category: "beauty",
@@ -44,7 +55,7 @@ const categories = [
     description: "Skincare and cosmetics"
   },
   {
-    id: 5,
+    id: 6,
     name: "Sports",
     icon: Dumbbell,
     category: "sports",
@@ -52,7 +63,7 @@ const categories = [
     description: "Fitness and outdoor gear"
   },
   {
-    id: 6,
+    id: 7,
     name: "Books",
     icon: BookOpen,
     category: "books",
@@ -60,7 +71,7 @@ const categories = [
     description: "Literature and educational"
   },
   {
-    id: 7,
+    id: 8,
     name: "Toys & Games",
     icon: Gamepad2,
     category: "toys",
@@ -68,7 +79,7 @@ const categories = [
     description: "Fun for all ages"
   },
   {
-    id: 8,
+    id: 9,
     name: "Food & Drinks",
     icon: Coffee,
     category: "food",
@@ -76,7 +87,7 @@ const categories = [
     description: "Gourmet and specialty items"
   },
   {
-    id: 9,
+    id: 10,
     name: "Arts & Crafts",
     icon: Palette,
     category: "arts",
@@ -84,20 +95,12 @@ const categories = [
     description: "Creative supplies and tools"
   },
   {
-    id: 10,
+    id: 11,
     name: "Health",
     icon: Pill,
     category: "health",
     searchTerm: "best wellness products",
     description: "Wellness and self-care"
-  },
-  {
-    id: 11,
-    name: "Flowers",
-    icon: Flower,
-    category: "flowers",
-    searchTerm: "flowers for delivery",
-    description: "Fresh flowers and arrangements"
   }
 ];
 
@@ -164,6 +167,10 @@ const FeaturedCategories: React.FC = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
+            
+            {/* Navigation arrows - hidden on mobile, visible on desktop */}
+            <CarouselPrevious className="hidden md:flex -left-12 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50" />
+            <CarouselNext className="hidden md:flex -right-12 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50" />
           </Carousel>
         </div>
       </ResponsiveContainer>

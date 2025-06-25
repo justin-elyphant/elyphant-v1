@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
@@ -26,6 +25,7 @@ export const categories = [
   { name: "Craft Supplies & Tools", url: "craft-supplies", searchTerm: "best selling craft supplies" },
   { name: "Electronics & Accessories", url: "electronics", searchTerm: "best selling electronics" },
   { name: "Experiences", url: "experiences", searchTerm: "best selling experience gifts" },
+  { name: "Flowers", url: "flowers", searchTerm: "flowers for delivery" },
   { name: "Gaming", url: "gaming", searchTerm: "best selling gaming" },
   { name: "Gifts", url: "gifts", searchTerm: "best selling gifts" },
   { name: "Home & Living", url: "home-living", searchTerm: "best selling home living" },

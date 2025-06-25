@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Smartphone, Shirt, Home, Heart, Dumbbell, BookOpen, Gamepad2, Coffee, Palette, Pill } from "lucide-react";
+import { ArrowRight, Smartphone, Shirt, Home, Heart, Dumbbell, BookOpen, Gamepad2, Coffee, Palette, Pill, Flower } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import {
@@ -90,6 +90,14 @@ const categories = [
     category: "health",
     searchTerm: "best wellness products",
     description: "Wellness and self-care"
+  },
+  {
+    id: 11,
+    name: "Flowers",
+    icon: Flower,
+    category: "flowers",
+    searchTerm: "flowers for delivery",
+    description: "Fresh flowers and arrangements"
   }
 ];
 

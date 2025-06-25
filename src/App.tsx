@@ -28,7 +28,6 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Trunkline from "./pages/Trunkline";
 import Events from "./pages/Events";
-import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
 
@@ -66,7 +65,6 @@ const App = () => (
                 <Route path="/trunkline-login" element={<Trunkline />} />
                 <Route path="/trunkline" element={<Trunkline />} />
               </Routes>
-              <SearchOptimizationMonitor />
             </CartProvider>
           </ProfileProvider>
         </AuthProvider>

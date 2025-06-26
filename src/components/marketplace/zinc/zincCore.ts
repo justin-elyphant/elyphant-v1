@@ -3,25 +3,19 @@
 export const ZINC_API_BASE_URL = 'https://api.zinc.io/v1';
 
 // Environment variables
-const ZINC_API_TOKEN = import.meta.env.VITE_ZINC_API_TOKEN || '';
 const MOCK_API_RESPONSE = import.meta.env.VITE_MOCK_API === 'true' || false; // Default to false to use real API
 
 /**
  * Get headers needed for Zinc API requests using Basic Auth
+ * Note: This is only used for client-side API calls, which are deprecated.
+ * The edge function handles API authentication server-side.
  */
 export const getZincHeaders = () => {
-  // Get the token from localStorage if available, otherwise use env var
-  const storedToken = localStorage.getItem('zincApiToken');
-  const token = storedToken || ZINC_API_TOKEN;
-
-  // Using Basic Auth as shown in Zinc documentation
-  // Base64 encode the API token with empty password (token:)
-  const base64Credentials = btoa(`${token}:`); 
+  // This function is deprecated - API calls should go through edge functions
+  console.warn('getZincHeaders is deprecated. Use edge functions for API calls.');
   
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Basic ${base64Credentials}`,
-    // Add CORS headers - though these only work server-side
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
@@ -44,54 +38,40 @@ export const isTestMode = (): boolean => {
 };
 
 /**
- * Check if we have a valid Zinc API token
- * In a real implementation, this would validate against the actual API
+ * Legacy functions - these are maintained for backward compatibility
+ * but should not be used for API validation since API calls go through edge functions
  */
-export const hasValidZincToken = (): boolean => {
-  const storedToken = localStorage.getItem('zincApiToken');
-  const token = storedToken || ZINC_API_TOKEN;
-  
-  // Consider a token valid if it's at least 10 chars
-  return !!(token && token.trim() !== '' && token.trim().length >= 10);
-};
 
 /**
- * Set the Zinc API token in localStorage
+ * Set a placeholder token in localStorage (legacy support)
  */
 export const setZincApiToken = (token: string): void => {
   if (token && token.trim() !== '') {
-    // Store the token
     localStorage.setItem('zincApiToken', token.trim());
-    console.log('Zinc API token saved to localStorage');
+    console.log('Zinc API token saved to localStorage (legacy)');
     
-    // Also store connection status
     const connection = {
       autoFulfillment: false,
       lastSync: Date.now()
     };
     localStorage.setItem("zincConnection", JSON.stringify(connection));
-    
-    // Log that we have a valid token
-    console.log('Zinc API token set. Token valid:', hasValidZincToken());
   } else {
     console.warn('Attempted to save empty Zinc API token. No changes made.');
   }
 };
 
 /**
- * Get the current Zinc API token
+ * Get the current token from localStorage (legacy support)
  */
 export const getZincApiToken = (): string => {
-  const storedToken = localStorage.getItem('zincApiToken') || '';
-  const envToken = ZINC_API_TOKEN || '';
-  return storedToken || envToken;
+  return localStorage.getItem('zincApiToken') || '';
 };
 
 /**
- * Clear the Zinc API token from localStorage
+ * Clear the token from localStorage (legacy support)
  */
 export const clearZincApiToken = (): void => {
   localStorage.removeItem('zincApiToken');
   localStorage.removeItem("zincConnection");
-  console.log('Zinc API token removed from localStorage');
+  console.log('Zinc API token removed from localStorage (legacy)');
 };

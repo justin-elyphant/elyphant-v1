@@ -4,15 +4,12 @@
  */
 import { ZincProduct } from "../../types";
 import { getSpecialCaseProducts } from "../../utils/specialCaseHandler";
-import { isTestMode, hasValidZincToken } from "../../zincCore";
+import { isTestMode } from "../../zincCore";
 import { validateSearchQuery, enhanceSearchQuery, correctSearchQuery, getPadresHatQuery } from "./searchValidationUtils";
 import { getMockResults } from "./mockResultsHandler";
 import { searchZincApi } from "./zincApiService";
 import { validateProductImages, filterRelevantProducts } from "./productValidationUtils";
 import { filterAndSortProductsBrandFirst, generateEnhancedSearchContext } from "../../utils/search/enhancedProductFiltering";
-
-// Track whether we've shown token error toast
-let hasShownTokenError = false;
 
 /**
  * Search for products using the Zinc API with enhanced brand-first logic
@@ -57,7 +54,7 @@ export const searchProducts = async (
   let finalQuery = padresHatQuery || enhancedQuery;
   
   try {
-    // Always attempt to use the real API first
+    // Always attempt to use the real API first - let the edge function handle API key validation
     console.log(`Using Zinc API via edge function for query: "${finalQuery}"`);
     
     // Try with enhanced query first
@@ -144,9 +141,9 @@ export const searchProducts = async (
       return brandFirstResults.slice(0, numResults);
     }
     
-    // Last resort - if we have no results, use mock data only as final fallback
-    if (isTestMode() || !hasValidZincToken()) {
-      console.log(`Using mock data as final fallback for product search: ${finalQuery}`);
+    // Only use mock data if we're in explicit test mode or no API results
+    if (isTestMode()) {
+      console.log(`Using mock data as fallback for product search: ${finalQuery}`);
       const mockResults = getMockResults(finalQuery, numResults);
       
       // Apply brand-first filtering to mock results too
@@ -169,8 +166,9 @@ export const searchProducts = async (
   } catch (error) {
     console.error(`Error searching for products: ${error}`);
     
-    // Only use mock results for fallback in case of errors if no real API available
-    if (isTestMode() || !hasValidZincToken()) {
+    // Only use mock results for fallback in case of errors if in test mode
+    if (isTestMode()) {
+      console.log(`Using mock fallback due to API error for: ${finalQuery}`);
       const mockResults = getMockResults(finalQuery, numResults);
       
       // Apply brand-first filtering to mock results
@@ -187,6 +185,7 @@ export const searchProducts = async (
     }
     
     // Return empty array to indicate error with real API
+    console.log(`API error occurred, returning empty results: ${error}`);
     return [];
   }
 };

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useZincIntegration } from "./useZincIntegration";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +9,6 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, RefreshCcw, Info, ExternalLink, AlertTriangle } from "lucide-react";
 import ZincProductsTab from "./ZincProductsTab";
-import { hasValidZincToken } from "./zincCore";
 
 const ZincIntegration = () => {
   const { 

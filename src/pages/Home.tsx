@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -8,7 +9,6 @@ import HomeCTA from "@/components/home/sections/HomeCTA";
 import FeaturedCollections from "@/components/home/sections/FeaturedCollections";
 import FeaturedCategories from "@/components/home/sections/FeaturedCategories";
 import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
-import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import NicoleIntroSection from "@/components/home/sections/NicoleIntroSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
@@ -179,9 +179,6 @@ const Home = () => {
 
           {/* Nicole Introduction Section - now with full bleed */}
           <NicoleIntroSection />
-
-          {/* Trending Products Carousel */}
-          <FeaturedProductsSection />
 
           {/* Seasonal Gift Guide - enhanced for mobile */}
           <SeasonalGiftGuide />

@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { LogOut, X } from "lucide-react";
 
 interface MobileMenuProps {
@@ -32,17 +31,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-white">
           <h2 className="text-lg font-semibold">Menu</h2>
-          <div className="flex items-center gap-2">
-            <ThemeToggle size="sm" showTooltip={false} />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onClose}
-              className="p-2"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="p-2"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         {/* Content */}

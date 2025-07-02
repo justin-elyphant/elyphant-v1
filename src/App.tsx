@@ -121,9 +121,9 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <TooltipProvider>
-              <AuthProvider>
-                <ProductProvider>
-                  <Router>
+              <Router>
+                <AuthProvider>
+                  <ProductProvider>
                     <div className="min-h-screen bg-background">
                       <Routes>
                         {/* Auth routes without MainLayout */}
@@ -179,9 +179,9 @@ function App() {
                       </Routes>
                     </div>
                     <Toaster />
-                  </Router>
-                </ProductProvider>
-              </AuthProvider>
+                  </ProductProvider>
+                </AuthProvider>
+              </Router>
             </TooltipProvider>
           </ThemeProvider>
         </QueryClientProvider>

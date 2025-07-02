@@ -43,6 +43,10 @@ const NavigationBar = () => {
     return window.location.pathname === path;
   };
 
+  const handleMobileMenuToggle = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   const handleMobileMenuClose = () => {
     setIsMobileMenuOpen(false);
   };
@@ -90,26 +94,25 @@ const NavigationBar = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={HEADER_STYLES.hamburgerButton}
+            onClick={handleMobileMenuToggle}
+            className={`${HEADER_STYLES.hamburgerButton} ${isMobileMenuOpen ? 'bg-gray-100' : ''}`}
+            aria-label="Toggle menu"
           >
             <Menu className={HEADER_STYLES.hamburgerIcon} />
           </Button>
         </div>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className={HEADER_STYLES.mobileMenu}>
-          <MobileMenu
-            links={links}
-            marketplaceItems={marketplaceItems}
-            connectionsItems={connectionsItems}
-            isActive={isActive}
-            onClose={handleMobileMenuClose}
-            signOut={signOut}
-          />
-        </div>
+        <MobileMenu
+          links={links}
+          marketplaceItems={marketplaceItems}
+          connectionsItems={connectionsItems}
+          isActive={isActive}
+          onClose={handleMobileMenuClose}
+          signOut={signOut}
+        />
       )}
     </>
   );

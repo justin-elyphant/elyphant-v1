@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { LogOut, Users, ShoppingBag, Gift } from "lucide-react";
+import { LogOut, X } from "lucide-react";
 
 interface MobileMenuProps {
   links: Array<{ label: string; href: string }>;
@@ -27,95 +27,124 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   const { user } = useAuth();
 
   return (
-    <div className="fixed inset-0 top-16 z-40 bg-white border-t shadow-lg md:hidden">
-      <div className="p-4 h-full overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 pb-2 border-b">
-          <p className="text-sm font-medium">Menu</p>
-          <ThemeToggle size="sm" showTooltip={false} />
-        </div>
-        
-        <nav className="flex flex-col space-y-3">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
-              className={`py-3 px-4 rounded-md text-left ${isActive(link.href)
-                ? "bg-primary/10 text-primary font-semibold" 
-                : "hover:bg-muted"}`}
+    <div className="fixed inset-0 top-16 z-50 bg-white md:hidden overflow-y-auto">
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-white">
+          <h2 className="text-lg font-semibold">Menu</h2>
+          <div className="flex items-center gap-2">
+            <ThemeToggle size="sm" showTooltip={false} />
+            <Button 
+              variant="ghost" 
+              size="sm" 
               onClick={onClose}
+              className="p-2"
             >
-              {link.label}
-            </Link>
-          ))}
-          
-          {/* Mobile Marketplace Menu */}
-          <div className="space-y-1 border-t pt-3">
-            <p className="px-4 py-2 text-sm font-semibold text-muted-foreground">Marketplace</p>
-            {marketplaceItems.map((item, index) => (
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-4 space-y-4">
+          {/* Main Navigation Links */}
+          <div className="space-y-2">
+            {links.map((link) => (
               <Link
-                key={index}
-                to={item.href}
-                className={`py-3 px-6 rounded-md flex items-center ${isActive(item.href)
-                  ? "bg-primary/10 text-primary font-semibold" 
-                  : "hover:bg-muted"}`}
+                key={link.href}
+                to={link.href}
+                className={`block py-3 px-4 rounded-lg text-left transition-colors ${
+                  isActive(link.href)
+                    ? "bg-primary/10 text-primary font-semibold" 
+                    : "hover:bg-gray-100 text-gray-700"
+                }`}
                 onClick={onClose}
               >
-                {item.icon && <span className="mr-3">{item.icon}</span>}
-                {item.label}
+                {link.label}
               </Link>
             ))}
           </div>
           
-          {/* Mobile Connections Menu (for logged in users) */}
-          {user && (
-            <div className="space-y-1 border-t pt-3">
-              <p className="px-4 py-2 text-sm font-semibold text-muted-foreground">Connections</p>
-              {connectionsItems.map((item, index) => (
+          {/* Marketplace Section */}
+          <div className="border-t pt-4">
+            <h3 className="px-4 py-2 text-sm font-semibold text-gray-600 uppercase tracking-wide">
+              Marketplace
+            </h3>
+            <div className="space-y-1">
+              {marketplaceItems.map((item, index) => (
                 <Link
                   key={index}
                   to={item.href}
-                  className={`py-3 px-6 rounded-md flex items-center ${isActive(item.href)
-                    ? "bg-primary/10 text-primary font-semibold" 
-                    : "hover:bg-muted"}`}
+                  className={`flex items-center py-3 px-4 rounded-lg transition-colors ${
+                    isActive(item.href)
+                      ? "bg-primary/10 text-primary font-semibold" 
+                      : "hover:bg-gray-100 text-gray-700"
+                  }`}
                   onClick={onClose}
                 >
-                  {item.icon && <span className="mr-3">{item.icon}</span>}
-                  {item.label}
+                  {item.icon && <span className="mr-3 text-lg">{item.icon}</span>}
+                  <span>{item.label}</span>
                 </Link>
               ))}
             </div>
-          )}
+          </div>
           
-          {/* Authentication buttons for mobile */}
+          {/* Connections Section (for logged in users) */}
+          {user && (
+            <div className="border-t pt-4">
+              <h3 className="px-4 py-2 text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                Connections
+              </h3>
+              <div className="space-y-1">
+                {connectionsItems.map((item, index) => (
+                  <Link
+                    key={index}
+                    to={item.href}
+                    className={`flex items-center py-3 px-4 rounded-lg transition-colors ${
+                      isActive(item.href)
+                        ? "bg-primary/10 text-primary font-semibold" 
+                        : "hover:bg-gray-100 text-gray-700"
+                    }`}
+                    onClick={onClose}
+                  >
+                    {item.icon && <span className="mr-3 text-lg">{item.icon}</span>}
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer - Authentication */}
+        <div className="border-t bg-gray-50 p-4">
           {!user ? (
-            <div className="pt-4 border-t border-border flex flex-col space-y-3">
-              <Button asChild className="w-full py-3">
+            <div className="space-y-3">
+              <Button asChild className="w-full">
                 <Link to="/signup" onClick={onClose}>
                   Sign Up
                 </Link>
               </Button>
-              <Button variant="outline" asChild className="w-full py-3">
+              <Button variant="outline" asChild className="w-full">
                 <Link to="/login" onClick={onClose}>
                   Log In
                 </Link>
               </Button>
             </div>
           ) : (
-            <div className="pt-4 border-t border-border">
-              <Button 
-                variant="outline" 
-                className="w-full py-3 text-destructive hover:text-destructive"
-                onClick={() => {
-                  signOut();
-                  onClose();
-                }}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => {
+                signOut();
+                onClose();
+              }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log Out
+            </Button>
           )}
-        </nav>
+        </div>
       </div>
     </div>
   );

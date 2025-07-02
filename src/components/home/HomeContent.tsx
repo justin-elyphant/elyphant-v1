@@ -22,6 +22,8 @@ const HomeContent = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
+  console.log("HomeContent is rendering, user:", user);
+
   // Sample collections data - updated to use guided search approach
   const collections = [
     {
@@ -33,7 +35,7 @@ const HomeContent = () => {
     },
     {
       id: 2,
-      name: "Gifts for Him",
+      name: "Gifts for Him", 
       image: "/lovable-uploads/99d6a4f4-681f-4904-98fb-7c29bafba9d2.png",
       callToAction: "Shop Now",
       searchTerm: "gifts for men"

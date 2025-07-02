@@ -1,8 +1,14 @@
 
-import React from "react";
+import React, { useState } from "react";
 import GiftSchedulingTabs from "./GiftSchedulingTabs";
 
 const GiftSchedulingContent = () => {
+  const [selectedTab, setSelectedTab] = useState("upcoming");
+  
+  // Mock data - in a real app, these would come from your data source
+  const upcomingGifts = [];
+  const pastGifts = [];
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -12,7 +18,12 @@ const GiftSchedulingContent = () => {
         </p>
       </div>
       
-      <GiftSchedulingTabs />
+      <GiftSchedulingTabs 
+        upcomingGifts={upcomingGifts}
+        pastGifts={pastGifts}
+        selectedTab={selectedTab}
+        setSelectedTab={setSelectedTab}
+      />
     </div>
   );
 };

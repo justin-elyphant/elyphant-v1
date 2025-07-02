@@ -3,7 +3,11 @@ import React from "react";
 import EventsContent from "@/components/gifting/events/views/EnhancedEventsContainer";
 
 const Events = () => {
-  return <EventsContent />;
+  const handleAddEvent = () => {
+    console.log("Add event from Events page");
+  };
+
+  return <EventsContent onAddEvent={handleAddEvent} />;
 };
 
 export default Events;

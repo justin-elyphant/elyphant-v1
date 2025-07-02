@@ -6,6 +6,10 @@ import FriendsWishlists from "./FriendsWishlists";
 import UpcomingEvents from "./UpcomingEvents";
 
 const GiftingContent = () => {
+  const handleAddEvent = () => {
+    console.log("Add event clicked");
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -31,7 +35,7 @@ const GiftingContent = () => {
         </TabsContent>
         
         <TabsContent value="events" className="mt-6">
-          <UpcomingEvents />
+          <UpcomingEvents onAddEvent={handleAddEvent} />
         </TabsContent>
       </Tabs>
     </div>

@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth";
 import { ProductProvider } from "@/contexts/ProductContext";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "next-themes";
 import MainLayout from "@/components/layout/MainLayout";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
@@ -16,7 +16,6 @@ import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
 import EmailVerification from "@/pages/EmailVerification";
 import Marketplace from "@/pages/Marketplace";
-import ProductDetail from "@/pages/ProductDetail";
 import Gifting from "@/pages/Gifting";
 import MyWishlists from "@/pages/MyWishlists";
 import SharedWishlist from "@/pages/SharedWishlist";
@@ -27,7 +26,6 @@ import Returns from "@/pages/Returns";
 import Dashboard from "@/pages/Dashboard";
 import GiftScheduling from "@/pages/GiftScheduling";
 import Crowdfunding from "@/pages/Crowdfunding";
-import Admin from "@/pages/Admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,7 +54,6 @@ function App() {
                     {/* All other routes wrapped in MainLayout */}
                     <Route path="/" element={<MainLayout><Index /></MainLayout>} />
                     <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
-                    <Route path="/product/:id" element={<MainLayout><ProductDetail /></MainLayout>} />
                     <Route path="/gifting" element={<MainLayout><Gifting /></MainLayout>} />
                     <Route path="/my-wishlists" element={
                       <ProtectedRoute>
@@ -97,11 +94,6 @@ function App() {
                     <Route path="/crowdfunding" element={
                       <ProtectedRoute>
                         <MainLayout><Crowdfunding /></MainLayout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin" element={
-                      <ProtectedRoute>
-                        <MainLayout><Admin /></MainLayout>
                       </ProtectedRoute>
                     } />
                   </Routes>

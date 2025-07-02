@@ -6,12 +6,7 @@ import FriendsTabContent from "./FriendsTabContent";
 import FollowingTabContent from "./FollowingTabContent";
 import SuggestionsTabContent from "./SuggestionsTabContent";
 import ConnectionRequests from "./ConnectionRequests";
-
-// Define proper types for connections
-interface ConnectionFilters {
-  relationship: "all" | "friend" | "family" | "colleague" | "other";
-  verificationStatus: "all" | "verified" | "unverified";
-}
+import { ConnectionFilters } from "@/hooks/useConnections";
 
 const ConnectionsContent = () => {
   const [activeTab, setActiveTab] = useState("friends");

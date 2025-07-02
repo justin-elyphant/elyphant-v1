@@ -1,294 +1,279 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Search, LogIn, ShoppingBag, User, Heart, Calendar, Settings, Users, HelpCircle } from "lucide-react";
+
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import AuthButtons from "./AuthButtons";
-import UserButton from "@/components/auth/UserButton";
 import { useAuth } from "@/contexts/auth";
-import { useProfile } from "@/hooks/profile/useProfile";
-import { useViewport } from "@/hooks/useViewport";
-import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
-import CategoryFilterBar from "./CategoryFilterBar";
-import ShoppingCartButton from "@/components/marketplace/components/ShoppingCartButton";
+import { ShoppingCart, Menu, X, Search, Gift, Users, ShoppingBag, Heart, Calendar, Settings, User, HelpCircle, Info, LogOut } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import UserDropdownMenu from "@/components/navigation/components/UserDropdownMenu";
 
 const NavigationBar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const { user } = useAuth();
-  const { profile } = useProfile();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
-  const { isMobile } = useViewport();
-  
-  // Close mobile menu on route change
-  useEffect(() => {
-    setIsMenuOpen(false);
-    setIsSearchModalOpen(false);
-  }, [location.pathname]);
-  
-  // Prevent body scroll when mobile menu or search modal is open
-  useEffect(() => {
-    if (isMobile) {
-      document.body.style.overflow = (isMenuOpen || isSearchModalOpen) ? 'hidden' : '';
-      
-      return () => {
-        document.body.style.overflow = '';
-      };
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/marketplace?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsMobileMenuOpen(false);
+      setSearchQuery("");
     }
-  }, [isMenuOpen, isSearchModalOpen, isMobile]);
-  
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
   };
 
-  const toggleSearchModal = () => {
-    setIsSearchModalOpen(!isSearchModalOpen);
-  };
-
-  // Enhanced mobile menu structure for modern e-commerce
-  const getMenuSections = () => {
-    const sections = [
-      {
-        title: "SHOP",
-        items: [
-          { label: "Marketplace", path: "/marketplace", icon: ShoppingBag, requireAuth: false },
-          { label: "Categories", path: "/marketplace/categories", icon: Search, requireAuth: false },
-          { label: "Trending", path: "/marketplace/trending", icon: Heart, requireAuth: false },
-        ]
-      }
-    ];
-
-    // Add authenticated sections
-    if (user) {
-      sections.push(
-        {
-          title: "MY ACCOUNT",
-          items: [
-            { label: "Dashboard", path: "/dashboard", icon: User, requireAuth: true },
-            { label: "My Orders", path: "/orders", icon: ShoppingBag, requireAuth: true },
-            { label: "My Wishlists", path: "/wishlists", icon: Heart, requireAuth: true },
-            { label: "Events & Dates", path: "/events", icon: Calendar, requireAuth: true },
-            { label: "Settings", path: "/profile-setup", icon: Settings, requireAuth: true },
-          ]
-        },
-        {
-          title: "CONNECT",
-          items: [
-            { label: "My Friends", path: "/connections/friends", icon: Users, requireAuth: true },
-            { label: "Find Friends", path: "/connections/find", icon: Users, requireAuth: true },
-          ]
-        }
-      );
+  const handleProtectedNavigation = (path: string, label: string) => {
+    if (!user) {
+      navigate(`/signin?redirect=${encodeURIComponent(path)}`);
+      return;
     }
-
-    // Always show support section
-    sections.push({
-      title: "SUPPORT",
-      items: [
-        { label: "Help Center", path: "/help", icon: HelpCircle, requireAuth: false },
-        { label: "Contact Us", path: "/contact", icon: HelpCircle, requireAuth: false },
-      ]
-    });
-
-    return sections;
+    navigate(path);
+    setIsMobileMenuOpen(false);
   };
 
-  const handleProtectedRoute = (path: string, requireAuth: boolean) => {
-    if (requireAuth && !user) {
-      // Redirect to sign-in with return path
-      return `/signin?redirect=${encodeURIComponent(path)}`;
-    }
-    return path;
-  };
+  const publicShopItems = [
+    { label: "Marketplace", href: "/marketplace", icon: ShoppingBag },
+    { label: "Categories", href: "/marketplace?category=all", icon: Gift },
+    { label: "Trending", href: "/marketplace?sort=popular", icon: Heart },
+  ];
+
+  const protectedAccountItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "My Orders", href: "/orders" },
+    { label: "My Wishlists", href: "/my-wishlists" },
+    { label: "Events & Dates", href: "/events" },
+    { label: "Settings", href: "/settings" },
+    { label: "Profile", href: "/profile" },
+  ];
+
+  const protectedConnectItems = [
+    { label: "My Friends", href: "/connections" },
+    { label: "Find Friends", href: "/connections?tab=suggestions" },
+    { label: "Messages", href: "/messages" },
+  ];
+
+  const supportItems = [
+    { label: "Help Center", href: "/help" },
+    { label: "Contact Us", href: "/contact" },
+    { label: "About Us", href: "/about" },
+  ];
 
   return (
-    <>
-      <nav className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4">
-          {/* Main navigation row */}
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center cursor-pointer flex-shrink-0">
-              <img 
-                src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
-                alt="Elyphant" 
-                className="h-10 w-10 mr-2" 
-              />
-              <h1 className="text-xl font-bold text-purple-700">Elyphant</h1>
-            </Link>
-            
-            {/* Desktop Search Bar */}
-            {!isMobile && (
-              <div className="flex-1 max-w-2xl mx-8">
-                <AIEnhancedSearchBar />
-              </div>
-            )}
-            
-            {/* Right side actions */}
-            <div className="flex items-center space-x-3 flex-shrink-0">
-              {/* Mobile Search Icon */}
-              {isMobile && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={toggleSearchModal}
-                  className="h-10 w-10"
-                  aria-label="Search"
-                >
-                  <Search size={20} />
-                </Button>
-              )}
-              
-              <ShoppingCartButton />
-              
-              {/* Mobile Sign In Button */}
-              {isMobile && !user && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  asChild
-                  className="h-10 w-10"
-                  aria-label="Sign In"
-                >
-                  <Link to="/signin">
-                    <LogIn size={20} />
-                  </Link>
-                </Button>
-              )}
-              
-              <div className="hidden md:flex">
-                {user ? (
-                  <UserButton />
-                ) : (
-                  <AuthButtons profileImage={profile?.profile_image} />
-                )}
-              </div>
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex container mx-auto px-4 py-4 items-center justify-between">
+        <Link to="/" className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+            <Gift className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-bold text-purple-600">Elyphant</span>
+        </Link>
 
-              {/* Mobile menu button */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleMenu} 
-                className="md:hidden h-10 w-10"
-                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-              >
-                {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        <div className="flex items-center space-x-6">
+          <Link to="/marketplace" className="text-gray-700 hover:text-purple-600">
+            Marketplace
+          </Link>
+          <Link to="/events" className="text-gray-700 hover:text-purple-600">
+            Events
+          </Link>
+          {user && (
+            <Link to="/connections" className="text-gray-700 hover:text-purple-600">
+              Friends
+            </Link>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/marketplace">
+              <ShoppingCart className="w-5 h-5" />
+            </Link>
+          </Button>
+          
+          {user ? (
+            <UserDropdownMenu />
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/signin">Sign In</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/signup">Sign Up</Link>
               </Button>
             </div>
-          </div>
-          
-          {/* Category filter bar - desktop only */}
-          {!isMobile && (
-            <div className="py-2 border-t border-gray-100">
-              <CategoryFilterBar />
-            </div>
           )}
-          
-          {/* Enhanced Mobile Navigation Menu */}
-          {isMenuOpen && (
-            <div className="fixed inset-0 top-[64px] bg-white z-50 flex flex-col md:hidden overflow-y-auto">
-              {/* Mobile Search Bar - Keep at top */}
-              <div className="p-4 border-b border-gray-100">
-                <AIEnhancedSearchBar mobile={true} />
-                <div className="mt-2">
-                  <CategoryFilterBar mobile={true} />
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+              <Gift className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-purple-600">Elyphant</span>
+          </Link>
+
+          <div className="flex items-center space-x-3">
+            {/* Shopping Cart */}
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/marketplace">
+                <ShoppingCart className="w-5 h-5" />
+              </Link>
+            </Button>
+
+            {/* Hamburger Menu */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50">
+            <div className="px-4 py-4 space-y-6">
+              {/* Search Bar */}
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search for gifts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+                <Button type="submit" size="sm">
+                  Search
+                </Button>
+              </form>
+
+              {/* SHOP Section */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Shop</h3>
+                <div className="space-y-2">
+                  {publicShopItems.map((item, index) => (
+                    <Link
+                      key={index}
+                      to={item.href}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <item.icon className="w-5 h-5 text-gray-500" />
+                      <span className="text-gray-700">{item.label}</span>
+                    </Link>
+                  ))}
                 </div>
               </div>
-              
-              {/* Enhanced Menu Sections */}
-              <div className="flex-1 px-4 py-2">
-                {getMenuSections().map((section, sectionIndex) => (
-                  <div key={section.title} className={sectionIndex > 0 ? "mt-6" : ""}>
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 px-2">
-                      {section.title}
-                    </h3>
-                    <div className="space-y-1">
-                      {section.items.map((item) => {
-                        const IconComponent = item.icon;
-                        const targetPath = handleProtectedRoute(item.path, item.requireAuth);
-                        
-                        return (
-                          <Link
-                            key={item.path}
-                            to={targetPath}
-                            className={`flex items-center py-3 px-4 rounded-lg min-h-[48px] transition-colors ${
-                              location.pathname === item.path
-                                ? "bg-purple-50 text-purple-700 font-medium"
-                                : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                            }`}
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              // Show sign-in prompt for protected routes
-                              if (item.requireAuth && !user) {
-                                // The link already handles this with redirect parameter
-                              }
-                            }}
-                          >
-                            <IconComponent className="h-5 w-5 mr-3 flex-shrink-0" />
-                            <span className="text-base">{item.label}</span>
-                            {item.requireAuth && !user && (
-                              <span className="ml-auto text-xs text-gray-400">Sign in</span>
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+
+              {/* MY ACCOUNT Section */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Account</h3>
+                <div className="space-y-2">
+                  {protectedAccountItems.map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleProtectedNavigation(item.href, item.label)}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors w-full text-left"
+                    >
+                      <User className="w-5 h-5 text-gray-500" />
+                      <span className="text-gray-700">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              
+
+              {/* CONNECT Section */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Connect</h3>
+                <div className="space-y-2">
+                  {protectedConnectItems.map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleProtectedNavigation(item.href, item.label)}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors w-full text-left"
+                    >
+                      <Users className="w-5 h-5 text-gray-500" />
+                      <span className="text-gray-700">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SUPPORT Section */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Support</h3>
+                <div className="space-y-2">
+                  {supportItems.map((item, index) => (
+                    <Link
+                      key={index}
+                      to={item.href}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <HelpCircle className="w-5 h-5 text-gray-500" />
+                      <span className="text-gray-700">{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
               {/* Authentication Section */}
-              <div className="mt-auto p-4 border-t border-gray-100 bg-gray-50">
+              <div className="pt-4 border-t border-gray-200">
                 {user ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3 px-2">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {profile?.full_name || user.email}
-                        </p>
-                        <p className="text-xs text-gray-500">Signed in</p>
-                      </div>
+                  <div className="space-y-2">
+                    <div className="px-3 py-2">
+                      <p className="text-sm text-gray-600">Signed in as</p>
+                      <p className="font-medium text-gray-900">{user.email}</p>
                     </div>
-                    <UserButton />
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors w-full text-left text-red-600"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span>Sign Out</span>
+                    </button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-600 px-2">
-                      Sign in to access your account, orders, and wishlists
-                    </p>
-                    <AuthButtons profileImage={profile?.profile_image} />
+                  <div className="space-y-2">
+                    <Button
+                      asChild
+                      className="w-full"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Link to="/signup">Sign Up</Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="w-full"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Link to="/signin">Sign In</Link>
+                    </Button>
                   </div>
                 )}
               </div>
             </div>
-          )}
-        </div>
-      </nav>
-
-      {/* Mobile Search Modal - Keep existing */}
-      {isMobile && isSearchModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-start justify-center pt-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">Search</h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleSearchModal}
-                className="h-8 w-8"
-              >
-                <X size={16} />
-              </Button>
-            </div>
-            <div className="p-4">
-              <AIEnhancedSearchBar mobile={true} />
-            </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </nav>
   );
 };
 

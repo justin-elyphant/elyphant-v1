@@ -2,12 +2,7 @@
 import React from "react";
 import UserButton from "@/components/auth/UserButton";
 import { User } from "@supabase/supabase-js";
-
-interface NavDropdownItem {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-}
+import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 interface UserDropdownMenuProps {
   user?: User;

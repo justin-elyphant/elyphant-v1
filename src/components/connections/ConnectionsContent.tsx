@@ -6,7 +6,12 @@ import FriendsTabContent from "./FriendsTabContent";
 import FollowingTabContent from "./FollowingTabContent";
 import SuggestionsTabContent from "./SuggestionsTabContent";
 import ConnectionRequests from "./ConnectionRequests";
-import { ConnectionFilters } from "@/hooks/useConnections";
+
+// Define proper types for connections
+interface ConnectionFilters {
+  relationship: "all" | "friend" | "family" | "colleague" | "other";
+  verificationStatus: "all" | "verified" | "unverified";
+}
 
 const ConnectionsContent = () => {
   const [activeTab, setActiveTab] = useState("friends");
@@ -17,10 +22,10 @@ const ConnectionsContent = () => {
   });
 
   // Mock data - in a real app, these would come from your data source
-  const friends = [];
-  const following = [];
-  const suggestions = [];
-  const requests = [];
+  const friends: any[] = [];
+  const following: any[] = [];
+  const suggestions: any[] = [];
+  const requests: any[] = [];
 
   const handleRelationshipChange = (connectionId: string, newRelationship: any, customValue?: string) => {
     console.log("Relationship change:", connectionId, newRelationship, customValue);

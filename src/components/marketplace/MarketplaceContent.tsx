@@ -18,12 +18,14 @@ const MarketplaceContent: React.FC = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   
+  console.log("MarketplaceContent rendering, products:", products?.length || 0);
+  
   // Get search term from URL
   const searchTerm = searchParams.get("search") || "";
   
-  // Get marketplace products
-  const elyphantProducts = products.filter(p => p.vendor === "Elyphant");
-  const zincProducts = products.filter(p => p.vendor === "Amazon via Zinc");
+  // Get marketplace products with fallback
+  const elyphantProducts = products?.filter(p => p.vendor === "Elyphant") || [];
+  const zincProducts = products?.filter(p => p.vendor === "Amazon via Zinc") || [];
   
   // Clear filters when navigating
   useEffect(() => {

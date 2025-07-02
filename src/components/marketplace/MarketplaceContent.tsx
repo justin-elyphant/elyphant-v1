@@ -1,174 +1,116 @@
 
-import React, { useState, useMemo } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Product } from "@/types/product";
+import React, { useState, useEffect } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import MarketplaceHeader from "./header/MarketplaceHeader";
 import ProductGrid from "./ProductGrid";
-import ProductSkeleton from "./loading/ProductSkeleton";
-import MarketplaceToolbar from "./MarketplaceToolbar";
-import AdvancedFilterDrawer from "./filters/AdvancedFilterDrawer";
-import MobileMarketplaceLayout from "./mobile/MobileMarketplaceLayout";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertCircle } from "lucide-react";
-import { useEnhancedMarketplaceSearch } from "./hooks/useEnhancedMarketplaceSearch";
+import CategoryFilter from "./CategoryFilter";
+import PriceFilter from "./PriceFilter";
+import MobileFilters from "./mobile/MobileFilters";
+import ZincProductsTab from "./zinc/ZincProductsTab";
+import { useProducts } from "@/contexts/ProductContext";
 
-interface MarketplaceContentProps {
-  products: Product[];
-  isLoading: boolean;
-  searchTerm: string;
-  onProductView: (productId: string) => void;
-  showFilters: boolean;
-  setShowFilters: (show: boolean) => void;
-  error?: string | null;
-  onRefresh?: () => void;
-}
-
-const MarketplaceContent = ({
-  products,
-  isLoading: externalLoading,
-  searchTerm: externalSearchTerm,
-  onProductView,
-  showFilters,
-  setShowFilters,
-  error: externalError,
-  onRefresh,
-}: MarketplaceContentProps) => {
-  const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [currentPage, setCurrentPage] = useState(1);
+const MarketplaceContent: React.FC = () => {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { products } = useProducts();
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   
-  // Use enhanced search and filters
-  const {
-    filteredProducts,
-    availableCategories,
-    activeFilterCount,
-    updateFilters,
-    clearFilters,
-    filters,
-    isSearching,
-    error: searchError,
-    handleRetrySearch
-  } = useEnhancedMarketplaceSearch(currentPage);
+  // Get search term from URL
+  const searchTerm = searchParams.get("search") || "";
+  
+  // Get marketplace products
+  const elyphantProducts = products.filter(p => p.vendor === "Elyphant");
+  const zincProducts = products.filter(p => p.vendor === "Amazon via Zinc");
+  
+  // Clear filters when navigating
+  useEffect(() => {
+    setSelectedCategory("");
+    setPriceRange([0, 1000]);
+  }, [location.pathname]);
 
-  // Combine loading states
-  const isLoading = externalLoading || isSearching;
-  const error = externalError || searchError;
-
-  // Use mobile layout for mobile devices
-  if (isMobile) {
-    return (
-      <MobileMarketplaceLayout
-        products={filteredProducts} // Use filteredProducts from enhanced search
-        isLoading={isLoading}
-        searchTerm={externalSearchTerm}
-        onProductView={onProductView}
-        error={error}
-        onRefresh={onRefresh}
-      />
-    );
-  }
-
-  // Desktop layout continues as before
-  // Error state
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center max-w-md mx-auto">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <div className="flex gap-2 justify-center">
-            {onRefresh && (
-              <Button onClick={onRefresh} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Try Again
-              </Button>
-            )}
-            {searchError && (
-              <Button onClick={handleRetrySearch} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Search
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <div className="h-12 bg-gray-200 rounded animate-pulse mb-4" />
-        </div>
-        <ProductSkeleton count={isMobile ? 6 : 12} viewMode={viewMode} />
-      </div>
-    );
-  }
-
-  // Desktop content
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex gap-6">
-        {/* Desktop Filters Sidebar */}
-        {showFilters && (
-          <AdvancedFilterDrawer
-            filters={filters}
-            availableCategories={availableCategories}
-            activeFilterCount={activeFilterCount}
-            onUpdateFilters={updateFilters}
-            onClearFilters={clearFilters}
-          />
-        )}
-
-        {/* Main Content */}
-        <div className="flex-1">
-          {/* Toolbar */}
-          <div className="mb-6">
-            <MarketplaceToolbar
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              sortOption={filters.sortBy}
-              setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-              totalItems={filteredProducts.length}
-              showFilters={showFilters}
-              setShowFilters={setShowFilters}
-              isMobile={isMobile}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-            />
-          </div>
-
-          {/* Active Filters Display */}
-          {activeFilterCount > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} applied
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Clear all
-                </Button>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      <MarketplaceHeader />
+      
+      <div className="container mx-auto px-4 py-6">
+        <Tabs defaultValue="elyphant" className="w-full">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Desktop Filters Sidebar */}
+            <div className="hidden lg:block w-64 space-y-6">
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-4">Filters</h3>
+                  <div className="space-y-4">
+                    <CategoryFilter
+                      selectedCategory={selectedCategory}
+                      onCategoryChange={setSelectedCategory}
+                    />
+                    <Separator />
+                    <PriceFilter
+                      priceRange={priceRange}
+                      onPriceChange={setPriceRange}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          )}
-
-          {/* Product Grid */}
-          <div className="relative">
-            <ProductGrid
-              products={filteredProducts}
-              viewMode={viewMode}
-              sortOption={filters.sortBy}
-              onProductView={onProductView}
-            />
+            
+            {/* Main Content */}
+            <div className="flex-1">
+              {/* Mobile Filters */}
+              <div className="lg:hidden mb-4">
+                <MobileFilters
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={setSelectedCategory}
+                  priceRange={priceRange}
+                  onPriceChange={setPriceRange}
+                />
+              </div>
+              
+              {/* Search Results Header */}
+              {searchTerm && (
+                <div className="mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Search Results for "{searchTerm}"
+                  </h1>
+                  <p className="text-gray-600 mt-1">
+                    Found {elyphantProducts.length + zincProducts.length} products
+                  </p>
+                </div>
+              )}
+              
+              {/* Tabs */}
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="elyphant" className="flex items-center gap-2">
+                  Elyphant Store
+                  <Badge variant="secondary">{elyphantProducts.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="amazon" className="flex items-center gap-2">
+                  Amazon Products
+                  <Badge variant="secondary">{zincProducts.length}</Badge>
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="elyphant">
+                <ProductGrid 
+                  searchTerm={searchTerm}
+                  selectedCategory={selectedCategory}
+                  priceRange={priceRange}
+                  products={elyphantProducts}
+                />
+              </TabsContent>
+              
+              <TabsContent value="amazon">
+                <ZincProductsTab searchTerm={searchTerm} />
+              </TabsContent>
+            </div>
           </div>
-        </div>
+        </Tabs>
       </div>
     </div>
   );

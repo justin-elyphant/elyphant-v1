@@ -1,78 +1,119 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { CartProvider } from "@/contexts/CartContext";
-import { ProfileProvider } from "@/contexts/profile/ProfileContext";
-import ScrollToTop from "@/components/layout/ScrollToTop";
-import Index from "./pages/Index";
-import Marketplace from "./pages/Marketplace";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn";
-import Wishlists from "./pages/Wishlists";
-import Dashboard from "./pages/Dashboard";
-import ProfileSetup from "./pages/ProfileSetup";
-import Settings from "./pages/Settings";
-import Messages from "./pages/Messages";
-import Connections from "./pages/Connections";
-import Orders from "./pages/Orders";
-import Profile from "./pages/Profile";
-import VendorPartner from "./pages/VendorPartner";
-import AboutUs from "./pages/AboutUs";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PaymentCancel from "./pages/PaymentCancel";
-import Trunkline from "./pages/Trunkline";
-import Events from "./pages/Events";
-import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/auth";
+import { ProductProvider } from "@/contexts/ProductContext";
+import { ThemeProvider } from "@/components/theme-provider";
+import MainLayout from "@/components/layout/MainLayout";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
-const queryClient = new QueryClient();
+// Page imports
+import Index from "@/pages/Index";
+import SignIn from "@/pages/SignIn";
+import SignUp from "@/pages/SignUp";
+import EmailVerification from "@/pages/EmailVerification";
+import Marketplace from "@/pages/Marketplace";
+import ProductDetail from "@/pages/ProductDetail";
+import Gifting from "@/pages/Gifting";
+import MyWishlists from "@/pages/MyWishlists";
+import SharedWishlist from "@/pages/SharedWishlist";
+import Events from "@/pages/Events";
+import Connections from "@/pages/Connections";
+import Orders from "@/pages/Orders";
+import Returns from "@/pages/Returns";
+import Dashboard from "@/pages/Dashboard";
+import GiftScheduling from "@/pages/GiftScheduling";
+import Crowdfunding from "@/pages/Crowdfunding";
+import Admin from "@/pages/Admin";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <AuthProvider>
-          <ProfileProvider>
-            <CartProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/wishlists" element={<Wishlists />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/messages/:connectionId" element={<Messages />} />
-                <Route path="/connections" element={<Connections />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/profile/:identifier" element={<Profile />} />
-                <Route path="/vendor-partner" element={<VendorPartner />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/payment-success" element={<PaymentSuccess />} />
-                <Route path="/payment-cancel" element={<PaymentCancel />} />
-                <Route path="/trunkline-login" element={<Trunkline />} />
-                <Route path="/trunkline" element={<Trunkline />} />
-              </Routes>
-              <SearchOptimizationMonitor />
-            </CartProvider>
-          </ProfileProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <TooltipProvider>
+          <AuthProvider>
+            <ProductProvider>
+              <Router>
+                <div className="min-h-screen bg-background">
+                  <Routes>
+                    {/* Auth routes without MainLayout */}
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/email-verification" element={<EmailVerification />} />
+                    
+                    {/* All other routes wrapped in MainLayout */}
+                    <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+                    <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
+                    <Route path="/product/:id" element={<MainLayout><ProductDetail /></MainLayout>} />
+                    <Route path="/gifting" element={<MainLayout><Gifting /></MainLayout>} />
+                    <Route path="/my-wishlists" element={
+                      <ProtectedRoute>
+                        <MainLayout><MyWishlists /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/wishlist/:id" element={<MainLayout><SharedWishlist /></MainLayout>} />
+                    <Route path="/events" element={
+                      <ProtectedRoute>
+                        <MainLayout><Events /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/connections" element={
+                      <ProtectedRoute>
+                        <MainLayout><Connections /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/orders" element={
+                      <ProtectedRoute>
+                        <MainLayout><Orders /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/returns/:orderId" element={
+                      <ProtectedRoute>
+                        <MainLayout><Returns /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <MainLayout><Dashboard /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/gift-scheduling" element={
+                      <ProtectedRoute>
+                        <MainLayout><GiftScheduling /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/crowdfunding" element={
+                      <ProtectedRoute>
+                        <MainLayout><Crowdfunding /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin" element={
+                      <ProtectedRoute>
+                        <MainLayout><Admin /></MainLayout>
+                      </ProtectedRoute>
+                    } />
+                  </Routes>
+                </div>
+                <Toaster />
+              </Router>
+            </ProductProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

@@ -1,7 +1,7 @@
 import React from "react";
 import { getPrimaryProductImage } from "@/components/marketplace/product-item/getPrimaryProductImage";
 import { useIsMobile } from "@/hooks/use-mobile";
-import MobileOptimizedImage from "@/components/marketplace/ui/MobileOptimizedImage";
+import SimpleMobileImage from "@/components/marketplace/ui/SimpleMobileImage";
 
 interface ProductCardImageSectionProps {
   product: any;
@@ -50,10 +50,10 @@ const ProductCardImageSection: React.FC<ProductCardImageSectionProps> = ({
     console.log("[ProductCardImageSection] Image loaded successfully:", selectedImg);
   };
 
-  // Use mobile-optimized component for mobile devices
+  // Use simplified mobile component for mobile devices
   if (isMobile) {
     return (
-      <MobileOptimizedImage
+      <SimpleMobileImage
         src={selectedImg}
         alt={productName}
         aspectRatio="square"

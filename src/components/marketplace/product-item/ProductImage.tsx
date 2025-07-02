@@ -3,7 +3,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
 import { getProductFallbackImage } from "./productImageUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import MobileOptimizedImage from "../ui/MobileOptimizedImage";
+import SimpleMobileImage from "../ui/SimpleMobileImage";
 
 interface ProductImageProps {
   product: {
@@ -28,16 +28,6 @@ const ProductImage = ({
 }: ProductImageProps) => {
   const [imageError, setImageError] = useState(false);
   const isMobile = useIsMobile();
-
-  // Determine the appropriate aspect ratio value
-  const getAspectRatioValue = (ratio: string): number => {
-    switch (ratio) {
-      case "portrait": return 3/4;
-      case "wide": return 16/9;
-      case "square":
-      default: return 1/1;
-    }
-  };
 
   // Get primary image with fallbacks - optimized for performance
   const getPrimaryImage = (): string => {
@@ -88,11 +78,11 @@ const ProductImage = ({
     console.log("Image loaded successfully:", imageUrl);
   };
 
-  // Use mobile-optimized image component for mobile devices
+  // Use simplified mobile image component for mobile devices
   if (isMobile) {
     return (
       <div className={cn("bg-slate-100 overflow-hidden rounded-t-md", className)}>
-        <MobileOptimizedImage
+        <SimpleMobileImage
           src={imageUrl}
           alt={productName}
           aspectRatio={aspectRatio}
@@ -106,6 +96,15 @@ const ProductImage = ({
   }
 
   // Desktop version (unchanged)
+  const getAspectRatioValue = (ratio: string): number => {
+    switch (ratio) {
+      case "portrait": return 3/4;
+      case "wide": return 16/9;
+      case "square":
+      default: return 1/1;
+    }
+  };
+
   return (
     <AspectRatio 
       ratio={getAspectRatioValue(aspectRatio)} 

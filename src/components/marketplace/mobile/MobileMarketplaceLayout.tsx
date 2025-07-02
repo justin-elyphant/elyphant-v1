@@ -1,14 +1,10 @@
 
-import React, { useState, useEffect } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import React, { useState } from "react";
 import { Product } from "@/types/product";
-import MobileProductGrid from "./MobileProductGrid";
-import MobileFilterBottomSheet from "./MobileFilterBottomSheet";
-import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
-import ProductDetailsDialog from "../ProductDetailsDialog";
+import ProductSkeleton from "../ui/ProductSkeleton";
+import ProductGrid from "../ProductGrid";
 import { Button } from "@/components/ui/button";
-import { Filter, SlidersHorizontal } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { RefreshCw, AlertCircle } from "lucide-react";
 
 interface MobileMarketplaceLayoutProps {
   products: Product[];
@@ -19,133 +15,67 @@ interface MobileMarketplaceLayoutProps {
   onRefresh?: () => void;
 }
 
-const MobileMarketplaceLayout = ({
+const MobileMarketplaceLayout: React.FC<MobileMarketplaceLayoutProps> = ({
   products,
   isLoading,
   searchTerm,
   onProductView,
   error,
-  onRefresh
-}: MobileMarketplaceLayoutProps) => {
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortOption, setSortOption] = useState("relevance");
-  const [activeFilterCount, setActiveFilterCount] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [showProductDetails, setShowProductDetails] = useState(false);
+  onRefresh,
+}) => {
+  const [viewMode] = useState<"grid" | "list">("grid");
 
-  const getProductStatus = (product: Product) => {
-    if (product.isBestSeller) {
-      return { badge: "Best Seller", color: "bg-amber-100 text-amber-800" };
-    }
-    if (product.tags?.includes("new")) {
-      return { badge: "New", color: "bg-green-100 text-green-800" };
-    }
-    return null;
-  };
-
-  // Handle product click to open details
-  const handleProductClick = (productId: string) => {
-    const product = products.find(p => (p.product_id || p.id) === productId);
-    if (product) {
-      setSelectedProduct(product);
-      setShowProductDetails(true);
-      // Also call the parent handler if provided
-      if (onProductView) {
-        onProductView(productId);
-      }
-    }
-  };
-
-  // Debug log to see what products we're receiving
-  useEffect(() => {
-    console.log('MobileMarketplaceLayout products:', products?.length || 0, products);
-  }, [products]);
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Enhanced Search Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 safe-area-top">
-        <AIEnhancedSearchBar mobile={true} className="w-full" />
-      </div>
-
-      {/* Filter Toggle Bar */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 safe-area-inset">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(true)}
-              className="flex items-center gap-2 h-9 px-3 relative"
-            >
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
-              {activeFilterCount > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-blue-600 text-white"
-                >
-                  {activeFilterCount}
-                </Badge>
-              )}
+  // Error state
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center max-w-md mx-auto">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          {onRefresh && (
+            <Button onClick={onRefresh} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
             </Button>
-          </div>
-
-          <div className="text-sm text-gray-500">
-            {products?.length || 0} {(products?.length || 0) === 1 ? 'item' : 'items'}
-          </div>
+          )}
         </div>
       </div>
+    );
+  }
 
-      {/* Main Content */}
-      <div className="pb-20 safe-area-bottom">
-        {error ? (
-          <div className="flex flex-col items-center justify-center py-12 px-4">
-            <div className="text-center max-w-sm">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                <div className="w-8 h-8 bg-red-200 rounded-lg"></div>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Something went wrong</h3>
-              <p className="text-gray-500 mb-4">{error}</p>
-              {onRefresh && (
-                <Button onClick={onRefresh} variant="outline">
-                  Try Again
-                </Button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <MobileProductGrid
-            products={products || []} // Ensure we always pass an array
-            onProductClick={handleProductClick} // Use our custom handler
-            getProductStatus={getProductStatus}
-            isLoading={isLoading}
-            hasMore={false}
-            onRefresh={onRefresh}
-          />
-        )}
+  // Loading state with simplified skeleton
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-4">
+          <div className="h-8 bg-gray-200 rounded animate-pulse mb-2" />
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+        </div>
+        <ProductSkeleton count={6} viewMode={viewMode} />
       </div>
+    );
+  }
 
-      {/* Mobile Filter Bottom Sheet */}
-      <MobileFilterBottomSheet
-        open={showFilters}
-        onOpenChange={setShowFilters}
-        products={products || []} // Ensure we always pass an array
-        sortOption={sortOption}
-        setSortOption={setSortOption}
-        onFiltersChange={(count) => setActiveFilterCount(count)}
-      />
+  // Main content
+  return (
+    <div className="container mx-auto px-4 py-6">
+      {/* Search results header */}
+      {searchTerm && (
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-1">Search Results</h2>
+          <p className="text-sm text-muted-foreground">
+            {products.length} results for "{searchTerm}"
+          </p>
+        </div>
+      )}
 
-      {/* Product Details Dialog */}
-      <ProductDetailsDialog
-        product={selectedProduct}
-        open={showProductDetails}
-        onOpenChange={setShowProductDetails}
-        userData={null} // You can pass user data here if available
-        onWishlistChange={() => {
-          // Handle wishlist changes if needed
-          console.log('Wishlist changed');
-        }}
+      {/* Product Grid */}
+      <ProductGrid
+        products={products}
+        viewMode={viewMode}
+        sortOption="relevance"
+        onProductView={onProductView}
       />
     </div>
   );

@@ -20,15 +20,24 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ onClose }) => {
   const isMobile = useIsMobile();
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const debouncedSearchTerm = useDebounceSearch(searchTerm, 300);
+  const { debouncedSearchTerm, isSearching } = useDebounceSearch({ 
+    initialValue: searchTerm, 
+    delay: 300 
+  });
   
-  const {
-    groupedResults,
-    filteredProducts,
-    friendsData,
-    experiencesData,
-    loading
-  } = useResultGrouping(debouncedSearchTerm);
+  const { groupedResults } = useResultGrouping(debouncedSearchTerm, []);
+  
+  // Mock data for now - these would come from actual search services
+  const filteredProducts = [];
+  const friendsData = [
+    { id: "friend-1", name: "Alex's Wishlist" },
+    { id: "friend-2", name: "Sarah's Birthday" }
+  ];
+  const experiencesData = [
+    { id: "exp-1", name: "Virtual Wine Tasting" },
+    { id: "exp-2", name: "Spa Day Package" }
+  ];
+  const loading = isSearching;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,6 +49,11 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ onClose }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    setSearchTerm(searchTerm);
+    setIsOpen(searchTerm.length > 0);
+  }, [searchTerm]);
 
   const handleSelect = (value: string) => {
     console.log("Selected:", value);

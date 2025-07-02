@@ -7,20 +7,20 @@ import { useAdvancedFilters } from "@/hooks/useAdvancedFilters";
 import { enhancedZincApiService, ZincSearchResponse } from "@/services/enhancedZincApiService";
 import { toast } from "sonner";
 
-export const useEnhancedMarketplaceSearch = (currentPage) => {
-  console.log("useEnhancedMarketPlace search");
-  console.log(currentPage);
+export const useEnhancedMarketplaceSearch = (currentPage: number) => {
   const location = useLocation();
   const { products, setProducts } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchIdRef = useRef<string>("");
+  const searchRequestRef = useRef<string>("");
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isSearchingRef = useRef(false);
   
   // Get search term from URL
   const searchParams = new URLSearchParams(location.search);
   let urlSearchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
-  if (categoryParam) urlSearchTerm = "category="+categoryParam;
+  if (categoryParam) urlSearchTerm = "category=" + categoryParam;
   
   // Use debounced search
   const {
@@ -47,23 +47,49 @@ export const useEnhancedMarketplaceSearch = (currentPage) => {
   useEffect(() => {
     if (urlSearchTerm !== searchTerm) {
       setSearchTerm(urlSearchTerm);
-      performSearch(urlSearchTerm, currentPage);
     }
   }, [urlSearchTerm, searchTerm, setSearchTerm]);
 
+  // Perform search with proper race condition handling
   useEffect(() => {
-    performSearch(urlSearchTerm, currentPage);
-  }, [currentPage]);
+    if (!debouncedSearchTerm || isSearchingRef.current) {
+      return;
+    }
+
+    performSearch(debouncedSearchTerm, currentPage);
+  }, [debouncedSearchTerm, currentPage]);
 
   const performSearch = async (query: string, page: number) => {
-    console.log("performSearch");
+    // Prevent concurrent searches
+    if (isSearchingRef.current) {
+      console.log('Search already in progress, skipping');
+      return;
+    }
+
+    // Cancel previous request if still running
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+    const searchId = `${query}-${page}-${Date.now()}`;
+    searchRequestRef.current = searchId;
+
+    isSearchingRef.current = true;
     setIsLoading(true);
     setError(null);
     
     try {
-      console.log(`Enhanced search for: "${query}"`);
+      console.log(`Enhanced search for: "${query}" (page ${page})`);
       
       const searchResult = await enhancedZincApiService.searchProducts(query, page, 50);
+      
+      // Check if this search is still current
+      if (searchRequestRef.current !== searchId || abortControllerRef.current?.signal.aborted) {
+        console.log('Search cancelled or superseded');
+        return;
+      }
       
       if (searchResult.error && !searchResult.cached) {
         throw new Error(searchResult.error);
@@ -85,7 +111,7 @@ export const useEnhancedMarketplaceSearch = (currentPage) => {
           reviewCount: result.num_reviews
         }));
 
-        console.log("normalized products: ", normalizedProducts);
+        console.log("Normalized products: ", normalizedProducts.length);
         
         // Update products context
         setProducts(prev => {
@@ -96,30 +122,40 @@ export const useEnhancedMarketplaceSearch = (currentPage) => {
           return [...nonZincProducts, ...normalizedProducts];
         });
         
-        const description = searchResult.cached 
-          ? `Found ${searchResult.results.length} cached results for "${query}"`
-          : `Found ${searchResult.results.length} results for "${query}"`;
-          
-        toast.success("Search completed", { description });
-      } else {
+        // Only show success toast for new searches, not page changes
+        if (page === 1) {
+          const description = searchResult.cached 
+            ? `Found ${searchResult.results.length} cached results for "${query}"`
+            : `Found ${searchResult.results.length} results for "${query}"`;
+            
+          toast.success("Search completed", { description });
+        }
+      } else if (page === 1) {
         toast.info("No results found", {
           description: `No products found matching "${query}"`
         });
       }
       
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Search failed";
-      setError(errorMessage);
-      
-      toast.error("Search error", {
-        description: errorMessage,
-        action: {
-          label: "Retry",
-          onClick: () => performSearch(query, page)
-        }
-      });
+      // Only show error if this search is still current
+      if (searchRequestRef.current === searchId && !abortControllerRef.current?.signal.aborted) {
+        const errorMessage = err instanceof Error ? err.message : "Search failed";
+        setError(errorMessage);
+        
+        toast.error("Search error", {
+          description: errorMessage,
+          action: {
+            label: "Retry",
+            onClick: () => performSearch(query, page)
+          }
+        });
+      }
     } finally {
-      setIsLoading(false);
+      // Only update loading state if this search is still current
+      if (searchRequestRef.current === searchId) {
+        setIsLoading(false);
+        isSearchingRef.current = false;
+      }
     }
   };
 
@@ -133,6 +169,16 @@ export const useEnhancedMarketplaceSearch = (currentPage) => {
     enhancedZincApiService.clearCache();
     toast.success("Search cache cleared");
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      isSearchingRef.current = false;
+    };
+  }, []);
 
   return {
     searchTerm,

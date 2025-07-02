@@ -1,37 +1,29 @@
 
 /**
  * Service for making Zinc API calls via Supabase Edge Functions
+ * Updated to use the working Enhanced Zinc API System
  */
-import { ZincProduct } from "../../types";
-import { supabase } from "@/integrations/supabase/client";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import { toast } from "sonner";
 
 // Track whether we've shown the API error toast already
 let hasShownApiErrorToast = false;
 
 /**
- * Call the Zinc API via Supabase Edge Function to search for products
+ * Call the Enhanced Zinc API System instead of the legacy zinc-search endpoint
  */
 export const searchZincApi = async (
   query: string,
   maxResults: string
-): Promise<ZincProduct[] | null> => {
+): Promise<any[] | null> => {
   try {
-    // Ensure we request enough products for better filtering
-    const requestedResults = Math.max(parseInt(maxResults), 50).toString();
+    console.log(`Making API call via Enhanced Zinc API System for query: "${query}", max results: ${maxResults}`);
     
-    console.log(`Making API call via Supabase Edge Function for query: "${query}", max results: ${requestedResults}`);
-    
-    // Use Supabase edge function with improved error handling
-    const { data, error } = await supabase.functions.invoke('zinc-search', {
-      body: {
-        query: query.trim(),
-        maxResults: requestedResults
-      }
-    });
+    // Use the working Enhanced Zinc API System
+    const response = await enhancedZincApiService.searchProducts(query, 1, parseInt(maxResults));
 
-    if (error) {
-      console.error('Zinc search error via edge function:', error);
+    if (response.error && !response.cached) {
+      console.error('Enhanced Zinc API error:', response.error);
       
       if (!hasShownApiErrorToast) {
         hasShownApiErrorToast = true;
@@ -40,7 +32,6 @@ export const searchZincApi = async (
           duration: 5000,
         });
         
-        // Reset the flag after some time
         setTimeout(() => {
           hasShownApiErrorToast = false;
         }, 30000);
@@ -49,24 +40,37 @@ export const searchZincApi = async (
       return null;
     }
 
-    console.log('Zinc API response via edge function:', data);
+    console.log('Enhanced Zinc API response:', response);
     
-    // If we get results, return them
-    if (data?.results && data.results.length > 0) {
-      console.log(`Found ${data.results.length} results from Zinc API for "${query}"`);
+    if (response.results && response.results.length > 0) {
+      console.log(`Found ${response.results.length} results from Enhanced Zinc API for "${query}"`);
       
       // Reset the error toast flag on successful response
       hasShownApiErrorToast = false;
       
-      return data.results;
+      // Transform to expected format
+      return response.results.map((product: any) => ({
+        product_id: product.product_id,
+        title: product.title,
+        price: product.price,
+        description: product.description || product.product_description,
+        image: product.image || product.main_image,
+        images: product.images || [product.image || product.main_image],
+        category: product.category,
+        retailer: product.retailer || 'Amazon via Zinc',
+        rating: product.rating || product.stars,
+        review_count: product.review_count || product.num_reviews,
+        url: product.url || product.product_url,
+        brand: product.brand || '',
+        availability: product.availability || 'in_stock'
+      }));
     }
     
-    // No results found
-    console.log(`No results found from Zinc API for "${query}"`);
+    console.log(`No results found from Enhanced Zinc API for "${query}"`);
     return null;
     
   } catch (error) {
-    console.error(`Error calling Zinc API via edge function: ${error}`);
+    console.error(`Error calling Enhanced Zinc API: ${error}`);
     
     if (!hasShownApiErrorToast) {
       hasShownApiErrorToast = true;
@@ -75,7 +79,6 @@ export const searchZincApi = async (
         duration: 5000,
       });
       
-      // Reset the flag after some time
       setTimeout(() => {
         hasShownApiErrorToast = false;
       }, 30000);

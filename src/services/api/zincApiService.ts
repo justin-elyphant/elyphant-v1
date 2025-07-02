@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { enhancedZincApiService } from "../enhancedZincApiService";
 
 export interface ZincSearchResult {
   product_id: string;
@@ -24,34 +24,48 @@ export interface ZincSearchResponse {
 }
 
 /**
- * Search products using the Zinc API via our Edge Function proxy
+ * Search products using the Enhanced Zinc API System
  */
 export const searchZincProducts = async (
   query: string, 
   maxResults: number = 10
 ): Promise<ZincSearchResponse> => {
   try {
-    console.log(`Searching Zinc API for: "${query}" (max: ${maxResults})`);
+    console.log(`Searching Enhanced Zinc API for: "${query}" (max: ${maxResults})`);
     
-    const { data, error } = await supabase.functions.invoke('zinc-search', {
-      body: {
-        query: query.trim(),
-        maxResults: maxResults.toString()
-      }
-    });
+    const response = await enhancedZincApiService.searchProducts(query, 1, maxResults);
 
-    if (error) {
-      console.error('Zinc search error:', error);
-      throw new Error(`Zinc API error: ${error.message}`);
+    if (response.error && !response.cached) {
+      console.error('Enhanced Zinc search error:', response.error);
+      throw new Error(`Enhanced Zinc API error: ${response.error}`);
     }
 
-    console.log(`Zinc API returned ${data.results?.length || 0} results`);
-    return data as ZincSearchResponse;
+    const transformedResults: ZincSearchResult[] = (response.results || []).map((product: any) => ({
+      product_id: product.product_id,
+      title: product.title,
+      price: product.price,
+      description: product.description || product.product_description,
+      image: product.image || product.main_image,
+      images: product.images || [product.image || product.main_image],
+      category: product.category,
+      retailer: product.retailer || 'Amazon via Zinc',
+      rating: product.rating || product.stars,
+      review_count: product.review_count || product.num_reviews,
+      url: product.url || product.product_url
+    }));
+
+    console.log(`Enhanced Zinc API returned ${transformedResults.length} results`);
+    
+    return {
+      results: transformedResults,
+      total: transformedResults.length,
+      query,
+      fallback: response.cached || false
+    };
 
   } catch (error) {
-    console.error('Error calling Zinc API:', error);
+    console.error('Error calling Enhanced Zinc API:', error);
     
-    // Return fallback response
     return {
       results: [],
       total: 0,
@@ -63,7 +77,7 @@ export const searchZincProducts = async (
 };
 
 /**
- * Test if Zinc API is available and working
+ * Test if Enhanced Zinc API is available and working
  */
 export const testZincConnection = async (): Promise<boolean> => {
   try {

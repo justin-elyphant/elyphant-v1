@@ -16,6 +16,7 @@ const MarketplaceContent: React.FC = () => {
   const { products } = useProducts();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   
   // Get search term from URL
   const searchTerm = searchParams.get("search") || "";
@@ -77,6 +78,19 @@ const MarketplaceContent: React.FC = () => {
                         />
                       </div>
                     </div>
+                    <Separator />
+                    <div>
+                      <label className="text-sm font-medium">View Mode</label>
+                      <select 
+                        value={viewMode} 
+                        onChange={(e) => setViewMode(e.target.value as "grid" | "list" | "modern")}
+                        className="w-full mt-1 p-2 border rounded"
+                      >
+                        <option value="grid">Grid</option>
+                        <option value="list">List</option>
+                        <option value="modern">Modern</option>
+                      </select>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -109,7 +123,10 @@ const MarketplaceContent: React.FC = () => {
               </TabsList>
               
               <TabsContent value="elyphant">
-                <ProductGrid products={elyphantProducts} />
+                <ProductGrid 
+                  products={elyphantProducts} 
+                  viewMode={viewMode}
+                />
               </TabsContent>
               
               <TabsContent value="amazon">

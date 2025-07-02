@@ -6,14 +6,14 @@ import FriendsTabContent from "./FriendsTabContent";
 import FollowingTabContent from "./FollowingTabContent";
 import SuggestionsTabContent from "./SuggestionsTabContent";
 import ConnectionRequests from "./ConnectionRequests";
+import { ConnectionFilters } from "@/hooks/useConnections";
 
 const ConnectionsContent = () => {
   const [activeTab, setActiveTab] = useState("friends");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<ConnectionFilters>({
     relationship: "all",
-    location: "all",
-    interests: "all"
+    verificationStatus: "all"
   });
 
   // Mock data - in a real app, these would come from your data source

@@ -1,10 +1,5 @@
-import React, { useState, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import { useProducts } from "@/contexts/ProductContext";
-import { Product } from "@/types/product";
+
+import React from "react";
 import MarketplaceContent from "./MarketplaceContent";
 
 const MarketplaceWrapper: React.FC = () => {

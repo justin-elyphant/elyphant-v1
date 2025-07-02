@@ -44,7 +44,6 @@ const MarketplaceContent: React.FC = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold mb-4">Filters</h3>
                   <div className="space-y-4">
-                    {/* Basic filter UI - you can enhance this */}
                     <div>
                       <label className="text-sm font-medium">Category</label>
                       <select 

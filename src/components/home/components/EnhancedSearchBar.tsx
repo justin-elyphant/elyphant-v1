@@ -1,147 +1,96 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Search, X } from "lucide-react";
-import { Command, CommandInput, CommandList, CommandEmpty } from "@/components/ui/command";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useDebounceSearch } from "@/hooks/useDebounceSearch";
-import { useResultGrouping } from "@/hooks/useResultGrouping";
-import ResultGroups from "./search/ResultGroups";
+import { Search } from "lucide-react";
 
 interface EnhancedSearchBarProps {
-  onClose?: () => void;
+  mobile?: boolean;
 }
 
-const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ onClose }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false }) => {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const searchRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState("");
+  const previousSearchParam = useRef<string | null>(null);
 
-  const { debouncedSearchTerm, isSearching } = useDebounceSearch({ 
-    initialValue: searchTerm, 
-    delay: 300 
-  });
-  
-  const { groupedResults } = useResultGrouping(debouncedSearchTerm, []);
-  
-  // Mock data for now - these would come from actual search services
-  const filteredProducts = [];
-  const friendsData = [
-    { id: "friend-1", name: "Alex's Wishlist" },
-    { id: "friend-2", name: "Sarah's Birthday" }
-  ];
-  const experiencesData = [
-    { id: "exp-1", name: "Virtual Wine Tasting" },
-    { id: "exp-2", name: "Spa Day Package" }
-  ];
-  const loading = isSearching;
-
+  // Enhanced sync with URL parameters - listen for all changes
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+    const searchParam = searchParams.get("search");
+    const categoryParam = searchParams.get("category");
+    
+    // Only update if the search param actually changed
+    if (searchParam !== previousSearchParam.current) {
+      previousSearchParam.current = searchParam;
+      
+      if (searchParam && searchParam !== query) {
+        setQuery(searchParam);
+      } else if (!searchParam && query) {
+        // Clear query if no search param
+        setQuery("");
       }
-    };
+    }
+    
+    // If there's a category but no search, clear the search bar
+    if (categoryParam && !searchParam && query) {
+      setQuery("");
+    }
+  }, [searchParams, location.pathname, location.search, query]);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  // Clear query when navigating to different pages
   useEffect(() => {
-    setSearchTerm(searchTerm);
-    setIsOpen(searchTerm.length > 0);
-  }, [searchTerm]);
+    // Reset query state when navigating away from marketplace
+    if (!location.pathname.includes('/marketplace')) {
+      setQuery("");
+    }
+  }, [location.pathname]);
 
-  const handleSelect = (value: string) => {
-    console.log("Selected:", value);
-    setSearchTerm(value);
-    setIsOpen(false);
-    
-    // Navigate to marketplace with search term
-    navigate(`/marketplace?search=${encodeURIComponent(value)}`);
-    
-    // Close mobile menu if provided
-    if (onClose) {
-      onClose();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      const searchParams = new URLSearchParams();
+      searchParams.set("search", query.trim());
+      navigate(`/marketplace?${searchParams.toString()}`);
     }
   };
 
-  const handleInputChange = (value: string) => {
-    setSearchTerm(value);
-    setIsOpen(value.length > 0);
-  };
-
-  const clearSearch = () => {
-    setSearchTerm("");
-    setIsOpen(false);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
   };
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-md">
-      <Command className="rounded-lg border shadow-md bg-white">
-        <div className="flex items-center border-b px-3">
-          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-          <CommandInput
-            placeholder="Search for gifts, products, friends..."
-            value={searchTerm}
-            onValueChange={handleInputChange}
-            onFocus={() => searchTerm && setIsOpen(true)}
-            className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0"
-          />
-          {searchTerm && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearSearch}
-              className="h-6 w-6 p-0 hover:bg-gray-100"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
+    <form
+      className="relative flex items-center w-full"
+      onSubmit={handleSubmit}
+      autoComplete="off"
+    >
+      <div className="relative flex-1 flex items-center">
+        <div className="absolute left-3 flex items-center">
+          <Search className="h-4 w-4 text-gray-400" />
         </div>
+        
+        <Input
+          type="search"
+          placeholder="Search for products, brands, or categories"
+          className={`pl-10 pr-16 ${
+            mobile 
+              ? "text-base py-3 h-12 rounded-lg" 
+              : "h-10 rounded-lg"
+          } border-gray-300 focus:border-purple-500 focus:ring-purple-500`}
+          value={query}
+          onChange={handleInputChange}
+        />
 
-        {isOpen && (
-          <CommandList className="max-h-80 overflow-y-auto">
-            {!debouncedSearchTerm ? (
-              <div className="p-4 text-sm text-muted-foreground text-center">
-                Start typing to search...
-              </div>
-            ) : loading ? (
-              <div className="p-4 text-sm text-muted-foreground text-center">
-                Searching...
-              </div>
-            ) : (
-              <>
-                <ResultGroups
-                  searchTerm={debouncedSearchTerm}
-                  groupedResults={groupedResults}
-                  filteredProducts={filteredProducts}
-                  friendsData={friendsData}
-                  experiencesData={experiencesData}
-                  onSelect={handleSelect}
-                  loading={loading}
-                />
-                <CommandEmpty>
-                  <div className="p-4 text-sm text-center">
-                    <p className="text-muted-foreground mb-2">No results found for "{debouncedSearchTerm}"</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSelect(debouncedSearchTerm)}
-                    >
-                      Search marketplace for "{debouncedSearchTerm}"
-                    </Button>
-                  </div>
-                </CommandEmpty>
-              </>
-            )}
-          </CommandList>
-        )}
-      </Command>
-    </div>
+        <Button
+          type="submit"
+          className="absolute right-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md px-3 py-1 text-sm font-medium h-7"
+        >
+          Search
+        </Button>
+      </div>
+    </form>
   );
 };
 

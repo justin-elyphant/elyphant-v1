@@ -43,6 +43,10 @@ const NavigationBar = () => {
     return window.location.pathname === path;
   };
 
+  const handleMobileMenuClose = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <>
       <nav className={HEADER_STYLES.navBar}>
@@ -102,7 +106,7 @@ const NavigationBar = () => {
             marketplaceItems={marketplaceItems}
             connectionsItems={connectionsItems}
             isActive={isActive}
-            onClose={() => setIsMobileMenuOpen(false)}
+            onClose={handleMobileMenuClose}
             signOut={signOut}
           />
         </div>

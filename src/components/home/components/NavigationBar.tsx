@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Search, LogIn } from "lucide-react";
+import { Menu, X, Search, LogIn, ShoppingBag, User, Heart, Calendar, Settings, Users, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthButtons from "./AuthButtons";
 import UserButton from "@/components/auth/UserButton";
@@ -45,52 +44,69 @@ const NavigationBar = () => {
     setIsSearchModalOpen(!isSearchModalOpen);
   };
 
-  const navItems = [
-    // Shopping Section
-    { label: "Marketplace", path: "/marketplace", section: "shopping" },
-    { label: "Categories", path: "/marketplace/categories", section: "shopping" },
-    { label: "Trending", path: "/marketplace/trending", section: "shopping" },
-    
-    // Account Section (authenticated users only)
-    { label: "Dashboard", path: "/dashboard", section: "account", requireAuth: true },
-    { label: "My Orders", path: "/orders", section: "account", requireAuth: true },
-    { label: "My Wishlists", path: "/wishlists", section: "account", requireAuth: true },
-    { label: "Profile", path: "/profile-setup", section: "account", requireAuth: true },
-    
-    // Social Section (authenticated users only)
-    { label: "Friends", path: "/connections/friends", section: "social", requireAuth: true },
-    { label: "Find Friends", path: "/connections/find", section: "social", requireAuth: true },
-    
-    // Support Section
-    { label: "Help", path: "/help", section: "support" },
-    { label: "Contact", path: "/contact", section: "support" },
-  ];
+  // Enhanced mobile menu structure for modern e-commerce
+  const getMenuSections = () => {
+    const sections = [
+      {
+        title: "SHOP",
+        items: [
+          { label: "Marketplace", path: "/marketplace", icon: ShoppingBag, requireAuth: false },
+          { label: "Categories", path: "/marketplace/categories", icon: Search, requireAuth: false },
+          { label: "Trending", path: "/marketplace/trending", icon: Heart, requireAuth: false },
+        ]
+      }
+    ];
 
-  const groupedNavItems = navItems.reduce((acc, item) => {
-    if (!acc[item.section]) {
-      acc[item.section] = [];
+    // Add authenticated sections
+    if (user) {
+      sections.push(
+        {
+          title: "MY ACCOUNT",
+          items: [
+            { label: "Dashboard", path: "/dashboard", icon: User, requireAuth: true },
+            { label: "My Orders", path: "/orders", icon: ShoppingBag, requireAuth: true },
+            { label: "My Wishlists", path: "/wishlists", icon: Heart, requireAuth: true },
+            { label: "Events & Dates", path: "/events", icon: Calendar, requireAuth: true },
+            { label: "Settings", path: "/profile-setup", icon: Settings, requireAuth: true },
+          ]
+        },
+        {
+          title: "CONNECT",
+          items: [
+            { label: "My Friends", path: "/connections/friends", icon: Users, requireAuth: true },
+            { label: "Find Friends", path: "/connections/find", icon: Users, requireAuth: true },
+          ]
+        }
+      );
     }
-    acc[item.section].push(item);
-    return acc;
-  }, {} as Record<string, typeof navItems>);
 
-  const getSectionTitle = (section: string) => {
-    switch (section) {
-      case 'shopping': return 'Shopping';
-      case 'account': return 'My Account';
-      case 'social': return 'Social';
-      case 'support': return 'Support';
-      default: return '';
+    // Always show support section
+    sections.push({
+      title: "SUPPORT",
+      items: [
+        { label: "Help Center", path: "/help", icon: HelpCircle, requireAuth: false },
+        { label: "Contact Us", path: "/contact", icon: HelpCircle, requireAuth: false },
+      ]
+    });
+
+    return sections;
+  };
+
+  const handleProtectedRoute = (path: string, requireAuth: boolean) => {
+    if (requireAuth && !user) {
+      // Redirect to sign-in with return path
+      return `/signin?redirect=${encodeURIComponent(path)}`;
     }
+    return path;
   };
 
   return (
     <>
       <nav className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4">
-          {/* Main navigation row - reduced height */}
+          {/* Main navigation row */}
           <div className="flex justify-between items-center h-16">
-            {/* Logo - more compact */}
+            {/* Logo */}
             <Link to="/" className="flex items-center cursor-pointer flex-shrink-0">
               <img 
                 src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
@@ -100,14 +116,14 @@ const NavigationBar = () => {
               <h1 className="text-xl font-bold text-purple-700">Elyphant</h1>
             </Link>
             
-            {/* Desktop Search Bar - better proportions */}
+            {/* Desktop Search Bar */}
             {!isMobile && (
               <div className="flex-1 max-w-2xl mx-8">
                 <AIEnhancedSearchBar />
               </div>
             )}
             
-            {/* Right side actions - more compact */}
+            {/* Right side actions */}
             <div className="flex items-center space-x-3 flex-shrink-0">
               {/* Mobile Search Icon */}
               {isMobile && (
@@ -160,59 +176,90 @@ const NavigationBar = () => {
             </div>
           </div>
           
-          {/* Category filter bar - only on desktop, more compact */}
+          {/* Category filter bar - desktop only */}
           {!isMobile && (
             <div className="py-2 border-t border-gray-100">
               <CategoryFilterBar />
             </div>
           )}
           
-          {/* Mobile navigation */}
+          {/* Enhanced Mobile Navigation Menu */}
           {isMenuOpen && (
-            <div className="fixed inset-0 top-[64px] bg-white z-50 flex flex-col p-4 md:hidden overflow-y-auto">
-              {/* Mobile Search Bar */}
-              <div className="mb-4">
+            <div className="fixed inset-0 top-[64px] bg-white z-50 flex flex-col md:hidden overflow-y-auto">
+              {/* Mobile Search Bar - Keep at top */}
+              <div className="p-4 border-b border-gray-100">
                 <AIEnhancedSearchBar mobile={true} />
                 <div className="mt-2">
                   <CategoryFilterBar mobile={true} />
                 </div>
               </div>
               
-              {/* Navigation Items by Section */}
-              <div className="flex-1 space-y-6">
-                {Object.entries(groupedNavItems).map(([section, items]) => (
-                  <div key={section}>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      {getSectionTitle(section)}
+              {/* Enhanced Menu Sections */}
+              <div className="flex-1 px-4 py-2">
+                {getMenuSections().map((section, sectionIndex) => (
+                  <div key={section.title} className={sectionIndex > 0 ? "mt-6" : ""}>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 px-2">
+                      {section.title}
                     </h3>
                     <div className="space-y-1">
-                      {items.map((item) => (
-                        (!item.requireAuth || user) && (
+                      {section.items.map((item) => {
+                        const IconComponent = item.icon;
+                        const targetPath = handleProtectedRoute(item.path, item.requireAuth);
+                        
+                        return (
                           <Link
                             key={item.path}
-                            to={item.path}
-                            className={`block text-base font-medium py-3 px-4 rounded-md min-h-[48px] flex items-center ${
+                            to={targetPath}
+                            className={`flex items-center py-3 px-4 rounded-lg min-h-[48px] transition-colors ${
                               location.pathname === item.path
-                                ? "bg-purple-50 text-purple-700"
-                                : "text-gray-700 hover:bg-gray-50"
+                                ? "bg-purple-50 text-purple-700 font-medium"
+                                : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
                             }`}
-                            onClick={() => setIsMenuOpen(false)}
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              // Show sign-in prompt for protected routes
+                              if (item.requireAuth && !user) {
+                                // The link already handles this with redirect parameter
+                              }
+                            }}
                           >
-                            {item.label}
+                            <IconComponent className="h-5 w-5 mr-3 flex-shrink-0" />
+                            <span className="text-base">{item.label}</span>
+                            {item.requireAuth && !user && (
+                              <span className="ml-auto text-xs text-gray-400">Sign in</span>
+                            )}
                           </Link>
-                        )
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
               </div>
               
               {/* Authentication Section */}
-              <div className="mt-auto px-4 py-4 border-t">
+              <div className="mt-auto p-4 border-t border-gray-100 bg-gray-50">
                 {user ? (
-                  <UserButton />
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 px-2">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {profile?.full_name || user.email}
+                        </p>
+                        <p className="text-xs text-gray-500">Signed in</p>
+                      </div>
+                    </div>
+                    <UserButton />
+                  </div>
                 ) : (
-                  <AuthButtons profileImage={profile?.profile_image} />
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600 px-2">
+                      Sign in to access your account, orders, and wishlists
+                    </p>
+                    <AuthButtons profileImage={profile?.profile_image} />
+                  </div>
                 )}
               </div>
             </div>
@@ -220,11 +267,10 @@ const NavigationBar = () => {
         </div>
       </nav>
 
-      {/* Mobile Search Modal */}
+      {/* Mobile Search Modal - Keep existing */}
       {isMobile && isSearchModalOpen && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-start justify-center pt-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-semibold">Search</h3>
               <Button 
@@ -236,8 +282,6 @@ const NavigationBar = () => {
                 <X size={16} />
               </Button>
             </div>
-            
-            {/* Search Content */}
             <div className="p-4">
               <AIEnhancedSearchBar mobile={true} />
             </div>

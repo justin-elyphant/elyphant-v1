@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 import MobileMenu from "@/components/layout/navigation/MobileMenu";
 import Logo from "./Logo";
-import EnhancedSearchBar from "./EnhancedSearchBar";
+import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import AuthButtons from "./AuthButtons";
 import UserDropdownMenu from "@/components/navigation/components/UserDropdownMenu";
 import { HEADER_STYLES } from "./styleConstants";
@@ -53,7 +53,7 @@ const NavigationBar = () => {
 
         {/* Desktop Search Bar */}
         <div className={HEADER_STYLES.desktopSearch}>
-          <EnhancedSearchBar />
+          <AIEnhancedSearchBar />
         </div>
 
         {/* Desktop Actions */}

@@ -5,23 +5,37 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
 import ProductGrid from "./ProductGrid";
 import ZincProductsTab from "./zinc/ZincProductsTab";
+import MobileMarketplaceLayout from "./mobile/MobileMarketplaceLayout";
+import { useEnhancedMarketplaceSearch } from "./hooks/useEnhancedMarketplaceSearch";
 import { useProducts } from "@/contexts/ProductContext";
 
 const MarketplaceContent: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { products } = useProducts();
+  const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
+  const [currentPage] = useState(1);
   
   console.log("MarketplaceContent rendering, products:", products?.length || 0);
   
   // Get search term from URL
   const searchTerm = searchParams.get("search") || "";
+  
+  // Use enhanced marketplace search
+  const {
+    debouncedSearchTerm,
+    isSearching,
+    filteredProducts,
+    error,
+    handleRetrySearch
+  } = useEnhancedMarketplaceSearch(currentPage);
   
   // Get marketplace products with fallback
   const elyphantProducts = products?.filter(p => p.vendor === "Elyphant") || [];
@@ -32,6 +46,27 @@ const MarketplaceContent: React.FC = () => {
     setSelectedCategory("");
     setPriceRange([0, 1000]);
   }, [location.pathname]);
+
+  const handleProductView = (productId: string) => {
+    console.log("Viewing product:", productId);
+  };
+
+  // Use mobile layout for mobile devices
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <MarketplaceHeader />
+        <MobileMarketplaceLayout
+          products={filteredProducts}
+          isLoading={isSearching}
+          searchTerm={debouncedSearchTerm}
+          onProductView={handleProductView}
+          error={error}
+          onRefresh={handleRetrySearch}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

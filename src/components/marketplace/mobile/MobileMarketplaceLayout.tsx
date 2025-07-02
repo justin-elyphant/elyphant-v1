@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Product } from "@/types/product";
 import ProductSkeleton from "../ui/ProductSkeleton";
-import ProductGrid from "../ProductGrid";
+import MobileProductGrid from "./MobileProductGrid";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertCircle } from "lucide-react";
 
@@ -48,10 +48,12 @@ const MobileMarketplaceLayout: React.FC<MobileMarketplaceLayoutProps> = ({
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <div className="mb-4">
-          <div className="h-8 bg-gray-200 rounded animate-pulse mb-2" />
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
-        </div>
+        {searchTerm && (
+          <div className="mb-4">
+            <div className="h-8 bg-gray-200 rounded animate-pulse mb-2" />
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+          </div>
+        )}
         <ProductSkeleton count={6} viewMode={viewMode} />
       </div>
     );
@@ -70,12 +72,21 @@ const MobileMarketplaceLayout: React.FC<MobileMarketplaceLayoutProps> = ({
         </div>
       )}
 
-      {/* Product Grid */}
-      <ProductGrid
+      {/* Mobile Product Grid - matches your screenshot layout */}
+      <MobileProductGrid
         products={products}
-        viewMode={viewMode}
-        sortOption="relevance"
-        onProductView={onProductView}
+        onProductClick={onProductView}
+        isLoading={isLoading}
+        hasMore={false}
+        getProductStatus={(product) => {
+          if (product.isBestSeller) {
+            return { badge: "Best Seller", color: "orange" };
+          }
+          if (product.vendor === "Amazon via Zinc") {
+            return { badge: "Amazon", color: "blue" };
+          }
+          return null;
+        }}
       />
     </div>
   );

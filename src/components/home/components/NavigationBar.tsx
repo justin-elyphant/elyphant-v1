@@ -5,7 +5,7 @@ import { Menu, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import Logo from "./Logo";
-import EnhancedSearchBar from "./EnhancedSearchBar";
+import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import AuthButtons from "./AuthButtons";
 import MobileNavMenu from "@/components/navigation/components/MobileNavMenu";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
@@ -41,7 +41,7 @@ const NavigationBar = () => {
 
           {/* Desktop Search Bar */}
           <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <EnhancedSearchBar />
+            <AIEnhancedSearchBar />
           </div>
 
           {/* Desktop Auth & Cart */}
@@ -74,7 +74,7 @@ const NavigationBar = () => {
 
         {/* Mobile Search Bar - Below header */}
         <div className="md:hidden pb-3 pt-2">
-          <EnhancedSearchBar mobile />
+          <AIEnhancedSearchBar mobile />
         </div>
       </div>
 

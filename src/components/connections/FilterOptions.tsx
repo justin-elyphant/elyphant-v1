@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { ConnectionFilters } from "@/hooks/useConnections";
+import { ConnectionFilters } from "@/types/connection-filters";
 import { RelationshipType } from "@/types/connections";
 
 interface FilterOptionsProps {

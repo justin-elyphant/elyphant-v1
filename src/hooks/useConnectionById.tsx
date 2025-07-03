@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { Connection, RelationshipType } from "@/types/connections";
-import { useConnections } from "./useConnections";
+import { useConnectionsAdapter } from "./useConnectionsAdapter";
 import { toast } from "sonner";
 
 const useConnectionsById = (connectionId: string) => {
-  const { connections, handleRelationshipChange, handleSendVerificationRequest } = useConnections();
+  const { connections, handleRelationshipChange, handleSendVerificationRequest } = useConnectionsAdapter();
   const [connection, setConnection] = useState<Connection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

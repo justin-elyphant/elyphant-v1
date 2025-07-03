@@ -1,48 +1,99 @@
 
 import React, { useState } from "react";
-import { Users } from "lucide-react";
+import { Gift, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "sonner";
-import { useConnections } from "@/hooks/useConnections";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Product } from "@/types/product";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface GroupGiftingButtonProps {
-  product: {
-    id: string;
-    title: string;
-    image?: string;
-    price?: number;
-  };
-  variant?: "icon" | "full";
+  product: Product;
   className?: string;
 }
 
-const GroupGiftingButton = ({ 
+const GroupGiftingButton: React.FC<GroupGiftingButtonProps> = ({ 
   product, 
-  variant = "icon", 
-  className 
-}: GroupGiftingButtonProps) => {
+  className = "" 
+}) => {
   const { user } = useAuth();
-  const { friends } = useConnections();
+  const { connections } = useEnhancedConnections();
   const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(`Group gift for ${product.title || product.name}`);
+  const [description, setDescription] = useState("");
+  const [goalAmount, setGoalAmount] = useState(product.price || 0);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
-  const [contributionAmount, setContributionAmount] = useState<number>(
-    product.price ? Math.ceil(product.price / 2) : 0
-  );
-  const [message, setMessage] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
-  const handleFriendToggle = (friendId: string) => {
+  // Filter to only accepted friend connections
+  const friends = connections.filter(conn => 
+    conn.status === 'accepted' && conn.relationship_type === 'friend'
+  );
+
+  const handleCreateCampaign = async () => {
+    if (!user) {
+      toast.error("Please sign in to create group gifts");
+      return;
+    }
+
+    if (selectedFriends.length === 0) {
+      toast.error("Please select at least one friend to invite");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      // Create the funding campaign
+      const { data: campaign, error: campaignError } = await supabase
+        .from('funding_campaigns')
+        .insert({
+          title,
+          description: description || `Let's pool together to buy this amazing gift!`,
+          goal_amount: goalAmount,
+          creator_id: user.id,
+          campaign_type: 'group_gift',
+          product_id: product.product_id || product.id,
+        })
+        .select()
+        .single();
+
+      if (campaignError) throw campaignError;
+
+      // TODO: Send invitations to selected friends
+      // This would typically involve creating invitation records and sending notifications
+
+      toast.success("Group gift campaign created! Invitations will be sent to your friends.");
+      setOpen(false);
+      
+      // Reset form
+      setTitle(`Group gift for ${product.title || product.name}`);
+      setDescription("");
+      setGoalAmount(product.price || 0);
+      setSelectedFriends([]);
+      
+    } catch (error) {
+      console.error('Error creating group gift campaign:', error);
+      toast.error("Failed to create group gift campaign");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const toggleFriendSelection = (friendId: string) => {
     setSelectedFriends(prev => 
       prev.includes(friendId) 
         ? prev.filter(id => id !== friendId)
@@ -50,139 +101,107 @@ const GroupGiftingButton = ({
     );
   };
 
-  const calculateSplitAmount = () => {
-    if (!product.price) return 0;
-    const totalPeople = selectedFriends.length + 1; // +1 for the current user
-    return totalPeople > 1 ? Math.ceil(product.price / totalPeople) : product.price;
-  };
-
-  const handleCreateGroupGift = () => {
-    if (selectedFriends.length === 0) {
-      toast.error("Please select at least one friend to create a group gift");
-      return;
-    }
-
-    // Here you would integrate with your backend to create the group gift
-    // For now, we'll show a success toast
-    toast.success("Group gift invitation sent!", {
-      description: `Invited ${selectedFriends.length} friends to contribute to this gift`
-    });
-    
-    setOpen(false);
-    setSelectedFriends([]);
-    setMessage("");
-  };
-
-  if (!user) {
-    return null;
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          size={variant === "icon" ? "icon" : "sm"}
-          className={className}
-          aria-label="Set up group gift"
+          size="sm" 
+          className={`flex items-center gap-2 ${className}`}
         >
-          <Users className="h-4 w-4 mr-1" />
-          {variant === "full" && "Group Gift"}
+          <Users className="h-4 w-4" />
+          Group Gift
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create a Group Gift</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5" />
+            Create Group Gift
+          </DialogTitle>
           <DialogDescription>
-            Invite friends to contribute to {product.title}
+            Invite friends to contribute towards this gift together.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 my-4">
-          <div className="flex items-center space-x-2">
-            <img 
-              src={product.image} 
-              alt={product.title} 
-              className="w-16 h-16 object-cover rounded"
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="title">Campaign Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter campaign title"
             />
-            <div>
-              <p className="font-medium">{product.title}</p>
-              <p className="text-sm text-muted-foreground">${product.price?.toFixed(2)}</p>
-            </div>
           </div>
           
           <div>
-            <label className="text-sm font-medium">Your contribution</label>
-            <div className="flex items-center space-x-2 mt-1">
-              <span>$</span>
-              <Input 
-                type="number" 
-                value={contributionAmount}
-                onChange={e => setContributionAmount(Number(e.target.value))}
-                min={1}
-                max={product.price || 1000}
-                className="flex-1"
-              />
-            </div>
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add a message about this group gift..."
+              rows={3}
+            />
           </div>
           
           <div>
-            <label className="text-sm font-medium">Invite friends (Select)</label>
-            <div className="max-h-48 overflow-y-auto mt-2 border rounded-md">
+            <Label htmlFor="goal">Goal Amount</Label>
+            <Input
+              id="goal"
+              type="number"
+              value={goalAmount}
+              onChange={(e) => setGoalAmount(Number(e.target.value))}
+              min="1"
+              step="0.01"
+            />
+          </div>
+          
+          <div>
+            <Label>Invite Friends ({selectedFriends.length} selected)</Label>
+            <div className="max-h-48 overflow-y-auto border rounded-md p-2 mt-2">
               {friends.length > 0 ? (
-                <ul className="divide-y">
-                  {friends.map(friend => (
-                    <li 
-                      key={friend.id} 
-                      onClick={() => handleFriendToggle(friend.id)}
-                      className={`p-2 flex items-center space-x-2 cursor-pointer transition-colors ${
-                        selectedFriends.includes(friend.id) ? 'bg-slate-100' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <input 
-                        type="checkbox" 
-                        checked={selectedFriends.includes(friend.id)} 
-                        onChange={() => {}} // Handled by li onClick
+                <div className="space-y-2">
+                  {friends.map((friend) => (
+                    <div key={friend.id} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={friend.id}
+                        checked={selectedFriends.includes(friend.id)}
+                        onCheckedChange={() => toggleFriendSelection(friend.id)}
                       />
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={friend.imageUrl} />
-                        <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={friend.profile_image} />
+                        <AvatarFallback>
+                          {friend.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
+                        </AvatarFallback>
                       </Avatar>
-                      <span>{friend.name}</span>
-                    </li>
+                      <Label htmlFor={friend.id} className="flex-1 cursor-pointer">
+                        {friend.profile_name || 'Unknown User'}
+                      </Label>
+                    </div>
                   ))}
-                </ul>
+                </div>
               ) : (
-                <p className="p-3 text-center text-sm text-muted-foreground">
-                  You need to add friends to invite them to group gifts
+                <p className="text-muted-foreground text-sm text-center py-4">
+                  No friends found. Add some friends to create group gifts!
                 </p>
               )}
             </div>
           </div>
           
-          <div>
-            <label className="text-sm font-medium">Add a message</label>
-            <Input
-              className="mt-1"
-              placeholder="Let's get this gift for Sarah's birthday!"
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-            />
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateCampaign}
+              disabled={isCreating || selectedFriends.length === 0}
+            >
+              {isCreating ? "Creating..." : "Create Campaign"}
+            </Button>
           </div>
-          
-          {selectedFriends.length > 0 && (
-            <div className="bg-slate-50 p-3 rounded-md">
-              <p className="text-sm font-medium">Split Summary</p>
-              <p className="text-sm">Each person pays: <span className="font-medium">${calculateSplitAmount().toFixed(2)}</span></p>
-              <p className="text-sm">Total people: {selectedFriends.length + 1}</p>
-            </div>
-          )}
         </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreateGroupGift}>Create Group Gift</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

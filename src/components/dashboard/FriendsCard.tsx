@@ -119,29 +119,36 @@ const FriendsCard = () => {
         <div className="space-y-4">
           {friends.length > 0 ? (
             <div className="space-y-3">
-              {friends.map((connection) => (
-                <div key={connection.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={connection.profile_image} />
-                      <AvatarFallback className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground">
-                        {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">
-                        {connection.profile_name || 'Unknown User'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {connection.relationship_type}
-                      </p>
+              {friends.map((connection) => {
+                // Determine the connected user ID based on who initiated the connection
+                const connectedUserId = connection.user_id !== connection.connected_user_id 
+                  ? (connection.user_id === connection.id ? connection.connected_user_id : connection.user_id)
+                  : connection.connected_user_id;
+                
+                return (
+                  <div key={connection.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Avatar>
+                        <AvatarImage src={connection.profile_image} />
+                        <AvatarFallback className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground">
+                          {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">
+                          {connection.profile_name || 'Unknown User'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {connection.relationship_type}
+                        </p>
+                      </div>
                     </div>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={`/user/${connectedUserId}`}>View</Link>
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/user/${connection.display_user_id}`}>View</Link>
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-4 text-muted-foreground">

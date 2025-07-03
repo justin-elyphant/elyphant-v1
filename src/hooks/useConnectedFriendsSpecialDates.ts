@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { useConnections } from "@/hooks/useConnections";
+import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { GiftOccasion } from "@/components/marketplace/utils/upcomingOccasions";
 import { addDays, format, parseISO } from "date-fns";
 
@@ -40,7 +40,7 @@ export const useConnectedFriendsSpecialDates = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [friendOccasions, setFriendOccasions] = useState<GiftOccasion[]>([]);
-  const { connections } = useConnections();
+  const { connections } = useEnhancedConnections();
 
   useEffect(() => {
     const loadFriendOccasions = async () => {

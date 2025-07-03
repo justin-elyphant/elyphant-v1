@@ -1,128 +1,93 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, ShoppingCart } from "lucide-react";
+import { Menu, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
-import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
-import MobileMenu from "@/components/layout/navigation/MobileMenu";
-import MobileMenuErrorBoundary from "@/components/layout/navigation/MobileMenuErrorBoundary";
-import MobileSearchButton from "./MobileSearchButton";
 import Logo from "./Logo";
-import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
+import EnhancedSearchBar from "./EnhancedSearchBar";
 import AuthButtons from "./AuthButtons";
-import UserDropdownMenu from "@/components/navigation/components/UserDropdownMenu";
-import { HEADER_STYLES } from "./styleConstants";
+import MobileNavMenu from "@/components/navigation/components/MobileNavMenu";
+import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 const NavigationBar = () => {
   const { user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const links = [
-    { label: "Home", href: "/" },
-    { label: "Marketplace", href: "/marketplace" },
-    { label: "Gifting", href: "/gifting" },
-    { label: "Events", href: "/events" },
-  ];
-
   const marketplaceItems: NavDropdownItem[] = [
-    {
-      label: "Browse Products",
-      href: "/marketplace",
-      icon: <ShoppingCart className="h-4 w-4" />,
-    },
+    { label: "All Products", href: "/marketplace" },
+    { label: "Electronics", href: "/marketplace?category=electronics" },
+    { label: "Fashion", href: "/marketplace?category=fashion" },
+    { label: "Home & Garden", href: "/marketplace?category=home-garden" },
+    { label: "Sports & Outdoors", href: "/marketplace?category=sports" },
+    { label: "Books & Media", href: "/marketplace?category=books" },
   ];
 
-  const connectionsItems: NavDropdownItem[] = [
-    {
-      label: "My Connections",
-      href: "/connections",
-      icon: <Menu className="h-4 w-4" />,
-    },
+  const profileItems: NavDropdownItem[] = [
+    { label: "Profile", href: "/profile" },
+    { label: "Settings", href: "/settings" },
+    { label: "Orders", href: "/orders" },
+    { label: "Wishlists", href: "/my-wishlists" },
   ];
-
-  const isActive = (path: string) => {
-    return window.location.pathname === path;
-  };
-
-  const handleMobileMenuToggle = () => {
-    console.log('Mobile menu toggle clicked, current state:', isMobileMenuOpen);
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleMobileMenuClose = () => {
-    console.log('Mobile menu close called');
-    setIsMobileMenuOpen(false);
-  };
 
   return (
-    <>
-      <nav className={HEADER_STYLES.navBar}>
-        {/* Logo Section */}
-        <div className={HEADER_STYLES.logoSection}>
-          <Logo />
-        </div>
+    <nav className="bg-white border-b border-gray-200">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Logo />
+          </div>
 
-        {/* Desktop Search Bar */}
-        <div className={HEADER_STYLES.desktopSearch}>
-          <AIEnhancedSearchBar />
-        </div>
+          {/* Desktop Search Bar */}
+          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <EnhancedSearchBar />
+          </div>
 
-        {/* Desktop Actions */}
-        <div className={HEADER_STYLES.desktopActions}>
-          {!user ? (
+          {/* Desktop Auth & Cart */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/marketplace" className="text-gray-700 hover:text-gray-900">
+              <ShoppingCart className="h-6 w-6" />
+            </Link>
             <AuthButtons />
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" className={HEADER_STYLES.cartButton}>
-                <ShoppingCart className={HEADER_STYLES.cartIcon} />
-                <span className={HEADER_STYLES.cartBadge}>0</span>
-              </Button>
-              <UserDropdownMenu 
-                user={user} 
-                onSignOut={signOut}
-                marketplaceItems={marketplaceItems}
-                connectionsItems={connectionsItems}
-              />
-            </>
-          )}
+          </div>
+
+          {/* Mobile Right Side - Only Cart and Menu */}
+          <div className="md:hidden flex items-center space-x-3">
+            <Link to="/marketplace" className="text-gray-700 hover:text-gray-900">
+              <ShoppingCart className="h-6 w-6" />
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </Button>
+          </div>
         </div>
 
-        {/* Mobile Actions - Search, Cart and Hamburger Menu */}
-        <div className={HEADER_STYLES.mobileActions}>
-          <MobileSearchButton />
-          
-          <Button variant="ghost" size="sm" className={HEADER_STYLES.cartButton}>
-            <ShoppingCart className={HEADER_STYLES.cartIcon} />
-            <span className={HEADER_STYLES.cartBadge}>0</span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleMobileMenuToggle}
-            className={`${HEADER_STYLES.hamburgerButton} ${isMobileMenuOpen ? 'bg-gray-100' : ''}`}
-            aria-label="Toggle menu"
-            aria-expanded={isMobileMenuOpen}
-          >
-            <Menu className={HEADER_STYLES.hamburgerIcon} />
-          </Button>
+        {/* Mobile Search Bar - Below header */}
+        <div className="md:hidden pb-3 pt-2">
+          <EnhancedSearchBar mobile />
         </div>
-      </nav>
+      </div>
 
-      {/* Mobile Menu with Error Boundaries */}
-      {isMobileMenuOpen && (
-        <MobileMenuErrorBoundary onClose={handleMobileMenuClose}>
-          <MobileMenu
-            links={links}
-            marketplaceItems={marketplaceItems}
-            connectionsItems={connectionsItems}
-            isActive={isActive}
-            onClose={handleMobileMenuClose}
-            signOut={signOut}
-          />
-        </MobileMenuErrorBoundary>
-      )}
-    </>
+      {/* Mobile Menu */}
+      <MobileNavMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        onSignOut={signOut}
+        isAuthenticated={!!user}
+        marketplaceItems={marketplaceItems}
+        profileItems={profileItems}
+      />
+    </nav>
   );
 };
 

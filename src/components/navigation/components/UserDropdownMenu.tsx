@@ -1,26 +1,14 @@
 
 import React from "react";
 import UserButton from "@/components/auth/UserButton";
-import { User } from "@supabase/supabase-js";
-import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 interface UserDropdownMenuProps {
-  user?: User;
   profile?: { name?: string; profile_image?: string };
   email?: string;
   onSignOut: () => void;
-  marketplaceItems?: NavDropdownItem[];
-  connectionsItems?: NavDropdownItem[];
 }
 
-const UserDropdownMenu = ({ 
-  user, 
-  profile, 
-  email, 
-  onSignOut,
-  marketplaceItems,
-  connectionsItems 
-}: UserDropdownMenuProps) => {
+const UserDropdownMenu = ({ profile, email, onSignOut }: UserDropdownMenuProps) => {
   // Simply use the consolidated UserButton component
   return <UserButton />;
 };

@@ -29,15 +29,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header with AIEnhancedSearchBar and Enhanced Zinc API System */}
       <Header className={headerClassName} />
-      
-      {/* Main content area */}
       <main className={cn("flex-1", className)}>
         {children}
       </main>
-      
-      {/* Footer */}
       <Footer className={footerClassName} />
       
       {/* TEMPORARILY DISABLED: Floating Nicole Chat Widget - Re-enable when technical issues are resolved */}

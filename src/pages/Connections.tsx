@@ -10,14 +10,15 @@ import SuggestionsTabContent from "@/components/connections/SuggestionsTabConten
 import MainLayout from "@/components/layout/MainLayout";
 import { useState } from "react";
 import { RelationshipType } from "@/types/connections";
+import { ConnectionFilters } from "@/hooks/useConnections";
 
 const Connections = () => {
   const [userData] = useLocalStorage("userData", null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("friends");
-  const [filters, setFilters] = useState({
-    relationship: 'all' as RelationshipType | 'all',
-    verificationStatus: 'all' as 'verified' | 'incomplete' | 'all'
+  const [filters, setFilters] = useState<ConnectionFilters>({
+    relationship: 'all',
+    verificationStatus: 'all'
   });
   
   const { 

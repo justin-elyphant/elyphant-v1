@@ -10,6 +10,7 @@ import SingleImageView from "./carousel/SingleImageView";
 import CarouselItems from "./carousel/CarouselItems";
 import CarouselIndicators from "./carousel/CarouselIndicators";
 import { useCarouselState } from "./carousel/useCarouselState";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductCarouselProps {
   images: string[];
@@ -17,6 +18,8 @@ interface ProductCarouselProps {
 }
 
 const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
+  const isMobile = useIsMobile();
+  
   // Use our custom hook to manage carousel state
   const {
     activeIndex,
@@ -36,7 +39,7 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
     return <SingleImageView imageSrc={validImages[0]} altText={productName} />;
   }
 
-  // If multiple images, show carousel with navigation
+  // If multiple images, show carousel with conditional navigation
   return (
     <div className="space-y-2">
       <Carousel 
@@ -57,7 +60,8 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
           onImageError={handleImageError}
         />
         
-        {validImages.length > 1 && (
+        {/* Show navigation arrows only on desktop */}
+        {!isMobile && validImages.length > 1 && (
           <>
             <CarouselPrevious className="left-2" />
             <CarouselNext className="right-2" />
@@ -65,7 +69,7 @@ const ProductCarousel = ({ images, productName }: ProductCarouselProps) => {
         )}
       </Carousel>
       
-      {/* Thumbnail indicators */}
+      {/* Thumbnail indicators - shown on both mobile and desktop */}
       <CarouselIndicators 
         totalImages={validImages.length}
         activeIndex={activeIndex}

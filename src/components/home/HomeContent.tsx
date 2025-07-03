@@ -9,7 +9,6 @@ import HomeCTA from "@/components/home/sections/HomeCTA";
 import FeaturedCollections from "@/components/home/sections/FeaturedCollections";
 import FeaturedCategories from "@/components/home/sections/FeaturedCategories";
 import FeaturedOccasions from "@/components/home/sections/FeaturedOccasions";
-import FeaturedProductsSection from "@/components/home/sections/FeaturedProducts";
 import PopularBrandsSection from "@/components/home/sections/PopularBrandsSection";
 import NicoleIntroSection from "@/components/home/sections/NicoleIntroSection";
 import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
@@ -157,9 +156,6 @@ const HomeContent = () => {
 
         {/* Nicole Introduction Section */}
         <NicoleIntroSection />
-
-        {/* Trending Products Carousel */}
-        <FeaturedProductsSection />
 
         {/* Seasonal Gift Guide */}
         <SeasonalGiftGuide />

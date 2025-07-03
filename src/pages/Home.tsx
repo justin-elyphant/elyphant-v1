@@ -180,9 +180,6 @@ const Home = () => {
           {/* Nicole Introduction Section - now with full bleed */}
           <NicoleIntroSection />
 
-          {/* Featured Products Section - HIDDEN */}
-          {/* <FeaturedProductsSection /> */}
-
           {/* Seasonal Gift Guide - enhanced for mobile */}
           <SeasonalGiftGuide />
 

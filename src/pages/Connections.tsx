@@ -11,19 +11,13 @@ import MainLayout from "@/components/layout/MainLayout";
 import { useState } from "react";
 import { RelationshipType } from "@/types/connections";
 
-// Define the proper ConnectionFilters type to match what the components expect
-interface ConnectionFilters {
-  relationship: RelationshipType | 'all';
-  verificationStatus: 'verified' | 'incomplete' | 'all';
-}
-
 const Connections = () => {
   const [userData] = useLocalStorage("userData", null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("friends");
-  const [filters, setFilters] = useState<ConnectionFilters>({
-    relationship: 'all',
-    verificationStatus: 'all'
+  const [filters, setFilters] = useState({
+    relationship: 'all' as RelationshipType | 'all',
+    verificationStatus: 'all' as 'verified' | 'incomplete' | 'all'
   });
   
   const { 

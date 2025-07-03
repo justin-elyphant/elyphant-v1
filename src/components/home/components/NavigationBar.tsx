@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth";
 import Logo from "./Logo";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import AuthButtons from "./AuthButtons";
-import MobileNavMenu from "@/components/navigation/components/MobileNavMenu";
+import ModernMobileNavMenu from "@/components/navigation/components/ModernMobileNavMenu";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 const NavigationBar = () => {
@@ -78,8 +78,8 @@ const NavigationBar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      <MobileNavMenu
+      {/* Modern Mobile Menu */}
+      <ModernMobileNavMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         onSignOut={signOut}

@@ -1,8 +1,8 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 
 export interface EnhancedConnection {
   id: string;
@@ -29,7 +29,7 @@ export const useEnhancedConnections = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchEnhancedConnections = async () => {
+  const fetchEnhancedConnections = useCallback(async () => {
     if (!user) return;
     
     setLoading(true);
@@ -66,7 +66,6 @@ export const useEnhancedConnections = () => {
           profile_image: profile?.profile_image,
           profile_bio: profile?.bio,
           profile_username: profile?.username || `@user${conn.connected_user_id.substring(0, 6)}`,
-          // For connections where we're the connected user, we need to fetch the other user's profile
           display_user_id: isUserInitiated ? conn.connected_user_id : conn.user_id
         };
       });
@@ -100,11 +99,14 @@ export const useEnhancedConnections = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Set up real-time updates
+  useRealtimeConnections(fetchEnhancedConnections);
 
   useEffect(() => {
     fetchEnhancedConnections();
-  }, [user]);
+  }, [fetchEnhancedConnections]);
 
   const sendConnectionRequest = async (connectedUserId: string, relationshipType: string) => {
     if (!user) {
@@ -148,7 +150,6 @@ export const useEnhancedConnections = () => {
           : "Connection request sent"
       );
       
-      await fetchEnhancedConnections();
       return data;
     } catch (err) {
       console.error("Error sending connection request:", err);
@@ -176,7 +177,6 @@ export const useEnhancedConnections = () => {
       if (error) throw error;
       
       toast.success("Connection request accepted");
-      await fetchEnhancedConnections();
       return data;
     } catch (err) {
       console.error("Error accepting connection request:", err);
@@ -204,7 +204,6 @@ export const useEnhancedConnections = () => {
       if (error) throw error;
       
       toast.success("Connection request rejected");
-      await fetchEnhancedConnections();
       return data;
     } catch (err) {
       console.error("Error rejecting connection request:", err);
@@ -229,7 +228,6 @@ export const useEnhancedConnections = () => {
       if (error) throw error;
       
       toast.success("Connection removed successfully");
-      await fetchEnhancedConnections();
       return true;
     } catch (err) {
       console.error("Error removing connection:", err);

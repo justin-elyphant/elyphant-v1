@@ -26,7 +26,9 @@ const Logo = () => {
         alt="Elyphant" 
         className="h-12 w-12 mr-3" 
       />
-      <h1 className="text-2xl font-bold">Elyphant</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent drop-shadow-sm">
+        Elyphant
+      </h1>
     </div>
   );
 };

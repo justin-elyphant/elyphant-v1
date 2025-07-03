@@ -8,20 +8,26 @@ import { cn } from "@/lib/utils";
 interface MessageThreadProps {
   threadId: string;
   connectionName: string;
+  connectionImage?: string;
+  connectionUsername?: string;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
   isActive?: boolean;
+  mutualFriends?: number;
   onClick: () => void;
 }
 
 const MessageThread = ({
   threadId,
   connectionName,
+  connectionImage,
+  connectionUsername,
   lastMessage,
   lastMessageTime,
   unreadCount,
   isActive = false,
+  mutualFriends = 0,
   onClick
 }: MessageThreadProps) => {
   const initials = connectionName
@@ -41,12 +47,11 @@ const MessageThread = ({
     >
       <div className="relative">
         <Avatar className="h-10 w-10">
+          <AvatarImage src={connectionImage} alt={connectionName} />
           <AvatarFallback className="bg-purple-100 text-purple-800 font-medium">
             {initials}
           </AvatarFallback>
-          <AvatarImage src="" alt={connectionName} />
         </Avatar>
-        {/* Removed duplicate status indicator - only show in chat header */}
       </div>
       
       <div className="flex-1 min-w-0">
@@ -56,7 +61,17 @@ const MessageThread = ({
             {formatDistanceToNow(new Date(lastMessageTime), { addSuffix: true })}
           </span>
         </div>
-        <p className="text-sm text-muted-foreground truncate">{lastMessage}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground truncate flex-1">{lastMessage}</p>
+          {mutualFriends > 0 && (
+            <span className="text-xs text-muted-foreground ml-2">
+              {mutualFriends} mutual
+            </span>
+          )}
+        </div>
+        {connectionUsername && (
+          <p className="text-xs text-muted-foreground mt-1">{connectionUsername}</p>
+        )}
       </div>
       
       {unreadCount > 0 && (

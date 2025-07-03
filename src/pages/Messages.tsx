@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useConnections } from "@/hooks/profile/useConnections";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { useAuth } from "@/contexts/AuthContext";
 import EnhancedChatInterface from "@/components/messaging/EnhancedChatInterface";
 import MessageThread from "@/components/messaging/MessageThread";
@@ -14,40 +14,34 @@ import { Input } from "@/components/ui/input";
 import { MessageSquare, Search, Plus, Users } from "lucide-react";
 import { useUserPresence } from "@/hooks/useUserPresence";
 
-// Mock conversation data with additional IDs to ensure some match
+// Mock conversation data for demo purposes - this will be enhanced with real message data
 const mockConversations = [
   {
-    connectionName: 'Alex Johnson',
     lastMessage: "Thanks for the gift recommendation! I'll definitely check it out.",
     lastMessageTime: '2024-01-15T10:30:00Z',
     unreadCount: 2
   },
   {
-    connectionName: 'Jamie Smith',
     lastMessage: "Hey! How was your weekend?",
     lastMessageTime: '2024-01-15T09:15:00Z',
     unreadCount: 0
   },
   {
-    connectionName: 'Taylor Wilson',
     lastMessage: "Perfect! I added that item to my wishlist.",
     lastMessageTime: '2024-01-14T16:45:00Z',
     unreadCount: 1
   },
   {
-    connectionName: 'Jordan Parks',
     lastMessage: "Looking forward to catching up soon!",
     lastMessageTime: '2024-01-14T14:20:00Z',
     unreadCount: 0
   },
   {
-    connectionName: 'Casey Morgan',
     lastMessage: "Thanks for thinking of me! ❤️",
     lastMessageTime: '2024-01-13T11:10:00Z',
     unreadCount: 0
   },
   {
-    connectionName: 'Sam Chen',
     lastMessage: "That gift idea is perfect for mom's birthday!",
     lastMessageTime: '2024-01-12T15:22:00Z',
     unreadCount: 3
@@ -58,50 +52,56 @@ const Messages = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { connections, loading } = useConnections();
+  const { 
+    connections, 
+    friends, 
+    following, 
+    loading 
+  } = useConnectionsAdapter();
+  
   const [selectedConnection, setSelectedConnection] = useState<string | null>(connectionId || null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Create message threads - if no real connections, use mock data
-  const messageThreads = connections.length > 0 
-    ? connections.map((connection, index) => {
-        const otherUser = connection.user_id === user?.id 
-          ? { 
-              id: connection.connected_user_id, 
-              name: `User ${connection.connected_user_id.slice(0, 8)}` 
-            }
-          : { 
-              id: connection.user_id, 
-              name: `User ${connection.user_id.slice(0, 8)}` 
-            };
-        
-        // Use mock conversation data for display
+  // Create message threads from real connection data
+  const allConnections = [...friends, ...following].filter(conn => 
+    conn.type === 'friend' || conn.type === 'following'
+  );
+
+  const messageThreads = allConnections.length > 0
+    ? allConnections.map((connection, index) => {
+        // Use mock data for message content until we implement real messaging
         const mockData = mockConversations[index % mockConversations.length];
         
         return {
-          threadId: otherUser.id,
-          connectionName: mockData.connectionName,
+          threadId: connection.id,
+          connectionName: connection.name,
+          connectionImage: connection.imageUrl,
+          connectionUsername: connection.username,
           lastMessage: mockData.lastMessage,
           lastMessageTime: mockData.lastMessageTime,
           unreadCount: mockData.unreadCount,
-          relationshipType: connection.relationship_type,
-          status: connection.status
+          relationshipType: connection.relationship,
+          status: connection.type === 'friend' ? 'accepted' : 'following',
+          mutualFriends: connection.mutualFriends
         };
       })
-    : // If no real connections, create mock threads for demo
+    : // Fallback to mock data for demo if no real connections
       mockConversations.map((mock, index) => ({
         threadId: `mock-${index + 1}`,
-        connectionName: mock.connectionName,
+        connectionName: `Demo User ${index + 1}`,
+        connectionImage: '/placeholder.svg',
+        connectionUsername: `@demo${index + 1}`,
         lastMessage: mock.lastMessage,
         lastMessageTime: mock.lastMessageTime,
         unreadCount: mock.unreadCount,
         relationshipType: 'friend' as const,
-        status: 'accepted' as const
+        status: 'accepted' as const,
+        mutualFriends: Math.floor(Math.random() * 5)
       }));
 
   const filteredThreads = messageThreads.filter(thread =>
-    thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    thread.status === 'accepted'
+    thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    thread.connectionUsername.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
@@ -188,10 +188,13 @@ const Messages = () => {
                         key={thread.threadId}
                         threadId={thread.threadId}
                         connectionName={thread.connectionName}
+                        connectionImage={thread.connectionImage}
+                        connectionUsername={thread.connectionUsername}
                         lastMessage={thread.lastMessage}
                         lastMessageTime={thread.lastMessageTime}
                         unreadCount={thread.unreadCount}
                         isActive={selectedConnection === thread.threadId}
+                        mutualFriends={thread.mutualFriends}
                         onClick={() => handleSelectConnection(thread.threadId)}
                       />
                     ))
@@ -224,6 +227,8 @@ const Messages = () => {
                 <EnhancedChatInterface 
                   connectionId={selectedConnection}
                   connectionName={selectedConnectionData.connectionName}
+                  connectionImage={selectedConnectionData.connectionImage}
+                  relationshipType={selectedConnectionData.relationshipType}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center p-8">

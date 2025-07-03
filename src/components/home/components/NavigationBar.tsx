@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth";
 import Logo from "./Logo";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import AuthButtons from "./AuthButtons";
+import UserButton from "@/components/auth/UserButton";
 import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
@@ -49,7 +50,7 @@ const NavigationBar = () => {
             <Link to="/marketplace" className="text-gray-700 hover:text-gray-900">
               <ShoppingCart className="h-6 w-6" />
             </Link>
-            <AuthButtons />
+            {user ? <UserButton /> : <AuthButtons />}
           </div>
 
           {/* Mobile Right Side - Only Cart and Menu */}

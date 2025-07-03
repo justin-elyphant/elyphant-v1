@@ -11,28 +11,32 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
-import { EventTypeSelector } from "./EventTypeSelector";
-import { DateSelector } from "./DateSelector";
-import { PersonSelector } from "./PersonSelector";
-import { RecurringToggle } from "./RecurringToggle";
-import { PrivacySelector } from "./PrivacySelector";
-import { AutoGiftToggle } from "./AutoGiftToggle";
-import { GiftBudgetInput } from "./GiftBudgetInput";
+import EventTypeSelector from "./EventTypeSelector";
+import DateSelector from "./DateSelector";
+import PersonSelector from "./PersonSelector";
+import RecurringToggle from "./RecurringToggle";
+import PrivacySelector from "./PrivacySelector";
+import AutoGiftToggle from "./AutoGiftToggle";
+import GiftBudgetInput from "./GiftBudgetInput";
 import { EventFormData } from "./types";
 
 const eventSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Title is required").optional(),
   description: z.string().optional(),
-  date: z.string().min(1, "Date is required"),
-  dateType: z.string().min(1, "Event type is required"),
+  date: z.date().nullable(),
+  dateType: z.string().optional(),
   personId: z.string().optional(),
+  eventType: z.string().min(1, "Event type is required"),
+  personName: z.string().min(1, "Person name is required"),
   isRecurring: z.boolean().default(false),
   recurringType: z.string().optional(),
   maxOccurrences: z.number().optional(),
   endDate: z.string().optional(),
-  visibility: z.enum(["public", "friends", "private"]).default("friends"),
-  autoGift: z.boolean().default(false),
-  giftBudget: z.number().optional(),
+  visibility: z.enum(["public", "friends", "private"]).default("friends").optional(),
+  privacyLevel: z.enum(["public", "private", "shared"]).default("private"),
+  autoGift: z.boolean().default(false).optional(),
+  autoGiftEnabled: z.boolean().default(false),
+  giftBudget: z.number().min(1).default(50),
 });
 
 interface AddEventFormProps {
@@ -50,15 +54,19 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
     defaultValues: {
       title: "",
       description: "",
-      date: "",
+      date: null,
       dateType: "birthday",
       personId: "",
+      eventType: "birthday",
+      personName: "",
       isRecurring: false,
       recurringType: "yearly",
       maxOccurrences: undefined,
       endDate: "",
       visibility: "friends",
+      privacyLevel: "private",
       autoGift: false,
+      autoGiftEnabled: false,
       giftBudget: 50,
     }
   });
@@ -82,7 +90,7 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <Label htmlFor="title">Event Title</Label>
+          <Label htmlFor="title">Event Title (Optional)</Label>
           <Input
             id="title"
             {...form.register("title")}
@@ -106,9 +114,23 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
         </div>
 
         <EventTypeSelector
-          value={form.watch("dateType")}
-          onChange={(value) => form.setValue("dateType", value)}
+          value={form.watch("eventType")}
+          onChange={(value) => form.setValue("eventType", value)}
         />
+
+        <div>
+          <Label htmlFor="personName">Person Name</Label>
+          <Input
+            id="personName"
+            {...form.register("personName")}
+            placeholder="Enter person's name"
+          />
+          {form.formState.errors.personName && (
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.personName.message}
+            </p>
+          )}
+        </div>
 
         <DateSelector
           value={form.watch("date")}
@@ -117,7 +139,7 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
 
         <PersonSelector
           connections={connections}
-          value={form.watch("personId")}
+          value={form.watch("personId") || ""}
           onChange={(value) => form.setValue("personId", value)}
         />
 
@@ -133,16 +155,16 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
         />
 
         <PrivacySelector
-          value={form.watch("visibility")}
-          onChange={(value) => form.setValue("visibility", value)}
+          value={form.watch("privacyLevel")}
+          onChange={(value) => form.setValue("privacyLevel", value)}
         />
 
         <AutoGiftToggle
-          autoGift={form.watch("autoGift")}
-          onAutoGiftChange={(value) => form.setValue("autoGift", value)}
+          autoGift={form.watch("autoGiftEnabled")}
+          onAutoGiftChange={(value) => form.setValue("autoGiftEnabled", value)}
         />
 
-        {form.watch("autoGift") && (
+        {form.watch("autoGiftEnabled") && (
           <GiftBudgetInput
             value={form.watch("giftBudget")}
             onChange={(value) => form.setValue("giftBudget", value)}

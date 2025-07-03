@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import AddEventForm from "./AddEventForm";
+import { AddEventForm } from "./AddEventForm";
 import { EventFormData } from "./types";
 import { eventsService, transformExtendedEventToDatabase } from "@/services/eventsService";
 import { useEvents } from "../context/EventsContext";

@@ -2,44 +2,39 @@
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UseFormReturn } from "react-hook-form";
-import { AddEventFormValues } from "./types";
+import { Label } from "@/components/ui/label";
 
 interface EventTypeSelectorProps {
-  form: UseFormReturn<AddEventFormValues>;
-  eventTypes: { value: string; label: string }[];
-  validationError?: string;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-const EventTypeSelector = ({ form, eventTypes, validationError }: EventTypeSelectorProps) => {
+const EventTypeSelector = ({ value, onChange }: EventTypeSelectorProps) => {
+  const eventTypes = [
+    { value: "birthday", label: "Birthday" },
+    { value: "anniversary", label: "Anniversary" },
+    { value: "wedding", label: "Wedding" },
+    { value: "graduation", label: "Graduation" },
+    { value: "holiday", label: "Holiday" },
+    { value: "other", label: "Other" },
+  ];
+
   return (
-    <FormField
-      control={form.control}
-      name="eventType"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Event Type</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger className={validationError ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select event type" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {eventTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {validationError && (
-            <p className="text-sm text-red-500">{validationError}</p>
-          )}
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="space-y-2">
+      <Label>Event Type</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select event type" />
+        </SelectTrigger>
+        <SelectContent>
+          {eventTypes.map((type) => (
+            <SelectItem key={type.value} value={type.value}>
+              {type.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
 

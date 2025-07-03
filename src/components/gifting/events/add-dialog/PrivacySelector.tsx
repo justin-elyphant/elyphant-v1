@@ -1,54 +1,42 @@
 
 import React from "react";
-import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UseFormReturn } from "react-hook-form";
-import { AddEventFormValues } from "./types";
+import { Label } from "@/components/ui/label";
 
 interface PrivacySelectorProps {
-  form: UseFormReturn<AddEventFormValues>;
+  value: "public" | "private" | "shared";
+  onChange: (value: "public" | "private" | "shared") => void;
 }
 
-const PrivacySelector = ({ form }: PrivacySelectorProps) => {
-  const watchPrivacyLevel = form.watch("privacyLevel");
-
+const PrivacySelector = ({ value, onChange }: PrivacySelectorProps) => {
   return (
-    <FormField
-      control={form.control}
-      name="privacyLevel"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Privacy Level</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select privacy level" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectItem value="private">
-                Private (Only you can see)
-              </SelectItem>
-              <SelectItem value="shared">
-                Shared (Only with connected users)
-              </SelectItem>
-              <SelectItem value="public">
-                Public (Visible to all)
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <FormDescription>
-            Controls who can see this event. Shared events are verified with connected users.
-          </FormDescription>
-          {watchPrivacyLevel === "shared" && (
-            <FormDescription className="text-amber-600">
-              Only the event type and date will be shared. Person's name remains private.
-            </FormDescription>
-          )}
-          <FormMessage />
-        </FormItem>
+    <div className="space-y-2">
+      <Label>Privacy Level</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select privacy level" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="private">
+            Private (Only you can see)
+          </SelectItem>
+          <SelectItem value="shared">
+            Shared (Only with connected users)
+          </SelectItem>
+          <SelectItem value="public">
+            Public (Visible to all)
+          </SelectItem>
+        </SelectContent>
+      </Select>
+      <div className="text-sm text-muted-foreground">
+        Controls who can see this event. Shared events are verified with connected users.
+      </div>
+      {value === "shared" && (
+        <div className="text-sm text-amber-600">
+          Only the event type and date will be shared. Person's name remains private.
+        </div>
       )}
-    />
+    </div>
   );
 };
 

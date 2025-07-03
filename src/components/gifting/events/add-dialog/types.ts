@@ -1,30 +1,30 @@
-export interface AddEventFormValues {
-  eventType: string;
-  personName: string;
-  personId?: string;
-  date: Date;
-  autoGift: boolean;
-  autoGiftAmount?: number;
-  privacyLevel: "private" | "shared" | "public";
-  isRecurring: boolean;
-  recurringType?: "yearly" | "monthly" | "custom";
-}
 
 export interface EventFormData {
+  title?: string;
+  description?: string;
+  date: Date | null;
+  dateType?: string;
+  personId?: string;
   eventType: string;
   personName: string;
-  date: Date | null;
-  privacyLevel: "private" | "shared" | "public";
+  privacyLevel: "public" | "private" | "shared";
   autoGiftEnabled: boolean;
   giftBudget: number;
   isRecurring: boolean;
-  recurringType?: "yearly" | "monthly" | "custom";
+  recurringType: "yearly" | "monthly" | "custom";
+  maxOccurrences?: number;
+  endDate?: string;
+  visibility?: "public" | "friends" | "private";
+  autoGift?: boolean;
 }
 
-export interface PersonContact {
-  id: string;
-  name: string;
-  avatar: string;
-  topGifter: boolean;
-  events: number;
+export interface AddEventFormValues {
+  eventType: string;
+  personName: string;
+  date: Date | null;
+  privacyLevel: "public" | "private" | "shared";
+  autoGiftEnabled: boolean;
+  giftBudget: number;
+  isRecurring: boolean;
+  recurringType: "yearly" | "monthly" | "custom";
 }

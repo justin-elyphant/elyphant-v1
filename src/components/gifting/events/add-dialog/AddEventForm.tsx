@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import EventTypeSelector from "./EventTypeSelector";
@@ -21,7 +20,7 @@ import GiftBudgetInput from "./GiftBudgetInput";
 import { EventFormData } from "./types";
 
 const eventSchema = z.object({
-  title: z.string().min(1, "Title is required").optional(),
+  title: z.string().optional(),
   description: z.string().optional(),
   date: z.date().nullable(),
   dateType: z.string().optional(),
@@ -29,7 +28,7 @@ const eventSchema = z.object({
   eventType: z.string().min(1, "Event type is required"),
   personName: z.string().min(1, "Person name is required"),
   isRecurring: z.boolean().default(false),
-  recurringType: z.string().optional(),
+  recurringType: z.enum(["yearly", "monthly", "custom"]).optional(),
   maxOccurrences: z.number().optional(),
   endDate: z.string().optional(),
   visibility: z.enum(["public", "friends", "private"]).default("friends").optional(),
@@ -145,11 +144,11 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
 
         <RecurringToggle
           isRecurring={form.watch("isRecurring")}
-          recurringType={form.watch("recurringType")}
+          recurringType={form.watch("recurringType") as "yearly" | "monthly" | "custom" | undefined}
           maxOccurrences={form.watch("maxOccurrences")}
           endDate={form.watch("endDate")}
           onRecurringChange={(value) => form.setValue("isRecurring", value)}
-          onRecurringTypeChange={(value) => form.setValue("recurringType", value)}
+          onRecurringTypeChange={(value) => form.setValue("recurringType", value as "yearly" | "monthly" | "custom")}
           onMaxOccurrencesChange={(value) => form.setValue("maxOccurrences", value)}
           onEndDateChange={(value) => form.setValue("endDate", value)}
         />

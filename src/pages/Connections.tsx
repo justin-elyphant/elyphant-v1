@@ -2,28 +2,32 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { useConnections } from "@/hooks/useConnections";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
 import FriendsTabContent from "@/components/connections/FriendsTabContent";
 import FollowingTabContent from "@/components/connections/FollowingTabContent";
 import SuggestionsTabContent from "@/components/connections/SuggestionsTabContent";
 import MainLayout from "@/components/layout/MainLayout";
+import { useState } from "react";
 
 const Connections = () => {
   const [userData] = useLocalStorage("userData", null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("friends");
+  const [filters, setFilters] = useState({
+    relationship: 'all',
+    verificationStatus: 'all'
+  });
+  
   const { 
-    searchTerm, 
-    setSearchTerm, 
-    activeTab, 
-    setActiveTab,
     friends,
     following,
     suggestions,
-    filters,
-    setFilters,
+    loading,
+    error,
     handleRelationshipChange,
     handleSendVerificationRequest
-  } = useConnections();
+  } = useConnectionsAdapter();
   
   return (
     <MainLayout>

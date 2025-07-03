@@ -1,9 +1,8 @@
 
 import { useMemo } from "react";
-import { useConnections as useRealConnections } from "@/hooks/profile/useConnections";
+import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { Connection, RelationshipType } from "@/types/connections";
 
-// Adapter hook to transform real connection data into the format expected by UI components
 export const useConnectionsAdapter = () => {
   const { 
     connections,
@@ -16,38 +15,38 @@ export const useConnectionsAdapter = () => {
     acceptConnectionRequest,
     rejectConnectionRequest,
     removeConnection
-  } = useRealConnections();
+  } = useEnhancedConnections();
 
-  // Transform real connections into UI-compatible format
+  // Transform enhanced connections into UI-compatible format
   const transformedConnections = useMemo(() => {
     return connections.map(conn => ({
       id: conn.id,
-      name: `User ${conn.connected_user_id.substring(0, 8)}`, // Placeholder until we get profile data
-      username: `@user${conn.connected_user_id.substring(0, 6)}`,
-      imageUrl: '/placeholder.svg',
+      name: conn.profile_name || 'Unknown User',
+      username: conn.profile_username || '@unknown',
+      imageUrl: conn.profile_image || '/placeholder.svg',
       mutualFriends: 0, // TODO: Calculate mutual friends
       type: conn.status === 'accepted' ? 'friend' as const : 'suggestion' as const,
-      lastActive: 'Unknown', // TODO: Get last active from profiles
+      lastActive: 'Recently', // TODO: Get last active from profiles
       relationship: conn.relationship_type as RelationshipType,
       dataStatus: {
-        shipping: 'missing' as const,
-        birthday: 'missing' as const,
-        email: 'missing' as const
+        shipping: conn.data_access_permissions?.shipping_address ? 'verified' as const : 'missing' as const,
+        birthday: conn.data_access_permissions?.dob ? 'verified' as const : 'missing' as const,
+        email: conn.data_access_permissions?.email ? 'verified' as const : 'missing' as const
       },
       interests: [], // TODO: Get from profiles
-      bio: '', // TODO: Get from profiles
+      bio: conn.profile_bio || '',
     })) as Connection[];
   }, [connections]);
 
   const transformedFollowing = useMemo(() => {
     return following.map(conn => ({
       id: conn.id,
-      name: `User ${conn.connected_user_id.substring(0, 8)}`,
-      username: `@user${conn.connected_user_id.substring(0, 6)}`,
-      imageUrl: '/placeholder.svg',
+      name: conn.profile_name || 'Unknown User',
+      username: conn.profile_username || '@unknown',
+      imageUrl: conn.profile_image || '/placeholder.svg',
       mutualFriends: 0,
       type: 'following' as const,
-      lastActive: 'Unknown',
+      lastActive: 'Recently',
       relationship: conn.relationship_type as RelationshipType,
       dataStatus: {
         shipping: 'missing' as const,
@@ -55,7 +54,7 @@ export const useConnectionsAdapter = () => {
         email: 'missing' as const
       },
       interests: [],
-      bio: '',
+      bio: conn.profile_bio || '',
     })) as Connection[];
   }, [following]);
 
@@ -63,14 +62,18 @@ export const useConnectionsAdapter = () => {
     conn.type === 'friend' && conn.relationship === 'friend'
   );
 
-  const suggestions: Connection[] = []; // Empty for now - TODO: implement suggestions
+  // Generate basic suggestions based on existing connections
+  const suggestions: Connection[] = useMemo(() => {
+    // This is a placeholder - in a real app, you'd have a more sophisticated algorithm
+    return [];
+  }, []);
 
-  const handleRelationshipChange = (connectionId: string, newRelationship: RelationshipType, customValue?: string) => {
+  const handleRelationshipChange = async (connectionId: string, newRelationship: RelationshipType, customValue?: string) => {
     // TODO: Implement relationship update in the database
     console.log('Update relationship:', connectionId, newRelationship, customValue);
   };
 
-  const handleSendVerificationRequest = (connectionId: string, dataType: keyof Connection['dataStatus']) => {
+  const handleSendVerificationRequest = async (connectionId: string, dataType: keyof Connection['dataStatus']) => {
     // TODO: Implement verification request
     console.log('Send verification request:', connectionId, dataType);
   };

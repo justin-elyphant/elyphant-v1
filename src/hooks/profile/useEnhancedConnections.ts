@@ -1,0 +1,254 @@
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
+
+export interface EnhancedConnection {
+  id: string;
+  user_id: string;
+  connected_user_id: string;
+  relationship_type: string;
+  status: string;
+  created_at: string;
+  data_access_permissions: any;
+  // Profile data
+  profile_name?: string;
+  profile_email?: string;
+  profile_image?: string;
+  profile_bio?: string;
+  profile_username?: string;
+}
+
+export const useEnhancedConnections = () => {
+  const { user } = useAuth();
+  const [connections, setConnections] = useState<EnhancedConnection[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<EnhancedConnection[]>([]);
+  const [followers, setFollowers] = useState<EnhancedConnection[]>([]);
+  const [following, setFollowing] = useState<EnhancedConnection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchEnhancedConnections = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Fetch connections with profile data
+      const { data: connectionsData, error: connectionsError } = await supabase
+        .from('user_connections')
+        .select(`
+          *,
+          connected_profile:profiles!user_connections_connected_user_id_fkey(
+            id,
+            name,
+            email,
+            profile_image,
+            bio,
+            username
+          )
+        `)
+        .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
+      
+      if (connectionsError) throw connectionsError;
+      
+      // Transform the data to include profile information
+      const enhancedConnections = (connectionsData || []).map(conn => {
+        const profile = conn.connected_profile;
+        const isUserInitiated = conn.user_id === user.id;
+        
+        return {
+          ...conn,
+          profile_name: profile?.name || `User ${conn.connected_user_id.substring(0, 8)}`,
+          profile_email: profile?.email,
+          profile_image: profile?.profile_image,
+          profile_bio: profile?.bio,
+          profile_username: profile?.username || `@user${conn.connected_user_id.substring(0, 6)}`,
+          // For connections where we're the connected user, we need to fetch the other user's profile
+          display_user_id: isUserInitiated ? conn.connected_user_id : conn.user_id
+        };
+      });
+      
+      // Separate different types of connections
+      const accepted = enhancedConnections.filter(conn => conn.status === 'accepted');
+      const pending = enhancedConnections.filter(conn => 
+        conn.status === 'pending' && conn.connected_user_id === user.id
+      );
+      
+      // Separate followers and following for follow relationships
+      const followerConnections = enhancedConnections.filter(conn => 
+        conn.connected_user_id === user.id && 
+        conn.relationship_type === 'follow' && 
+        conn.status === 'accepted'
+      );
+      
+      const followingConnections = enhancedConnections.filter(conn => 
+        conn.user_id === user.id && 
+        conn.relationship_type === 'follow' && 
+        conn.status === 'accepted'
+      );
+      
+      setConnections(accepted);
+      setPendingRequests(pending);
+      setFollowers(followerConnections);
+      setFollowing(followingConnections);
+    } catch (err) {
+      console.error("Error fetching enhanced connections:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEnhancedConnections();
+  }, [user]);
+
+  const sendConnectionRequest = async (connectedUserId: string, relationshipType: string) => {
+    if (!user) {
+      toast.error("You must be logged in to send a connection request");
+      return null;
+    }
+    
+    try {
+      const { data: canFollow } = await supabase
+        .rpc('can_user_follow', {
+          follower_id: user.id,
+          target_id: connectedUserId
+        });
+        
+      if (!canFollow) {
+        toast.error("Unable to connect with this user");
+        return null;
+      }
+      
+      const { data, error } = await supabase
+        .from('user_connections')
+        .insert({
+          user_id: user.id,
+          connected_user_id: connectedUserId,
+          relationship_type: relationshipType,
+          status: relationshipType === 'follow' ? 'accepted' : 'pending',
+          data_access_permissions: {
+            dob: false,
+            shipping_address: false,
+            gift_preferences: false
+          }
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success(
+        relationshipType === 'follow' 
+          ? "Successfully followed user" 
+          : "Connection request sent"
+      );
+      
+      await fetchEnhancedConnections();
+      return data;
+    } catch (err) {
+      console.error("Error sending connection request:", err);
+      toast.error("Failed to send connection request");
+      throw err;
+    }
+  };
+
+  const acceptConnectionRequest = async (connectionId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to accept a connection request");
+      return null;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_connections')
+        .update({ status: 'accepted' })
+        .eq('id', connectionId)
+        .eq('connected_user_id', user.id)
+        .eq('status', 'pending')
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success("Connection request accepted");
+      await fetchEnhancedConnections();
+      return data;
+    } catch (err) {
+      console.error("Error accepting connection request:", err);
+      toast.error("Failed to accept connection request");
+      throw err;
+    }
+  };
+
+  const rejectConnectionRequest = async (connectionId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to reject a connection request");
+      return null;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_connections')
+        .update({ status: 'rejected' })
+        .eq('id', connectionId)
+        .eq('connected_user_id', user.id)
+        .eq('status', 'pending')
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success("Connection request rejected");
+      await fetchEnhancedConnections();
+      return data;
+    } catch (err) {
+      console.error("Error rejecting connection request:", err);
+      toast.error("Failed to reject connection request");
+      throw err;
+    }
+  };
+
+  const removeConnection = async (connectionId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to remove a connection");
+      return false;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('user_connections')
+        .delete()
+        .eq('id', connectionId)
+        .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
+      
+      if (error) throw error;
+      
+      toast.success("Connection removed successfully");
+      await fetchEnhancedConnections();
+      return true;
+    } catch (err) {
+      console.error("Error removing connection:", err);
+      toast.error("Failed to remove connection");
+      throw err;
+    }
+  };
+
+  return {
+    connections,
+    pendingRequests,
+    followers,
+    following,
+    loading,
+    error,
+    fetchConnections: fetchEnhancedConnections,
+    sendConnectionRequest,
+    acceptConnectionRequest,
+    rejectConnectionRequest,
+    removeConnection
+  };
+};

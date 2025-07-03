@@ -10,7 +10,7 @@ import SuggestionsTabContent from "@/components/connections/SuggestionsTabConten
 import MainLayout from "@/components/layout/MainLayout";
 import { useState } from "react";
 import { RelationshipType } from "@/types/connections";
-import { ConnectionFilters } from "@/hooks/useConnections";
+import { ConnectionFilters } from "@/types/connection-filters";
 
 const Connections = () => {
   const [userData] = useLocalStorage("userData", null);

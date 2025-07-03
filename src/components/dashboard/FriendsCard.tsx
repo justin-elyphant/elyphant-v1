@@ -5,11 +5,11 @@ import { Users, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useConnections } from "@/hooks/profile/useConnections";
+import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const FriendsCard = () => {
-  const { connections, loading, error } = useConnections();
+  const { connections, loading, error } = useEnhancedConnections();
 
   // Filter accepted connections that are friends or follows
   const friends = connections.filter(conn => 
@@ -123,14 +123,14 @@ const FriendsCard = () => {
                 <div key={connection.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar>
-                      <AvatarImage src={undefined} />
+                      <AvatarImage src={connection.profile_image} />
                       <AvatarFallback className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground">
-                        {connection.connected_user_id.substring(0, 2).toUpperCase()}
+                        {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium">
-                        {connection.relationship_type === 'friend' ? 'Friend' : 'Following'}
+                        {connection.profile_name || 'Unknown User'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {connection.relationship_type}
@@ -138,7 +138,7 @@ const FriendsCard = () => {
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/user/${connection.connected_user_id}`}>View</Link>
+                    <Link to={`/user/${connection.display_user_id}`}>View</Link>
                   </Button>
                 </div>
               ))}

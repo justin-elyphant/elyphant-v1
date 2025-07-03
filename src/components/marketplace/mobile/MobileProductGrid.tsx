@@ -44,7 +44,8 @@ const MobileProductGrid: React.FC<MobileProductGridProps> = ({
         {products.map((product) => {
           const productId = String(product.product_id || product.id);
           const status = getProductStatus?.(product);
-          const price = typeof product.price === 'number' ? product.price : parseFloat(product.price?.toString() || '0');
+          // Fix the price type handling
+          const price = typeof product.price === 'number' ? product.price : parseFloat(String(product.price) || '0');
           
           return (
             <Card 

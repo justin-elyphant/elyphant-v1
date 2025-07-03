@@ -48,6 +48,7 @@ const ZincProductsTab = () => {
       if (response.results && response.results.length > 0) {
         // Convert Enhanced Zinc API results to Product format
         const formattedProducts = response.results.map((product: any, index: number) => {
+          // Fix the bestSellerType property by removing it from normalizeProduct call
           return normalizeProduct({
             product_id: product.product_id || `zinc-${Date.now()}-${index}`,
             id: product.product_id || `zinc-${Date.now()}-${index}`,
@@ -61,7 +62,7 @@ const ZincProductsTab = () => {
             rating: product.rating || product.stars || 0,
             reviewCount: product.review_count || product.num_reviews || 0,
             isBestSeller: product.isBestSeller || false,
-            bestSellerType: product.bestSellerType || null,
+            // Remove bestSellerType since it's not in the Product type
             badgeText: product.badgeText || null
           });
         });

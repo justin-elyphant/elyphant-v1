@@ -64,7 +64,7 @@ export const useConnectionSuggestions = () => {
           score += profile.bio ? 2 : 0; // Small bonus for complete profiles
           score += profile.profile_image ? 1 : 0; // Small bonus for profile image
 
-          return {
+          const connection: Connection = {
             id: profile.id,
             name: profile.name || 'Unknown User',
             username: profile.username || '@unknown',
@@ -86,13 +86,15 @@ export const useConnectionSuggestions = () => {
               ? `Shares ${commonInterests.length} interest${commonInterests.length > 1 ? 's' : ''}`
               : 'New to the platform',
             score
-          } as Connection;
+          };
+
+          return connection;
         })
       );
 
       // Sort by score and take top 10
       const topSuggestions = scoredSuggestions
-        .sort((a, b) => b.score - a.score)
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
         .slice(0, 10);
 
       setSuggestions(topSuggestions);

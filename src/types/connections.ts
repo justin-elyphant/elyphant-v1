@@ -22,6 +22,7 @@ export interface Connection {
   bio?: string;
   reason?: string;
   connectionDate?: string;
+  score?: number; // Add optional score property for suggestions
 }
 
 export type ConnectionRequest = {

@@ -24,9 +24,9 @@ const Logo = () => {
       <img 
         src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
         alt="Elyphant" 
-        className="h-20 w-20 mr-3" 
+        className="h-12 w-12 mr-3" 
       />
-      <h1 className="text-3xl font-bold">Elyphant</h1>
+      <h1 className="text-2xl font-bold">Elyphant</h1>
     </div>
   );
 };

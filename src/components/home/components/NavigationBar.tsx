@@ -1,13 +1,14 @@
 
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, ShoppingCart, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import Logo from "./Logo";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import AuthButtons from "./AuthButtons";
 import UserButton from "@/components/auth/UserButton";
+import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
@@ -47,17 +48,13 @@ const NavigationBar = () => {
 
           {/* Desktop Auth & Cart */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/marketplace" className="text-gray-700 hover:text-gray-900">
-              <ShoppingCart className="h-6 w-6" />
-            </Link>
+            <OptimizedShoppingCartButton />
             {user ? <UserButton /> : <AuthButtons />}
           </div>
 
           {/* Mobile Right Side - Only Cart and Menu */}
           <div className="md:hidden flex items-center space-x-3">
-            <Link to="/marketplace" className="text-gray-700 hover:text-gray-900">
-              <ShoppingCart className="h-6 w-6" />
-            </Link>
+            <OptimizedShoppingCartButton />
             <Button
               variant="ghost"
               size="sm"

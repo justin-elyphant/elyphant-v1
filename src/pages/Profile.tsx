@@ -8,6 +8,7 @@ import ProfileInfo from "@/components/user-profile/ProfileInfo";
 import SignupCTA from "@/components/user-profile/SignupCTA";
 import LoadingState from "./profile-setup/LoadingState";
 import Header from "@/components/home/Header";
+import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
 import { Profile as ProfileType } from "@/types/profile";
 import { useUserPresence } from "@/hooks/useUserPresence";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
@@ -33,6 +34,8 @@ const Profile = () => {
   });
 
   const fetchProfile = useCallback(async () => {
+    if (!identifier) return;
+    
     setIsLoading(true);
     try {
       if (!identifier) {
@@ -189,55 +192,57 @@ const Profile = () => {
   const userStatus = getUserStatus(profileData.id);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="container max-w-4xl mx-auto py-6 px-4">
-        {isMockProfile && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <strong>Demo Profile:</strong> This is a demonstration profile used for testing messaging features.
-            </p>
-          </div>
-        )}
+    <ProfileErrorBoundary>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-4xl mx-auto py-6 px-4">
+          {isMockProfile && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Demo Profile:</strong> This is a demonstration profile used for testing messaging features.
+              </p>
+            </div>
+          )}
 
-        {/* Profile Banner */}
-        <ProfileBanner 
-          userData={profileData}
-          isCurrentUser={isCurrentUser}
-          isFollowing={isFollowing}
-          onFollow={handleFollow}
-          onShare={handleShare}
-          userStatus={userStatus}
-        />
-
-        {/* Profile Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Left Sidebar - Profile Info */}
-          <div className="lg:col-span-1">
-            <ProfileInfo profile={profileData} />
-          </div>
-
-          {/* Main Content - Tabs */}
-          <div className="lg:col-span-2">
-            <ProfileTabs 
-              profile={profileData}
-              isOwnProfile={isCurrentUser}
-              onUpdateProfile={updateProfile}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            />
-          </div>
-        </div>
-
-        {/* Signup CTA for non-authenticated users */}
-        {shouldShowCTA && (
-          <SignupCTA 
-            profileName={profileData.name || 'User'}
-            onDismiss={dismissCTA}
+          {/* Profile Banner */}
+          <ProfileBanner 
+            userData={profileData}
+            isCurrentUser={isCurrentUser}
+            isFollowing={isFollowing}
+            onFollow={handleFollow}
+            onShare={handleShare}
+            userStatus={userStatus}
           />
-        )}
+
+          {/* Profile Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            {/* Left Sidebar - Profile Info */}
+            <div className="lg:col-span-1">
+              <ProfileInfo profile={profileData} />
+            </div>
+
+            {/* Main Content - Tabs */}
+            <div className="lg:col-span-2">
+              <ProfileTabs 
+                profile={profileData}
+                isOwnProfile={isCurrentUser}
+                onUpdateProfile={updateProfile}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              />
+            </div>
+          </div>
+
+          {/* Signup CTA for non-authenticated users */}
+          {shouldShowCTA && (
+            <SignupCTA 
+              profileName={profileData.name || 'User'}
+              onDismiss={dismissCTA}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </ProfileErrorBoundary>
   );
 };
 

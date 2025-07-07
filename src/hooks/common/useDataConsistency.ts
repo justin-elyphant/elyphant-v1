@@ -213,7 +213,7 @@ export function useDataConsistency() {
         });
       }
     }
-  }, [user, validationRules]);
+  }, [user]); // Removed validationRules dependency
 
   const fixIssues = useCallback(async () => {
     if (!user) return;
@@ -237,7 +237,7 @@ export function useDataConsistency() {
         description: "Please try manual resolution"
       });
     }
-  }, [user, validationRules, validateData]);
+  }, [user, validateData]); // Removed validationRules dependency
 
   // Auto-validate on user change
   useEffect(() => {

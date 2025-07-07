@@ -4,6 +4,7 @@ import { useProfileFetch } from './useProfileFetch';
 import { useProfileUpdate } from './useProfileUpdate';
 import { Profile } from "@/types/supabase";
 import { toast } from 'sonner';
+import { unifiedDataService } from '@/services/unified/UnifiedDataService';
 
 interface ProfileContextType {
   profile: Profile | null;

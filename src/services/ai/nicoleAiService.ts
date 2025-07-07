@@ -192,55 +192,25 @@ export async function chatWithNicole(
   console.log('📊 Current context:', context);
 
   try {
-    // Enhanced: Load user connections and wishlist data
-    const { data: userData } = await supabase.auth.getUser();
-    let connectionData = null;
-    let wishlistData = null;
+    // Enhanced: Use unified data service for comprehensive integration
+    const { unifiedDataService } = await import("../unified/UnifiedDataService");
+    const { nicoleConnectionBridge } = await import("../unified/NicoleConnectionBridge");
     
-    if (userData?.user) {
-      console.log('🔍 Loading user connections and wishlist data...');
-      
-      // Load user connections
-      const { data: connections } = await supabase
-        .from('user_connections')
-        .select(`
-          connected_user_id,
-          relationship_type,
-          profiles!user_connections_connected_user_id_fkey (
-            id,
-            name,
-            interests
-          )
-        `)
-        .eq('user_id', userData.user.id)
-        .eq('status', 'accepted');
-      
-      connectionData = connections || [];
-      
-      // Load user's wishlists
-      const { data: wishlists } = await supabase
-        .from('wishlists')
-        .select(`
-          id,
-          title,
-          category,
-          wishlist_items (
-            id,
-            name,
-            price,
-            image_url,
-            brand,
-            description
-          )
-        `)
-        .eq('user_id', userData.user.id)
-        .limit(5);
-      
-      wishlistData = wishlists || [];
-      
-      console.log('✅ Loaded connection data:', connectionData.length, 'connections');
-      console.log('✅ Loaded wishlist data:', wishlistData.length, 'wishlists');
-    }
+    console.log('🔍 Loading unified user data...');
+    const nicoleData = await unifiedDataService.getNicoleIntegrationData();
+    
+    // Enhance context with connection and wishlist integration
+    const enhancedContext = await nicoleConnectionBridge.enhanceNicoleContext(
+      message,
+      context
+    );
+    
+    console.log('✅ Enhanced context with unified data:', {
+      connections: nicoleData?.connections.length || 0,
+      wishlists: nicoleData?.availableWishlists.length || 0,
+      selectedRecipient: enhancedContext.selectedRecipient?.profile?.name,
+      availableRecipients: enhancedContext.availableRecipients?.length || 0
+    });
 
     // Check for category-specific follow-up requests first
     const followUpRequest = ConversationEnhancementService.parseFollowUpRequest(
@@ -289,9 +259,12 @@ export async function chatWithNicole(
           ...parsedContext,
           conversationPhase: determineConversationPhase(parsedContext),
           preferredCategories: ConversationEnhancementService.getPreferredCategories(),
-          // Enhanced: Include connection and wishlist data
-          userConnections: connectionData,
-          userWishlists: wishlistData
+          // Enhanced: Include unified connection and wishlist data
+          userConnections: nicoleData?.connections || [],
+          userWishlists: nicoleData?.availableWishlists || [],
+          selectedRecipient: enhancedContext.selectedRecipient,
+          availableRecipients: enhancedContext.availableRecipients,
+          contextualRecommendations: enhancedContext.contextualRecommendations
         },
         conversationHistory,
         enhancedFeatures: {

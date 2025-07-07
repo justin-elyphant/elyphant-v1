@@ -74,11 +74,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       const result = await updateProfile(data);
       
       if (result) {
+        // Add a small delay to ensure database consistency
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Update the local profile state with the new data
         const updatedProfile = await fetchProfile();
         if (updatedProfile) {
+          console.log("✅ Profile refreshed after update:", updatedProfile);
           setProfile(updatedProfile);
           setLastFetchTime(Date.now());
+        } else {
+          console.warn("⚠️ Failed to fetch updated profile data");
         }
       }
       

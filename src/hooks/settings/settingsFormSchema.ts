@@ -17,6 +17,7 @@ export interface BirthdayData {
 export const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
+  username: z.string().optional(),
   bio: z.string().optional(),
   profile_image: z.string().nullable().optional(),
   birthday: z.object({

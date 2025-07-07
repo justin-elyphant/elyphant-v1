@@ -16,6 +16,7 @@ export const useGeneralSettingsForm = () => {
     defaultValues: {
       name: "",
       email: "",
+      username: "",
       bio: "",
       profile_image: null,
       birthday: null,

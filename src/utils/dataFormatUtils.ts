@@ -130,6 +130,7 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
   return {
     name: databaseProfile.name || "",
     email: databaseProfile.email || "",
+    username: databaseProfile.username || "",
     bio: databaseProfile.bio || "",
     profile_image: databaseProfile.profile_image || null,
     birthday: parseBirthdayFromStorage(databaseProfile.dob),

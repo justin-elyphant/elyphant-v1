@@ -82,6 +82,25 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
         />
 
         <FormField
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="your_username" 
+                  {...field} 
+                />
+              </FormControl>
+              <FormDescription>
+                This will be used for your public profile URL and connections.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
           name="birthday"
           render={({ field }) => (
             <FormItem>

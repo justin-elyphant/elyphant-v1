@@ -227,7 +227,7 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
   return {
     name: formData.name,
     email: formData.email,
-    username: formData.username,
+    username: formData.username || null,
     bio: formData.bio || '',
     dob: dobString,
     shipping_address: formData.address ? mapFormAddressToApiAddress(formData.address) : undefined,

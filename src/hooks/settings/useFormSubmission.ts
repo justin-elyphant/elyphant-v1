@@ -19,22 +19,45 @@ export const useFormSubmission = () => {
     try {
       setIsSaving(true);
       
-      // Convert form data to API format
-      const apiData = profileFormToApiData(formData);
+      console.log("Form data before processing:", JSON.stringify(formData, null, 2));
       
-      // Ensure profile_image is included in the update
-      if (formData.profile_image !== undefined) {
-        apiData.profile_image = formData.profile_image;
+      // Validate required fields
+      if (!formData.name || formData.name.trim() === '') {
+        toast.error("Name is required");
+        return;
       }
       
-      console.log("Submitting profile update with data:", apiData);
+      if (!formData.email || formData.email.trim() === '') {
+        toast.error("Email is required");
+        return;
+      }
+      
+      // Clean and validate form data
+      const cleanedFormData = {
+        ...formData,
+        username: formData.username && formData.username.trim() !== '' ? formData.username.trim() : null,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        bio: formData.bio?.trim() || ""
+      };
+      
+      // Convert form data to API format
+      const apiData = profileFormToApiData(cleanedFormData);
+      
+      // Ensure profile_image is included in the update
+      if (cleanedFormData.profile_image !== undefined) {
+        apiData.profile_image = cleanedFormData.profile_image;
+      }
+      
+      console.log("Submitting profile update with cleaned data:", JSON.stringify(apiData, null, 2));
       
       // Update profile
       await updateProfile(apiData);
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast.error("Failed to update profile");
+      const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }

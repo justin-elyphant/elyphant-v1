@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, ArrowRight, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useFormContext } from "react-hook-form";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
 
 const ProfileDataIntegrityPanel: React.FC = () => {
   const navigate = useNavigate();
+  const form = useFormContext();
   const {
     issues,
     isChecking,
@@ -17,10 +19,13 @@ const ProfileDataIntegrityPanel: React.FC = () => {
     hasCriticalIssues
   } = useProfileDataIntegrity();
 
-  // Automatically check data integrity when component mounts
+  // Watch form values for real-time updates
+  const formValues = form.watch();
+
+  // Check data integrity when component mounts and when form values change
   useEffect(() => {
     checkDataIntegrity(false);
-  }, [checkDataIntegrity]);
+  }, [checkDataIntegrity, formValues]);
 
   // Determine which settings tab to open based on missing data
   const getTargetSettingsTab = () => {

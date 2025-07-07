@@ -10,7 +10,15 @@ import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity"
 
 const ProfileDataIntegrityPanel: React.FC = () => {
   const navigate = useNavigate();
-  const form = useFormContext();
+  
+  // Form context might not exist (e.g., when used on dashboard)
+  let form;
+  try {
+    form = useFormContext();
+  } catch {
+    form = null;
+  }
+  
   const {
     issues,
     isChecking,
@@ -19,8 +27,8 @@ const ProfileDataIntegrityPanel: React.FC = () => {
     hasCriticalIssues
   } = useProfileDataIntegrity();
 
-  // Watch form values for real-time updates
-  const formValues = form.watch();
+  // Watch form values for real-time updates (only if form context exists)
+  const formValues = form?.watch();
 
   // Check data integrity when component mounts and when form values change
   useEffect(() => {

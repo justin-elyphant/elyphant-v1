@@ -13,6 +13,7 @@ import Marketplace from "./pages/Marketplace";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import SignUp from "./pages/SignUp";
+import StreamlinedSignUp from "./pages/StreamlinedSignUp";
 import SignIn from "./pages/SignIn";
 import Wishlists from "./pages/Wishlists";
 import Dashboard from "./pages/Dashboard";
@@ -48,7 +49,8 @@ const App = () => (
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
-                <Route path="/signup" element={<SignUp />} />
+                <Route path="/signup" element={<StreamlinedSignUp />} />
+                <Route path="/signup-legacy" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/dashboard" element={<Dashboard />} />

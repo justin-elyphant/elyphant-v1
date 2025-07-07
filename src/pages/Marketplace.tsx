@@ -1,6 +1,7 @@
 
 import React from "react";
 import MarketplaceWrapper from "@/components/marketplace/MarketplaceWrapper";
+import StreamlinedMarketplaceWrapper from "@/components/marketplace/StreamlinedMarketplaceWrapper";
 import { Helmet } from "react-helmet";
 import MainLayout from "@/components/layout/MainLayout";
 import { ProductProvider } from "@/contexts/ProductContext";
@@ -18,7 +19,7 @@ const Marketplace = () => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         </Helmet>
         <div className={`min-h-screen bg-gray-50 ${isMobile ? 'safe-area-inset pb-safe' : ''}`}>
-          <MarketplaceWrapper />
+          <StreamlinedMarketplaceWrapper />
         </div>
       </MainLayout>
     </ProductProvider>

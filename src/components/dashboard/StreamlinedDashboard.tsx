@@ -147,6 +147,14 @@ const StreamlinedDashboard = () => {
       icon: Calendar,
       action: () => navigate('/events'),
       variant: 'secondary'
+    },
+    {
+      id: 'settings',
+      title: 'Account Settings',
+      description: 'Manage your profile, privacy, and preferences',
+      icon: Settings,
+      action: () => navigate('/settings'),
+      variant: 'secondary'
     }
   ];
 
@@ -330,25 +338,6 @@ const StreamlinedDashboard = () => {
         </Card>
       )}
 
-      {/* Settings Quick Access */}
-      <Card className="bg-gray-50">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Settings className="h-5 w-5 text-gray-600" />
-              <div>
-                <h3 className="font-medium text-gray-900">Account Settings</h3>
-                <p className="text-sm text-muted-foreground">
-                  Manage your profile, privacy, and preferences
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" onClick={() => navigate('/settings')}>
-              Open Settings
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
       </div>
     </ErrorBoundary>
   );

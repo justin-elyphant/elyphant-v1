@@ -9,6 +9,7 @@ import MarketplaceErrorBoundary from "./error/ErrorBoundary";
 // TEMPORARILY DISABLED: NicoleMarketplaceWidget - Re-enable when technical issues are resolved
 // import NicoleMarketplaceWidget from "@/components/ai/marketplace/NicoleMarketplaceWidget";
 import ConnectionIntegration from "./integration/ConnectionIntegration";
+import EventsAwareHeader from "./integration/EventsAwareHeader";
 import LoadingFallback from "@/components/common/LoadingFallback";
 import { useRetry } from "@/hooks/common/useRetry";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -287,6 +288,18 @@ const MarketplaceWrapper = () => {
         <FullWidthSection>
           <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
         </FullWidthSection>
+
+        {/* Enhanced: Events-Aware Header - Show upcoming events for gift opportunities */}
+        {user && (
+          <FullWidthSection className="py-4">
+            <div className="max-w-6xl mx-auto">
+              <EventsAwareHeader 
+                isVisible={true}
+                searchQuery={searchTerm}
+              />
+            </div>
+          </FullWidthSection>
+        )}
 
         {/* Enhanced: Connection Integration - Show when user is authenticated and no active search */}
         {user && !hasActiveSearch && (

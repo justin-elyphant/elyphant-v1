@@ -12,6 +12,7 @@ import { useWishlists } from "@/components/gifting/hooks/useWishlists";
 import LoadingFallback from "@/components/common/LoadingFallback";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { useDataConsistency } from "@/hooks/common/useDataConsistency";
+import CoreNicoleExperience from "@/components/ai/nicole/CoreNicoleExperience";
 
 interface ActionCard {
   id: string;
@@ -89,13 +90,22 @@ const StreamlinedDashboard = () => {
   // Core action cards based on user's primary use cases
   const actionCards: ActionCard[] = [
     {
-      id: 'send-gift',
-      title: 'Send a Gift',
-      description: 'Find the perfect gift with Nicole AI or browse our marketplace',
-      icon: Gift,
-      action: () => navigate('/marketplace?mode=nicole&open=true'),
+      id: 'nicole-ai',
+      title: 'Ask Nicole',
+      description: 'Get personalized gift recommendations from our AI assistant',
+      icon: MessageSquare,
+      action: () => navigate('/marketplace?mode=nicole&open=true&greeting=dashboard'),
       variant: 'primary',
-      badge: 'AI Powered'
+      badge: 'Core Feature'
+    },
+    {
+      id: 'send-gift',
+      title: 'Browse Marketplace',
+      description: 'Explore gifts while seeing friends\' upcoming events',
+      icon: Gift,
+      action: () => navigate('/marketplace?enhanced=true'),
+      variant: 'secondary',
+      badge: 'Events Aware'
     },
     {
       id: 'my-wishlist',
@@ -197,6 +207,14 @@ const StreamlinedDashboard = () => {
           What would you like to do today?
         </p>
       </div>
+
+      {/* Core Nicole Experience - Mainstreamed */}
+      <CoreNicoleExperience 
+        compact={false}
+        showFeatures={true}
+        triggerSource="dashboard"
+        className="mb-6"
+      />
 
       {/* Main Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

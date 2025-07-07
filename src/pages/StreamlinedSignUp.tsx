@@ -58,10 +58,16 @@ const StreamlinedSignUp = () => {
         setStep('profile');
         return;
       }
-      // Otherwise redirect to dashboard
+      
+      // Don't redirect if user is in the middle of the signup flow
+      if (step !== 'signup') {
+        return; // Let them continue with profile setup or intent selection
+      }
+      
+      // Only redirect to dashboard if they landed on the signup step while already authenticated
       navigate('/dashboard', { replace: true });
     }
-  }, [user, navigate, searchParams]);
+  }, [user, navigate, searchParams, step]);
 
   const handleSignUp = async () => {
     if (!profileData.email || !profileData.password || !profileData.firstName) {

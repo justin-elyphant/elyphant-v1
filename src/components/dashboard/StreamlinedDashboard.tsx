@@ -11,8 +11,8 @@ import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { useWishlists } from "@/components/gifting/hooks/useWishlists";
 import LoadingFallback from "@/components/common/LoadingFallback";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
-import { useDataConsistency } from "@/hooks/common/useDataConsistency";
 import CoreNicoleExperience from "@/components/ai/nicole/CoreNicoleExperience";
+import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 
 interface ActionCard {
   id: string;
@@ -39,7 +39,6 @@ const StreamlinedDashboard = () => {
   // Enhanced hooks for real data
   const { connections, loading: connectionsLoading } = useEnhancedConnections();
   const { wishlists, isLoading: wishlistsLoading } = useWishlists();
-  const { hasIssues, validateData } = useDataConsistency();
 
   // Load real-time statistics
   useEffect(() => {
@@ -200,13 +199,11 @@ const StreamlinedDashboard = () => {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-8"
-        onError={(error) => {
-          console.error('Dashboard error:', error);
-          validateData(true);
-        }}
-      >
-      {/* Welcome Header */}
+      <div className="space-y-8">
+        {/* Profile Data Integrity Panel - Top Priority */}
+        <ProfileDataIntegrityPanel />
+        
+        {/* Welcome Header */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back{user?.user_metadata?.first_name ? `, ${user.user_metadata.first_name}` : ''}! 👋
@@ -312,31 +309,6 @@ const StreamlinedDashboard = () => {
         </Card>
       </div>
 
-      {/* Data Consistency Alert */}
-      {hasIssues && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-                <div>
-                  <h3 className="font-medium text-amber-900">Data Consistency Issues Detected</h3>
-                  <p className="text-sm text-amber-700">
-                    Some data inconsistencies were found in your profile.
-                  </p>
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => validateData(true)}
-                className="border-amber-200 text-amber-800 hover:bg-amber-100"
-              >
-                Review & Fix
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       </div>
     </ErrorBoundary>

@@ -1,20 +1,62 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle, RefreshCw, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle, ArrowRight, Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
 
 const ProfileDataIntegrityPanel: React.FC = () => {
+  const navigate = useNavigate();
   const {
     issues,
     isChecking,
     checkDataIntegrity,
-    refreshData,
     hasIssues,
     hasCriticalIssues
   } = useProfileDataIntegrity();
+
+  // Automatically check data integrity when component mounts
+  useEffect(() => {
+    checkDataIntegrity(false);
+  }, [checkDataIntegrity]);
+
+  // Determine which settings tab to open based on missing data
+  const getTargetSettingsTab = () => {
+    const criticalIssues = issues.filter(issue => issue.severity === 'error');
+    const nameEmailIssues = criticalIssues.filter(issue => 
+      issue.field === 'name' || issue.field === 'email'
+    );
+    const addressIssues = issues.filter(issue => 
+      issue.field === 'shipping_address'
+    );
+    const usernameIssues = issues.filter(issue => 
+      issue.field === 'username'
+    );
+
+    if (nameEmailIssues.length > 0) return 'basic';
+    if (addressIssues.length > 0) return 'address';
+    if (usernameIssues.length > 0) return 'basic';
+    return 'basic'; // Default to basic info tab
+  };
+
+  const handleCompleteProfile = () => {
+    const targetTab = getTargetSettingsTab();
+    navigate('/settings', { state: { activeTab: targetTab, fromDataIntegrity: true } });
+  };
+
+  const getCompletionMessage = () => {
+    const completionPercentage = Math.round(
+      ((issues.length > 0 ? Math.max(0, 5 - issues.length) : 5) / 5) * 100
+    );
+    
+    if (completionPercentage === 100) {
+      return "Your profile is complete and properly formatted";
+    }
+    
+    return `Complete your profile to unlock all features (${completionPercentage}% complete)`;
+  };
 
   return (
     <Card className="border-l-4 border-l-primary">
@@ -30,34 +72,19 @@ const ProfileDataIntegrityPanel: React.FC = () => {
               Profile Data Status
             </CardTitle>
             <CardDescription>
-              {hasIssues
-                ? `${issues.length} issue(s) detected with your profile data`
-                : "Your profile data is complete and properly formatted"
-              }
+              {getCompletionMessage()}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          {hasIssues && (
             <Button
-              variant="outline"
+              onClick={handleCompleteProfile}
+              className="flex items-center gap-2"
               size="sm"
-              onClick={() => checkDataIntegrity(true)}
-              disabled={isChecking}
             >
-              {isChecking ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              Check
+              Complete Your Profile
+              <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshData}
-            >
-              Refresh Data
-            </Button>
-          </div>
+          )}
         </div>
       </CardHeader>
       
@@ -81,8 +108,8 @@ const ProfileDataIntegrityPanel: React.FC = () => {
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Critical issues detected. Some features may not work properly until these are resolved.
-                Please update your profile information or contact support if you need assistance.
+                Some features may not work properly until these issues are resolved.
+                Click "Complete Your Profile" above to fix these issues.
               </AlertDescription>
             </Alert>
           )}

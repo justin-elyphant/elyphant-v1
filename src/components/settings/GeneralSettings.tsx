@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth";
 import { useGeneralSettingsForm } from "@/hooks/settings/useGeneralSettingsForm";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import DataSharingSection from "./DataSharingSection";
@@ -15,6 +16,9 @@ import GiftingPreferencesSection from "./GiftingPreferencesSection";
 import ProfileDataIntegrityPanel from "./ProfileDataIntegrityPanel";
 const GeneralSettings = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState("basic");
+  
   const {
     form,
     isSaving,
@@ -29,6 +33,15 @@ const GeneralSettings = () => {
     handleAddImportantDate,
     handleRemoveImportantDate
   } = useGeneralSettingsForm();
+
+  // Handle navigation from data integrity panel
+  useEffect(() => {
+    if (location.state?.fromDataIntegrity && location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clear the state to prevent issues on subsequent visits
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   if (loading) {
     return (
@@ -56,7 +69,7 @@ const GeneralSettings = () => {
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Tabs defaultValue="basic" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="address">Address</TabsTrigger>

@@ -71,8 +71,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
             console.log("[SignUpContentWrapper] Navigating to marketplace with AI mode");
             navigate("/marketplace?mode=nicole&open=true&greeting=personalized", { replace: true });
           } else {
-            console.log("[SignUpContentWrapper] Navigating to profile-setup");
-            navigate("/profile-setup", { replace: true });
+            console.log("[SignUpContentWrapper] Navigating to streamlined signup for profile completion");
+            navigate("/signup?intent=complete-profile", { replace: true });
           }
         }, 100);
         return;
@@ -117,8 +117,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
         console.log("[SignUpContentWrapper] Navigating to marketplace with AI mode");
         navigate("/marketplace?mode=nicole&open=true&greeting=personalized", { replace: true });
       } else {
-        console.log("[SignUpContentWrapper] Navigating to profile-setup");
-        navigate("/profile-setup", { replace: true });
+        console.log("[SignUpContentWrapper] Navigating to streamlined signup for profile completion");
+        navigate("/signup?intent=complete-profile", { replace: true });
       }
     }, 100);
   };

@@ -6,7 +6,7 @@ import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 export const getDefaultLinks = () => [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Connections", href: "/connections" },
-  { label: "Profile", href: "/profile-setup" },
+  { label: "Profile", href: "/signup?intent=complete-profile" },
   { label: "Wishlists", href: "/wishlists" }
 ];
 

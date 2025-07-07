@@ -67,8 +67,8 @@ export const useAutoRedirect = ({
           console.log("[useAutoRedirect] Navigating to /marketplace");
           navigate('/marketplace', { replace: true });
         } else if (userIntent === "giftee") {
-          console.log("[useAutoRedirect] Navigating to /profile-setup");
-          navigate('/profile-setup', { replace: true });
+          console.log("[useAutoRedirect] Navigating to streamlined signup for profile completion");
+          navigate('/signup?intent=complete-profile', { replace: true });
         }
       }, 150);
     } else {

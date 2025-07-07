@@ -32,8 +32,8 @@ export const useProfileCompletion = (shouldRedirect = true) => {
           setIsComplete(false);
           
           if (shouldRedirect) {
-            console.log("Redirecting to profile setup due to error fetching profile");
-            navigate("/profile-setup");
+            console.log("Redirecting to streamlined signup for profile completion due to error fetching profile");
+            navigate("/signup?intent=complete-profile");
           }
           return;
         }
@@ -51,18 +51,18 @@ export const useProfileCompletion = (shouldRedirect = true) => {
         console.log("Profile completion check result:", isProfileComplete);
         setIsComplete(isProfileComplete);
         
-        // Redirect to profile setup if needed
+        // Redirect to streamlined signup for profile completion if needed
         if (shouldRedirect && !isProfileComplete && !isDebugMode) {
-          console.log("Redirecting to profile setup");
-          navigate("/profile-setup");
+          console.log("Redirecting to streamlined signup for profile completion");
+          navigate("/signup?intent=complete-profile");
         }
       } catch (err) {
         console.error("Error checking profile completion:", err);
         setIsComplete(false);
         
-        // Still redirect to profile setup on error
+        // Still redirect to streamlined signup for profile completion on error
         if (shouldRedirect) {
-          navigate("/profile-setup");
+          navigate("/signup?intent=complete-profile");
         }
       } finally {
         setLoading(false);

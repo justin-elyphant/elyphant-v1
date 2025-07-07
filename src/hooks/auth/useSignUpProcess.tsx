@@ -34,7 +34,7 @@ export function useSignUpProcess() {
       if (userIntent === "giftor") {
         navigate("/marketplace", { replace: true });
       } else if (userIntent === "giftee" || userIntent === "skipped") {
-        navigate("/profile-setup", { replace: true });
+        navigate("/signup?intent=complete-profile", { replace: true });
       }
     }
 

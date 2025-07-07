@@ -65,8 +65,8 @@ const UserButton = () => {
     if (profileIdentifier) {
       navigate(`/profile/${profileIdentifier}`);
     } else {
-      // Fallback to profile setup if no identifier available
-      navigate("/profile-setup");
+      // Fallback to streamlined signup flow for profile completion
+      navigate("/signup?intent=complete-profile");
     }
   };
 

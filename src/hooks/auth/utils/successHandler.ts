@@ -48,12 +48,12 @@ export const handleSignupSuccess = ({
   
   // Give state time to update before navigation
   setTimeout(() => {
-    // Navigate directly to profile setup
-    navigate('/profile-setup', { replace: true });
+    // Navigate to streamlined signup flow for profile completion
+    navigate('/signup?intent=complete-profile', { replace: true });
     
     // Fallback direct location change if navigate doesn't work
     setTimeout(() => {
-      window.location.href = "/profile-setup";
+      window.location.href = "/signup?intent=complete-profile";
     }, 100);
   }, 50);
 };

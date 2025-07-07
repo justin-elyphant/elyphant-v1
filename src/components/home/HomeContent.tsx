@@ -80,7 +80,7 @@ const HomeContent = () => {
                       variant="outline" 
                       size="sm" 
                       className="border-purple-300 text-purple-700 hover:bg-purple-100 touch-target-44 touch-manipulation tap-feedback"
-                      onClick={() => navigate("/profile-setup")}
+                      onClick={() => navigate("/signup?intent=complete-profile")}
                       aria-label="Set up your profile"
                     >
                       Set up profile <ArrowRight className="ml-1 h-4 w-4" />

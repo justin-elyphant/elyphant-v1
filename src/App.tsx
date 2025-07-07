@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import LegacyRouteHandler from "@/components/navigation/LegacyRouteHandler";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import Cart from "./pages/Cart";
@@ -44,16 +45,18 @@ const App = () => (
         <AuthProvider>
           <ProfileProvider>
             <CartProvider>
-              <Routes>
+              <LegacyRouteHandler>
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/signup" element={<StreamlinedSignUp />} />
-                <Route path="/signup-legacy" element={<SignUp />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                {/* Legacy routes - deprecated */}
+                <Route path="/signup-legacy" element={<SignUp />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/messages" element={<Messages />} />
@@ -69,8 +72,9 @@ const App = () => (
                 <Route path="/payment-cancel" element={<PaymentCancel />} />
                 <Route path="/trunkline-login" element={<Trunkline />} />
                 <Route path="/trunkline" element={<Trunkline />} />
-              </Routes>
-              <SearchOptimizationMonitor />
+                </Routes>
+                <SearchOptimizationMonitor />
+              </LegacyRouteHandler>
             </CartProvider>
           </ProfileProvider>
         </AuthProvider>

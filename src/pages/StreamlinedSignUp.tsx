@@ -48,12 +48,20 @@ const StreamlinedSignUp = () => {
     address: ''
   });
 
-  // Redirect if already authenticated
+  // Handle user redirection and intent completion
   useEffect(() => {
+    const intentParam = searchParams.get('intent');
+    
     if (user) {
+      // If user is authenticated and came here to complete profile, allow them to continue
+      if (intentParam === 'complete-profile') {
+        setStep('profile');
+        return;
+      }
+      // Otherwise redirect to dashboard
       navigate('/dashboard', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, searchParams]);
 
   const handleSignUp = async () => {
     if (!profileData.email || !profileData.password || !profileData.firstName) {

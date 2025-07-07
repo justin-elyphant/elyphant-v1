@@ -28,7 +28,7 @@ const Hero = () => {
         navigate("/wishlists");
       }
     } else {
-      // Not logged in: send to signup (onboarding flow will route post-auth)
+      // Not logged in: send to signup (streamlined onboarding flow will route post-auth)
       navigate("/signup");
     }
   };

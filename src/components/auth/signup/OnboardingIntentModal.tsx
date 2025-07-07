@@ -16,11 +16,35 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   onSelect,
   suggestedIntent,
 }) => {
-  // Add highlight style if suggested
-  const getButtonClass = (intent: "giftor" | "giftee") =>
-    suggestedIntent === intent
-      ? "border-2 border-purple-500 bg-purple-50"
-      : "border-2";
+  const [selectedIntent, setSelectedIntent] = React.useState<"giftor" | "giftee" | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  // Enhanced: Handle intent selection with loading states
+  const handleIntentSelect = async (intent: "giftor" | "giftee") => {
+    setSelectedIntent(intent);
+    setIsLoading(true);
+    
+    // Small delay for better UX
+    setTimeout(() => {
+      onSelect(intent);
+      setIsLoading(false);
+    }, 300);
+  };
+
+  // Add highlight style if suggested or selected
+  const getButtonClass = (intent: "giftor" | "giftee") => {
+    let baseClass = "border-2 transition-all duration-200";
+    
+    if (selectedIntent === intent) {
+      return `${baseClass} border-purple-600 bg-purple-100 scale-105`;
+    }
+    
+    if (suggestedIntent === intent) {
+      return `${baseClass} border-purple-500 bg-purple-50`;
+    }
+    
+    return `${baseClass} hover:border-purple-300`;
+  };
 
   return (
     <Dialog open={open} modal={true}>
@@ -34,7 +58,8 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
           <Button
             variant="outline"
             className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 ${getButtonClass("giftor")}`}
-            onClick={() => onSelect("giftor")}
+            onClick={() => handleIntentSelect("giftor")}
+            disabled={isLoading}
             data-testid="intent-giftor"
           >
             <Gift className="w-6 h-6 text-purple-600 flex-shrink-0" />
@@ -55,7 +80,8 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
           <Button
             variant="outline"
             className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 ${getButtonClass("giftee")}`}
-            onClick={() => onSelect("giftee")}
+            onClick={() => handleIntentSelect("giftee")}
+            disabled={isLoading}
             data-testid="intent-giftee"
           >
             <List className="w-6 h-6 text-indigo-600 flex-shrink-0" />
@@ -72,8 +98,23 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
                 Suggested
               </span>
             )}
+            {isLoading && selectedIntent === "giftee" && (
+              <div className="ml-auto flex items-center">
+                <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+              </div>
+            )}
           </Button>
         </div>
+        
+        {/* Loading state overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+              <p className="text-sm text-muted-foreground">Setting up your experience...</p>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

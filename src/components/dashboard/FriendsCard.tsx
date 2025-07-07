@@ -11,11 +11,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 const FriendsCard = () => {
   const { connections, loading, error } = useEnhancedConnections();
 
-  // Filter accepted connections that are friends or follows
-  const friends = connections.filter(conn => 
-    conn.status === 'accepted' && 
-    (conn.relationship_type === 'friend' || conn.relationship_type === 'follow')
-  ).slice(0, 3); // Show only first 3 friends
+  // Enhanced: Filter and enrich connection data
+  const friends = React.useMemo(() => {
+    return connections
+      .filter(conn => 
+        conn.status === 'accepted' && 
+        (conn.relationship_type === 'friend' || conn.relationship_type === 'follow')
+      )
+      .map(conn => ({
+        ...conn,
+        hasUpcomingEvents: false, // TODO: Load from events data
+        recentActivity: 'Active this week', // TODO: Load from activity data
+        wishlistCount: 0 // TODO: Load from wishlists
+      }))
+      .slice(0, 3); // Show only first 3 friends
+  }, [connections]);
 
   if (loading) {
     return (

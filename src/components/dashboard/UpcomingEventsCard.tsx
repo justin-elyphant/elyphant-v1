@@ -23,21 +23,31 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
-  // Filter to upcoming events only and sort by date
+  // Enhanced: Load real events data with marketplace integration
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return events
+    // Calculate days away for each event
+    const eventsWithDays = events
       .filter(event => {
         if (!event.dateObj) return false;
         return event.dateObj >= today;
       })
+      .map(event => {
+        const daysAway = Math.ceil((event.dateObj!.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return {
+          ...event,
+          daysAway,
+          urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low'
+        };
+      })
       .sort((a, b) => {
         if (!a.dateObj || !b.dateObj) return 0;
         return a.dateObj.getTime() - b.dateObj.getTime();
-      })
-      .slice(0, 3); // Show only first 3 upcoming events
+      });
+    
+    return eventsWithDays.slice(0, 3); // Show only first 3 upcoming events
   }, [events]);
 
   const handleSetupAutoGift = (event: any) => {

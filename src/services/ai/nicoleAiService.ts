@@ -192,6 +192,56 @@ export async function chatWithNicole(
   console.log('📊 Current context:', context);
 
   try {
+    // Enhanced: Load user connections and wishlist data
+    const { data: userData } = await supabase.auth.getUser();
+    let connectionData = null;
+    let wishlistData = null;
+    
+    if (userData?.user) {
+      console.log('🔍 Loading user connections and wishlist data...');
+      
+      // Load user connections
+      const { data: connections } = await supabase
+        .from('user_connections')
+        .select(`
+          connected_user_id,
+          relationship_type,
+          profiles!user_connections_connected_user_id_fkey (
+            id,
+            name,
+            interests
+          )
+        `)
+        .eq('user_id', userData.user.id)
+        .eq('status', 'accepted');
+      
+      connectionData = connections || [];
+      
+      // Load user's wishlists
+      const { data: wishlists } = await supabase
+        .from('wishlists')
+        .select(`
+          id,
+          title,
+          category,
+          wishlist_items (
+            id,
+            name,
+            price,
+            image_url,
+            brand,
+            description
+          )
+        `)
+        .eq('user_id', userData.user.id)
+        .limit(5);
+      
+      wishlistData = wishlists || [];
+      
+      console.log('✅ Loaded connection data:', connectionData.length, 'connections');
+      console.log('✅ Loaded wishlist data:', wishlistData.length, 'wishlists');
+    }
+
     // Check for category-specific follow-up requests first
     const followUpRequest = ConversationEnhancementService.parseFollowUpRequest(
       message, 
@@ -238,14 +288,19 @@ export async function chatWithNicole(
         context: {
           ...parsedContext,
           conversationPhase: determineConversationPhase(parsedContext),
-          preferredCategories: ConversationEnhancementService.getPreferredCategories()
+          preferredCategories: ConversationEnhancementService.getPreferredCategories(),
+          // Enhanced: Include connection and wishlist data
+          userConnections: connectionData,
+          userWishlists: wishlistData
         },
         conversationHistory,
         enhancedFeatures: {
           multiCategorySearch: true,
           brandCategoryMapping: true,
           groupedResults: true,
-          conversationEnhancement: true
+          conversationEnhancement: true,
+          connectionIntegration: true,
+          wishlistIntegration: true
         }
       }
     });

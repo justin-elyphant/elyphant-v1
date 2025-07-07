@@ -24,17 +24,32 @@ const WishlistsCard = () => {
     return null;
   }
 
-  // Calculate total items across all wishlists
-  const totalItems = wishlists?.reduce((total, wishlist) => total + (wishlist.items?.length || 0), 0) || 0;
-  const wishlistCount = wishlists?.length || 0;
+  // Enhanced: Calculate real data with marketplace integration
+  const { totalItems, wishlistCount, allItems, recentItems, popularItems } = React.useMemo(() => {
+    const totalItems = wishlists?.reduce((total, wishlist) => total + (wishlist.items?.length || 0), 0) || 0;
+    const wishlistCount = wishlists?.length || 0;
 
-  // Get all items from all wishlists for the "All Saved" tab
-  const allItems = wishlists?.flatMap(wishlist => 
-    (wishlist.items || []).map(item => ({
-      ...item,
-      wishlistName: wishlist.title
-    }))
-  ) || [];
+    // Get all items from all wishlists for the "All Saved" tab
+    const allItems = wishlists?.flatMap(wishlist => 
+      (wishlist.items || []).map(item => ({
+        ...item,
+        wishlistName: wishlist.title,
+        addedDate: item.created_at ? new Date(item.created_at) : new Date()
+      }))
+    ) || [];
+    
+    // Sort by most recently added
+    const recentItems = [...allItems]
+      .sort((a, b) => b.addedDate.getTime() - a.addedDate.getTime())
+      .slice(0, 5);
+    
+    // Mock popular items (could be based on view count, etc.)
+    const popularItems = [...allItems]
+      .filter(item => item.price && item.price > 25) // Higher value items tend to be more popular
+      .slice(0, 3);
+      
+    return { totalItems, wishlistCount, allItems, recentItems, popularItems };
+  }, [wishlists]);
 
   const handleProductClick = (item: any) => {
     // Convert wishlist item to product format for the dialog

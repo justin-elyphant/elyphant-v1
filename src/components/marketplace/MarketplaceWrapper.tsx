@@ -8,11 +8,13 @@ import ResultsSummaryBar from "./ResultsSummaryBar";
 import MarketplaceErrorBoundary from "./error/ErrorBoundary";
 // TEMPORARILY DISABLED: NicoleMarketplaceWidget - Re-enable when technical issues are resolved
 // import NicoleMarketplaceWidget from "@/components/ai/marketplace/NicoleMarketplaceWidget";
+import ConnectionIntegration from "./integration/ConnectionIntegration";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 
@@ -22,6 +24,7 @@ const MarketplaceWrapper = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addSearch } = useUserSearchHistory();
+  const { user } = useAuth();
 
   // Check if this is a fresh navigation from home page or Nicole
   const isFromHomePage = location.state?.fromHome || false;
@@ -212,6 +215,21 @@ const MarketplaceWrapper = () => {
     window.location.reload();
   };
 
+  // Enhanced: Handle connection selection for gifting context
+  const handleConnectionSelect = (connectionId: string, name: string) => {
+    console.log('Selected connection for gifting:', { connectionId, name });
+    
+    // Set search context for the selected person
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("search", `gifts for ${name}`);
+    newParams.delete("category");
+    setSearchParams(newParams, { replace: true });
+    
+    toast.success(`Finding gifts for ${name}`, {
+      description: "Searching for personalized recommendations"
+    });
+  };
+
   // TEMPORARILY DISABLED: Nicole search suggestion handler - Re-enable when technical issues are resolved
   // const handleNicoleSearchSuggestion = (query: string) => {
   //   const newParams = new URLSearchParams(searchParams);
@@ -227,6 +245,18 @@ const MarketplaceWrapper = () => {
         <FullWidthSection>
           <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
         </FullWidthSection>
+
+        {/* Enhanced: Connection Integration - Show when user is authenticated and no active search */}
+        {user && !hasActiveSearch && (
+          <FullWidthSection className="py-4">
+            <div className="max-w-4xl mx-auto">
+              <ConnectionIntegration 
+                onSelectConnection={handleConnectionSelect}
+                searchQuery={searchTerm}
+              />
+            </div>
+          </FullWidthSection>
+        )}
 
         {/* Countdown Banner */}
         <SubtleCountdownBanner />

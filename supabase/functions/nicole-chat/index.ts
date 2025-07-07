@@ -14,9 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationHistory, context } = await req.json();
+    const { message, conversationHistory, context, enhancedFeatures } = await req.json();
     
-    console.log('Enhanced Nicole chat request with CTA button system:', { message, context });
+    console.log('Enhanced Nicole chat request with CTA button system:', { 
+      message, 
+      context, 
+      enhancedFeatures,
+      hasConnections: Boolean(context?.userConnections),
+      hasWishlists: Boolean(context?.userWishlists)
+    });
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     
@@ -99,8 +105,18 @@ serve(async (req) => {
       return budget;
     };
 
-    // Enhanced system prompt with more flexible CTA button logic
-    const systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow with a streamlined CTA button experience.
+    // Enhanced system prompt with connection and wishlist integration
+    let systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow with a streamlined CTA button experience.
+
+ENHANCED WEEK 2 CAPABILITIES:
+- Connection Integration: Access to user's friends/family for personalized recommendations
+- Wishlist Integration: Reference user's saved items and preferences
+- Real-time Data: Current user connections and wishlist insights
+- Marketplace Integration: Direct connection to Enhanced Zinc API System
+
+CURRENT USER DATA:
+${context?.userConnections ? `- Connections: ${context.userConnections.length} friends/family members` : '- No connection data available'}
+${context?.userWishlists ? `- Wishlists: ${context.userWishlists.length} saved lists with items` : '- No wishlist data available'}
 
 CONVERSATION FLOW GUIDELINES:
 
@@ -173,6 +189,10 @@ Current context: ${JSON.stringify(context || {})}
 - Brands: ${context?.detectedBrands?.join(', ') || 'None'}
 - Phase: ${context?.conversationPhase || 'greeting'}
 
+ENHANCED INTEGRATION FEATURES:
+- Connection Integration: ${Boolean(context?.userConnections) ? 'Active' : 'Inactive'}
+- Wishlist Integration: ${Boolean(context?.userWishlists) ? 'Active' : 'Inactive'}
+
 RESPONSE RULES:
 - Be conversational and warm, not robotic
 - Extract context intelligently from user messages
@@ -182,6 +202,25 @@ RESPONSE RULES:
 - Focus on conversation flow, trigger CTA button when ready
 
 The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
+
+    // Enhanced: Add connection and wishlist context to system prompt
+    if (context?.userConnections && context.userConnections.length > 0) {
+      systemPrompt += `\n\nUSER'S CONNECTIONS:
+${context.userConnections.map((conn: any, i: number) => 
+  `${i + 1}. ${conn.profiles?.name || 'Unknown'} (${conn.relationship_type})`
+).join('\n')}
+
+When appropriate, you can suggest gifts for these specific people or ask if they're shopping for any of them.`;
+    }
+
+    if (context?.userWishlists && context.userWishlists.length > 0) {
+      systemPrompt += `\n\nUSER'S WISHLIST INSIGHTS:
+${context.userWishlists.map((list: any, i: number) => 
+  `${i + 1}. "${list.title}" (${list.category || 'General'}) - ${list.wishlist_items?.length || 0} items`
+).join('\n')}
+
+You can reference their taste preferences based on their saved items when making recommendations.`;
+    }
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -296,7 +335,14 @@ The Enhanced Zinc API works best with specific brand names, product categories, 
         step: enhancedContext?.step || 'discovery',
         conversationPhase: updatedContext.conversationPhase,
         userIntent: enhancedContext?.userIntent || 'none',
-        context: updatedContext
+        context: updatedContext,
+        // Enhanced Week 2 features
+        enhancedFeatures: {
+          connectionIntegration: Boolean(context?.userConnections),
+          wishlistIntegration: Boolean(context?.userWishlists),
+          realTimeData: true,
+          marketplaceIntegration: true
+        }
       }),
       { 
         status: 200, 

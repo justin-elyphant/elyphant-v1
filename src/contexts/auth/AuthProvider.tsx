@@ -29,52 +29,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [isDebugMode] = useState<boolean>(false);
 
-  // Initialize auth state from Supabase with timeout
+  // Initialize auth state from Supabase with timeout and better error handling
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let mounted = true; // Track component mount status
     
     const initAuth = async () => {
       try {
+        console.log("🔐 Initializing auth state...");
+        
         // Set a timeout to prevent infinite loading
         timeoutId = setTimeout(() => {
-          console.warn("Auth initialization taking too long, setting loading to false");
-          setState(prev => ({ ...prev, isLoading: false }));
-        }, 5000);
+          console.warn("⏰ Auth initialization taking too long, setting loading to false");
+          if (mounted) {
+            setState(prev => ({ ...prev, isLoading: false }));
+          }
+        }, 8000); // Increased timeout for slower connections
 
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Error getting session:", error);
+          console.error("❌ Error getting session:", error);
         }
 
-        clearTimeout(timeoutId);
-        setState({
-          session,
-          user: session?.user ?? null,
-          isLoading: false
-        });
+        if (mounted) {
+          clearTimeout(timeoutId);
+          console.log("✅ Auth state initialized:", session ? "authenticated" : "unauthenticated");
+          setState({
+            session,
+            user: session?.user ?? null,
+            isLoading: false
+          });
+        }
       } catch (error) {
-        console.error("Error initializing auth:", error);
-        clearTimeout(timeoutId);
-        setState(prev => ({ ...prev, isLoading: false }));
+        console.error("❌ Error initializing auth:", error);
+        if (mounted) {
+          clearTimeout(timeoutId);
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
       }
     };
 
     initAuth();
 
-    // Listen for auth changes
+    // Listen for auth changes with proper error handling
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setState({
-        session,
-        user: session?.user ?? null,
-        isLoading: false
-      });
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("🔄 Auth state changed:", event, session ? "authenticated" : "unauthenticated");
+      
+      if (mounted) {
+        setState({
+          session,
+          user: session?.user ?? null,
+          isLoading: false
+        });
+      }
     });
 
     // Cleanup
     return () => {
+      mounted = false;
       if (timeoutId) {
         clearTimeout(timeoutId);
       }

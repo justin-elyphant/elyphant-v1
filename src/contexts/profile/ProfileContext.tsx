@@ -28,41 +28,44 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const loading = isFetching || isUpdating;
   const error = fetchError || updateError;
 
-  // Fetch profile data when auth state changes
+  // Load profile data - simplified and consolidated
   useEffect(() => {
+    let isActive = true; // Prevent state updates if component unmounts
+    
     const loadProfile = async () => {
-      const profileData = await fetchProfile();
-      if (profileData) {
-        console.log("Profile loaded from backend:", profileData);
-        setProfile(profileData);
-        setLastFetchTime(Date.now());
+      try {
+        console.log("🔄 Loading profile data...");
+        const profileData = await fetchProfile();
+        
+        // Only update state if component is still mounted
+        if (isActive && profileData) {
+          console.log("✅ Profile loaded from backend:", profileData);
+          setProfile(profileData);
+          setLastFetchTime(Date.now());
+          
+          // Clear any pending flags after successful load
+          localStorage.removeItem("newSignUp");
+          localStorage.removeItem("profileSetupLoading");
+        }
+      } catch (error) {
+        console.error("❌ Error loading profile:", error);
+        if (isActive) {
+          // Don't clear existing profile on error
+          setLastFetchTime(Date.now());
+        }
       }
     };
     
-    loadProfile();
-  }, [fetchProfile]);
-
-  // Check for new signup or profile setup flags ONLY ONCE on mount
-  useEffect(() => {
-    const checkInitialFlags = async () => {
-      const newSignUp = localStorage.getItem("newSignUp");
-      const profileSetupLoading = localStorage.getItem("profileSetupLoading");
-      
-      if (newSignUp === "true" || profileSetupLoading === "true") {
-        console.log("Detected new signup or profile setup, fetching profile data once");
-        const profileData = await fetchProfile();
-        if (profileData) {
-          setProfile(profileData);
-          setLastFetchTime(Date.now());
-        }
-        // Clear flags after initial fetch
-        localStorage.removeItem("newSignUp");
-        localStorage.removeItem("profileSetupLoading");
-      }
+    // Only load if we have a fetchProfile function
+    if (typeof fetchProfile === 'function') {
+      loadProfile();
+    }
+    
+    // Cleanup function
+    return () => {
+      isActive = false;
     };
-
-    checkInitialFlags();
-  }, []); // Empty dependency array - only run once
+  }, [fetchProfile]);
 
   // Wrapper for updating the profile that also updates local state
   const handleUpdateProfile = async (data: Partial<Profile>) => {

@@ -11,11 +11,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Upload, Gift, List, Eye, EyeOff } from 'lucide-react';
+import { CalendarIcon, Upload, Gift, List, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
 import MainLayout from '@/components/layout/MainLayout';
+import { ProfileCreationService } from '@/services/profile/profileCreationService';
 
 interface ProfileData {
   firstName: string;
@@ -128,30 +129,51 @@ const StreamlinedSignUp = () => {
   };
 
   const handleIntentSelection = async (intent: 'giftor' | 'giftee') => {
-    setLoading(true);
-    try {
-      // Create/update profile with all collected data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user?.id,
-          name: `${profileData.firstName} ${profileData.lastName}`.trim(),
-          email: profileData.email,
-          username: profileData.username,
-          profile_image: profileData.photo,
-          dob: profileData.dateOfBirth?.toISOString(),
-          shipping_address: profileData.address ? { formatted_address: profileData.address } : null,
-          profile_type: intent,
-          onboarding_completed: true
-        });
+    if (!user?.id) {
+      console.error("❌ No user ID available for profile creation");
+      toast.error('Authentication error', {
+        description: 'Please refresh and try again.'
+      });
+      return;
+    }
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
+    console.log("🎯 Starting intent selection process:", intent);
+    setLoading(true);
+    
+    try {
+      // Use the new ProfileCreationService with timeout and retry logic
+      const result = await ProfileCreationService.createProfileWithTimeout(user.id, {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        username: profileData.username,
+        photo: profileData.photo,
+        dateOfBirth: profileData.dateOfBirth,
+        address: profileData.address,
+        profileType: intent
+      });
+
+      if (!result.success) {
+        console.error("❌ Profile creation failed:", result.error);
         toast.error('Profile setup failed', {
+          description: result.error || 'Please try again.'
+        });
+        return;
+      }
+
+      console.log("✅ Profile creation successful, verifying...");
+      
+      // Verify the profile was actually created
+      const profileExists = await ProfileCreationService.verifyProfileExists(user.id);
+      if (!profileExists) {
+        console.error("❌ Profile verification failed - profile not found after creation");
+        toast.error('Profile verification failed', {
           description: 'Please try again.'
         });
         return;
       }
+
+      console.log("✅ Profile verified successfully");
 
       // Clear stored data
       localStorage.removeItem('pendingProfileData');
@@ -161,14 +183,19 @@ const StreamlinedSignUp = () => {
         description: 'Your account is ready to go.'
       });
 
-      // Route based on intent
-      if (intent === 'giftor') {
-        navigate('/marketplace?mode=nicole&open=true&greeting=personalized', { replace: true });
-      } else {
-        navigate('/marketplace?mode=wishlist', { replace: true });
-      }
+      console.log("🚀 Navigating based on intent:", intent);
+
+      // Route based on intent with small delay to ensure everything is ready
+      setTimeout(() => {
+        if (intent === 'giftor') {
+          navigate('/marketplace?mode=nicole&open=true&greeting=personalized', { replace: true });
+        } else {
+          navigate('/marketplace?mode=wishlist', { replace: true });
+        }
+      }, 500);
+
     } catch (error: any) {
-      console.error('Intent selection error:', error);
+      console.error('❌ Intent selection error:', error);
       toast.error('Setup failed', {
         description: 'Please try again.'
       });
@@ -402,11 +429,15 @@ const StreamlinedSignUp = () => {
                 <div className="flex flex-col gap-5 mt-4">
                   <Button
                     variant="outline"
-                    className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 border-2"
+                    className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 border-2 disabled:opacity-50"
                     onClick={() => handleIntentSelection("giftor")}
                     disabled={loading}
                   >
-                    <Gift className="w-6 h-6 text-purple-600 flex-shrink-0" />
+                    {loading ? (
+                      <Loader2 className="w-6 h-6 text-purple-600 flex-shrink-0 animate-spin" />
+                    ) : (
+                      <Gift className="w-6 h-6 text-purple-600 flex-shrink-0" />
+                    )}
                     <div className="flex flex-col">
                       <span className="text-base font-medium text-foreground">
                         I'm here to <span className="font-semibold text-purple-700">give a gift</span>
@@ -418,11 +449,15 @@ const StreamlinedSignUp = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 border-2"
+                    className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 border-2 disabled:opacity-50"
                     onClick={() => handleIntentSelection("giftee")}
                     disabled={loading}
                   >
-                    <List className="w-6 h-6 text-indigo-600 flex-shrink-0" />
+                    {loading ? (
+                      <Loader2 className="w-6 h-6 text-indigo-600 flex-shrink-0 animate-spin" />
+                    ) : (
+                      <List className="w-6 h-6 text-indigo-600 flex-shrink-0" />
+                    )}
                     <div className="flex flex-col">
                       <span className="text-base font-medium text-foreground">
                         I want to <span className="font-semibold text-indigo-700">set up a wishlist</span>
@@ -434,8 +469,12 @@ const StreamlinedSignUp = () => {
                   </Button>
                 </div>
                 {loading && (
-                  <div className="text-center mt-4">
-                    <p className="text-sm text-muted-foreground">Setting up your account...</p>
+                  <div className="text-center mt-4 space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <p className="text-sm text-muted-foreground">Setting up your account...</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">This may take a few moments</p>
                   </div>
                 )}
               </DialogContent>

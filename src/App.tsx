@@ -28,6 +28,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Trunkline from "./pages/Trunkline";
 import Events from "./pages/Events";
+import NicoleOnboarding from "./pages/NicoleOnboarding";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const App = () => (
                 <Route path="/connections" element={<Connections />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/events" element={<Events />} />
+                <Route path="/nicole-onboarding" element={<NicoleOnboarding />} />
                 <Route path="/profile/:identifier" element={<Profile />} />
                 <Route path="/vendor-partner" element={<VendorPartner />} />
                 <Route path="/about" element={<AboutUs />} />

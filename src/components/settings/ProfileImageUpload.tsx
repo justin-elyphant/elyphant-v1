@@ -97,20 +97,10 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       
       console.log("Final image URL to save:", finalImageUrl);
       
-      // Update profile in database
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ profile_image: finalImageUrl })
-        .eq('id', user.id);
-      
-      if (updateError) {
-        console.error("Database update error:", updateError);
-        throw updateError;
-      }
-      
+      // Update profile through ProfileContext instead of direct database call
       console.log("Profile updated successfully with image URL");
       
-      // Update local state and notify parent
+      // Update local state and notify parent (onImageUpdate will handle ProfileContext update)
       setPreview(finalImageUrl);
       onImageUpdate(finalImageUrl);
       toast.success("Profile image updated successfully");
@@ -133,16 +123,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       
       console.log("Removing profile image for user:", user.id);
       
-      // Update profile to remove image reference
-      const { error } = await supabase
-        .from('profiles')
-        .update({ profile_image: null })
-        .eq('id', user.id);
-      
-      if (error) {
-        throw error;
-      }
-      
+      // Update through ProfileContext instead of direct database call
       console.log("Profile image removed successfully");
       
       setPreview(null);

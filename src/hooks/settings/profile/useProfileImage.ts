@@ -1,28 +1,22 @@
 
 import { useAuth } from "@/contexts/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { toast } from "sonner";
 
+/**
+ * UPDATED: Now uses ProfileContext for profile updates instead of direct database calls
+ */
 export const useProfileImage = () => {
   const { user } = useAuth();
+  const { updateProfile } = useProfile();
 
-  // Handle profile image update
+  // Handle profile image update through ProfileContext
   const handleProfileImageUpdate = async (imageUrl: string) => {
     if (!user) return null;
 
     try {
-      // Update profile record
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          profile_image: imageUrl
-        })
-        .eq('id', user.id);
-      
-      if (error) {
-        throw error;
-      }
-      
+      // Use ProfileContext instead of direct database call
+      await updateProfile({ profile_image: imageUrl });
       return imageUrl;
     } catch (error) {
       console.error("Error updating profile image:", error);
@@ -30,23 +24,13 @@ export const useProfileImage = () => {
     }
   };
 
-  // Handle removing an image
+  // Handle removing an image through ProfileContext
   const handleRemoveImage = async () => {
     if (!user) return false;
     
     try {
-      // Update profile to remove image reference
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          profile_image: null
-        })
-        .eq('id', user.id);
-      
-      if (error) {
-        throw error;
-      }
-      
+      // Use ProfileContext instead of direct database call
+      await updateProfile({ profile_image: null });
       return true;
     } catch (error) {
       console.error("Error removing image:", error);

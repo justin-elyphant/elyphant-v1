@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProfileFetch } from './useProfileFetch';
 import { useProfileUpdate } from './useProfileUpdate';
+import { ProfileDataValidator } from './ProfileDataValidator';
 import { Profile } from "@/types/supabase";
 import { toast } from 'sonner';
 import { unifiedDataService } from '@/services/unified/UnifiedDataService';
@@ -14,6 +15,9 @@ interface ProfileContextType {
   refetchProfile: () => Promise<Profile | null>;
   refreshProfile: () => Promise<Profile | null>; 
   lastRefreshTime: number | null;
+  // Enhanced data management
+  invalidateCache: () => void;
+  validateProfileData: (data: Partial<Profile>) => { isValid: boolean; errors: string[] };
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -67,11 +71,20 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     };
   }, [fetchProfile]);
 
-  // Wrapper for updating the profile that also updates local state
+  // Wrapper for updating the profile that also updates local state with validation
   const handleUpdateProfile = async (data: Partial<Profile>) => {
     try {
-      console.log("Updating profile with data:", JSON.stringify(data, null, 2));
-      const result = await updateProfile(data);
+      // Validate data before updating
+      const validation = ProfileDataValidator.validate(data);
+      
+      if (!validation.isValid) {
+        console.error("Profile validation failed:", validation.errors);
+        toast.error(`Validation failed: ${validation.errors[0]}`);
+        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+      }
+
+      console.log("Updating profile with validated data:", JSON.stringify(validation.sanitizedData, null, 2));
+      const result = await updateProfile(validation.sanitizedData!);
       
       if (result) {
         // Add a small delay to ensure database consistency
@@ -83,6 +96,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           console.log("✅ Profile refreshed after update:", updatedProfile);
           setProfile(updatedProfile);
           setLastFetchTime(Date.now());
+          
+          // Invalidate unified data service cache for consistency
+          unifiedDataService.invalidateCache();
         } else {
           console.warn("⚠️ Failed to fetch updated profile data");
         }
@@ -119,6 +135,20 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Add refreshProfile as an alias of refetchProfile for backward compatibility
   const refreshProfile = refetchProfile;
 
+  // Enhanced data management functions
+  const invalidateCache = useCallback(() => {
+    unifiedDataService.invalidateCache();
+    setLastFetchTime(null);
+  }, []);
+
+  const validateProfileData = useCallback((data: Partial<Profile>) => {
+    const validation = ProfileDataValidator.validate(data);
+    return {
+      isValid: validation.isValid,
+      errors: validation.errors
+    };
+  }, []);
+
   const value = {
     profile,
     loading,
@@ -126,7 +156,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     updateProfile: handleUpdateProfile,
     refetchProfile,
     refreshProfile,
-    lastRefreshTime: lastFetchTime
+    lastRefreshTime: lastFetchTime,
+    invalidateCache,
+    validateProfileData
   };
 
   return (

@@ -188,12 +188,48 @@ export function mapApiAddressToFormAddress(apiAddress: ShippingAddress): any {
 
 // Function to convert form data to API data format
 export function profileFormToApiData(formData: any): Partial<Profile> {
+  // Convert birthday to MM-DD format
+  let dobString = null;
+  if (formData.birthday) {
+    if (typeof formData.birthday === 'object' && formData.birthday.month && formData.birthday.day) {
+      // Handle { month, day } format
+      const month = formData.birthday.month.toString().padStart(2, '0');
+      const day = formData.birthday.day.toString().padStart(2, '0');
+      dobString = `${month}-${day}`;
+    } else if (formData.birthday instanceof Date) {
+      // Handle Date object
+      const month = (formData.birthday.getMonth() + 1).toString().padStart(2, '0');
+      const day = formData.birthday.getDate().toString().padStart(2, '0');
+      dobString = `${month}-${day}`;
+    }
+  }
+
+  // Convert important dates to proper format
+  const processedImportantDates = formData.importantDates?.map((date: any) => {
+    let dateString = '';
+    if (date.date instanceof Date) {
+      dateString = date.date.toISOString();
+    } else if (typeof date.date === 'object' && date.date.month && date.date.day) {
+      const month = date.date.month.toString().padStart(2, '0');
+      const day = date.date.day.toString().padStart(2, '0');
+      dateString = `${month}-${day}`;
+    } else if (typeof date.date === 'string') {
+      dateString = date.date;
+    }
+    
+    return {
+      title: date.description,
+      date: dateString,
+      type: 'custom'
+    };
+  });
+
   return {
     name: formData.name,
     email: formData.email,
     username: formData.username,
     bio: formData.bio || '',
-    dob: formData.birthday ? formData.birthday.toISOString() : null,
+    dob: dobString,
     shipping_address: formData.address ? mapFormAddressToApiAddress(formData.address) : undefined,
     gift_preferences: formData.interests?.map((interest: string) => ({
       category: interest,
@@ -201,11 +237,7 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     })),
     interests: formData.interests,  // Add interests mapping
     data_sharing_settings: formData.data_sharing_settings,
-    important_dates: formData.importantDates?.map((date: any) => ({
-      title: date.description,
-      date: date.date.toISOString(),
-      type: 'custom'
-    }))
+    important_dates: processedImportantDates
   };
 }
 

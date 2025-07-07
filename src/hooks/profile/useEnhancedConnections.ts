@@ -30,7 +30,14 @@ export const useEnhancedConnections = () => {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchEnhancedConnections = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setConnections([]);
+      setPendingRequests([]);
+      setFollowers([]);
+      setFollowing([]);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -96,6 +103,17 @@ export const useEnhancedConnections = () => {
     } catch (err) {
       console.error("Error fetching enhanced connections:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
+      
+      // Set empty arrays on error to prevent undefined states
+      setConnections([]);
+      setPendingRequests([]);
+      setFollowers([]);
+      setFollowing([]);
+      
+      // Show user-friendly error message
+      toast.error("Failed to load connections", {
+        description: "Please try refreshing the page"
+      });
     } finally {
       setLoading(false);
     }

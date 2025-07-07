@@ -9,6 +9,8 @@ import MarketplaceErrorBoundary from "./error/ErrorBoundary";
 // TEMPORARILY DISABLED: NicoleMarketplaceWidget - Re-enable when technical issues are resolved
 // import NicoleMarketplaceWidget from "@/components/ai/marketplace/NicoleMarketplaceWidget";
 import ConnectionIntegration from "./integration/ConnectionIntegration";
+import LoadingFallback from "@/components/common/LoadingFallback";
+import { useRetry } from "@/hooks/common/useRetry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
@@ -37,6 +39,13 @@ const MarketplaceWrapper = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Enhanced retry mechanism for failed operations
+  const { execute: executeWithRetry, isRetrying } = useRetry({
+    maxRetries: 3,
+    retryDelay: 1000,
+    exponentialBackoff: true
+  });
 
   // TEMPORARILY DISABLED: Nicole widget state - Re-enable when technical issues are resolved
   // const [isNicoleOpen, setIsNicoleOpen] = useState(false);
@@ -112,13 +121,15 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, setSearchParams]);
 
-  // Enhanced product filtering and search logic with error handling
+  // Enhanced product filtering and search logic with error handling and retry
   useEffect(() => {
     const fetchProducts = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
+      const result = await executeWithRetry(async () => {
+        setIsLoading(true);
+        setError(null);
+        
+        // Simulate network delay for testing
+        await new Promise(resolve => setTimeout(resolve, 100));
         let results = [];
         
         // Prioritize search over category
@@ -141,8 +152,6 @@ const MarketplaceWrapper = () => {
           results = allProducts.slice(0, 20); // Show first 20 products as default
         }
         
-        setProducts(results);
-        
         // Enhanced toast dismissal for all specific scenarios
         if (categoryParam && !searchTerm) {
           toast.dismiss(`category-search-${categoryParam}`);
@@ -155,16 +164,19 @@ const MarketplaceWrapper = () => {
           toast.dismiss("search-loading");
           toast.dismiss("search-error");
         }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load products";
-        setError(errorMessage);
-        console.error("Error loading products:", err);
-        toast.error("Error loading products", {
-          description: errorMessage
-        });
-      } finally {
-        setIsLoading(false);
+        
+        return results;
+      });
+      
+      if (result) {
+        setProducts(result);
+      } else {
+        // Fallback to all products if retry failed
+        setProducts(allProducts.slice(0, 20));
+        setError("Failed to load specific products. Showing default selection.");
       }
+      
+      setIsLoading(false);
     };
 
     fetchProducts();
@@ -212,7 +224,37 @@ const MarketplaceWrapper = () => {
   };
 
   const handleRefresh = async () => {
-    window.location.reload();
+    // Enhanced refresh with retry mechanism
+    const result = await executeWithRetry(async () => {
+      // Clear current state
+      setError(null);
+      setProducts([]);
+      
+      // Refetch products
+      const params = new URLSearchParams(window.location.search);
+      const term = params.get("search") || "";
+      const category = params.get("category");
+      const brand = params.get("brand");
+      
+      let results = [];
+      if (term) {
+        results = searchMockProducts(term, 16);
+      } else if (category) {
+        results = searchMockProducts(category, 16);
+      } else {
+        results = allProducts.slice(0, 20);
+      }
+      
+      return results;
+    });
+    
+    if (result) {
+      setProducts(result);
+      toast.success("Refreshed successfully");
+    } else {
+      // Fallback to page reload if retry fails
+      window.location.reload();
+    }
   };
 
   // Enhanced: Handle connection selection for gifting context
@@ -267,16 +309,20 @@ const MarketplaceWrapper = () => {
         {/* Main Content - full bleed layout */}
         <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">
           <div ref={resultsRef}>
-            <MarketplaceContent
-              products={products}
-              isLoading={isLoading}
-              searchTerm={searchTerm}
-              onProductView={handleProductView}
-              showFilters={showFilters}
-              setShowFilters={setShowFilters}
-              error={error}
-              onRefresh={handleRefresh}
-            />
+        {(isLoading || isRetrying) && products.length === 0 ? (
+          <LoadingFallback type="marketplace" />
+        ) : (
+          <MarketplaceContent
+            products={products}
+            isLoading={isLoading || isRetrying}
+            searchTerm={searchTerm}
+            onProductView={handleProductView}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            error={error}
+            onRefresh={handleRefresh}
+          />
+        )}
           </div>
         </FullWidthSection>
 

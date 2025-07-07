@@ -50,14 +50,43 @@ export class ProfileCreationService {
     console.log(`🔄 Profile creation attempt ${attempt}/${this.MAX_RETRIES}`);
     
     try {
+      // Ensure we have a proper name
+      const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+      if (!fullName) {
+        throw new Error("Name is required - firstName and/or lastName must be provided");
+      }
+
+      // Format date of birth properly
+      let formattedDob = null;
+      if (data.dateOfBirth) {
+        if (data.dateOfBirth instanceof Date) {
+          // Convert to MM-DD format for birthday storage
+          const month = (data.dateOfBirth.getMonth() + 1).toString().padStart(2, '0');
+          const day = data.dateOfBirth.getDate().toString().padStart(2, '0');
+          formattedDob = `${month}-${day}`;
+        } else {
+          console.warn("dateOfBirth is not a Date object:", data.dateOfBirth);
+        }
+      }
+
+      // Format shipping address properly
+      let formattedAddress = null;
+      if (data.address) {
+        if (typeof data.address === 'string') {
+          formattedAddress = { formatted_address: data.address };
+        } else if (typeof data.address === 'object') {
+          formattedAddress = data.address;
+        }
+      }
+
       const profileData = {
         id: userId,
-        name: `${data.firstName} ${data.lastName}`.trim(),
+        name: fullName,
         email: data.email,
-        username: data.username,
+        username: data.username || null,
         profile_image: data.photo || null,
-        dob: data.dateOfBirth?.toISOString() || null,
-        shipping_address: data.address ? { formatted_address: data.address } : null,
+        dob: formattedDob,
+        shipping_address: formattedAddress,
         profile_type: data.profileType || null,
         onboarding_completed: true,
         data_sharing_settings: {

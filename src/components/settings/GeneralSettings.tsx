@@ -12,8 +12,7 @@ import DataSharingSection from "./DataSharingSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import InterestsFormSection from "./InterestsFormSection";
 import GiftingPreferencesSection from "./GiftingPreferencesSection";
-import GoogleMapsDebugPanel from "@/components/debug/GoogleMapsDebugPanel";
-
+import ProfileDataIntegrityPanel from "./ProfileDataIntegrityPanel";
 const GeneralSettings = () => {
   const { user } = useAuth();
   const {
@@ -52,10 +51,8 @@ const GeneralSettings = () => {
         <p className="text-gray-600">Manage your profile information and preferences</p>
       </div>
 
-      {/* Google Maps Debug Panel */}
-      <div className="mb-6">
-        <GoogleMapsDebugPanel />
-      </div>
+      {/* Profile Data Integrity Panel */}
+      <ProfileDataIntegrityPanel />
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

@@ -13,7 +13,16 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
   // Load profile data when available
   const loadProfileData = () => {
     if (profile && !loading) {
-      console.log("Loading profile data into settings form:", profile);
+      console.log("🔄 Loading profile data into settings form:", profile);
+      
+      // Check for data integrity issues first
+      if (!profile.name || profile.name.trim() === '') {
+        console.warn("⚠️ Profile name is missing or empty:", profile.name);
+      }
+      
+      if (!profile.email || profile.email.trim() === '') {
+        console.warn("⚠️ Profile email is missing or empty:", profile.email);
+      }
       
       // Use the improved mapping function
       const mappedData = mapDatabaseToSettingsForm(profile);
@@ -24,12 +33,19 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
           mappedData.profile_image = profile.profile_image;
         }
         
-        console.log("Mapped data for settings form (including profile_image):", mappedData);
+        console.log("✅ Mapped data for settings form:", {
+          name: mappedData.name,
+          email: mappedData.email,
+          username: profile.username,
+          profile_image: mappedData.profile_image,
+          dob: profile.dob,
+          shipping_address: profile.shipping_address
+        });
+        
         form.reset(mappedData);
-        console.log("Settings form reset with mapped data including profile image");
         hasLoadedRef.current = true;
       } else {
-        console.warn("Failed to map profile data to settings form");
+        console.error("❌ Failed to map profile data to settings form");
       }
     }
   };

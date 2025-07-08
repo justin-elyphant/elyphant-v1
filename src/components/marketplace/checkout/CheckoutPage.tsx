@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { createOrder } from "@/services/orderService";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import MobileOptimizedCheckout from "@/components/checkout/MobileOptimizedCheckout";
 
 // Import optimized components
 import ExpressCheckoutFlow from "./ExpressCheckoutFlow";
@@ -25,7 +27,9 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [isExpressMode, setIsExpressMode] = useState(false);
+  const [showMobileView, setShowMobileView] = useState(false);
   
   const {
     activeTab,
@@ -63,6 +67,23 @@ const CheckoutPage = () => {
     }
     
     toast.success(`Express ${type === 'self' ? 'purchase' : 'gift'} mode activated`);
+  };
+
+  const handleMobileCheckoutComplete = async (mobileCheckoutData: any) => {
+    // Handle mobile checkout completion
+    const order = await createOrder({
+      cartItems,
+      subtotal,
+      shippingCost,
+      taxAmount,
+      totalAmount,
+      shippingInfo: mobileCheckoutData.address,
+      giftOptions: { isGift: true, giftMessage: '', isSurpriseGift: false },
+    });
+
+    clearCart();
+    toast.success('Order placed successfully!');
+    navigate(`/order-confirmation/${order.id}`);
   };
 
   const handlePlaceOrder = async (paymentIntentId?: string) => {
@@ -141,7 +162,11 @@ const CheckoutPage = () => {
 
   return (
     <CheckoutErrorBoundary>
-      <div className="container mx-auto px-4 py-8">
+      {/* Mobile Optimized Checkout */}
+      <MobileOptimizedCheckout onComplete={handleMobileCheckoutComplete} />
+      
+      {/* Desktop Checkout */}
+      <div className="hidden lg:block container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button 
             variant="ghost" 

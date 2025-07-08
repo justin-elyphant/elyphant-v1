@@ -1,0 +1,2 @@
+-- This query will be handled by Supabase secrets management
+-- The GOOGLE_MAPS_API_KEY secret needs to be updated with the new value: AIzaSyBGsDKFAoPavatQTkcSMgZXpaqGiJpsCf8

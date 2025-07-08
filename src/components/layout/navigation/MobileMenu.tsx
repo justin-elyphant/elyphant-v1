@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { LogOut, Users, ShoppingBag, Gift } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { LogOut, Users, ShoppingBag, Gift, CreditCard, Zap } from "lucide-react";
 
 interface MobileMenuProps {
   links: Array<{ label: string; href: string }>;
@@ -25,6 +26,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   signOut,
 }) => {
   const { user } = useAuth();
+  const { cartItems } = useCart();
 
   return (
     <div className="py-3 px-4 border-t bg-background">
@@ -46,6 +48,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             {link.label}
           </Link>
         ))}
+        
+        {/* Quick Checkout Access */}
+        {user && cartItems.length > 0 && (
+          <div className="space-y-2 border-t pt-3">
+            <Button 
+              asChild 
+              className="w-full justify-start bg-primary hover:bg-primary/90"
+            >
+              <Link to="/checkout" onClick={onClose}>
+                <Zap className="h-4 w-4 mr-2" />
+                Quick Checkout ({cartItems.length} items)
+              </Link>
+            </Button>
+            <Button 
+              variant="outline" 
+              asChild 
+              className="w-full justify-start"
+            >
+              <Link to="/cart" onClick={onClose}>
+                <ShoppingBag className="h-4 w-4 mr-2" />
+                View Cart
+              </Link>
+            </Button>
+          </div>
+        )}
         
         {/* Mobile Marketplace Menu */}
         <div className="space-y-1 border-t pt-2">

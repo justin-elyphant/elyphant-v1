@@ -11,6 +11,7 @@ import { createOrder } from "@/services/orderService";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import MobileOptimizedCheckout from "@/components/checkout/MobileOptimizedCheckout";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import optimized components
 import ExpressCheckoutFlow from "./ExpressCheckoutFlow";
@@ -28,8 +29,8 @@ const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
   const { user } = useAuth();
   const { profile } = useProfile();
+  const isMobile = useIsMobile();
   const [isExpressMode, setIsExpressMode] = useState(false);
-  const [showMobileView, setShowMobileView] = useState(false);
   
   const {
     activeTab,
@@ -160,13 +161,19 @@ const CheckoutPage = () => {
     );
   }
 
+  // Use mobile checkout for mobile devices
+  if (isMobile) {
+    return (
+      <CheckoutErrorBoundary>
+        <MobileOptimizedCheckout onComplete={handleMobileCheckoutComplete} />
+      </CheckoutErrorBoundary>
+    );
+  }
+
   return (
     <CheckoutErrorBoundary>
-      {/* Mobile Optimized Checkout */}
-      <MobileOptimizedCheckout onComplete={handleMobileCheckoutComplete} />
-      
       {/* Desktop Checkout */}
-      <div className="hidden lg:block container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button 
             variant="ghost" 

@@ -8,12 +8,15 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import MainLayout from "@/components/layout/MainLayout";
 import RecipientAssignmentSection from "@/components/cart/RecipientAssignmentSection";
+import ShippingPreview from "@/components/cart/ShippingPreview";
 import { toast } from "sonner";
 
 const Cart = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const { 
     cartItems, 
@@ -32,11 +35,36 @@ const Cart = () => {
       navigate("/signin");
       return;
     }
+    
+    // Check for complete shipping address
+    const shippingAddress = profile?.shipping_address;
+    const hasCompleteAddress = shippingAddress && 
+      profile?.name &&
+      (shippingAddress.address_line1 || shippingAddress.street) &&
+      shippingAddress.city &&
+      shippingAddress.state &&
+      (shippingAddress.zip_code || shippingAddress.zipCode);
+    
+    if (!hasCompleteAddress) {
+      toast.error("Please add your shipping address before checkout");
+      navigate('/settings', { state: { tab: 'profile' } });
+      return;
+    }
+    
     navigate("/checkout");
   };
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
   const unassignedItems = getUnassignedItems();
+  
+  // Check shipping address validity for UI feedback
+  const shippingAddress = profile?.shipping_address;
+  const hasCompleteAddress = shippingAddress && 
+    profile?.name &&
+    (shippingAddress.address_line1 || shippingAddress.street) &&
+    shippingAddress.city &&
+    shippingAddress.state &&
+    (shippingAddress.zip_code || shippingAddress.zipCode);
 
   return (
     <MainLayout>
@@ -79,6 +107,9 @@ const Cart = () => {
           <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
             {/* Cart Content */}
             <div className={isMobile ? 'order-1' : 'lg:col-span-2'}>
+              {/* Shipping Address Preview */}
+              <ShippingPreview />
+              
               <Tabs defaultValue="items" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="items" className="flex items-center gap-2">
@@ -229,8 +260,9 @@ const Cart = () => {
                     onClick={handleCheckout}
                     className="w-full"
                     size={isMobile ? "lg" : "default"}
+                    disabled={!hasCompleteAddress}
                   >
-                    Proceed to Checkout
+                    {hasCompleteAddress ? 'Proceed to Checkout' : 'Add Shipping Address'}
                   </Button>
                   
                   <Button 

@@ -109,75 +109,75 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            {title}
-          </span>
-          {allowAddNew && (
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowQuickActions(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add New
-              </Button>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              {title}
+            </span>
+            {allowAddNew && (
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowQuickActions(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New
+                </Button>
+              </div>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {addresses.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <p>No saved addresses yet</p>
+              <p className="text-sm">Add your first address to speed up checkout</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {addresses.map((address) => (
+                <div
+                  key={address.id}
+                  className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-primary/50 ${
+                    selectedAddressId === address.id ? 'border-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => onAddressSelect(address)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      {getAddressIcon(address.name)}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">{address.name}</span>
+                          {address.is_default && (
+                            <Badge variant="secondary" className="text-xs">Default</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {formatAddress(address.address)}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedAddressId === address.id && (
+                      <div className="text-primary">
+                        <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {addresses.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p>No saved addresses yet</p>
-            <p className="text-sm">Add your first address to speed up checkout</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {addresses.map((address) => (
-              <div
-                key={address.id}
-                className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-primary/50 ${
-                  selectedAddressId === address.id ? 'border-primary bg-primary/5' : ''
-                }`}
-                onClick={() => onAddressSelect(address)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    {getAddressIcon(address.name)}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{address.name}</span>
-                        {address.is_default && (
-                          <Badge variant="secondary" className="text-xs">Default</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {formatAddress(address.address)}
-                      </p>
-                    </div>
-                  </div>
-                  {selectedAddressId === address.id && (
-                    <div className="text-primary">
-                      <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
 
-    <>
       {/* Quick Actions Dialog */}
       {showQuickActions && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">

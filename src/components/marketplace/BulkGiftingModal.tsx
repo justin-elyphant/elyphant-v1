@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Users, Gift, ShoppingCart, X } from 'lucide-react';
-import { useConnections } from '@/hooks/profile/useConnections';
+import { useConnectionAddresses } from '@/hooks/checkout/useConnectionAddresses';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 
@@ -23,8 +23,8 @@ const BulkGiftingModal: React.FC<BulkGiftingModalProps> = ({
   const [selectedProduct, setSelectedProduct] = useState(initialProduct);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [giftMessages, setGiftMessages] = useState<Record<string, string>>({});
-  const { connections } = useConnections();
-  const { addToCart } = useCart();
+  const { connections } = useConnectionAddresses();
+  const { addToCart, assignItemToRecipient } = useCart();
 
   useEffect(() => {
     if (initialProduct) {
@@ -46,19 +46,26 @@ const BulkGiftingModal: React.FC<BulkGiftingModalProps> = ({
       return;
     }
 
-    // Add to cart for each recipient
+    // Add to cart for each recipient with proper assignment
     selectedRecipients.forEach(recipientId => {
-          const recipient = connections.find(c => c.connected_user_id === recipientId);
-          if (recipient) {
-            addToCart({
-              ...selectedProduct,
-              isGift: true,
-              recipientId: recipient.connected_user_id,
-              recipientName: 'Unknown User',
-              giftMessage: giftMessages[recipientId] || '',
-              bulkGiftId: `bulk-${Date.now()}-${recipientId}`
-            });
-          }
+      const recipient = connections.find(c => c.id === recipientId);
+      if (recipient) {
+        // Add product to cart
+        addToCart(selectedProduct);
+        
+        // Assign to recipient immediately after adding
+        const recipientAssignment = {
+          connectionId: recipient.id,
+          connectionName: recipient.name || 'Unknown User',
+          deliveryGroupId: `bulk-${Date.now()}-${recipientId}`,
+          giftMessage: giftMessages[recipientId] || '',
+          scheduledDeliveryDate: undefined,
+          shippingAddress: recipient.shipping_address || undefined
+        };
+        
+        // Use the assignItemToRecipient function from cart context
+        assignItemToRecipient(selectedProduct.product_id, recipientAssignment);
+      }
     });
 
     toast.success(`Added ${selectedRecipients.length} gifts to cart!`);
@@ -69,7 +76,7 @@ const BulkGiftingModal: React.FC<BulkGiftingModalProps> = ({
     setGiftMessages({});
   };
 
-  const acceptedConnections = connections.filter(c => c.status === 'accepted');
+  const acceptedConnections = connections; // useConnectionAddresses already filters for accepted
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,7 +131,7 @@ const BulkGiftingModal: React.FC<BulkGiftingModalProps> = ({
                           ? 'border-primary bg-primary/5'
                           : 'hover:border-primary/50'
                       }`}
-                      onClick={() => handleRecipientToggle(connection.connected_user_id)}
+                      onClick={() => handleRecipientToggle(connection.id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -133,12 +140,12 @@ const BulkGiftingModal: React.FC<BulkGiftingModalProps> = ({
                               {'User'.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <div>
-                            <div className="font-medium">Connection User</div>
-                            <div className="text-sm text-muted-foreground capitalize">
-                              {connection.relationship_type}
-                            </div>
-                          </div>
+                           <div>
+                             <div className="font-medium">{connection.name}</div>
+                             <div className="text-sm text-muted-foreground capitalize">
+                               {connection.relationship_type}
+                             </div>
+                           </div>
                         </div>
                         {selectedRecipients.includes(connection.id) && (
                           <div className="text-primary">

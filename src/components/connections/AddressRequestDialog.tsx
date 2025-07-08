@@ -75,7 +75,10 @@ const AddressRequestDialog: React.FC<AddressRequestDialogProps> = ({
         body: requestData
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to send address request');
+      }
       
       toast.success(`Address request sent to ${connection.name}`);
       onRequestSent();

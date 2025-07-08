@@ -91,9 +91,21 @@ const ConnectionAddressManager: React.FC<ConnectionAddressManagerProps> = ({
     setAddressRequest(prev => ({ ...prev, sending: true }));
     
     try {
-      // In a real app, this would send an email to the connection
-      // For now, we'll just show a success message
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Call the address request edge function
+      const { data, error } = await supabase.functions.invoke('send-address-request', {
+        body: {
+          recipient_id: selectedConnection.connected_user_id,
+          recipient_email: addressRequest.email,
+          message: addressRequest.message || 'Could you please share your address for gift delivery?',
+          include_notifications: true,
+          reminder_schedule: '3_days',
+          expires_in_days: 7
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to send address request');
+      }
       
       toast.success(`Address request sent to ${selectedConnection.name}`);
       setShowAddAddressDialog(false);

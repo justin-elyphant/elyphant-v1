@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      address_intelligence: {
+        Row: {
+          address_hash: string
+          analysis: Json
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_hash: string
+          analysis: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_hash?: string
+          analysis?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_gift_searches: {
         Row: {
           budget_range: Json | null
@@ -457,6 +484,63 @@ export type Database = {
           recipient_type?: string | null
           search_results?: Json | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gift_templates: {
+        Row: {
+          budget_range: Json
+          connection_filters: Json | null
+          created_at: string
+          default_message: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          last_used: string | null
+          name: string
+          occasion: string
+          preferred_categories: string[]
+          recipient_types: string[]
+          recurring_schedule: Json | null
+          updated_at: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          budget_range?: Json
+          connection_filters?: Json | null
+          created_at?: string
+          default_message?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_used?: string | null
+          name: string
+          occasion: string
+          preferred_categories?: string[]
+          recipient_types?: string[]
+          recurring_schedule?: Json | null
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          budget_range?: Json
+          connection_filters?: Json | null
+          created_at?: string
+          default_message?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_used?: string | null
+          name?: string
+          occasion?: string
+          preferred_categories?: string[]
+          recipient_types?: string[]
+          recurring_schedule?: Json | null
+          updated_at?: string
+          usage_count?: number
           user_id?: string
         }
         Relationships: []

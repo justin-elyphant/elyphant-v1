@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AddressFormDialog from './AddressFormDialog';
 import AddressQuickActions from './AddressQuickActions';
+import AddressIntelligence from '../gifting/intelligence/AddressIntelligence';
 
 interface Address {
   id: string;
@@ -146,7 +147,11 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
                   className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-primary/50 ${
                     selectedAddressId === address.id ? 'border-primary bg-primary/5' : ''
                   }`}
-                  onClick={() => onAddressSelect(address)}
+                  onClick={() => {
+                    onAddressSelect(address);
+                    setSelectedAddress(address);
+                    setShowAddressIntelligence(true);
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -207,6 +212,32 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
         defaultName={selectedTemplate}
         title={selectedTemplate ? `Add ${selectedTemplate} Address` : 'Add New Address'}
       />
+
+      {/* Address Intelligence Panel */}
+      {showAddressIntelligence && selectedAddress && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Address Analysis</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddressIntelligence(false)}
+              >
+                ×
+              </Button>
+            </div>
+            <AddressIntelligence
+              address={selectedAddress.address}
+              onAddressUpdate={(updatedAddress) => {
+                const updated = { ...selectedAddress, address: updatedAddress };
+                onAddressSelect(updated);
+                setSelectedAddress(updated);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };

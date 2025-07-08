@@ -70,45 +70,66 @@ const AddressRequestManager: React.FC = () => {
   };
 
   const fetchSentRequests = async () => {
-    // Mock implementation - replace with actual database query
-    const mockSentRequests: AddressRequest[] = [
-      {
-        id: '1',
-        requester_id: profile!.id,
-        recipient_id: 'user1',
-        recipient_email: 'john@example.com',
-        message: 'Hi! Could you share your address for gift delivery?',
-        status: 'pending',
-        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        expires_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-        reminder_count: 1,
-        requester_name: profile!.name || 'You',
-        recipient_name: 'John Doe'
-      }
-    ];
+    try {
+      const { data, error } = await supabase
+        .from('address_requests')
+        .select('*')
+        .eq('requester_id', profile!.id)
+        .order('created_at', { ascending: false });
 
-    setSentRequests(mockSentRequests);
+      if (error) throw error;
+
+      const formattedRequests: AddressRequest[] = (data || []).map(req => ({
+        id: req.id,
+        requester_id: req.requester_id,
+        recipient_id: req.recipient_id,
+        recipient_email: req.recipient_email,
+        message: req.message,
+        status: req.status,
+        created_at: req.created_at,
+        expires_at: req.expires_at,
+        reminder_count: 0,
+        requester_name: profile!.name || 'You',
+        recipient_name: 'Recipient' // Will be enhanced later
+      }));
+
+      setSentRequests(formattedRequests);
+    } catch (error) {
+      console.error('Error fetching sent requests:', error);
+      setSentRequests([]);
+    }
   };
 
   const fetchReceivedRequests = async () => {
-    // Mock implementation - replace with actual database query
-    const mockReceivedRequests: AddressRequest[] = [
-      {
-        id: '2',
-        requester_id: 'user2',
-        recipient_id: profile!.id,
-        recipient_email: profile!.email || '',
-        message: 'Hey! I\'d like to send you a gift. Could you share your shipping address?',
-        status: 'pending',
-        created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        expires_at: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(),
-        reminder_count: 0,
-        requester_name: 'Sarah Smith',
-        recipient_name: profile!.name
-      }
-    ];
+    try {
+      const { data, error } = await supabase
+        .from('address_requests')
+        .select('*')
+        .eq('recipient_id', profile!.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
 
-    setReceivedRequests(mockReceivedRequests);
+      if (error) throw error;
+
+      const formattedRequests: AddressRequest[] = (data || []).map(req => ({
+        id: req.id,
+        requester_id: req.requester_id,
+        recipient_id: req.recipient_id,
+        recipient_email: req.recipient_email,
+        message: req.message,
+        status: req.status,
+        created_at: req.created_at,
+        expires_at: req.expires_at,
+        reminder_count: 0,
+        requester_name: 'Requester', // Will be enhanced later
+        recipient_name: profile!.name
+      }));
+
+      setReceivedRequests(formattedRequests);
+    } catch (error) {
+      console.error('Error fetching received requests:', error);
+      setReceivedRequests([]);
+    }
   };
 
   const fetchConnections = async () => {
@@ -154,33 +175,27 @@ const AddressRequestManager: React.FC = () => {
     }
 
     try {
-      // In real implementation, this would:
-      // 1. Insert into address_requests table
-      // 2. Send email notification
-      // 3. Create in-app notification
+      const { data, error } = await supabase.functions.invoke('send-address-request', {
+        body: {
+          recipient_id: selectedConnection.connected_user_id,
+          recipient_email: selectedConnection.email || '',
+          message: requestMessage || 'Could you please share your address for gift delivery?',
+          include_notifications: true,
+          reminder_schedule: '3_days',
+          expires_in_days: 7
+        }
+      });
 
-      const newRequest: AddressRequest = {
-        id: Date.now().toString(),
-        requester_id: profile.id,
-        recipient_id: selectedConnection.connected_user_id,
-        recipient_email: selectedConnection.email || '',
-        message: requestMessage || 'Could you please share your address for gift delivery?',
-        status: 'pending',
-        created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        reminder_count: 0,
-        requester_name: profile.name || 'You',
-        recipient_name: selectedConnection.name
-      };
+      if (error) throw error;
 
-      setSentRequests(prev => [newRequest, ...prev]);
+      toast.success(`Address request sent to ${selectedConnection.name}`);
+      
+      // Refresh the sent requests
+      await fetchSentRequests();
+      
       setSelectedConnection(null);
       setRequestMessage('');
       
-      // Send email notification (would be handled by edge function)
-      await sendEmailNotification(newRequest);
-      
-      toast.success(`Address request sent to ${selectedConnection.name}`);
     } catch (error) {
       console.error('Error creating address request:', error);
       toast.error('Failed to send address request');

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
+import { Heart, Users } from "lucide-react";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import SignUpDialog from "../SignUpDialog";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
@@ -165,14 +165,29 @@ const ProductItem = ({
           </div>
 
           {/* Add to Cart Button */}
-          <div className="mt-3">
+          <div className="mt-3 flex gap-2">
             <AddToCartButton
               product={product}
               variant="outline"
               size="sm"
-              className="w-full h-9 text-sm font-medium touch-target-48 touch-manipulation tap-feedback no-select"
+              className="flex-1 h-9 text-sm font-medium touch-target-48 touch-manipulation tap-feedback no-select"
               onClick={handleAddToCartClick}
             />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Dispatch custom event for bulk gifting
+                window.dispatchEvent(new CustomEvent('open-bulk-gifting', { 
+                  detail: { product } 
+                }));
+              }}
+              className="flex-shrink-0 h-9 px-3 touch-target-48 touch-manipulation tap-feedback no-select"
+              title="Gift to Multiple Recipients"
+            >
+              <Users className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>

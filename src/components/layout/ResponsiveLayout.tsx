@@ -1,6 +1,6 @@
 
 import React, { ReactNode } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 interface ResponsiveLayoutProps {
@@ -21,7 +21,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   className = "",
   mobileBreakpoint = 768,
 }) => {
-  const isMobile = useIsMobile(mobileBreakpoint);
+  const isMobile = useMediaQuery(`(max-width: ${mobileBreakpoint}px)`);
   
   return (
     <div className={cn(className, isMobile ? mobileClassName : desktopClassName)}>

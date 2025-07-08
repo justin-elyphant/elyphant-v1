@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MapPin, Plus, User, Home, Building, Heart } from 'lucide-react';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import AddressFormDialog from './AddressFormDialog';
+import AddressQuickActions from './AddressQuickActions';
 
 interface Address {
   id: string;
@@ -39,6 +40,8 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
 
   useEffect(() => {
     fetchAddresses();
@@ -62,6 +65,25 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddressAdded = (newAddress: any) => {
+    setAddresses(prev => [newAddress, ...prev]);
+    toast.success('Address added successfully');
+    setShowAddDialog(false);
+    setShowQuickActions(false);
+  };
+
+  const handleTemplateSelect = (template: any) => {
+    setSelectedTemplate(template.name);
+    setShowQuickActions(false);
+    setShowAddDialog(true);
+  };
+
+  const handleCustomAdd = () => {
+    setSelectedTemplate('');
+    setShowQuickActions(false);
+    setShowAddDialog(true);
   };
 
   const getAddressIcon = (addressName: string) => {
@@ -95,24 +117,16 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
             {title}
           </span>
           {allowAddNew && (
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add New Address</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <p className="text-muted-foreground">
-                    Address form would be implemented here using ProfileContext
-                  </p>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowQuickActions(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add New
+              </Button>
+            </div>
           )}
         </CardTitle>
       </CardHeader>
@@ -162,6 +176,38 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
         )}
       </CardContent>
     </Card>
+
+    <>
+      {/* Quick Actions Dialog */}
+      {showQuickActions && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Add Address</h3>
+            <AddressQuickActions
+              onTemplateSelect={handleTemplateSelect}
+              onCustomAdd={handleCustomAdd}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowQuickActions(false)}
+              className="mt-3 w-full"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Address Form Dialog */}
+      <AddressFormDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onAddressAdded={handleAddressAdded}
+        defaultName={selectedTemplate}
+        title={selectedTemplate ? `Add ${selectedTemplate} Address` : 'Add New Address'}
+      />
+    </>
   );
 };
 

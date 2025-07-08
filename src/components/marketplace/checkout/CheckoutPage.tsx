@@ -70,21 +70,54 @@ const CheckoutPage = () => {
     toast.success(`Express ${type === 'self' ? 'purchase' : 'gift'} mode activated`);
   };
 
-  const handleMobileCheckoutComplete = async (mobileCheckoutData: any) => {
-    // Handle mobile checkout completion
-    const order = await createOrder({
-      cartItems,
-      subtotal,
-      shippingCost,
-      taxAmount,
-      totalAmount,
-      shippingInfo: mobileCheckoutData.address,
-      giftOptions: { isGift: true, giftMessage: '', isSurpriseGift: false },
-    });
+  const handleMobileCheckoutComplete = async (checkoutData: any) => {
+    console.log('Mobile checkout completed with data:', checkoutData);
+    
+    try {
+      setIsProcessing(true);
+      
+      // Create order using the mobile checkout data
+      const orderData = {
+        cartItems,
+        subtotal: checkoutData.subtotal,
+        shippingCost: checkoutData.shippingCost,
+        taxAmount: checkoutData.taxAmount,
+        totalAmount: checkoutData.totalAmount,
+        shippingInfo: {
+          name: checkoutData.address.name,
+          email: profile?.email || user?.email || '',
+          address: checkoutData.address.address.street,
+          city: checkoutData.address.address.city,
+          state: checkoutData.address.address.state,
+          zipCode: checkoutData.address.address.zipCode,
+          country: checkoutData.address.address.country || 'US'
+        },
+        giftOptions: {
+          isGift: checkoutData.isGift,
+          giftMessage: checkoutData.giftMessage || '',
+          isSurpriseGift: false
+        },
+        deliveryGroups: checkoutData.recipients.map((recipient: any, index: number) => ({
+          id: `group-${index}`,
+          recipient_id: recipient.id || null,
+          recipient_name: recipient.name,
+          recipient_type: recipient.type,
+          items: cartItems.map(item => item.product.product_id)
+        }))
+      };
 
-    clearCart();
-    toast.success('Order placed successfully!');
-    navigate(`/order-confirmation/${order.id}`);
+      // Clear cart on successful mobile checkout
+      clearCart();
+      
+      // Navigate to success page
+      navigate('/payment-success');
+      
+    } catch (error) {
+      console.error('Mobile checkout processing failed:', error);
+      toast.error('Checkout failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePlaceOrder = async (paymentIntentId?: string) => {
@@ -161,8 +194,11 @@ const CheckoutPage = () => {
     );
   }
 
-  // Use mobile checkout for mobile devices
-  if (isMobile) {
+  // Use mobile checkout for phones, not tablets
+  const isTablet = window.innerWidth >= 769 && window.innerWidth <= 1024;
+  const shouldUseMobile = isMobile && !isTablet;
+  
+  if (shouldUseMobile) {
     return (
       <CheckoutErrorBoundary>
         <MobileOptimizedCheckout onComplete={handleMobileCheckoutComplete} />

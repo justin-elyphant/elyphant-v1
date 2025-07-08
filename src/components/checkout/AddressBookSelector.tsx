@@ -43,6 +43,8 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [showAddressIntelligence, setShowAddressIntelligence] = useState(false);
 
   useEffect(() => {
     fetchAddresses();

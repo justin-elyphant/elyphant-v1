@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MailIcon, Clock, CheckCircle, AlertCircle, Send, UserCheck } from 'lucide-react';
 import { useProfile } from '@/contexts/profile/ProfileContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import AddressRequestNotifications from './AddressRequestNotifications';
 
 interface AddressRequest {

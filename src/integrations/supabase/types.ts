@@ -41,6 +41,69 @@ export type Database = {
         }
         Relationships: []
       }
+      address_requests: {
+        Row: {
+          created_at: string
+          expires_at: string
+          fulfilled_at: string | null
+          id: string
+          include_notifications: boolean
+          message: string
+          recipient_email: string
+          recipient_id: string
+          reminder_schedule: string
+          requester_id: string
+          shared_address: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          fulfilled_at?: string | null
+          id?: string
+          include_notifications?: boolean
+          message: string
+          recipient_email: string
+          recipient_id: string
+          reminder_schedule?: string
+          requester_id: string
+          shared_address?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          fulfilled_at?: string | null
+          id?: string
+          include_notifications?: boolean
+          message?: string
+          recipient_email?: string
+          recipient_id?: string
+          reminder_schedule?: string
+          requester_id?: string
+          shared_address?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "address_requests_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "address_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_gift_searches: {
         Row: {
           budget_range: Json | null

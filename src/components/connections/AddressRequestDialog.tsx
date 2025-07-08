@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Send, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Connection {
   id: string;
@@ -69,8 +70,12 @@ const AddressRequestDialog: React.FC<AddressRequestDialogProps> = ({
         expires_in_days: 7
       };
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call edge function to send address request
+      const { data, error } = await supabase.functions.invoke('send-address-request', {
+        body: requestData
+      });
+
+      if (error) throw error;
       
       toast.success(`Address request sent to ${connection.name}`);
       onRequestSent();

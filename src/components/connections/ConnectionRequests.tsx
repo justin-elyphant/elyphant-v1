@@ -4,7 +4,7 @@ import React from "react";
 import EnhancedConnectionRequests from "./EnhancedConnectionRequests";
 
 // This component now uses the enhanced version with address collection
-export { ConnectionRequest } from "./EnhancedConnectionRequests";
+export type { ConnectionRequest } from "./EnhancedConnectionRequests";
 
 interface ConnectionRequestsProps {
   requests: any[];

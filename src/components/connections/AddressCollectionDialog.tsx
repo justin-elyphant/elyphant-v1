@@ -130,7 +130,9 @@ const AddressCollectionDialog: React.FC<AddressCollectionDialogProps> = ({
             <Label>Address</Label>
             <div className="mt-1">
               <GooglePlacesAutocomplete 
-                onPlaceSelect={handlePlaceSelect}
+                value={address.street}
+                onChange={(value) => setAddress(prev => ({ ...prev, street: value }))}
+                onAddressSelect={handlePlaceSelect}
                 placeholder="Start typing an address..."
               />
             </div>

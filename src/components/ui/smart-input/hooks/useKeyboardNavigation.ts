@@ -25,10 +25,12 @@ export const useKeyboardNavigation = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (filteredSuggestions.length > 0 && isOpen) {
+        // If dropdown is open, select the suggestion (this will close dropdown and update value)
         handleSuggestionSelect(filteredSuggestions[selectedIndex]);
+      } else {
+        // If dropdown is closed, let parent handle the Enter (to add to list)
+        onKeyDown?.(e);
       }
-      // Always call the parent's onKeyDown for Enter, so it can handle adding to the list
-      onKeyDown?.(e);
       return;
     }
     

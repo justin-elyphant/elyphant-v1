@@ -27,6 +27,8 @@ export const useKeyboardNavigation = ({
       if (filteredSuggestions.length > 0 && isOpen) {
         handleSuggestionSelect(filteredSuggestions[selectedIndex]);
       }
+      // Always call the parent's onKeyDown for Enter, so it can handle adding to the list
+      onKeyDown?.(e);
       return;
     }
     

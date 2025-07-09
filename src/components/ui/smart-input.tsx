@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Check, AlertCircle, Lightbulb } from "lucide-react";
@@ -102,32 +102,36 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (filteredSuggestions.length > 0) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filteredSuggestions.length > 0 && isOpen) {
         handleSuggestionSelect(filteredSuggestions[selectedIndex]);
-        return;
       }
-      
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
+      return;
+    }
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (filteredSuggestions.length > 0) {
         setIsOpen(true);
         setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length);
-        return;
       }
-      
-      if (e.key === 'ArrowUp') {
-        e.preventDefault();
+      return;
+    }
+    
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (filteredSuggestions.length > 0) {
         setIsOpen(true);
         setSelectedIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
-        return;
       }
-      
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setIsOpen(false);
-        return;
-      }
+      return;
+    }
+    
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsOpen(false);
+      return;
     }
     
     onKeyDown?.(e);
@@ -157,27 +161,29 @@ export const SmartInput: React.FC<SmartInputProps> = ({
         
         {isOpen && filteredSuggestions.length > 0 && (
           <PopoverContent className="w-full p-0 z-50 bg-popover border shadow-md" align="start">
-            <Command>
-              <CommandList>
-                <CommandEmpty>No suggestions found.</CommandEmpty>
-                <CommandGroup>
+            <div className="max-h-[200px] overflow-y-auto">
+              {filteredSuggestions.length === 0 ? (
+                <div className="p-2 text-sm text-muted-foreground">No suggestions found.</div>
+              ) : (
+                <div className="p-1">
                   {filteredSuggestions.map((suggestion, index) => (
-                    <CommandItem
+                    <div
                       key={index}
-                      value={suggestion}
-                      onSelect={() => handleSuggestionSelect(suggestion)}
+                      onClick={() => handleSuggestionSelect(suggestion)}
                       className={cn(
-                        "cursor-pointer",
-                        index === selectedIndex && "bg-accent text-accent-foreground"
+                        "px-2 py-1.5 text-sm cursor-pointer rounded-sm flex items-center",
+                        index === selectedIndex 
+                          ? "bg-accent text-accent-foreground" 
+                          : "hover:bg-accent/50"
                       )}
                     >
                       <Check className={cn("mr-2 h-4 w-4", index === selectedIndex ? "opacity-100" : "opacity-0")} />
                       {suggestion}
-                    </CommandItem>
+                    </div>
                   ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+                </div>
+              )}
+            </div>
           </PopoverContent>
         )}
       </Popover>

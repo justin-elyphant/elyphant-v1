@@ -26,6 +26,7 @@ export const formSchema = z.object({
   }).nullable().optional(),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
+    line2: z.string().optional(),
     city: z.string().min(1, "City is required"),
     state: z.string().min(1, "State is required"),
     zipCode: z.string().min(1, "ZIP code is required"),

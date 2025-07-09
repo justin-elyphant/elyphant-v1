@@ -49,6 +49,20 @@ const AddressSection = () => {
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="address.line2"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Apartment, Suite, Unit, etc. (optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Apt 2B, Suite 100, Unit 4..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}

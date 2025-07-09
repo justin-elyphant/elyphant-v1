@@ -53,6 +53,7 @@ export interface ShippingAddress {
   
   // Convenience aliases for better DX
   street?: string;  // Alias for address_line1
+  line2?: string;   // Alias for address_line2
   zipCode?: string; // Alias for zip_code
 }
 
@@ -144,6 +145,7 @@ export function normalizeShippingAddress(address: any | null | undefined): Shipp
     is_default: address.is_default || true,
     // Add aliases for compatibility
     street: address.address_line1 || address.street || '',
+    line2: address.address_line2 || address.line2 || '',
     zipCode: address.zip_code || address.zipCode || ''
   };
 }
@@ -161,6 +163,7 @@ export function mapFormAddressToApiAddress(formAddress: any): ShippingAddress {
   
   const result = {
     address_line1: formAddress.street || '',
+    address_line2: formAddress.line2 || '',
     city: formAddress.city || '',
     state: formAddress.state || '',
     zip_code: formAddress.zipCode || '',
@@ -168,6 +171,7 @@ export function mapFormAddressToApiAddress(formAddress: any): ShippingAddress {
     is_default: true,
     // Add aliases
     street: formAddress.street || '',
+    line2: formAddress.line2 || '',
     zipCode: formAddress.zipCode || ''
   };
   
@@ -185,6 +189,7 @@ export function mapApiAddressToFormAddress(apiAddress: ShippingAddress): any {
   
   return {
     street: apiAddress.address_line1 || apiAddress.street || '',
+    line2: apiAddress.address_line2 || '',
     city: apiAddress.city || '',
     state: apiAddress.state || '',
     zipCode: apiAddress.zip_code || apiAddress.zipCode || '',

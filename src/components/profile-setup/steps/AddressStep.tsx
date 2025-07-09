@@ -51,6 +51,16 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
         </div>
 
         <div className="grid gap-2">
+          <Label htmlFor="line2">Apartment, Suite, Unit, etc. (optional)</Label>
+          <Input
+            id="line2"
+            placeholder="Apt 2B, Suite 100, Unit 4..."
+            value={currentAddress.line2 || ""}
+            onChange={(e) => handleChange("line2", e.target.value)}
+          />
+        </div>
+
+        <div className="grid gap-2">
           <Label htmlFor="city">City</Label>
           <Input
             id="city"

@@ -96,6 +96,7 @@ export type ZincOrderRequest = {
     first_name: string;
     last_name: string;
     address_line1: string;
+    address_line2?: string;
     zip_code: string;
     city: string;
     state: string;
@@ -113,6 +114,7 @@ export type ZincOrderRequest = {
     first_name: string;
     last_name: string;
     address_line1: string;
+    address_line2?: string;
     zip_code: string;
     city: string;
     state: string;

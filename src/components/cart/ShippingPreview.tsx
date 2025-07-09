@@ -84,6 +84,11 @@ const ShippingPreview: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 {shippingAddress.address_line1 || shippingAddress.street}
               </p>
+              {(shippingAddress.address_line2) && (
+                <p className="text-sm text-muted-foreground">
+                  {shippingAddress.address_line2}
+                </p>
+              )}
               <p className="text-sm text-muted-foreground">
                 {shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip_code || shippingAddress.zipCode}
               </p>
@@ -114,6 +119,7 @@ const ShippingPreview: React.FC = () => {
           address={{
             name: profile?.name || '',
             address: shippingAddress.address_line1 || shippingAddress.street || '',
+            line2: shippingAddress.address_line2 || '',
             city: shippingAddress.city || '',
             state: shippingAddress.state || '',
             zipCode: shippingAddress.zip_code || shippingAddress.zipCode || '',

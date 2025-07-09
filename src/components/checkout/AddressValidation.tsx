@@ -19,6 +19,7 @@ interface AddressValidationProps {
   address: {
     name: string;
     address: string;
+    line2?: string;
     city: string;
     state: string;
     zipCode: string;
@@ -50,7 +51,7 @@ const AddressValidation: React.FC<AddressValidationProps> = ({
 
     try {
       // Create address hash for tracking
-      const addressString = `${address.address}, ${address.city}, ${address.state} ${address.zipCode}`;
+      const addressString = `${address.address}${address.line2 ? ', ' + address.line2 : ''}, ${address.city}, ${address.state} ${address.zipCode}`;
       const addressHash = btoa(addressString).slice(0, 16);
 
       // Check if we have existing analysis

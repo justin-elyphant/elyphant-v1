@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock } from "lucide-react";
+import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -151,7 +151,7 @@ const SmartGiftingTab = () => {
         <div className="flex items-center justify-between">
           <div>
             <h4 className="font-semibold flex items-center">
-              <Search className="h-5 w-5 mr-2 text-blue-500" />
+              <Bot className="h-5 w-5 mr-2 text-blue-500" />
               Need Gift Ideas?
             </h4>
             <p className="text-sm text-muted-foreground">Ask Nicole for personalized recommendations</p>

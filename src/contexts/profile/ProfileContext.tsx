@@ -87,13 +87,25 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       const result = await updateProfile(validation.sanitizedData!);
       
       if (result) {
-        // Add a small delay to ensure database consistency
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Optimistically update the local state with the validated data
+        if (profile) {
+          const optimisticUpdate = { 
+            ...profile, 
+            ...validation.sanitizedData,
+            updated_at: new Date().toISOString()
+          };
+          console.log("✅ Optimistically updating local profile state");
+          setProfile(optimisticUpdate);
+          setLastFetchTime(Date.now());
+        }
         
-        // Update the local profile state with the new data
+        // Longer delay to ensure database consistency before refetch
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Verify the update with a fresh fetch
         const updatedProfile = await fetchProfile();
         if (updatedProfile) {
-          console.log("✅ Profile refreshed after update:", updatedProfile);
+          console.log("✅ Profile verified after update:", updatedProfile);
           setProfile(updatedProfile);
           setLastFetchTime(Date.now());
           

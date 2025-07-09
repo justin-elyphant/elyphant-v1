@@ -22,6 +22,7 @@ export const useGeneralSettingsForm = () => {
       birthday: null,
       address: {
         street: "",
+        line2: "",
         city: "",
         state: "",
         zipCode: "",

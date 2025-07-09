@@ -75,6 +75,7 @@ export function validateAndCleanProfileData(profileData: ProfileData): [boolean,
       // Ensure address has all required fields
       address: {
         street: profileData.address?.street || "",
+        line2: profileData.address?.line2 || "",
         city: profileData.address?.city || "",
         state: profileData.address?.state || "",
         zipCode: profileData.address?.zipCode || "",
@@ -136,6 +137,7 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     birthday: parseBirthdayFromStorage(databaseProfile.dob),
     address: {
       street: databaseProfile.shipping_address?.address_line1 || databaseProfile.shipping_address?.street || "",
+      line2: databaseProfile.shipping_address?.address_line2 || databaseProfile.shipping_address?.line2 || "",
       city: databaseProfile.shipping_address?.city || "",
       state: databaseProfile.shipping_address?.state || "",
       zipCode: databaseProfile.shipping_address?.zip_code || databaseProfile.shipping_address?.zipCode || "",

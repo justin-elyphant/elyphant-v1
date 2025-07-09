@@ -102,21 +102,18 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         // Force invalidate any cache before refetch
         unifiedDataService.invalidateCache();
         
-        // Longer delay to ensure database consistency before refetch
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Force a fresh fetch with explicit cache bypass
-        console.log("🔄 Force fetching updated profile with cache bypass...");
+        // Immediate refetch to get updated data
+        console.log("🔄 Immediately fetching updated profile...");
         const updatedProfile = await fetchProfile();
         if (updatedProfile) {
-          console.log("✅ Profile verified after update - timestamp:", updatedProfile.updated_at);
+          console.log("✅ Profile updated successfully - timestamp:", updatedProfile.updated_at);
           console.log("✅ Profile shipping address:", updatedProfile.shipping_address);
           setProfile(updatedProfile);
           setLastFetchTime(Date.now());
         } else {
-          console.warn("⚠️ Failed to fetch updated profile data - retrying once more");
-          // One more attempt
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.warn("⚠️ Failed to fetch updated profile data - retrying once");
+          // One retry attempt
+          await new Promise(resolve => setTimeout(resolve, 500));
           const retryProfile = await fetchProfile();
           if (retryProfile) {
             console.log("✅ Profile fetched on retry:", retryProfile);

@@ -148,6 +148,39 @@ export type Database = {
           },
         ]
       }
+      ai_suggestion_insights: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          insight_data: Json
+          insight_type: string
+          is_active: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          insight_data?: Json
+          insight_type: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          insight_data?: Json
+          insight_type?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -178,6 +211,10 @@ export type Database = {
           is_active: boolean | null
           notification_preferences: Json | null
           recipient_id: string
+          recipient_lifestyle_factors: Json | null
+          relationship_context: Json | null
+          seasonal_adjustment_factors: Json | null
+          success_metrics: Json | null
           updated_at: string | null
           user_id: string
         }
@@ -192,6 +229,10 @@ export type Database = {
           is_active?: boolean | null
           notification_preferences?: Json | null
           recipient_id: string
+          recipient_lifestyle_factors?: Json | null
+          relationship_context?: Json | null
+          seasonal_adjustment_factors?: Json | null
+          success_metrics?: Json | null
           updated_at?: string | null
           user_id: string
         }
@@ -206,6 +247,10 @@ export type Database = {
           is_active?: boolean | null
           notification_preferences?: Json | null
           recipient_id?: string
+          recipient_lifestyle_factors?: Json | null
+          relationship_context?: Json | null
+          seasonal_adjustment_factors?: Json | null
+          success_metrics?: Json | null
           updated_at?: string | null
           user_id?: string
         }
@@ -241,8 +286,10 @@ export type Database = {
           default_budget_limit: number | null
           default_gift_source: string | null
           default_notification_days: number[] | null
+          dynamic_budget_intelligence: Json | null
           email_notifications: boolean | null
           id: string
+          predictive_suggestions: Json | null
           push_notifications: boolean | null
           updated_at: string | null
           user_id: string
@@ -254,8 +301,10 @@ export type Database = {
           default_budget_limit?: number | null
           default_gift_source?: string | null
           default_notification_days?: number[] | null
+          dynamic_budget_intelligence?: Json | null
           email_notifications?: boolean | null
           id?: string
+          predictive_suggestions?: Json | null
           push_notifications?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -267,8 +316,10 @@ export type Database = {
           default_budget_limit?: number | null
           default_gift_source?: string | null
           default_notification_days?: number[] | null
+          dynamic_budget_intelligence?: Json | null
           email_notifications?: boolean | null
           id?: string
+          predictive_suggestions?: Json | null
           push_notifications?: boolean | null
           updated_at?: string | null
           user_id?: string
@@ -497,6 +548,39 @@ export type Database = {
           product_id?: number | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gift_intelligence_cache: {
+        Row: {
+          cache_data: Json
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          intelligence_type: string
+          recipient_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cache_data?: Json
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          intelligence_type: string
+          recipient_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cache_data?: Json
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          intelligence_type?: string
+          recipient_id?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -874,6 +958,9 @@ export type Database = {
           data_sharing_settings: Json | null
           dob: string | null
           email: string | null
+          enhanced_ai_interaction_data: Json | null
+          enhanced_gift_preferences: Json | null
+          enhanced_gifting_history: Json | null
           gift_giving_preferences: Json | null
           gift_preferences: Json | null
           gifting_history: Json | null
@@ -896,6 +983,9 @@ export type Database = {
           data_sharing_settings?: Json | null
           dob?: string | null
           email?: string | null
+          enhanced_ai_interaction_data?: Json | null
+          enhanced_gift_preferences?: Json | null
+          enhanced_gifting_history?: Json | null
           gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
           gifting_history?: Json | null
@@ -918,6 +1008,9 @@ export type Database = {
           data_sharing_settings?: Json | null
           dob?: string | null
           email?: string | null
+          enhanced_ai_interaction_data?: Json | null
+          enhanced_gift_preferences?: Json | null
+          enhanced_gifting_history?: Json | null
           gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
           gifting_history?: Json | null

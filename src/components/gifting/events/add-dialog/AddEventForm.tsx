@@ -138,8 +138,8 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
 
         <PersonSelector
           connections={connections}
-          value={form.watch("personId") || ""}
-          onChange={(value) => form.setValue("personId", value)}
+          value={form.watch("personId") || "none"}
+          onChange={(value) => form.setValue("personId", value === "none" ? "" : value)}
         />
 
         <RecurringToggle

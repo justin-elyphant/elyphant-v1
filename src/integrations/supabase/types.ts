@@ -199,6 +199,91 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_gift_data_access: {
+        Row: {
+          access_reason: string | null
+          accessed_data_type: string
+          accessed_user_id: string | null
+          created_at: string | null
+          data_points_accessed: Json | null
+          execution_id: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          access_reason?: string | null
+          accessed_data_type: string
+          accessed_user_id?: string | null
+          created_at?: string | null
+          data_points_accessed?: Json | null
+          execution_id?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          access_reason?: string | null
+          accessed_data_type?: string
+          accessed_user_id?: string | null
+          created_at?: string | null
+          data_points_accessed?: Json | null
+          execution_id?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_gift_data_access_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automated_gift_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auto_gift_notifications: {
+        Row: {
+          created_at: string | null
+          email_sent: boolean | null
+          execution_id: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          notification_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          execution_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          notification_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          execution_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          notification_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_gift_notifications_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automated_gift_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_gifting_rules: {
         Row: {
           budget_limit: number | null
@@ -210,6 +295,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           notification_preferences: Json | null
+          privacy_settings: Json | null
           recipient_id: string
           recipient_lifestyle_factors: Json | null
           relationship_context: Json | null
@@ -228,6 +314,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notification_preferences?: Json | null
+          privacy_settings?: Json | null
           recipient_id: string
           recipient_lifestyle_factors?: Json | null
           relationship_context?: Json | null
@@ -246,6 +333,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notification_preferences?: Json | null
+          privacy_settings?: Json | null
           recipient_id?: string
           recipient_lifestyle_factors?: Json | null
           relationship_context?: Json | null
@@ -289,6 +377,7 @@ export type Database = {
           dynamic_budget_intelligence: Json | null
           email_notifications: boolean | null
           id: string
+          notification_preferences: Json | null
           predictive_suggestions: Json | null
           push_notifications: boolean | null
           updated_at: string | null
@@ -304,6 +393,7 @@ export type Database = {
           dynamic_budget_intelligence?: Json | null
           email_notifications?: boolean | null
           id?: string
+          notification_preferences?: Json | null
           predictive_suggestions?: Json | null
           push_notifications?: boolean | null
           updated_at?: string | null
@@ -319,6 +409,7 @@ export type Database = {
           dynamic_budget_intelligence?: Json | null
           email_notifications?: boolean | null
           id?: string
+          notification_preferences?: Json | null
           predictive_suggestions?: Json | null
           push_notifications?: boolean | null
           updated_at?: string | null

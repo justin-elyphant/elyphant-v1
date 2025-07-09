@@ -19,7 +19,7 @@ const PersonSelector = ({ connections, value, onChange }: PersonSelectorProps) =
           <SelectValue placeholder="Select a connection" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">No connection</SelectItem>
+          <SelectItem value="none">No connection</SelectItem>
           {connections.map((connection) => (
             <SelectItem key={connection.id} value={connection.id}>
               {connection.profile_name || 'Unknown User'}

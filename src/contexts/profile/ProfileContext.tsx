@@ -86,40 +86,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       console.log("Updating profile with validated data:", JSON.stringify(validation.sanitizedData, null, 2));
       const result = await updateProfile(validation.sanitizedData!);
       
-      if (result) {
-        // Optimistically update the local state with the validated data
+      if (result !== null) {
+        // Just use the optimistic update - don't refetch immediately
         if (profile) {
           const optimisticUpdate = { 
             ...profile, 
             ...validation.sanitizedData,
             updated_at: new Date().toISOString()
           };
-          console.log("✅ Optimistically updating local profile state");
+          console.log("✅ Using optimistic update for immediate UI refresh");
           setProfile(optimisticUpdate);
           setLastFetchTime(Date.now());
-        }
-        
-        // Force invalidate any cache before refetch
-        unifiedDataService.invalidateCache();
-        
-        // Immediate refetch to get updated data
-        console.log("🔄 Immediately fetching updated profile...");
-        const updatedProfile = await fetchProfile();
-        if (updatedProfile) {
-          console.log("✅ Profile updated successfully - timestamp:", updatedProfile.updated_at);
-          console.log("✅ Profile shipping address:", updatedProfile.shipping_address);
-          setProfile(updatedProfile);
-          setLastFetchTime(Date.now());
-        } else {
-          console.warn("⚠️ Failed to fetch updated profile data - retrying once");
-          // One retry attempt
-          await new Promise(resolve => setTimeout(resolve, 500));
-          const retryProfile = await fetchProfile();
-          if (retryProfile) {
-            console.log("✅ Profile fetched on retry:", retryProfile);
-            setProfile(retryProfile);
-            setLastFetchTime(Date.now());
-          }
         }
       }
       

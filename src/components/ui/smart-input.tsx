@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Check, AlertCircle, Lightbulb } from "lucide-react";
 import { fuzzySearch, getSpellingSuggestion } from "@/utils/fuzzySearch";
@@ -102,6 +100,8 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log('Key pressed:', e.key, 'isOpen:', isOpen, 'suggestions:', filteredSuggestions.length);
+    
     if (e.key === 'Enter') {
       e.preventDefault();
       if (filteredSuggestions.length > 0 && isOpen) {
@@ -139,54 +139,45 @@ export const SmartInput: React.FC<SmartInputProps> = ({
 
   return (
     <div className="relative">
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <div className="relative">
-            <Input
-              ref={inputRef}
-              value={value}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              className={cn(
-                className,
-                showSpellingAlert && "border-orange-300 focus:border-orange-500"
-              )}
-            />
-            {showSpellingAlert && (
-              <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-orange-500" />
-            )}
-          </div>
-        </PopoverTrigger>
-        
-        {isOpen && filteredSuggestions.length > 0 && (
-          <PopoverContent className="w-full p-0 z-50 bg-popover border shadow-md" align="start">
-            <div className="max-h-[200px] overflow-y-auto">
-              {filteredSuggestions.length === 0 ? (
-                <div className="p-2 text-sm text-muted-foreground">No suggestions found.</div>
-              ) : (
-                <div className="p-1">
-                  {filteredSuggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleSuggestionSelect(suggestion)}
-                      className={cn(
-                        "px-2 py-1.5 text-sm cursor-pointer rounded-sm flex items-center",
-                        index === selectedIndex 
-                          ? "bg-accent text-accent-foreground" 
-                          : "hover:bg-accent/50"
-                      )}
-                    >
-                      <Check className={cn("mr-2 h-4 w-4", index === selectedIndex ? "opacity-100" : "opacity-0")} />
-                      {suggestion}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </PopoverContent>
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className={cn(
+            className,
+            showSpellingAlert && "border-orange-300 focus:border-orange-500"
+          )}
+        />
+        {showSpellingAlert && (
+          <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-orange-500" />
         )}
-      </Popover>
+      </div>
+      
+      {/* Custom dropdown */}
+      {isOpen && filteredSuggestions.length > 0 && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-[200px] overflow-y-auto">
+          <div className="p-1">
+            {filteredSuggestions.map((suggestion, index) => (
+              <div
+                key={index}
+                onClick={() => handleSuggestionSelect(suggestion)}
+                className={cn(
+                  "px-2 py-1.5 text-sm cursor-pointer rounded-sm flex items-center",
+                  index === selectedIndex 
+                    ? "bg-accent text-accent-foreground" 
+                    : "hover:bg-accent/50"
+                )}
+              >
+                <Check className={cn("mr-2 h-4 w-4", index === selectedIndex ? "opacity-100" : "opacity-0")} />
+                {suggestion}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* Spelling suggestion alert */}
       {showSpellingAlert && spellingSuggestion && (

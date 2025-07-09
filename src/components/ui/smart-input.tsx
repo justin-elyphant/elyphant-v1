@@ -39,8 +39,26 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   useEffect(() => {
     if (value.length >= 2) {
       const matches = fuzzySearch(value, suggestions, 0.3);
-      setFilteredSuggestions(matches);
-      setIsOpen(matches.length > 0);
+      
+      // Prioritize exact matches and popular items
+      const prioritizedMatches = matches.sort((a, b) => {
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+        const queryLower = value.toLowerCase();
+        
+        // Exact matches first
+        if (aLower === queryLower && bLower !== queryLower) return -1;
+        if (bLower === queryLower && aLower !== queryLower) return 1;
+        
+        // Starts with query next
+        if (aLower.startsWith(queryLower) && !bLower.startsWith(queryLower)) return -1;
+        if (bLower.startsWith(queryLower) && !aLower.startsWith(queryLower)) return 1;
+        
+        return 0;
+      });
+      
+      setFilteredSuggestions(prioritizedMatches);
+      setIsOpen(prioritizedMatches.length > 0);
       
       // Check for spelling suggestions
       if (showSpellingSuggestions) {

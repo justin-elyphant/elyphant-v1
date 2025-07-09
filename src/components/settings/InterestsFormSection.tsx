@@ -14,6 +14,15 @@ interface InterestsFormSectionProps {
   addInterest: () => void;
 }
 
+// Enhanced duplicate detection with smart matching
+const isDuplicateInterest = (newInterest: string, existingInterests: string[]): boolean => {
+  const normalized = newInterest.trim().toLowerCase();
+  return existingInterests.some(existing => 
+    existing.toLowerCase() === normalized ||
+    existing.toLowerCase().replace(/[s\s]/g, '') === normalized.replace(/[s\s]/g, '') // Handle plurals and spaces
+  );
+};
+
 const InterestsFormSection = ({
   interests,
   removeInterest,
@@ -21,6 +30,18 @@ const InterestsFormSection = ({
   setNewInterest,
   addInterest
 }: InterestsFormSectionProps) => {
+  
+  // Enhanced add function with duplicate prevention
+  const handleAddInterest = () => {
+    if (!newInterest.trim()) return;
+    
+    if (isDuplicateInterest(newInterest, interests)) {
+      // Could show a toast here, but for now just prevent addition
+      return;
+    }
+    
+    addInterest();
+  };
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Interests</h3>
@@ -52,7 +73,7 @@ const InterestsFormSection = ({
           onKeyDown={(e) => {
             if (e.key === "Enter" && newInterest.trim()) {
               e.preventDefault();
-              addInterest();
+              handleAddInterest();
             }
           }}
           suggestions={COMMON_INTERESTS}
@@ -62,8 +83,8 @@ const InterestsFormSection = ({
         
         <Button
           type="button"
-          onClick={addInterest}
-          disabled={!newInterest.trim()}
+          onClick={handleAddInterest}
+          disabled={!newInterest.trim() || isDuplicateInterest(newInterest, interests)}
         >
           Add
         </Button>

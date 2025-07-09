@@ -154,7 +154,7 @@ const SmartGiftingTab = () => {
         <div className="flex items-center justify-between relative z-10">
           <div>
             <h4 className="font-semibold flex items-center">
-              <Bot className="h-5 w-5 mr-2 bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent" />
+              <Bot className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
               <span className="bg-gradient-to-r from-purple-700 to-cyan-700 bg-clip-text text-transparent">
                 Need Gift Ideas?
               </span>

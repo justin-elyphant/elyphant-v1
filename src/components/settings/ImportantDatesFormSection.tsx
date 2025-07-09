@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarCheck, X } from "lucide-react";
@@ -9,6 +8,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NewImportantDateState } from "@/hooks/settings/useImportantDates";
 import { ImportantDate } from "@/hooks/settings/settingsFormSchema";
+import { SmartInput } from "@/components/ui/smart-input";
+import { COMMON_EVENTS, SPELLING_CORRECTIONS } from "@/constants/commonEvents";
 
 interface ImportantDatesFormSectionProps {
   importantDates: ImportantDate[];
@@ -85,13 +86,13 @@ const ImportantDatesFormSection = ({
         </Popover>
         
         <div className="flex flex-1 gap-2">
-          <Input
+          <SmartInput
             placeholder="Description (e.g. Anniversary)"
             value={newImportantDate.description}
-            onChange={(e) =>
+            onChange={(description) =>
               setNewImportantDate({
                 ...newImportantDate,
-                description: e.target.value
+                description
               })
             }
             onKeyDown={(e) => {
@@ -100,6 +101,9 @@ const ImportantDatesFormSection = ({
                 addImportantDate();
               }
             }}
+            suggestions={COMMON_EVENTS}
+            spellingCorrections={SPELLING_CORRECTIONS}
+            className="flex-1"
           />
           
           <Button

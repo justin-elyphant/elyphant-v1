@@ -35,7 +35,8 @@ const ProfileDataIntegrityPanel: React.FC = () => {
 
   // Check data integrity when component mounts and when form values change
   useEffect(() => {
-    checkDataIntegrity(false);
+    // Pass form values to integrity checker for real-time updates
+    checkDataIntegrity(false, formValues);
   }, [checkDataIntegrity, formValues]);
 
   // Determine which settings tab to open based on missing data

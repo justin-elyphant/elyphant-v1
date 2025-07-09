@@ -22,8 +22,11 @@ export function useProfileDataIntegrity() {
   const [issues, setIssues] = useState<DataIntegrityIssue[]>([]);
   const [completionScore, setCompletionScore] = useState(0);
 
-  const checkDataIntegrity = useCallback(async (showToasts = true) => {
+  const checkDataIntegrity = useCallback(async (showToasts = true, formValues?: any) => {
     if (!user || !profile) return [];
+    
+    // Use form values if provided, otherwise use profile data
+    const dataToCheck = formValues || profile;
 
     setIsChecking(true);
     const foundIssues: DataIntegrityIssue[] = [];
@@ -32,7 +35,7 @@ export function useProfileDataIntegrity() {
     try {
       // === CRITICAL ALERTS (30 points) ===
       // Basic profile info (name, email) - Essential for account function
-      if (!profile.name || profile.name.trim() === '') {
+      if (!dataToCheck.name || dataToCheck.name.trim() === '') {
         foundIssues.push({
           field: 'name',
           issue: 'Add your name',
@@ -45,7 +48,7 @@ export function useProfileDataIntegrity() {
         score += 15;
       }
 
-      if (!profile.email || profile.email.trim() === '') {
+      if (!dataToCheck.email || dataToCheck.email.trim() === '') {
         foundIssues.push({
           field: 'email',
           issue: 'Email is missing',
@@ -60,7 +63,7 @@ export function useProfileDataIntegrity() {
 
       // === IMPORTANT ALERTS (45 points total) ===
       // Important dates (20 points)
-      const importantDates = profile.important_dates;
+      const importantDates = dataToCheck.importantDates || dataToCheck.important_dates;
       const dateCount = Array.isArray(importantDates) ? importantDates.length : 0;
       
       if (dateCount === 0) {
@@ -87,7 +90,7 @@ export function useProfileDataIntegrity() {
       }
 
       // Interests (20 points)
-      const interests = profile.interests;
+      const interests = dataToCheck.interests;
       const interestCount = Array.isArray(interests) ? interests.length : 0;
       
       if (interestCount === 0) {
@@ -141,10 +144,11 @@ export function useProfileDataIntegrity() {
 
       // === HELPFUL ALERTS (25 points total) ===
       // Shipping address (10 points)
-      if (!profile.shipping_address || 
-          (typeof profile.shipping_address === 'string') ||
-          (typeof profile.shipping_address === 'object' && 
-           (!profile.shipping_address.street || !profile.shipping_address.city))) {
+      const shippingAddress = dataToCheck.address || dataToCheck.shipping_address;
+      if (!shippingAddress || 
+          (typeof shippingAddress === 'string') ||
+          (typeof shippingAddress === 'object' && 
+           (!shippingAddress.street || !shippingAddress.city))) {
         foundIssues.push({
           field: 'shipping_address',
           issue: 'Complete your shipping address',
@@ -158,7 +162,8 @@ export function useProfileDataIntegrity() {
       }
 
       // Date of birth (5 points)
-      if (!profile.dob) {
+      const dob = dataToCheck.birthday || dataToCheck.dob;
+      if (!dob) {
         foundIssues.push({
           field: 'dob',
           issue: 'Add your date of birth',
@@ -167,9 +172,9 @@ export function useProfileDataIntegrity() {
           targetTab: 'basic',
           aiImpact: 'Helps provide age-appropriate gift recommendations'
         });
-      } else if (profile.dob && typeof profile.dob === 'string') {
+      } else if (dob && typeof dob === 'string') {
         const dobPattern = /^\d{2}-\d{2}$/;
-        if (!dobPattern.test(profile.dob)) {
+        if (!dobPattern.test(dob)) {
           foundIssues.push({
             field: 'dob',
             issue: 'Date of birth format needs fixing',
@@ -186,7 +191,7 @@ export function useProfileDataIntegrity() {
       }
 
       // Username (5 points)
-      if (!profile.username || profile.username.trim() === '') {
+      if (!dataToCheck.username || dataToCheck.username.trim() === '') {
         foundIssues.push({
           field: 'username',
           issue: 'Choose a username',
@@ -200,7 +205,7 @@ export function useProfileDataIntegrity() {
       }
 
       // Bio (5 points)
-      if (!profile.bio || profile.bio.trim() === '') {
+      if (!dataToCheck.bio || dataToCheck.bio.trim() === '') {
         foundIssues.push({
           field: 'bio',
           issue: 'Add a bio to your profile',

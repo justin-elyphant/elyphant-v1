@@ -53,13 +53,15 @@ export const useProfileUpdate = () => {
             .from('profiles')
             .upsert(dataWithId, {
               onConflict: 'id'
-            });
+            })
+            .select()
+            .single();
 
           if (error) {
             console.error(`Error updating profile (attempt ${attempts}):`, error);
             if (attempts === 3) throw error;
           } else {
-            console.log("Profile updated successfully");
+            console.log("Profile updated successfully:", data);
             success = true;
             result = data;
           }

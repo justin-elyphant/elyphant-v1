@@ -1,92 +1,232 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DataIntegrityIssue {
   field: string;
   issue: string;
-  severity: 'warning' | 'error';
+  severity: 'critical' | 'important' | 'helpful';
   autoFixable: boolean;
+  targetTab?: string;
+  aiImpact: string;
 }
 
 export function useProfileDataIntegrity() {
   const { user } = useAuth();
   const { profile, refetchProfile } = useProfile();
+  const { connections } = useEnhancedConnections();
   const [isChecking, setIsChecking] = useState(false);
   const [issues, setIssues] = useState<DataIntegrityIssue[]>([]);
+  const [completionScore, setCompletionScore] = useState(0);
 
   const checkDataIntegrity = useCallback(async (showToasts = true) => {
     if (!user || !profile) return [];
 
     setIsChecking(true);
     const foundIssues: DataIntegrityIssue[] = [];
+    let score = 0;
 
     try {
-      // Check for missing critical data
+      // === CRITICAL ALERTS (30 points) ===
+      // Basic profile info (name, email) - Essential for account function
       if (!profile.name || profile.name.trim() === '') {
         foundIssues.push({
           field: 'name',
-          issue: 'Name is missing or empty',
-          severity: 'error',
-          autoFixable: false
+          issue: 'Add your name',
+          severity: 'critical',
+          autoFixable: false,
+          targetTab: 'basic',
+          aiImpact: 'Required for personalized AI recommendations'
         });
+      } else {
+        score += 15;
       }
 
       if (!profile.email || profile.email.trim() === '') {
         foundIssues.push({
           field: 'email',
           issue: 'Email is missing',
-          severity: 'error',
-          autoFixable: false
+          severity: 'critical',
+          autoFixable: false,
+          targetTab: 'basic',
+          aiImpact: 'Required for account security and notifications'
         });
+      } else {
+        score += 15;
       }
 
-      if (!profile.username || profile.username.trim() === '') {
+      // === IMPORTANT ALERTS (45 points total) ===
+      // Important dates (20 points)
+      const importantDates = profile.important_dates;
+      const dateCount = Array.isArray(importantDates) ? importantDates.length : 0;
+      
+      if (dateCount === 0) {
         foundIssues.push({
-          field: 'username',
-          issue: 'Username is missing',
-          severity: 'warning',
-          autoFixable: false
+          field: 'important_dates',
+          issue: 'Add important dates (birthdays, anniversaries)',
+          severity: 'important',
+          autoFixable: false,
+          targetTab: 'dates',
+          aiImpact: 'Essential for auto-gifting and gift timing recommendations'
         });
+      } else if (dateCount < 2) {
+        foundIssues.push({
+          field: 'important_dates',
+          issue: 'Add more important dates for better gift planning',
+          severity: 'important',
+          autoFixable: false,
+          targetTab: 'dates',
+          aiImpact: 'More dates improve auto-gifting accuracy'
+        });
+        score += 10;
+      } else {
+        score += 20;
       }
 
-      // Check data format issues
-      if (profile.dob && typeof profile.dob === 'string') {
+      // Interests (20 points)
+      const interests = profile.interests;
+      const interestCount = Array.isArray(interests) ? interests.length : 0;
+      
+      if (interestCount === 0) {
+        foundIssues.push({
+          field: 'interests',
+          issue: 'Add your interests and hobbies',
+          severity: 'important',
+          autoFixable: false,
+          targetTab: 'interests',
+          aiImpact: 'Critical for personalized gift recommendations'
+        });
+      } else if (interestCount < 3) {
+        foundIssues.push({
+          field: 'interests',
+          issue: 'Add more interests for better recommendations',
+          severity: 'helpful',
+          autoFixable: false,
+          targetTab: 'interests',
+          aiImpact: 'More interests = better gift suggestions'
+        });
+        score += 10;
+      } else {
+        score += 20;
+      }
+
+      // Connections (15 points)
+      const acceptedConnections = connections.filter(c => c.status === 'accepted').length;
+      
+      if (acceptedConnections === 0) {
+        foundIssues.push({
+          field: 'connections',
+          issue: 'Add your first connection',
+          severity: 'important',
+          autoFixable: false,
+          targetTab: 'connections',
+          aiImpact: 'Connections enable auto-gifting and shared wishlists'
+        });
+      } else if (acceptedConnections < 3) {
+        foundIssues.push({
+          field: 'connections',
+          issue: 'Connect with more friends and family',
+          severity: 'helpful',
+          autoFixable: false,
+          targetTab: 'connections',
+          aiImpact: 'More connections improve gift recommendations'
+        });
+        score += 8;
+      } else {
+        score += 15;
+      }
+
+      // === HELPFUL ALERTS (25 points total) ===
+      // Shipping address (10 points)
+      if (!profile.shipping_address || 
+          (typeof profile.shipping_address === 'string') ||
+          (typeof profile.shipping_address === 'object' && 
+           (!profile.shipping_address.street || !profile.shipping_address.city))) {
+        foundIssues.push({
+          field: 'shipping_address',
+          issue: 'Complete your shipping address',
+          severity: 'helpful',
+          autoFixable: true,
+          targetTab: 'address',
+          aiImpact: 'Required for receiving auto-gifts and deliveries'
+        });
+      } else {
+        score += 10;
+      }
+
+      // Date of birth (5 points)
+      if (!profile.dob) {
+        foundIssues.push({
+          field: 'dob',
+          issue: 'Add your date of birth',
+          severity: 'helpful',
+          autoFixable: false,
+          targetTab: 'basic',
+          aiImpact: 'Helps provide age-appropriate gift recommendations'
+        });
+      } else if (profile.dob && typeof profile.dob === 'string') {
         const dobPattern = /^\d{2}-\d{2}$/;
         if (!dobPattern.test(profile.dob)) {
           foundIssues.push({
             field: 'dob',
-            issue: 'Date of birth format is incorrect',
-            severity: 'warning',
-            autoFixable: false
+            issue: 'Date of birth format needs fixing',
+            severity: 'helpful',
+            autoFixable: false,
+            targetTab: 'basic',
+            aiImpact: 'Proper format improves gift timing accuracy'
           });
+        } else {
+          score += 5;
         }
+      } else {
+        score += 5;
       }
 
-      // Check if shipping address is properly formatted
-      if (profile.shipping_address && typeof profile.shipping_address === 'string') {
+      // Username (5 points)
+      if (!profile.username || profile.username.trim() === '') {
         foundIssues.push({
-          field: 'shipping_address',
-          issue: 'Shipping address is stored as string instead of object',
-          severity: 'warning',
-          autoFixable: true
+          field: 'username',
+          issue: 'Choose a username',
+          severity: 'helpful',
+          autoFixable: false,
+          targetTab: 'basic',
+          aiImpact: 'Makes it easier for friends to find you'
         });
+      } else {
+        score += 5;
+      }
+
+      // Bio (5 points)
+      if (!profile.bio || profile.bio.trim() === '') {
+        foundIssues.push({
+          field: 'bio',
+          issue: 'Add a bio to your profile',
+          severity: 'helpful',
+          autoFixable: false,
+          targetTab: 'basic',
+          aiImpact: 'Provides context for better personalization'
+        });
+      } else {
+        score += 5;
       }
 
       setIssues(foundIssues);
+      setCompletionScore(score);
 
       if (showToasts) {
         if (foundIssues.length === 0) {
-          toast.success("Profile data integrity check passed");
+          toast.success("Profile optimization complete - AI ready!");
         } else {
-          const errorCount = foundIssues.filter(i => i.severity === 'error').length;
-          const warningCount = foundIssues.filter(i => i.severity === 'warning').length;
+          const criticalCount = foundIssues.filter(i => i.severity === 'critical').length;
+          const importantCount = foundIssues.filter(i => i.severity === 'important').length;
           
-          if (errorCount > 0) {
-            toast.error(`Found ${errorCount} critical issue(s) with your profile data`);
-          } else if (warningCount > 0) {
-            toast.warning(`Found ${warningCount} minor issue(s) with your profile data`);
+          if (criticalCount > 0) {
+            toast.error(`${criticalCount} critical item(s) needed for full functionality`);
+          } else if (importantCount > 0) {
+            toast.warning(`${importantCount} important item(s) will improve AI recommendations`);
           }
         }
       }
@@ -101,7 +241,7 @@ export function useProfileDataIntegrity() {
     } finally {
       setIsChecking(false);
     }
-  }, [user, profile]);
+  }, [user, profile, connections]);
 
   const refreshData = useCallback(async () => {
     try {
@@ -118,7 +258,10 @@ export function useProfileDataIntegrity() {
     isChecking,
     checkDataIntegrity,
     refreshData,
+    completionScore,
     hasIssues: issues.length > 0,
-    hasCriticalIssues: issues.some(i => i.severity === 'error')
+    hasCriticalIssues: issues.some(i => i.severity === 'critical'),
+    hasImportantIssues: issues.some(i => i.severity === 'important'),
+    hasHelpfulIssues: issues.some(i => i.severity === 'helpful')
   };
 }

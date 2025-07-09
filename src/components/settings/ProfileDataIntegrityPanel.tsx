@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle, ArrowRight, Info, Heart, Calendar, Users, MapPin, User, Brain } from "lucide-react";
+import { AlertTriangle, CheckCircle, ArrowRight, Info, Heart, Calendar, Users, MapPin, User, Brain, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormContext } from "react-hook-form";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
@@ -65,6 +65,8 @@ const ProfileDataIntegrityPanel: React.FC = () => {
   const handleSpecificAction = (issue: any) => {
     if (issue.field === 'connections') {
       navigate('/connections');
+    } else if (issue.field === 'wishlists') {
+      navigate('/my-wishlists');
     } else {
       const targetTab = issue.targetTab || 'basic';
       navigate('/settings', { state: { activeTab: targetTab, fromDataIntegrity: true } });
@@ -90,6 +92,7 @@ const ProfileDataIntegrityPanel: React.FC = () => {
       case 'important_dates': return Calendar;
       case 'interests': return Heart;
       case 'connections': return Users;
+      case 'wishlists': return List;
       case 'shipping_address': return MapPin;
       case 'dob': case 'name': case 'username': case 'bio': return User;
       default: return Brain;

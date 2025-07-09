@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
+import { useWishlists } from "@/components/gifting/hooks/useWishlists";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,6 +19,7 @@ export function useProfileDataIntegrity() {
   const { user } = useAuth();
   const { profile, refetchProfile } = useProfile();
   const { connections } = useEnhancedConnections();
+  const { wishlists } = useWishlists();
   const [isChecking, setIsChecking] = useState(false);
   const [issues, setIssues] = useState<DataIntegrityIssue[]>([]);
   const [completionScore, setCompletionScore] = useState(0);
@@ -61,7 +63,7 @@ export function useProfileDataIntegrity() {
         score += 15;
       }
 
-      // === IMPORTANT ALERTS (45 points total) ===
+      // === IMPORTANT ALERTS (60 points total) ===
       // Important dates (20 points)
       const importantDates = dataToCheck.importantDates || dataToCheck.important_dates;
       const dateCount = Array.isArray(importantDates) ? importantDates.length : 0;
@@ -116,7 +118,22 @@ export function useProfileDataIntegrity() {
         score += 20;
       }
 
-      // Connections (15 points)
+      // Wishlists (15 points)
+      const wishlistCount = Array.isArray(wishlists) ? wishlists.length : 0;
+      
+      if (wishlistCount === 0) {
+        foundIssues.push({
+          field: 'wishlists',
+          issue: 'Create your first wishlist',
+          severity: 'important',
+          autoFixable: false,
+          aiImpact: 'Wishlists help friends see what you want and improve gift recommendations'
+        });
+      } else {
+        score += 15;
+      }
+
+      // Connections (10 points)
       const acceptedConnections = connections.filter(c => c.status === 'accepted').length;
       
       if (acceptedConnections === 0) {
@@ -137,9 +154,9 @@ export function useProfileDataIntegrity() {
           targetTab: 'connections',
           aiImpact: 'More connections improve gift recommendations'
         });
-        score += 8;
+        score += 5;
       } else {
-        score += 15;
+        score += 10;
       }
 
       // === HELPFUL ALERTS (25 points total) ===
@@ -246,7 +263,7 @@ export function useProfileDataIntegrity() {
     } finally {
       setIsChecking(false);
     }
-  }, [user, profile, connections]);
+  }, [user, profile, connections, wishlists]);
 
   const refreshData = useCallback(async () => {
     try {

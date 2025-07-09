@@ -147,16 +147,21 @@ const SmartGiftingTab = () => {
       </div>
 
       {/* Nicole AI Quick Access */}
-      <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-        <div className="flex items-center justify-between">
+      <div className="p-6 border rounded-lg bg-gradient-to-r from-purple-100 via-blue-100 to-cyan-100 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-cyan-900/30 shadow-lg relative overflow-hidden">
+        {/* Subtle animated background effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-blue-500/5 to-cyan-500/5 animate-pulse"></div>
+        
+        <div className="flex items-center justify-between relative z-10">
           <div>
             <h4 className="font-semibold flex items-center">
-              <Bot className="h-5 w-5 mr-2 text-blue-500" />
-              Need Gift Ideas?
+              <Bot className="h-5 w-5 mr-2 bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent" />
+              <span className="bg-gradient-to-r from-purple-700 to-cyan-700 bg-clip-text text-transparent">
+                Need Gift Ideas?
+              </span>
             </h4>
-            <p className="text-sm text-muted-foreground">Ask Nicole for personalized recommendations</p>
+            <p className="text-sm text-muted-foreground mt-1">Ask Nicole for personalized AI recommendations</p>
           </div>
-          <Button asChild>
+          <Button asChild className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white border-0 shadow-md">
             <Link to="/marketplace?mode=nicole&open=true&greeting=dashboard">
               Ask Nicole
             </Link>

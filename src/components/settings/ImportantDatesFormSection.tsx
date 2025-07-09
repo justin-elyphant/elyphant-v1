@@ -81,6 +81,7 @@ const ImportantDatesFormSection = ({
                 setNewImportantDate({ ...newImportantDate, date })
               }
               initialFocus
+              className="pointer-events-auto"
             />
           </PopoverContent>
         </Popover>

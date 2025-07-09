@@ -111,7 +111,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
         </PopoverTrigger>
         
         {isOpen && filteredSuggestions.length > 0 && (
-          <PopoverContent className="w-full p-0" align="start">
+          <PopoverContent className="w-full p-0 z-50 bg-popover border shadow-md" align="start">
             <Command>
               <CommandList>
                 <CommandEmpty>No suggestions found.</CommandEmpty>

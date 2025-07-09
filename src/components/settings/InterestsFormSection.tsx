@@ -32,26 +32,15 @@ const InterestsFormSection = ({
 }: InterestsFormSectionProps) => {
   
   // Enhanced add function with duplicate prevention
-  const handleAddInterest = (interestToAdd?: string) => {
-    const interest = interestToAdd || newInterest;
-    if (!interest.trim()) return;
+  const handleAddInterest = () => {
+    if (!newInterest.trim()) return;
     
-    if (isDuplicateInterest(interest, interests)) {
+    if (isDuplicateInterest(newInterest, interests)) {
       // Could show a toast here, but for now just prevent addition
       return;
     }
     
-    // If we have a specific interest to add (from suggestion), set it first
-    if (interestToAdd) {
-      setNewInterest(interestToAdd);
-      // Use setTimeout to ensure state update happens before calling addInterest
-      setTimeout(() => {
-        addInterest();
-        setNewInterest(''); // Clear after adding
-      }, 0);
-    } else {
-      addInterest();
-    }
+    addInterest();
   };
   return (
     <div className="space-y-4">
@@ -87,10 +76,6 @@ const InterestsFormSection = ({
               handleAddInterest();
             }
           }}
-          onSuggestionSelect={(suggestion) => {
-            // When a suggestion is selected via Enter, add it immediately
-            handleAddInterest(suggestion);
-          }}
           suggestions={COMMON_INTERESTS}
           spellingCorrections={INTEREST_SPELLING_CORRECTIONS}
           className="flex-1"
@@ -98,7 +83,7 @@ const InterestsFormSection = ({
         
         <Button
           type="button"
-          onClick={() => handleAddInterest()}
+          onClick={handleAddInterest}
           disabled={!newInterest.trim() || isDuplicateInterest(newInterest, interests)}
         >
           Add

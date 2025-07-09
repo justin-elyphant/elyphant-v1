@@ -8,7 +8,7 @@ interface UseKeyboardNavigationProps {
   setIsOpen: (open: boolean) => void;
   handleSuggestionSelect: (suggestion: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
-  onSuggestionSelect?: (suggestion: string) => void;
+  onChange: (value: string) => void;
 }
 
 export const useKeyboardNavigation = ({
@@ -19,7 +19,7 @@ export const useKeyboardNavigation = ({
   setIsOpen,
   handleSuggestionSelect,
   onKeyDown,
-  onSuggestionSelect
+  onChange
 }: UseKeyboardNavigationProps) => {
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     console.log('Key pressed:', e.key, 'suggestions:', filteredSuggestions.length);
@@ -27,10 +27,8 @@ export const useKeyboardNavigation = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (filteredSuggestions.length > 0 && isOpen) {
-        // Select the suggestion and also trigger the parent's add logic
-        const suggestion = filteredSuggestions[selectedIndex];
-        handleSuggestionSelect(suggestion);
-        onSuggestionSelect?.(suggestion);
+        // If dropdown is open, select the suggestion (input already has the correct value)
+        handleSuggestionSelect(filteredSuggestions[selectedIndex]);
       } else {
         // If dropdown is closed, let parent handle the Enter (to add to list)
         onKeyDown?.(e);
@@ -42,7 +40,10 @@ export const useKeyboardNavigation = ({
       e.preventDefault();
       if (filteredSuggestions.length > 0) {
         setIsOpen(true);
-        setSelectedIndex((selectedIndex + 1) % filteredSuggestions.length);
+        const newIndex = (selectedIndex + 1) % filteredSuggestions.length;
+        setSelectedIndex(newIndex);
+        // Update the input field to show the highlighted suggestion
+        onChange(filteredSuggestions[newIndex]);
       }
       return;
     }
@@ -51,7 +52,10 @@ export const useKeyboardNavigation = ({
       e.preventDefault();
       if (filteredSuggestions.length > 0) {
         setIsOpen(true);
-        setSelectedIndex((selectedIndex - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+        const newIndex = (selectedIndex - 1 + filteredSuggestions.length) % filteredSuggestions.length;
+        setSelectedIndex(newIndex);
+        // Update the input field to show the highlighted suggestion
+        onChange(filteredSuggestions[newIndex]);
       }
       return;
     }
@@ -63,7 +67,7 @@ export const useKeyboardNavigation = ({
     }
     
     onKeyDown?.(e);
-  }, [filteredSuggestions, selectedIndex, isOpen, setSelectedIndex, setIsOpen, handleSuggestionSelect, onKeyDown, onSuggestionSelect]);
+  }, [filteredSuggestions, selectedIndex, isOpen, setSelectedIndex, setIsOpen, handleSuggestionSelect, onKeyDown, onChange]);
 
   return { handleKeyDown };
 };

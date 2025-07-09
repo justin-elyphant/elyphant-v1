@@ -16,7 +16,6 @@ export interface SmartInputProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   className?: string;
   showSpellingSuggestions?: boolean;
-  onSuggestionSelect?: (suggestion: string) => void;
 }
 
 export const SmartInput: React.FC<SmartInputProps> = ({
@@ -27,8 +26,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   spellingCorrections = {},
   onKeyDown,
   className,
-  showSpellingSuggestions = true,
-  onSuggestionSelect
+  showSpellingSuggestions = true
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -60,7 +58,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
     setIsOpen,
     handleSuggestionSelect,
     onKeyDown,
-    onSuggestionSelect
+    onChange
   });
 
   const handleSuggestionClick = (suggestion: string) => {

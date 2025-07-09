@@ -6,6 +6,7 @@ import PastEventsContainer from "@/components/gifting/events/past-events/PastEve
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
 import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
+import AutoGiftExecutionMonitor from "@/components/gifting/auto-gift/AutoGiftExecutionMonitor";
 import UnifiedGiftTimingDashboard from "@/components/gifting/unified/UnifiedGiftTimingDashboard";
 import BackToDashboard from "@/components/shared/BackToDashboard";
 import MainLayout from "@/components/layout/MainLayout";
@@ -97,6 +98,10 @@ const Events = () => {
 
 const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
   const { events } = useEvents();
+  const [searchParams] = useSearchParams();
+  
+  // Get default tab from URL parameter
+  const defaultTab = searchParams.get("tab") || "overview";
   
   // Separate past and upcoming events
   const { upcomingEvents, pastEvents } = useMemo(() => {
@@ -117,7 +122,7 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
   }, [events]);
 
   return (
-    <Tabs defaultValue="overview" className="w-full">
+    <Tabs defaultValue={defaultTab} className="w-full">
       <div className="flex items-center justify-between">
         <TabsList className="h-10">
           <TabsTrigger value="overview" className="text-sm">
@@ -130,6 +135,7 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
             Past Events ({pastEvents.length})
           </TabsTrigger>
           <TabsTrigger value="automated" className="text-sm">Auto-Gifting Setup</TabsTrigger>
+          <TabsTrigger value="monitoring" className="text-sm">Monitoring</TabsTrigger>
         </TabsList>
       </div>
         
@@ -147,6 +153,10 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
         
       <TabsContent value="automated" className="mt-6">
         <AutomatedGiftingTabContent />
+      </TabsContent>
+        
+      <TabsContent value="monitoring" className="mt-6">
+        <AutoGiftExecutionMonitor />
       </TabsContent>
     </Tabs>
   );

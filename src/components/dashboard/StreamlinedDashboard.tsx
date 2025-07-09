@@ -119,7 +119,7 @@ const StreamlinedDashboard = () => {
       title: 'Manage Auto-Gifts',
       description: 'Set up automated gifting for birthdays and special occasions',
       icon: Zap,
-      action: () => navigate('/auto-gifts'),
+      action: () => navigate('/events?tab=monitoring'),
       variant: 'accent',
       badge: 'Smart'
     },

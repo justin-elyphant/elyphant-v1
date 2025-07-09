@@ -84,7 +84,7 @@ const SmartGiftingTab = () => {
             Auto-Gift Hub
           </h3>
           <Button variant="outline" size="sm" asChild>
-            <Link to="/auto-gifts">Manage All</Link>
+            <Link to="/events?tab=monitoring">Manage All</Link>
           </Button>
         </div>
         

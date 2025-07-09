@@ -2,8 +2,9 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SmartInput } from "@/components/ui/smart-input";
 import { X } from "lucide-react";
+import { COMMON_INTERESTS, INTEREST_SPELLING_CORRECTIONS } from "@/constants/commonInterests";
 
 interface InterestsFormSectionProps {
   interests: string[];
@@ -44,16 +45,19 @@ const InterestsFormSection = ({
       </div>
       
       <div className="flex gap-2">
-        <Input
-          placeholder="Add a new interest"
+        <SmartInput
+          placeholder="Add a new interest (e.g. Photography, Cooking)"
           value={newInterest}
-          onChange={(e) => setNewInterest(e.target.value)}
+          onChange={setNewInterest}
           onKeyDown={(e) => {
             if (e.key === "Enter" && newInterest.trim()) {
               e.preventDefault();
               addInterest();
             }
           }}
+          suggestions={COMMON_INTERESTS}
+          spellingCorrections={INTEREST_SPELLING_CORRECTIONS}
+          className="flex-1"
         />
         
         <Button

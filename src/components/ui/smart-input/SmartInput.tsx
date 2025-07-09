@@ -53,6 +53,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   const { handleKeyDown } = useKeyboardNavigation({
     filteredSuggestions,
     selectedIndex,
+    isOpen,
     setSelectedIndex,
     setIsOpen,
     handleSuggestionSelect,

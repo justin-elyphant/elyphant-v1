@@ -3,6 +3,7 @@ import { useCallback } from "react";
 interface UseKeyboardNavigationProps {
   filteredSuggestions: string[];
   selectedIndex: number;
+  isOpen: boolean;
   setSelectedIndex: (index: number) => void;
   setIsOpen: (open: boolean) => void;
   handleSuggestionSelect: (suggestion: string) => void;
@@ -12,6 +13,7 @@ interface UseKeyboardNavigationProps {
 export const useKeyboardNavigation = ({
   filteredSuggestions,
   selectedIndex,
+  isOpen,
   setSelectedIndex,
   setIsOpen,
   handleSuggestionSelect,
@@ -22,7 +24,7 @@ export const useKeyboardNavigation = ({
     
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (filteredSuggestions.length > 0) {
+      if (filteredSuggestions.length > 0 && isOpen) {
         handleSuggestionSelect(filteredSuggestions[selectedIndex]);
       }
       return;
@@ -53,7 +55,7 @@ export const useKeyboardNavigation = ({
     }
     
     onKeyDown?.(e);
-  }, [filteredSuggestions, selectedIndex, setSelectedIndex, setIsOpen, handleSuggestionSelect, onKeyDown]);
+  }, [filteredSuggestions, selectedIndex, isOpen, setSelectedIndex, setIsOpen, handleSuggestionSelect, onKeyDown]);
 
   return { handleKeyDown };
 };

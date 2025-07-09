@@ -8,6 +8,7 @@ interface UseKeyboardNavigationProps {
   setIsOpen: (open: boolean) => void;
   handleSuggestionSelect: (suggestion: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  onSuggestionSelect?: (suggestion: string) => void;
 }
 
 export const useKeyboardNavigation = ({
@@ -17,7 +18,8 @@ export const useKeyboardNavigation = ({
   setSelectedIndex,
   setIsOpen,
   handleSuggestionSelect,
-  onKeyDown
+  onKeyDown,
+  onSuggestionSelect
 }: UseKeyboardNavigationProps) => {
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     console.log('Key pressed:', e.key, 'suggestions:', filteredSuggestions.length);
@@ -25,8 +27,10 @@ export const useKeyboardNavigation = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (filteredSuggestions.length > 0 && isOpen) {
-        // If dropdown is open, select the suggestion (this will close dropdown and update value)
-        handleSuggestionSelect(filteredSuggestions[selectedIndex]);
+        // Select the suggestion and also trigger the parent's add logic
+        const suggestion = filteredSuggestions[selectedIndex];
+        handleSuggestionSelect(suggestion);
+        onSuggestionSelect?.(suggestion);
       } else {
         // If dropdown is closed, let parent handle the Enter (to add to list)
         onKeyDown?.(e);
@@ -59,7 +63,7 @@ export const useKeyboardNavigation = ({
     }
     
     onKeyDown?.(e);
-  }, [filteredSuggestions, selectedIndex, isOpen, setSelectedIndex, setIsOpen, handleSuggestionSelect, onKeyDown]);
+  }, [filteredSuggestions, selectedIndex, isOpen, setSelectedIndex, setIsOpen, handleSuggestionSelect, onKeyDown, onSuggestionSelect]);
 
   return { handleKeyDown };
 };

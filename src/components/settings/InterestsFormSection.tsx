@@ -76,6 +76,10 @@ const InterestsFormSection = ({
               handleAddInterest();
             }
           }}
+          onSuggestionSelect={(suggestion) => {
+            // When a suggestion is selected via Enter, add it immediately
+            handleAddInterest();
+          }}
           suggestions={COMMON_INTERESTS}
           spellingCorrections={INTEREST_SPELLING_CORRECTIONS}
           className="flex-1"

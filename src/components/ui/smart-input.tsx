@@ -33,6 +33,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [spellingSuggestion, setSpellingSuggestion] = useState<string | null>(null);
   const [showSpellingAlert, setShowSpellingAlert] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Update suggestions based on input
@@ -59,6 +60,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
       
       setFilteredSuggestions(prioritizedMatches);
       setIsOpen(prioritizedMatches.length > 0);
+      setSelectedIndex(0);
       
       // Check for spelling suggestions
       if (showSpellingSuggestions) {
@@ -83,6 +85,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
     onChange(suggestion);
     setIsOpen(false);
     setShowSpellingAlert(false);
+    setSelectedIndex(0);
     inputRef.current?.focus();
   };
 
@@ -99,10 +102,34 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown' && filteredSuggestions.length > 0) {
-      e.preventDefault();
-      setIsOpen(true);
+    if (filteredSuggestions.length > 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSuggestionSelect(filteredSuggestions[selectedIndex]);
+        return;
+      }
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setIsOpen(true);
+        setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length);
+        return;
+      }
+      
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setIsOpen(true);
+        setSelectedIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+        return;
+      }
+      
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsOpen(false);
+        return;
+      }
     }
+    
     onKeyDown?.(e);
   };
 
@@ -139,9 +166,12 @@ export const SmartInput: React.FC<SmartInputProps> = ({
                       key={index}
                       value={suggestion}
                       onSelect={() => handleSuggestionSelect(suggestion)}
-                      className="cursor-pointer"
+                      className={cn(
+                        "cursor-pointer",
+                        index === selectedIndex && "bg-accent text-accent-foreground"
+                      )}
                     >
-                      <Check className="mr-2 h-4 w-4 opacity-0" />
+                      <Check className={cn("mr-2 h-4 w-4", index === selectedIndex ? "opacity-100" : "opacity-0")} />
                       {suggestion}
                     </CommandItem>
                   ))}

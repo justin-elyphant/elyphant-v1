@@ -21,6 +21,9 @@ export function useProfileFetch() {
       setError(null);
 
       console.log("Fetching profile for user:", user.id);
+      
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = Date.now();
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')

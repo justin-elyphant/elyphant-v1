@@ -1,15 +1,16 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { UserPlus, Zap } from "lucide-react";
+import { UserPlus, Zap, Plus } from "lucide-react";
 import BudgetTrackingSection from "./BudgetTrackingSection";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import DefaultGiftSourceSection from "./DefaultGiftSourceSection";
 import ActiveRulesSection from "./ActiveRulesSection";
 import AutoGiftExecutionDashboard from "../../auto-execution/AutoGiftExecutionDashboard";
+import AutoGiftSetupFlow from "../../auto-gift/AutoGiftSetupFlow";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import { useAutoGiftTrigger } from "@/hooks/useAutoGiftTrigger";
@@ -18,6 +19,7 @@ const AutomatedGiftingTabContent = () => {
   const { user } = useAuth();
   const { settings, rules, loading, updateSettings } = useAutoGifting();
   const { triggerAutoGiftProcessing, triggering } = useAutoGiftTrigger();
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
 
   if (!user) {
     return (
@@ -61,15 +63,25 @@ const AutomatedGiftingTabContent = () => {
           </p>
         </div>
         
-        <Button 
-          onClick={triggerAutoGiftProcessing}
-          disabled={triggering}
-          className="flex items-center gap-2"
-          variant="outline"
-        >
-          <Zap className="h-4 w-4" />
-          {triggering ? "Processing..." : "Trigger Auto-Gifts"}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={() => setSetupDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            New Auto-Gift Rule
+          </Button>
+          
+          <Button 
+            onClick={triggerAutoGiftProcessing}
+            disabled={triggering}
+            className="flex items-center gap-2"
+            variant="outline"
+          >
+            <Zap className="h-4 w-4" />
+            {triggering ? "Processing..." : "Trigger Auto-Gifts"}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="executions" className="w-full">
@@ -120,6 +132,12 @@ const AutomatedGiftingTabContent = () => {
           <ActiveRulesSection rules={rules} />
         </TabsContent>
       </Tabs>
+
+      {/* Auto-Gift Setup Dialog */}
+      <AutoGiftSetupFlow
+        open={setupDialogOpen}
+        onOpenChange={setSetupDialogOpen}
+      />
     </div>
   );
 };

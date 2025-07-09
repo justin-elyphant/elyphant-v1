@@ -152,11 +152,14 @@ export function normalizeShippingAddress(address: any | null | undefined): Shipp
  * Create a mapping utility to convert between form data and API formats
  */
 export function mapFormAddressToApiAddress(formAddress: any): ShippingAddress {
+  console.log("🏠 mapFormAddressToApiAddress input:", JSON.stringify(formAddress, null, 2));
+  
   if (!formAddress) {
+    console.log("🏠 No address provided, returning empty object");
     return {};
   }
   
-  return {
+  const result = {
     address_line1: formAddress.street || '',
     city: formAddress.city || '',
     state: formAddress.state || '',
@@ -167,6 +170,9 @@ export function mapFormAddressToApiAddress(formAddress: any): ShippingAddress {
     street: formAddress.street || '',
     zipCode: formAddress.zipCode || ''
   };
+  
+  console.log("🏠 mapFormAddressToApiAddress output:", JSON.stringify(result, null, 2));
+  return result;
 }
 
 /**

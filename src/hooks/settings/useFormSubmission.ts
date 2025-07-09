@@ -19,7 +19,8 @@ export const useFormSubmission = () => {
     try {
       setIsSaving(true);
       
-      console.log("Form data before processing:", JSON.stringify(formData, null, 2));
+      console.log("🚀 FORM SUBMISSION STARTED");
+      console.log("📝 Raw form data:", JSON.stringify(formData, null, 2));
       
       // Validate required fields
       if (!formData.name || formData.name.trim() === '') {
@@ -41,6 +42,8 @@ export const useFormSubmission = () => {
         bio: formData.bio?.trim() || ""
       };
       
+      console.log("🧹 Cleaned form data:", JSON.stringify(cleanedFormData, null, 2));
+      
       // Convert form data to API format
       const apiData = profileFormToApiData(cleanedFormData);
       
@@ -49,17 +52,26 @@ export const useFormSubmission = () => {
         apiData.profile_image = cleanedFormData.profile_image;
       }
       
-      console.log("Submitting profile update with cleaned data:", JSON.stringify(apiData, null, 2));
+      console.log("🔄 API data before update:", JSON.stringify(apiData, null, 2));
+      console.log("📍 Address data specifically:", JSON.stringify(apiData.shipping_address, null, 2));
       
       // Update profile
-      await updateProfile(apiData);
+      console.log("📤 Calling updateProfile...");
+      const result = await updateProfile(apiData);
+      console.log("✅ UpdateProfile result:", result);
+      
+      // Force a page reload to ensure the form reflects the database state
+      console.log("🔄 Forcing page reload to sync form with database...");
+      window.location.reload();
+      
       toast.success("Profile updated successfully");
     } catch (error) {
-      console.error("Error saving profile:", error);
+      console.error("❌ Error saving profile:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);
+      console.log("🏁 FORM SUBMISSION ENDED");
     }
   };
 

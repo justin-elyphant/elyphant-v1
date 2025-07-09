@@ -22,11 +22,21 @@ const PersonSelector = ({ connections, value, onChange }: PersonSelectorProps) =
           <SelectItem value="none">No connection</SelectItem>
           {connections.map((connection) => (
             <SelectItem key={connection.id} value={connection.id}>
-              {connection.profile_name || 'Unknown User'}
+              <div className="flex items-center gap-2">
+                <span>{connection.profile_name || 'Unknown User'}</span>
+                <span className="text-xs text-muted-foreground">
+                  ({connection.status === 'accepted' ? '✓ Connected' : 'Pending'})
+                </span>
+              </div>
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
+      {value !== "none" && (
+        <p className="text-xs text-muted-foreground">
+          💡 Auto-gifting will have access to this friend's wishlist for gift selection
+        </p>
+      )}
     </div>
   );
 };

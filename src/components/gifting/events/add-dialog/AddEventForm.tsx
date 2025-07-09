@@ -139,7 +139,18 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
         <PersonSelector
           connections={connections}
           value={form.watch("personId") || "none"}
-          onChange={(value) => form.setValue("personId", value === "none" ? "" : value)}
+          onChange={(value) => {
+            const connectionId = value === "none" ? "" : value;
+            form.setValue("personId", connectionId);
+            
+            // Auto-populate person name from friend's profile when connection is selected
+            if (connectionId) {
+              const selectedConnection = connections.find(c => c.id === connectionId);
+              if (selectedConnection?.profile_name) {
+                form.setValue("personName", selectedConnection.profile_name);
+              }
+            }
+          }}
         />
 
         <RecurringToggle
@@ -160,7 +171,14 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
 
         <AutoGiftToggle
           autoGift={form.watch("autoGiftEnabled")}
-          onAutoGiftChange={(value) => form.setValue("autoGiftEnabled", value)}
+          onAutoGiftChange={(value) => {
+            // Only allow auto-gifting when a connection is selected
+            if (value && !form.watch("personId")) {
+              toast.error("Please select a friend first to enable auto-gifting");
+              return;
+            }
+            form.setValue("autoGiftEnabled", value);
+          }}
         />
 
         {form.watch("autoGiftEnabled") && (

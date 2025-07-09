@@ -67,6 +67,7 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
             recipient_id: connection.connected_user_id,
             date_type: data.eventType,
             event_id: createdEvent.id,
+            created_from_event_id: createdEvent.id,
             is_active: true,
             budget_limit: data.giftBudget,
             notification_preferences: {

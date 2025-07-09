@@ -60,10 +60,6 @@ export const useFormSubmission = () => {
       const result = await updateProfile(apiData);
       console.log("✅ UpdateProfile result:", result);
       
-      // Force a page reload to ensure the form reflects the database state
-      console.log("🔄 Forcing page reload to sync form with database...");
-      window.location.reload();
-      
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("❌ Error saving profile:", error);

@@ -1284,6 +1284,7 @@ export type Database = {
       }
       user_special_dates: {
         Row: {
+          connection_id: string | null
           created_at: string | null
           date: string
           date_type: string
@@ -1301,6 +1302,7 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          connection_id?: string | null
           created_at?: string | null
           date: string
           date_type: string
@@ -1318,6 +1320,7 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          connection_id?: string | null
           created_at?: string | null
           date?: string
           date_type?: string
@@ -1335,6 +1338,13 @@ export type Database = {
           visibility?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_special_dates_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_special_dates_original_event_id_fkey"
             columns: ["original_event_id"]

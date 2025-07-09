@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { AddEventForm } from "./AddEventForm";
 import { EventFormData } from "./types";
 import { eventsService, transformExtendedEventToDatabase } from "@/services/eventsService";
+import { autoGiftingService } from "@/services/autoGiftingService";
+import { supabase } from "@/integrations/supabase/client";
 import { useEvents } from "../context/EventsContext";
 
 interface AddEventDialogProps {
@@ -37,14 +39,51 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
         recurringType: data.recurringType,
       };
 
-      // Transform to database format
+      // Get connection ID (excluding "none" option)
+      const connectionId = data.personId && data.personId !== "none" ? data.personId : undefined;
+      
+      // Transform to database format with connection ID
       const dbEventData = {
-        ...transformExtendedEventToDatabase(extendedEventData),
+        ...transformExtendedEventToDatabase(extendedEventData, connectionId),
         is_recurring: data.isRecurring,
         recurring_type: data.recurringType,
       };
 
-      await eventsService.createEvent(dbEventData);
+      // Create the event
+      const createdEvent = await eventsService.createEvent(dbEventData);
+
+      // Create auto-gifting rule if enabled and connection is selected
+      if (data.autoGiftEnabled && connectionId) {
+        // Get the connected user's ID from the connection
+        const { data: connection } = await supabase
+          .from('user_connections')
+          .select('connected_user_id')
+          .eq('id', connectionId)
+          .single();
+
+        if (connection) {
+          await autoGiftingService.createRule({
+            user_id: (await supabase.auth.getUser()).data.user!.id,
+            recipient_id: connection.connected_user_id,
+            date_type: data.eventType,
+            event_id: createdEvent.id,
+            is_active: true,
+            budget_limit: data.giftBudget,
+            notification_preferences: {
+              enabled: true,
+              days_before: [7, 3, 1],
+              email: true,
+              push: false,
+            },
+            gift_selection_criteria: {
+              source: "wishlist",
+              categories: [],
+              exclude_items: [],
+            },
+          });
+        }
+      }
+
       await refreshEvents();
       
       toast.success(`${data.eventType} for ${data.personName} has been added!`);

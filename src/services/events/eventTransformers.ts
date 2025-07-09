@@ -44,11 +44,12 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
 }
 
 // Helper function to transform ExtendedEventData back to database format
-export function transformExtendedEventToDatabase(event: ExtendedEventData): EventCreateData {
+export function transformExtendedEventToDatabase(event: ExtendedEventData, connectionId?: string): EventCreateData {
   return {
     date: event.dateObj?.toISOString() || new Date().toISOString(),
     date_type: `${event.type} - ${event.person}`,
     visibility: event.privacyLevel,
+    connection_id: connectionId,
     is_recurring: event.isRecurring,
     recurring_type: event.recurringType,
     series_id: event.seriesId,

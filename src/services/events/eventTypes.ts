@@ -3,6 +3,7 @@ export interface EventCreateData {
   date: string;
   date_type: string;
   visibility: string;
+  connection_id?: string;
   is_recurring?: boolean;
   recurring_type?: string;
   series_id?: string;

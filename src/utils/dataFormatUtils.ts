@@ -128,13 +128,43 @@ export function formatProfileForSubmission(profileData: ProfileData): any {
 export function mapDatabaseToSettingsForm(databaseProfile: any) {
   if (!databaseProfile) return null;
 
+  // Parse existing important dates
+  let importantDates = Array.isArray(databaseProfile.important_dates)
+    ? databaseProfile.important_dates.map((date: any) => ({
+        date: new Date(date.date),
+        description: date.title || date.description || ""
+      }))
+    : [];
+
+  // Auto-populate birthday if it exists and isn't already in important dates
+  const birthday = parseBirthdayFromStorage(databaseProfile.dob);
+  if (birthday) {
+    // Check if birthday is already in important dates to avoid duplicates
+    const birthdayExists = importantDates.some(date => {
+      const existingDate = new Date(date.date);
+      return existingDate.getMonth() + 1 === birthday.month && 
+             existingDate.getDate() === birthday.day;
+    });
+
+    // If birthday doesn't exist in important dates, add it as the first entry
+    if (!birthdayExists) {
+      const currentYear = new Date().getFullYear();
+      const birthdayDate = new Date(currentYear, birthday.month - 1, birthday.day);
+      
+      importantDates.unshift({
+        date: birthdayDate,
+        description: "My Birthday"
+      });
+    }
+  }
+
   return {
     name: databaseProfile.name || "",
     email: databaseProfile.email || "",
     username: databaseProfile.username || "",
     bio: databaseProfile.bio || "",
     profile_image: databaseProfile.profile_image || null,
-    birthday: parseBirthdayFromStorage(databaseProfile.dob),
+    birthday: birthday,
     address: {
       street: databaseProfile.shipping_address?.address_line1 || databaseProfile.shipping_address?.street || "",
       line2: databaseProfile.shipping_address?.address_line2 || databaseProfile.shipping_address?.line2 || "",
@@ -144,12 +174,7 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
       country: databaseProfile.shipping_address?.country || "US"
     },
     interests: Array.isArray(databaseProfile.interests) ? databaseProfile.interests : [],
-    importantDates: Array.isArray(databaseProfile.important_dates)
-      ? databaseProfile.important_dates.map((date: any) => ({
-          date: new Date(date.date),
-          description: date.title || date.description || ""
-        }))
-      : [],
+    importantDates: importantDates,
     data_sharing_settings: {
       ...getDefaultDataSharingSettings(),
       ...(databaseProfile.data_sharing_settings || {})

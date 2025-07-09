@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
-import StreamlinedDashboard from "@/components/dashboard/StreamlinedDashboard";
 import { useAuth } from "@/contexts/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import MainLayout from "@/components/layout/MainLayout";
@@ -56,7 +55,7 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <StreamlinedDashboard />
+        <DashboardGrid />
       </div>
     </MainLayout>
   );

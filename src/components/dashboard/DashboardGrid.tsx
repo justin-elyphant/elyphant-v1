@@ -1,31 +1,25 @@
 
 import React from "react";
-import OrdersCard from "./OrdersCard";
+import GiftingHubCard from "./GiftingHubCard";
 import FriendsCard from "./FriendsCard";
 import SettingsCard from "./SettingsCard";
-import UpcomingEventsCard from "./UpcomingEventsCard";
-import WishlistsCard from "./WishlistsCard";
+import MessagesCard from "./MessagesCard";
 
 const DashboardGrid = () => {
   return (
     <div className="space-y-6">
-      {/* Main hero section */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <UpcomingEventsCard />
-        </div>
-        <div className="lg:col-span-2 space-y-4">
-          <WishlistsCard />
-        </div>
+      {/* Main Gifting Hub - takes full width */}
+      <div className="w-full">
+        <GiftingHubCard />
       </div>
 
-      {/* Secondary cards - grid layout with consistent heights */}
+      {/* Secondary cards - connections, messages, settings */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="flex flex-col h-full">
-          <OrdersCard />
+          <FriendsCard />
         </div>
         <div className="flex flex-col h-full">
-          <FriendsCard />
+          <MessagesCard />
         </div>
         <div className="flex flex-col h-full">
           <SettingsCard />

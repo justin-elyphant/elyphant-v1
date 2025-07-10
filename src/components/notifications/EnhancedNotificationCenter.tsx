@@ -243,52 +243,43 @@ const EnhancedNotificationCenter: React.FC<EnhancedNotificationCenterProps> = ({
           <TabsContent value="all" className="flex-1 overflow-auto">
             {(notifications.length > 0 || groupNotifications.length > 0) ? (
               <div className="divide-y">
-                {[...notifications, ...groupNotifications]
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .map(notification => (
-                    'type' in notification && ['group_gift', 'group_invite', 'group_mention', 'group_vote'].includes(notification.type) ? (
-                      <div key={notification.id} className="p-4 hover:bg-muted/50 cursor-pointer"
-                           onClick={() => {
-                             markGroupNotificationAsRead(notification.id);
-                             if (notification.link) window.open(notification.link, '_blank');
-                           }}>
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" 
-                               style={{ opacity: notification.read ? 0.3 : 1 }} />
-                          <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium text-sm">{notification.title}</h4>
-                              {'groupName' in notification && notification.groupName && (
-                                <Badge variant="outline" className="text-xs">
-                                  {notification.groupName}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(notification.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
+                {/* Group Notifications */}
+                {groupNotifications.map(notification => (
+                  <div key={notification.id} className="p-4 hover:bg-muted/50 cursor-pointer"
+                       onClick={() => {
+                         markGroupNotificationAsRead(notification.id);
+                         if (notification.link) window.open(notification.link, '_blank');
+                       }}>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" 
+                           style={{ opacity: notification.read ? 0.3 : 1 }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-sm">{notification.title}</h4>
+                          {notification.groupName && (
+                            <Badge variant="outline" className="text-xs">
+                              {notification.groupName}
+                            </Badge>
+                          )}
                         </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(notification.createdAt).toLocaleDateString()}
+                        </p>
                       </div>
-                    ) : (
-                      'id' in notification && 'title' in notification && 'message' in notification && 'type' in notification && 'read' in notification && 'createdAt' in notification ? (
-                        <NotificationItem
-                          key={notification.id}
-                          notification={notification as any}
-                          onRead={() => markAsRead(notification.id)}
-                        />
-                       ) : (
-                         <NotificationItem
-                           key={notification.id}
-                           notification={notification as any}
-                           onRead={() => markAsRead(notification.id)}
-                         />
-                       )
-                    )
-                  ))}
+                    </div>
+                  </div>
+                ))}
+                {/* Regular Notifications */}
+                {notifications.map(notification => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onRead={() => markAsRead(notification.id)}
+                  />
+                ))}
               </div>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground p-4 text-center">
@@ -346,38 +337,35 @@ const EnhancedNotificationCenter: React.FC<EnhancedNotificationCenterProps> = ({
           <TabsContent value="gifts" className="flex-1 overflow-auto">
             {allGiftNotifications.length > 0 ? (
               <div className="divide-y">
-                {allGiftNotifications.map(notification => (
-                  'type' in notification && notification.type === 'group_gift' ? (
-                    <div key={notification.id} className="p-4 hover:bg-muted/50 cursor-pointer"
-                         onClick={() => {
-                           markGroupNotificationAsRead(notification.id);
-                           if (notification.link) window.open(notification.link, '_blank');
-                         }}>
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" 
-                             style={{ opacity: notification.read ? 0.3 : 1 }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-sm">{notification.title}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              Group Gift
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {notification.message}
-                          </p>
+                {groupNotifications.filter(n => n.type === 'group_gift').map(notification => (
+                  <div key={notification.id} className="p-4 hover:bg-muted/50 cursor-pointer"
+                       onClick={() => {
+                         markGroupNotificationAsRead(notification.id);
+                         if (notification.link) window.open(notification.link, '_blank');
+                       }}>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" 
+                           style={{ opacity: notification.read ? 0.3 : 1 }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-sm">{notification.title}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            Group Gift
+                          </Badge>
                         </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {notification.message}
+                        </p>
                       </div>
                     </div>
-                  ) : (
-                    'id' in notification && 'title' in notification && 'message' in notification && 'type' in notification && 'read' in notification && 'createdAt' in notification ? (
-                      <NotificationItem
-                        key={notification.id}
-                        notification={notification as any}
-                        onRead={() => markAsRead(notification.id)}
-                      />
-                    ) : null
-                  )
+                  </div>
+                ))}
+                {notifications.filter(n => n.type === 'gift').map(notification => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onRead={() => markAsRead(notification.id)}
+                  />
                 ))}
               </div>
             ) : (
@@ -393,38 +381,35 @@ const EnhancedNotificationCenter: React.FC<EnhancedNotificationCenterProps> = ({
           <TabsContent value="social" className="flex-1 overflow-auto">
             {allConnectionNotifications.length > 0 ? (
               <div className="divide-y">
-                {allConnectionNotifications.map(notification => (
-                  'type' in notification && ['group_invite', 'group_mention'].includes(notification.type) ? (
-                    <div key={notification.id} className="p-4 hover:bg-muted/50 cursor-pointer"
-                         onClick={() => {
-                           markGroupNotificationAsRead(notification.id);
-                           if (notification.link) window.open(notification.link, '_blank');
-                         }}>
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" 
-                             style={{ opacity: notification.read ? 0.3 : 1 }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-sm">{notification.title}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {notification.type === 'group_mention' ? 'Mention' : 'Invite'}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {notification.message}
-                          </p>
+                {groupNotifications.filter(n => ['group_invite', 'group_mention'].includes(n.type)).map(notification => (
+                  <div key={notification.id} className="p-4 hover:bg-muted/50 cursor-pointer"
+                       onClick={() => {
+                         markGroupNotificationAsRead(notification.id);
+                         if (notification.link) window.open(notification.link, '_blank');
+                       }}>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" 
+                           style={{ opacity: notification.read ? 0.3 : 1 }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-sm">{notification.title}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {notification.type === 'group_mention' ? 'Mention' : 'Invite'}
+                          </Badge>
                         </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {notification.message}
+                        </p>
                       </div>
                     </div>
-                  ) : (
-                    'id' in notification && 'title' in notification && 'message' in notification && 'type' in notification && 'read' in notification && 'createdAt' in notification ? (
-                      <NotificationItem
-                        key={notification.id}
-                        notification={notification as any}
-                        onRead={() => markAsRead(notification.id)}
-                      />
-                    ) : null
-                  )
+                  </div>
+                ))}
+                {notifications.filter(n => n.type === 'connection').map(notification => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onRead={() => markAsRead(notification.id)}
+                  />
                 ))}
               </div>
             ) : (

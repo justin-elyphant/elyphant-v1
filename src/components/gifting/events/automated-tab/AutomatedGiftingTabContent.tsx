@@ -56,12 +56,12 @@ const AutomatedGiftingTabContent = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-semibold mb-2">Automated Gifting Settings</h3>
-          <p className="text-sm text-muted-foreground">
-            Configure your preferences for automated gift-giving and manage your active rules
-          </p>
-        </div>
+      <div>
+        <h3 className="text-xl font-semibold mb-2">Automation Rules</h3>
+        <p className="text-sm text-muted-foreground">
+          Create and manage rules for automated gift-giving based on your events and preferences
+        </p>
+      </div>
         
         <div className="flex items-center gap-3">
           <Button 
@@ -69,7 +69,7 @@ const AutomatedGiftingTabContent = () => {
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
-            New Auto-Gift Rule
+            New Automation Rule
           </Button>
           
           <Button 
@@ -79,57 +79,53 @@ const AutomatedGiftingTabContent = () => {
             variant="outline"
           >
             <Zap className="h-4 w-4" />
-            {triggering ? "Processing..." : "Trigger Auto-Gifts"}
+            {triggering ? "Processing..." : "Run Auto-Gifts"}
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="executions" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="executions">Executions</TabsTrigger>
-          <TabsTrigger value="settings">General Settings</TabsTrigger>
-          <TabsTrigger value="budget">Budget Tracking</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="rules">Active Rules</TabsTrigger>
+      <Tabs defaultValue="rules" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="rules">My Rules</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="executions" className="space-y-4">
-          <AutoGiftExecutionDashboard />
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Default Settings</CardTitle>
-              <CardDescription>
-                Set default preferences that will be applied to new auto-gifting rules
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <DefaultGiftSourceSection 
-                settings={settings}
-                onUpdateSettings={updateSettings}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="budget" className="space-y-4">
-          <BudgetTrackingSection 
-            settings={settings}
-            onUpdateSettings={updateSettings}
-          />
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-4">
-          <NotificationSettingsSection 
-            settings={settings}
-            onUpdateSettings={updateSettings}
-          />
-        </TabsContent>
 
         <TabsContent value="rules" className="space-y-4">
           <ActiveRulesSection rules={rules} />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Default Preferences</CardTitle>
+                <CardDescription>
+                  Set default preferences that will be applied to new automation rules
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <DefaultGiftSourceSection 
+                  settings={settings}
+                  onUpdateSettings={updateSettings}
+                />
+              </CardContent>
+            </Card>
+            
+            <BudgetTrackingSection 
+              settings={settings}
+              onUpdateSettings={updateSettings}
+            />
+            
+            <NotificationSettingsSection 
+              settings={settings}
+              onUpdateSettings={updateSettings}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-4">
+          <AutoGiftExecutionDashboard />
         </TabsContent>
       </Tabs>
 

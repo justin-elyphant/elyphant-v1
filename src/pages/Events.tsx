@@ -134,8 +134,8 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
           <TabsTrigger value="past" className="text-sm">
             Past Events ({pastEvents.length})
           </TabsTrigger>
-          <TabsTrigger value="automated" className="text-sm">Auto-Gifting Setup</TabsTrigger>
-          <TabsTrigger value="monitoring" className="text-sm">Monitoring</TabsTrigger>
+          <TabsTrigger value="automated" className="text-sm">Automation Rules</TabsTrigger>
+          <TabsTrigger value="monitoring" className="text-sm">Activity Log</TabsTrigger>
         </TabsList>
       </div>
         

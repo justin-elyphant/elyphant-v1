@@ -21,13 +21,9 @@ const UserButton = () => {
   const { profile } = useProfile();
   const { hasIssues, checkDataIntegrity } = useProfileDataIntegrity();
   
-  // Debug logging
-  console.log("UserButton - hasIssues:", hasIssues);
-  
   // Run integrity check when component mounts or profile changes
   React.useEffect(() => {
     if (user && profile) {
-      console.log("UserButton - Running integrity check");
       checkDataIntegrity(false); // Don't show toasts in dropdown
     }
   }, [user, profile, checkDataIntegrity]);

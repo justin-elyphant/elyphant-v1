@@ -4,10 +4,14 @@ import GiftingHubCard from "./GiftingHubCard";
 import FriendsCard from "./FriendsCard";
 import SettingsCard from "./SettingsCard";
 import MessagesCard from "./MessagesCard";
+import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 
 const DashboardGrid = () => {
   return (
     <div className="space-y-6">
+      {/* Profile Data Integrity Panel - Top Priority */}
+      <ProfileDataIntegrityPanel />
+
       {/* Main Gifting Hub - takes full width */}
       <div className="w-full">
         <GiftingHubCard />

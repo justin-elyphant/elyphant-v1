@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot } from "lucide-react";
+import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,10 @@ import { EventsProvider, useEvents } from "@/components/gifting/events/context/E
 import { getUserOrders, Order } from "@/services/orderService";
 import AutoGiftSetupDialog from "@/components/gifting/events/setup-dialog/AutoGiftSetupDialog";
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+
+// Import group components
+import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
+import GroupGiftAnalytics from "./GroupGiftAnalytics";
 
 // Smart Gifting Tab Component
 const SmartGiftingTab = () => {
@@ -76,6 +80,29 @@ const SmartGiftingTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Group Projects Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <div className="flex items-center mb-4">
+            <Users className="h-5 w-5 mr-2 text-blue-500" />
+            <h3 className="text-lg font-semibold">Active Group Projects</h3>
+          </div>
+          <div className="p-6 bg-card rounded-lg border">
+            <ActiveGroupProjectsWidget />
+          </div>
+        </div>
+        
+        <div>
+          <div className="flex items-center mb-4">
+            <Target className="h-5 w-5 mr-2 text-purple-500" />
+            <h3 className="text-lg font-semibold">Group Gift Analytics</h3>
+          </div>
+          <div className="p-6 bg-card rounded-lg border">
+            <GroupGiftAnalytics />
+          </div>
+        </div>
+      </div>
+
       {/* Auto-Gift Hub Section */}
       <div>
         <div className="flex items-center justify-between mb-4">

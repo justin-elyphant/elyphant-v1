@@ -2,8 +2,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Eye, EyeOff, Users, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Shield, Eye, EyeOff, Users, Lock, Settings } from "lucide-react";
 import { usePrivacySettings } from "@/hooks/usePrivacySettings";
+import { useNavigate } from "react-router-dom";
 
 interface PrivacyIntegrationProps {
   userId?: string;
@@ -15,6 +17,11 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
   showOwnSettings = false
 }) => {
   const { settings, loading } = usePrivacySettings();
+  const navigate = useNavigate();
+
+  const handleManageSettings = () => {
+    navigate('/settings?tab=privacy');
+  };
 
   if (loading) {
     return (
@@ -83,9 +90,20 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Your Privacy Settings
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Your Privacy Settings
+            </div>
+            <Button
+              onClick={handleManageSettings}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Manage Settings
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

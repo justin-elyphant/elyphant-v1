@@ -12,11 +12,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { useState } from "react";
 import { RelationshipType } from "@/types/connections";
 import { ConnectionFilters } from "@/types/connection-filters";
-import { Button } from "@/components/ui/button";
-import { TestTube } from "lucide-react";
-import { createTestConnections } from "@/utils/connectionTestUtils";
 import { useAuth } from "@/contexts/auth";
-import { toast } from "sonner";
 
 const Connections = () => {
   const { user } = useAuth();
@@ -44,21 +40,6 @@ const Connections = () => {
   const filteredFollowing = filterConnections(following, searchTerm);
   const filteredSuggestions = filterConnections(suggestions, searchTerm);
 
-  const handleCreateTestData = async () => {
-    if (!user) {
-      toast.error("Please log in to create test data");
-      return;
-    }
-
-    const result = await createTestConnections(user.id);
-    if (result.success) {
-      toast.success("Test connections created successfully!");
-      // Refresh the page to see the new data
-      window.location.reload();
-    } else {
-      toast.error("Failed to create test connections");
-    }
-  };
   
   return (
     <ConnectionsErrorBoundary>
@@ -76,20 +57,6 @@ const Connections = () => {
             <PrivacyIntegration showOwnSettings={true} />
           </div>
 
-          {/* Test Data Button (Development Only) */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mb-6">
-              <Button
-                onClick={handleCreateTestData}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <TestTube className="h-4 w-4" />
-                Create Test Connections
-              </Button>
-            </div>
-          )}
           
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList className="w-full max-w-md">

@@ -100,7 +100,7 @@ const SmartGiftingTab = () => {
         {upcomingEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {upcomingEvents.map((event) => (
-              <div key={event.id} className="p-4 border rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+              <div key={event.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">

@@ -19,7 +19,18 @@ const UserButton = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
-  const { hasIssues } = useProfileDataIntegrity();
+  const { hasIssues, checkDataIntegrity } = useProfileDataIntegrity();
+  
+  // Debug logging
+  console.log("UserButton - hasIssues:", hasIssues);
+  
+  // Run integrity check when component mounts or profile changes
+  React.useEffect(() => {
+    if (user && profile) {
+      console.log("UserButton - Running integrity check");
+      checkDataIntegrity(false); // Don't show toasts in dropdown
+    }
+  }, [user, profile, checkDataIntegrity]);
   
   const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
   

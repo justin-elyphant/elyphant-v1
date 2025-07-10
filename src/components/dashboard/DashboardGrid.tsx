@@ -1,9 +1,8 @@
 
 import React from "react";
 import GiftingHubCard from "./GiftingHubCard";
-import FriendsCard from "./FriendsCard";
+import SocialHubCard from "./SocialHubCard";
 import SettingsCard from "./SettingsCard";
-import MessagesCard from "./MessagesCard";
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 
 const DashboardGrid = () => {
@@ -17,13 +16,10 @@ const DashboardGrid = () => {
         <GiftingHubCard />
       </div>
 
-      {/* Secondary cards - connections, messages, settings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Secondary cards - social hub and settings */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col h-full">
-          <FriendsCard />
-        </div>
-        <div className="flex flex-col h-full">
-          <MessagesCard />
+          <SocialHubCard />
         </div>
         <div className="flex flex-col h-full">
           <SettingsCard />

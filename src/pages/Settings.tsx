@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -15,7 +15,9 @@ import { Link } from "react-router-dom";
 type SettingsTab = "general" | "notifications" | "privacy";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as SettingsTab) || "general";
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const { profile, loading } = useProfile();
   const { user } = useAuth();
   const navigate = useNavigate();

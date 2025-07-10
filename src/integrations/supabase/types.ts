@@ -787,31 +787,54 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          delivery_status: string | null
           id: string
           is_read: boolean | null
+          message_type: string | null
           product_link_id: number | null
+          reactions: Json | null
           recipient_id: string
+          reply_to_id: string | null
           sender_id: string
+          wishlist_link_id: string | null
         }
         Insert: {
           content: string
           created_at?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean | null
+          message_type?: string | null
           product_link_id?: number | null
+          reactions?: Json | null
           recipient_id: string
+          reply_to_id?: string | null
           sender_id: string
+          wishlist_link_id?: string | null
         }
         Update: {
           content?: string
           created_at?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean | null
+          message_type?: string | null
           product_link_id?: number | null
+          reactions?: Json | null
           recipient_id?: string
+          reply_to_id?: string | null
           sender_id?: string
+          wishlist_link_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -1163,6 +1186,33 @@ export type Database = {
           },
         ]
       }
+      typing_indicators: {
+        Row: {
+          chat_with_user_id: string
+          created_at: string | null
+          id: string
+          is_typing: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_with_user_id: string
+          created_at?: string | null
+          id?: string
+          is_typing?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_with_user_id?: string
+          created_at?: string | null
+          id?: string
+          is_typing?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_addresses: {
         Row: {
           address: Json
@@ -1257,6 +1307,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_presence: {
+        Row: {
+          current_activity: string | null
+          last_seen: string | null
+          status: string
+          typing_in_chat_with: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_activity?: string | null
+          last_seen?: string | null
+          status?: string
+          typing_in_chat_with?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_activity?: string | null
+          last_seen?: string | null
+          status?: string
+          typing_in_chat_with?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_search_history: {
         Row: {

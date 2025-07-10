@@ -25,8 +25,15 @@ import {
   markMessagesAsRead, 
   subscribeToMessages,
   addMessageReaction,
+  removeMessageReaction,
+  setTypingStatus,
+  subscribeToTyping,
   type Message 
-} from "@/utils/messageService";
+} from "@/utils/enhancedMessageService";
+import { useEnhancedPresence } from "@/hooks/useEnhancedPresence";
+import { useAuth } from "@/contexts/auth";
+import TypingIndicator from "./TypingIndicator";
+import ChatGiftModal from "./ChatGiftModal";
 import { toast } from "sonner";
 
 interface EnhancedChatInterfaceProps {
@@ -42,17 +49,26 @@ const EnhancedChatInterface = ({
   connectionImage,
   relationshipType = 'friend'
 }: EnhancedChatInterfaceProps) => {
+  const { user } = useAuth();
+  const { getUserStatus, subscribeToUserPresence } = useEnhancedPresence();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [isOnline, setIsOnline] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [showGiftModal, setShowGiftModal] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
+  const userStatus = getUserStatus(connectionId);
 
   const loadMessages = useCallback(async () => {
     try {
@@ -62,7 +78,7 @@ const EnhancedChatInterface = ({
       
       // Mark unread messages as read
       const unreadMessageIds = fetchedMessages
-        .filter(msg => !msg.is_read && msg.recipient_id === "current-user")
+        .filter(msg => !msg.is_read && msg.recipient_id === user?.id)
         .map(msg => msg.id);
       
       if (unreadMessageIds.length > 0) {
@@ -76,7 +92,7 @@ const EnhancedChatInterface = ({
     } finally {
       setLoading(false);
     }
-  }, [connectionId, scrollToBottom]);
+  }, [connectionId, scrollToBottom, user?.id]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +101,14 @@ const EnhancedChatInterface = ({
     const messageContent = newMessage.trim();
     setNewMessage("");
     setSending(true);
+
+    // Clear typing status
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      setTypingTimeout(null);
+    }
+    setIsTyping(false);
+    await setTypingStatus(connectionId, false);
 
     try {
       const sentMessage = await sendMessage({
@@ -106,39 +130,117 @@ const EnhancedChatInterface = ({
   };
 
   const handleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+
     try {
-      await addMessageReaction(messageId, emoji);
-      // Update local state to show reaction immediately
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId 
-          ? { 
-              ...msg, 
-              reactions: { 
-                ...msg.reactions, 
-                [emoji]: [...(msg.reactions?.[emoji] || []), "current-user"] 
-              } 
-            }
-          : msg
-      ));
+      // Check if user already reacted with this emoji
+      const message = messages.find(m => m.id === messageId);
+      const hasReacted = message?.reactions[emoji]?.includes(user.id);
+
+      if (hasReacted) {
+        await removeMessageReaction(messageId, emoji);
+      } else {
+        await addMessageReaction(messageId, emoji);
+      }
     } catch (error) {
-      console.error("Error adding reaction:", error);
+      console.error("Error handling reaction:", error);
+    }
+  };
+
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewMessage(value);
+
+    // Handle typing indicators
+    if (value.trim() && !isTyping) {
+      setIsTyping(true);
+      await setTypingStatus(connectionId, true);
+    }
+
+    // Clear existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    // Set new timeout to clear typing status
+    const timeout = setTimeout(async () => {
+      setIsTyping(false);
+      await setTypingStatus(connectionId, false);
+    }, 2000);
+
+    setTypingTimeout(timeout);
+  };
+
+  const handleSendGift = async (giftData: any) => {
+    try {
+      const giftMessage = `🎁 ${giftData.itemName}${giftData.message ? ` - ${giftData.message}` : ''}`;
+      
+      const sentMessage = await sendMessage({
+        recipientId: connectionId,
+        content: giftMessage,
+        messageType: 'gift',
+        ...(giftData.type === 'wishlist' && { wishlistLinkId: giftData.itemId }),
+        ...(giftData.type === 'marketplace' && { productLinkId: parseInt(giftData.itemId) })
+      });
+
+      if (sentMessage) {
+        setMessages(prev => [...prev, sentMessage]);
+        setTimeout(scrollToBottom, 100);
+      }
+    } catch (error) {
+      console.error("Error sending gift:", error);
+      toast.error("Failed to send gift");
     }
   };
 
   useEffect(() => {
+    if (!user) return;
+
     loadMessages();
     
-    // Set up real-time subscription
-    const unsubscribe = subscribeToMessages(connectionId, (newMessage: Message) => {
-      setMessages(prev => [...prev, newMessage]);
-      setTimeout(scrollToBottom, 100);
-    });
+    // Set up real-time subscriptions
+    const unsubscribeMessages = subscribeToMessages(
+      user.id,
+      connectionId,
+      (newMessage: Message) => {
+        setMessages(prev => [...prev, newMessage]);
+        setTimeout(scrollToBottom, 100);
+        
+        // Mark message as read if chat is active
+        if (newMessage.recipient_id === user.id) {
+          markMessagesAsRead([newMessage.id]);
+        }
+      },
+      (updatedMessage: Message) => {
+        setMessages(prev => prev.map(msg => 
+          msg.id === updatedMessage.id ? updatedMessage : msg
+        ));
+      }
+    );
 
-    // Simulate online status (in real app, this would come from presence)
-    setIsOnline(Math.random() > 0.3);
+    // Subscribe to typing indicators
+    const unsubscribeTyping = subscribeToTyping(
+      user.id,
+      connectionId,
+      (typing: boolean) => {
+        setOtherUserTyping(typing);
+      }
+    );
 
-    return unsubscribe;
-  }, [connectionId, loadMessages, scrollToBottom]);
+    // Subscribe to user presence
+    const unsubscribePresence = subscribeToUserPresence(connectionId);
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeTyping();
+      unsubscribePresence();
+      
+      // Clear typing status on unmount
+      if (isTyping) {
+        setTypingStatus(connectionId, false);
+      }
+    };
+  }, [connectionId, loadMessages, scrollToBottom, user, isTyping, subscribeToUserPresence]);
 
   const initials = connectionName
     .split(' ')
@@ -174,8 +276,11 @@ const EnhancedChatInterface = ({
                 {initials}
               </AvatarFallback>
             </Avatar>
-            {isOnline && (
+            {userStatus.status === 'online' && (
               <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></div>
+            )}
+            {userStatus.status === 'away' && (
+              <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-yellow-500 border-2 border-white rounded-full"></div>
             )}
           </div>
           <div>
@@ -185,7 +290,10 @@ const EnhancedChatInterface = ({
                 {relationshipType}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {isOnline ? "Online" : "Last seen recently"}
+                {userStatus.status === "online" ? "Online" : 
+                 userStatus.status === "away" ? "Away" : 
+                 userStatus.lastSeen ? `Last seen ${formatDistanceToNow(new Date(userStatus.lastSeen), { addSuffix: true })}` : 
+                 "Offline"}
               </span>
             </div>
           </div>
@@ -198,7 +306,12 @@ const EnhancedChatInterface = ({
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <Video className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0"
+            onClick={() => setShowGiftModal(true)}
+          >
             <Gift className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -240,22 +353,37 @@ const EnhancedChatInterface = ({
                       "relative group",
                       isCurrentUser 
                         ? "bg-primary text-primary-foreground" 
-                        : "bg-muted"
+                        : "bg-muted",
+                      message.message_type === 'gift' && "border-2 border-purple-200"
                     )}>
                       <CardContent className="p-3">
                         <p className="text-sm leading-relaxed">{message.content}</p>
                         
+                        {/* Delivery status for current user messages */}
+                        {isCurrentUser && (
+                          <div className="flex items-center justify-end mt-1">
+                            <span className="text-xs opacity-70">
+                              {message.delivery_status === 'read' && '✓✓'}
+                              {message.delivery_status === 'delivered' && '✓✓'}
+                              {message.delivery_status === 'sent' && '✓'}
+                              {message.delivery_status === 'sending' && '⏳'}
+                            </span>
+                          </div>
+                        )}
+                        
                         {/* Message reactions */}
                         {message.reactions && Object.keys(message.reactions).length > 0 && (
-                          <div className="flex gap-1 mt-2">
+                          <div className="flex gap-1 mt-2 flex-wrap">
                             {Object.entries(message.reactions).map(([emoji, users]) => (
-                              <Badge 
-                                key={emoji} 
-                                variant="secondary" 
-                                className="text-xs px-1 py-0.5 h-5"
+                              <Button
+                                key={emoji}
+                                variant="secondary"
+                                size="sm"
+                                className="h-6 px-2 text-xs cursor-pointer hover:bg-secondary/80"
+                                onClick={() => handleReaction(message.id, emoji)}
                               >
-                                {emoji} {users.length}
-                              </Badge>
+                                {emoji} {Array.isArray(users) ? users.length : 0}
+                              </Button>
                             ))}
                           </div>
                         )}
@@ -263,7 +391,7 @@ const EnhancedChatInterface = ({
                       
                       {/* Quick reaction buttons */}
                       <div className={cn(
-                        "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 p-1 bg-background border rounded-md shadow-sm",
+                        "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 p-1 bg-background border rounded-md shadow-sm z-10",
                         isCurrentUser ? "-left-16" : "-right-16"
                       )}>
                         <Button
@@ -301,6 +429,12 @@ const EnhancedChatInterface = ({
               );
             })
           )}
+          
+          {/* Typing indicator */}
+          {otherUserTyping && (
+            <TypingIndicator userName={connectionName} />
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
@@ -311,7 +445,7 @@ const EnhancedChatInterface = ({
           <div className="flex-1 relative">
             <Input
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={handleInputChange}
               placeholder={`Message ${connectionName}...`}
               className="pr-20 resize-none"
               disabled={sending}
@@ -344,6 +478,15 @@ const EnhancedChatInterface = ({
           </Button>
         </form>
       </div>
+
+      {/* Gift Modal */}
+      <ChatGiftModal
+        isOpen={showGiftModal}
+        onClose={() => setShowGiftModal(false)}
+        recipientName={connectionName}
+        recipientId={connectionId}
+        onSendGift={handleSendGift}
+      />
     </div>
   );
 };

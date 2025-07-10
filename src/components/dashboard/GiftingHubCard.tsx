@@ -80,29 +80,6 @@ const SmartGiftingTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Group Projects Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <div className="flex items-center mb-4">
-            <Users className="h-5 w-5 mr-2 text-blue-500" />
-            <h3 className="text-lg font-semibold">Active Group Projects</h3>
-          </div>
-          <div className="p-6 bg-card rounded-lg border">
-            <ActiveGroupProjectsWidget />
-          </div>
-        </div>
-        
-        <div>
-          <div className="flex items-center mb-4">
-            <Target className="h-5 w-5 mr-2 text-purple-500" />
-            <h3 className="text-lg font-semibold">Group Gift Analytics</h3>
-          </div>
-          <div className="p-6 bg-card rounded-lg border">
-            <GroupGiftAnalytics />
-          </div>
-        </div>
-      </div>
-
       {/* Auto-Gift Hub Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -456,6 +433,29 @@ const GiftActivityTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Group Projects Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <div className="flex items-center mb-4">
+            <Users className="h-5 w-5 mr-2 text-blue-500" />
+            <h3 className="text-lg font-semibold">Active Group Projects</h3>
+          </div>
+          <div className="p-6 bg-card rounded-lg border">
+            <ActiveGroupProjectsWidget />
+          </div>
+        </div>
+        
+        <div>
+          <div className="flex items-center mb-4">
+            <Target className="h-5 w-5 mr-2 text-purple-500" />
+            <h3 className="text-lg font-semibold">Group Gift Analytics</h3>
+          </div>
+          <div className="p-6 bg-card rounded-lg border">
+            <GroupGiftAnalytics />
+          </div>
+        </div>
+      </div>
+
       {/* Recent Orders */}
       <div>
         <div className="flex items-center justify-between mb-4">

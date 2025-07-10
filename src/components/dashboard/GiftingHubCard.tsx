@@ -81,11 +81,16 @@ const SmartGiftingTab = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center">
             <Zap className="h-5 w-5 mr-2 text-emerald-500" />
-            Auto-Gift Hub
+            Upcoming Events
           </h3>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/events?tab=monitoring">Manage All</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="default" size="sm" asChild>
+              <Link to="/events?action=add">Add Event</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/events?tab=monitoring">Manage All</Link>
+            </Button>
+          </div>
         </div>
         
         {upcomingEvents.length > 0 ? (

@@ -783,8 +783,38 @@ export type Database = {
         }
         Relationships: []
       }
+      message_rate_limits: {
+        Row: {
+          is_rate_limited: boolean | null
+          last_message_date: string | null
+          last_message_time: string | null
+          messages_sent_today: number | null
+          rate_limit_expires_at: string | null
+          user_id: string
+        }
+        Insert: {
+          is_rate_limited?: boolean | null
+          last_message_date?: string | null
+          last_message_time?: string | null
+          messages_sent_today?: number | null
+          rate_limit_expires_at?: string | null
+          user_id: string
+        }
+        Update: {
+          is_rate_limited?: boolean | null
+          last_message_date?: string | null
+          last_message_time?: string | null
+          messages_sent_today?: number | null
+          rate_limit_expires_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
           content: string
           created_at: string | null
           delivery_status: string | null
@@ -799,6 +829,9 @@ export type Database = {
           wishlist_link_id: string | null
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content: string
           created_at?: string | null
           delivery_status?: string | null
@@ -813,6 +846,9 @@ export type Database = {
           wishlist_link_id?: string | null
         }
         Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content?: string
           created_at?: string | null
           delivery_status?: string | null
@@ -835,6 +871,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      offline_message_queue: {
+        Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
+          content: string
+          error_message: string | null
+          id: string
+          last_retry_at: string | null
+          max_retries: number | null
+          message_type: string | null
+          queued_at: string | null
+          recipient_id: string
+          retry_count: number | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content: string
+          error_message?: string | null
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number | null
+          message_type?: string | null
+          queued_at?: string | null
+          recipient_id: string
+          retry_count?: number | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content?: string
+          error_message?: string | null
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number | null
+          message_type?: string | null
+          queued_at?: string | null
+          recipient_id?: string
+          retry_count?: number | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       order_items: {
         Row: {
@@ -1543,6 +1630,10 @@ export type Database = {
       }
       can_user_follow: {
         Args: { follower_id: string; target_id: string }
+        Returns: boolean
+      }
+      check_message_rate_limit: {
+        Args: { sender_uuid: string }
         Returns: boolean
       }
       delete_user_account: {

@@ -28,12 +28,15 @@ import {
   removeMessageReaction,
   setTypingStatus,
   subscribeToTyping,
+  setupOfflineSupport,
   type Message 
-} from "@/utils/enhancedMessageService";
+} from "@/utils/advancedMessageService";
 import { useEnhancedPresence } from "@/hooks/useEnhancedPresence";
 import { useAuth } from "@/contexts/auth";
 import TypingIndicator from "./TypingIndicator";
 import ChatGiftModal from "./ChatGiftModal";
+import FileAttachment from "./FileAttachment";
+import AttachmentDisplay from "./AttachmentDisplay";
 import { toast } from "sonner";
 
 interface EnhancedChatInterfaceProps {
@@ -60,9 +63,16 @@ const EnhancedChatInterface = ({
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesStartRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,11 +80,21 @@ const EnhancedChatInterface = ({
 
   const userStatus = getUserStatus(connectionId);
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async (page: number = 0, append: boolean = false) => {
     try {
-      setLoading(true);
-      const fetchedMessages = await fetchMessages(connectionId);
-      setMessages(fetchedMessages);
+      if (page === 0) setLoading(true);
+      else setLoadingMore(true);
+      
+      const { messages: fetchedMessages, hasMore } = await fetchMessages(connectionId, page);
+      
+      if (append) {
+        setMessages(prev => [...fetchedMessages, ...prev]);
+      } else {
+        setMessages(fetchedMessages);
+      }
+      
+      setHasMoreMessages(hasMore);
+      setCurrentPage(page);
       
       // Mark unread messages as read
       const unreadMessageIds = fetchedMessages
@@ -85,22 +105,31 @@ const EnhancedChatInterface = ({
         await markMessagesAsRead(unreadMessageIds);
       }
       
-      setTimeout(scrollToBottom, 100);
+      if (page === 0) {
+        setTimeout(scrollToBottom, 100);
+      }
     } catch (error) {
       console.error("Error loading messages:", error);
       toast.error("Failed to load messages");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [connectionId, scrollToBottom, user?.id]);
+  }, [connectionId, user?.id, scrollToBottom]);
+
+  const loadMoreMessages = useCallback(async () => {
+    if (!hasMoreMessages || loadingMore) return;
+    await loadMessages(currentPage + 1, true);
+  }, [hasMoreMessages, loadingMore, currentPage, loadMessages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || sending) return;
+    if ((!newMessage.trim() && !selectedFile) || sending) return;
 
-    const messageContent = newMessage.trim();
+    const messageContent = newMessage.trim() || (selectedFile ? `📎 ${selectedFile.name}` : "");
     setNewMessage("");
     setSending(true);
+    setUploading(!!selectedFile);
 
     // Clear typing status
     if (typingTimeout) {
@@ -113,19 +142,24 @@ const EnhancedChatInterface = ({
     try {
       const sentMessage = await sendMessage({
         recipientId: connectionId,
-        content: messageContent
+        content: messageContent,
+        attachment: selectedFile || undefined
       });
 
       if (sentMessage) {
         setMessages(prev => [...prev, sentMessage]);
         setTimeout(scrollToBottom, 100);
       }
+      
+      setSelectedFile(null);
+      setUploadProgress(0);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
       setNewMessage(messageContent); // Restore message on error
     } finally {
       setSending(false);
+      setUploading(false);
     }
   };
 
@@ -198,6 +232,9 @@ const EnhancedChatInterface = ({
 
     loadMessages();
     
+    // Set up offline support
+    const cleanupOffline = setupOfflineSupport();
+    
     // Set up real-time subscriptions
     const unsubscribeMessages = subscribeToMessages(
       user.id,
@@ -234,13 +271,14 @@ const EnhancedChatInterface = ({
       unsubscribeMessages();
       unsubscribeTyping();
       unsubscribePresence();
+      cleanupOffline();
       
       // Clear typing status on unmount
       if (isTyping) {
         setTypingStatus(connectionId, false);
       }
     };
-  }, [connectionId, loadMessages, scrollToBottom, user, isTyping, subscribeToUserPresence]);
+  }, [connectionId, loadMessages, user, isTyping, subscribeToUserPresence]);
 
   const initials = connectionName
     .split(' ')
@@ -320,9 +358,23 @@ const EnhancedChatInterface = ({
         </div>
       </div>
 
-      {/* Messages Area */}
+      {/* Messages Area with Infinite Scroll */}
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
+          {/* Load More Button */}
+          {hasMoreMessages && (
+            <div className="text-center" ref={messagesStartRef}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadMoreMessages}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading..." : "Load More Messages"}
+              </Button>
+            </div>
+          )}
+          
           {messages.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Start your conversation with {connectionName}</p>
@@ -359,6 +411,17 @@ const EnhancedChatInterface = ({
                       <CardContent className="p-3">
                         <p className="text-sm leading-relaxed">{message.content}</p>
                         
+                        {/* File attachments */}
+                        {message.attachment_url && message.attachment_type && message.attachment_name && (
+                          <div className="mt-2">
+                            <AttachmentDisplay
+                              attachmentUrl={message.attachment_url}
+                              attachmentType={message.attachment_type}
+                              attachmentName={message.attachment_name}
+                            />
+                          </div>
+                        )}
+                        
                         {/* Delivery status for current user messages */}
                         {isCurrentUser && (
                           <div className="flex items-center justify-end mt-1">
@@ -379,7 +442,7 @@ const EnhancedChatInterface = ({
                                 key={emoji}
                                 variant="secondary"
                                 size="sm"
-                                className="h-6 px-2 text-xs cursor-pointer hover:bg-secondary/80"
+                                className="h-6 px-2 text-xs cursor-pointer hover:bg-secondary/80 touch-manipulation"
                                 onClick={() => handleReaction(message.id, emoji)}
                               >
                                 {emoji} {Array.isArray(users) ? users.length : 0}
@@ -389,7 +452,7 @@ const EnhancedChatInterface = ({
                         )}
                       </CardContent>
                       
-                      {/* Quick reaction buttons */}
+                      {/* Quick reaction buttons - Mobile optimized */}
                       <div className={cn(
                         "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 p-1 bg-background border rounded-md shadow-sm z-10",
                         isCurrentUser ? "-left-16" : "-right-16"
@@ -397,7 +460,7 @@ const EnhancedChatInterface = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-xs"
+                          className="h-8 w-8 p-0 text-xs touch-manipulation"
                           onClick={() => handleReaction(message.id, "👍")}
                         >
                           👍
@@ -405,7 +468,7 @@ const EnhancedChatInterface = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-xs"
+                          className="h-8 w-8 p-0 text-xs touch-manipulation"
                           onClick={() => handleReaction(message.id, "❤️")}
                         >
                           ❤️
@@ -413,7 +476,7 @@ const EnhancedChatInterface = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-xs"
+                          className="h-8 w-8 p-0 text-xs touch-manipulation"
                           onClick={() => handleReaction(message.id, "😂")}
                         >
                           😂
@@ -441,29 +504,43 @@ const EnhancedChatInterface = ({
 
       {/* Message Input */}
       <div className="p-4 border-t">
+        {/* File attachment preview */}
+        {selectedFile && (
+          <div className="mb-2">
+            <FileAttachment
+              selectedFile={selectedFile}
+              onFileSelect={setSelectedFile}
+              onFileRemove={() => setSelectedFile(null)}
+              uploading={uploading}
+              uploadProgress={uploadProgress}
+              disabled={sending}
+            />
+          </div>
+        )}
+        
         <form onSubmit={handleSendMessage} className="flex items-end gap-2">
           <div className="flex-1 relative">
             <Input
               value={newMessage}
               onChange={handleInputChange}
               placeholder={`Message ${connectionName}...`}
-              className="pr-20 resize-none"
+              className="pr-20 resize-none min-h-[44px] touch-manipulation"
               disabled={sending}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+              <FileAttachment
+                onFileSelect={setSelectedFile}
+                onFileRemove={() => setSelectedFile(null)}
+                selectedFile={selectedFile}
+                uploading={uploading}
+                uploadProgress={uploadProgress}
+                disabled={sending}
+              />
               <Button 
                 type="button" 
                 variant="ghost" 
                 size="sm"
-                className="h-8 w-8 p-0"
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm"
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 touch-manipulation"
               >
                 <Smile className="h-4 w-4" />
               </Button>
@@ -471,8 +548,8 @@ const EnhancedChatInterface = ({
           </div>
           <Button 
             type="submit" 
-            disabled={!newMessage.trim() || sending}
-            className="h-10 w-10 p-0"
+            disabled={(!newMessage.trim() && !selectedFile) || sending}
+            className="h-11 w-11 p-0 touch-manipulation"
           >
             <Send className="h-4 w-4" />
           </Button>

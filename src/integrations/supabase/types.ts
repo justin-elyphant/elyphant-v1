@@ -783,6 +783,295 @@ export type Database = {
         }
         Relationships: []
       }
+      group_chat_members: {
+        Row: {
+          can_invite: boolean | null
+          can_manage_gifts: boolean | null
+          group_chat_id: string
+          id: string
+          joined_at: string | null
+          last_seen_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          can_invite?: boolean | null
+          can_manage_gifts?: boolean | null
+          group_chat_id: string
+          id?: string
+          joined_at?: string | null
+          last_seen_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          can_invite?: boolean | null
+          can_manage_gifts?: boolean | null
+          group_chat_id?: string
+          id?: string
+          joined_at?: string | null
+          last_seen_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_chat_members_group_chat_id_fkey"
+            columns: ["group_chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_chats: {
+        Row: {
+          avatar_url: string | null
+          chat_type: string | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          chat_type?: string | null
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          chat_type?: string | null
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_chats_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_gift_contributions: {
+        Row: {
+          committed_amount: number
+          contribution_status: string | null
+          contributor_id: string
+          created_at: string | null
+          group_gift_project_id: string
+          id: string
+          paid_amount: number | null
+          payment_date: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          committed_amount: number
+          contribution_status?: string | null
+          contributor_id: string
+          created_at?: string | null
+          group_gift_project_id: string
+          id?: string
+          paid_amount?: number | null
+          payment_date?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          committed_amount?: number
+          contribution_status?: string | null
+          contributor_id?: string
+          created_at?: string | null
+          group_gift_project_id?: string
+          id?: string
+          paid_amount?: number | null
+          payment_date?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_gift_contributions_contributor_id_fkey"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_contributions_group_gift_project_id_fkey"
+            columns: ["group_gift_project_id"]
+            isOneToOne: false
+            referencedRelation: "group_gift_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_gift_projects: {
+        Row: {
+          coordinator_id: string
+          created_at: string | null
+          current_amount: number | null
+          delivery_address: Json | null
+          group_chat_id: string
+          id: string
+          order_id: string | null
+          project_name: string
+          purchase_deadline: string | null
+          recipient_id: string | null
+          recipient_name: string | null
+          status: string | null
+          stripe_group_payment_intent_id: string | null
+          target_amount: number
+          target_product_id: string | null
+          target_product_image: string | null
+          target_product_name: string | null
+          target_product_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          coordinator_id: string
+          created_at?: string | null
+          current_amount?: number | null
+          delivery_address?: Json | null
+          group_chat_id: string
+          id?: string
+          order_id?: string | null
+          project_name: string
+          purchase_deadline?: string | null
+          recipient_id?: string | null
+          recipient_name?: string | null
+          status?: string | null
+          stripe_group_payment_intent_id?: string | null
+          target_amount: number
+          target_product_id?: string | null
+          target_product_image?: string | null
+          target_product_name?: string | null
+          target_product_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          coordinator_id?: string
+          created_at?: string | null
+          current_amount?: number | null
+          delivery_address?: Json | null
+          group_chat_id?: string
+          id?: string
+          order_id?: string | null
+          project_name?: string
+          purchase_deadline?: string | null
+          recipient_id?: string | null
+          recipient_name?: string | null
+          status?: string | null
+          stripe_group_payment_intent_id?: string | null
+          target_amount?: number
+          target_product_id?: string | null
+          target_product_image?: string | null
+          target_product_name?: string | null
+          target_product_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_gift_projects_coordinator_id_fkey"
+            columns: ["coordinator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_projects_group_chat_id_fkey"
+            columns: ["group_chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_projects_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_projects_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_gift_tracking_access: {
+        Row: {
+          access_level: string | null
+          can_view_delivery_address: boolean | null
+          can_view_tracking: string | null
+          created_at: string | null
+          group_gift_project_id: string
+          id: string
+          notification_preferences: Json | null
+          user_id: string
+        }
+        Insert: {
+          access_level?: string | null
+          can_view_delivery_address?: boolean | null
+          can_view_tracking?: string | null
+          created_at?: string | null
+          group_gift_project_id: string
+          id?: string
+          notification_preferences?: Json | null
+          user_id: string
+        }
+        Update: {
+          access_level?: string | null
+          can_view_delivery_address?: boolean | null
+          can_view_tracking?: string | null
+          created_at?: string | null
+          group_gift_project_id?: string
+          id?: string
+          notification_preferences?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_gift_tracking_access_group_gift_project_id_fkey"
+            columns: ["group_gift_project_id"]
+            isOneToOne: false
+            referencedRelation: "group_gift_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_tracking_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_rate_limits: {
         Row: {
           is_rate_limited: boolean | null
@@ -818,8 +1107,11 @@ export type Database = {
           content: string
           created_at: string | null
           delivery_status: string | null
+          group_chat_id: string | null
           id: string
           is_read: boolean | null
+          mentioned_users: string[] | null
+          message_thread_id: string | null
           message_type: string | null
           product_link_id: number | null
           reactions: Json | null
@@ -835,8 +1127,11 @@ export type Database = {
           content: string
           created_at?: string | null
           delivery_status?: string | null
+          group_chat_id?: string | null
           id?: string
           is_read?: boolean | null
+          mentioned_users?: string[] | null
+          message_thread_id?: string | null
           message_type?: string | null
           product_link_id?: number | null
           reactions?: Json | null
@@ -852,8 +1147,11 @@ export type Database = {
           content?: string
           created_at?: string | null
           delivery_status?: string | null
+          group_chat_id?: string | null
           id?: string
           is_read?: boolean | null
+          mentioned_users?: string[] | null
+          message_thread_id?: string | null
           message_type?: string | null
           product_link_id?: number | null
           reactions?: Json | null
@@ -863,6 +1161,13 @@ export type Database = {
           wishlist_link_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_group_chat_id_fkey"
+            columns: ["group_chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_reply_to_id_fkey"
             columns: ["reply_to_id"]
@@ -922,6 +1227,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      order_group_contributors: {
+        Row: {
+          contribution_amount: number
+          contributor_id: string
+          created_at: string | null
+          id: string
+          order_id: string
+          stripe_payment_intent_id: string
+        }
+        Insert: {
+          contribution_amount: number
+          contributor_id: string
+          created_at?: string | null
+          id?: string
+          order_id: string
+          stripe_payment_intent_id: string
+        }
+        Update: {
+          contribution_amount?: number
+          contributor_id?: string
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          stripe_payment_intent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_group_contributors_contributor_id_fkey"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_group_contributors_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -994,9 +1341,11 @@ export type Database = {
           created_at: string
           currency: string
           delivery_groups: Json | null
+          funding_source: string | null
           gift_message: string | null
           gift_options: Json | null
           gift_scheduling_options: Json | null
+          group_gift_project_id: string | null
           has_multiple_recipients: boolean | null
           id: string
           is_gift: boolean | null
@@ -1022,9 +1371,11 @@ export type Database = {
           created_at?: string
           currency?: string
           delivery_groups?: Json | null
+          funding_source?: string | null
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
+          group_gift_project_id?: string | null
           has_multiple_recipients?: boolean | null
           id?: string
           is_gift?: boolean | null
@@ -1050,9 +1401,11 @@ export type Database = {
           created_at?: string
           currency?: string
           delivery_groups?: Json | null
+          funding_source?: string | null
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
+          group_gift_project_id?: string | null
           has_multiple_recipients?: boolean | null
           id?: string
           is_gift?: boolean | null
@@ -1074,7 +1427,15 @@ export type Database = {
           zinc_order_id?: string | null
           zinc_status?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_group_gift_project_id_fkey"
+            columns: ["group_gift_project_id"]
+            isOneToOne: false
+            referencedRelation: "group_gift_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pricing_settings: {
         Row: {

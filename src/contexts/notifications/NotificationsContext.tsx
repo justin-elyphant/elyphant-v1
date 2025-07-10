@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
-export type NotificationType = "connection" | "wishlist" | "gift" | "event" | "system";
+export type NotificationType = "connection" | "wishlist" | "gift" | "event" | "system" | "group_gift" | "group_invite" | "group_mention" | "group_vote";
 
 export interface Notification {
   id: string;
@@ -156,6 +156,34 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
         type: "system",
         link: "/whats-new",
         actionText: "Learn More"
+      },
+      group_gift: {
+        title: "Group Gift Update",
+        message: "The group gift for Sarah's birthday is ready to purchase!",
+        type: "group_gift",
+        link: "/group-chats",
+        actionText: "View Project"
+      },
+      group_invite: {
+        title: "Group Invitation",
+        message: "You've been invited to join the Birthday Planning group",
+        type: "group_invite",
+        link: "/group-chats",
+        actionText: "View Invitation"
+      },
+      group_mention: {
+        title: "You were mentioned",
+        message: "Alex mentioned you in the Holiday Party planning chat",
+        type: "group_mention",
+        link: "/group-chats",
+        actionText: "View Message"
+      },
+      group_vote: {
+        title: "Voting Required",
+        message: "Please vote on the gift proposal for Tom's retirement",
+        type: "group_vote",
+        link: "/group-chats",
+        actionText: "Vote Now"
       }
     };
     

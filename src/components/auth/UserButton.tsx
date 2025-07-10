@@ -12,11 +12,14 @@ import { User, LogOut, Settings, Heart, Store, MessageSquare, LayoutDashboard } 
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
+import NotificationBadge from "@/components/notifications/NotificationBadge";
 
 const UserButton = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
+  const { hasIssues } = useProfileDataIntegrity();
   
   const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
   
@@ -115,7 +118,15 @@ const UserButton = () => {
 
         <DropdownMenuItem onClick={() => navigate("/dashboard")}>
           <LayoutDashboard className="mr-2 h-4 w-4" />
-          <span>Dashboard</span>
+          <span className="relative">
+            Dashboard
+            {hasIssues && (
+              <NotificationBadge 
+                count={1} 
+                className="absolute -top-2 -right-2 min-w-[1rem] h-4 text-xs"
+              />
+            )}
+          </span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={handleProfileClick}>

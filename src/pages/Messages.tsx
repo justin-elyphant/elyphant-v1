@@ -14,6 +14,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Search, Plus, Users } from "lucide-react";
 import { useUserPresence } from "@/hooks/useUserPresence";
+import CreateGroupModal from "@/components/messaging/CreateGroupModal";
+import { getUserGroupChats } from "@/services/groupChatService";
+import { useQuery } from "@tanstack/react-query";
 
 // Mock conversation data for demo purposes - this will be enhanced with real message data
 const mockConversations = [
@@ -62,13 +65,23 @@ const Messages = () => {
   
   const [selectedConnection, setSelectedConnection] = useState<string | null>(connectionId || null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [conversationType, setConversationType] = useState<'all' | 'direct' | 'groups'>('all');
+
+  // Get group chats for current user
+  const { data: groupChats = [], isLoading: groupsLoading } = useQuery({
+    queryKey: ['group-chats', user?.id],
+    queryFn: () => user ? getUserGroupChats() : [],
+    enabled: !!user
+  });
 
   // Create message threads from real connection data
   const allConnections = [...friends, ...following].filter(conn => 
     conn.type === 'friend' || conn.type === 'following'
   );
 
-  const messageThreads = allConnections.length > 0
+  // Direct message threads
+  const directMessageThreads = allConnections.length > 0
     ? allConnections.map((connection, index) => {
         // Use mock data for message content until we implement real messaging
         const mockData = mockConversations[index % mockConversations.length];
@@ -83,7 +96,8 @@ const Messages = () => {
           unreadCount: mockData.unreadCount,
           relationshipType: connection.relationship,
           status: connection.type === 'friend' ? 'accepted' : 'following',
-          mutualFriends: connection.mutualFriends
+          mutualFriends: connection.mutualFriends,
+          type: 'direct' as const
         };
       })
     : // Fallback to mock data for demo if no real connections
@@ -97,13 +111,50 @@ const Messages = () => {
         unreadCount: mock.unreadCount,
         relationshipType: 'friend' as const,
         status: 'accepted' as const,
-        mutualFriends: Math.floor(Math.random() * 5)
+        mutualFriends: Math.floor(Math.random() * 5),
+        type: 'direct' as const
       }));
+
+  // Group chat threads
+  const groupThreads = groupChats.map(group => ({
+    threadId: group.id,
+    connectionName: group.name,
+    connectionImage: group.avatar_url,
+    connectionUsername: `${group.member_count || 0} members`,
+    lastMessage: 'Group conversation',
+    lastMessageTime: group.updated_at,
+    unreadCount: 0,
+    relationshipType: 'group' as const,
+    status: 'active' as const,
+    mutualFriends: 0,
+    type: 'group' as const,
+    memberCount: group.member_count || 0
+  }));
+
+  // Combine all threads
+  const allThreads = [...directMessageThreads, ...groupThreads];
+  
+  // Filter based on conversation type
+  const messageThreads = allThreads.filter(thread => {
+    if (conversationType === 'direct') return thread.type === 'direct';
+    if (conversationType === 'groups') return thread.type === 'group';
+    return true; // 'all'
+  });
 
   const filteredThreads = messageThreads.filter(thread =>
     thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     thread.connectionUsername.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Check URL params for create group action
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'create-group') {
+      setShowCreateGroup(true);
+      // Clean up URL
+      window.history.replaceState({}, '', '/messages');
+    }
+  }, []);
 
   useEffect(() => {
     if (connectionId) {
@@ -147,13 +198,13 @@ const Messages = () => {
     );
   }
 
-  if (loading) {
+  if (loading || groupsLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container max-w-7xl mx-auto py-8 px-4">
           <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Loading connections...</p>
+            <p className="text-muted-foreground">Loading conversations...</p>
           </div>
         </div>
       </div>
@@ -171,10 +222,19 @@ const Messages = () => {
         
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Messages</h1>
-          <Button onClick={() => navigate('/connections')}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Message
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCreateGroup(true)}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              New Group
+            </Button>
+            <Button onClick={() => navigate('/connections')}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Message
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-12rem)]">
@@ -183,6 +243,32 @@ const Messages = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Conversations</CardTitle>
               <CardDescription>Recent chats with your connections</CardDescription>
+              
+              {/* Conversation type filter */}
+              <div className="flex gap-1 mb-3">
+                <Button
+                  variant={conversationType === 'all' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setConversationType('all')}
+                >
+                  All ({allThreads.length})
+                </Button>
+                <Button
+                  variant={conversationType === 'direct' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setConversationType('direct')}
+                >
+                  Direct ({directMessageThreads.length})
+                </Button>
+                <Button
+                  variant={conversationType === 'groups' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setConversationType('groups')}
+                >
+                  Groups ({groupThreads.length})
+                </Button>
+              </div>
+              
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -198,19 +284,25 @@ const Messages = () => {
                 <div className="space-y-2 p-4 pt-0">
                   {filteredThreads.length > 0 ? (
                     filteredThreads.map((thread) => (
-                      <MessageThread
-                        key={thread.threadId}
-                        threadId={thread.threadId}
-                        connectionName={thread.connectionName}
-                        connectionImage={thread.connectionImage}
-                        connectionUsername={thread.connectionUsername}
-                        lastMessage={thread.lastMessage}
-                        lastMessageTime={thread.lastMessageTime}
-                        unreadCount={thread.unreadCount}
-                        isActive={selectedConnection === thread.threadId}
-                        mutualFriends={thread.mutualFriends}
-                        onClick={() => handleSelectConnection(thread.threadId)}
-                      />
+                      <div key={thread.threadId} className="relative">
+                        <MessageThread
+                          threadId={thread.threadId}
+                          connectionName={thread.connectionName}
+                          connectionImage={thread.connectionImage}
+                          connectionUsername={thread.connectionUsername}
+                          lastMessage={thread.lastMessage}
+                          lastMessageTime={thread.lastMessageTime}
+                          unreadCount={thread.unreadCount}
+                          isActive={selectedConnection === thread.threadId}
+                          mutualFriends={thread.mutualFriends}
+                          onClick={() => handleSelectConnection(thread.threadId)}
+                        />
+                        {thread.type === 'group' && thread.memberCount && (
+                          <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {thread.memberCount}
+                          </div>
+                        )}
+                      </div>
                     ))
                   ) : (
                     <div className="text-center py-8">
@@ -238,12 +330,18 @@ const Messages = () => {
           <Card className="lg:col-span-3">
             <CardContent className="p-0 h-full">
               {selectedConnection && selectedConnectionData ? (
-                <EnhancedChatInterface 
-                  connectionId={selectedConnection}
-                  connectionName={selectedConnectionData.connectionName}
-                  connectionImage={selectedConnectionData.connectionImage}
-                  relationshipType={selectedConnectionData.relationshipType}
-                />
+                selectedConnectionData.type === 'group' ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">Group chat interface coming soon...</p>
+                  </div>
+                ) : (
+                  <EnhancedChatInterface 
+                    connectionId={selectedConnection}
+                    connectionName={selectedConnectionData.connectionName}
+                    connectionImage={selectedConnectionData.connectionImage}
+                    relationshipType={selectedConnectionData.relationshipType}
+                  />
+                )
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
                   <MessageSquare className="h-16 w-16 text-muted-foreground mb-4" />
@@ -261,6 +359,17 @@ const Messages = () => {
             </CardContent>
           </Card>
         </div>
+        
+        {/* Create Group Modal */}
+        <CreateGroupModal
+          isOpen={showCreateGroup}
+          onClose={() => setShowCreateGroup(false)}
+          onGroupCreated={(groupId) => {
+            setShowCreateGroup(false);
+            navigate(`/messages/${groupId}`);
+          }}
+          connections={friends.filter(f => f.type === 'friend')}
+        />
       </div>
     </div>
   );

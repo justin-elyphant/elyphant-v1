@@ -28,7 +28,8 @@ const SocialHubCard = () => {
       avatar: null,
       message: 'Thanks for the birthday gift suggestion!',
       time: '2h ago',
-      unread: true
+      unread: true,
+      isGroup: false
     },
     {
       id: '2', 
@@ -36,11 +37,27 @@ const SocialHubCard = () => {
       avatar: null,
       message: 'Hey, I updated my wishlist',
       time: '1d ago',
-      unread: false
+      unread: false,
+      isGroup: false
     }
   ];
 
-  const unreadCount = recentMessages.filter(msg => msg.unread).length;
+  // TODO: Replace with real group chats data when implemented
+  const recentGroupChats = [
+    {
+      id: '3',
+      name: 'Family Birthday Planning',
+      avatar: null,
+      message: 'Sarah: Perfect! Let\'s get that for mom',
+      time: '30m ago',
+      unread: true,
+      memberCount: 4,
+      isGroup: true
+    }
+  ];
+
+  const allConversations = [...recentMessages, ...recentGroupChats];
+  const unreadCount = allConversations.filter(conv => conv.unread).length;
 
   if (loading) {
     return (
@@ -138,46 +155,64 @@ const SocialHubCard = () => {
             )}
           </div>
 
-          {/* Messages Section */}
+          {/* Messages & Groups Section */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-muted-foreground">Recent Messages</h4>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/messages" className="flex items-center gap-1.5">
-                  <Send className="h-3.5 w-3.5" />
-                  <span className="text-xs">New</span>
-                </Link>
-              </Button>
+              <h4 className="text-sm font-medium text-muted-foreground">Recent Conversations</h4>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/messages?action=create-group" className="flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="text-xs">Group</span>
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/messages" className="flex items-center gap-1.5">
+                    <Send className="h-3.5 w-3.5" />
+                    <span className="text-xs">New</span>
+                  </Link>
+                </Button>
+              </div>
             </div>
-            {recentMessages.length > 0 ? (
+            {allConversations.length > 0 ? (
               <div className="space-y-2">
-                {recentMessages.slice(0, 2).map((message) => (
-                  <div key={message.id} className="flex items-center space-x-3 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={message.avatar} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                        {message.sender.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
+                {allConversations.slice(0, 3).map((conversation) => (
+                  <div key={conversation.id} className="flex items-center space-x-3 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div className="relative">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={conversation.avatar} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                          {conversation.isGroup 
+                            ? (conversation as any).name?.substring(0, 2).toUpperCase() || 'GR'
+                            : (conversation as any).sender?.split(' ').map((n: string) => n[0]).join('') || 'UN'
+                          }
+                        </AvatarFallback>
+                      </Avatar>
+                      {conversation.isGroup && (conversation as any).memberCount && (
+                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center">
+                          {(conversation as any).memberCount}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className={`text-xs font-medium truncate ${message.unread ? 'text-gray-900' : 'text-muted-foreground'}`}>
-                          {message.sender}
+                        <p className={`text-xs font-medium truncate ${conversation.unread ? 'text-gray-900' : 'text-muted-foreground'}`}>
+                          {conversation.isGroup ? (conversation as any).name : (conversation as any).sender}
                         </p>
-                        <span className="text-xs text-muted-foreground">{message.time}</span>
-                        {message.unread && (
+                        <span className="text-xs text-muted-foreground">{conversation.time}</span>
+                        {conversation.unread && (
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
                         )}
                       </div>
-                      <p className={`text-xs truncate ${message.unread ? 'text-gray-700' : 'text-muted-foreground'}`}>
-                        {message.message}
+                      <p className={`text-xs truncate ${conversation.unread ? 'text-gray-700' : 'text-muted-foreground'}`}>
+                        {conversation.message}
                       </p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No messages yet</p>
+              <p className="text-sm text-muted-foreground">No conversations yet</p>
             )}
           </div>
           

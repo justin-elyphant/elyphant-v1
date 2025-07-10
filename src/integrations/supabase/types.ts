@@ -675,6 +675,48 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_proposal_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          updated_at: string | null
+          user_id: string
+          vote_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          updated_at?: string | null
+          user_id: string
+          vote_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          updated_at?: string | null
+          user_id?: string
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_proposal_votes_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_proposal_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_searches: {
         Row: {
           budget_range: string | null
@@ -1072,6 +1114,42 @@ export type Database = {
           },
         ]
       }
+      message_mentions: {
+        Row: {
+          created_at: string | null
+          id: string
+          mentioned_user_id: string
+          message_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mentioned_user_id: string
+          message_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mentioned_user_id?: string
+          message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_mentions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_rate_limits: {
         Row: {
           is_rate_limited: boolean | null
@@ -1109,11 +1187,15 @@ export type Database = {
           delivery_status: string | null
           group_chat_id: string | null
           id: string
+          is_gift_proposal: boolean | null
           is_read: boolean | null
           mentioned_users: string[] | null
+          message_parent_id: string | null
           message_thread_id: string | null
           message_type: string | null
+          poll_data: Json | null
           product_link_id: number | null
+          proposal_data: Json | null
           reactions: Json | null
           recipient_id: string
           reply_to_id: string | null
@@ -1129,11 +1211,15 @@ export type Database = {
           delivery_status?: string | null
           group_chat_id?: string | null
           id?: string
+          is_gift_proposal?: boolean | null
           is_read?: boolean | null
           mentioned_users?: string[] | null
+          message_parent_id?: string | null
           message_thread_id?: string | null
           message_type?: string | null
+          poll_data?: Json | null
           product_link_id?: number | null
+          proposal_data?: Json | null
           reactions?: Json | null
           recipient_id: string
           reply_to_id?: string | null
@@ -1149,11 +1235,15 @@ export type Database = {
           delivery_status?: string | null
           group_chat_id?: string | null
           id?: string
+          is_gift_proposal?: boolean | null
           is_read?: boolean | null
           mentioned_users?: string[] | null
+          message_parent_id?: string | null
           message_thread_id?: string | null
           message_type?: string | null
+          poll_data?: Json | null
           product_link_id?: number | null
+          proposal_data?: Json | null
           reactions?: Json | null
           recipient_id?: string
           reply_to_id?: string | null
@@ -1166,6 +1256,13 @@ export type Database = {
             columns: ["group_chat_id"]
             isOneToOne: false
             referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_message_parent_id_fkey"
+            columns: ["message_parent_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {

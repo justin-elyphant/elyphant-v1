@@ -173,7 +173,7 @@ const EventCard = ({
 
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer" 
+      className="bg-white hover:shadow-md transition-shadow cursor-pointer" 
       onClick={handleCardClick}
     >
       <CardContent className="p-3 sm:p-4">

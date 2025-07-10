@@ -73,6 +73,7 @@ const EnhancedChatInterface = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesStartRef = useRef<HTMLDivElement>(null);
+  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -121,6 +122,29 @@ const EnhancedChatInterface = ({
     if (!hasMoreMessages || loadingMore) return;
     await loadMessages(currentPage + 1, true);
   }, [hasMoreMessages, loadingMore, currentPage, loadMessages]);
+
+  // Set up intersection observer for automatic infinite scroll
+  useEffect(() => {
+    if (!messagesStartRef.current || !hasMoreMessages) return;
+
+    intersectionObserverRef.current = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !loadingMore) {
+          loadMoreMessages();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    intersectionObserverRef.current.observe(messagesStartRef.current);
+
+    return () => {
+      if (intersectionObserverRef.current) {
+        intersectionObserverRef.current.disconnect();
+      }
+    };
+  }, [hasMoreMessages, loadingMore, loadMoreMessages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,14 +327,14 @@ const EnhancedChatInterface = ({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
       {/* Enhanced Chat Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-muted/20">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Avatar className="h-10 w-10">
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-muted/20 min-h-[60px]">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="relative flex-shrink-0">
+            <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
               <AvatarImage src={connectionImage} alt={connectionName} />
-              <AvatarFallback className="bg-purple-100 text-purple-800 font-medium">
+              <AvatarFallback className="bg-purple-100 text-purple-800 font-medium text-sm">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -321,13 +345,13 @@ const EnhancedChatInterface = ({
               <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-yellow-500 border-2 border-white rounded-full"></div>
             )}
           </div>
-          <div>
-            <h3 className="font-semibold text-sm">{connectionName}</h3>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className={cn("text-xs", relationshipBadgeColor)}>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-sm truncate">{connectionName}</h3>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              <Badge variant="secondary" className={cn("text-xs hidden sm:inline-flex", relationshipBadgeColor)}>
                 {relationshipType}
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground truncate">
                 {userStatus.status === "online" ? "Online" : 
                  userStatus.status === "away" ? "Away" : 
                  userStatus.lastSeen ? `Last seen ${formatDistanceToNow(new Date(userStatus.lastSeen), { addSuffix: true })}` : 
@@ -337,41 +361,42 @@ const EnhancedChatInterface = ({
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 touch-manipulation hidden sm:flex">
             <Phone className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 touch-manipulation hidden sm:flex">
             <Video className="h-4 w-4" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 touch-manipulation"
             onClick={() => setShowGiftModal(true)}
           >
-            <Gift className="h-4 w-4" />
+            <Gift className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 touch-manipulation">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Messages Area with Infinite Scroll */}
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        <div className="space-y-4">
-          {/* Load More Button */}
+      <ScrollArea className="flex-1 p-2 sm:p-4" ref={scrollAreaRef}>
+        <div className="space-y-2 sm:space-y-4">
+          {/* Infinite scroll trigger - invisible div at top */}
           {hasMoreMessages && (
-            <div className="text-center" ref={messagesStartRef}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadMoreMessages}
-                disabled={loadingMore}
-              >
-                {loadingMore ? "Loading..." : "Load More Messages"}
-              </Button>
+            <div 
+              ref={messagesStartRef} 
+              className="h-4 flex items-center justify-center"
+            >
+              {loadingMore && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="animate-spin h-3 w-3 border border-current border-t-transparent rounded-full"></div>
+                  Loading more...
+                </div>
+              )}
             </div>
           )}
           
@@ -381,20 +406,20 @@ const EnhancedChatInterface = ({
             </div>
           ) : (
             messages.map((message, index) => {
-              const isCurrentUser = message.sender_id === "current-user";
+              const isCurrentUser = user && message.sender_id === user.id;
               const showTimestamp = index === 0 || 
                 new Date(message.created_at).getTime() - new Date(messages[index - 1].created_at).getTime() > 300000; // 5 minutes
-
+              
               return (
-                <div key={message.id} className={cn("flex gap-3", isCurrentUser && "flex-row-reverse")}>
+                <div key={message.id} className={cn("flex gap-2 sm:gap-3", isCurrentUser && "flex-row-reverse")}>
                   {!isCurrentUser && (
-                    <Avatar className="h-8 w-8 mt-1">
+                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 mt-1 flex-shrink-0">
                       <AvatarImage src={connectionImage} alt={connectionName} />
                       <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                     </Avatar>
                   )}
                   
-                  <div className={cn("flex flex-col max-w-[70%]", isCurrentUser && "items-end")}>
+                  <div className={cn("flex flex-col max-w-[85%] sm:max-w-[70%]", isCurrentUser && "items-end")}>
                     {showTimestamp && (
                       <span className="text-xs text-muted-foreground mb-1 px-2">
                         {format(new Date(message.created_at), 'MMM d, h:mm a')}
@@ -503,7 +528,7 @@ const EnhancedChatInterface = ({
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="p-4 border-t">
+      <div className="p-2 sm:p-4 border-t bg-background">
         {/* File attachment preview */}
         {selectedFile && (
           <div className="mb-2">
@@ -524,7 +549,7 @@ const EnhancedChatInterface = ({
               value={newMessage}
               onChange={handleInputChange}
               placeholder={`Message ${connectionName}...`}
-              className="pr-20 resize-none min-h-[44px] touch-manipulation"
+              className="pr-20 resize-none min-h-[48px] sm:min-h-[44px] touch-manipulation text-base sm:text-sm"
               disabled={sending}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
@@ -549,9 +574,9 @@ const EnhancedChatInterface = ({
           <Button 
             type="submit" 
             disabled={(!newMessage.trim() && !selectedFile) || sending}
-            className="h-11 w-11 p-0 touch-manipulation"
+            className="h-12 w-12 sm:h-11 sm:w-11 p-0 touch-manipulation"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
         </form>
       </div>

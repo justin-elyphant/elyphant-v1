@@ -42,18 +42,60 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
           currentImage={currentImage}
           name={currentName}
           onImageUpdate={handleImageUpdate}
+          mandatory={true}
+          showMandatoryIndicator={true}
         />
       </div>
       
       <div className="space-y-4">
+        {/* First Name and Last Name Fields */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name *</FormLabel>
+                <FormControl>
+                  <Input placeholder="First name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Last name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Birth Year Field */}
         <FormField
-          name="name"
+          name="birth_year"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Birth Year *</FormLabel>
               <FormControl>
-                <Input placeholder="Your name" {...field} />
+                <Input 
+                  type="number" 
+                  placeholder="YYYY" 
+                  min="1900" 
+                  max={new Date().getFullYear()}
+                  {...field} 
+                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : '')}
+                />
               </FormControl>
+              <FormDescription>
+                Used for age-appropriate gift recommendations and user matching.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -14,12 +14,14 @@ export const useGeneralSettingsForm = () => {
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      first_name: "",
+      last_name: "",
       email: "",
       username: "",
       bio: "",
       profile_image: null,
       birthday: null,
+      birth_year: undefined,
       address: {
         street: "",
         line2: "",
@@ -33,7 +35,8 @@ export const useGeneralSettingsForm = () => {
       data_sharing_settings: {
         dob: "private",
         shipping_address: "private",
-        gift_preferences: "friends"
+        gift_preferences: "friends",
+        email: "private"
       }
     }
   });

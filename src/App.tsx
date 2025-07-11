@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import LegacyRouteHandler from "@/components/navigation/LegacyRouteHandler";
 import Index from "./pages/Index";
@@ -33,8 +34,12 @@ import Events from "./pages/Events";
 
 import FAQ from "./pages/FAQ";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
+import OAuthProfileCompletion from "@/components/auth/OAuthProfileCompletion";
 
 const queryClient = new QueryClient();
+
+// Initialize localStorage service on app start
+LocalStorageService.initialize();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -54,6 +59,7 @@ const App = () => (
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/signup" element={<StreamlinedSignUp />} />
                 <Route path="/signin" element={<SignIn />} />
+                <Route path="/auth/oauth-complete" element={<OAuthProfileCompletion />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 {/* Legacy routes - deprecated */}

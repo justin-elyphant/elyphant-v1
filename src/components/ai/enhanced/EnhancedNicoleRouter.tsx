@@ -107,13 +107,15 @@ const EnhancedNicoleRouter: React.FC<EnhancedNicoleRouterProps> = ({
   ];
 
   const handleIntentSelection = (intent: IntentOption) => {
-    // Store context for Nicole to use
-    localStorage.setItem('nicoleContext', JSON.stringify({
-      source,
-      selectedIntent: intent.id,
-      timestamp: new Date().toISOString(),
-      ...context
-    }));
+    // Use the centralized localStorage service for Nicole context
+    import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
+      LocalStorageService.setNicoleContext({
+        source,
+        selectedIntent: intent.id,
+        currentPage: window.location.pathname,
+        ...context
+      });
+    });
 
     // Close modal/dropdown
     setIsOpen(false);

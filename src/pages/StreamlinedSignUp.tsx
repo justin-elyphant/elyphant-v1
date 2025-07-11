@@ -59,7 +59,7 @@ const StreamlinedSignUp = () => {
     birthYear: false
   });
 
-  // Handle user redirection and OAuth completion
+  // Handle user redirection and OAuth completion with centralized storage
   useEffect(() => {
     const intentParam = searchParams.get('intent');
     
@@ -70,29 +70,26 @@ const StreamlinedSignUp = () => {
         return;
       }
       
-      // Check if user came from OAuth and needs profile completion
-      const isNewOAuthUser = !localStorage.getItem('profileSetupCompleted') && user.app_metadata?.provider;
-      if (isNewOAuthUser) {
-        // Pre-populate data from OAuth
-        const metadata = user.user_metadata || {};
-        setProfileData(prev => ({
-          ...prev,
-          firstName: metadata.first_name || metadata.given_name || '',
-          lastName: metadata.last_name || metadata.family_name || '',
-          email: user.email || '',
-          photo: metadata.avatar_url || metadata.picture || metadata.profile_image_url || '',
-        }));
-        setStep('oauth-complete');
-        return;
-      }
-      
-      // Don't redirect if user is in the middle of the signup flow
-      if (step !== 'signup') {
-        return; // Let them continue with profile setup or intent selection
-      }
-      
-      // Only redirect to dashboard if they landed on the signup step while already authenticated
-      navigate('/dashboard', { replace: true });
+      // Check if profile setup is completed using centralized service
+      import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
+        const isCompleted = LocalStorageService.isProfileSetupCompleted();
+        
+        if (!isCompleted && user.app_metadata?.provider) {
+          // OAuth user needs profile completion - redirect to dedicated OAuth completion flow
+          navigate('/auth/oauth-complete', { replace: true });
+          return;
+        }
+        
+        // Don't redirect if user is in the middle of the signup flow
+        if (step !== 'signup') {
+          return; // Let them continue with profile setup or intent selection
+        }
+        
+        // Only redirect to dashboard if they landed on the signup step while already authenticated
+        if (isCompleted) {
+          navigate('/dashboard', { replace: true });
+        }
+      });
     }
   }, [user, navigate, searchParams, step]);
 
@@ -127,9 +124,14 @@ const StreamlinedSignUp = () => {
         throw error;
       }
 
-      // Store profile data for later steps
-      localStorage.setItem('pendingProfileData', JSON.stringify(profileData));
-      localStorage.setItem('signupRedirectPath', redirectPath);
+      // Store profile data using centralized service
+      import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
+        LocalStorageService.setProfileCompletionState({
+          ...profileData,
+          step: 'profile',
+          source: 'email'
+        });
+      });
       
       toast.success('Account created!', {
         description: 'Let\'s set up your profile.'
@@ -219,10 +221,10 @@ const StreamlinedSignUp = () => {
 
       console.log("✅ Profile verified successfully");
 
-      // Clear stored data and mark profile as completed
-      localStorage.removeItem('pendingProfileData');
-      localStorage.removeItem('signupRedirectPath');
-      localStorage.setItem('profileSetupCompleted', 'true');
+      // Mark profile as completed using centralized service
+      import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
+        LocalStorageService.markProfileSetupCompleted();
+      });
       
       toast.success('Welcome to Elyphant!', {
         description: 'Your account is ready to go.'

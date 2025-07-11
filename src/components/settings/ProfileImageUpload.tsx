@@ -12,9 +12,17 @@ interface ProfileImageUploadProps {
   currentImage: string | null;
   name: string;
   onImageUpdate: (url: string | null) => void;
+  mandatory?: boolean;
+  showMandatoryIndicator?: boolean;
 }
 
-const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageUploadProps) => {
+const ProfileImageUpload = ({ 
+  currentImage, 
+  name, 
+  onImageUpdate, 
+  mandatory = false,
+  showMandatoryIndicator = false 
+}: ProfileImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -215,16 +223,24 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
         disabled={uploading}
       />
       
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={uploading}
-        className="text-xs mt-2"
-      >
-        {uploading ? "Uploading..." : "Change profile picture"}
-      </Button>
+      <div className="text-center">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="text-xs mt-2"
+        >
+          {uploading ? "Uploading..." : "Change profile picture"}
+        </Button>
+        
+        {showMandatoryIndicator && (
+          <p className="text-xs mt-1 text-muted-foreground">
+            {mandatory ? "Profile photo is required" : "Optional"}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

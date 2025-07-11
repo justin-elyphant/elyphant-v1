@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ProfileImageStep from "@/components/profile-setup/steps/ProfileImageStep";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ const OAuthProfileCompletion = () => {
     birthYear: new Date().getFullYear() - 25,
     dateOfBirth: ''
   });
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -50,13 +52,16 @@ const OAuthProfileCompletion = () => {
             birthYear: existingProfile.birth_year || new Date().getFullYear() - 25,
             dateOfBirth: existingProfile.dob || ''
           });
+          
+          setProfileImageUrl(existingProfile.profile_image || null);
 
-          // If profile is already complete, redirect to dashboard
+          // If profile is already complete (including profile image), redirect to dashboard
           if (existingProfile.first_name && 
               existingProfile.last_name && 
               existingProfile.username && 
               existingProfile.birth_year && 
-              existingProfile.dob) {
+              existingProfile.dob &&
+              existingProfile.profile_image) {
             LocalStorageService.markProfileSetupCompleted();
             navigate('/dashboard');
           }
@@ -74,9 +79,17 @@ const OAuthProfileCompletion = () => {
     e.preventDefault();
     if (!user) return;
 
+    // Enforce mandatory profile photo
+    if (!profileImageUrl) {
+      toast.error("Profile photo is required", {
+        description: "Please upload a profile photo to continue"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      // Update profile with mandatory fields
+      // Update profile with mandatory fields including profile image
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -85,7 +98,8 @@ const OAuthProfileCompletion = () => {
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           username: formData.username,
           birth_year: formData.birthYear,
-          dob: formData.dateOfBirth
+          dob: formData.dateOfBirth,
+          profile_image: profileImageUrl
         })
         .eq('id', user.id);
 
@@ -109,7 +123,8 @@ const OAuthProfileCompletion = () => {
                      formData.lastName && 
                      formData.username && 
                      formData.dateOfBirth &&
-                     formData.birthYear;
+                     formData.birthYear &&
+                     profileImageUrl; // Profile photo is mandatory
 
   if (!user) {
     return null;
@@ -127,6 +142,18 @@ const OAuthProfileCompletion = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Mandatory Profile Photo */}
+              <div className="space-y-2">
+                <Label>Profile Photo *</Label>
+                <ProfileImageStep
+                  value={profileImageUrl}
+                  onChange={setProfileImageUrl}
+                  name={`${formData.firstName} ${formData.lastName}`.trim() || 'User'}
+                />
+                {!profileImageUrl && (
+                  <p className="text-sm text-destructive">Profile photo is required</p>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
                 <Input

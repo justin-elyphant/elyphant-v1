@@ -45,8 +45,7 @@ export function useSignUpProcess() {
       setResendCount(Number(storedResendCount) || 0);
     }
 
-    // Phase 5: Always set bypass verification to true
-    localStorage.setItem("bypassVerification", "true");
+    // Migration: Use LocalStorageService for new state management
   }, [navigate]);
 
   const { onSignUpSubmit: originalOnSignUpSubmit } = useSignUpSubmit({
@@ -74,8 +73,11 @@ export function useSignUpProcess() {
       setUserName(values.name);
       setStep("verification");
 
-      // Set new signup flag for custom onboarding flow
-      localStorage.setItem("newSignUp", "true");
+      // Update completion state to indicate verification step
+      LocalStorageService.setProfileCompletionState({
+        step: 'profile',
+        source: 'email'
+      });
       // Do NOT auto-redirect here! Modal will handle all navigation.
     } catch (error) {
       console.error("Sign up process error:", error);
@@ -85,8 +87,14 @@ export function useSignUpProcess() {
 
   const handleResendVerification = async (): Promise<{ success: boolean; rateLimited?: boolean }> => {
     try {
-      setResendCount(prev => prev + 1);
-      localStorage.setItem("verificationResendCount", String(resendCount + 1));
+      const newCount = resendCount + 1;
+      setResendCount(newCount);
+      
+      // Store resend count in profile completion state
+      LocalStorageService.setProfileCompletionState({
+        email: userEmail,
+        step: 'signup'
+      });
 
       // Use Supabase's native resend functionality
       const { error } = await supabase.auth.resend({

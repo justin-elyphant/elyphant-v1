@@ -24,6 +24,8 @@ interface NicoleContext {
   currentPage?: string;
   userIntent?: string;
   searchQuery?: string;
+  previousActions?: string[];
+  timeSpentOnPage?: number;
 }
 
 export class LocalStorageService {

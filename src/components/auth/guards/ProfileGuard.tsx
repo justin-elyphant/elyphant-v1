@@ -35,15 +35,15 @@ const ProfileGuard: React.FC<ProfileGuardProps> = ({
     );
   }
 
-  // Check if profile is complete
+  // Check if profile is complete - ALL fields are mandatory
   const isProfileComplete = profile && 
-    profile.first_name && 
-    profile.last_name && 
-    profile.email && 
-    profile.username && 
+    profile.first_name?.trim() && 
+    profile.last_name?.trim() && 
+    profile.email?.trim() && 
+    profile.username?.trim() && 
     profile.birth_year && 
     profile.dob &&
-    profile.profile_image;
+    profile.profile_image?.trim();
 
   // If profile is incomplete, redirect to OAuth completion or signup
   if (!isProfileComplete) {

@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import VerificationCodeInput from "./components/VerificationCodeInput";
 
 interface VerificationFormProps {
@@ -63,9 +64,11 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
         // Mark verification as successful and trigger the callback
         onVerificationSuccess();
         
-        // Set verification state to local storage for reliability
-        localStorage.setItem("emailVerified", "true");
-        localStorage.setItem("verifiedEmail", userEmail);
+        // Update profile completion state with verified email
+        LocalStorageService.setProfileCompletionState({
+          email: userEmail,
+          step: 'profile'
+        });
       } else {
         toast.error("Invalid verification code", {
           description: "Please check the code and try again"

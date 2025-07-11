@@ -14,7 +14,6 @@ import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import SignUp from "./pages/SignUp";
 import StreamlinedSignUp from "./pages/StreamlinedSignUp";
 import SignIn from "./pages/SignIn";
 import OAuthProfileCompletion from "./pages/OAuthProfileCompletion";
@@ -62,8 +61,6 @@ const App = () => (
                 <Route path="/auth/oauth-complete" element={<OAuthProfileCompletion />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                {/* Legacy routes - deprecated */}
-                <Route path="/signup-legacy" element={<SignUp />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/messages" element={<Messages />} />

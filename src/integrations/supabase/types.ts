@@ -1690,7 +1690,7 @@ export type Database = {
         Row: {
           ai_interaction_data: Json | null
           bio: string | null
-          birth_year: number | null
+          birth_year: number
           created_at: string | null
           data_sharing_settings: Json | null
           dob: string | null
@@ -1718,7 +1718,7 @@ export type Database = {
         Insert: {
           ai_interaction_data?: Json | null
           bio?: string | null
-          birth_year?: number | null
+          birth_year: number
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
@@ -1746,7 +1746,7 @@ export type Database = {
         Update: {
           ai_interaction_data?: Json | null
           bio?: string | null
-          birth_year?: number | null
+          birth_year?: number
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null

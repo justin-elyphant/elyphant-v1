@@ -9,6 +9,7 @@ import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import GiftCountdown from "./sections/GiftCountdown";
 import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
 import { format } from "date-fns";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const Hero = () => {
 
   // Enhanced handler for CTAs: sets intent and routes based on auth
   const handleCta = (intent: "giftor" | "giftee") => {
-    localStorage.setItem("ctaIntent", intent);
+    LocalStorageService.setNicoleContext({ selectedIntent: intent, source: 'hero_cta' });
     if (user) {
       // Authenticated user: go to guided experience instead of marketplace
       if (intent === "giftor") {

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSignUpSubmit } from "../signup/useSignUpProcess/useSignUpSubmit";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 export function useSignUpProcess() {
   const navigate = useNavigate();
@@ -19,10 +20,12 @@ export function useSignUpProcess() {
 
   // Check localStorage for previously stored values on component mount
   useEffect(() => {
-    const storedEmail = localStorage.getItem("pendingVerificationEmail");
-    const storedName = localStorage.getItem("pendingVerificationName");
+    // Try new LocalStorageService first, fallback to deprecated keys for migration
+    const completionState = LocalStorageService.getProfileCompletionState();
+    const storedEmail = completionState?.email || localStorage.getItem("pendingVerificationEmail");
+    const storedName = completionState?.firstName + ' ' + completionState?.lastName || localStorage.getItem("pendingVerificationName");
     const storedResendCount = localStorage.getItem("verificationResendCount");
-    const userIntent = localStorage.getItem("userIntent");
+    const userIntent = LocalStorageService.getNicoleContext()?.selectedIntent || localStorage.getItem("userIntent");
 
     // Restore last verification session if it exists
     if (storedEmail && storedName) {
@@ -56,9 +59,14 @@ export function useSignUpProcess() {
 
   const handleSignUpSubmit = async (values: any) => {
     try {
-      // Store pending verification details before submission
-      localStorage.setItem("pendingVerificationEmail", values.email);
-      localStorage.setItem("pendingVerificationName", values.name);
+      // Store pending verification details in new service
+      LocalStorageService.setProfileCompletionState({
+        email: values.email,
+        firstName: values.name.split(' ')[0] || '',
+        lastName: values.name.split(' ').slice(1).join(' ') || '',
+        step: 'signup',
+        source: 'email'
+      });
 
       await originalOnSignUpSubmit(values);
 
@@ -119,8 +127,7 @@ export function useSignUpProcess() {
     setStep("signup");
 
     // Clear stored verification details when going back
-    localStorage.removeItem("pendingVerificationEmail");
-    localStorage.removeItem("pendingVerificationName");
+    LocalStorageService.clearProfileCompletionState();
   };
 
   return {

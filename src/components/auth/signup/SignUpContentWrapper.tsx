@@ -1,6 +1,7 @@
 
 import React from "react";
 import { toast } from "sonner";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import SignUpView from "./views/SignUpView";
 import VerificationView from "./views/VerificationView";
 import { SignUpFormValues } from "./SignUpForm";
@@ -43,8 +44,8 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     
     // Clear flags during signup step
     if (step === "signup") {
-      localStorage.removeItem("showingIntentModal");
-      localStorage.removeItem("userIntent");
+      // Clean up deprecated localStorage keys
+      LocalStorageService.cleanupDeprecatedKeys();
       setShouldShowModal(false);
       setIsCheckingIntent(false);
       return;
@@ -79,16 +80,19 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       }
 
       // Get suggested intent from CTA (only once)
+      // Check for legacy intent data and migrate to new service
       const ctaIntent = localStorage.getItem("ctaIntent");
       if (ctaIntent === "giftor" || ctaIntent === "giftee") {
         console.log("[SignUpContentWrapper] Setting suggested intent:", ctaIntent);
         setSuggestedIntent(ctaIntent);
-        localStorage.removeItem("ctaIntent"); // Clear after using
+        LocalStorageService.setNicoleContext({ selectedIntent: ctaIntent });
+        localStorage.removeItem("ctaIntent"); // Clean up deprecated key
       }
 
       // IMMEDIATELY show the intent modal without any loading states
       console.log("[SignUpContentWrapper] Setting up intent modal IMMEDIATELY");
-      localStorage.setItem("showingIntentModal", "true");
+      // Use new LocalStorageService instead of deprecated keys
+      LocalStorageService.setNicoleContext({ source: 'signup_completion' });
       setShouldShowModal(true);
       setIsCheckingIntent(false); // No loading state needed
     }
@@ -98,10 +102,12 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     console.log("[SignUpContentWrapper] Intent selected:", userIntent);
     
     // Set the intent and clear modal flags
-    localStorage.setItem("userIntent", userIntent);
-    localStorage.removeItem("showingIntentModal");
-    localStorage.removeItem("ctaIntent");
-    localStorage.removeItem("blockAutoRedirect");
+    // Use new LocalStorageService
+    LocalStorageService.setNicoleContext({ 
+      selectedIntent: userIntent,
+      source: 'signup_completion'
+    });
+    LocalStorageService.cleanupDeprecatedKeys();
     
     // Show success toast
     toast.success("Account created successfully!", {

@@ -14,20 +14,29 @@ export interface BirthdayData {
 }
 
 export const formSchema = z.object({
-  // New mandatory fields
+  // Mandatory fields for enhanced onboarding
   first_name: z.string().min(1, { message: "First name is required" }),
   last_name: z.string().min(1, { message: "Last name is required" }),
-  // Legacy compatibility field
-  name: z.string().optional(),
   email: z.string().email({ message: "Please enter a valid email address" }),
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
-  bio: z.string().optional(),
-  profile_image: z.string().nullable().optional(),
+  birth_year: z.number().min(1900).max(new Date().getFullYear(), { message: "Birth year is required" }),
+  
+  // Profile image is now mandatory
+  profile_image: z.string().min(1, { message: "Profile photo is required" }),
+  
+  // Date of birth fields (mandatory)
   birthday: z.object({
     month: z.number().min(1).max(12),
     day: z.number().min(1).max(31)
-  }).nullable().optional(),
-  birth_year: z.number().min(1900).max(new Date().getFullYear()).optional(),
+  }).refine((data) => data.month && data.day, { 
+    message: "Complete date of birth is required" 
+  }),
+  
+  // Legacy compatibility field (optional now)
+  name: z.string().optional(),
+  
+  // Optional fields
+  bio: z.string().optional(),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
     line2: z.string().optional(),
@@ -50,3 +59,6 @@ export const formSchema = z.object({
 });
 
 export type SettingsFormValues = z.infer<typeof formSchema>;
+
+// Alias for backward compatibility
+export const settingsFormSchema = formSchema;

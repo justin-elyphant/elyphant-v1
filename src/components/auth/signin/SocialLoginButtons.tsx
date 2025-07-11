@@ -18,10 +18,13 @@ export const SocialLoginButtons = () => {
     try {
       setSocialLoading({ ...socialLoading, [provider]: true });
       
+      // OAuth users go to profile completion instead of dashboard
+      const redirectUrl = `${window.location.origin}/auth/oauth-complete`;
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/signup?intent=complete-profile`,
+          redirectTo: redirectUrl,
         }
       });
       

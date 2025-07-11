@@ -17,6 +17,7 @@ import Checkout from "./pages/Checkout";
 import SignUp from "./pages/SignUp";
 import StreamlinedSignUp from "./pages/StreamlinedSignUp";
 import SignIn from "./pages/SignIn";
+import OAuthProfileCompletion from "./pages/OAuthProfileCompletion";
 import Wishlists from "./pages/Wishlists";
 import Dashboard from "./pages/Dashboard";
 import ProfileSetup from "./pages/ProfileSetup";
@@ -34,7 +35,6 @@ import Events from "./pages/Events";
 
 import FAQ from "./pages/FAQ";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
-import OAuthProfileCompletion from "@/components/auth/OAuthProfileCompletion";
 
 const queryClient = new QueryClient();
 

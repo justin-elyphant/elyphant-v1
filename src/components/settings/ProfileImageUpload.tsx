@@ -172,6 +172,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
         
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
           <Button 
+            type="button"
             size="sm" 
             variant="ghost" 
             className="text-white p-1 h-8 w-8"
@@ -187,6 +188,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
           
           {preview && (
             <Button 
+              type="button"
               size="sm" 
               variant="ghost" 
               className="text-white p-1 h-8 w-8 ml-1"
@@ -209,6 +211,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       />
       
       <Button
+        type="button"
         variant="ghost"
         size="sm"
         onClick={() => fileInputRef.current?.click()}

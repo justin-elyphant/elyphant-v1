@@ -23,6 +23,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log("File selected:", file);
     if (!file || !user) return;
     
     // Validate file type and size
@@ -38,6 +39,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
     }
     
     try {
+      console.log("Starting upload process...");
       setUploading(true);
       
       // Create a preview immediately
@@ -66,7 +68,8 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       
       if (error) {
         console.error("Storage upload failed:", error);
-        toast.error("Failed to upload image. Please try again.");
+        console.error("Error details:", error.message);
+        toast.error(`Failed to upload image: ${error.message}`);
         setPreview(currentImage);
         return;
       }
@@ -77,6 +80,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
         .getPublicUrl(filePath);
       
       finalImageUrl = publicUrlData.publicUrl;
+      console.log("Upload successful, final URL:", finalImageUrl);
       
       // Update profile through the hook
       await handleProfileImageUpdate(finalImageUrl);

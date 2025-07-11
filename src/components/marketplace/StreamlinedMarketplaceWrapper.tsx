@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useUnifiedProfile } from '@/hooks/useUnifiedProfile';
 import { useConnectionsAdapter } from '@/hooks/useConnectionsAdapter';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ const StreamlinedMarketplaceWrapper = () => {
   const { friends, loading: connectionsLoading } = useConnectionsAdapter();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const [showNicole, setShowNicole] = useState(false);
   const [selectedRecipient, setSelectedRecipient] = useState<any>(null);
@@ -195,8 +197,8 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Main Marketplace */}
       <MarketplaceWrapper />
 
-      {/* Nicole AI Widget */}
-      {showNicole && (
+      {/* Nicole AI Widget - Mobile Only */}
+      {showNicole && isMobile && (
         <FloatingNicoleWidget
           onNavigateToResults={(query) => {
             // Handle search results navigation

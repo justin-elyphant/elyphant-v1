@@ -26,7 +26,6 @@ interface ProfileData {
   photo?: string;
   username: string;
   dateOfBirth?: Date;
-  birthYear?: number;
   address: string;
 }
 
@@ -55,8 +54,7 @@ const StreamlinedSignUp = () => {
     email: false,
     photo: false,
     username: false,
-    dateOfBirth: false,
-    birthYear: false
+    dateOfBirth: false
   });
 
   // Handle user redirection and OAuth completion with centralized storage
@@ -155,8 +153,7 @@ const StreamlinedSignUp = () => {
       email: profileData.email.trim().length > 0,
       photo: !!profileData.photo,
       username: profileData.username.trim().length >= 3,
-      dateOfBirth: !!profileData.dateOfBirth,
-      birthYear: !!profileData.birthYear && profileData.birthYear >= 1900 && profileData.birthYear <= new Date().getFullYear()
+      dateOfBirth: !!profileData.dateOfBirth
     };
     
     setMandatoryValidation(validation);
@@ -194,7 +191,7 @@ const StreamlinedSignUp = () => {
         username: profileData.username,
         photo: profileData.photo,
         dateOfBirth: profileData.dateOfBirth,
-        birthYear: profileData.birthYear,
+        birthYear: profileData.dateOfBirth?.getFullYear(),
         address: profileData.address,
         profileType: intent
       });
@@ -555,60 +552,29 @@ const StreamlinedSignUp = () => {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
                         selected={profileData.dateOfBirth}
                         onSelect={(date) => {
                           setProfileData(prev => ({ 
                             ...prev, 
-                            dateOfBirth: date,
-                            birthYear: date?.getFullYear() 
+                            dateOfBirth: date
                           }));
                           setMandatoryValidation(prev => ({ 
                             ...prev, 
-                            dateOfBirth: !!date,
-                            birthYear: !!date?.getFullYear()
+                            dateOfBirth: !!date
                           }));
                         }}
                         fromYear={1900}
                         toYear={new Date().getFullYear()}
-                        captionLayout="dropdown"
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
 
-                {/* Birth Year Field - Auto-populated from date of birth */}
-                <div className="space-y-2">
-                  <Label htmlFor="birthYear" className={cn(
-                    "font-medium",
-                    mandatoryValidation.birthYear ? "text-green-600" : "text-red-600"
-                  )}>
-                    Birth Year * (for age-appropriate recommendations)
-                  </Label>
-                  <Input
-                    id="birthYear"
-                    type="number"
-                    min="1900"
-                    max={new Date().getFullYear()}
-                    value={profileData.birthYear || ''}
-                    onChange={(e) => {
-                      const year = parseInt(e.target.value);
-                      setProfileData(prev => ({ ...prev, birthYear: year }));
-                      setMandatoryValidation(prev => ({ 
-                        ...prev, 
-                        birthYear: year >= 1900 && year <= new Date().getFullYear()
-                      }));
-                    }}
-                    className={cn(
-                      mandatoryValidation.birthYear ? "border-green-300" : "border-red-300"
-                    )}
-                    placeholder="YYYY"
-                    required
-                  />
-                </div>
 
                 <div className="space-y-2">
                   <Label>Shipping Address (optional)</Label>
@@ -639,7 +605,6 @@ const StreamlinedSignUp = () => {
                           {field === 'photo' && 'Profile Photo'}
                           {field === 'username' && 'Username'}
                           {field === 'dateOfBirth' && 'Date of Birth'}
-                          {field === 'birthYear' && 'Birth Year'}
                         </span>
                       </div>
                     ))}

@@ -10,6 +10,7 @@ interface ProfileCreationData {
   dateOfBirth?: Date;
   birthYear?: number;
   address?: string;
+  addressLine2?: string;
   profileType?: string;
 }
 

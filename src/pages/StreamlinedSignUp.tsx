@@ -27,6 +27,7 @@ interface ProfileData {
   username: string;
   dateOfBirth?: Date;
   address: string;
+  addressLine2: string;
 }
 
 type Step = 'signup' | 'profile' | 'intent' | 'oauth-complete';
@@ -46,7 +47,8 @@ const StreamlinedSignUp = () => {
     email: '',
     password: '',
     username: '',
-    address: ''
+    address: '',
+    addressLine2: ''
   });
   const [mandatoryValidation, setMandatoryValidation] = useState({
     firstName: false,
@@ -54,7 +56,8 @@ const StreamlinedSignUp = () => {
     email: false,
     photo: false,
     username: false,
-    dateOfBirth: false
+    dateOfBirth: false,
+    address: false
   });
 
   // Handle user redirection and OAuth completion with centralized storage
@@ -153,7 +156,8 @@ const StreamlinedSignUp = () => {
       email: profileData.email.trim().length > 0,
       photo: !!profileData.photo,
       username: profileData.username.trim().length >= 3,
-      dateOfBirth: !!profileData.dateOfBirth
+      dateOfBirth: !!profileData.dateOfBirth,
+      address: profileData.address.trim().length > 0
     };
     
     setMandatoryValidation(validation);
@@ -193,6 +197,7 @@ const StreamlinedSignUp = () => {
         dateOfBirth: profileData.dateOfBirth,
         birthYear: profileData.dateOfBirth?.getFullYear(),
         address: profileData.address,
+        addressLine2: profileData.addressLine2,
         profileType: intent
       });
 
@@ -568,8 +573,9 @@ const StreamlinedSignUp = () => {
                         }}
                         fromYear={1900}
                         toYear={new Date().getFullYear()}
+                        captionLayout="dropdown"
                         initialFocus
-                        className="pointer-events-auto"
+                        className="pointer-events-auto p-3"
                       />
                     </PopoverContent>
                   </Popover>
@@ -577,14 +583,45 @@ const StreamlinedSignUp = () => {
 
 
                 <div className="space-y-2">
-                  <Label>Shipping Address (optional)</Label>
+                  <Label className={cn(
+                    "font-medium",
+                    mandatoryValidation.address ? "text-green-600" : "text-red-600"
+                  )}>
+                    Shipping Address *
+                  </Label>
                   <GooglePlacesAutocomplete
                     value={profileData.address}
-                    onChange={(value) => setProfileData(prev => ({ ...prev, address: value }))}
-                    onAddressSelect={(address) => 
-                      setProfileData(prev => ({ ...prev, address: address.formatted_address }))
-                    }
+                    onChange={(value) => {
+                      setProfileData(prev => ({ ...prev, address: value }));
+                      setMandatoryValidation(prev => ({ 
+                        ...prev, 
+                        address: value.trim().length > 0
+                      }));
+                    }}
+                    onAddressSelect={(address) => {
+                      setProfileData(prev => ({ ...prev, address: address.formatted_address }));
+                      setMandatoryValidation(prev => ({ 
+                        ...prev, 
+                        address: true
+                      }));
+                    }}
                     placeholder="Enter your address"
+                    className={cn(
+                      mandatoryValidation.address ? "border-green-300" : "border-red-300"
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="addressLine2" className="font-medium text-muted-foreground">
+                    Apartment, Suite, Unit (optional)
+                  </Label>
+                  <Input
+                    id="addressLine2"
+                    value={profileData.addressLine2}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, addressLine2: e.target.value }))}
+                    placeholder="Apt, Suite, Unit, Building, Floor, etc."
+                    className="w-full"
                   />
                 </div>
 
@@ -605,6 +642,7 @@ const StreamlinedSignUp = () => {
                           {field === 'photo' && 'Profile Photo'}
                           {field === 'username' && 'Username'}
                           {field === 'dateOfBirth' && 'Date of Birth'}
+                          {field === 'address' && 'Shipping Address'}
                         </span>
                       </div>
                     ))}

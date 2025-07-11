@@ -75,9 +75,15 @@ export class ProfileCreationService {
       let formattedAddress = null;
       if (data.address) {
         if (typeof data.address === 'string') {
-          formattedAddress = { formatted_address: data.address };
-        } else if (typeof data.address === 'object') {
-          formattedAddress = data.address;
+          formattedAddress = { 
+            formatted_address: data.address,
+            address_line_2: data.addressLine2 || null
+          };
+        } else if (data.address && typeof data.address === 'object') {
+          formattedAddress = {
+            formatted_address: (data.address as any).formatted_address || data.address,
+            address_line_2: data.addressLine2 || null
+          };
         }
       }
 
@@ -170,6 +176,9 @@ export class ProfileCreationService {
     }
     if (!data.birthYear || data.birthYear < 1900 || data.birthYear > new Date().getFullYear()) {
       return { success: false, error: "Valid birth year is required" };
+    }
+    if (!data.address?.trim()) {
+      return { success: false, error: "Shipping address is required" };
     }
     
     return this.createProfileWithTimeout(userId, data);

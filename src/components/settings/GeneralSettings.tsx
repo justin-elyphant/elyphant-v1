@@ -14,7 +14,6 @@ import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import InterestsFormSection from "./InterestsFormSection";
 import GiftingPreferencesSection from "./GiftingPreferencesSection";
 import ProfileDataIntegrityPanel from "./ProfileDataIntegrityPanel";
-import ProfileCompletionProgress from "@/components/profile/ProfileCompletionProgress";
 const GeneralSettings = () => {
   const { user } = useAuth();
   const location = useLocation();
@@ -65,9 +64,6 @@ const GeneralSettings = () => {
         <p className="text-gray-600">Manage your profile information and preferences</p>
       </div>
 
-      {/* Profile Completion Progress */}
-      <ProfileCompletionProgress />
-      
       {/* Profile Data Integrity Panel */}
       <ProfileDataIntegrityPanel />
       

@@ -31,6 +31,7 @@ import PaymentCancel from "./pages/PaymentCancel";
 import Trunkline from "./pages/Trunkline";
 import Events from "./pages/Events";
 import NicoleOnboarding from "./pages/NicoleOnboarding";
+import FAQ from "./pages/FAQ";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,15 @@ const App = () => (
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/payment-cancel" element={<PaymentCancel />} />
+                <Route path="/help" element={<FAQ />} />
+                <Route path="/contact" element={<AboutUs />} />
+                <Route path="/returns" element={<FAQ />} />
+                <Route path="/privacy" element={<AboutUs />} />
+                <Route path="/terms" element={<AboutUs />} />
+                <Route path="/careers" element={<AboutUs />} />
+                <Route path="/press" element={<AboutUs />} />
+                <Route path="/vendor-signup" element={<VendorPartner />} />
+                <Route path="/vendor-login" element={<VendorPartner />} />
                 <Route path="/trunkline-login" element={<Trunkline />} />
                 <Route path="/trunkline" element={<Trunkline />} />
                 </Routes>

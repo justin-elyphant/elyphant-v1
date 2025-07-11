@@ -60,6 +60,59 @@ const StreamlinedSignUp = () => {
     address: false
   });
 
+  // Handle OAuth data loading and validation
+  useEffect(() => {
+    if (user && user.app_metadata?.provider) {
+      // Load OAuth data from user metadata
+      const firstName = user.user_metadata?.first_name || user.user_metadata?.given_name || '';
+      const lastName = user.user_metadata?.last_name || user.user_metadata?.family_name || '';
+      const email = user.email || '';
+      const photo = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+
+      if (firstName || lastName || email) {
+        setProfileData(prev => ({
+          ...prev,
+          firstName: firstName || prev.firstName,
+          lastName: lastName || prev.lastName,
+          email: email || prev.email,
+          photo: photo || prev.photo
+        }));
+      }
+    }
+
+    // Also check localStorage for any saved data
+    import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
+      const savedState = LocalStorageService.getProfileCompletionState();
+      if (savedState) {
+        setProfileData(prev => ({
+          ...prev,
+          firstName: savedState.firstName || prev.firstName,
+          lastName: savedState.lastName || prev.lastName,
+          email: savedState.email || prev.email,
+          photo: savedState.photo || prev.photo,
+          username: savedState.username || prev.username,
+          address: savedState.address || prev.address,
+          dateOfBirth: savedState.dateOfBirth ? new Date(savedState.dateOfBirth) : prev.dateOfBirth
+        }));
+      }
+    });
+  }, [user]);
+
+  // Validate fields whenever profileData changes
+  useEffect(() => {
+    const validation = {
+      firstName: profileData.firstName.trim().length > 0,
+      lastName: profileData.lastName.trim().length > 0,
+      email: profileData.email.trim().length > 0,
+      photo: !!profileData.photo,
+      username: profileData.username.trim().length >= 3,
+      dateOfBirth: !!profileData.dateOfBirth,
+      address: profileData.address.trim().length > 0
+    };
+    
+    setMandatoryValidation(validation);
+  }, [profileData]);
+
   // Handle user redirection and OAuth completion with centralized storage
   useEffect(() => {
     const intentParam = searchParams.get('intent');
@@ -76,8 +129,8 @@ const StreamlinedSignUp = () => {
         const isCompleted = LocalStorageService.isProfileSetupCompleted();
         
         if (!isCompleted && user.app_metadata?.provider) {
-          // OAuth user needs profile completion - redirect to dedicated OAuth completion flow
-          navigate('/auth/oauth-complete', { replace: true });
+          // OAuth user needs profile completion - stay on profile step
+          setStep('profile');
           return;
         }
         

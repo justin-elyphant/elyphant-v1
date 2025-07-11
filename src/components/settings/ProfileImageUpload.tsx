@@ -51,10 +51,28 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       };
       reader.readAsDataURL(file);
       
-      // Generate a unique file name
+      // Generate a unique file name with proper folder structure for RLS
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `profile-images/${fileName}`;
+      const fileName = `profile-${Date.now()}.${fileExt}`;
+      const filePath = `profile-images/${user.id}/${fileName}`;
+      
+      // Remove old profile image if it exists
+      try {
+        const { data: existingFiles } = await supabase.storage
+          .from('avatars')
+          .list(`profile-images/${user.id}`);
+        
+        if (existingFiles && existingFiles.length > 0) {
+          const deletePromises = existingFiles.map(file => 
+            supabase.storage
+              .from('avatars')
+              .remove([`profile-images/${user.id}/${file.name}`])
+          );
+          await Promise.all(deletePromises);
+        }
+      } catch (error) {
+        console.log("No existing files to remove or error removing:", error);
+      }
       
       // Try to upload to Supabase Storage
       const { data, error } = await supabase.storage

@@ -17,6 +17,7 @@ import Checkout from "./pages/Checkout";
 import StreamlinedSignUp from "./pages/StreamlinedSignUp";
 import SignIn from "./pages/SignIn";
 import OAuthProfileCompletion from "./pages/OAuthProfileCompletion";
+import ProfileSetupWithIntent from "./pages/ProfileSetupWithIntent";
 import Wishlists from "./pages/Wishlists";
 import Dashboard from "./pages/Dashboard";
 
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/signup" element={<StreamlinedSignUp />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/auth/oauth-complete" element={<OAuthProfileCompletion />} />
+                <Route path="/profile-setup" element={<ProfileSetupWithIntent />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 

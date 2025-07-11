@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { Profile } from '@/types/supabase';
 import { toast } from 'sonner';
+import { ensureProfileDataConsistency } from '@/utils/profileDataMigration';
 
 export function useProfileFetch() {
   const { user } = useAuth();
@@ -42,6 +43,9 @@ export function useProfileFetch() {
       }
 
       console.log("Profile fetched successfully:", profile);
+      
+      // Ensure profile data consistency (fix any missing fields)
+      await ensureProfileDataConsistency(user.id);
       
       // Add the user_id field that's expected by certain components
       const enhancedProfile: Profile = {

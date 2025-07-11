@@ -21,7 +21,6 @@ const OAuthProfileCompletion = () => {
     firstName: '',
     lastName: '',
     username: '',
-    birthYear: new Date().getFullYear() - 25,
     dateOfBirth: ''
   });
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
@@ -49,7 +48,6 @@ const OAuthProfileCompletion = () => {
             firstName: existingProfile.first_name || '',
             lastName: existingProfile.last_name || '',
             username: existingProfile.username || '',
-            birthYear: existingProfile.birth_year || new Date().getFullYear() - 25,
             dateOfBirth: existingProfile.dob || ''
           });
           
@@ -59,7 +57,6 @@ const OAuthProfileCompletion = () => {
           if (existingProfile.first_name && 
               existingProfile.last_name && 
               existingProfile.username && 
-              existingProfile.birth_year && 
               existingProfile.dob &&
               existingProfile.profile_image) {
             LocalStorageService.markProfileSetupCompleted();
@@ -89,6 +86,9 @@ const OAuthProfileCompletion = () => {
 
     setLoading(true);
     try {
+      // Extract birth year from date of birth
+      const birthYear = formData.dateOfBirth ? new Date(formData.dateOfBirth).getFullYear() : new Date().getFullYear() - 25;
+      
       // Update profile with mandatory fields including profile image
       const { error } = await supabase
         .from('profiles')
@@ -97,7 +97,7 @@ const OAuthProfileCompletion = () => {
           last_name: formData.lastName,
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           username: formData.username,
-          birth_year: formData.birthYear,
+          birth_year: birthYear,
           dob: formData.dateOfBirth,
           profile_image: profileImageUrl
         })
@@ -105,12 +105,22 @@ const OAuthProfileCompletion = () => {
 
       if (error) throw error;
 
-      // Mark profile setup as completed
+      // Mark profile setup as completed and trigger intent modal
       LocalStorageService.markProfileSetupCompleted();
+      LocalStorageService.setProfileCompletionState({
+        step: 'intent',
+        source: 'oauth',
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: user.email || '',
+        username: formData.username,
+        photo: profileImageUrl || undefined
+      });
       LocalStorageService.cleanupDeprecatedKeys();
 
       toast.success('Profile completed successfully!');
-      navigate('/dashboard');
+      // Instead of going directly to dashboard, redirect to trigger intent modal
+      navigate('/profile-setup');
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to complete profile setup');
@@ -123,7 +133,6 @@ const OAuthProfileCompletion = () => {
                      formData.lastName && 
                      formData.username && 
                      formData.dateOfBirth &&
-                     formData.birthYear &&
                      profileImageUrl; // Profile photo is mandatory
 
   if (!user) {
@@ -198,18 +207,6 @@ const OAuthProfileCompletion = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="birthYear">Birth Year</Label>
-                <Input
-                  id="birthYear"
-                  type="number"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  value={formData.birthYear}
-                  onChange={(e) => setFormData(prev => ({ ...prev, birthYear: parseInt(e.target.value) }))}
-                  required
-                />
-              </div>
 
               <Button 
                 type="submit" 

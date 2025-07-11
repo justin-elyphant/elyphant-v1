@@ -110,9 +110,32 @@ export function formatProfileForSubmission(profileData: ProfileData): any {
     throw new Error("Failed to format profile data for submission");
   }
   
-  // Add database-specific fields
+  // Extract first_name and last_name from name
+  const nameParts = cleanedData.name?.split(' ') || [];
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+  
+  // Extract birth_year from birthday if available
+  let birthYear = new Date().getFullYear() - 25; // Default
+  if (cleanedData.birthday?.month && cleanedData.birthday?.day) {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const birthdayThisYear = new Date(currentYear, cleanedData.birthday.month - 1, cleanedData.birthday.day);
+    
+    if (birthdayThisYear > currentDate) {
+      birthYear = currentYear - 25 - 1;
+    } else {
+      birthYear = currentYear - 25;
+    }
+  }
+  
+  // Add database-specific fields with proper mapping
   const databaseData = {
     ...cleanedData,
+    first_name: firstName,
+    last_name: lastName,
+    username: cleanedData.username || `user_${Date.now()}`,
+    birth_year: birthYear,
     // Convert birthday to storage format
     dob: formatBirthdayForStorage(cleanedData.birthday),
     onboarding_completed: true,

@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { ProfileData } from "./types";
 import { profileFormToApiData } from "@/types/profile";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 export const useProfileSubmission = ({ onComplete, onSkip }) => {
   const { user } = useAuth();
@@ -61,9 +62,18 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
       
       if (success) {
         toast.success("Profile setup complete!");
+        // Clean up deprecated localStorage
         localStorage.removeItem("newSignUp");
         localStorage.removeItem("userEmail");
         localStorage.removeItem("userName");
+        
+        // Set state to trigger intent modal
+        LocalStorageService.setProfileCompletionState({
+          step: 'intent',
+          source: 'email'
+        });
+        LocalStorageService.cleanupDeprecatedKeys();
+        
         setIsLoading(false);
         onComplete();
       } else {

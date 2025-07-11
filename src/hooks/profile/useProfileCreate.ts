@@ -23,14 +23,38 @@ export const useProfileCreate = () => {
       // Format and validate the profile data
       const formattedData = formatProfileForSubmission(profileData);
       
-      // Map onboarding data to database format
+      // Map onboarding data to database format with proper field mapping
+      const nameParts = formattedData.name?.split(' ') || [];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Extract birth year from birthday if available
+      let birthYear = new Date().getFullYear() - 25; // Default
+      if (formattedData.birthday?.month && formattedData.birthday?.day) {
+        // For birthday (month/day), we estimate birth year based on current age
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const birthdayThisYear = new Date(currentYear, formattedData.birthday.month - 1, formattedData.birthday.day);
+        
+        // If birthday hasn't happened this year yet, assume they're one year older
+        if (birthdayThisYear > currentDate) {
+          birthYear = currentYear - 25 - 1;
+        } else {
+          birthYear = currentYear - 25;
+        }
+      }
+      
       const profileRecord = {
         id: user.id,
+        first_name: firstName,
+        last_name: lastName,
         name: formattedData.name,
         email: formattedData.email,
+        username: formattedData.username || `user_${user.id.substring(0, 8)}`,
         bio: formattedData.bio || "",
         profile_image: formattedData.profile_image || null,
         dob: formatBirthdayForStorage(formattedData.birthday),
+        birth_year: birthYear,
         shipping_address: {
           address_line1: formattedData.address?.street || "",
           city: formattedData.address?.city || "",

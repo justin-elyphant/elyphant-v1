@@ -1690,76 +1690,85 @@ export type Database = {
         Row: {
           ai_interaction_data: Json | null
           bio: string | null
+          birth_year: number | null
           created_at: string | null
           data_sharing_settings: Json | null
           dob: string | null
-          email: string | null
+          email: string
           enhanced_ai_interaction_data: Json | null
           enhanced_gift_preferences: Json | null
           enhanced_gifting_history: Json | null
+          first_name: string
           gift_giving_preferences: Json | null
           gift_preferences: Json | null
           gifting_history: Json | null
           id: string
           important_dates: Json | null
           interests: Json | null
+          last_name: string
           name: string | null
           onboarding_completed: boolean | null
           profile_image: string | null
           profile_type: string | null
           shipping_address: Json | null
           updated_at: string | null
-          username: string | null
+          username: string
           wishlists: Json | null
         }
         Insert: {
           ai_interaction_data?: Json | null
           bio?: string | null
+          birth_year?: number | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
-          email?: string | null
+          email: string
           enhanced_ai_interaction_data?: Json | null
           enhanced_gift_preferences?: Json | null
           enhanced_gifting_history?: Json | null
+          first_name: string
           gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
           gifting_history?: Json | null
           id: string
           important_dates?: Json | null
           interests?: Json | null
+          last_name: string
           name?: string | null
           onboarding_completed?: boolean | null
           profile_image?: string | null
           profile_type?: string | null
           shipping_address?: Json | null
           updated_at?: string | null
-          username?: string | null
+          username: string
           wishlists?: Json | null
         }
         Update: {
           ai_interaction_data?: Json | null
           bio?: string | null
+          birth_year?: number | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
-          email?: string | null
+          email?: string
           enhanced_ai_interaction_data?: Json | null
           enhanced_gift_preferences?: Json | null
           enhanced_gifting_history?: Json | null
+          first_name?: string
           gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
           gifting_history?: Json | null
           id?: string
           important_dates?: Json | null
           interests?: Json | null
+          last_name?: string
           name?: string | null
           onboarding_completed?: boolean | null
           profile_image?: string | null
           profile_type?: string | null
           shipping_address?: Json | null
           updated_at?: string | null
-          username?: string | null
+          username?: string
           wishlists?: Json | null
         }
         Relationships: []

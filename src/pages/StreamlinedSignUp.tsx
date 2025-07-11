@@ -11,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Upload, Gift, List, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { CalendarIcon, Upload, Gift, List, Eye, EyeOff, Loader2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
@@ -26,10 +26,11 @@ interface ProfileData {
   photo?: string;
   username: string;
   dateOfBirth?: Date;
+  birthYear?: number;
   address: string;
 }
 
-type Step = 'signup' | 'profile' | 'intent';
+type Step = 'signup' | 'profile' | 'intent' | 'oauth-complete';
 
 const StreamlinedSignUp = () => {
   const navigate = useNavigate();
@@ -48,8 +49,17 @@ const StreamlinedSignUp = () => {
     username: '',
     address: ''
   });
+  const [mandatoryValidation, setMandatoryValidation] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    photo: false,
+    username: false,
+    dateOfBirth: false,
+    birthYear: false
+  });
 
-  // Handle user redirection and intent completion
+  // Handle user redirection and OAuth completion
   useEffect(() => {
     const intentParam = searchParams.get('intent');
     
@@ -57,6 +67,22 @@ const StreamlinedSignUp = () => {
       // If user is authenticated and came here to complete profile, allow them to continue
       if (intentParam === 'complete-profile') {
         setStep('profile');
+        return;
+      }
+      
+      // Check if user came from OAuth and needs profile completion
+      const isNewOAuthUser = !localStorage.getItem('profileSetupCompleted') && user.app_metadata?.provider;
+      if (isNewOAuthUser) {
+        // Pre-populate data from OAuth
+        const metadata = user.user_metadata || {};
+        setProfileData(prev => ({
+          ...prev,
+          firstName: metadata.first_name || metadata.given_name || '',
+          lastName: metadata.last_name || metadata.family_name || '',
+          email: user.email || '',
+          photo: metadata.avatar_url || metadata.picture || metadata.profile_image_url || '',
+        }));
+        setStep('oauth-complete');
         return;
       }
       
@@ -120,9 +146,26 @@ const StreamlinedSignUp = () => {
     }
   };
 
+  const validateMandatoryFields = () => {
+    const validation = {
+      firstName: profileData.firstName.trim().length > 0,
+      lastName: profileData.lastName.trim().length > 0,
+      email: profileData.email.trim().length > 0,
+      photo: !!profileData.photo,
+      username: profileData.username.trim().length >= 3,
+      dateOfBirth: !!profileData.dateOfBirth,
+      birthYear: !!profileData.birthYear && profileData.birthYear >= 1900 && profileData.birthYear <= new Date().getFullYear()
+    };
+    
+    setMandatoryValidation(validation);
+    return Object.values(validation).every(Boolean);
+  };
+
   const handleProfileSetup = () => {
-    if (!profileData.username.trim()) {
-      toast.error('Please enter a username');
+    if (!validateMandatoryFields()) {
+      toast.error('All fields are required', {
+        description: 'Please complete all required fields before continuing.'
+      });
       return;
     }
     setStep('intent');
@@ -141,14 +184,15 @@ const StreamlinedSignUp = () => {
     setLoading(true);
     
     try {
-      // Use the new ProfileCreationService with timeout and retry logic
-      const result = await ProfileCreationService.createProfileWithTimeout(user.id, {
+      // Use the enhanced ProfileCreationService with new mandatory fields
+      const result = await ProfileCreationService.createEnhancedProfile(user.id, {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         email: profileData.email,
         username: profileData.username,
         photo: profileData.photo,
         dateOfBirth: profileData.dateOfBirth,
+        birthYear: profileData.birthYear,
         address: profileData.address,
         profileType: intent
       });
@@ -175,9 +219,10 @@ const StreamlinedSignUp = () => {
 
       console.log("✅ Profile verified successfully");
 
-      // Clear stored data
+      // Clear stored data and mark profile as completed
       localStorage.removeItem('pendingProfileData');
       localStorage.removeItem('signupRedirectPath');
+      localStorage.setItem('profileSetupCompleted', 'true');
       
       toast.success('Welcome to Elyphant!', {
         description: 'Your account is ready to go.'
@@ -185,12 +230,12 @@ const StreamlinedSignUp = () => {
 
       console.log("🚀 Navigating based on intent:", intent);
 
-      // Route based on intent with small delay to ensure everything is ready
+      // Enhanced intent-based routing with Nicole integration
       setTimeout(() => {
         if (intent === 'giftor') {
-          navigate('/marketplace?mode=nicole&open=true&greeting=personalized', { replace: true });
+          navigate('/marketplace?mode=nicole&open=true&greeting=personalized&source=signup', { replace: true });
         } else {
-          navigate('/marketplace?mode=wishlist', { replace: true });
+          navigate('/marketplace?mode=wishlist&source=signup', { replace: true });
         }
       }, 500);
 
@@ -207,19 +252,33 @@ const StreamlinedSignUp = () => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image too large', {
+          description: 'Please choose an image smaller than 5MB.'
+        });
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfileData(prev => ({ ...prev, photo: e.target?.result as string }));
+        setMandatoryValidation(prev => ({ ...prev, photo: true }));
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileData(prev => ({ ...prev, photo: undefined }));
+    setMandatoryValidation(prev => ({ ...prev, photo: false }));
   };
 
   const userInitials = profileData.firstName 
     ? `${profileData.firstName[0]}${profileData.lastName?.[0] || ''}`.toUpperCase()
     : 'U';
 
-  if (user && step !== 'intent') return null;
+  if (user && step !== 'intent' && step !== 'oauth-complete' && step !== 'profile') return null;
 
   return (
     <MainLayout>
@@ -322,16 +381,21 @@ const StreamlinedSignUp = () => {
           )}
 
           {/* Step 2: Profile Setup */}
-          {step === 'profile' && (
+          {(step === 'profile' || step === 'oauth-complete') && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl text-center">Set Up Your Profile</CardTitle>
+                <CardTitle className="text-2xl text-center">
+                  {step === 'oauth-complete' ? 'Complete Your Profile' : 'Set Up Your Profile'}
+                </CardTitle>
                 <p className="text-center text-muted-foreground">
-                  Just a few quick details to personalize your experience
+                  {step === 'oauth-complete' 
+                    ? 'Please complete all required fields to continue' 
+                    : 'All fields are required to personalize your experience'
+                  }
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Profile Photo */}
+                {/* Profile Photo - Now Required */}
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
                     <Avatar className="h-24 w-24">
@@ -349,37 +413,143 @@ const StreamlinedSignUp = () => {
                         onChange={handleImageUpload}
                       />
                     </label>
+                    {profileData.photo && (
+                      <button
+                        onClick={handleRemoveImage}
+                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">Add a profile photo (optional)</p>
+                  <div className="text-center">
+                    <p className={cn(
+                      "text-sm font-medium",
+                      mandatoryValidation.photo ? "text-green-600" : "text-red-600"
+                    )}>
+                      Profile photo *
+                    </p>
+                    <p className="text-xs text-muted-foreground">Required for your account</p>
+                  </div>
                 </div>
 
+                {/* First & Last Name Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className={cn(
+                      "font-medium",
+                      mandatoryValidation.firstName ? "text-green-600" : "text-red-600"
+                    )}>
+                      First Name *
+                    </Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={profileData.firstName}
+                      onChange={(e) => {
+                        setProfileData(prev => ({ ...prev, firstName: e.target.value }));
+                        setMandatoryValidation(prev => ({ ...prev, firstName: e.target.value.trim().length > 0 }));
+                      }}
+                      className={cn(
+                        mandatoryValidation.firstName ? "border-green-300" : "border-red-300"
+                      )}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className={cn(
+                      "font-medium",
+                      mandatoryValidation.lastName ? "text-green-600" : "text-red-600"
+                    )}>
+                      Last Name *
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={profileData.lastName}
+                      onChange={(e) => {
+                        setProfileData(prev => ({ ...prev, lastName: e.target.value }));
+                        setMandatoryValidation(prev => ({ ...prev, lastName: e.target.value.trim().length > 0 }));
+                      }}
+                      className={cn(
+                        mandatoryValidation.lastName ? "border-green-300" : "border-red-300"
+                      )}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Email Field */}
+                {step !== 'oauth-complete' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className={cn(
+                      "font-medium",
+                      mandatoryValidation.email ? "text-green-600" : "text-red-600"
+                    )}>
+                      Email *
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) => {
+                        setProfileData(prev => ({ ...prev, email: e.target.value }));
+                        setMandatoryValidation(prev => ({ ...prev, email: e.target.value.trim().length > 0 }));
+                      }}
+                      className={cn(
+                        mandatoryValidation.email ? "border-green-300" : "border-red-300"
+                      )}
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* Username Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username" className={cn(
+                    "font-medium",
+                    mandatoryValidation.username ? "text-green-600" : "text-red-600"
+                  )}>
+                    Username * (minimum 3 characters)
+                  </Label>
                   <Input
                     id="username"
                     placeholder="Choose a username"
                     value={profileData.username}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+                    onChange={(e) => {
+                      setProfileData(prev => ({ ...prev, username: e.target.value }));
+                      setMandatoryValidation(prev => ({ ...prev, username: e.target.value.trim().length >= 3 }));
+                    }}
+                    className={cn(
+                      mandatoryValidation.username ? "border-green-300" : "border-red-300"
+                    )}
                     required
                   />
                 </div>
 
+                {/* Date of Birth - Now Required */}
                 <div className="space-y-2">
-                  <Label>Date of Birth (optional)</Label>
+                  <Label className={cn(
+                    "font-medium",
+                    mandatoryValidation.dateOfBirth ? "text-green-600" : "text-red-600"
+                  )}>
+                    Date of Birth *
+                  </Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !profileData.dateOfBirth && "text-muted-foreground"
+                          !profileData.dateOfBirth && "text-muted-foreground",
+                          mandatoryValidation.dateOfBirth ? "border-green-300" : "border-red-300"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {profileData.dateOfBirth ? (
                           format(profileData.dateOfBirth, "PPP")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>Pick your date of birth</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -387,11 +557,55 @@ const StreamlinedSignUp = () => {
                       <Calendar
                         mode="single"
                         selected={profileData.dateOfBirth}
-                        onSelect={(date) => setProfileData(prev => ({ ...prev, dateOfBirth: date }))}
+                        onSelect={(date) => {
+                          setProfileData(prev => ({ 
+                            ...prev, 
+                            dateOfBirth: date,
+                            birthYear: date?.getFullYear() 
+                          }));
+                          setMandatoryValidation(prev => ({ 
+                            ...prev, 
+                            dateOfBirth: !!date,
+                            birthYear: !!date?.getFullYear()
+                          }));
+                        }}
+                        fromYear={1900}
+                        toYear={new Date().getFullYear()}
+                        captionLayout="dropdown"
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
+                </div>
+
+                {/* Birth Year Field - Auto-populated from date of birth */}
+                <div className="space-y-2">
+                  <Label htmlFor="birthYear" className={cn(
+                    "font-medium",
+                    mandatoryValidation.birthYear ? "text-green-600" : "text-red-600"
+                  )}>
+                    Birth Year * (for age-appropriate recommendations)
+                  </Label>
+                  <Input
+                    id="birthYear"
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                    value={profileData.birthYear || ''}
+                    onChange={(e) => {
+                      const year = parseInt(e.target.value);
+                      setProfileData(prev => ({ ...prev, birthYear: year }));
+                      setMandatoryValidation(prev => ({ 
+                        ...prev, 
+                        birthYear: year >= 1900 && year <= new Date().getFullYear()
+                      }));
+                    }}
+                    className={cn(
+                      mandatoryValidation.birthYear ? "border-green-300" : "border-red-300"
+                    )}
+                    placeholder="YYYY"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -406,12 +620,38 @@ const StreamlinedSignUp = () => {
                   />
                 </div>
 
+                {/* Validation Summary */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm font-medium mb-2">Required Fields:</p>
+                  <div className="space-y-1 text-xs">
+                    {Object.entries(mandatoryValidation).map(([field, isValid]) => (
+                      <div key={field} className="flex items-center gap-2">
+                        <div className={cn(
+                          "w-2 h-2 rounded-full",
+                          isValid ? "bg-green-500" : "bg-red-500"
+                        )} />
+                        <span className={isValid ? "text-green-700" : "text-red-700"}>
+                          {field === 'firstName' && 'First Name'}
+                          {field === 'lastName' && 'Last Name'}
+                          {field === 'email' && 'Email'}
+                          {field === 'photo' && 'Profile Photo'}
+                          {field === 'username' && 'Username'}
+                          {field === 'dateOfBirth' && 'Date of Birth'}
+                          {field === 'birthYear' && 'Birth Year'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <Button 
                   onClick={handleProfileSetup}
-                  disabled={!profileData.username.trim()}
+                  disabled={!Object.values(mandatoryValidation).every(Boolean)}
                   className="w-full"
                 >
-                  Continue
+                  {Object.values(mandatoryValidation).every(Boolean) 
+                    ? 'Continue to Intent Selection' 
+                    : 'Complete All Required Fields'}
                 </Button>
               </CardContent>
             </Card>

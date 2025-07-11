@@ -8,6 +8,7 @@ interface ProfileCreationData {
   username: string;
   photo?: string;
   dateOfBirth?: Date;
+  birthYear?: number;
   address?: string;
   profileType?: string;
 }
@@ -81,11 +82,14 @@ export class ProfileCreationService {
 
       const profileData = {
         id: userId,
+        first_name: data.firstName,
+        last_name: data.lastName,
         name: fullName,
         email: data.email,
         username: data.username || null,
         profile_image: data.photo || null,
         dob: formattedDob,
+        birth_year: data.birthYear || null,
         shipping_address: formattedAddress,
         profile_type: data.profileType || null,
         onboarding_completed: true,
@@ -134,6 +138,40 @@ export class ProfileCreationService {
       
       throw error;
     }
+  }
+
+  // Enhanced profile creation with mandatory fields
+  static async createEnhancedProfile(
+    userId: string, 
+    data: ProfileCreationData
+  ): Promise<{ success: boolean; error?: string }> {
+    console.log("🚀 Starting enhanced profile creation for user:", userId);
+    console.log("📝 Enhanced profile data:", JSON.stringify(data, null, 2));
+    
+    // Validate mandatory fields
+    if (!data.firstName?.trim()) {
+      return { success: false, error: "First name is required" };
+    }
+    if (!data.lastName?.trim()) {
+      return { success: false, error: "Last name is required" };
+    }
+    if (!data.email?.trim()) {
+      return { success: false, error: "Email is required" };
+    }
+    if (!data.username?.trim() || data.username.length < 3) {
+      return { success: false, error: "Username must be at least 3 characters" };
+    }
+    if (!data.photo) {
+      return { success: false, error: "Profile photo is required" };
+    }
+    if (!data.dateOfBirth) {
+      return { success: false, error: "Date of birth is required" };
+    }
+    if (!data.birthYear || data.birthYear < 1900 || data.birthYear > new Date().getFullYear()) {
+      return { success: false, error: "Valid birth year is required" };
+    }
+    
+    return this.createProfileWithTimeout(userId, data);
   }
 
   static async verifyProfileExists(userId: string): Promise<boolean> {

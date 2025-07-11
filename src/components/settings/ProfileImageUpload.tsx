@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, X } from "lucide-react";
@@ -20,6 +20,11 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { handleProfileImageUpdate, handleRemoveImage } = useProfileImage();
+  
+  // Sync preview with currentImage prop changes
+  useEffect(() => {
+    setPreview(currentImage);
+  }, [currentImage]);
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

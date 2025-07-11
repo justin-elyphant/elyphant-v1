@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 interface UseVerificationContainerProps {
   userEmail: string;
@@ -37,12 +38,17 @@ export const useVerificationContainer = ({
     console.log("[useVerificationContainer] Handling verification success");
     setIsVerified(true);
     
-    // Store the verification state in localStorage
-    localStorage.setItem("emailVerified", "true");
-    localStorage.setItem("verifiedEmail", userEmail);
-    localStorage.setItem("userName", userName);
-    localStorage.removeItem("pendingVerificationEmail");
-    localStorage.removeItem("pendingVerificationName");
+    // Store verification state using LocalStorageService
+    LocalStorageService.setProfileCompletionState({
+      email: userEmail,
+      firstName: userName.split(' ')[0] || '',
+      lastName: userName.split(' ').slice(1).join(' ') || '',
+      step: 'intent',
+      source: 'email'
+    });
+    
+    // Clean up deprecated keys
+    LocalStorageService.cleanupDeprecatedKeys();
     
     console.log("[useVerificationContainer] Verification successful - ready for intent selection");
   };
@@ -51,10 +57,14 @@ export const useVerificationContainer = ({
   const handleCheckVerification = async (): Promise<{ verified: boolean }> => {
     console.log("[useVerificationContainer] Manual verification check");
     
-    // Store bypass data for reliability
-    localStorage.setItem("bypassVerification", "true");
-    localStorage.setItem("emailVerified", "true");
-    localStorage.setItem("verifiedEmail", userEmail);
+    // Store bypass data using LocalStorageService
+    LocalStorageService.setProfileCompletionState({
+      email: userEmail,
+      firstName: userName.split(' ')[0] || '',
+      lastName: userName.split(' ').slice(1).join(' ') || '',
+      step: 'intent',
+      source: 'email'
+    });
     
     // Send verification email in background
     try {

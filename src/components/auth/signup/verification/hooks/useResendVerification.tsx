@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 interface UseResendVerificationProps {
   onResendVerification: () => Promise<{ success: boolean; rateLimited?: boolean }>;
@@ -35,8 +36,12 @@ export const useResendVerification = ({ onResendVerification }: UseResendVerific
         });
       }
       
-      // Store resend count in localStorage for persistence
-      localStorage.setItem("verificationResendCount", String(resendCount + 1));
+      // Track resend attempts in context
+      LocalStorageService.setNicoleContext({ 
+        source: 'verification_resend',
+        timestamp: new Date().toISOString(),
+        previousActions: [`resend_attempt_${resendCount + 1}`]
+      });
       
       return result;
     } catch (error) {

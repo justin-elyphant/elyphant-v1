@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, Loader2, Info } from "lucide-react"; // Added Info
+import { Mail, Lock, Loader2, Info } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -71,7 +72,10 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
       }
       
       console.log("Sign in successful, calling onSuccess handler");
-      localStorage.setItem("fromSignIn", "true");
+      LocalStorageService.setNicoleContext({ 
+        source: 'sign_in',
+        currentPage: window.location.pathname
+      });
       toast.success("Signed in successfully!");
       onSuccess();
 

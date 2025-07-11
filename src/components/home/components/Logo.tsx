@@ -3,17 +3,22 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const Logo = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const handleLogoClick = () => {
-    // Always navigate to homepage, clearing any setup flags
-    localStorage.removeItem("newSignUp");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("nextStepsOption");
-    localStorage.removeItem("profileCompleted");
+    // Navigate to homepage with fresh context
+    LocalStorageService.setNicoleContext({ 
+      source: 'logo_click',
+      currentPage: '/',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clean up deprecated keys
+    LocalStorageService.cleanupDeprecatedKeys();
     
     console.log("Logo clicked, navigating to homepage");
     navigate("/");

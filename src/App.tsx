@@ -19,7 +19,7 @@ import SignIn from "./pages/SignIn";
 import OAuthProfileCompletion from "./pages/OAuthProfileCompletion";
 import Wishlists from "./pages/Wishlists";
 import Dashboard from "./pages/Dashboard";
-import ProfileSetup from "./pages/ProfileSetup";
+
 import Settings from "./pages/Settings";
 import Messages from "./pages/Messages";
 import Connections from "./pages/Connections";
@@ -61,7 +61,7 @@ const App = () => (
                 <Route path="/auth/oauth-complete" element={<OAuthProfileCompletion />} />
                 <Route path="/wishlists" element={<Wishlists />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
+                
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/messages/:connectionId" element={<Messages />} />

@@ -15,6 +15,7 @@ import SeasonalGiftGuide from "@/components/home/sections/SeasonalGiftGuide";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const HomeContent = () => {
   const { user } = useAuth();
@@ -54,7 +55,8 @@ const HomeContent = () => {
   ];
 
   // Journey guide logic: new user onboarding steps
-  const showJourneyGuide = user && localStorage.getItem("newSignUp") === "true";
+  const profileState = LocalStorageService.getProfileCompletionState();
+  const showJourneyGuide = user && profileState?.step !== 'completed' && !LocalStorageService.isProfileSetupCompleted();
 
   return (
     <ProductProvider>

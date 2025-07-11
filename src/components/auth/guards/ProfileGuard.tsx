@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/hooks/profile/useProfile";
 import { Navigate, useLocation } from "react-router-dom";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
+import { hasCompleteDOB } from "@/utils/dobValidation";
 
 interface ProfileGuardProps {
   children: React.ReactNode;
@@ -35,14 +36,13 @@ const ProfileGuard: React.FC<ProfileGuardProps> = ({
     );
   }
 
-  // Check if profile is complete - ALL fields are mandatory
+  // Check if profile is complete - ALL fields are mandatory including full DOB validation
   const isProfileComplete = profile && 
     profile.first_name?.trim() && 
     profile.last_name?.trim() && 
     profile.email?.trim() && 
     profile.username?.trim() && 
-    profile.birth_year && 
-    profile.dob &&
+    hasCompleteDOB(profile) &&
     profile.profile_image?.trim();
 
   // If profile is incomplete, redirect to OAuth completion or signup

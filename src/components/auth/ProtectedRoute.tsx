@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const ProtectedRoute = ({ 
   redirectPath = "/sign-in", 
@@ -18,15 +19,14 @@ const ProtectedRoute = ({
   
   // Enhanced logging for debugging navigation
   useEffect(() => {
+    const profileState = LocalStorageService.getProfileCompletionState();
     console.log("ProtectedRoute - Navigation Debug:", {
       currentPath: location.pathname,
       user: user?.id,
       isLoading,
       isDebugMode,
-      profileCompleted: localStorage.getItem("profileCompleted"),
-      newSignUp: localStorage.getItem("newSignUp"),
-      signupRateLimited: localStorage.getItem("signupRateLimited"),
-      emailVerified: localStorage.getItem("emailVerified")
+      profileSetupCompleted: LocalStorageService.isProfileSetupCompleted(),
+      profileCompletionState: profileState
     });
   }, [user, location, isLoading, isDebugMode]);
 
@@ -39,11 +39,10 @@ const ProtectedRoute = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Check for various auth states
-  const isRateLimited = localStorage.getItem("signupRateLimited") === "true";
-  const isNewSignUp = localStorage.getItem("newSignUp") === "true";
-  const profileCompleted = localStorage.getItem("profileCompleted") === "true";
-  const emailVerified = localStorage.getItem("emailVerified") === "true";
+  // Check for various auth states using new service
+  const profileState = LocalStorageService.getProfileCompletionState();
+  const isNewSignUp = profileState?.step !== 'completed';
+  const profileCompleted = LocalStorageService.isProfileSetupCompleted();
 
   // If in debug mode, bypass authentication check
   if (isDebugMode) {
@@ -56,8 +55,11 @@ const ProtectedRoute = ({
 
   // If loading has timed out but we're on a protected route and don't have user info
   if (!shouldShowLoading && !isLoading && !user && location.pathname !== '/profile-setup') {
-    // Save the current path to redirect back after login
-    localStorage.setItem("redirectAfterSignIn", location.pathname);
+    // Save the current path using LocalStorageService context
+    LocalStorageService.setNicoleContext({ 
+      currentPage: location.pathname,
+      source: 'protected_route_redirect'
+    });
     return <Navigate to={redirectPath} state={{ from: location.pathname }} replace />;
   }
 
@@ -65,9 +67,8 @@ const ProtectedRoute = ({
   if (location.pathname === '/profile-setup') {
     console.log("On profile setup page - Enhanced Logging", {
       newSignUp: isNewSignUp,
-      rateLimited: isRateLimited,
       profileCompleted,
-      emailVerified,
+      profileState,
       userExists: !!user
     });
     
@@ -78,8 +79,8 @@ const ProtectedRoute = ({
     }
     
     // If we have a new signup flag, bypass normal auth checks
-    if (isNewSignUp || isRateLimited) {
-      console.log("New signup or rate limited signup detected, allowing access");
+    if (isNewSignUp) {
+      console.log("New signup detected, allowing access");
       return <>{children}</>;
     }
   }

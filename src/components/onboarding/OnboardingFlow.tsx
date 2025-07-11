@@ -9,8 +9,9 @@ import OnboardingWelcome from "./steps/OnboardingWelcome";
 import OnboardingConnections from "./steps/OnboardingConnections";
 import OnboardingPreferences from "./steps/OnboardingPreferences";
 import OnboardingComplete from "./steps/OnboardingComplete";
-import "./onboardingStyles.css"; // Import the new styles
+import "./onboardingStyles.css";
 import { useGiftSearches } from "./hooks/useGiftSearches";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 export type OnboardingStep = 'welcome' | 'connections' | 'preferences' | 'complete';
 
@@ -81,8 +82,11 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
       setCurrentStep(steps[currentStepIndex + 1]);
     } else {
       // Onboarding complete, redirect to dashboard
-      localStorage.removeItem("newSignUp");
-      localStorage.setItem("onboardingComplete", "true");
+      LocalStorageService.markProfileSetupCompleted();
+      LocalStorageService.setNicoleContext({ 
+        source: 'onboarding_complete',
+        currentPage: '/dashboard'
+      });
       onComplete();
     }
   };
@@ -118,8 +122,11 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     await saveGiftSearch(onboardingSession);
 
     // Redirect to dashboard
-    localStorage.removeItem("newSignUp");
-    localStorage.setItem("onboardingComplete", "true");
+    LocalStorageService.markProfileSetupCompleted();
+    LocalStorageService.setNicoleContext({ 
+      source: 'onboarding_complete',
+      currentPage: '/dashboard'
+    });
     
     // If the parent component provided an onComplete handler, use that
     onComplete();
@@ -130,10 +137,12 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     if (onSkip) {
       onSkip();
     } else {
-      localStorage.removeItem("newSignUp");
-      localStorage.setItem("onboardingComplete", "true");
-      localStorage.setItem("onboardingSkipped", "true");
-      localStorage.setItem("onboardingSkippedTime", Date.now().toString());
+      LocalStorageService.markProfileSetupCompleted();
+      LocalStorageService.setNicoleContext({ 
+        source: 'onboarding_skipped',
+        currentPage: '/dashboard',
+        timestamp: new Date().toISOString()
+      });
       navigate("/dashboard");
     }
   };

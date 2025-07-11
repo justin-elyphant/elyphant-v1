@@ -55,20 +55,17 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     if (step === "verification" && userEmail) {
       console.log("[SignUpContentWrapper] Verification step detected - IMMEDIATELY showing intent modal");
       
-      // Block any potential auto-redirects
-      localStorage.setItem("blockAutoRedirect", "true");
+      // Check for existing intent using LocalStorageService
+      const nicoleContext = LocalStorageService.getNicoleContext();
+      const validIntent = nicoleContext?.selectedIntent === "giftor" || nicoleContext?.selectedIntent === "giftee";
       
-      // Check if user already has valid intent (only check, don't navigate)
-      const userIntent = localStorage.getItem("userIntent");
-      const validIntent = userIntent === "giftor" || userIntent === "giftee";
-      
-      console.log("[SignUpContentWrapper] Current intent:", userIntent, "Valid:", validIntent);
+      console.log("[SignUpContentWrapper] Current intent:", nicoleContext?.selectedIntent, "Valid:", validIntent);
 
       // If valid intent already exists, navigate immediately
       if (validIntent) {
         console.log("[SignUpContentWrapper] Valid intent found, navigating immediately");
         setTimeout(() => {
-          if (userIntent === "giftor") {
+          if (nicoleContext?.selectedIntent === "giftor") {
             console.log("[SignUpContentWrapper] Navigating to marketplace with AI mode");
             navigate("/marketplace?mode=nicole&open=true&greeting=personalized", { replace: true });
           } else {
@@ -79,14 +76,18 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
         return;
       }
 
-      // Get suggested intent from CTA (only once)
-      // Check for legacy intent data and migrate to new service
-      const ctaIntent = localStorage.getItem("ctaIntent");
-      if (ctaIntent === "giftor" || ctaIntent === "giftee") {
-        console.log("[SignUpContentWrapper] Setting suggested intent:", ctaIntent);
-        setSuggestedIntent(ctaIntent);
-        LocalStorageService.setNicoleContext({ selectedIntent: ctaIntent });
-        localStorage.removeItem("ctaIntent"); // Clean up deprecated key
+      // Get suggested intent from existing context or migrate legacy data
+      if (!nicoleContext?.selectedIntent) {
+        // Check for legacy intent data and migrate
+        const ctaIntent = localStorage.getItem("ctaIntent");
+        if (ctaIntent === "giftor" || ctaIntent === "giftee") {
+          console.log("[SignUpContentWrapper] Migrating legacy intent:", ctaIntent);
+          setSuggestedIntent(ctaIntent as "giftor" | "giftee");
+          LocalStorageService.setNicoleContext({ selectedIntent: ctaIntent });
+          localStorage.removeItem("ctaIntent");
+        }
+      } else {
+        setSuggestedIntent(nicoleContext.selectedIntent as "giftor" | "giftee");
       }
 
       // IMMEDIATELY show the intent modal without any loading states

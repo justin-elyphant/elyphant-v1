@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Users, Eye, Mail, Calendar, Package } from "lucide-react";
 import { useCustomers } from "@/hooks/trunkline/useCustomers";
+import CustomerDetailModal from "./customers/CustomerDetailModal";
 
 const TrunklineCustomersTab = () => {
   const { customers, loading, error, filters, setFilters } = useCustomers();
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
   const handleSearchChange = (search: string) => {
     setFilters({ ...filters, search });
@@ -149,7 +151,7 @@ const TrunklineCustomersTab = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => console.log('View customer:', customer.id)}
+                            onClick={() => setSelectedCustomerId(customer.id)}
                           >
                             <Eye className="h-3 w-3 mr-1" />
                             View
@@ -172,6 +174,12 @@ const TrunklineCustomersTab = () => {
           )}
         </CardContent>
       </Card>
+
+      <CustomerDetailModal
+        customerId={selectedCustomerId}
+        isOpen={!!selectedCustomerId}
+        onClose={() => setSelectedCustomerId(null)}
+      />
     </div>
   );
 };

@@ -49,6 +49,12 @@ const navigationItems = [
     badge: null,
   },
   {
+    title: "Returns",
+    url: "/trunkline/returns",
+    icon: Package,
+    badge: null,
+  },
+  {
     title: "Support",
     url: "/trunkline/support",
     icon: MessageSquare,

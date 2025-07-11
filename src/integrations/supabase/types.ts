@@ -104,6 +104,42 @@ export type Database = {
           },
         ]
       }
+      admin_audit_log: {
+        Row: {
+          action_details: Json
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          target_id: string
+          target_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          action_details: Json
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          target_id: string
+          target_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          action_details?: Json
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          target_id?: string
+          target_type?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       ai_gift_searches: {
         Row: {
           budget_range: Json | null
@@ -1433,6 +1469,47 @@ export type Database = {
           },
         ]
       }
+      order_notes: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          note_content: string
+          note_type: string
+          order_id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          note_content: string
+          note_type?: string
+          order_id: string
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          note_content?: string
+          note_type?: string
+          order_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
@@ -1727,6 +1804,56 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      return_events: {
+        Row: {
+          created_at: string
+          detected_at: string
+          id: string
+          order_id: string
+          processed_at: string | null
+          refund_amount: number | null
+          return_items: Json | null
+          return_reason: string | null
+          return_status: string
+          updated_at: string
+          zinc_order_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detected_at?: string
+          id?: string
+          order_id: string
+          processed_at?: string | null
+          refund_amount?: number | null
+          return_items?: Json | null
+          return_reason?: string | null
+          return_status: string
+          updated_at?: string
+          zinc_order_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detected_at?: string
+          id?: string
+          order_id?: string
+          processed_at?: string | null
+          refund_amount?: number | null
+          return_items?: Json | null
+          return_reason?: string | null
+          return_status?: string
+          updated_at?: string
+          zinc_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]

@@ -29,7 +29,7 @@ const ProfileCompletionProgress: React.FC = () => {
       id: 'first_name',
       label: 'First Name',
       icon: <User className="w-4 h-4" />,
-      isComplete: !!profile.first_name?.trim(),
+      isComplete: !!(profile as any).first_name?.trim(),
       isRequired: true,
       settingsTab: 'basic'
     },
@@ -37,7 +37,7 @@ const ProfileCompletionProgress: React.FC = () => {
       id: 'last_name',
       label: 'Last Name',
       icon: <User className="w-4 h-4" />,
-      isComplete: !!profile.last_name?.trim(),
+      isComplete: !!(profile as any).last_name?.trim(),
       isRequired: true,
       settingsTab: 'basic'
     },
@@ -69,7 +69,7 @@ const ProfileCompletionProgress: React.FC = () => {
       id: 'birth_year',
       label: 'Birth Year',
       icon: <Calendar className="w-4 h-4" />,
-      isComplete: !!profile.birth_year && profile.birth_year >= 1900 && profile.birth_year <= new Date().getFullYear(),
+      isComplete: !!(profile as any).birth_year && (profile as any).birth_year >= 1900 && (profile as any).birth_year <= new Date().getFullYear(),
       isRequired: true,
       settingsTab: 'basic'
     },

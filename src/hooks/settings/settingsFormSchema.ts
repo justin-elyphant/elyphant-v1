@@ -13,10 +13,12 @@ export interface BirthdayData {
   day: number;
 }
 
-// Define form schema with enhanced mandatory fields
 export const formSchema = z.object({
+  // New mandatory fields
   first_name: z.string().min(1, { message: "First name is required" }),
   last_name: z.string().min(1, { message: "Last name is required" }),
+  // Legacy compatibility field
+  name: z.string().optional(),
   email: z.string().email({ message: "Please enter a valid email address" }),
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   bio: z.string().optional(),

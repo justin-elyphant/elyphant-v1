@@ -14,8 +14,11 @@ export const useGeneralSettingsForm = () => {
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      // New mandatory fields
       first_name: "",
       last_name: "",
+      // Legacy compatibility field
+      name: "",
       email: "",
       username: "",
       bio: "",

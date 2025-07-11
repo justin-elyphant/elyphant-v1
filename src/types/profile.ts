@@ -3,12 +3,15 @@
 export interface Profile {
   id: string;
   user_id?: string;  // Changed to optional to match supabase type
-  name?: string;
+  name?: string; // Keep for backwards compatibility
+  first_name?: string; // New mandatory field
+  last_name?: string; // New mandatory field
   username?: string;
   email: string;
   profile_image?: string | null;
   bio?: string;
   dob?: string | null;
+  birth_year?: number; // New mandatory field for AI recommendations
   shipping_address?: ShippingAddress;
   gift_preferences?: GiftPreference[];
   important_dates?: ImportantDate[];
@@ -236,10 +239,13 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
   });
 
   return {
-    name: formData.name,
+    name: formData.name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim(),
+    first_name: formData.first_name,
+    last_name: formData.last_name,
     email: formData.email,
     username: formData.username || null,
     bio: formData.bio || '',
+    birth_year: formData.birth_year,
     dob: dobString,
     shipping_address: formData.address ? mapFormAddressToApiAddress(formData.address) : undefined,
     gift_preferences: formData.interests?.map((interest: string) => ({

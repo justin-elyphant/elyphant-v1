@@ -75,6 +75,10 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       }
       
       // Try to upload to Supabase Storage
+      console.log("Attempting to upload to path:", filePath);
+      console.log("User ID:", user.id);
+      console.log("File details:", { name: file.name, size: file.size, type: file.type });
+      
       const { data, error } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
@@ -82,25 +86,40 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
           upsert: true
         });
       
-      let finalImageUrl = '';
-      
       if (error) {
         console.error("Storage upload failed:", error);
-        console.error("Error details:", error.message);
+        console.error("Error details:", JSON.stringify(error, null, 2));
+        console.error("File path attempted:", filePath);
         toast.error(`Failed to upload image: ${error.message}`);
         setPreview(currentImage);
-        return;
+        return; // CRITICAL: Exit here - don't proceed to database update
       }
+      
+      console.log("Storage upload successful:", data);
       
       // Get the public URL
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
       
-      finalImageUrl = publicUrlData.publicUrl;
-      console.log("Upload successful, final URL:", finalImageUrl);
+      const finalImageUrl = publicUrlData.publicUrl;
+      console.log("Generated public URL:", finalImageUrl);
       
-      // Update profile through the hook
+      // Test if the URL is actually accessible
+      try {
+        const testResponse = await fetch(finalImageUrl, { method: 'HEAD' });
+        if (!testResponse.ok) {
+          throw new Error(`Image not accessible: ${testResponse.status}`);
+        }
+        console.log("Image URL verified as accessible");
+      } catch (urlError) {
+        console.error("Generated URL is not accessible:", urlError);
+        toast.error("Image uploaded but not accessible. Please try again.");
+        setPreview(currentImage);
+        return;
+      }
+      
+      // Only update profile if storage upload was successful AND URL is accessible
       await handleProfileImageUpdate(finalImageUrl);
       
       // Update local state and notify parent

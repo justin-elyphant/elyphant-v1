@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
+import { useProfileImage } from "@/hooks/settings/profile/useProfileImage";
 import { toast } from "sonner";
 
 interface ProfileImageUploadProps {
@@ -18,6 +19,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
   const [preview, setPreview] = useState<string | null>(currentImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const { handleProfileImageUpdate, handleRemoveImage } = useProfileImage();
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,55 +54,34 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `profile-images/${fileName}`;
       
+      // Try to upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
       let finalImageUrl = '';
       
-      try {
-        // Try to upload to Supabase Storage first
-        const { data, error } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: true
-          });
-        
-        if (error) {
-          console.log("Storage upload failed, using base64 fallback:", error);
-          // Fallback to base64
-          const base64Promise = new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          
-          finalImageUrl = await base64Promise;
-          console.log("Using base64 fallback for image");
-        } else {
-          // Get the public URL
-          const { data: publicUrlData } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(filePath);
-          
-          finalImageUrl = publicUrlData.publicUrl;
-          console.log("Image uploaded to storage, URL:", finalImageUrl);
-        }
-      } catch (storageError) {
-        console.log("Storage error, using base64 fallback:", storageError);
-        // Fallback to base64
-        const base64Promise = new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        
-        finalImageUrl = await base64Promise;
+      if (error) {
+        console.error("Storage upload failed:", error);
+        toast.error("Failed to upload image. Please try again.");
+        setPreview(currentImage);
+        return;
       }
       
-      console.log("Final image URL to save:", finalImageUrl);
+      // Get the public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
       
-      // Update profile through ProfileContext instead of direct database call
-      console.log("Profile updated successfully with image URL");
+      finalImageUrl = publicUrlData.publicUrl;
       
-      // Update local state and notify parent (onImageUpdate will handle ProfileContext update)
+      // Update profile through the hook
+      await handleProfileImageUpdate(finalImageUrl);
+      
+      // Update local state and notify parent
       setPreview(finalImageUrl);
       onImageUpdate(finalImageUrl);
       toast.success("Profile image updated successfully");
@@ -108,23 +89,20 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image. Please try again.");
-      // Reset preview on error
       setPreview(currentImage);
     } finally {
       setUploading(false);
     }
   };
   
-  const handleRemoveImage = async () => {
+  const handleRemoveImageClick = async () => {
     if (!user) return;
     
     try {
       setUploading(true);
       
-      console.log("Removing profile image for user:", user.id);
-      
-      // Update through ProfileContext instead of direct database call
-      console.log("Profile image removed successfully");
+      // Update profile through the hook
+      await handleRemoveImage();
       
       setPreview(null);
       onImageUpdate(null);
@@ -171,7 +149,7 @@ const ProfileImageUpload = ({ currentImage, name, onImageUpdate }: ProfileImageU
               size="sm" 
               variant="ghost" 
               className="text-white p-1 h-8 w-8 ml-1"
-              onClick={handleRemoveImage}
+              onClick={handleRemoveImageClick}
               disabled={uploading}
             >
               <X className="h-5 w-5" />

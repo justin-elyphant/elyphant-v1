@@ -19,14 +19,11 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
 
   const handleImageUpdate = async (imageUrl: string | null) => {
     try {
-      // Update the form value
+      // Update the form value first to prevent race conditions
       form.setValue("profile_image", imageUrl);
       
-      // Only update the profile if we actually have a new image URL
-      // Don't update for null values (which happen during initialization)
-      if (imageUrl !== null) {
-        await updateProfile({ profile_image: imageUrl });
-      }
+      // Don't update the profile here - let the ProfileImageUpload component handle it
+      // This prevents race conditions where the form reloads and overwrites the image
     } catch (error) {
       console.error("Failed to update profile image:", error);
     }

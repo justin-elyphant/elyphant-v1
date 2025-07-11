@@ -22,8 +22,11 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
       // Update the form value
       form.setValue("profile_image", imageUrl);
       
-      // Also update the profile immediately for instant feedback
-      await updateProfile({ profile_image: imageUrl });
+      // Only update the profile if we actually have a new image URL
+      // Don't update for null values (which happen during initialization)
+      if (imageUrl !== null) {
+        await updateProfile({ profile_image: imageUrl });
+      }
     } catch (error) {
       console.error("Failed to update profile image:", error);
     }

@@ -216,6 +216,15 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
 
   // Ensure we have a proper address object - check both shipping_address and address
   const shippingAddress = databaseProfile.shipping_address || databaseProfile.address || {};
+  
+  console.log("🏠 Address debugging:", {
+    shipping_address: databaseProfile.shipping_address,
+    address: databaseProfile.address,
+    shippingAddress,
+    address_line2: shippingAddress.address_line2,
+    line2: shippingAddress.line2,
+    addressLine2: shippingAddress.addressLine2
+  });
 
   // Parse formatted address if individual components are missing
   const parseFormattedAddress = (formattedAddress: string) => {
@@ -257,10 +266,19 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
   }
 
   // Handle apartment/suite field variations
-  const apartmentField = shippingAddress.address_line2 || 
+  const apartmentField = shippingAddress.address_line_2 || 
+                        shippingAddress.address_line2 || 
                         shippingAddress.line2 || 
                         shippingAddress.addressLine2 || 
                         "";
+  
+  console.log("🏠 Apartment field mapping:", {
+    address_line_2: shippingAddress.address_line_2,
+    address_line2: shippingAddress.address_line2,
+    line2: shippingAddress.line2,
+    addressLine2: shippingAddress.addressLine2,
+    final: apartmentField
+  });
 
   const mappedData = {
     first_name: firstName,

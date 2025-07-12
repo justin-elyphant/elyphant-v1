@@ -17,14 +17,12 @@ export const useGeneralSettingsForm = () => {
       // New mandatory fields
       first_name: "",
       last_name: "",
-      // Legacy compatibility field
       name: "",
       email: "",
       username: "",
       bio: "",
       profile_image: null,
-      birthday: null,
-      birth_year: undefined,
+      date_of_birth: undefined,
       address: {
         street: "",
         line2: "",

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { normalizeDataSharingSettings } from "@/utils/privacyUtils";
 import { ShippingAddress, DataSharingSettings } from "@/types/profile";
-import { parseBirthdayFromStorage, formatBirthdayForStorage } from "@/utils/dataFormatUtils";
+import { parseBirthdayFromStorage, formatBirthdayForStorage, mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
 
 export const useSettingsForm = () => {
   const { user } = useAuth();
@@ -19,11 +19,14 @@ export const useSettingsForm = () => {
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      first_name: "",
+      last_name: "",
       name: "",
       email: "",
+      username: "",
       bio: "",
       profile_image: null,
-      birthday: null, // Use null for month/day birthday format
+      date_of_birth: undefined,
       address: {
         street: "",
         city: "",
@@ -45,29 +48,35 @@ export const useSettingsForm = () => {
   // Load profile data when available
   useEffect(() => {
     if (profile && !loading) {
-      // Parse birthday from storage format, ensuring we have valid data
-      const parsedBirthday = parseBirthdayFromStorage(profile.dob);
-      
-      form.reset({
-        name: profile.name || "",
-        email: profile.email || "",
-        bio: profile.bio || "",
-        profile_image: profile.profile_image || null,
-        birthday: parsedBirthday, // This is now properly typed as BirthdayData | null
-        address: profile.shipping_address || {
-          street: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          country: ""
-        },
-        interests: profile.interests || [],
-        importantDates: profile.important_dates?.map(date => ({
-          date: new Date(date.date),
-          description: date.title || date.description || ""
-        })) || [],
-        data_sharing_settings: normalizeDataSharingSettings(profile.data_sharing_settings)
-      });
+      // Use mapped data from the profile data hook which handles the conversion
+      const mappedData = mapDatabaseToSettingsForm(profile);
+      if (mappedData) {
+        form.reset(mappedData);
+      } else {
+        form.reset({
+          first_name: profile.name?.split(' ')[0] || "",
+          last_name: profile.name?.split(' ').slice(1).join(' ') || "",
+          name: profile.name || "",
+          email: profile.email || "",
+          username: profile.username || "",
+          bio: profile.bio || "",
+          profile_image: profile.profile_image || null,
+          date_of_birth: undefined,
+          address: profile.shipping_address || {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: ""
+          },
+          interests: profile.interests || [],
+          importantDates: profile.important_dates?.map(date => ({
+            date: new Date(date.date),
+            description: date.title || date.description || ""
+          })) || [],
+          data_sharing_settings: normalizeDataSharingSettings(profile.data_sharing_settings)
+        });
+      }
     }
   }, [profile, loading, form]);
 
@@ -101,18 +110,25 @@ export const useSettingsForm = () => {
         zipCode: data.address.zipCode || ""
       };
       
-      // Format birthday for storage, ensuring we have valid data before calling formatBirthdayForStorage
+      // Format date of birth for storage
       let formattedBirthday: string | null = null;
-      if (data.birthday && data.birthday.month && data.birthday.day) {
-        formattedBirthday = formatBirthdayForStorage(data.birthday as { month: number; day: number });
+      let birthYear: number | null = null;
+      if (data.date_of_birth) {
+        const date = new Date(data.date_of_birth);
+        formattedBirthday = `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        birthYear = date.getFullYear();
       }
       
       // Format the data for Supabase
       const updateData = {
-        name: data.name,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        name: data.name || `${data.first_name} ${data.last_name}`.trim(),
+        username: data.username,
         bio: data.bio,
         profile_image: data.profile_image,
         dob: formattedBirthday,
+        birth_year: birthYear,
         shipping_address: shippingAddress,
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({

@@ -157,13 +157,29 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
   console.log("🔄 Mapping database profile to settings form:", {
     id: databaseProfile.id,
     name: databaseProfile.name,
+    first_name: databaseProfile.first_name,
+    last_name: databaseProfile.last_name,
     email: databaseProfile.email,
     username: databaseProfile.username,
     profile_image: databaseProfile.profile_image,
     dob: databaseProfile.dob,
+    birth_year: databaseProfile.birth_year,
     shipping_address: databaseProfile.shipping_address,
     onboarding_completed: databaseProfile.onboarding_completed
   });
+
+  // Extract first_name and last_name 
+  const firstName = databaseProfile.first_name || "";
+  const lastName = databaseProfile.last_name || "";
+  
+  // Create date of birth from stored dob (MM-DD) and birth_year
+  let dateOfBirth: Date | null = null;
+  const birthday = parseBirthdayFromStorage(databaseProfile.dob);
+  const birthYear = databaseProfile.birth_year;
+  
+  if (birthday && birthYear) {
+    dateOfBirth = new Date(birthYear, birthday.month - 1, birthday.day);
+  }
 
   // Parse existing important dates
   let importantDates = Array.isArray(databaseProfile.important_dates)
@@ -174,20 +190,15 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     : [];
 
   // Auto-populate birthday if it exists and isn't already in important dates
-  const birthday = parseBirthdayFromStorage(databaseProfile.dob);
-  if (birthday) {
-    // Check if birthday is already in important dates to avoid duplicates
+  if (birthday && birthYear) {
     const birthdayExists = importantDates.some(date => {
       const existingDate = new Date(date.date);
       return existingDate.getMonth() + 1 === birthday.month && 
              existingDate.getDate() === birthday.day;
     });
 
-    // If birthday doesn't exist in important dates, add it as the first entry
     if (!birthdayExists) {
-      const currentYear = new Date().getFullYear();
-      const birthdayDate = new Date(currentYear, birthday.month - 1, birthday.day);
-      
+      const birthdayDate = new Date(birthYear, birthday.month - 1, birthday.day);
       importantDates.unshift({
         date: birthdayDate,
         description: "My Birthday"
@@ -195,19 +206,10 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     }
   }
 
-  // Use the name field directly as it should contain the full name
-  let displayName = databaseProfile.name || "";
-  
-  // If name is empty but we have first/last name from migration data, construct it
-  if (!displayName && (databaseProfile.first_name || databaseProfile.last_name)) {
-    displayName = `${databaseProfile.first_name || ""} ${databaseProfile.last_name || ""}`.trim();
-  }
-
   console.log("🔍 Profile data mapping debug:", {
-    original_name: databaseProfile.name,
-    first_name: databaseProfile.first_name,
-    last_name: databaseProfile.last_name,
-    mapped_name: displayName,
+    first_name: firstName,
+    last_name: lastName,
+    date_of_birth: dateOfBirth,
     profile_image: databaseProfile.profile_image ? "present" : "missing",
     onboarding_completed: databaseProfile.onboarding_completed
   });
@@ -216,12 +218,15 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
   const shippingAddress = databaseProfile.shipping_address || {};
 
   const mappedData = {
-    name: displayName,
+    first_name: firstName,
+    last_name: lastName,
     email: databaseProfile.email || "",
     username: databaseProfile.username || "",
     bio: databaseProfile.bio || "",
     profile_image: databaseProfile.profile_image || null,
-    birthday: birthday,
+    date_of_birth: dateOfBirth,
+    // Legacy compatibility field
+    name: databaseProfile.name || `${firstName} ${lastName}`.trim(),
     address: {
       street: shippingAddress.address_line1 || shippingAddress.street || "",
       line2: shippingAddress.address_line2 || shippingAddress.line2 || "",

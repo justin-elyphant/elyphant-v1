@@ -58,7 +58,7 @@ export const testOnboardingSettingsSync = async (userId: string) => {
         hasName: !!settingsData.name,
         hasEmail: !!settingsData.email,
         hasBio: !!settingsData.bio,
-        hasBirthday: !!settingsData.birthday,
+        hasBirthday: !!settingsData.date_of_birth,
         hasAddress: !!settingsData.address && Object.keys(settingsData.address).length > 0,
         hasInterests: settingsData.interests.length > 0,
         hasImportantDates: settingsData.importantDates.length > 0,

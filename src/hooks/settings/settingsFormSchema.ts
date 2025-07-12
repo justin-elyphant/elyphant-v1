@@ -19,17 +19,19 @@ export const formSchema = z.object({
   last_name: z.string().min(1, { message: "Last name is required" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
-  birth_year: z.number().min(1900).max(new Date().getFullYear(), { message: "Birth year is required" }),
   
   // Profile image is optional
   profile_image: z.string().optional(),
   
-  // Date of birth fields (mandatory)
-  birthday: z.object({
-    month: z.number().min(1).max(12),
-    day: z.number().min(1).max(31)
-  }).refine((data) => data.month && data.day, { 
-    message: "Complete date of birth is required" 
+  // Complete date of birth (mandatory)
+  date_of_birth: z.date({ 
+    required_error: "Date of birth is required" 
+  }).refine((date) => {
+    const now = new Date();
+    const age = now.getFullYear() - date.getFullYear();
+    return age >= 13 && age <= 120;
+  }, { 
+    message: "You must be between 13 and 120 years old" 
   }),
   
   // Legacy compatibility field (optional now)

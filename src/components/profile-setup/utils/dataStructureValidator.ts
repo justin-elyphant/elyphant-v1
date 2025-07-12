@@ -64,13 +64,18 @@ export const convertProfileDataToSettingsForm = (profileData: ProfileData): Sett
     ...(profileData.data_sharing_settings || {})
   };
 
-  // Convert to settings form format
+  // Convert to settings form format  
   const settingsData: SettingsFormValues = {
+    first_name: profileData.name?.split(' ')[0] || '',
+    last_name: profileData.name?.split(' ').slice(1).join(' ') || '',
     name: profileData.name || '',
     email: profileData.email || '',
+    username: profileData.username || '',
     bio: profileData.bio || '',
     profile_image: profileData.profile_image || null,
-    birthday: profileData.birthday || null,
+    date_of_birth: profileData.birthday ? 
+      new Date(new Date().getFullYear(), profileData.birthday.month - 1, profileData.birthday.day) : 
+      undefined,
     address: {
       street: profileData.address?.street || '',
       city: profileData.address?.city || '',

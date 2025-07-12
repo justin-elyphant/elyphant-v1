@@ -217,6 +217,45 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
   // Ensure we have a proper address object - check both shipping_address and address
   const shippingAddress = databaseProfile.shipping_address || databaseProfile.address || {};
 
+  // Parse formatted address if individual components are missing
+  const parseFormattedAddress = (formattedAddress: string) => {
+    // Basic parsing for US addresses like "123 Main St, City, State 12345, Country"
+    const parts = formattedAddress.split(', ');
+    if (parts.length >= 3) {
+      const street = parts[0] || "";
+      const city = parts[1] || "";
+      const stateZipMatch = parts[2]?.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/) || [];
+      const state = stateZipMatch[1] || parts[2] || "";
+      const zipCode = stateZipMatch[2] || "";
+      const country = parts[3] || "US";
+      
+      return { street, city, state, zipCode, country };
+    }
+    // Fallback: use formatted address as street
+    return { 
+      street: formattedAddress, 
+      city: "", 
+      state: "", 
+      zipCode: "", 
+      country: "US" 
+    };
+  };
+
+  // If we have formatted_address but missing individual components, parse it
+  let addressComponents = {
+    street: shippingAddress.address_line1 || shippingAddress.street || "",
+    city: shippingAddress.city || "",
+    state: shippingAddress.state || "",
+    zipCode: shippingAddress.zip_code || shippingAddress.zipCode || "",
+    country: shippingAddress.country || "US"
+  };
+
+  // If components are missing but we have formatted_address, parse it
+  if (!addressComponents.street && !addressComponents.city && shippingAddress.formatted_address) {
+    const parsed = parseFormattedAddress(shippingAddress.formatted_address);
+    addressComponents = { ...addressComponents, ...parsed };
+  }
+
   const mappedData = {
     first_name: firstName,
     last_name: lastName,
@@ -228,12 +267,12 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     // Legacy compatibility field
     name: databaseProfile.name || `${firstName} ${lastName}`.trim(),
     address: {
-      street: shippingAddress.address_line1 || shippingAddress.street || "",
+      street: addressComponents.street,
       line2: shippingAddress.address_line2 || shippingAddress.line2 || "",
-      city: shippingAddress.city || "",
-      state: shippingAddress.state || "",
-      zipCode: shippingAddress.zip_code || shippingAddress.zipCode || "",
-      country: shippingAddress.country || "US"
+      city: addressComponents.city,
+      state: addressComponents.state,
+      zipCode: addressComponents.zipCode,
+      country: addressComponents.country
     },
     interests: Array.isArray(databaseProfile.interests) ? databaseProfile.interests : [],
     importantDates: importantDates,

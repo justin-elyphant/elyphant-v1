@@ -63,7 +63,7 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
     }
   }, [profile, loading]);
 
-  // Check for onboarding completion flag and force refresh
+  // Check for onboarding completion flag and force refresh (only once)
   useEffect(() => {
     const checkOnboardingCompletion = async () => {
       const onboardingComplete = localStorage.getItem("onboardingComplete");
@@ -71,6 +71,9 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
       // Force refresh if onboarding was just completed
       if (onboardingComplete === "true") {
         console.log("🎯 Onboarding completed flag detected - starting data sync");
+        
+        // Clear the flag immediately to prevent repeat triggers
+        localStorage.removeItem("onboardingComplete");
         
         // Reset loading state to ensure fresh data load
         hasLoadedRef.current = false;
@@ -84,7 +87,7 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
     };
 
     checkOnboardingCompletion();
-  }, [handleOnboardingComplete]); // Include handleOnboardingComplete in dependencies
+  }, []); // No dependencies to prevent infinite loop
 
   // Additional effect to handle immediate profile loading when it becomes available
   useEffect(() => {
@@ -94,15 +97,6 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
     }
   }, [profile]);
 
-  // Force refresh on component mount to ensure fresh data
-  useEffect(() => {
-    const forceRefresh = async () => {
-      console.log("💫 Forcing profile refresh on settings page mount");
-      await refetchProfile();
-    };
-    
-    forceRefresh();
-  }, []); // Only run once on mount
 
   return {
     profile,

@@ -256,6 +256,12 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     addressComponents = { ...addressComponents, ...parsed };
   }
 
+  // Handle apartment/suite field variations
+  const apartmentField = shippingAddress.address_line2 || 
+                        shippingAddress.line2 || 
+                        shippingAddress.addressLine2 || 
+                        "";
+
   const mappedData = {
     first_name: firstName,
     last_name: lastName,
@@ -268,7 +274,7 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     name: databaseProfile.name || `${firstName} ${lastName}`.trim(),
     address: {
       street: addressComponents.street,
-      line2: shippingAddress.address_line2 || shippingAddress.line2 || "",
+      line2: apartmentField,
       city: addressComponents.city,
       state: addressComponents.state,
       zipCode: addressComponents.zipCode,

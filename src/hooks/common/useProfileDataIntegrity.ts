@@ -162,10 +162,19 @@ export function useProfileDataIntegrity() {
       // === HELPFUL ALERTS (25 points total) ===
       // Shipping address (10 points)
       const shippingAddress = dataToCheck.address || dataToCheck.shipping_address;
-      if (!shippingAddress || 
-          (typeof shippingAddress === 'string') ||
-          (typeof shippingAddress === 'object' && 
-           (!shippingAddress.street || !shippingAddress.city))) {
+      
+      // Check if address is complete - handle different field name variations
+      let isAddressComplete = false;
+      if (shippingAddress && typeof shippingAddress === 'object') {
+        const street = shippingAddress.street || shippingAddress.address_line1;
+        const city = shippingAddress.city;
+        const state = shippingAddress.state;
+        const zipCode = shippingAddress.zipCode || shippingAddress.zip_code;
+        
+        isAddressComplete = !!(street?.trim() && city?.trim() && state?.trim() && zipCode?.trim());
+      }
+      
+      if (!isAddressComplete) {
         foundIssues.push({
           field: 'shipping_address',
           issue: 'Complete your shipping address',

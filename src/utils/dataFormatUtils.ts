@@ -214,8 +214,8 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     onboarding_completed: databaseProfile.onboarding_completed
   });
 
-  // Ensure we have a proper address object
-  const shippingAddress = databaseProfile.shipping_address || {};
+  // Ensure we have a proper address object - check both shipping_address and address
+  const shippingAddress = databaseProfile.shipping_address || databaseProfile.address || {};
 
   const mappedData = {
     first_name: firstName,

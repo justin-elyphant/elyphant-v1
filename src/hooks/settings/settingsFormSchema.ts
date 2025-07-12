@@ -21,8 +21,8 @@ export const formSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   birth_year: z.number().min(1900).max(new Date().getFullYear(), { message: "Birth year is required" }),
   
-  // Profile image is now mandatory
-  profile_image: z.string().min(1, { message: "Profile photo is required" }),
+  // Profile image is optional
+  profile_image: z.string().optional(),
   
   // Date of birth fields (mandatory)
   birthday: z.object({

@@ -15,6 +15,7 @@ interface ProfileImageStepProps {
 const ProfileImageStep: React.FC<ProfileImageStepProps> = ({ value, onChange, name }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +108,11 @@ const ProfileImageStep: React.FC<ProfileImageStepProps> = ({ value, onChange, na
     toast.success("Profile image removed");
   };
   
+  const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Camera capture works the same as file upload
+    await handleFileChange(e);
+  };
+
   const getInitials = (name: string) => {
     if (!name) return "?";
     return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
@@ -117,7 +123,7 @@ const ProfileImageStep: React.FC<ProfileImageStepProps> = ({ value, onChange, na
       <div className="text-center mb-6">
         <h3 className="text-lg font-medium">Add a profile picture</h3>
         <p className="text-sm text-muted-foreground">
-          Help your friends recognize you with a profile picture
+          Help your friends recognize you with a profile picture (optional)
         </p>
       </div>
       
@@ -159,17 +165,40 @@ const ProfileImageStep: React.FC<ProfileImageStepProps> = ({ value, onChange, na
           disabled={isUploading}
         />
         
+        <input 
+          type="file" 
+          ref={cameraInputRef}
+          className="hidden"
+          accept="image/*"
+          capture="user"
+          onChange={handleCameraCapture}
+          disabled={isUploading}
+        />
+        
         <div className="space-y-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full flex items-center justify-center"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            {isUploading ? "Uploading..." : "Upload photo"}
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center justify-center"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {isUploading ? "Uploading..." : "Upload"}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center justify-center"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Camera
+            </Button>
+          </div>
           
           {value && (
             <Button

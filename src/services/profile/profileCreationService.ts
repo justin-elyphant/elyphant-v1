@@ -168,9 +168,10 @@ export class ProfileCreationService {
     if (!data.username?.trim() || data.username.length < 3) {
       return { success: false, error: "Username must be at least 3 characters" };
     }
-    if (!data.photo) {
-      return { success: false, error: "Profile photo is required" };
-    }
+    // Profile photo is now optional
+    // if (!data.photo) {
+    //   return { success: false, error: "Profile photo is required" };
+    // }
     if (!data.dateOfBirth) {
       return { success: false, error: "Date of birth is required" };
     }

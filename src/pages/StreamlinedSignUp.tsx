@@ -104,7 +104,7 @@ const StreamlinedSignUp = () => {
       firstName: profileData.firstName.trim().length > 0,
       lastName: profileData.lastName.trim().length > 0,
       email: profileData.email.trim().length > 0,
-      photo: !!profileData.photo,
+      photo: false, // Photo is optional
       username: profileData.username.trim().length >= 3,
       dateOfBirth: !!profileData.dateOfBirth,
       address: profileData.address.trim().length > 0
@@ -207,7 +207,7 @@ const StreamlinedSignUp = () => {
       firstName: profileData.firstName.trim().length > 0,
       lastName: profileData.lastName.trim().length > 0,
       email: profileData.email.trim().length > 0,
-      photo: !!profileData.photo,
+      photo: false, // Photo is optional
       username: profileData.username.trim().length >= 3,
       dateOfBirth: !!profileData.dateOfBirth,
       address: profileData.address.trim().length > 0
@@ -480,13 +480,10 @@ const StreamlinedSignUp = () => {
                     )}
                   </div>
                   <div className="text-center">
-                    <p className={cn(
-                      "text-sm font-medium",
-                      mandatoryValidation.photo ? "text-green-600" : "text-red-600"
-                    )}>
-                      Profile photo *
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Profile photo
                     </p>
-                    <p className="text-xs text-muted-foreground">Required for your account</p>
+                    <p className="text-xs text-muted-foreground">Optional</p>
                   </div>
                 </div>
 

@@ -229,9 +229,9 @@ const OAuthProfileCompletion = () => {
                 "text-sm font-medium",
                 mandatoryValidation.photo ? "text-green-600" : "text-red-600"
               )}>
-                Profile photo *
+                Profile photo
               </p>
-              <p className="text-xs text-muted-foreground">Required for your account</p>
+              <p className="text-xs text-muted-foreground">Optional</p>
             </div>
           </div>
 

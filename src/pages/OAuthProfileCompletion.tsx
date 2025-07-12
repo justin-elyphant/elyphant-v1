@@ -76,13 +76,13 @@ const OAuthProfileCompletion = () => {
     e.preventDefault();
     if (!user) return;
 
-    // Enforce mandatory profile photo
-    if (!profileImageUrl) {
-      toast.error("Profile photo is required", {
-        description: "Please upload a profile photo to continue"
-      });
-      return;
-    }
+    // Profile photo is now optional
+    // if (!profileImageUrl) {
+    //   toast.error("Profile photo is required", {
+    //     description: "Please upload a profile photo to continue"
+    //   });
+    //   return;
+    // }
 
     setLoading(true);
     try {
@@ -132,8 +132,7 @@ const OAuthProfileCompletion = () => {
   const isFormValid = formData.firstName && 
                      formData.lastName && 
                      formData.username && 
-                     formData.dateOfBirth &&
-                     profileImageUrl; // Profile photo is mandatory
+                     formData.dateOfBirth; // Profile photo is now optional
 
   if (!user) {
     return null;
@@ -153,15 +152,12 @@ const OAuthProfileCompletion = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Mandatory Profile Photo */}
               <div className="space-y-2">
-                <Label>Profile Photo *</Label>
+                <Label>Profile Photo (Optional)</Label>
                 <ProfileImageStep
                   value={profileImageUrl}
                   onChange={setProfileImageUrl}
                   name={`${formData.firstName} ${formData.lastName}`.trim() || 'User'}
                 />
-                {!profileImageUrl && (
-                  <p className="text-sm text-destructive">Profile photo is required</p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>

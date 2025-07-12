@@ -54,7 +54,6 @@ const StreamlinedSignUp = () => {
     firstName: false,
     lastName: false,
     email: false,
-    photo: false,
     username: false,
     dateOfBirth: false,
     address: false
@@ -104,7 +103,6 @@ const StreamlinedSignUp = () => {
       firstName: profileData.firstName.trim().length > 0,
       lastName: profileData.lastName.trim().length > 0,
       email: profileData.email.trim().length > 0,
-      photo: false, // Photo is optional
       username: profileData.username.trim().length >= 3,
       dateOfBirth: !!profileData.dateOfBirth,
       address: profileData.address.trim().length > 0
@@ -207,7 +205,6 @@ const StreamlinedSignUp = () => {
       firstName: profileData.firstName.trim().length > 0,
       lastName: profileData.lastName.trim().length > 0,
       email: profileData.email.trim().length > 0,
-      photo: false, // Photo is optional
       username: profileData.username.trim().length >= 3,
       dateOfBirth: !!profileData.dateOfBirth,
       address: profileData.address.trim().length > 0
@@ -320,7 +317,6 @@ const StreamlinedSignUp = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfileData(prev => ({ ...prev, photo: e.target?.result as string }));
-        setMandatoryValidation(prev => ({ ...prev, photo: true }));
       };
       reader.readAsDataURL(file);
     }
@@ -328,7 +324,6 @@ const StreamlinedSignUp = () => {
 
   const handleRemoveImage = () => {
     setProfileData(prev => ({ ...prev, photo: undefined }));
-    setMandatoryValidation(prev => ({ ...prev, photo: false }));
   };
 
   const userInitials = profileData.firstName 
@@ -716,7 +711,6 @@ const StreamlinedSignUp = () => {
                           {field === 'firstName' && 'First Name'}
                           {field === 'lastName' && 'Last Name'}
                           {field === 'email' && 'Email'}
-                          {field === 'photo' && 'Profile Photo'}
                           {field === 'username' && 'Username'}
                           {field === 'dateOfBirth' && 'Date of Birth'}
                           {field === 'address' && 'Shipping Address'}

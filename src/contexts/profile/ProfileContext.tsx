@@ -43,13 +43,22 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         
         // Only update state if component is still mounted
         if (isActive && profileData) {
-          console.log("✅ Profile loaded from backend:", profileData);
+          console.log("✅ Profile loaded from backend:", {
+            id: profileData.id,
+            name: profileData.name,
+            email: profileData.email,
+            username: profileData.username,
+            profile_image: profileData.profile_image,
+            onboarding_completed: profileData.onboarding_completed
+          });
           setProfile(profileData);
           setLastFetchTime(Date.now());
           
           // Clear any pending flags after successful load
           localStorage.removeItem("newSignUp");
           localStorage.removeItem("profileSetupLoading");
+        } else if (isActive && !profileData) {
+          console.warn("⚠️ No profile data returned from fetchProfile");
         }
       } catch (error) {
         console.error("❌ Error loading profile:", error);
@@ -111,18 +120,26 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Wrapper for refetching the profile
   const refetchProfile = useCallback(async () => {
     try {
-      console.log("Manually refetching profile...");
+      console.log("🔄 Manually refetching profile...");
       const profileData = await fetchProfile();
       if (profileData) {
-        console.log("Profile refetched successfully");
+        console.log("✅ Profile refetched successfully:", {
+          id: profileData.id,
+          name: profileData.name,
+          profile_image: profileData.profile_image,
+          onboarding_completed: profileData.onboarding_completed
+        });
         setProfile(profileData);
         setLastFetchTime(Date.now());
+        
+        // Invalidate unified data service cache to ensure consistency
+        unifiedDataService.invalidateCache();
       } else {
-        console.log("No profile data returned when refetching");
+        console.warn("⚠️ No profile data returned when refetching");
       }
       return profileData;
     } catch (error) {
-      console.error("Error refetching profile:", error);
+      console.error("❌ Error refetching profile:", error);
       toast.error("Failed to refresh your profile data");
       return null;
     }
@@ -133,8 +150,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
   // Enhanced data management functions
   const invalidateCache = useCallback(() => {
+    console.log("🧹 Invalidating profile cache");
     unifiedDataService.invalidateCache();
     setLastFetchTime(null);
+    // Reset profile state to force fresh fetch
+    setProfile(null);
   }, []);
 
   const validateProfileData = useCallback((data: Partial<Profile>) => {

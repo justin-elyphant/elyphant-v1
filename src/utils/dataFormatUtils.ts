@@ -149,7 +149,21 @@ export function formatProfileForSubmission(profileData: ProfileData): any {
  * Maps database profile data to settings form format
  */
 export function mapDatabaseToSettingsForm(databaseProfile: any) {
-  if (!databaseProfile) return null;
+  if (!databaseProfile) {
+    console.warn("⚠️ No database profile provided to mapDatabaseToSettingsForm");
+    return null;
+  }
+
+  console.log("🔄 Mapping database profile to settings form:", {
+    id: databaseProfile.id,
+    name: databaseProfile.name,
+    email: databaseProfile.email,
+    username: databaseProfile.username,
+    profile_image: databaseProfile.profile_image,
+    dob: databaseProfile.dob,
+    shipping_address: databaseProfile.shipping_address,
+    onboarding_completed: databaseProfile.onboarding_completed
+  });
 
   // Parse existing important dates
   let importantDates = Array.isArray(databaseProfile.important_dates)
@@ -181,20 +195,40 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     }
   }
 
-  return {
-    name: databaseProfile.name || "",
+  // Use the name field directly as it should contain the full name
+  let displayName = databaseProfile.name || "";
+  
+  // If name is empty but we have first/last name from migration data, construct it
+  if (!displayName && (databaseProfile.first_name || databaseProfile.last_name)) {
+    displayName = `${databaseProfile.first_name || ""} ${databaseProfile.last_name || ""}`.trim();
+  }
+
+  console.log("🔍 Profile data mapping debug:", {
+    original_name: databaseProfile.name,
+    first_name: databaseProfile.first_name,
+    last_name: databaseProfile.last_name,
+    mapped_name: displayName,
+    profile_image: databaseProfile.profile_image ? "present" : "missing",
+    onboarding_completed: databaseProfile.onboarding_completed
+  });
+
+  // Ensure we have a proper address object
+  const shippingAddress = databaseProfile.shipping_address || {};
+
+  const mappedData = {
+    name: displayName,
     email: databaseProfile.email || "",
     username: databaseProfile.username || "",
     bio: databaseProfile.bio || "",
     profile_image: databaseProfile.profile_image || null,
     birthday: birthday,
     address: {
-      street: databaseProfile.shipping_address?.address_line1 || databaseProfile.shipping_address?.street || "",
-      line2: databaseProfile.shipping_address?.address_line2 || databaseProfile.shipping_address?.line2 || "",
-      city: databaseProfile.shipping_address?.city || "",
-      state: databaseProfile.shipping_address?.state || "",
-      zipCode: databaseProfile.shipping_address?.zip_code || databaseProfile.shipping_address?.zipCode || "",
-      country: databaseProfile.shipping_address?.country || "US"
+      street: shippingAddress.address_line1 || shippingAddress.street || "",
+      line2: shippingAddress.address_line2 || shippingAddress.line2 || "",
+      city: shippingAddress.city || "",
+      state: shippingAddress.state || "",
+      zipCode: shippingAddress.zip_code || shippingAddress.zipCode || "",
+      country: shippingAddress.country || "US"
     },
     interests: Array.isArray(databaseProfile.interests) ? databaseProfile.interests : [],
     importantDates: importantDates,
@@ -203,4 +237,11 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
       ...(databaseProfile.data_sharing_settings || {})
     }
   };
+
+  console.log("✅ Mapped data result:", {
+    ...mappedData,
+    profile_image_preview: mappedData.profile_image ? 
+      `${mappedData.profile_image.substring(0, 50)}...` : null
+  });
+  return mappedData;
 }

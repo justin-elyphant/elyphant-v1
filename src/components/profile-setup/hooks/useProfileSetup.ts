@@ -111,6 +111,9 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       
       toast.error("Profile setup completed with some errors");
       
+      // Delay to ensure any partial database write completes
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const nextStepsOption = profileData?.next_steps_option;
       setTimeout(() => {
         onComplete(nextStepsOption);

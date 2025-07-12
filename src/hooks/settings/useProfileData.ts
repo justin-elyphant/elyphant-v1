@@ -4,9 +4,11 @@ import { UseFormReturn } from "react-hook-form";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SettingsFormValues } from "./settingsFormSchema";
 import { mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
+import { useProfileCacheManager } from "@/hooks/profile/useProfileCacheManager";
 
 export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
   const { profile, loading, refetchProfile } = useProfile();
+  const { handleOnboardingComplete } = useProfileCacheManager();
   const hasLoadedRef = useRef(false);
   const lastProfileUpdateRef = useRef<string | null>(null);
 
@@ -61,23 +63,46 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
     }
   }, [profile, loading]);
 
-  // Check for onboarding completion flag ONLY ONCE on mount
+  // Check for onboarding completion flag and force refresh
   useEffect(() => {
     const checkOnboardingCompletion = async () => {
       const onboardingComplete = localStorage.getItem("onboardingComplete");
-      const newSignUp = localStorage.getItem("newSignUp");
       
-      // Only refetch if we haven't loaded profile data yet AND onboarding was just completed
-      if (onboardingComplete === "true" && newSignUp !== "true" && !hasLoadedRef.current) {
-        console.log("Onboarding completed, refreshing profile data once");
-        await refetchProfile();
-        // Clear the flag to prevent future refetches
-        localStorage.removeItem("onboardingComplete");
+      // Force refresh if onboarding was just completed
+      if (onboardingComplete === "true") {
+        console.log("🎯 Onboarding completed flag detected - starting data sync");
+        
+        // Reset loading state to ensure fresh data load
+        hasLoadedRef.current = false;
+        lastProfileUpdateRef.current = null;
+        
+        // Use the cache manager to handle complete refresh
+        await handleOnboardingComplete();
+        
+        console.log("✅ Onboarding data sync complete");
       }
     };
 
     checkOnboardingCompletion();
-  }, []); // Empty dependency array - only run once on mount
+  }, [handleOnboardingComplete]); // Include handleOnboardingComplete in dependencies
+
+  // Additional effect to handle immediate profile loading when it becomes available
+  useEffect(() => {
+    if (profile && !hasLoadedRef.current) {
+      console.log("🚀 Profile became available, loading immediately");
+      loadProfileData();
+    }
+  }, [profile]);
+
+  // Force refresh on component mount to ensure fresh data
+  useEffect(() => {
+    const forceRefresh = async () => {
+      console.log("💫 Forcing profile refresh on settings page mount");
+      await refetchProfile();
+    };
+    
+    forceRefresh();
+  }, []); // Only run once on mount
 
   return {
     profile,

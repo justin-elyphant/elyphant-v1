@@ -40,9 +40,15 @@ export const useProfileSubmit = ({ onSuccess, onComplete }: UseProfileSubmitProp
         // Force refresh the profile context to get the latest data
         await refetchProfile();
         
-        // Mark onboarding as complete
+        // Mark onboarding as complete and trigger data sync
         localStorage.setItem("onboardingComplete", "true");
         localStorage.removeItem("newSignUp");
+        
+        // Delay to ensure database write completes
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Force profile refresh to sync data
+        await refetchProfile();
         
         toast.success("Profile created successfully!");
         

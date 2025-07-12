@@ -28,10 +28,12 @@ export const useUnifiedProfile = (): UseUnifiedProfileReturn => {
     try {
       setLoading(true);
       setError(null);
+      console.log("🔄 Unified profile refetch for user:", user.id);
       const profileData = await unifiedProfileService.getCurrentProfile();
+      console.log("✅ Unified profile data:", profileData);
       setProfile(profileData);
     } catch (err: any) {
-      console.error('Error fetching profile:', err);
+      console.error('❌ Error fetching unified profile:', err);
       setError(err.message || 'Failed to fetch profile');
     } finally {
       setLoading(false);

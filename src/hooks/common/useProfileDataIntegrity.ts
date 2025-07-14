@@ -168,7 +168,9 @@ export function useProfileDataIntegrity() {
         dataToCheck: dataToCheck,
         shippingAddress: shippingAddress,
         hasAddress: !!shippingAddress,
-        addressType: typeof shippingAddress
+        addressType: typeof shippingAddress,
+        addressKeys: shippingAddress ? Object.keys(shippingAddress) : [],
+        fullAddressObject: shippingAddress
       });
       
       // Check if address is complete - handle different field name variations

@@ -16,11 +16,12 @@ export const useFormSubmission = () => {
       return;
     }
 
+    console.log("🚀 FORM SUBMISSION STARTED");
+    console.log("📝 Raw form data:", JSON.stringify(formData, null, 2));
+    console.log("🔍 Address data in form:", JSON.stringify(formData.address, null, 2));
+
     try {
       setIsSaving(true);
-      
-      console.log("🚀 FORM SUBMISSION STARTED");
-      console.log("📝 Raw form data:", JSON.stringify(formData, null, 2));
       
       // Validate required fields
       if (!formData.name || formData.name.trim() === '') {

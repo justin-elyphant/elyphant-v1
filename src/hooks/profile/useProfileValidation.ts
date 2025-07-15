@@ -32,6 +32,7 @@ const dataSharingSettingsSchema = z.object({
 export const profileValidationSchema = profileBaseSchema.extend({
   shipping_address: shippingAddressSchema,
   dob: z.string().optional(),
+  birth_year: z.number().min(1900, "Birth year must be valid").max(new Date().getFullYear(), "Birth year cannot be in the future"),
   data_sharing_settings: dataSharingSettingsSchema.optional(),
   gift_preferences: z.array(z.any()).optional(),
   important_dates: z.array(z.any()).optional(),

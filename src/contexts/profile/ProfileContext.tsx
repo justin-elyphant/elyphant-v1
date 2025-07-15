@@ -96,16 +96,24 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       const result = await updateProfile(validation.sanitizedData!);
       
       if (result !== null) {
-        // Just use the optimistic update - don't refetch immediately
-        if (profile) {
-          const optimisticUpdate = { 
-            ...profile, 
-            ...validation.sanitizedData,
-            updated_at: new Date().toISOString()
-          };
-          console.log("✅ Using optimistic update for immediate UI refresh");
-          setProfile(optimisticUpdate);
-          setLastFetchTime(Date.now());
+        console.log("✅ Profile update successful, refetching profile data");
+        
+        // Force a proper refetch to get the actual database data
+        try {
+          await refetchProfile();
+          console.log("✅ Profile refetch completed successfully");
+        } catch (refetchError) {
+          console.error("⚠️ Profile refetch failed, using optimistic update:", refetchError);
+          // Fallback to optimistic update if refetch fails
+          if (profile) {
+            const optimisticUpdate = { 
+              ...profile, 
+              ...validation.sanitizedData,
+              updated_at: new Date().toISOString()
+            };
+            setProfile(optimisticUpdate);
+            setLastFetchTime(Date.now());
+          }
         }
       }
       

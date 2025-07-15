@@ -60,6 +60,9 @@ export const useFormSubmission = () => {
       const result = await updateProfile(apiData);
       console.log("✅ UpdateProfile result:", result);
       
+      // Small delay to ensure database write completes
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("❌ Error saving profile:", error);

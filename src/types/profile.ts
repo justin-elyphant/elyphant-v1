@@ -202,6 +202,31 @@ export function mapApiAddressToFormAddress(apiAddress: ShippingAddress): any {
 
 // Function to convert form data to API data format
 export function profileFormToApiData(formData: any): Partial<Profile> {
+  console.log("🔄 profileFormToApiData - Input:", JSON.stringify(formData, null, 2));
+  
+  // Handle name field extraction - extract first_name and last_name from name if not provided
+  let firstName = formData.first_name;
+  let lastName = formData.last_name;
+  
+  // If first_name or last_name are missing but name exists, extract them
+  if ((!firstName || !lastName) && formData.name) {
+    const nameParts = formData.name.trim().split(' ');
+    if (!firstName) {
+      firstName = nameParts[0] || '';
+    }
+    if (!lastName) {
+      lastName = nameParts.slice(1).join(' ') || '';
+    }
+  }
+  
+  // Ensure we have minimum required fields
+  if (!firstName) {
+    firstName = formData.name?.split(' ')[0] || 'User';
+  }
+  if (!lastName) {
+    lastName = formData.name?.split(' ').slice(1).join(' ') || 'Name';
+  }
+  
   // Convert birthday to MM-DD format
   let dobString = null;
   if (formData.birthday) {
@@ -238,10 +263,10 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     };
   });
 
-  return {
-    name: formData.name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim(),
-    first_name: formData.first_name,
-    last_name: formData.last_name,
+  const result = {
+    name: formData.name || `${firstName} ${lastName}`.trim(),
+    first_name: firstName,
+    last_name: lastName,
     email: formData.email,
     username: formData.username || null,
     bio: formData.bio || '',
@@ -256,6 +281,9 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     data_sharing_settings: formData.data_sharing_settings,
     important_dates: processedImportantDates
   };
+
+  console.log("🔄 profileFormToApiData - Output:", JSON.stringify(result, null, 2));
+  return result;
 }
 
 /**

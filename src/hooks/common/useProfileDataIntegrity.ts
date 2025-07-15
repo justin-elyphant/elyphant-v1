@@ -163,15 +163,31 @@ export function useProfileDataIntegrity() {
       // Shipping address (10 points)
       const shippingAddress = dataToCheck.shipping_address || dataToCheck.address;
       
+      console.log("🔍 [useProfileDataIntegrity] Checking shipping address:", shippingAddress);
+      
       // Check if address is complete - handle different field name variations
       let isAddressComplete = false;
       if (shippingAddress && typeof shippingAddress === 'object') {
+        // Check for individual fields (complete form)
         const street = shippingAddress.address_line1 || shippingAddress.street;
         const city = shippingAddress.city;
         const state = shippingAddress.state;
         const zipCode = shippingAddress.zip_code || shippingAddress.zipCode;
         
-        isAddressComplete = !!(street?.trim() && city?.trim() && state?.trim() && zipCode?.trim());
+        const hasIndividualFields = !!(street?.trim() && city?.trim() && state?.trim() && zipCode?.trim());
+        
+        // Check for formatted address (Google Places API format)
+        const hasFormattedAddress = !!(shippingAddress.formatted_address && 
+                                      shippingAddress.formatted_address.trim().length > 10);
+        
+        isAddressComplete = hasIndividualFields || hasFormattedAddress;
+        
+        console.log("🔍 [useProfileDataIntegrity] Address validation:", {
+          hasIndividualFields,
+          hasFormattedAddress,
+          isAddressComplete,
+          formatted_address_length: shippingAddress.formatted_address?.length || 0
+        });
       }
       
       if (!isAddressComplete) {

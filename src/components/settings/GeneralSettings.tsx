@@ -71,7 +71,9 @@ const GeneralSettings = () => {
       <ProfileDataIntegrityPanel />
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          console.log("❌ Form validation errors:", errors);
+        })} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -129,7 +131,11 @@ const GeneralSettings = () => {
               </div>
             )}
             <div className="flex-1" />
-            <Button type="submit" disabled={isSaving}>
+            <Button 
+              type="submit" 
+              disabled={isSaving}
+              onClick={() => console.log("🔘 Save button clicked!")}
+            >
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

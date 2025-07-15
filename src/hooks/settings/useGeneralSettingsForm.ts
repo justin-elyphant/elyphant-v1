@@ -52,6 +52,7 @@ export const useGeneralSettingsForm = () => {
 
   // Enhanced onSubmit with unsaved changes tracking
   const handleSubmit = async (data: SettingsFormValues) => {
+    console.log("📋 Form handleSubmit called with data:", data);
     await onSubmit(data);
     clearUnsavedChanges();
   };

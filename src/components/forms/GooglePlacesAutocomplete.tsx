@@ -51,12 +51,10 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     }
   });
 
-  // Sync external value with internal query
+  // Sync external value with internal query only when external value changes
   useEffect(() => {
-    if (value !== query) {
-      setQuery(value);
-    }
-  }, [value, query, setQuery]);
+    setQuery(value);
+  }, [value, setQuery]);
 
   // Auto-open popover when predictions arrive, but don't close it immediately
   useEffect(() => {
@@ -69,8 +67,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    onChange(newValue);
     setQuery(newValue);
+    onChange(newValue);
     
     // Close popover if input is too short
     if (newValue.length < 3) {
@@ -83,13 +81,13 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   };
 
   const handleInputClick = () => {
-    if (value && value.length >= 3 && predictions.length > 0 && !isLoading) {
+    if (query && query.length >= 3 && predictions.length > 0 && !isLoading) {
       setOpen(true);
     }
   };
 
   const handleInputFocus = () => {
-    if (value.length >= 3 && predictions.length > 0 && !isLoading) {
+    if (query.length >= 3 && predictions.length > 0 && !isLoading) {
       setOpen(true);
     }
   };
@@ -115,7 +113,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
             <Input
               id="address-input"
               ref={inputRef}
-              value={value}
+              value={query}
               onChange={handleInputChange}
               onClick={handleInputClick}
               onFocus={handleInputFocus}

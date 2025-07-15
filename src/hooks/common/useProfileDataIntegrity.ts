@@ -176,10 +176,10 @@ export function useProfileDataIntegrity() {
       // Check if address is complete - handle different field name variations
       let isAddressComplete = false;
       if (shippingAddress && typeof shippingAddress === 'object') {
-        const street = shippingAddress.street || shippingAddress.address_line1;
+        const street = shippingAddress.address_line1 || shippingAddress.street;
         const city = shippingAddress.city;
         const state = shippingAddress.state;
-        const zipCode = shippingAddress.zipCode || shippingAddress.zip_code;
+        const zipCode = shippingAddress.zip_code || shippingAddress.zipCode;
         
         console.log('Address fields check:', {
           street, city, state, zipCode,

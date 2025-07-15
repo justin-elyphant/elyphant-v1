@@ -124,29 +124,32 @@ const GeneralSettings = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="flex items-center justify-between">
-            {hasUnsavedChanges && (
-              <div className="flex items-center gap-2 text-sm text-amber-600">
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                You have unsaved changes
-              </div>
-            )}
-            <div className="flex-1" />
-            <Button 
-              type="submit" 
-              disabled={isSaving}
-              onClick={() => console.log("🔘 Save button clicked!")}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
+          {/* Hide save button for auto-saving tabs */}
+          {activeTab !== "interests" && activeTab !== "dates" && (
+            <div className="flex items-center justify-between">
+              {hasUnsavedChanges && (
+                <div className="flex items-center gap-2 text-sm text-amber-600">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                  You have unsaved changes
+                </div>
               )}
-            </Button>
-          </div>
+              <div className="flex-1" />
+              <Button 
+                type="submit" 
+                disabled={isSaving}
+                onClick={() => console.log("🔘 Save button clicked!")}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
+          )}
         </form>
       </Form>
     </div>

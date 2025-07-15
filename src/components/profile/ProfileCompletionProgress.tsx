@@ -19,29 +19,30 @@ interface CompletionField {
 
 // Helper function to validate shipping address completeness
 const validateShippingAddress = (shippingAddress: any): boolean => {
-  console.log("🔍 Validating shipping address:", JSON.stringify(shippingAddress, null, 2));
+  console.log("🔍 [ProfileCompletionProgress] Validating shipping address:", JSON.stringify(shippingAddress, null, 2));
   
   if (!shippingAddress || typeof shippingAddress !== 'object') {
-    console.log("❌ No shipping address or invalid type");
+    console.log("❌ [ProfileCompletionProgress] No shipping address or invalid type");
     return false;
   }
   
   // Check if we have individual fields (ideal case)
-  const hasIndividualFields = shippingAddress.address_line1 && 
-                              shippingAddress.city && 
-                              shippingAddress.state && 
-                              shippingAddress.zip_code && 
-                              shippingAddress.country;
+  const hasIndividualFields = !!(shippingAddress.address_line1 && 
+                                shippingAddress.city && 
+                                shippingAddress.state && 
+                                shippingAddress.zip_code && 
+                                shippingAddress.country);
   
   // Check if we have formatted address (current incomplete case)
-  const hasFormattedAddress = shippingAddress.formatted_address && 
-                              shippingAddress.formatted_address.trim().length > 10; // At least a basic address
+  const hasFormattedAddress = !!(shippingAddress.formatted_address && 
+                                shippingAddress.formatted_address.trim().length > 10);
   
   const isComplete = hasIndividualFields || hasFormattedAddress;
-  console.log("🔍 Address validation result:", {
+  console.log("🔍 [ProfileCompletionProgress] Address validation result:", {
     hasIndividualFields,
     hasFormattedAddress,
-    isComplete
+    isComplete,
+    formatted_address_length: shippingAddress.formatted_address?.length || 0
   });
   
   return isComplete;
@@ -51,6 +52,8 @@ const ProfileCompletionProgress: React.FC = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
+
+  console.log("🔄 [ProfileCompletionProgress] Profile data:", profile);
 
   if (!profile) return null;
 

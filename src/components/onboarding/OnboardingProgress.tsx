@@ -15,21 +15,22 @@ const validateShippingAddress = (shippingAddress: any): boolean => {
   }
   
   // Check if we have individual fields (ideal case)
-  const hasIndividualFields = shippingAddress.address_line1 && 
-                              shippingAddress.city && 
-                              shippingAddress.state && 
-                              shippingAddress.zip_code && 
-                              shippingAddress.country;
+  const hasIndividualFields = !!(shippingAddress.address_line1 && 
+                                shippingAddress.city && 
+                                shippingAddress.state && 
+                                shippingAddress.zip_code && 
+                                shippingAddress.country);
   
   // Check if we have formatted address (current incomplete case)
-  const hasFormattedAddress = shippingAddress.formatted_address && 
-                              shippingAddress.formatted_address.trim().length > 10; // At least a basic address
+  const hasFormattedAddress = !!(shippingAddress.formatted_address && 
+                                shippingAddress.formatted_address.trim().length > 10);
   
   const isComplete = hasIndividualFields || hasFormattedAddress;
   console.log("🔍 [OnboardingProgress] Address validation result:", {
     hasIndividualFields,
     hasFormattedAddress,
-    isComplete
+    isComplete,
+    formatted_address_length: shippingAddress.formatted_address?.length || 0
   });
   
   return isComplete;

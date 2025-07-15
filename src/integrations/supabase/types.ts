@@ -1987,7 +1987,7 @@ export type Database = {
         Row: {
           blocked_at: string | null
           blocked_by: string | null
-          connected_user_id: string
+          connected_user_id: string | null
           created_at: string | null
           data_access_permissions: Json | null
           follow_type: string | null
@@ -2005,7 +2005,7 @@ export type Database = {
         Insert: {
           blocked_at?: string | null
           blocked_by?: string | null
-          connected_user_id: string
+          connected_user_id?: string | null
           created_at?: string | null
           data_access_permissions?: Json | null
           follow_type?: string | null
@@ -2023,7 +2023,7 @@ export type Database = {
         Update: {
           blocked_at?: string | null
           blocked_by?: string | null
-          connected_user_id?: string
+          connected_user_id?: string | null
           created_at?: string | null
           data_access_permissions?: Json | null
           follow_type?: string | null

@@ -52,7 +52,7 @@ export const pendingGiftsService = {
       .from('user_connections')
       .insert({
         user_id: user.user.id,
-        connected_user_id: '00000000-0000-0000-0000-000000000000', // Placeholder for pending
+        connected_user_id: null, // Will be set when invitation is accepted
         status: 'pending_invitation',
         relationship_type: relationshipType,
         pending_recipient_email: recipientEmail,
@@ -82,7 +82,7 @@ export const pendingGiftsService = {
       .from('auto_gifting_rules')
       .insert({
         user_id: user.user.id,
-        recipient_id: '00000000-0000-0000-0000-000000000000', // Placeholder for pending
+        recipient_id: null, // Will be set when invitation is accepted
         pending_recipient_email: recipientEmail,
         date_type: dateType,
         budget_limit: budgetLimit,

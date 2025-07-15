@@ -37,11 +37,10 @@ const ProfileDataIntegrityPanel: React.FC = () => {
 
   // Check data integrity when component mounts and when form values change
   useEffect(() => {
-    // Use profile data if form values are not available or incomplete
-    // This ensures the integrity check works even when form is not fully populated
-    const dataToUse = (formValues && Object.keys(formValues).length > 5) ? formValues : profile;
-    checkDataIntegrity(false, dataToUse);
-  }, [checkDataIntegrity, formValues, profile]);
+    // Always use the actual profile data for integrity checks
+    // Form values may not have the complete address structure
+    checkDataIntegrity(false, profile);
+  }, [checkDataIntegrity, profile]);
 
   // Determine which settings tab to open based on missing data
   const getTargetSettingsTab = () => {

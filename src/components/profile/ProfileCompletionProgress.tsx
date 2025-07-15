@@ -4,7 +4,7 @@ import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Camera, User, Mail, Calendar, Hash } from 'lucide-react';
+import { CheckCircle, AlertCircle, Camera, User, Mail, Calendar, Hash, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +16,18 @@ interface CompletionField {
   isRequired: boolean;
   settingsTab?: string;
 }
+
+// Helper function to validate shipping address completeness
+const validateShippingAddress = (shippingAddress: any): boolean => {
+  if (!shippingAddress || typeof shippingAddress !== 'object') return false;
+  
+  const requiredFields = ['address_line1', 'city', 'state', 'zip_code', 'country'];
+  return requiredFields.every(field => 
+    shippingAddress[field] && 
+    typeof shippingAddress[field] === 'string' && 
+    shippingAddress[field].trim().length > 0
+  );
+};
 
 const ProfileCompletionProgress: React.FC = () => {
   const { user } = useAuth();
@@ -80,6 +92,14 @@ const ProfileCompletionProgress: React.FC = () => {
       isComplete: !!profile.dob,
       isRequired: true,
       settingsTab: 'basic'
+    },
+    {
+      id: 'shipping_address',
+      label: 'Shipping Address',
+      icon: <MapPin className="w-4 h-4" />,
+      isComplete: validateShippingAddress(profile.shipping_address),
+      isRequired: true,
+      settingsTab: 'address'
     }
   ];
 

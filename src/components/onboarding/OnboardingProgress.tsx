@@ -5,6 +5,18 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertCircle, User, Mail, Camera, Calendar, MapPin } from "lucide-react";
 
+// Helper function to validate shipping address completeness
+const validateShippingAddress = (shippingAddress: any): boolean => {
+  if (!shippingAddress || typeof shippingAddress !== 'object') return false;
+  
+  const requiredFields = ['address_line1', 'city', 'state', 'zip_code', 'country'];
+  return requiredFields.every(field => 
+    shippingAddress[field] && 
+    typeof shippingAddress[field] === 'string' && 
+    shippingAddress[field].trim().length > 0
+  );
+};
+
 interface OnboardingProgressProps {
   showHeader?: boolean;
   className?: string;
@@ -62,6 +74,12 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
       label: 'Date of Birth',
       icon: Calendar,
       completed: !!profile.dob,
+    },
+    {
+      key: 'shipping_address',
+      label: 'Shipping Address',
+      icon: MapPin,
+      completed: validateShippingAddress(profile.shipping_address),
     },
   ];
 

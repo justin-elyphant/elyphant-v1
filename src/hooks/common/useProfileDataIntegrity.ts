@@ -164,6 +164,10 @@ export function useProfileDataIntegrity() {
       const shippingAddress = dataToCheck.address || dataToCheck.shipping_address;
       
       // Debug logging for address validation
+      console.log('=== FULL PROFILE DEBUG ===');
+      console.log('Full dataToCheck object:', JSON.stringify(dataToCheck, null, 2));
+      console.log('Profile shipping_address:', dataToCheck.shipping_address);
+      console.log('Profile address:', dataToCheck.address);
       console.log('Address validation debug:', {
         dataToCheck: dataToCheck,
         shippingAddress: shippingAddress,

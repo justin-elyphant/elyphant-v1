@@ -54,8 +54,13 @@ const ProfileCompletionProgress: React.FC = () => {
   const navigate = useNavigate();
 
   console.log("🔄 [ProfileCompletionProgress] Profile data:", profile);
+  console.log("🔄 [ProfileCompletionProgress] User data:", user);
+  console.log("🔄 [ProfileCompletionProgress] Profile shipping address:", profile?.shipping_address);
 
-  if (!profile) return null;
+  if (!profile) {
+    console.log("❌ [ProfileCompletionProgress] No profile data");
+    return null;
+  }
 
   const completionFields: CompletionField[] = [
     {

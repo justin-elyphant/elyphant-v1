@@ -49,8 +49,13 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
   const { profile } = useProfile();
 
   console.log("🔄 [OnboardingProgress] Full profile data:", profile);
+  console.log("🔄 [OnboardingProgress] User data:", user);
+  console.log("🔄 [OnboardingProgress] Profile shipping address:", profile?.shipping_address);
 
-  if (!user || !profile) return null;
+  if (!user || !profile) {
+    console.log("❌ [OnboardingProgress] Missing user or profile:", { user: !!user, profile: !!profile });
+    return null;
+  }
 
   // Check completion of mandatory fields
   const checks = [

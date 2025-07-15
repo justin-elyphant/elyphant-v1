@@ -55,6 +55,9 @@ const InterestsFormSection = ({
           </div>
         )}
       </div>
+      <p className="text-sm text-muted-foreground">
+        Add your favorite brands, interests, or hobbies to help our AI better assist your connections when they're shopping for you.
+      </p>
       
       <div className="flex flex-wrap gap-2 mb-4">
         {interests.length > 0 ? (
@@ -75,7 +78,7 @@ const InterestsFormSection = ({
         )}
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <SmartInput
           placeholder="Add a new interest (e.g. Photography, Cooking)"
           value={newInterest}
@@ -88,7 +91,7 @@ const InterestsFormSection = ({
           }}
           suggestions={COMMON_INTERESTS}
           spellingCorrections={INTEREST_SPELLING_CORRECTIONS}
-          className="flex-1"
+          className="flex-1 min-w-[280px]"
         />
         
         <Button

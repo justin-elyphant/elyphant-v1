@@ -6,11 +6,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, ArrowRight, Info, Heart, Calendar, Users, MapPin, User, Brain, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormContext } from "react-hook-form";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
 import { cn } from "@/lib/utils";
 
 const ProfileDataIntegrityPanel: React.FC = () => {
   const navigate = useNavigate();
+  const { profile } = useProfile();
   
   // Form context might not exist (e.g., when used on dashboard)
   let form;
@@ -35,9 +37,11 @@ const ProfileDataIntegrityPanel: React.FC = () => {
 
   // Check data integrity when component mounts and when form values change
   useEffect(() => {
-    // Pass form values to integrity checker for real-time updates
-    checkDataIntegrity(false, formValues);
-  }, [checkDataIntegrity, formValues]);
+    // Use profile data if form values are not available or incomplete
+    // This ensures the integrity check works even when form is not fully populated
+    const dataToUse = (formValues && Object.keys(formValues).length > 5) ? formValues : profile;
+    checkDataIntegrity(false, dataToUse);
+  }, [checkDataIntegrity, formValues, profile]);
 
   // Determine which settings tab to open based on missing data
   const getTargetSettingsTab = () => {

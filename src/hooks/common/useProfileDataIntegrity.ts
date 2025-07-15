@@ -163,20 +163,6 @@ export function useProfileDataIntegrity() {
       // Shipping address (10 points)
       const shippingAddress = dataToCheck.address || dataToCheck.shipping_address;
       
-      // Debug logging for address validation
-      console.log('=== FULL PROFILE DEBUG ===');
-      console.log('Full dataToCheck object:', JSON.stringify(dataToCheck, null, 2));
-      console.log('Profile shipping_address:', dataToCheck.shipping_address);
-      console.log('Profile address:', dataToCheck.address);
-      console.log('Address validation debug:', {
-        dataToCheck: dataToCheck,
-        shippingAddress: shippingAddress,
-        hasAddress: !!shippingAddress,
-        addressType: typeof shippingAddress,
-        addressKeys: shippingAddress ? Object.keys(shippingAddress) : [],
-        fullAddressObject: shippingAddress
-      });
-      
       // Check if address is complete - handle different field name variations
       let isAddressComplete = false;
       if (shippingAddress && typeof shippingAddress === 'object') {
@@ -185,18 +171,8 @@ export function useProfileDataIntegrity() {
         const state = shippingAddress.state;
         const zipCode = shippingAddress.zip_code || shippingAddress.zipCode;
         
-        console.log('Address fields check:', {
-          street, city, state, zipCode,
-          streetExists: !!street?.trim(),
-          cityExists: !!city?.trim(),
-          stateExists: !!state?.trim(),
-          zipExists: !!zipCode?.trim()
-        });
-        
         isAddressComplete = !!(street?.trim() && city?.trim() && state?.trim() && zipCode?.trim());
       }
-      
-      console.log('Is address complete:', isAddressComplete);
       
       if (!isAddressComplete) {
         foundIssues.push({

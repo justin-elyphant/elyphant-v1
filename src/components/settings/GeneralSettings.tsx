@@ -13,7 +13,7 @@ import DataSharingSection from "./DataSharingSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import InterestsFormSection from "./InterestsFormSection";
 import GiftingPreferencesSection from "./GiftingPreferencesSection";
-import ProfileDataIntegrityPanel from "./ProfileDataIntegrityPanel";
+
 const GeneralSettings = () => {
   const { user } = useAuth();
   const location = useLocation();
@@ -67,8 +67,6 @@ const GeneralSettings = () => {
         <p className="text-gray-600">Manage your profile information and preferences</p>
       </div>
 
-      {/* Profile Data Integrity Panel */}
-      <ProfileDataIntegrityPanel />
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, (errors) => {

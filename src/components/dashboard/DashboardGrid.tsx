@@ -2,7 +2,7 @@
 import React from "react";
 import GiftingHubCard from "./GiftingHubCard";
 import SocialHubCard from "./SocialHubCard";
-import SettingsCard from "./SettingsCard";
+
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 
 const DashboardGrid = () => {
@@ -16,14 +16,9 @@ const DashboardGrid = () => {
         <GiftingHubCard />
       </div>
 
-      {/* Secondary cards - social hub and settings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col h-full">
-          <SocialHubCard />
-        </div>
-        <div className="flex flex-col h-full">
-          <SettingsCard />
-        </div>
+      {/* Secondary cards - social hub */}
+      <div className="w-full">
+        <SocialHubCard />
       </div>
     </div>
   );

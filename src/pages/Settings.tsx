@@ -10,7 +10,7 @@ import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import PrivacySecuritySettings from "@/components/settings/PrivacySecuritySettings";
 import { Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+
 
 type SettingsTab = "general" | "notifications" | "privacy";
 
@@ -66,37 +66,6 @@ const Settings = () => {
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
       >
-        {user && (
-          <div className="mb-6">
-            <h2 className="font-semibold text-lg mb-3">Your Quick Links</h2>
-            <div className="flex flex-wrap gap-3 mb-4">
-              <Link
-                to="/dashboard"
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to={`/profile/${user.id}`}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-              >
-                Profile
-              </Link>
-              <Link
-                to="/connections"
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-              >
-                Connections
-              </Link>
-              <Link
-                to="/wishlists"
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm shadow-sm transition"
-              >
-                Wishlists
-              </Link>
-            </div>
-          </div>
-        )}
         {renderTabContent()}
       </SettingsLayout>
     </MainLayout>

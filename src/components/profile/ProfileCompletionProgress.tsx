@@ -19,14 +19,32 @@ interface CompletionField {
 
 // Helper function to validate shipping address completeness
 const validateShippingAddress = (shippingAddress: any): boolean => {
-  if (!shippingAddress || typeof shippingAddress !== 'object') return false;
+  console.log("🔍 Validating shipping address:", JSON.stringify(shippingAddress, null, 2));
   
-  const requiredFields = ['address_line1', 'city', 'state', 'zip_code', 'country'];
-  return requiredFields.every(field => 
-    shippingAddress[field] && 
-    typeof shippingAddress[field] === 'string' && 
-    shippingAddress[field].trim().length > 0
-  );
+  if (!shippingAddress || typeof shippingAddress !== 'object') {
+    console.log("❌ No shipping address or invalid type");
+    return false;
+  }
+  
+  // Check if we have individual fields (ideal case)
+  const hasIndividualFields = shippingAddress.address_line1 && 
+                              shippingAddress.city && 
+                              shippingAddress.state && 
+                              shippingAddress.zip_code && 
+                              shippingAddress.country;
+  
+  // Check if we have formatted address (current incomplete case)
+  const hasFormattedAddress = shippingAddress.formatted_address && 
+                              shippingAddress.formatted_address.trim().length > 10; // At least a basic address
+  
+  const isComplete = hasIndividualFields || hasFormattedAddress;
+  console.log("🔍 Address validation result:", {
+    hasIndividualFields,
+    hasFormattedAddress,
+    isComplete
+  });
+  
+  return isComplete;
 };
 
 const ProfileCompletionProgress: React.FC = () => {

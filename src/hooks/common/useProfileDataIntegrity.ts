@@ -161,7 +161,7 @@ export function useProfileDataIntegrity() {
 
       // === HELPFUL ALERTS (25 points total) ===
       // Shipping address (10 points)
-      const shippingAddress = dataToCheck.address || dataToCheck.shipping_address;
+      const shippingAddress = dataToCheck.shipping_address || dataToCheck.address;
       
       // Check if address is complete - handle different field name variations
       let isAddressComplete = false;

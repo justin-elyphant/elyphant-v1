@@ -11,7 +11,7 @@ export const useUnsavedChanges = (form: UseFormReturn<SettingsFormValues>) => {
     const subscription = form.watch((value, { name }) => {
       if (!initialValues) return;
       
-      // Skip auto-saved fields
+      // Skip auto-saved fields but allow address fields to trigger unsaved changes
       if (name === "interests" || name === "importantDates") return;
       
       // Check if current values differ from initial values

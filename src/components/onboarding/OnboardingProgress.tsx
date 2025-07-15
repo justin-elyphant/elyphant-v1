@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "@/contexts/auth";
-import { useProfile } from "@/hooks/profile/useProfile";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertCircle, User, Mail, Camera, Calendar, MapPin } from "lucide-react";
@@ -56,13 +56,13 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
       key: 'first_name',
       label: 'First Name',
       icon: User,
-      completed: !!profile.first_name && profile.first_name.length > 0,
+      completed: !!(profile as any).first_name && (profile as any).first_name.length > 0,
     },
     {
       key: 'last_name',
       label: 'Last Name', 
       icon: User,
-      completed: !!profile.last_name && profile.last_name.length > 0,
+      completed: !!(profile as any).last_name && (profile as any).last_name.length > 0,
     },
     {
       key: 'email',
@@ -86,7 +86,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
       key: 'birth_year',
       label: 'Birth Year',
       icon: Calendar,
-      completed: !!profile.birth_year && profile.birth_year >= 1900,
+      completed: !!(profile as any).birth_year && (profile as any).birth_year >= 1900,
     },
     {
       key: 'dob',

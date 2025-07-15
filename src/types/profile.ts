@@ -270,7 +270,7 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     email: formData.email,
     username: formData.username || null,
     bio: formData.bio || '',
-    birth_year: formData.birth_year,
+    birth_year: formData.date_of_birth ? formData.date_of_birth.getFullYear() : new Date().getFullYear() - 25, // Default to 25 years old if no date provided
     dob: dobString,
     shipping_address: formData.address ? mapFormAddressToApiAddress(formData.address) : undefined,
     gift_preferences: formData.interests?.map((interest: string) => ({

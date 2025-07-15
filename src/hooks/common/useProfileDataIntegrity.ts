@@ -205,7 +205,13 @@ export function useProfileDataIntegrity() {
 
       // Date of birth (5 points)
       const dob = dataToCheck.birthday || dataToCheck.dob;
-      if (!dob) {
+      const birthYear = dataToCheck.birth_year;
+      const dateOfBirth = dataToCheck.date_of_birth;
+      
+      // Check if we have any form of date of birth information
+      const hasDateOfBirth = dob || birthYear || dateOfBirth;
+      
+      if (!hasDateOfBirth) {
         foundIssues.push({
           field: 'dob',
           issue: 'Add your date of birth',
@@ -229,6 +235,7 @@ export function useProfileDataIntegrity() {
           score += 5;
         }
       } else {
+        // User has birth_year or date_of_birth, count it as complete
         score += 5;
       }
 

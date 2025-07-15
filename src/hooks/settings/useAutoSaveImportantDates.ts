@@ -29,8 +29,10 @@ export const useAutoSaveImportantDates = (form: UseFormReturn<SettingsFormValues
         type: 'custom'
       }));
       
-      await updateProfile({ important_dates: profileDates });
-      toast.success("Important date saved automatically");
+      const result = await updateProfile({ important_dates: profileDates });
+      if (result) {
+        toast.success("Important date saved automatically");
+      }
     } catch (error) {
       console.error("Auto-save failed:", error);
       toast.error("Failed to save important date");

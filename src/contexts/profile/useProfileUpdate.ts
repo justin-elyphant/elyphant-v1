@@ -21,25 +21,34 @@ export const useProfileUpdate = () => {
       setIsUpdating(true);
       setUpdateError(null);
       
-      // Ensure shipping_address has all required fields
-      const safeShippingAddress = normalizeShippingAddress(updateData.shipping_address);
-
-      // Format gift preferences to ensure it's an array of objects with proper type
-      const safeGiftPreferences = Array.isArray(updateData.gift_preferences) 
-        ? updateData.gift_preferences.map(pref => normalizeGiftPreference(pref))
-        : [];
-      
-      const dataWithId = {
-        ...updateData,
+      // Prepare the update payload, only including fields that are being updated
+      const safeUpdateData: Record<string, any> = {
         id: user.id,
-        shipping_address: safeShippingAddress,
-        gift_preferences: safeGiftPreferences,
         updated_at: new Date().toISOString()
       };
 
-      console.log("Update payload:", JSON.stringify(dataWithId, null, 2));
+      // Only process and add shipping_address if it's being updated
+      if (updateData.shipping_address !== undefined) {
+        safeUpdateData.shipping_address = normalizeShippingAddress(updateData.shipping_address);
+      }
+
+      // Only process and add gift_preferences if it's being updated
+      if (updateData.gift_preferences !== undefined) {
+        safeUpdateData.gift_preferences = Array.isArray(updateData.gift_preferences) 
+          ? updateData.gift_preferences.map(pref => normalizeGiftPreference(pref))
+          : [];
+      }
+
+      // Add other fields that are being updated
+      Object.keys(updateData).forEach(key => {
+        if (key !== 'shipping_address' && key !== 'gift_preferences') {
+          safeUpdateData[key] = updateData[key as keyof Profile];
+        }
+      });
+
+      console.log("Update payload:", JSON.stringify(safeUpdateData, null, 2));
       
-      // Use a more resilient update approach with retry logic
+      // Use UPDATE instead of UPSERT to avoid null constraint violations
       let attempts = 0;
       let success = false;
       let result = null;
@@ -51,9 +60,8 @@ export const useProfileUpdate = () => {
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .upsert(dataWithId, {
-              onConflict: 'id'
-            })
+            .update(safeUpdateData)
+            .eq('id', user.id)
             .select()
             .single();
 
@@ -66,7 +74,7 @@ export const useProfileUpdate = () => {
             result = data;
           }
         } catch (error) {
-          console.error(`Error in upsert operation (attempt ${attempts}):`, error);
+          console.error(`Error in update operation (attempt ${attempts}):`, error);
           if (attempts === 3) throw error;
           await new Promise(resolve => setTimeout(resolve, 500));
         }

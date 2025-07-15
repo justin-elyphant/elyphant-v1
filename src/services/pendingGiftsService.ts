@@ -116,6 +116,19 @@ export const pendingGiftsService = {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
 
+    // Check if this date type already exists for this user
+    const { data: existingDate } = await supabase
+      .from('user_special_dates')
+      .select('id')
+      .eq('user_id', user.user.id)
+      .eq('date_type', dateType)
+      .maybeSingle();
+
+    // If it exists, return it instead of creating a new one
+    if (existingDate) {
+      return existingDate;
+    }
+
     const { data, error } = await supabase
       .from('user_special_dates')
       .insert({

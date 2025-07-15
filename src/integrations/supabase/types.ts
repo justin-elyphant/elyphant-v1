@@ -333,7 +333,7 @@ export type Database = {
           notification_preferences: Json | null
           pending_recipient_email: string | null
           privacy_settings: Json | null
-          recipient_id: string
+          recipient_id: string | null
           recipient_lifestyle_factors: Json | null
           relationship_context: Json | null
           seasonal_adjustment_factors: Json | null
@@ -353,7 +353,7 @@ export type Database = {
           notification_preferences?: Json | null
           pending_recipient_email?: string | null
           privacy_settings?: Json | null
-          recipient_id: string
+          recipient_id?: string | null
           recipient_lifestyle_factors?: Json | null
           relationship_context?: Json | null
           seasonal_adjustment_factors?: Json | null
@@ -373,7 +373,7 @@ export type Database = {
           notification_preferences?: Json | null
           pending_recipient_email?: string | null
           privacy_settings?: Json | null
-          recipient_id?: string
+          recipient_id?: string | null
           recipient_lifestyle_factors?: Json | null
           relationship_context?: Json | null
           seasonal_adjustment_factors?: Json | null

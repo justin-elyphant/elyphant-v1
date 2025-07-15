@@ -12,6 +12,7 @@ const profileValidationSchema = z.object({
   bio: z.string().max(500, "Bio too long").nullable().optional(),
   profile_image: z.string().url().nullable().optional().or(z.literal(null)),
   dob: z.string().regex(/^\d{2}-\d{2}$/, "Invalid date format (MM-DD)").nullable().optional(),
+  birth_year: z.number().min(1900, "Birth year must be valid").max(new Date().getFullYear(), "Birth year cannot be in the future"),
   shipping_address: z.object({
     address_line1: z.string().max(255, "Address too long").optional(),
     address_line2: z.string().max(255, "Address too long").optional(),

@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DashboardGrid from "@/components/dashboard/DashboardGrid";
+import SimplifiedDashboard from "@/components/dashboard/SimplifiedDashboard";
 import { useAuth } from "@/contexts/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import MainLayout from "@/components/layout/MainLayout";
+import { EventsProvider } from "@/components/gifting/events/context/EventsContext";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -55,7 +56,9 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <DashboardGrid />
+        <EventsProvider>
+          <SimplifiedDashboard />
+        </EventsProvider>
       </div>
     </MainLayout>
   );

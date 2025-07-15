@@ -144,7 +144,12 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
         <CardContent>
           <GooglePlacesAutocomplete
             value={formData.shippingAddress?.formatted_address || ""}
-            onChange={() => {}} // Address selection is handled by onAddressSelect
+            onChange={(value) => {
+              // Handle typing in the input field
+              if (!value) {
+                setFormData(prev => ({ ...prev, shippingAddress: null }));
+              }
+            }}
             onAddressSelect={handleAddressSelect}
             placeholder="Start typing their address..."
             className="w-full"

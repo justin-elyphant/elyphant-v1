@@ -39,7 +39,8 @@ export const useFormSubmission = () => {
         username: formData.username && formData.username.trim() !== '' ? formData.username.trim() : null,
         name: formData.name.trim(),
         email: formData.email.trim(),
-        bio: formData.bio?.trim() || ""
+        bio: formData.bio?.trim() || "",
+        address: formData.address // Ensure address is preserved
       };
       
       console.log("🧹 Cleaned form data:", JSON.stringify(cleanedFormData, null, 2));

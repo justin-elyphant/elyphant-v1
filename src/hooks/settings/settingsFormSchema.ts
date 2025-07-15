@@ -20,8 +20,8 @@ export const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   username: z.string().optional(),
   
-  // Profile image is optional
-  profile_image: z.string().optional(),
+  // Profile image is optional and can be null
+  profile_image: z.string().nullable().optional(),
   
   // Complete date of birth (optional in settings)
   date_of_birth: z.date().optional().refine((date) => {

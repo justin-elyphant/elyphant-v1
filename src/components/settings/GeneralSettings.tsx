@@ -73,6 +73,7 @@ const GeneralSettings = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
           console.log("❌ Form validation errors:", errors);
+          console.log("❌ Detailed validation errors:", JSON.stringify(errors, null, 2));
         })} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-6">

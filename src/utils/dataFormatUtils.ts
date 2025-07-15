@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getDefaultDataSharingSettings } from "./privacyUtils";
 import { ProfileData, BirthdayData } from "@/components/profile-setup/hooks/types";
+import { AgeInfo, getAgeInfoFromBirthYear, getAgeInfoFromBirthDate } from "./enhancedAgeUtils";
 
 /**
  * Database-specific profile data type that extends ProfileData with additional fields
@@ -117,7 +118,15 @@ export function formatProfileForSubmission(profileData: ProfileData): any {
   
   // Extract birth_year from birthday if available
   let birthYear = new Date().getFullYear() - 25; // Default
-  if (cleanedData.birthday?.month && cleanedData.birthday?.day) {
+  
+  // Check if we have a full birth date first
+  if (cleanedData.date_of_birth) {
+    const birthDate = new Date(cleanedData.date_of_birth);
+    if (!isNaN(birthDate.getTime())) {
+      birthYear = birthDate.getFullYear();
+    }
+  } else if (cleanedData.birthday?.month && cleanedData.birthday?.day) {
+    // Fallback to estimating from current data
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const birthdayThisYear = new Date(currentYear, cleanedData.birthday.month - 1, cleanedData.birthday.day);
@@ -127,6 +136,9 @@ export function formatProfileForSubmission(profileData: ProfileData): any {
     } else {
       birthYear = currentYear - 25;
     }
+  } else if ((cleanedData as any).birth_year) {
+    // Preserve existing birth_year if available
+    birthYear = (cleanedData as any).birth_year;
   }
   
   // Add database-specific fields with proper mapping
@@ -174,11 +186,18 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
   
   // Create date of birth from stored dob (MM-DD) and birth_year
   let dateOfBirth: Date | null = null;
+  let usingFallbackDate = false;
   const birthday = parseBirthdayFromStorage(databaseProfile.dob);
   const birthYear = databaseProfile.birth_year;
   
   if (birthday && birthYear) {
+    // Full date available - use exact birth date
     dateOfBirth = new Date(birthYear, birthday.month - 1, birthday.day);
+  } else if (!birthday && birthYear) {
+    // Fallback: use January 1st of birth year to enable age calculation
+    console.log("🔄 Using fallback date (Jan 1st) for birth_year:", birthYear);
+    dateOfBirth = new Date(birthYear, 0, 1); // January 1st
+    usingFallbackDate = true;
   }
 
   // Parse existing important dates
@@ -288,6 +307,8 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
     bio: databaseProfile.bio || "",
     profile_image: databaseProfile.profile_image || null,
     date_of_birth: dateOfBirth,
+    birth_year: databaseProfile.birth_year, // Preserve birth_year for age calculation
+    using_fallback_date: usingFallbackDate, // Flag to indicate when fallback date is used
     // Legacy compatibility field
     name: databaseProfile.name || `${firstName} ${lastName}`.trim(),
     address: {
@@ -312,4 +333,39 @@ export function mapDatabaseToSettingsForm(databaseProfile: any) {
       `${mappedData.profile_image.substring(0, 50)}...` : null
   });
   return mappedData;
+}
+
+/**
+ * Extract age information from profile data for AI gift suggestions
+ */
+export function getAgeInfoFromProfile(profileData: any): AgeInfo | null {
+  try {
+    // First, try to get age from full birth date
+    if (profileData.date_of_birth) {
+      const birthDate = new Date(profileData.date_of_birth);
+      if (!isNaN(birthDate.getTime())) {
+        return getAgeInfoFromBirthDate(birthDate);
+      }
+    }
+    
+    // Fallback to birth_year if available
+    if (profileData.birth_year && typeof profileData.birth_year === 'number') {
+      return getAgeInfoFromBirthYear(profileData.birth_year);
+    }
+    
+    // Try to extract from dob + birth_year combination
+    if (profileData.dob && profileData.birth_year) {
+      const birthday = parseBirthdayFromStorage(profileData.dob);
+      if (birthday) {
+        const birthDate = new Date(profileData.birth_year, birthday.month - 1, birthday.day);
+        return getAgeInfoFromBirthDate(birthDate);
+      }
+    }
+    
+    console.warn("⚠️ No age information available in profile data");
+    return null;
+  } catch (error) {
+    console.error("Error extracting age info from profile:", error);
+    return null;
+  }
 }

@@ -89,6 +89,52 @@ export function getAgeRangeFromAge(age: number): string {
 }
 
 /**
+ * Calculate age from birth year
+ */
+export function calculateAgeFromBirthYear(birthYear: number): number {
+  const currentYear = new Date().getFullYear();
+  return currentYear - birthYear;
+}
+
+/**
+ * Get age info from birth year data
+ */
+export function getAgeInfoFromBirthYear(birthYear: number): AgeInfo {
+  const age = calculateAgeFromBirthYear(birthYear);
+  return {
+    exactAge: age,
+    ageGroup: getAgeGroupFromAge(age),
+    ageRange: getAgeRangeFromAge(age),
+    confidence: 0.9 // High confidence since we have birth year
+  };
+}
+
+/**
+ * Get age info from full birth date
+ */
+export function getAgeInfoFromBirthDate(birthDate: Date): AgeInfo {
+  const today = new Date();
+  const birthYear = birthDate.getFullYear();
+  const birthMonth = birthDate.getMonth();
+  const birthDay = birthDate.getDate();
+  
+  let age = today.getFullYear() - birthYear;
+  
+  // Adjust if birthday hasn't occurred this year
+  if (today.getMonth() < birthMonth || 
+      (today.getMonth() === birthMonth && today.getDate() < birthDay)) {
+    age--;
+  }
+  
+  return {
+    exactAge: age,
+    ageGroup: getAgeGroupFromAge(age),
+    ageRange: getAgeRangeFromAge(age),
+    confidence: 1.0 // Full confidence with exact birth date
+  };
+}
+
+/**
  * Generate age-appropriate search terms
  */
 export function getAgeAppropriateSearchTerms(ageGroup: string): string[] {

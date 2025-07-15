@@ -27,7 +27,8 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
     recipientName: data.recipientName || "",
     recipientEmail: data.recipientEmail || "",
     relationshipType: data.relationshipType || "friend",
-    shippingAddress: data.shippingAddress || null
+    shippingAddress: data.shippingAddress || null,
+    apartmentUnit: data.shippingAddress?.line2 || ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,12 +56,26 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
 
   const handleNext = () => {
     if (validateForm()) {
-      onNext(formData);
+      // Ensure apartment/unit is included in the shipping address
+      const updatedData = {
+        ...formData,
+        shippingAddress: formData.shippingAddress ? {
+          ...formData.shippingAddress,
+          line2: formData.apartmentUnit
+        } : null
+      };
+      onNext(updatedData);
     }
   };
 
   const handleAddressSelect = (address: any) => {
-    setFormData(prev => ({ ...prev, shippingAddress: address }));
+    setFormData(prev => ({ 
+      ...prev, 
+      shippingAddress: {
+        ...address,
+        line2: prev.apartmentUnit // Preserve apartment/unit when selecting new address
+      }
+    }));
   };
 
   return (
@@ -141,23 +156,41 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
             Add their shipping address now to make gift delivery seamless. You can always add or update this later.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <GooglePlacesAutocomplete
-            value={formData.shippingAddress?.formatted_address || ""}
-            onChange={(value) => {
-              // Handle typing in the input field
-              if (!value) {
-                setFormData(prev => ({ ...prev, shippingAddress: null }));
-              }
-            }}
-            onAddressSelect={handleAddressSelect}
-            placeholder="Start typing their address..."
-            className="w-full"
-          />
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <GooglePlacesAutocomplete
+              value={formData.shippingAddress?.formatted_address || ""}
+              onChange={(value) => {
+                // Handle typing in the input field
+                if (!value) {
+                  setFormData(prev => ({ ...prev, shippingAddress: null }));
+                }
+              }}
+              onAddressSelect={handleAddressSelect}
+              placeholder="Start typing their address..."
+              className="w-full"
+            />
+            
+            <div className="space-y-2">
+              <Label htmlFor="apartmentUnit">Apartment, Unit, Suite (Optional)</Label>
+              <Input
+                id="apartmentUnit"
+                placeholder="e.g., Apt 4B, Suite 200, Unit 15"
+                value={formData.apartmentUnit}
+                onChange={(e) => setFormData(prev => ({ ...prev, apartmentUnit: e.target.value }))}
+              />
+            </div>
+          </div>
+          
           {formData.shippingAddress && (
             <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800 font-medium">Address saved:</p>
-              <p className="text-sm text-green-700">{formData.shippingAddress.formatted_address}</p>
+              <p className="text-sm text-green-700">
+                {formData.shippingAddress.formatted_address}
+                {formData.apartmentUnit && (
+                  <><br />{formData.apartmentUnit}</>
+                )}
+              </p>
             </div>
           )}
         </CardContent>

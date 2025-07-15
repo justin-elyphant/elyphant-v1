@@ -41,6 +41,7 @@ const StreamlinedSignUp = () => {
   const [step, setStep] = useState<Step>('signup');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: '',
     lastName: '',
@@ -115,10 +116,19 @@ const StreamlinedSignUp = () => {
   useEffect(() => {
     const intentParam = searchParams.get('intent');
     
+    console.log("👤 User state change:", { 
+      hasUser: !!user, 
+      intentParam, 
+      currentStep: step,
+      sessionChecked 
+    });
+    
     if (user) {
       // If user is authenticated and came here to complete profile, allow them to continue
       if (intentParam === 'complete-profile') {
+        console.log("✅ User completing profile from email verification");
         setStep('profile');
+        setSessionChecked(true);
         return;
       }
       
@@ -126,22 +136,39 @@ const StreamlinedSignUp = () => {
       import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
         const isCompleted = LocalStorageService.isProfileSetupCompleted();
         
+        console.log("📊 Profile completion check:", { isCompleted, hasOAuthProvider: !!user.app_metadata?.provider });
+        
         if (!isCompleted && user.app_metadata?.provider) {
           // OAuth user needs profile completion - stay on profile step
+          console.log("🔄 OAuth user needs profile completion");
           setStep('profile');
+          setSessionChecked(true);
           return;
         }
         
         // Don't redirect if user is in the middle of the signup flow
         if (step !== 'signup') {
+          console.log("🚫 User in middle of signup flow, not redirecting");
+          setSessionChecked(true);
           return; // Let them continue with profile setup or intent selection
         }
         
         // Only redirect to dashboard if they landed on the signup step while already authenticated
         if (isCompleted) {
+          console.log("🏠 Redirecting completed user to dashboard");
           navigate('/dashboard', { replace: true });
+        } else {
+          console.log("📝 Authenticated user without completed profile - allowing signup");
+          setSessionChecked(true);
         }
       });
+    } else {
+      // No user, make sure we're on signup step
+      if (step !== 'signup') {
+        console.log("🔄 No user but not on signup step, resetting to signup");
+        setStep('signup');
+      }
+      setSessionChecked(true);
     }
   }, [user, navigate, searchParams, step]);
 
@@ -252,6 +279,8 @@ const StreamlinedSignUp = () => {
       });
       return;
     }
+    
+    console.log("✅ Profile setup complete, proceeding to intent selection");
     setStep('intent');
   };
 
@@ -361,6 +390,20 @@ const StreamlinedSignUp = () => {
     ? `${profileData.firstName[0]}${profileData.lastName?.[0] || ''}`.toUpperCase()
     : 'U';
 
+  // Show loading state while checking session
+  if (!sessionChecked) {
+    return (
+      <MainLayout>
+        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading...</span>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   if (user && step !== 'intent' && step !== 'oauth-complete' && step !== 'profile') return null;
 
   return (
@@ -450,7 +493,14 @@ const StreamlinedSignUp = () => {
                   disabled={loading || !profileData.email || !profileData.password || !profileData.firstName}
                   className="w-full"
                 >
-                  {loading ? 'Creating Account...' : 'Create Account'}
+                  {loading ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Creating Account...
+                    </div>
+                  ) : (
+                    'Create Account'
+                  )}
                 </Button>
                 
                 <p className="text-center text-sm text-muted-foreground">
@@ -753,10 +803,15 @@ const StreamlinedSignUp = () => {
 
                 <Button 
                   onClick={handleProfileSetup}
-                  disabled={!Object.values(mandatoryValidation).every(Boolean)}
+                  disabled={!Object.values(mandatoryValidation).every(Boolean) || loading}
                   className="w-full"
                 >
-                  {Object.values(mandatoryValidation).every(Boolean) 
+                  {loading ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Setting up profile...
+                    </div>
+                  ) : Object.values(mandatoryValidation).every(Boolean) 
                     ? 'Continue to Intent Selection' 
                     : 'Complete All Required Fields'}
                 </Button>

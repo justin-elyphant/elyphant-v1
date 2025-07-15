@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import MainLayout from "@/components/layout/MainLayout";
+import OptimizedLayout from "@/components/layout/OptimizedLayout";
 import UnifiedSettings from "@/components/settings/UnifiedSettings";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -35,16 +35,16 @@ const Settings = () => {
 
   if (loading || !profile) {
     return (
-      <MainLayout>
+      <OptimizedLayout>
         <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </OptimizedLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <OptimizedLayout>
       <div className="container max-w-4xl mx-auto py-8 px-4">
         {/* Quick Links */}
         <div className="mb-6">
@@ -79,7 +79,7 @@ const Settings = () => {
         {/* Unified Settings */}
         <UnifiedSettings initialTab={getInitialTab()} />
       </div>
-    </MainLayout>
+    </OptimizedLayout>
   );
 };
 

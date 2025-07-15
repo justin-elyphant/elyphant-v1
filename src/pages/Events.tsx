@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import SimplifiedEvents from "@/components/events/SimplifiedEvents";
 import BackToDashboard from "@/components/shared/BackToDashboard";
-import MainLayout from "@/components/layout/MainLayout";
+import OptimizedLayout from "@/components/layout/OptimizedLayout";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ const Events = () => {
   // Show sign-in prompt if not authenticated
   if (!user) {
     return (
-      <MainLayout>
+      <OptimizedLayout>
         <div className="container mx-auto py-8 px-4">
           <BackToDashboard />
           
@@ -40,19 +40,19 @@ const Events = () => {
             </CardContent>
           </Card>
         </div>
-      </MainLayout>
+      </OptimizedLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <OptimizedLayout>
       <EventsProvider>
         <div className="container mx-auto py-8 px-4">
           <BackToDashboard />
           <SimplifiedEvents />
         </div>
       </EventsProvider>
-    </MainLayout>
+    </OptimizedLayout>
   );
 };
 

@@ -138,8 +138,8 @@ const StreamlinedSignUp = () => {
         
         console.log("📊 Profile completion check:", { isCompleted, hasOAuthProvider: !!user.app_metadata?.provider });
         
-        if (!isCompleted && user.app_metadata?.provider) {
-          // OAuth user needs profile completion - stay on profile step
+        if (!isCompleted && user.app_metadata?.provider && step === 'signup') {
+          // OAuth user needs profile completion - but only if they're starting fresh
           console.log("🔄 OAuth user needs profile completion");
           setStep('profile');
           setSessionChecked(true);

@@ -331,6 +331,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           notification_preferences: Json | null
+          pending_recipient_email: string | null
           privacy_settings: Json | null
           recipient_id: string
           recipient_lifestyle_factors: Json | null
@@ -350,6 +351,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notification_preferences?: Json | null
+          pending_recipient_email?: string | null
           privacy_settings?: Json | null
           recipient_id: string
           recipient_lifestyle_factors?: Json | null
@@ -369,6 +371,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notification_preferences?: Json | null
+          pending_recipient_email?: string | null
           privacy_settings?: Json | null
           recipient_id?: string
           recipient_lifestyle_factors?: Json | null
@@ -1611,6 +1614,54 @@ export type Database = {
           },
         ]
       }
+      pending_gift_invitations: {
+        Row: {
+          auto_gift_rules: Json | null
+          created_at: string | null
+          expires_at: string | null
+          gift_events: Json | null
+          id: string
+          invitation_sent_at: string | null
+          invitation_token: string
+          recipient_email: string
+          recipient_name: string
+          shipping_address: Json | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_gift_rules?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          gift_events?: Json | null
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_token: string
+          recipient_email: string
+          recipient_name: string
+          shipping_address?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_gift_rules?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          gift_events?: Json | null
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_token?: string
+          recipient_email?: string
+          recipient_name?: string
+          shipping_address?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pricing_settings: {
         Row: {
           applies_to: string
@@ -1941,6 +1992,11 @@ export type Database = {
           data_access_permissions: Json | null
           follow_type: string | null
           id: string
+          invitation_sent_at: string | null
+          invitation_token: string | null
+          pending_recipient_email: string | null
+          pending_recipient_name: string | null
+          pending_shipping_address: Json | null
           relationship_type: string
           status: string
           updated_at: string | null
@@ -1954,6 +2010,11 @@ export type Database = {
           data_access_permissions?: Json | null
           follow_type?: string | null
           id?: string
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          pending_recipient_email?: string | null
+          pending_recipient_name?: string | null
+          pending_shipping_address?: Json | null
           relationship_type: string
           status?: string
           updated_at?: string | null
@@ -1967,6 +2028,11 @@ export type Database = {
           data_access_permissions?: Json | null
           follow_type?: string | null
           id?: string
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          pending_recipient_email?: string | null
+          pending_recipient_name?: string | null
+          pending_shipping_address?: Json | null
           relationship_type?: string
           status?: string
           updated_at?: string | null
@@ -2233,6 +2299,10 @@ export type Database = {
       delete_user_account: {
         Args: { target_user_id: string }
         Returns: Json
+      }
+      generate_invitation_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       generate_order_number: {
         Args: Record<PropertyKey, never>

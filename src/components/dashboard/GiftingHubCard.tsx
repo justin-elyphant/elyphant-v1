@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ const SmartGiftingTab = () => {
   const { user } = useAuth();
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
@@ -88,11 +90,17 @@ const SmartGiftingTab = () => {
             Upcoming Events
           </h3>
           <div className="flex gap-2">
-            <Button variant="default" size="sm" asChild>
-              <Link to="/events?action=add">Add Event</Link>
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={() => setWizardOpen(true)}
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Quick Gift Setup
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/events?tab=monitoring">Manage All</Link>
+              <Link to="/events?action=add">Add Event</Link>
             </Button>
           </div>
         </div>
@@ -189,6 +197,12 @@ const SmartGiftingTab = () => {
           onSave={handleSaveAutoGiftSettings}
         />
       )}
+      
+      {/* Gift Setup Wizard */}
+      <GiftSetupWizard 
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+      />
     </div>
   );
 };

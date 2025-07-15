@@ -1,0 +1,199 @@
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { ArrowRight, Calendar, Plus, Trash2 } from "lucide-react";
+import { GiftSetupData } from "../GiftSetupWizard";
+
+interface WizardStepTwoProps {
+  data: GiftSetupData;
+  onNext: (stepData: Partial<GiftSetupData>) => void;
+}
+
+const EVENT_TYPES = [
+  { value: "birthday", label: "Birthday" },
+  { value: "anniversary", label: "Anniversary" },
+  { value: "christmas", label: "Christmas" },
+  { value: "valentine", label: "Valentine's Day" },
+  { value: "mothers_day", label: "Mother's Day" },
+  { value: "fathers_day", label: "Father's Day" },
+  { value: "graduation", label: "Graduation" },
+  { value: "promotion", label: "Work Promotion" },
+  { value: "custom", label: "Custom Occasion" }
+];
+
+export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) => {
+  const [giftingEvents, setGiftingEvents] = useState(
+    data.giftingEvents.length > 0 
+      ? data.giftingEvents 
+      : [{ dateType: "", date: "", isRecurring: true, customName: "" }]
+  );
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const addEvent = () => {
+    setGiftingEvents(prev => [
+      ...prev,
+      { dateType: "", date: "", isRecurring: true, customName: "" }
+    ]);
+  };
+
+  const removeEvent = (index: number) => {
+    if (giftingEvents.length > 1) {
+      setGiftingEvents(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateEvent = (index: number, field: string, value: any) => {
+    setGiftingEvents(prev => prev.map((event, i) => 
+      i === index ? { ...event, [field]: value } : event
+    ));
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    giftingEvents.forEach((event, index) => {
+      if (!event.dateType) {
+        newErrors[`dateType_${index}`] = "Please select an occasion type";
+      }
+      if (!event.date) {
+        newErrors[`date_${index}`] = "Please select a date";
+      }
+      if (event.dateType === "custom" && !event.customName?.trim()) {
+        newErrors[`customName_${index}`] = "Please enter a name for the custom occasion";
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validateForm()) {
+      onNext({ giftingEvents });
+    }
+  };
+
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            When should we send gifts?
+          </CardTitle>
+          <CardDescription>
+            Set up important dates and occasions when you'd like to send gifts to {data.recipientName}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {giftingEvents.map((event, index) => (
+            <div key={index} className="p-4 border rounded-lg space-y-4 relative">
+              {giftingEvents.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeEvent(index)}
+                  className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Occasion Type *</Label>
+                  <Select
+                    value={event.dateType}
+                    onValueChange={(value) => updateEvent(index, "dateType", value)}
+                  >
+                    <SelectTrigger className={errors[`dateType_${index}`] ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Select occasion" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVENT_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors[`dateType_${index}`] && (
+                    <p className="text-sm text-destructive">{errors[`dateType_${index}`]}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input
+                    type="date"
+                    value={formatDateForInput(event.date)}
+                    onChange={(e) => updateEvent(index, "date", e.target.value)}
+                    className={errors[`date_${index}`] ? "border-destructive" : ""}
+                  />
+                  {errors[`date_${index}`] && (
+                    <p className="text-sm text-destructive">{errors[`date_${index}`]}</p>
+                  )}
+                </div>
+              </div>
+
+              {event.dateType === "custom" && (
+                <div className="space-y-2">
+                  <Label>Custom Occasion Name *</Label>
+                  <Input
+                    placeholder="e.g., First Date Anniversary"
+                    value={event.customName || ""}
+                    onChange={(e) => updateEvent(index, "customName", e.target.value)}
+                    className={errors[`customName_${index}`] ? "border-destructive" : ""}
+                  />
+                  {errors[`customName_${index}`] && (
+                    <p className="text-sm text-destructive">{errors[`customName_${index}`]}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Repeat annually</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically set up gifts for this occasion every year
+                  </p>
+                </div>
+                <Switch
+                  checked={event.isRecurring}
+                  onCheckedChange={(checked) => updateEvent(index, "isRecurring", checked)}
+                />
+              </div>
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            onClick={addEvent}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Another Occasion
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleNext} size="lg" className="min-w-32">
+          Next: Preferences
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+    </div>
+  );
+};

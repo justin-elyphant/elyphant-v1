@@ -48,6 +48,8 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
   const { user } = useAuth();
   const { profile } = useProfile();
 
+  console.log("🔄 [OnboardingProgress] Full profile data:", profile);
+
   if (!user || !profile) return null;
 
   // Check completion of mandatory fields

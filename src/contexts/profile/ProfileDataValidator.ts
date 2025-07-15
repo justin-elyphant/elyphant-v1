@@ -5,6 +5,8 @@ import { z } from "zod";
 const profileValidationSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  first_name: z.string().min(1, "First name is required").max(100, "First name too long").optional(),
+  last_name: z.string().min(1, "Last name is required").max(100, "Last name too long").optional(),
   email: z.string().email("Invalid email format").max(255, "Email too long"),
   username: z.string().max(50, "Username too long").nullable().optional(),
   bio: z.string().max(500, "Bio too long").nullable().optional(),
@@ -125,11 +127,19 @@ export class ProfileDataValidator {
    * Sanitizes data to ensure type safety and remove harmful content
    */
   private static sanitizeData(data: Partial<Profile>): Partial<Profile> {
-    const sanitized = { ...data };
+    const sanitized = { ...data } as any;
 
     // Sanitize strings
     if (sanitized.name) {
       sanitized.name = this.sanitizeString(sanitized.name);
+    }
+    
+    if (sanitized.first_name) {
+      sanitized.first_name = this.sanitizeString(sanitized.first_name);
+    }
+    
+    if (sanitized.last_name) {
+      sanitized.last_name = this.sanitizeString(sanitized.last_name);
     }
     
     if (sanitized.username) {

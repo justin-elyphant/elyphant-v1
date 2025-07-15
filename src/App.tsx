@@ -32,6 +32,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Trunkline from "./pages/Trunkline";
 import Events from "./pages/Events";
+import Unauthorized from "./pages/Unauthorized";
+import { DomainGuard } from "@/components/consumer/DomainGuard";
 
 import FAQ from "./pages/FAQ";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
@@ -84,8 +86,17 @@ const App = () => (
                 <Route path="/press" element={<AboutUs />} />
                 <Route path="/vendor-signup" element={<VendorPartner />} />
                 <Route path="/vendor-login" element={<VendorPartner />} />
-                <Route path="/trunkline-login" element={<Trunkline />} />
-                <Route path="/trunkline" element={<Trunkline />} />
+                <Route path="/trunkline-login" element={
+                  <DomainGuard>
+                    <Trunkline />
+                  </DomainGuard>
+                } />
+                <Route path="/trunkline/*" element={
+                  <DomainGuard>
+                    <Trunkline />
+                  </DomainGuard>
+                } />
+                <Route path="/unauthorized" element={<Unauthorized />} />
                 </Routes>
                 <SearchOptimizationMonitor />
               </LegacyRouteHandler>

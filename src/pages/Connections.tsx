@@ -8,7 +8,7 @@ import FollowingTabContent from "@/components/connections/FollowingTabContent";
 import SuggestionsTabContent from "@/components/connections/SuggestionsTabContent";
 import ConnectionsErrorBoundary from "@/components/connections/ConnectionsErrorBoundary";
 import PrivacyIntegration from "@/components/connections/PrivacyIntegration";
-import MainLayout from "@/components/layout/MainLayout";
+import { ConsumerLayout } from "@/components/consumer/ConsumerLayout";
 import { useState } from "react";
 import { RelationshipType } from "@/types/connections";
 import { ConnectionFilters } from "@/types/connection-filters";
@@ -43,7 +43,7 @@ const Connections = () => {
   
   return (
     <ConnectionsErrorBoundary>
-      <MainLayout>
+      <ConsumerLayout>
         <div className="container max-w-4xl mx-auto py-8 px-4">
           <ConnectionsHeader 
             searchTerm={searchTerm} 
@@ -92,7 +92,7 @@ const Connections = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </MainLayout>
+      </ConsumerLayout>
     </ConnectionsErrorBoundary>
   );
 };

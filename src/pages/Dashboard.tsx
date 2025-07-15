@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import MainLayout from "@/components/layout/MainLayout";
+import { ConsumerLayout } from "@/components/consumer/ConsumerLayout";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -33,7 +33,7 @@ const Dashboard = () => {
   // If still loading or waiting for timeout, show skeleton
   if (isLoading || localLoadingTimeout || profileLoading) {
     return (
-      <MainLayout>
+      <ConsumerLayout>
         <div className="container max-w-6xl mx-auto py-8 px-4">
           <div className="flex items-center justify-between mb-8">
             <Skeleton className="h-10 w-64" />
@@ -45,7 +45,7 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
-      </MainLayout>
+      </ConsumerLayout>
     );
   }
 
@@ -53,11 +53,11 @@ const Dashboard = () => {
   if (!user && !isLoading && !localLoadingTimeout) return null;
 
   return (
-    <MainLayout>
+    <ConsumerLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <DashboardGrid />
       </div>
-    </MainLayout>
+    </ConsumerLayout>
   );
 };
 

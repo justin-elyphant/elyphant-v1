@@ -12,6 +12,7 @@ import { User, Bell, Shield, Gift, Calendar, Users, Settings, ChevronRight } fro
 import GeneralSettings from "./GeneralSettings";
 import NotificationSettings from "./NotificationSettings";
 import PrivacySecuritySettings from "./PrivacySecuritySettings";
+import SmartDefaultsAutoGifting from "@/components/gifting/SmartDefaultsAutoGifting";
 
 type SettingsTab = "profile" | "notifications" | "privacy" | "gifting";
 
@@ -63,7 +64,7 @@ const UnifiedSettings: React.FC<UnifiedSettingsProps> = ({ initialTab = "profile
       case "privacy":
         return <PrivacySecuritySettings />;
       case "gifting":
-        return <GiftingSettings />;
+        return <SmartDefaultsAutoGifting />;
       default:
         return <GeneralSettings />;
     }
@@ -96,7 +97,7 @@ const UnifiedSettings: React.FC<UnifiedSettingsProps> = ({ initialTab = "profile
                     {tab.id === "profile" && <GeneralSettings />}
                     {tab.id === "notifications" && <NotificationSettings />}
                     {tab.id === "privacy" && <PrivacySecuritySettings />}
-                    {tab.id === "gifting" && <GiftingSettings />}
+                    {tab.id === "gifting" && <SmartDefaultsAutoGifting />}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -131,78 +132,6 @@ const UnifiedSettings: React.FC<UnifiedSettingsProps> = ({ initialTab = "profile
           {renderTabContent()}
         </TabsContent>
       </Tabs>
-    </div>
-  );
-};
-
-// Simplified Gifting Settings Component
-const GiftingSettings = () => {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-pink-600" />
-            Smart Gifting Features
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                <h4 className="font-medium">Auto-Gift Reminders</h4>
-                <p className="text-sm text-muted-foreground">
-                  Get notified about upcoming events and gift opportunities
-                </p>
-              </div>
-              <Button variant="outline" size="sm">
-                Configure
-              </Button>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                <h4 className="font-medium">AI Recommendations</h4>
-                <p className="text-sm text-muted-foreground">
-                  Personalized gift suggestions based on your connections
-                </p>
-              </div>
-              <Button variant="outline" size="sm">
-                Optimize
-              </Button>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                <h4 className="font-medium">Special Dates</h4>
-                <p className="text-sm text-muted-foreground">
-                  Manage birthdays, anniversaries, and other important dates
-                </p>
-              </div>
-              <Button variant="outline" size="sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Manage
-              </Button>
-            </div>
-          </div>
-          
-          <div className="pt-4 border-t">
-            <h4 className="font-medium mb-2">Quick Actions</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Button variant="ghost" className="justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Find Friends & Family
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              </Button>
-              <Button variant="ghost" className="justify-start">
-                <Settings className="h-4 w-4 mr-2" />
-                Advanced Settings
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

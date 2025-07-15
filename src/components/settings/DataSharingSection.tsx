@@ -26,7 +26,7 @@ const DataSharingSection = () => {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-primary" />
-          <CardTitle>Privacy Settings</CardTitle>
+          <CardTitle>My Data</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">

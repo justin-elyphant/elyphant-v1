@@ -41,9 +41,9 @@ const Settings = () => {
   }
 
   const tabs = [
-    { id: "general", label: "General" },
-    { id: "notifications", label: "Notifications" },
-    { id: "privacy", label: "Privacy & Security" },
+    { id: "general", label: "My Profile" },
+    { id: "notifications", label: "My Notifications" },
+    { id: "privacy", label: "My Privacy & Security" },
   ];
 
   const renderTabContent = () => {

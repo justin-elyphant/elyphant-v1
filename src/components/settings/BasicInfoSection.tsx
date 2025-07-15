@@ -39,7 +39,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Basic Information</h3>
+      <h3 className="text-lg font-medium">My Information</h3>
       
       {/* Profile Image Section */}
       <div className="flex flex-col items-center space-y-4 p-6 bg-muted/50 rounded-lg">
@@ -174,7 +174,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Bio</FormLabel>
+              <FormLabel>About Me</FormLabel>
               <FormControl>
                 <Textarea 
                   placeholder="Tell us a bit about yourself" 

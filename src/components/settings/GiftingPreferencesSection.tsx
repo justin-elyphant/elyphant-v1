@@ -56,7 +56,7 @@ const GiftingPreferencesSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
-            Gifting Preferences
+            My Gifting Preferences
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -73,7 +73,7 @@ const GiftingPreferencesSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Saved Recipients
+            My Recipients
           </CardTitle>
           <CardDescription>
             People you frequently give gifts to
@@ -126,7 +126,7 @@ const GiftingPreferencesSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Preferred Occasions
+            My Occasions
           </CardTitle>
           <CardDescription>
             Occasions you commonly shop for
@@ -154,7 +154,7 @@ const GiftingPreferencesSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Budget Preferences
+            My Budget
           </CardTitle>
           <CardDescription>
             Your typical spending ranges
@@ -193,7 +193,7 @@ const GiftingPreferencesSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
-            Recent AI Searches
+            My Recent Searches
           </CardTitle>
           <CardDescription>
             Your recent gift search sessions
@@ -234,7 +234,7 @@ const GiftingPreferencesSection = () => {
       {/* AI Learning Preferences */}
       <Card>
         <CardHeader>
-          <CardTitle>AI Learning Settings</CardTitle>
+          <CardTitle>My AI Settings</CardTitle>
           <CardDescription>
             Control how the AI learns from your interactions
           </CardDescription>

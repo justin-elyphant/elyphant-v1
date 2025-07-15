@@ -77,12 +77,12 @@ const GeneralSettings = () => {
         })} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="address">Address</TabsTrigger>
-              <TabsTrigger value="dates">Important Dates</TabsTrigger>
-              <TabsTrigger value="interests">Interests</TabsTrigger>
-              <TabsTrigger value="gifting">Gifting</TabsTrigger>
-              <TabsTrigger value="privacy">Data Sharing</TabsTrigger>
+              <TabsTrigger value="basic">My Info</TabsTrigger>
+              <TabsTrigger value="address">My Address</TabsTrigger>
+              <TabsTrigger value="dates">My Events</TabsTrigger>
+              <TabsTrigger value="interests">My Interests</TabsTrigger>
+              <TabsTrigger value="gifting">My Gifting</TabsTrigger>
+              <TabsTrigger value="privacy">My Data</TabsTrigger>
             </TabsList>
             
             <TabsContent value="basic" className="mt-6">

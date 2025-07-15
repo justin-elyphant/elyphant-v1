@@ -25,7 +25,7 @@ const AddressSection = () => {
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-medium">Shipping Address</h3>
+          <h3 className="text-lg font-medium">My Address</h3>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

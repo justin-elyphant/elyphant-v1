@@ -31,7 +31,7 @@ const ImportantDatesFormSection = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg font-medium">Important Dates</h3>
+        <h3 className="text-lg font-medium">My Events</h3>
         {isAutoSaving && (
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />

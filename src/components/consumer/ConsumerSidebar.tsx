@@ -45,15 +45,27 @@ const mainItems = [
     badge: null,
   },
   {
+    title: "Recent Activity",
+    url: "/dashboard/activity",
+    icon: Calendar,
+    badge: null,
+  },
+  {
+    title: "Quick Actions",
+    url: "/dashboard/actions",
+    icon: Target,
+    badge: null,
+  },
+];
+
+const shoppingItems = [
+  {
     title: "Marketplace",
     url: "/marketplace",
     icon: ShoppingCart,
     badge: null,
     external: true, // Opens in full-width layout
   },
-];
-
-const shoppingItems = [
   {
     title: "My Cart",
     url: "/cart",
@@ -61,14 +73,14 @@ const shoppingItems = [
     badge: "cart",
   },
   {
-    title: "My Orders",
+    title: "Orders & Tracking",
     url: "/orders",
     icon: Package,
     badge: null,
   },
   {
-    title: "My Wishlists",
-    url: "/wishlists",
+    title: "Saved Items",
+    url: "/saved",
     icon: Heart,
     badge: null,
   },
@@ -76,20 +88,26 @@ const shoppingItems = [
 
 const giftingItems = [
   {
-    title: "Gift Search",
-    url: "/gift-search",
-    icon: Target,
-    badge: null,
-  },
-  {
-    title: "Group Gifts",
-    url: "/group-gifts",
+    title: "Gift Dashboard",
+    url: "/gifts",
     icon: Gift,
     badge: null,
   },
   {
-    title: "Special Dates",
-    url: "/special-dates",
+    title: "Auto-Gifting Rules",
+    url: "/auto-gifting",
+    icon: Target,
+    badge: "auto-gifts",
+  },
+  {
+    title: "Gift Templates",
+    url: "/gift-templates",
+    icon: Calendar,
+    badge: null,
+  },
+  {
+    title: "Events & Dates",
+    url: "/events",
     icon: Calendar,
     badge: null,
   },
@@ -97,7 +115,7 @@ const giftingItems = [
 
 const socialItems = [
   {
-    title: "Connections",
+    title: "My Network",
     url: "/connections",
     icon: Users,
     badge: null,
@@ -108,28 +126,64 @@ const socialItems = [
     icon: MessageSquare,
     badge: "messages",
   },
+  {
+    title: "Group Gifts",
+    url: "/group-gifts",
+    icon: Gift,
+    badge: null,
+  },
+  {
+    title: "Find Friends",
+    url: "/find-friends",
+    icon: Users,
+    badge: null,
+  },
 ];
 
 const personalItems = [
   {
-    title: "Profile",
-    url: "/profile",
-    icon: User,
+    title: "My Wishlists",
+    url: "/wishlists",
+    icon: Heart,
     badge: null,
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
+    title: "Shared with Me",
+    url: "/shared",
+    icon: Users,
+    badge: null,
+  },
+  {
+    title: "Addresses",
+    url: "/addresses",
+    icon: CreditCard,
     badge: null,
   },
 ];
 
-const helpItems = [
+const settingsItems = [
   {
-    title: "Help & Support",
-    url: "/help",
-    icon: HelpCircle,
+    title: "Profile & Basic Info",
+    url: "/settings",
+    icon: User,
+    badge: null,
+  },
+  {
+    title: "Notifications",
+    url: "/settings?tab=notifications",
+    icon: Bell,
+    badge: null,
+  },
+  {
+    title: "Privacy & Security",
+    url: "/settings?tab=privacy",
+    icon: Settings,
+    badge: null,
+  },
+  {
+    title: "Account Management",
+    url: "/settings?tab=account",
+    icon: Settings,
     badge: null,
   },
 ];
@@ -159,6 +213,8 @@ export function ConsumerSidebar() {
         return cartItems?.length > 0 ? cartItems.length.toString() : null;
       case "messages":
         return "3"; // TODO: Replace with actual unread count
+      case "auto-gifts":
+        return "2"; // TODO: Replace with actual active auto-gifts count
       default:
         return null;
     }
@@ -226,7 +282,17 @@ export function ConsumerSidebar() {
                   Online
                 </span>
                 {user && (
-                  <span className="text-xs text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full border border-green-200">
+                      Premium
+                    </span>
+                    <span className="bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded-full border border-blue-200">
+                      Auto-Gifting On
+                    </span>
+                  </div>
+                )}
+                {user && (
+                  <span className="text-xs text-slate-500 mt-1">
                     {(profile as any)?.first_name || (profile as any)?.name || user.email?.split('@')[0]}
                   </span>
                 )}
@@ -240,7 +306,7 @@ export function ConsumerSidebar() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
               <Input
-                placeholder="Search gifts, friends, orders..."
+                placeholder="Search products, friends, wishlists..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 h-9 text-sm"
@@ -261,14 +327,14 @@ export function ConsumerSidebar() {
         <SidebarSeparator />
         <MenuSection title="Personal" items={personalItems} />
         <SidebarSeparator />
-        <MenuSection title="Help" items={helpItems} />
+        <MenuSection title="Settings" items={settingsItems} />
       </SidebarContent>
 
       <SidebarFooter className="border-t border-slate-200 p-4">
         {state === "expanded" && (
           <div className="text-xs text-slate-500">
-            <p>Gift Intelligence</p>
-            <p className="text-green-600">● Active</p>
+            <p>Elyphant Marketplace</p>
+            <p className="text-green-600">● All Systems Online</p>
           </div>
         )}
       </SidebarFooter>

@@ -14,8 +14,11 @@ export const useUnsavedChanges = (form: UseFormReturn<SettingsFormValues>) => {
       // Skip auto-saved fields but allow address fields to trigger unsaved changes
       if (name === "interests" || name === "importantDates") return;
       
+      console.log("🔍 Form change detected:", { name, hasInitialValues: !!initialValues });
+      
       // Check if current values differ from initial values
       const hasChanges = JSON.stringify(value) !== JSON.stringify(initialValues);
+      console.log("📊 Unsaved changes status:", hasChanges);
       setHasUnsavedChanges(hasChanges);
     });
     

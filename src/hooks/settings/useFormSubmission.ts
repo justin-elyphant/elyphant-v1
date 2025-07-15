@@ -11,7 +11,11 @@ export const useFormSubmission = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const onSubmit = async (formData: any) => {
+    console.log("🚀 FORM SUBMISSION STARTED - Button clicked!");
+    console.log("👤 User check:", user ? "✅ User exists" : "❌ No user");
+    
     if (!user) {
+      console.log("❌ No user - showing error");
       toast.error("You must be logged in to update your profile");
       return;
     }

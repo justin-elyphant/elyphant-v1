@@ -129,7 +129,7 @@ const GeneralSettings = () => {
               </div>
             )}
             <div className="flex-1" />
-            <Button type="submit" disabled={isSaving || !hasUnsavedChanges}>
+            <Button type="submit" disabled={isSaving}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

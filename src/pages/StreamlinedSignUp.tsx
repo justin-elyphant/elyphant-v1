@@ -153,11 +153,13 @@ const StreamlinedSignUp = () => {
 
     setLoading(true);
     try {
+      console.log("🔐 Starting signup process...");
+      
       const { data, error } = await supabase.auth.signUp({
         email: profileData.email,
         password: profileData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/signup?intent=complete-profile`,
           data: {
             first_name: profileData.firstName,
             last_name: profileData.lastName,
@@ -166,6 +168,7 @@ const StreamlinedSignUp = () => {
       });
 
       if (error) {
+        console.error("❌ Signup error:", error);
         if (error.message.includes('already registered')) {
           toast.error('Account already exists', {
             description: 'Please sign in instead.'
@@ -176,22 +179,50 @@ const StreamlinedSignUp = () => {
         throw error;
       }
 
-      // Store profile data using centralized service
-      import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
-        LocalStorageService.setProfileCompletionState({
-          ...profileData,
-          step: 'profile',
-          source: 'email'
+      console.log("✅ Signup response:", data);
+
+      // Check if user needs email confirmation
+      if (data.user && !data.session) {
+        console.log("📧 Email confirmation required");
+        
+        // Store profile data for after email confirmation
+        import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
+          LocalStorageService.setProfileCompletionState({
+            ...profileData,
+            step: 'profile',
+            source: 'email'
+          });
         });
-      });
-      
-      toast.success('Account created!', {
-        description: 'Let\'s set up your profile.'
-      });
-      
-      setStep('profile');
+
+        toast.success('Please check your email', {
+          description: 'Click the link in your email to verify your account, then return here to complete your profile.'
+        });
+        
+        // Don't proceed to profile step yet - wait for email confirmation
+        return;
+      }
+
+      // If user is immediately authenticated (email confirmation disabled)
+      if (data.session) {
+        console.log("✅ User immediately authenticated");
+        
+        // Store profile data using centralized service
+        import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
+          LocalStorageService.setProfileCompletionState({
+            ...profileData,
+            step: 'profile',
+            source: 'email'
+          });
+        });
+        
+        toast.success('Account created!', {
+          description: 'Let\'s set up your profile.'
+        });
+        
+        setStep('profile');
+      }
     } catch (error: any) {
-      console.error('Sign up error:', error);
+      console.error('❌ Sign up error:', error);
       toast.error('Sign up failed', {
         description: error.message || 'Please try again.'
       });

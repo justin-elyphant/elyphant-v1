@@ -1,11 +1,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SimplifiedDashboard from "@/components/dashboard/SimplifiedDashboard";
+import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import OptimizedLayout from "@/components/layout/OptimizedLayout";
-import { EventsProvider } from "@/components/gifting/events/context/EventsContext";
+import MainLayout from "@/components/layout/MainLayout";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -34,7 +33,7 @@ const Dashboard = () => {
   // If still loading or waiting for timeout, show skeleton
   if (isLoading || localLoadingTimeout || profileLoading) {
     return (
-      <OptimizedLayout>
+      <MainLayout>
         <div className="container max-w-6xl mx-auto py-8 px-4">
           <div className="flex items-center justify-between mb-8">
             <Skeleton className="h-10 w-64" />
@@ -46,7 +45,7 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
-      </OptimizedLayout>
+      </MainLayout>
     );
   }
 
@@ -54,13 +53,11 @@ const Dashboard = () => {
   if (!user && !isLoading && !localLoadingTimeout) return null;
 
   return (
-    <OptimizedLayout>
+    <MainLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <EventsProvider>
-          <SimplifiedDashboard />
-        </EventsProvider>
+        <DashboardGrid />
       </div>
-    </OptimizedLayout>
+    </MainLayout>
   );
 };
 

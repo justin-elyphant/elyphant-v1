@@ -3,7 +3,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SmartInput } from "@/components/ui/smart-input";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { COMMON_INTERESTS, INTEREST_SPELLING_CORRECTIONS } from "@/constants/commonInterests";
 
 interface InterestsFormSectionProps {
@@ -12,6 +12,7 @@ interface InterestsFormSectionProps {
   newInterest: string;
   setNewInterest: (interest: string) => void;
   addInterest: () => void;
+  isAutoSaving?: boolean;
 }
 
 // Enhanced duplicate detection with smart matching
@@ -28,7 +29,8 @@ const InterestsFormSection = ({
   removeInterest,
   newInterest,
   setNewInterest,
-  addInterest
+  addInterest,
+  isAutoSaving = false
 }: InterestsFormSectionProps) => {
   
   // Enhanced add function with duplicate prevention
@@ -44,7 +46,15 @@ const InterestsFormSection = ({
   };
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Interests</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-lg font-medium">Interests</h3>
+        {isAutoSaving && (
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Auto-saving...
+          </div>
+        )}
+      </div>
       
       <div className="flex flex-wrap gap-2 mb-4">
         {interests.length > 0 ? (
@@ -84,9 +94,9 @@ const InterestsFormSection = ({
         <Button
           type="button"
           onClick={handleAddInterest}
-          disabled={!newInterest.trim() || isDuplicateInterest(newInterest, interests)}
+          disabled={!newInterest.trim() || isDuplicateInterest(newInterest, interests) || isAutoSaving}
         >
-          Add
+          {isAutoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
         </Button>
       </div>
     </div>

@@ -3,10 +3,10 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarCheck, X } from "lucide-react";
+import { CalendarCheck, X, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { NewImportantDateState } from "@/hooks/settings/useImportantDates";
+import { NewImportantDateState } from "@/hooks/settings/useAutoSaveImportantDates";
 import { ImportantDate } from "@/hooks/settings/settingsFormSchema";
 import { SmartInput } from "@/components/ui/smart-input";
 import { COMMON_EVENTS, SPELLING_CORRECTIONS } from "@/constants/commonEvents";
@@ -17,6 +17,7 @@ interface ImportantDatesFormSectionProps {
   newImportantDate: NewImportantDateState;
   setNewImportantDate: (date: NewImportantDateState) => void;
   addImportantDate: () => void;
+  isAutoSaving?: boolean;
 }
 
 const ImportantDatesFormSection = ({
@@ -24,11 +25,20 @@ const ImportantDatesFormSection = ({
   removeImportantDate,
   newImportantDate,
   setNewImportantDate,
-  addImportantDate
+  addImportantDate,
+  isAutoSaving = false
 }: ImportantDatesFormSectionProps) => {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Important Dates</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-lg font-medium">Important Dates</h3>
+        {isAutoSaving && (
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Auto-saving...
+          </div>
+        )}
+      </div>
       
       {importantDates.length > 0 ? (
         <div className="space-y-2">
@@ -110,9 +120,9 @@ const ImportantDatesFormSection = ({
           <Button
             type="button"
             onClick={addImportantDate}
-            disabled={!newImportantDate.date || !newImportantDate.description}
+            disabled={!newImportantDate.date || !newImportantDate.description || isAutoSaving}
           >
-            Add Date
+            {isAutoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Date"}
           </Button>
         </div>
       </div>

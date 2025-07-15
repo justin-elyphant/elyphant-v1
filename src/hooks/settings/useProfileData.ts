@@ -6,7 +6,7 @@ import { SettingsFormValues } from "./settingsFormSchema";
 import { mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
 import { useProfileCacheManager } from "@/hooks/profile/useProfileCacheManager";
 
-export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
+export const useProfileData = (form: UseFormReturn<SettingsFormValues>, setInitialFormValues?: (values: SettingsFormValues) => void) => {
   const { profile, loading, refetchProfile } = useProfile();
   const { handleOnboardingComplete } = useProfileCacheManager();
   const hasLoadedRef = useRef(false);
@@ -46,6 +46,11 @@ export const useProfileData = (form: UseFormReturn<SettingsFormValues>) => {
         
         form.reset(mappedData);
         hasLoadedRef.current = true;
+        
+        // Set initial values for unsaved changes tracking
+        if (setInitialFormValues) {
+          setInitialFormValues(mappedData);
+        }
       } else {
         console.error("❌ Failed to map profile data to settings form");
       }

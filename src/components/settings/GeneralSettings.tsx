@@ -31,7 +31,10 @@ const GeneralSettings = () => {
     handleAddInterest,
     handleRemoveInterest,
     handleAddImportantDate,
-    handleRemoveImportantDate
+    handleRemoveImportantDate,
+    hasUnsavedChanges,
+    isAutoSavingInterests,
+    isAutoSavingDates
   } = useGeneralSettingsForm();
 
   // Handle navigation from data integrity panel
@@ -94,6 +97,7 @@ const GeneralSettings = () => {
                 newImportantDate={newImportantDate}
                 setNewImportantDate={setNewImportantDate}
                 addImportantDate={handleAddImportantDate}
+                isAutoSaving={isAutoSavingDates}
               />
             </TabsContent>
             
@@ -104,6 +108,7 @@ const GeneralSettings = () => {
                 newInterest={newInterest}
                 setNewInterest={setNewInterest}
                 addInterest={handleAddInterest}
+                isAutoSaving={isAutoSavingInterests}
               />
             </TabsContent>
             
@@ -116,8 +121,15 @@ const GeneralSettings = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSaving}>
+          <div className="flex items-center justify-between">
+            {hasUnsavedChanges && (
+              <div className="flex items-center gap-2 text-sm text-amber-600">
+                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                You have unsaved changes
+              </div>
+            )}
+            <div className="flex-1" />
+            <Button type="submit" disabled={isSaving || !hasUnsavedChanges}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -2,13 +2,14 @@
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useImportantDates, NewImportantDateState } from "./useImportantDates";
-import { useInterests } from "./useInterests";
+import { useAutoSaveImportantDates, NewImportantDateState } from "./useAutoSaveImportantDates";
+import { useAutoSaveInterests } from "./useAutoSaveInterests";
 import { useProfileData } from "./useProfileData";
 import { useFormSubmission } from "./useFormSubmission";
+import { useUnsavedChanges } from "./useUnsavedChanges";
 import { formSchema, SettingsFormValues, ImportantDate } from "./settingsFormSchema";
 
-export { type NewImportantDateState } from "./useImportantDates";
+export { type NewImportantDateState } from "./useAutoSaveImportantDates";
 
 export const useGeneralSettingsForm = () => {
   const form = useForm<SettingsFormValues>({
@@ -44,9 +45,16 @@ export const useGeneralSettingsForm = () => {
 
   // Use our custom hooks
   const { user, isSaving, onSubmit } = useFormSubmission();
-  const { profile, loading, loadProfileData, refetchProfile } = useProfileData(form);
-  const { newInterest, setNewInterest, handleAddInterest, handleRemoveInterest } = useInterests(form);
-  const { newImportantDate, setNewImportantDate, handleAddImportantDate, handleRemoveImportantDate } = useImportantDates(form);
+  const { hasUnsavedChanges, setInitialFormValues, clearUnsavedChanges } = useUnsavedChanges(form);
+  const { profile, loading, loadProfileData, refetchProfile } = useProfileData(form, setInitialFormValues);
+  const { newInterest, setNewInterest, handleAddInterest, handleRemoveInterest, isAutoSaving: isAutoSavingInterests } = useAutoSaveInterests(form);
+  const { newImportantDate, setNewImportantDate, handleAddImportantDate, handleRemoveImportantDate, isAutoSaving: isAutoSavingDates } = useAutoSaveImportantDates(form);
+
+  // Enhanced onSubmit with unsaved changes tracking
+  const handleSubmit = async (data: SettingsFormValues) => {
+    await onSubmit(data);
+    clearUnsavedChanges();
+  };
 
   return {
     user,
@@ -59,10 +67,14 @@ export const useGeneralSettingsForm = () => {
     setNewImportantDate,
     loadProfileData,
     refetchProfile,
-    onSubmit,
+    onSubmit: handleSubmit,
     handleAddInterest,
     handleRemoveInterest,
     handleAddImportantDate,
-    handleRemoveImportantDate
+    handleRemoveImportantDate,
+    hasUnsavedChanges,
+    setInitialFormValues,
+    isAutoSavingInterests,
+    isAutoSavingDates
   };
 };

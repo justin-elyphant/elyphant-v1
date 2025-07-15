@@ -113,6 +113,15 @@ export class ProfileCreationService {
 
       console.log("📤 Sending profile data to database:", JSON.stringify(profileData, null, 2));
 
+      // Add debugging to check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, username, birth_year, dob, shipping_address, onboarding_completed')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      console.log("🔍 Existing profile before upsert:", existingProfile);
+
       const { data: result, error } = await supabase
         .from('profiles')
         .upsert(profileData, { onConflict: 'id' })
@@ -132,6 +141,16 @@ export class ProfileCreationService {
       }
 
       console.log("✅ Profile created successfully:", result);
+      console.log("🔍 Key fields in result:", {
+        id: result.id,
+        first_name: result.first_name,
+        last_name: result.last_name,
+        username: result.username,
+        birth_year: result.birth_year,
+        dob: result.dob,
+        shipping_address: result.shipping_address,
+        onboarding_completed: result.onboarding_completed
+      });
       return { success: true };
       
     } catch (error: any) {

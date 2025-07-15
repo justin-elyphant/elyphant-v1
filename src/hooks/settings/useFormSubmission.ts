@@ -57,15 +57,33 @@ export const useFormSubmission = () => {
       
       // Update profile
       console.log("📤 Calling updateProfile...");
-      const result = await updateProfile(apiData);
-      console.log("✅ UpdateProfile result:", result);
+      console.log("📤 API Data being sent:", JSON.stringify(apiData, null, 2));
       
-      // Small delay to ensure database write completes
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      toast.success("Profile updated successfully");
+      try {
+        const result = await updateProfile(apiData);
+        console.log("✅ UpdateProfile result:", result);
+        
+        // Small delay to ensure database write completes
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        toast.success("Profile updated successfully");
+      } catch (updateError) {
+        console.error("❌ UpdateProfile threw error:", updateError);
+        console.error("❌ Error details:", {
+          message: updateError instanceof Error ? updateError.message : 'Unknown error',
+          stack: updateError instanceof Error ? updateError.stack : undefined
+        });
+        
+        // Re-throw to be caught by outer catch
+        throw updateError;
+      }
     } catch (error) {
       console.error("❌ Error saving profile:", error);
+      console.error("❌ Outer error details:", {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
       toast.error(errorMessage);
     } finally {

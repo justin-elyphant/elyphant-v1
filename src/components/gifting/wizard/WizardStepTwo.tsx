@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, Calendar, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Calendar, Plus, Trash2, Sparkles } from "lucide-react";
 import { GiftSetupData } from "../GiftSetupWizard";
+import { calculateHolidayDate, isKnownHoliday } from "@/constants/holidayDates";
 
 interface WizardStepTwoProps {
   data: GiftSetupData;
@@ -33,6 +34,7 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [autoPopulatedDates, setAutoPopulatedDates] = useState<Set<number>>(new Set());
 
   const addEvent = () => {
     setGiftingEvents(prev => [
@@ -48,9 +50,32 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
   };
 
   const updateEvent = (index: number, field: string, value: any) => {
-    setGiftingEvents(prev => prev.map((event, i) => 
-      i === index ? { ...event, [field]: value } : event
-    ));
+    setGiftingEvents(prev => prev.map((event, i) => {
+      if (i === index) {
+        const updatedEvent = { ...event, [field]: value };
+        
+        // Auto-populate date for known holidays
+        if (field === "dateType" && isKnownHoliday(value)) {
+          const suggestedDate = calculateHolidayDate(value);
+          if (suggestedDate) {
+            updatedEvent.date = suggestedDate;
+            setAutoPopulatedDates(prev => new Set(prev).add(index));
+          }
+        }
+        
+        // Clear auto-populated flag when user manually changes date
+        if (field === "date") {
+          setAutoPopulatedDates(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(index);
+            return newSet;
+          });
+        }
+        
+        return updatedEvent;
+      }
+      return event;
+    }));
   };
 
   const validateForm = () => {
@@ -134,7 +159,15 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Date *</Label>
+                  <div className="flex items-center gap-2">
+                    <Label>Date *</Label>
+                    {autoPopulatedDates.has(index) && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Sparkles className="h-3 w-3" />
+                        Auto-filled
+                      </div>
+                    )}
+                  </div>
                   <Input
                     type="date"
                     value={formatDateForInput(event.date)}

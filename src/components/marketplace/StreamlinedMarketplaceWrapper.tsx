@@ -90,43 +90,47 @@ const StreamlinedMarketplaceWrapper = () => {
     <div className="space-y-6">
       {/* Connection-Aware Header with Hero Image */}
       {!connectionsLoading && (
-        <div className="relative bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg overflow-hidden">
+        <div className="relative rounded-lg overflow-hidden min-h-[400px] flex items-center">
           {/* Hero Image Background */}
           <div 
-            className="absolute inset-0 bg-cover bg-center opacity-20"
+            className="absolute inset-0 bg-cover bg-center"
             style={{
               backgroundImage: `url('/lovable-uploads/9765a848-d167-4135-b5d0-742e88ad187c.png')`
             }}
           />
-          <div className="relative z-10 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Welcome to the Marketplace
-              </h2>
-              {profile?.profile_type === 'giftor' && (
-                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  AI Powered
-                </Badge>
-              )}
-            </div>
+          {/* Overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/30" />
           
-          {/* Quick Actions */}
-          <Tabs defaultValue="browse" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="browse">Browse Gifts</TabsTrigger>
-              <TabsTrigger value="connections">For Friends</TabsTrigger>
-              <TabsTrigger value="wishlist">My Wishlist</TabsTrigger>
+          <div className="relative z-10 p-8 w-full">
+            <div className="max-w-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-4xl font-bold text-white">
+                  Welcome to the Marketplace
+                </h2>
+                {profile?.profile_type === 'giftor' && (
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    AI Powered
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Quick Actions */}
+              <Tabs defaultValue="browse" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-white/20 backdrop-blur-sm">
+              <TabsTrigger value="browse" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900">Browse Gifts</TabsTrigger>
+              <TabsTrigger value="connections" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900">For Friends</TabsTrigger>
+              <TabsTrigger value="wishlist" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900">My Wishlist</TabsTrigger>
             </TabsList>
             
             <TabsContent value="browse" className="mt-4">
               <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">
+                <p className="text-white/80">
                   Discover best selling gifts and popular items curated just for you
                 </p>
                 <Button 
                   onClick={() => setShowNicole(true)}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Ask Nicole AI
@@ -137,12 +141,12 @@ const StreamlinedMarketplaceWrapper = () => {
             <TabsContent value="connections" className="mt-4">
               {upcomingEvents.length > 0 ? (
                 <div className="space-y-3">
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-white/80 mb-4">
                     Upcoming events from your connections
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {upcomingEvents.map((event) => (
-                      <Card key={event.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                      <Card key={event.id} className="cursor-pointer hover:shadow-md transition-shadow bg-white/10 backdrop-blur-sm border-white/20"
                             onClick={() => handleGiftForConnection(event)}>
                         <CardContent className="p-4">
                           <div className="flex items-center space-x-3">
@@ -151,16 +155,16 @@ const StreamlinedMarketplaceWrapper = () => {
                               <AvatarFallback>{event.name[0]}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{event.name}</p>
-                              <p className="text-xs text-muted-foreground">{event.event}</p>
+                              <p className="font-medium text-sm truncate text-white">{event.name}</p>
+                              <p className="text-xs text-white/70">{event.event}</p>
                               <div className="flex items-center mt-1">
-                                <Calendar className="h-3 w-3 mr-1 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3 mr-1 text-white/70" />
+                                <span className="text-xs text-white/70">
                                   {formatEventDate(event.date)}
                                 </span>
                               </div>
                             </div>
-                            <Gift className="h-4 w-4 text-purple-600" />
+                            <Gift className="h-4 w-4 text-purple-300" />
                           </div>
                         </CardContent>
                       </Card>
@@ -169,11 +173,11 @@ const StreamlinedMarketplaceWrapper = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">
+                  <Users className="h-12 w-12 text-white/60 mx-auto mb-4" />
+                  <p className="text-white/80 mb-4">
                     No upcoming events from your connections
                   </p>
-                  <Button variant="outline" onClick={handleViewConnections}>
+                  <Button variant="outline" onClick={handleViewConnections} className="border-white/30 text-white hover:bg-white/10">
                     <Users className="h-4 w-4 mr-2" />
                     Find Connections
                   </Button>
@@ -183,15 +187,15 @@ const StreamlinedMarketplaceWrapper = () => {
             
             <TabsContent value="wishlist" className="mt-4">
               <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">
+                <p className="text-white/80">
                   Create and manage your wishlists for perfect gifting
                 </p>
                 <div className="space-x-2">
-                  <Button variant="outline" onClick={() => navigate('/my-wishlists')}>
+                  <Button variant="outline" onClick={() => navigate('/my-wishlists')} className="border-white/30 text-white hover:bg-white/10">
                     <Heart className="h-4 w-4 mr-2" />
                     View Wishlists
                   </Button>
-                  <Button onClick={handleCreateWishlist}>
+                  <Button onClick={handleCreateWishlist} className="bg-purple-600 hover:bg-purple-700 text-white">
                     <Heart className="h-4 w-4 mr-2" />
                     Create Wishlist
                   </Button>
@@ -199,6 +203,7 @@ const StreamlinedMarketplaceWrapper = () => {
               </div>
             </TabsContent>
           </Tabs>
+            </div>
           </div>
         </div>
       )}

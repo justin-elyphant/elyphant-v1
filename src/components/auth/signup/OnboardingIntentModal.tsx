@@ -48,26 +48,26 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
 
   return (
     <Dialog open={open} modal={true}>
-      <DialogContent className="sm:max-w-md animate-fade-in p-6 max-w-[90vw]">
-        <DialogHeader className="mb-2">
-          <DialogTitle className="text-xl font-semibold text-center">
+      <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl animate-fade-in p-6 max-w-[90vw] w-full">
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-xl md:text-2xl font-semibold text-center">
             Welcome! How would you like to get started?
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4 mt-4">
           <Button
             variant="outline"
-            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 ${getButtonClass("quick-gift")}`}
+            className={`flex items-center justify-start gap-4 p-4 md:p-6 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 ${getButtonClass("quick-gift")}`}
             onClick={() => handleIntentSelect("quick-gift")}
             disabled={isLoading}
             data-testid="intent-quick-gift"
           >
-            <Zap className="w-6 h-6 text-purple-600 flex-shrink-0" />
-            <div className="flex flex-col">
-              <span className="text-base font-medium text-foreground">
+            <Zap className="w-6 h-6 md:w-7 md:h-7 text-purple-600 flex-shrink-0" />
+            <div className="flex flex-col flex-1">
+              <span className="text-base md:text-lg font-medium text-foreground">
                 <span className="font-semibold text-purple-700">Quick Gift (Elyphant Picks)</span>
               </span>
-              <span className="text-sm text-muted-foreground font-normal mt-0.5">
+              <span className="text-sm md:text-base text-muted-foreground font-normal mt-1">
                 Tell us about the occasion and recipient, we'll handle the rest
               </span>
             </div>
@@ -80,17 +80,17 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
           
           <Button
             variant="outline"
-            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-blue-50 hover:border-blue-300 ${getButtonClass("browse-shop")}`}
+            className={`flex items-center justify-start gap-4 p-4 md:p-6 w-full h-auto text-left hover:bg-blue-50 hover:border-blue-300 ${getButtonClass("browse-shop")}`}
             onClick={() => handleIntentSelect("browse-shop")}
             disabled={isLoading}
             data-testid="intent-browse-shop"
           >
-            <Search className="w-6 h-6 text-blue-600 flex-shrink-0" />
-            <div className="flex flex-col">
-              <span className="text-base font-medium text-foreground">
+            <Search className="w-6 h-6 md:w-7 md:h-7 text-blue-600 flex-shrink-0" />
+            <div className="flex flex-col flex-1">
+              <span className="text-base md:text-lg font-medium text-foreground">
                 <span className="font-semibold text-blue-700">Browse & Shop with Nicole's Help</span>
               </span>
-              <span className="text-sm text-muted-foreground font-normal mt-0.5">
+              <span className="text-sm md:text-base text-muted-foreground font-normal mt-1">
                 Explore our curated marketplace with AI assistance
               </span>
             </div>
@@ -103,17 +103,17 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
           
           <Button
             variant="outline"
-            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 ${getButtonClass("create-wishlist")}`}
+            className={`flex items-center justify-start gap-4 p-4 md:p-6 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 ${getButtonClass("create-wishlist")}`}
             onClick={() => handleIntentSelect("create-wishlist")}
             disabled={isLoading}
             data-testid="intent-create-wishlist"
           >
-            <List className="w-6 h-6 text-indigo-600 flex-shrink-0" />
-            <div className="flex flex-col">
-              <span className="text-base font-medium text-foreground">
+            <List className="w-6 h-6 md:w-7 md:h-7 text-indigo-600 flex-shrink-0" />
+            <div className="flex flex-col flex-1">
+              <span className="text-base md:text-lg font-medium text-foreground">
                 <span className="font-semibold text-indigo-700">Create My First Wishlist</span>
               </span>
-              <span className="text-sm text-muted-foreground font-normal mt-0.5">
+              <span className="text-sm md:text-base text-muted-foreground font-normal mt-1">
                 Build and share your wishlist for perfect gifting
               </span>
             </div>

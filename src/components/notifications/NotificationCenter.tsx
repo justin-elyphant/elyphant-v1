@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Bell } from "lucide-react";
 import NotificationItem from "./NotificationItem";
+import AutoGiftNotificationItem from "./AutoGiftNotificationItem";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 
 interface NotificationCenterProps {
@@ -66,8 +67,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className }) =>
         </SheetHeader>
         
         <Tabs defaultValue="all" className="flex-1 flex flex-col">
-          <TabsList className="grid grid-cols-3 px-4 pt-2">
+          <TabsList className="grid grid-cols-4 px-4 pt-2">
             <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="auto-gifts">Auto-Gifts</TabsTrigger>
             <TabsTrigger value="connections">Connections</TabsTrigger>
             <TabsTrigger value="gifts">Gifts</TabsTrigger>
           </TabsList>
@@ -75,17 +77,56 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className }) =>
           <TabsContent value="all" className="flex-1 overflow-auto">
             {notifications.length > 0 ? (
               <div className="divide-y">
-                {notifications.map(notification => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onRead={() => markAsRead(notification.id)}
-                  />
-                ))}
+                {notifications.map(notification => {
+                  // Use specialized auto-gift notification component
+                  if (notification.type === 'auto_gift_approval' || 
+                      notification.type === 'auto_gift_approved' || 
+                      notification.type === 'auto_gift_failed') {
+                    return (
+                      <AutoGiftNotificationItem
+                        key={notification.id}
+                        notification={notification}
+                        onRead={() => markAsRead(notification.id)}
+                        onQuickApprove={notification.quickActions?.approve}
+                        onReview={notification.quickActions?.review}
+                      />
+                    );
+                  }
+                  
+                  return (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onRead={() => markAsRead(notification.id)}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground p-4 text-center">
                 <p>You're all caught up! No new notifications.</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="auto-gifts" className="flex-1 overflow-auto">
+            {notifications.filter(n => n.type.startsWith('auto_gift')).length > 0 ? (
+              <div className="divide-y">
+                {notifications
+                  .filter(n => n.type.startsWith('auto_gift'))
+                  .map(notification => (
+                    <AutoGiftNotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onRead={() => markAsRead(notification.id)}
+                      onQuickApprove={notification.quickActions?.approve}
+                      onReview={notification.quickActions?.review}
+                    />
+                  ))}
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground p-4 text-center">
+                <p>No auto-gift notifications.</p>
               </div>
             )}
           </TabsContent>

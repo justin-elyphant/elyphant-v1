@@ -18,6 +18,9 @@ export interface AutoGiftExecution {
   next_retry_at?: Date;
   created_at: Date;
   updated_at: Date;
+  // Optional joined fields
+  auto_gifting_rules?: any;
+  user_special_dates?: any;
 }
 
 export interface GiftSelectionCriteria {

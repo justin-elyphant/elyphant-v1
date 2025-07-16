@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
-export type NotificationType = "connection" | "wishlist" | "gift" | "event" | "system" | "group_gift" | "group_invite" | "group_mention" | "group_vote";
+export type NotificationType = "connection" | "wishlist" | "gift" | "event" | "system" | "group_gift" | "group_invite" | "group_mention" | "group_vote" | "auto_gift_approval" | "auto_gift_approved" | "auto_gift_failed";
 
 export interface Notification {
   id: string;
@@ -14,6 +14,17 @@ export interface Notification {
   createdAt: string;
   link?: string;
   actionText?: string;
+  // Enhanced fields for auto-gift notifications
+  executionId?: string;
+  recipientName?: string;
+  eventType?: string;
+  selectedProducts?: any[];
+  totalAmount?: number;
+  quickActions?: {
+    approve?: () => void;
+    reject?: () => void;
+    review?: () => void;
+  };
 }
 
 interface NotificationsContextType {
@@ -184,6 +195,27 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
         type: "group_vote",
         link: "/group-chats",
         actionText: "Vote Now"
+      },
+      auto_gift_approval: {
+        title: "Auto-Gift Needs Approval",
+        message: "We've selected a perfect gift for Sarah's birthday - approve to send!",
+        type: "auto_gift_approval",
+        link: "/auto-gifting",
+        actionText: "Review & Approve"
+      },
+      auto_gift_approved: {
+        title: "Auto-Gift Approved",
+        message: "Your auto-gift for Michael's birthday has been sent!",
+        type: "auto_gift_approved",
+        link: "/orders",
+        actionText: "Track Order"
+      },
+      auto_gift_failed: {
+        title: "Auto-Gift Failed",
+        message: "We couldn't complete your auto-gift for David's birthday. Please review.",
+        type: "auto_gift_failed",
+        link: "/auto-gifting",
+        actionText: "Fix Issue"
       }
     };
     

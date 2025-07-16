@@ -29,7 +29,6 @@ const SmartGiftingTab = () => {
   const { user } = useAuth();
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
 
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
@@ -89,20 +88,9 @@ const SmartGiftingTab = () => {
             <Zap className="h-5 w-5 mr-2 text-emerald-500" />
             Upcoming Events
           </h3>
-          <div className="flex gap-2">
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={() => setWizardOpen(true)}
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Quick Gift Setup
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/events?action=add">Add Event</Link>
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/events?action=add">Add Event</Link>
+          </Button>
         </div>
         
         {upcomingEvents.length > 0 ? (
@@ -198,11 +186,6 @@ const SmartGiftingTab = () => {
         />
       )}
       
-      {/* Gift Setup Wizard */}
-      <GiftSetupWizard 
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-      />
     </div>
   );
 };

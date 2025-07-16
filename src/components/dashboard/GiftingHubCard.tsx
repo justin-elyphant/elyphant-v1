@@ -31,6 +31,7 @@ const SmartGiftingTab = () => {
   const { user } = useAuth();
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [giftSetupInitialData, setGiftSetupInitialData] = useState<any>(null);
 
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
@@ -59,6 +60,23 @@ const SmartGiftingTab = () => {
 
   const handleSetupAutoGift = (event: any) => {
     setSelectedEvent(event);
+    
+    // Transform data for pending invitations
+    if (event.isPendingInvitation) {
+      setGiftSetupInitialData({
+        recipientName: event.person,
+        recipientEmail: event.recipientEmail,
+        relationshipType: event.relationshipType,
+        giftingEvents: [{
+          dateType: event.type || 'Birthday',
+          date: '',
+          isRecurring: true
+        }]
+      });
+    } else {
+      setGiftSetupInitialData(null);
+    }
+    
     setSetupDialogOpen(true);
   };
 
@@ -93,6 +111,7 @@ const SmartGiftingTab = () => {
           <GiftSetupWizard 
             open={setupDialogOpen} 
             onOpenChange={setSetupDialogOpen}
+            initialData={giftSetupInitialData}
           />
           <Button 
             variant="outline" 

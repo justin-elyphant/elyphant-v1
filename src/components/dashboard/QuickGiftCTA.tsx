@@ -38,6 +38,7 @@ const QuickGiftCTA = () => {
       <GiftSetupWizard 
         open={wizardOpen}
         onOpenChange={setWizardOpen}
+        initialData={null}
       />
     </>
   );

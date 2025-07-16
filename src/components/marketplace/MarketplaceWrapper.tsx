@@ -14,10 +14,10 @@ import LoadingFallback from "@/components/common/LoadingFallback";
 import { useRetry } from "@/hooks/common/useRetry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { allProducts } from "@/components/marketplace/zinc/data/mockProducts";
-import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useAuth } from "@/contexts/auth";
+import { useProducts } from "@/contexts/ProductContext";
+import { useEnhancedMarketplaceSearch } from "./hooks/useEnhancedMarketplaceSearch";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 
@@ -35,11 +35,15 @@ const MarketplaceWrapper = () => {
 
   // Initialize showFilters state - always default to false
   const [showFilters, setShowFilters] = useState(false);
-  
-  const [products, setProducts] = useState(allProducts);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Use Enhanced Zinc API System for product management
+  const { products } = useProducts();
+  const {
+    isLoading,
+    error,
+    filteredProducts
+  } = useEnhancedMarketplaceSearch(1);
   
   // Enhanced retry mechanism for failed operations
   const { execute: executeWithRetry, isRetrying } = useRetry({
@@ -122,65 +126,20 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, setSearchParams]);
 
-  // Enhanced product filtering and search logic with error handling and retry
+  // Enhanced toast dismissal for search scenarios
   useEffect(() => {
-    const fetchProducts = async () => {
-      const result = await executeWithRetry(async () => {
-        setIsLoading(true);
-        setError(null);
-        
-        // Simulate network delay for testing
-        await new Promise(resolve => setTimeout(resolve, 100));
-        let results = [];
-        
-        // Prioritize search over category
-        if (searchTerm) {
-          if (brandParam) {
-            results = searchMockProducts(`${brandParam} ${searchTerm}`, 12);
-          } else {
-            results = searchMockProducts(searchTerm, 16);
-          }
-        } else if (brandParam) {
-          if (categoryParam) {
-            results = searchMockProducts(`${brandParam} ${categoryParam}`, 12);
-          } else {
-            results = searchMockProducts(brandParam, 12);
-          }
-        } else if (categoryParam) {
-          results = searchMockProducts(categoryParam, 16);
-        } else {
-          // Default: show all products when no search parameters are present
-          results = allProducts.slice(0, 20); // Show first 20 products as default
-        }
-        
-        // Enhanced toast dismissal for all specific scenarios
-        if (categoryParam && !searchTerm) {
-          toast.dismiss(`category-search-${categoryParam}`);
-        }
-        if (brandParam) {
-          toast.dismiss(`brand-loading-${brandParam}`);
-        }
-        if (searchTerm) {
-          // Dismiss any search-related toasts
-          toast.dismiss("search-loading");
-          toast.dismiss("search-error");
-        }
-        
-        return results;
-      });
-      
-      if (result) {
-        setProducts(result);
-      } else {
-        // Fallback to all products if retry failed
-        setProducts(allProducts.slice(0, 20));
-        setError("Failed to load specific products. Showing default selection.");
-      }
-      
-      setIsLoading(false);
-    };
-
-    fetchProducts();
+    // Enhanced toast dismissal for all specific scenarios
+    if (categoryParam && !searchTerm) {
+      toast.dismiss(`category-search-${categoryParam}`);
+    }
+    if (brandParam) {
+      toast.dismiss(`brand-loading-${brandParam}`);
+    }
+    if (searchTerm) {
+      // Dismiss any search-related toasts
+      toast.dismiss("search-loading");
+      toast.dismiss("search-error");
+    }
   }, [searchTerm, categoryParam, brandParam]);
   
   const handleProductView = (productId: string) => {
@@ -225,37 +184,8 @@ const MarketplaceWrapper = () => {
   };
 
   const handleRefresh = async () => {
-    // Enhanced refresh with retry mechanism
-    const result = await executeWithRetry(async () => {
-      // Clear current state
-      setError(null);
-      setProducts([]);
-      
-      // Refetch products
-      const params = new URLSearchParams(window.location.search);
-      const term = params.get("search") || "";
-      const category = params.get("category");
-      const brand = params.get("brand");
-      
-      let results = [];
-      if (term) {
-        results = searchMockProducts(term, 16);
-      } else if (category) {
-        results = searchMockProducts(category, 16);
-      } else {
-        results = allProducts.slice(0, 20);
-      }
-      
-      return results;
-    });
-    
-    if (result) {
-      setProducts(result);
-      toast.success("Refreshed successfully");
-    } else {
-      // Fallback to page reload if retry fails
-      window.location.reload();
-    }
+    // Enhanced refresh with retry mechanism - reload the page to reset the Enhanced Zinc API system
+    window.location.reload();
   };
 
   // Enhanced: Handle connection selection for gifting context
@@ -322,12 +252,12 @@ const MarketplaceWrapper = () => {
         {/* Main Content - full bleed layout */}
         <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">
           <div ref={resultsRef}>
-        {(isLoading || isRetrying) && products.length === 0 ? (
+        {isLoading && products.length === 0 ? (
           <LoadingFallback type="marketplace" />
         ) : (
           <MarketplaceContent
-            products={products}
-            isLoading={isLoading || isRetrying}
+            products={filteredProducts.length > 0 ? filteredProducts : products}
+            isLoading={isLoading}
             searchTerm={searchTerm}
             onProductView={handleProductView}
             showFilters={showFilters}

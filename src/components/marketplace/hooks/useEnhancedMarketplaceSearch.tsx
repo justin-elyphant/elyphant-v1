@@ -50,13 +50,19 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
     }
   }, [urlSearchTerm, searchTerm, setSearchTerm]);
 
-  // Perform search with proper race condition handling
+  // Load default products on initial load and perform search when there's a search term
   useEffect(() => {
-    if (!debouncedSearchTerm || isSearchingRef.current) {
+    if (isSearchingRef.current) {
       return;
     }
 
-    performSearch(debouncedSearchTerm, currentPage);
+    if (debouncedSearchTerm) {
+      // Perform search when there's a search term
+      performSearch(debouncedSearchTerm, currentPage);
+    } else {
+      // Load default products when there's no search term
+      loadDefaultProducts();
+    }
   }, [debouncedSearchTerm, currentPage]);
 
   const performSearch = async (query: string, page: number) => {
@@ -165,6 +171,73 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
     }
   };
 
+  const loadDefaultProducts = async () => {
+    if (isSearchingRef.current) {
+      console.log('Search already in progress, skipping default products load');
+      return;
+    }
+
+    isSearchingRef.current = true;
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Loading default marketplace products...');
+      
+      const defaultResult = await enhancedZincApiService.getDefaultProducts(50);
+      
+      if (defaultResult.error && !defaultResult.cached) {
+        throw new Error(defaultResult.error);
+      }
+      
+      if (defaultResult.results && defaultResult.results.length > 0) {
+        // Convert to Product format and update context
+        const normalizedProducts = defaultResult.results.map(result => ({
+          id: result.product_id,
+          product_id: result.product_id,
+          name: result.title,
+          title: result.title,
+          price: result.price / 100,
+          category: result.category,
+          image: result.image,
+          vendor: result.retailer || "Amazon via Zinc",
+          description: result.description,
+          rating: result.stars,
+          reviewCount: result.num_reviews
+        }));
+
+        console.log("Loaded default products: ", normalizedProducts.length);
+        
+        // Update products context with default products
+        setProducts(normalizedProducts);
+        
+        toast.success("Marketplace loaded", { 
+          description: `Showing ${normalizedProducts.length} featured products` 
+        });
+      } else {
+        console.log("No default products found");
+        toast.info("Welcome to the marketplace", {
+          description: "Use the search bar to find amazing gifts"
+        });
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load products";
+      setError(errorMessage);
+      
+      toast.error("Error loading marketplace", {
+        description: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => loadDefaultProducts()
+        }
+      });
+    } finally {
+      setIsLoading(false);
+      isSearchingRef.current = false;
+    }
+  };
+
   const clearCache = () => {
     enhancedZincApiService.clearCache();
     toast.success("Search cache cleared");
@@ -195,6 +268,7 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
     error,
     isLoading,
     handleRetrySearch,
-    clearCache
+    clearCache,
+    loadDefaultProducts
   };
 };

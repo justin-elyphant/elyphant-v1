@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,18 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
     shippingAddress: data.shippingAddress || null,
     apartmentUnit: data.shippingAddress?.line2 || ""
   });
+
+  // Update form data when the data prop changes
+  useEffect(() => {
+    console.log('WizardStepOne: data prop changed:', data);
+    setFormData({
+      recipientName: data.recipientName || "",
+      recipientEmail: data.recipientEmail || "",
+      relationshipType: data.relationshipType || "friend",
+      shippingAddress: data.shippingAddress || null,
+      apartmentUnit: data.shippingAddress?.line2 || ""
+    });
+  }, [data]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 

@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
 import MainLayout from '@/components/layout/MainLayout';
 import { ProfileCreationService } from '@/services/profile/profileCreationService';
+import OnboardingIntentModal from '@/components/auth/signup/OnboardingIntentModal';
 
 interface ProfileData {
   firstName: string;
@@ -284,7 +285,7 @@ const StreamlinedSignUp = () => {
     setStep('intent');
   };
 
-  const handleIntentSelection = async (intent: 'giftor' | 'giftee') => {
+  const handleIntentSelection = async (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => {
     if (!user?.id) {
       console.error("❌ No user ID available for profile creation");
       toast.error('Authentication error', {
@@ -293,10 +294,13 @@ const StreamlinedSignUp = () => {
       return;
     }
 
-    console.log("🎯 Starting intent selection process:", intent);
+    console.log("🎯 Starting intent selection process:", userIntent);
     setLoading(true);
     
     try {
+      // Map new intent types to profile types
+      const profileType = userIntent === 'create-wishlist' ? 'giftee' : 'giftor';
+      
       // Use the enhanced ProfileCreationService with new mandatory fields
       const result = await ProfileCreationService.createEnhancedProfile(user.id, {
         firstName: profileData.firstName,
@@ -308,7 +312,7 @@ const StreamlinedSignUp = () => {
         birthYear: profileData.dateOfBirth?.getFullYear(),
         address: profileData.address,
         addressLine2: profileData.addressLine2,
-        profileType: intent
+        profileType: profileType
       });
 
       if (!result.success) {
@@ -336,20 +340,33 @@ const StreamlinedSignUp = () => {
       // Mark profile as completed using centralized service
       import('@/services/localStorage/LocalStorageService').then(({ LocalStorageService }) => {
         LocalStorageService.markProfileSetupCompleted();
+        // Store the selected intent in Nicole context for guidance
+        LocalStorageService.setNicoleContext({
+          userIntent: userIntent,
+          source: 'signup'
+        });
       });
       
       toast.success('Welcome to Elyphant!', {
         description: 'Your account is ready to go.'
       });
 
-      console.log("🚀 Navigating based on intent:", intent);
+      console.log("🚀 Navigating based on intent:", userIntent);
 
-      // Enhanced intent-based routing with Nicole integration
+      // Enhanced intent-based routing with new intent types
       setTimeout(() => {
-        if (intent === 'giftor') {
-          navigate('/marketplace?mode=nicole&open=true&greeting=personalized&source=signup', { replace: true });
-        } else {
-          navigate('/marketplace?mode=wishlist&source=signup', { replace: true });
+        switch (userIntent) {
+          case 'quick-gift':
+            navigate('/marketplace?mode=nicole&open=true&greeting=personalized&source=signup', { replace: true });
+            break;
+          case 'browse-shop':
+            navigate('/marketplace?source=signup', { replace: true });
+            break;
+          case 'create-wishlist':
+            navigate('/marketplace?mode=wishlist&source=signup', { replace: true });
+            break;
+          default:
+            navigate('/dashboard', { replace: true });
         }
       }, 500);
 
@@ -819,68 +836,16 @@ const StreamlinedSignUp = () => {
             </Card>
           )}
 
-          {/* Step 3: Intent Discovery */}
+          {/* Step 3: Intent Discovery - Using new OnboardingIntentModal */}
           {step === 'intent' && (
-            <Dialog open={true} modal={true}>
-              <DialogContent className="sm:max-w-md animate-fade-in p-6 max-w-[90vw]">
-                <DialogHeader className="mb-2">
-                  <DialogTitle className="text-xl font-semibold text-center">
-                    Welcome! What brings you to Elyphant?
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="flex flex-col gap-5 mt-4">
-                  <Button
-                    variant="outline"
-                    className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 border-2 disabled:opacity-50"
-                    onClick={() => handleIntentSelection("giftor")}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader2 className="w-6 h-6 text-purple-600 flex-shrink-0 animate-spin" />
-                    ) : (
-                      <Gift className="w-6 h-6 text-purple-600 flex-shrink-0" />
-                    )}
-                    <div className="flex flex-col">
-                      <span className="text-base font-medium text-foreground">
-                        I'm here to <span className="font-semibold text-purple-700">give a gift</span>
-                      </span>
-                      <span className="text-sm text-muted-foreground font-normal mt-0.5">
-                        Buy a gift for someone else (no wishlist needed)
-                      </span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 border-2 disabled:opacity-50"
-                    onClick={() => handleIntentSelection("giftee")}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader2 className="w-6 h-6 text-indigo-600 flex-shrink-0 animate-spin" />
-                    ) : (
-                      <List className="w-6 h-6 text-indigo-600 flex-shrink-0" />
-                    )}
-                    <div className="flex flex-col">
-                      <span className="text-base font-medium text-foreground">
-                        I want to <span className="font-semibold text-indigo-700">set up a wishlist</span>
-                      </span>
-                      <span className="text-sm text-muted-foreground font-normal mt-0.5">
-                        Create &amp; share your wishlist for perfect gifting
-                      </span>
-                    </div>
-                  </Button>
-                </div>
-                {loading && (
-                  <div className="text-center mt-4 space-y-2">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <p className="text-sm text-muted-foreground">Setting up your account...</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">This may take a few moments</p>
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
+            <OnboardingIntentModal
+              open={true}
+              onSelect={handleIntentSelection}
+              onSkip={() => {
+                console.log("User skipped intent selection");
+                navigate('/dashboard', { replace: true });
+              }}
+            />
           )}
         </div>
       </div>

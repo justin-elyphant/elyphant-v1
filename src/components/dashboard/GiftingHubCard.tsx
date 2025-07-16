@@ -93,6 +93,7 @@ const SmartGiftingTab = () => {
           }],
           // Transfer existing preferences
           autoGiftingEnabled: existingRule?.is_active || true,
+          scheduledGiftingEnabled: existingRule?.notification_preferences?.enabled || false,
           budgetLimit: existingRule?.budget_limit || undefined,
           giftCategories: existingRule?.gift_selection_criteria?.categories || [],
           notificationDays: existingRule?.notification_preferences?.days_before || [7, 3, 1]

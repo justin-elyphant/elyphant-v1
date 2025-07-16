@@ -89,12 +89,13 @@ export const eventCRUD = {
         const recipientEmail = event.user_connections?.pending_recipient_email || 
                               event.user_connections?.profiles?.email;
         
-        if (recipientEmail) {
+        if (recipientEmail || eventType) {
           const { data: rules } = await supabase
             .from('auto_gifting_rules')
             .select('*')
             .eq('user_id', userId.user.id)
-            .or(`date_type.eq.${eventType},pending_recipient_email.eq.${recipientEmail}`);
+            .or(`date_type.eq.${eventType},pending_recipient_email.eq.${recipientEmail}`)
+            .order('created_at', { ascending: false });
 
           if (rules && rules.length > 0) {
             event.auto_gifting_rules = rules;

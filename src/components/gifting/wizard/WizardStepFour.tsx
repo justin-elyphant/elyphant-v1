@@ -8,7 +8,7 @@ import { GiftSetupData } from "../GiftSetupWizard";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import PaymentMethodSelector from "../events/edit-drawer/gift-settings/PaymentMethodSelector";
+// PaymentMethodSelector import removed - component no longer exists
 import { useNavigate } from "react-router-dom";
 
 interface WizardStepFourProps {
@@ -145,10 +145,11 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
                 <p className="text-sm text-muted-foreground mb-4">
                   Choose a payment method for auto-gifting to {data.recipientName}
                 </p>
-                <PaymentMethodSelector 
-                  selectedPaymentMethodId={selectedPaymentMethodId}
-                  onSelect={handlePaymentMethodSelect}
-                />
+                <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Payment method selector will be implemented here
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 pt-4 border-t">

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Gift, DollarSign, Bell, ShoppingCart, Sparkles } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
-import AutoGiftProductSelector from "../edit-drawer/gift-settings/AutoGiftProductSelector";
+// AutoGiftProductSelector import removed - component no longer exists
 import { toast } from "sonner";
 
 interface AutoGiftSetupDialogProps {
@@ -219,13 +219,11 @@ const AutoGiftSetupDialog: React.FC<AutoGiftSetupDialogProps> = ({
 
             {/* Specific product selection */}
             {formData.giftSource === "specific" && (
-              <AutoGiftProductSelector
-                onSelectProduct={(productId) => setFormData(prev => ({ 
-                  ...prev, 
-                  specificProductId: productId 
-                }))}
-                selectedProductId={formData.specificProductId}
-              />
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Product selector component will be implemented here
+                </p>
+              </div>
             )}
 
             {/* Category preferences for AI selection */}

@@ -24,7 +24,7 @@ export const useEventEdit = () => {
     }
 
     const giftSetupData: Partial<GiftSetupData> = {
-      recipientName: event.person || event.recipientName || "",
+      recipientName: event.person || "",
       recipientEmail: event.recipientEmail || "",
       relationshipType: event.relationshipType || "friend",
       giftingEvents: [{

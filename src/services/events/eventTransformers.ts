@@ -26,10 +26,10 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
     ? dbEvent.auto_gifting_rules 
     : (dbEvent.auto_gifting_rules ? [dbEvent.auto_gifting_rules] : []);
   
-  // Find the most relevant rule - prioritize by date_type match, then by active status
+  // Find the most relevant rule - prioritize by date_type match, then by active status, then by most recent
   const autoGiftingRule = autoGiftingRules.find(rule => rule.date_type === eventType && rule.is_active) ||
                           autoGiftingRules.find(rule => rule.is_active) ||
-                          autoGiftingRules[0];
+                          autoGiftingRules.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())[0];
   
   const autoGiftEnabled = autoGiftingRule?.is_active || false;
   const autoGiftAmount = autoGiftingRule?.budget_limit || 0;

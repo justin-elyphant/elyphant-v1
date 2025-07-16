@@ -204,28 +204,80 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={event.date ? new Date(event.date) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            updateEvent(index, "date", date.toISOString());
-                          }
-                        }}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                        captionLayout="dropdown"
-                        fromYear={1900}
-                        toYear={2100}
-                        classNames={{
-                          caption: "flex justify-center pt-1 relative items-center",
-                          caption_label: "text-sm font-medium",
-                          caption_dropdowns: "flex justify-center gap-1",
-                          dropdown: "min-w-[80px]",
-                          dropdown_month: "min-w-[120px]",
-                          dropdown_year: "min-w-[80px]",
-                        }}
-                      />
+                      <div className="p-3">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Select
+                              value={event.date ? new Date(event.date).getMonth().toString() : ""}
+                              onValueChange={(month) => {
+                                const currentDate = event.date ? new Date(event.date) : new Date();
+                                const newDate = new Date(currentDate.getFullYear(), parseInt(month), 1);
+                                updateEvent(index, "date", newDate.toISOString());
+                              }}
+                            >
+                              <SelectTrigger className="w-[140px]">
+                                <SelectValue placeholder="Month" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from({ length: 12 }, (_, i) => (
+                                  <SelectItem key={i} value={i.toString()}>
+                                    {format(new Date(2000, i, 1), "MMMM")}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            
+                            <Select
+                              value={event.date ? new Date(event.date).getFullYear().toString() : ""}
+                              onValueChange={(year) => {
+                                const currentDate = event.date ? new Date(event.date) : new Date();
+                                const newDate = new Date(parseInt(year), currentDate.getMonth(), 1);
+                                updateEvent(index, "date", newDate.toISOString());
+                              }}
+                            >
+                              <SelectTrigger className="w-[100px]">
+                                <SelectValue placeholder="Year" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from({ length: 101 }, (_, i) => {
+                                  const year = new Date().getFullYear() - 50 + i;
+                                  return (
+                                    <SelectItem key={year} value={year.toString()}>
+                                      {year}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <Calendar
+                          mode="single"
+                          selected={event.date ? new Date(event.date) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              updateEvent(index, "date", date.toISOString());
+                            }
+                          }}
+                          className="pointer-events-auto"
+                          month={event.date ? new Date(event.date) : undefined}
+                          onMonthChange={(month) => {
+                            updateEvent(index, "date", month.toISOString());
+                          }}
+                          classNames={{
+                            head_cell: "text-muted-foreground font-normal text-[0.8rem]",
+                            cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                            day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                            day_today: "bg-accent text-accent-foreground",
+                            day_outside: "text-muted-foreground opacity-50",
+                            day_disabled: "text-muted-foreground opacity-50",
+                            day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                            day_hidden: "invisible",
+                          }}
+                        />
+                      </div>
                     </PopoverContent>
                   </Popover>
                   <div className="min-h-[1.25rem]">

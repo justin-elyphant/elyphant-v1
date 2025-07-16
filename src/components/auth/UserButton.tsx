@@ -94,7 +94,13 @@ const UserButton = () => {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center space-x-1 hover:opacity-80 transition-opacity relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 rounded-full">
           <Avatar className="h-8 w-8 border border-gray-200">
-            <AvatarImage src={user?.user_metadata?.avatar_url} />
+            <AvatarImage 
+              src={
+                profile?.profile_image || 
+                user?.user_metadata?.avatar_url || 
+                user?.user_metadata?.picture
+              } 
+            />
             <AvatarFallback className="bg-purple-100 text-purple-800 text-sm font-medium">
               {userInitials}
             </AvatarFallback>

@@ -1,63 +1,73 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Users, MessageSquare, UserPlus, Send } from "lucide-react";
+import { Users, MessageSquare, UserPlus, Send, Clock, TrendingUp, Heart, CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SocialHubCard = () => {
-  const { connections, loading } = useEnhancedConnections();
+  const { 
+    connections, 
+    pendingRequests, 
+    followers, 
+    following, 
+    loading,
+    acceptConnectionRequest,
+    rejectConnectionRequest 
+  } = useEnhancedConnections();
 
-  // Enhanced: Filter and enrich connection data
-  const friends = React.useMemo(() => {
-    return connections
-      .filter(conn => 
-        conn.status === 'accepted' && 
-        (conn.relationship_type === 'friend' || conn.relationship_type === 'follow')
-      )
-      .slice(0, 2); // Show only 2 friends to save space
-  }, [connections]);
+  // Connection metrics
+  const metrics = React.useMemo(() => {
+    const totalConnections = connections.length;
+    const pendingCount = pendingRequests.length;
+    const followersCount = followers.length;
+    const followingCount = following.length;
+    
+    // Mock growth data - replace with real analytics
+    const weeklyGrowth = Math.floor(Math.random() * 5) + 1;
+    
+    return {
+      totalConnections,
+      pendingCount,
+      followersCount,
+      followingCount,
+      weeklyGrowth
+    };
+  }, [connections, pendingRequests, followers, following]);
 
-  // TODO: Replace with real messages data when implemented
-  const recentMessages = [
+  // Recent activity (mock data - replace with real data)
+  const recentActivity = React.useMemo(() => [
     {
       id: '1',
-      sender: 'Sarah Johnson',
+      type: 'new_connection',
+      user: 'Sarah Johnson',
       avatar: null,
-      message: 'Thanks for the birthday gift suggestion!',
       time: '2h ago',
-      unread: true,
-      isGroup: false
+      action: 'connected with you'
     },
     {
-      id: '2', 
-      sender: 'Mike Chen',
+      id: '2',
+      type: 'wishlist_update',
+      user: 'Mike Chen',
       avatar: null,
-      message: 'Hey, I updated my wishlist',
       time: '1d ago',
-      unread: false,
-      isGroup: false
+      action: 'updated their wishlist'
     }
-  ];
+  ], []);
 
-  // TODO: Replace with real group chats data when implemented
-  const recentGroupChats = [
-    {
-      id: '3',
-      name: 'Family Birthday Planning',
-      avatar: null,
-      message: 'Sarah: Perfect! Let\'s get that for mom',
-      time: '30m ago',
-      unread: true,
-      memberCount: 4,
-      isGroup: true
-    }
-  ];
-
-  const allConversations = [...recentMessages, ...recentGroupChats];
-  const unreadCount = allConversations.filter(conv => conv.unread).length;
+  // Connection suggestions (first 2 from existing suggestions)
+  const quickSuggestions = React.useMemo(() => 
+    connections.slice(0, 2).map(conn => ({
+      id: conn.id,
+      name: conn.profile_name || 'Unknown User',
+      username: conn.profile_username || '@unknown',
+      avatar: conn.profile_image,
+      mutualFriends: Math.floor(Math.random() * 5) + 1
+    })), [connections]
+  );
 
   if (loading) {
     return (
@@ -94,130 +104,144 @@ const SocialHubCard = () => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg font-semibold flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-500" />
+              <Users className="h-5 w-5 mr-2 text-primary" />
               Social Hub
-              {unreadCount > 0 && (
-                <span className="ml-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadCount}
-                </span>
+              {metrics.pendingCount > 0 && (
+                <Badge variant="destructive" className="ml-2 text-xs">
+                  {metrics.pendingCount}
+                </Badge>
               )}
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
-              Your connections and conversations
+              Connection center & activity
             </CardDescription>
           </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/connections" className="flex items-center gap-1.5">
+              <UserPlus className="h-3.5 w-3.5" />
+              <span className="text-xs">Manage</span>
+            </Link>
+          </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Friends Section */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Friends ({connections.filter(c => c.status === 'accepted').length})
-              </h4>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/connections" className="flex items-center gap-1.5">
-                  <UserPlus className="h-3.5 w-3.5" />
-                  <span className="text-xs">Find</span>
-                </Link>
-              </Button>
-            </div>
-            {friends.length > 0 ? (
-              <div className="space-y-2">
-                {friends.map((connection) => {
-                  const connectedUserId = connection.user_id !== connection.connected_user_id 
-                    ? (connection.user_id === connection.id ? connection.connected_user_id : connection.user_id)
-                    : connection.connected_user_id;
-                  
-                  return (
-                    <div key={connection.id} className="flex items-center space-x-3 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={connection.profile_image} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {connection.profile_name || 'Unknown User'}
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/user/${connectedUserId}`} className="text-xs">View</Link>
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No friends yet</p>
-            )}
+      <CardContent className="space-y-4">
+        {/* Connection Metrics */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-2 rounded-lg bg-muted/50">
+            <div className="text-xl font-bold text-primary">{metrics.totalConnections}</div>
+            <div className="text-xs text-muted-foreground">Friends</div>
           </div>
-
-          {/* Messages & Groups Section */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-muted-foreground">Recent Conversations</h4>
-              <div className="flex gap-1">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/messages?action=create-group" className="flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5" />
-                    <span className="text-xs">Group</span>
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/messages" className="flex items-center gap-1.5">
-                    <Send className="h-3.5 w-3.5" />
-                    <span className="text-xs">New</span>
-                  </Link>
-                </Button>
-              </div>
+          <div className="text-center p-2 rounded-lg bg-muted/50">
+            <div className="text-xl font-bold text-blue-600">{metrics.followersCount}</div>
+            <div className="text-xs text-muted-foreground">Followers</div>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-muted/50 relative">
+            <div className="text-xl font-bold text-green-600 flex items-center justify-center gap-1">
+              +{metrics.weeklyGrowth}
+              <TrendingUp className="h-3 w-3" />
             </div>
-            {allConversations.length > 0 ? (
-              <div className="space-y-2">
-                {allConversations.slice(0, 3).map((conversation) => (
-                  <div key={conversation.id} className="flex items-center space-x-3 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <div className="relative">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={conversation.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {conversation.isGroup 
-                            ? (conversation as any).name?.substring(0, 2).toUpperCase() || 'GR'
-                            : (conversation as any).sender?.split(' ').map((n: string) => n[0]).join('') || 'UN'
-                          }
-                        </AvatarFallback>
-                      </Avatar>
-                      {conversation.isGroup && (conversation as any).memberCount && (
-                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center">
-                          {(conversation as any).memberCount}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className={`text-xs font-medium truncate ${conversation.unread ? 'text-gray-900' : 'text-muted-foreground'}`}>
-                          {conversation.isGroup ? (conversation as any).name : (conversation as any).sender}
-                        </p>
-                        <span className="text-xs text-muted-foreground">{conversation.time}</span>
-                        {conversation.unread && (
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
-                        )}
-                      </div>
-                      <p className={`text-xs truncate ${conversation.unread ? 'text-gray-700' : 'text-muted-foreground'}`}>
-                        {conversation.message}
-                      </p>
+            <div className="text-xs text-muted-foreground">This week</div>
+          </div>
+        </div>
+
+        {/* Pending Requests */}
+        {metrics.pendingCount > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-orange-500" />
+                Pending Requests
+              </h4>
+              <Badge variant="secondary" className="text-xs">
+                {metrics.pendingCount}
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              {pendingRequests.slice(0, 2).map((request) => (
+                <div key={request.id} className="flex items-center justify-between p-2 rounded-lg border bg-card/50">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={request.profile_image} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {request.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{request.profile_name}</p>
+                      <p className="text-xs text-muted-foreground">{request.profile_username}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No conversations yet</p>
-            )}
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => acceptConnectionRequest(request.id)}
+                    >
+                      <CheckCircle className="h-3 w-3 text-green-600" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => rejectConnectionRequest(request.id)}
+                    >
+                      <X className="h-3 w-3 text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {metrics.pendingCount > 2 && (
+                <Link to="/connections?tab=pending" className="block text-xs text-primary hover:underline">
+                  View {metrics.pendingCount - 2} more requests
+                </Link>
+              )}
+            </div>
           </div>
-          
-          <Button className="w-full" asChild>
-            <Link to="/messages">View All Conversations</Link>
+        )}
+
+        {/* Recent Activity */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium flex items-center gap-1">
+              <Heart className="h-3.5 w-3.5 text-pink-500" />
+              Recent Activity
+            </h4>
+          </div>
+          <div className="space-y-2">
+            {recentActivity.slice(0, 2).map((activity) => (
+              <div key={activity.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={activity.avatar} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {activity.user.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs">
+                    <span className="font-medium">{activity.user}</span>{' '}
+                    <span className="text-muted-foreground">{activity.action}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">{activity.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" asChild className="h-8">
+            <Link to="/connections?tab=suggestions" className="flex items-center gap-1.5">
+              <UserPlus className="h-3.5 w-3.5" />
+              <span className="text-xs">Find Friends</span>
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="h-8">
+            <Link to="/messages" className="flex items-center gap-1.5">
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span className="text-xs">Messages</span>
+            </Link>
           </Button>
         </div>
       </CardContent>

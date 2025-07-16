@@ -32,6 +32,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Trunkline from "./pages/Trunkline";
 import Events from "./pages/Events";
+import Payments from "./pages/Payments";
 
 import FAQ from "./pages/FAQ";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/messages/:connectionId" element={<Messages />} />
                 <Route path="/connections" element={<Connections />} />
                 <Route path="/orders" element={<Orders />} />
+                <Route path="/payments" element={<Payments />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/profile/:identifier" element={<Profile />} />
                 <Route path="/vendor-partner" element={<VendorPartner />} />

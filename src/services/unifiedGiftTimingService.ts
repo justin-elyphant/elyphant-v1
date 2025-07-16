@@ -156,16 +156,19 @@ class UnifiedGiftTimingService {
       defaultNotificationDays: number[];
     }
   ) {
-    // Update auto-gifting settings
+    // Get existing settings to preserve other values
+    const existingSettings = await autoGiftingService.getSettings(userId);
+    
+    // Update auto-gifting settings with unified notification preferences
     await autoGiftingService.upsertSettings({
       user_id: userId,
       email_notifications: preferences.emailNotifications,
       push_notifications: preferences.pushNotifications,
       default_notification_days: preferences.defaultNotificationDays,
-      default_budget_limit: 50, // Keep existing or set default
-      auto_approve_gifts: false,
-      default_gift_source: 'wishlist',
-      budget_tracking: {
+      default_budget_limit: existingSettings?.default_budget_limit || 50,
+      auto_approve_gifts: existingSettings?.auto_approve_gifts || false,
+      default_gift_source: existingSettings?.default_gift_source || 'wishlist',
+      budget_tracking: existingSettings?.budget_tracking || {
         spent_this_month: 0,
         spent_this_year: 0
       }

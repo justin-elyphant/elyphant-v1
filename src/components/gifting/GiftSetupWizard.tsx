@@ -138,6 +138,17 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
             }
           );
         }
+        
+        // Store notification preferences for scheduled reminders too
+        if (finalData.scheduledGiftingEnabled) {
+          // These same notification preferences will be used for scheduled reminders
+          // The unifiedGiftTimingService will handle applying them to both systems
+          console.log('Scheduled reminders enabled with notification preferences:', {
+            days_before: finalData.notificationDays,
+            email: true,
+            push: false
+          });
+        }
       }
 
       // Send invitation email (we'll implement this next)

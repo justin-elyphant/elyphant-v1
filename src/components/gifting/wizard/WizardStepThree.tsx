@@ -392,7 +392,7 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
             Notification Preferences
           </CardTitle>
           <CardDescription>
-            Choose when you'd like to be notified about upcoming occasions.
+            Choose when you'd like to be notified about upcoming occasions for both auto-gifts and scheduled reminders.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -418,6 +418,14 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
                 </div>
               ))}
             </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <Bell className="inline h-4 w-4 mr-1" />
+              These notification settings apply to both auto-gifts and scheduled reminders. 
+              You'll receive notifications at the selected times for all your gift occasions.
+            </p>
           </div>
         </CardContent>
       </Card>

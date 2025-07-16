@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,14 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
       ? data.giftingEvents 
       : [{ dateType: "", date: "", isRecurring: true, customName: "" }]
   );
+
+  // Update events when data prop changes
+  useEffect(() => {
+    console.log('WizardStepTwo: data prop changed:', data);
+    if (data.giftingEvents.length > 0) {
+      setGiftingEvents(data.giftingEvents);
+    }
+  }, [data]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [autoPopulatedDates, setAutoPopulatedDates] = useState<Set<number>>(new Set());

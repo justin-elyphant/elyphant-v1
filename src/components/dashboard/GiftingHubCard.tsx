@@ -84,7 +84,7 @@ const SmartGiftingTab = () => {
           // Transfer existing event data if available
           giftingEvents: existingRule ? [{
             dateType: existingRule.date_type,
-            date: '', // Will be filled by user
+            date: existingRule.date_type === 'christmas' ? '2024-12-25' : '', // Default Christmas to Dec 25
             isRecurring: true
           }] : [{
             dateType: event.type || 'Birthday',

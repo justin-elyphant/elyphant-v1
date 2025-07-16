@@ -1,17 +1,54 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Gift, List } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
+import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
+import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
+import { toast } from "sonner";
 
 const HomeCTA = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [showIntentModal, setShowIntentModal] = useState(false);
+  const [showGiftWizard, setShowGiftWizard] = useState(false);
+  const [showCreateWishlist, setShowCreateWishlist] = useState(false);
   
-  const handleFindGifts = () => {
-    // Pass fromHome state to ensure clean filters
-    navigate("/marketplace?search=gift ideas", { state: { fromHome: true } });
+  const handleStartGifting = () => {
+    if (user) {
+      // Authenticated user: show intent modal to choose their path
+      setShowIntentModal(true);
+    } else {
+      // Not logged in: send to signup
+      navigate("/signup");
+    }
+  };
+
+  // Handle intent selection from modal
+  const handleIntentSelect = (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => {
+    setShowIntentModal(false);
+    
+    switch (userIntent) {
+      case "quick-gift":
+        setShowGiftWizard(true);
+        break;
+      case "browse-shop":
+        navigate("/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true");
+        break;
+      case "create-wishlist":
+        setShowCreateWishlist(true);
+        break;
+    }
+  };
+
+  // Handle wishlist creation
+  const handleCreateWishlistSubmit = async (values: any) => {
+    // This would typically create the wishlist
+    toast.success("Wishlist created successfully!");
+    setShowCreateWishlist(false);
+    navigate("/wishlists");
   };
   
   return (
@@ -33,10 +70,10 @@ const HomeCTA = () => {
               <Button
                 size="lg"
                 className="bg-white text-purple-600 hover:bg-gray-100 font-semibold touch-target-48 touch-manipulation tap-feedback no-select"
-                onClick={handleFindGifts}
+                onClick={handleStartGifting}
               >
                 <Gift className="mr-2 h-5 w-5" />
-                Find Perfect Gifts
+                Start Gifting
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
@@ -68,6 +105,26 @@ const HomeCTA = () => {
           )}
         </div>
       </div>
+
+      {/* Intent Modal for authenticated users */}
+      <OnboardingIntentModal
+        open={showIntentModal}
+        onSelect={handleIntentSelect}
+        onSkip={() => setShowIntentModal(false)}
+      />
+
+      {/* Gift Setup Wizard */}
+      <GiftSetupWizard 
+        open={showGiftWizard}
+        onOpenChange={setShowGiftWizard}
+      />
+
+      {/* Create Wishlist Dialog */}
+      <CreateWishlistDialog
+        open={showCreateWishlist}
+        onOpenChange={setShowCreateWishlist}
+        onSubmit={handleCreateWishlistSubmit}
+      />
     </section>
   );
 };

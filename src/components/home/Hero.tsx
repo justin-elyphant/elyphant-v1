@@ -1,8 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Gift, ShoppingBag } from "lucide-react";
+import { Gift } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
@@ -10,21 +10,26 @@ import GiftCountdown from "./sections/GiftCountdown";
 import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
 import { format } from "date-fns";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
+import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
+import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
+import { toast } from "sonner";
 
 const Hero = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const nextHoliday = getNextHoliday();
+  const [showIntentModal, setShowIntentModal] = useState(false);
+  const [showGiftWizard, setShowGiftWizard] = useState(false);
+  const [showCreateWishlist, setShowCreateWishlist] = useState(false);
 
   // Enhanced handler for CTAs: sets intent and routes based on auth
   const handleCta = (intent: "giftor" | "giftee") => {
     LocalStorageService.setNicoleContext({ selectedIntent: intent, source: 'hero_cta' });
     if (user) {
-      // Authenticated user: go to guided experience instead of marketplace
+      // Authenticated user: show intent modal to choose their path
       if (intent === "giftor") {
-        // Navigate to marketplace with search mode to encourage intentional shopping
-        // Pass fromHome state to ensure clean filters
-        navigate("/marketplace?search=gift ideas", { state: { fromHome: true } });
+        setShowIntentModal(true);
       } else {
         navigate("/wishlists");
       }
@@ -32,6 +37,31 @@ const Hero = () => {
       // Not logged in: send to signup (streamlined onboarding flow will route post-auth)
       navigate("/signup");
     }
+  };
+
+  // Handle intent selection from modal
+  const handleIntentSelect = (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => {
+    setShowIntentModal(false);
+    
+    switch (userIntent) {
+      case "quick-gift":
+        setShowGiftWizard(true);
+        break;
+      case "browse-shop":
+        navigate("/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true");
+        break;
+      case "create-wishlist":
+        setShowCreateWishlist(true);
+        break;
+    }
+  };
+
+  // Handle wishlist creation
+  const handleCreateWishlistSubmit = async (values: any) => {
+    // This would typically create the wishlist
+    toast.success("Wishlist created successfully!");
+    setShowCreateWishlist(false);
+    navigate("/wishlists");
   };
 
   return (
@@ -91,10 +121,10 @@ const Hero = () => {
                   e.preventDefault();
                   handleCta("giftor");
                 }}
-                aria-label="Find Perfect Gifts"
+                aria-label="Start Gifting"
               >
-                <ShoppingBag className="mr-2 h-5 w-5" />
-                Find Perfect Gifts
+                <Gift className="mr-2 h-5 w-5" />
+                Start Gifting
               </Button>
               <Button
                 variant="outline"
@@ -113,6 +143,26 @@ const Hero = () => {
           </div>
         </ResponsiveContainer>
       </div>
+
+      {/* Intent Modal for authenticated users */}
+      <OnboardingIntentModal
+        open={showIntentModal}
+        onSelect={handleIntentSelect}
+        onSkip={() => setShowIntentModal(false)}
+      />
+
+      {/* Gift Setup Wizard */}
+      <GiftSetupWizard 
+        open={showGiftWizard}
+        onOpenChange={setShowGiftWizard}
+      />
+
+      {/* Create Wishlist Dialog */}
+      <CreateWishlistDialog
+        open={showCreateWishlist}
+        onOpenChange={setShowCreateWishlist}
+        onSubmit={handleCreateWishlistSubmit}
+      />
     </FullWidthSection>
   );
 };

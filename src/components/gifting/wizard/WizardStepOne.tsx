@@ -4,13 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, MapPin, User, Mail, Calendar } from "lucide-react";
+import { ArrowRight, MapPin, User, Mail } from "lucide-react";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { GiftSetupData } from "../GiftSetupWizard";
-import { format } from "date-fns";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 
 interface WizardStepOneProps {
   data: GiftSetupData;
@@ -31,7 +27,6 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
     recipientName: data.recipientName || "",
     recipientEmail: data.recipientEmail || "",
     relationshipType: data.relationshipType || "friend",
-    recipientBirthDate: data.recipientBirthDate || undefined,
     shippingAddress: data.shippingAddress || null,
     apartmentUnit: data.shippingAddress?.line2 || ""
   });
@@ -127,132 +122,26 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="relationshipType">Your Relationship *</Label>
-              <Select
-                value={formData.relationshipType}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, relationshipType: value }))}
-              >
-                <SelectTrigger className={errors.relationshipType ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select your relationship" />
-                </SelectTrigger>
-                <SelectContent>
-                  {RELATIONSHIP_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.relationshipType && (
-                <p className="text-sm text-destructive">{errors.relationshipType}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="recipientBirthDate">Birthday (Optional)</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.recipientBirthDate && "text-muted-foreground"
-                    )}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {formData.recipientBirthDate ? (
-                      format(new Date(formData.recipientBirthDate), "PPP")
-                    ) : (
-                      <span>Pick their birthday</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <div className="p-3 space-y-3">
-                    <div className="flex gap-2">
-                      <Select
-                        value={formData.recipientBirthDate ? new Date(formData.recipientBirthDate).getMonth().toString() : ""}
-                        onValueChange={(month) => {
-                          const currentDate = formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : new Date();
-                          currentDate.setMonth(parseInt(month));
-                          setFormData(prev => ({ 
-                            ...prev, 
-                            recipientBirthDate: currentDate.toISOString().split('T')[0] 
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 12 }, (_, i) => (
-                            <SelectItem key={i} value={i.toString()}>
-                              {format(new Date(2000, i, 1), "MMMM")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      <Select
-                        value={formData.recipientBirthDate ? new Date(formData.recipientBirthDate).getFullYear().toString() : ""}
-                        onValueChange={(year) => {
-                          const currentDate = formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : new Date();
-                          currentDate.setFullYear(parseInt(year));
-                          setFormData(prev => ({ 
-                            ...prev, 
-                            recipientBirthDate: currentDate.toISOString().split('T')[0] 
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue placeholder="Year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 124 }, (_, i) => {
-                            const year = new Date().getFullYear() - i;
-                            return (
-                              <SelectItem key={year} value={year.toString()}>
-                                {year}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <CalendarComponent
-                      mode="single"
-                      selected={formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : undefined}
-                      onSelect={(date) => {
-                        setFormData(prev => ({ 
-                          ...prev, 
-                          recipientBirthDate: date ? date.toISOString().split('T')[0] : undefined 
-                        }));
-                      }}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      month={formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : undefined}
-                      onMonthChange={(month) => {
-                        if (month) {
-                          setFormData(prev => ({ 
-                            ...prev, 
-                            recipientBirthDate: month.toISOString().split('T')[0] 
-                          }));
-                        }
-                      }}
-                      initialFocus
-                      className={cn("pointer-events-auto")}
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <p className="text-sm text-muted-foreground">
-                Helps our AI make more personalized gift recommendations
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="relationshipType">Your Relationship *</Label>
+            <Select
+              value={formData.relationshipType}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, relationshipType: value }))}
+            >
+              <SelectTrigger className={errors.relationshipType ? "border-destructive" : ""}>
+                <SelectValue placeholder="Select your relationship" />
+              </SelectTrigger>
+              <SelectContent>
+                {RELATIONSHIP_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.relationshipType && (
+              <p className="text-sm text-destructive">{errors.relationshipType}</p>
+            )}
           </div>
         </CardContent>
       </Card>

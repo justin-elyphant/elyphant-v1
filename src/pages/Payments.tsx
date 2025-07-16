@@ -1,17 +1,23 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import PaymentMethodManager from "@/components/payments/PaymentMethodManager";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import MainLayout from "@/components/layout/MainLayout";
 
 const Payments = () => {
   const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
-      </div>
+      <MainLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-pulse">Loading...</div>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -20,10 +26,21 @@ const Payments = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <MainLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </div>
             <h1 className="text-3xl font-bold tracking-tight">Payment Methods</h1>
             <p className="text-muted-foreground mt-2">
               Manage your payment methods for orders and auto-gifting
@@ -50,7 +67,7 @@ const Payments = () => {
           </div>
         </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 

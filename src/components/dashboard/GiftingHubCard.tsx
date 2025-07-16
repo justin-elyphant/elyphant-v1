@@ -19,6 +19,7 @@ import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { getUserOrders, Order } from "@/services/orderService";
 import AutoGiftSetupDialog from "@/components/gifting/events/setup-dialog/AutoGiftSetupDialog";
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import group components
 import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
@@ -58,7 +59,7 @@ const SmartGiftingTab = () => {
     return eventsWithDays.slice(0, 4);
   }, [events]);
 
-  const handleSetupAutoGift = (event: any) => {
+  const handleSetupAutoGift = async (event: any) => {
     setSelectedEvent(event);
     
     // Transform data for pending invitations
@@ -66,17 +67,51 @@ const SmartGiftingTab = () => {
       // Find the full invitation data to get shipping address
       const fullInvitation = pendingInvitations.find(inv => inv.id === event.id);
       
-      setGiftSetupInitialData({
-        recipientName: event.person,
-        recipientEmail: event.recipientEmail,
-        relationshipType: event.relationshipType,
-        shippingAddress: fullInvitation?.pending_shipping_address || null,
-        giftingEvents: [{
-          dateType: event.type || 'Birthday',
-          date: '',
-          isRecurring: true
-        }]
-      });
+      try {
+        // Fetch existing auto-gifting rules for this recipient
+        const { data: existingRules } = await supabase
+          .from('auto_gifting_rules')
+          .select('*')
+          .eq('pending_recipient_email', event.recipientEmail);
+        
+        const existingRule = existingRules?.[0];
+        
+        setGiftSetupInitialData({
+          recipientName: event.person,
+          recipientEmail: event.recipientEmail,
+          relationshipType: event.relationshipType,
+          shippingAddress: fullInvitation?.pending_shipping_address || null,
+          // Transfer existing event data if available
+          giftingEvents: existingRule ? [{
+            dateType: existingRule.date_type,
+            date: '', // Will be filled by user
+            isRecurring: true
+          }] : [{
+            dateType: event.type || 'Birthday',
+            date: '',
+            isRecurring: true
+          }],
+          // Transfer existing preferences
+          autoGiftingEnabled: existingRule?.is_active || true,
+          budgetLimit: existingRule?.budget_limit || undefined,
+          giftCategories: existingRule?.gift_selection_criteria?.categories || [],
+          notificationDays: existingRule?.notification_preferences?.days_before || [7, 3, 1]
+        });
+      } catch (error) {
+        console.error('Error fetching existing rule data:', error);
+        // Fallback to basic data
+        setGiftSetupInitialData({
+          recipientName: event.person,
+          recipientEmail: event.recipientEmail,
+          relationshipType: event.relationshipType,
+          shippingAddress: fullInvitation?.pending_shipping_address || null,
+          giftingEvents: [{
+            dateType: event.type || 'Birthday',
+            date: '',
+            isRecurring: true
+          }]
+        });
+      }
     } else {
       setGiftSetupInitialData(null);
     }

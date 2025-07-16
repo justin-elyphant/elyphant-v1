@@ -31,6 +31,18 @@ export interface ExtendedEventData {
   maxOccurrences?: number;
   isModified?: boolean;
   occurrenceNumber?: number;
+  
+  // Recipient connection details
+  recipientEmail?: string;
+  relationshipType?: string;
+  connectionId?: string;
+  connectionStatus?: string;
+  
+  // Auto-gifting rule details
+  giftingRuleId?: string;
+  giftCategories?: string[];
+  notificationDays?: number[];
+  giftSelectionCriteria?: any;
 }
 
 export interface EventEditData {

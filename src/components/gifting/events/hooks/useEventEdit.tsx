@@ -13,19 +13,19 @@ export const useEventEdit = () => {
   const transformEventToGiftSetupData = (event: any): Partial<GiftSetupData> => {
     return {
       recipientName: event.person,
-      recipientEmail: "", // TODO: Get from connection if exists
-      relationshipType: "friend", // TODO: Get from connection if exists
+      recipientEmail: event.recipientEmail || "",
+      relationshipType: event.relationshipType || "friend",
       giftingEvents: [{
         dateType: event.type,
-        date: event.date,
+        date: event.dateObj ? event.dateObj.toISOString().split('T')[0] : event.date,
         isRecurring: event.isRecurring || false,
         customName: event.type
       }],
       autoGiftingEnabled: event.autoGiftEnabled || false,
       scheduledGiftingEnabled: !event.autoGiftEnabled,
       budgetLimit: event.autoGiftAmount || 50,
-      giftCategories: [], // TODO: Get from existing rules
-      notificationDays: [7, 3, 1], // TODO: Get from existing rules
+      giftCategories: event.giftCategories || [],
+      notificationDays: event.notificationDays || [7, 3, 1]
     };
   };
 

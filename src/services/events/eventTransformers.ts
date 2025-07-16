@@ -13,19 +13,34 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
     ? dbEvent.date_type.split(' - ')
     : [dbEvent.date_type, 'Unknown Person'];
 
+  // Extract recipient information from user_connections join
+  const connection = dbEvent.user_connections;
+  const recipientEmail = connection?.pending_recipient_email || connection?.profiles?.email;
+  const recipientName = connection?.pending_recipient_name || 
+    (connection?.profiles ? `${connection.profiles.first_name} ${connection.profiles.last_name}` : personName);
+  const relationshipType = connection?.relationship_type || 'friend';
+  const avatarUrl = connection?.profiles?.profile_image || "/placeholder.svg";
+
+  // Extract auto-gifting rule information
+  const autoGiftingRule = dbEvent.auto_gifting_rules?.[0]; // Take first rule if multiple
+  const autoGiftEnabled = autoGiftingRule?.is_active || false;
+  const autoGiftAmount = autoGiftingRule?.budget_limit || 0;
+  const giftCategories = autoGiftingRule?.gift_selection_criteria?.categories || [];
+  const notificationDays = autoGiftingRule?.notification_preferences?.days_before || [7, 3, 1];
+
   return {
     id: dbEvent.id,
     type: eventType,
-    person: personName,
+    person: recipientName,
     date: eventDate.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     }),
     daysAway: Math.max(0, diffDays),
-    avatarUrl: "/placeholder.svg",
-    autoGiftEnabled: false,
-    autoGiftAmount: 0,
+    avatarUrl,
+    autoGiftEnabled,
+    autoGiftAmount,
     privacyLevel: dbEvent.visibility || 'private',
     isVerified: true,
     needsVerification: false,
@@ -39,7 +54,17 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
     endDate: dbEvent.end_date,
     maxOccurrences: dbEvent.max_occurrences,
     isModified: dbEvent.is_modified || false,
-    occurrenceNumber: dbEvent.occurrence_number || 1
+    occurrenceNumber: dbEvent.occurrence_number || 1,
+    // Recipient connection details
+    recipientEmail,
+    relationshipType,
+    connectionId: connection?.id,
+    connectionStatus: connection?.status,
+    // Auto-gifting rule details
+    giftingRuleId: autoGiftingRule?.id,
+    giftCategories,
+    notificationDays,
+    giftSelectionCriteria: autoGiftingRule?.gift_selection_criteria
   };
 }
 

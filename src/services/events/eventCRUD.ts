@@ -5,11 +5,36 @@ import { EventCreateData, EventUpdateData } from "./eventTypes";
 import { transformDatabaseEventToExtended } from "./eventTransformers";
 
 export const eventCRUD = {
-  // Fetch all events for the current user
+  // Fetch all events for the current user with complete recipient and auto-gifting data
   async fetchUserEvents(): Promise<ExtendedEventData[]> {
     const { data, error } = await supabase
       .from('user_special_dates')
-      .select('*')
+      .select(`
+        *,
+        user_connections (
+          id,
+          connected_user_id,
+          pending_recipient_name,
+          pending_recipient_email,
+          relationship_type,
+          status,
+          profiles:connected_user_id (
+            first_name,
+            last_name,
+            email,
+            profile_image
+          )
+        ),
+        auto_gifting_rules (
+          id,
+          budget_limit,
+          is_active,
+          gift_preferences,
+          notification_preferences,
+          gift_selection_criteria,
+          pending_recipient_email
+        )
+      `)
       .order('date', { ascending: true });
 
     if (error) {

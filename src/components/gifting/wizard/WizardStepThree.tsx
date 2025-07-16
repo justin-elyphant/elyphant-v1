@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +54,7 @@ const EVENT_TYPES = [
   { value: "custom", label: "Custom Occasion" }
 ];
 
-export const WizardStepThree = forwardRef<any, WizardStepThreeProps>(({ data, onNext, isLoading }, ref) => {
+export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, isLoading }) => {
   const [formData, setFormData] = useState({
     autoGiftingEnabled: data.autoGiftingEnabled,
     scheduledGiftingEnabled: data.scheduledGiftingEnabled,
@@ -67,15 +67,6 @@ export const WizardStepThree = forwardRef<any, WizardStepThreeProps>(({ data, on
   const [occasionMessages, setOccasionMessages] = useState<Record<string, string>>(data.occasionMessages || {});
   const [useSameMessageForAll, setUseSameMessageForAll] = useState(data.useSameMessageForAll || false);
   const [expandedOccasions, setExpandedOccasions] = useState<Set<string>>(new Set());
-
-  // Expose getCurrentData method to parent
-  useImperativeHandle(ref, () => ({
-    getCurrentData: () => ({
-      ...formData,
-      occasionMessages,
-      useSameMessageForAll
-    })
-  }));
 
   // Initialize occasion messages when component mounts or when occasions change
   useEffect(() => {
@@ -456,4 +447,4 @@ export const WizardStepThree = forwardRef<any, WizardStepThreeProps>(({ data, on
       </div>
     </div>
   );
-});
+};

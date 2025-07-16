@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useImperativeHandle } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ const RELATIONSHIP_TYPES = [
   { value: "acquaintance", label: "Acquaintance" }
 ];
 
-export const WizardStepOne = forwardRef<any, WizardStepOneProps>(({ data, onNext }, ref) => {
+export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) => {
   const [formData, setFormData] = useState({
     recipientName: data.recipientName || "",
     recipientEmail: data.recipientEmail || "",
@@ -32,17 +32,6 @@ export const WizardStepOne = forwardRef<any, WizardStepOneProps>(({ data, onNext
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Expose getCurrentData method to parent
-  useImperativeHandle(ref, () => ({
-    getCurrentData: () => ({
-      ...formData,
-      shippingAddress: formData.shippingAddress ? {
-        ...formData.shippingAddress,
-        line2: formData.apartmentUnit
-      } : null
-    })
-  }));
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -215,4 +204,4 @@ export const WizardStepOne = forwardRef<any, WizardStepOneProps>(({ data, onNext
       </div>
     </div>
   );
-});
+};

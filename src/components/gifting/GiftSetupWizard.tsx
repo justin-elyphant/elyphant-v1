@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -82,10 +82,6 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
     ...initialData
   });
 
-  // Refs to access current step data
-  const stepOneRef = useRef<any>(null);
-  const stepTwoRef = useRef<any>(null);
-  const stepThreeRef = useRef<any>(null);
 
   const handleStepComplete = (stepData: Partial<GiftSetupData>) => {
     const updatedData = { ...giftSetupData, ...stepData };
@@ -101,6 +97,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       handleFinalSubmit(updatedData);
     }
   };
+
 
   const handleFinalSubmit = async (finalData: GiftSetupData) => {
     setIsLoading(true);
@@ -172,22 +169,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
 
   const handleBack = () => {
     if (currentStep > 1) {
-      // Capture current step data before going back
-      let currentStepData = {};
-      
-      if (currentStep === 2 && stepTwoRef.current) {
-        currentStepData = stepTwoRef.current.getCurrentData();
-      } else if (currentStep === 3 && stepThreeRef.current) {
-        currentStepData = stepThreeRef.current.getCurrentData();
-      } else if (currentStep === 4) {
-        // Step 4 doesn't have persistent data to save
-        currentStepData = {};
-      }
-      
-      // Update the central state with current step data
-      setGiftSetupData(prev => ({ ...prev, ...currentStepData }));
-      
-      // Navigate back
+      // Navigate back - data is already saved via onNext calls
       setCurrentStep(prev => prev - 1);
     }
   };
@@ -222,7 +204,6 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       case 1:
         return (
           <WizardStepOne
-            ref={stepOneRef}
             data={giftSetupData}
             onNext={handleStepComplete}
           />
@@ -230,7 +211,6 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       case 2:
         return (
           <WizardStepTwo
-            ref={stepTwoRef}
             data={giftSetupData}
             onNext={handleStepComplete}
           />
@@ -238,7 +218,6 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       case 3:
         return (
           <WizardStepThree
-            ref={stepThreeRef}
             data={giftSetupData}
             onNext={handleStepComplete}
             isLoading={isLoading}

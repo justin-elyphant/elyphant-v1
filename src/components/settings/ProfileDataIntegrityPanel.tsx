@@ -1,13 +1,14 @@
-import React, { useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle, ArrowRight, Info, Heart, Calendar, Users, MapPin, User, Brain, List } from "lucide-react";
+import { AlertTriangle, CheckCircle, ArrowRight, Info, Heart, Calendar, Users, MapPin, User, Brain, List, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormContext } from "react-hook-form";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
 const ProfileDataIntegrityPanel: React.FC = () => {
@@ -120,17 +121,54 @@ const ProfileDataIntegrityPanel: React.FC = () => {
     }
   };
 
-  return (
-    <Card className={cn(
-      "border-l-4",
-      completionScore >= 100 ? "border-l-green-500" : 
-      completionScore >= 80 ? "border-l-blue-500" :
-      completionScore >= 60 ? "border-l-yellow-500" : "border-l-red-500"
-    )}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+  // Prepare slides data
+  const criticalIssues = issues.filter(i => i.severity === 'critical');
+  const importantIssues = issues.filter(i => i.severity === 'important');
+  const helpfulIssues = issues.filter(i => i.severity === 'helpful');
+
+  const slides = [];
+
+  // Slide 1: Overview (always present)
+  slides.push({
+    type: 'overview',
+    title: 'AI-Ready Profile Status',
+    content: 'overview'
+  });
+
+  // Add issue slides based on what exists
+  if (criticalIssues.length > 0) {
+    slides.push({
+      type: 'critical',
+      title: 'Critical Items',
+      content: 'critical',
+      issues: criticalIssues
+    });
+  }
+
+  if (importantIssues.length > 0) {
+    slides.push({
+      type: 'important', 
+      title: 'Important Items',
+      content: 'important',
+      issues: importantIssues
+    });
+  }
+
+  if (helpfulIssues.length > 0) {
+    slides.push({
+      type: 'helpful',
+      title: 'Helpful Items', 
+      content: 'helpful',
+      issues: helpfulIssues
+    });
+  }
+
+  const renderSlideContent = (slide: any) => {
+    if (slide.type === 'overview') {
+      return (
+        <div className="flex items-center justify-between h-full">
           <div className="flex-1">
-            <CardTitle className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-2">
               {completionScore >= 100 ? (
                 <CheckCircle className="h-5 w-5 text-green-500" />
               ) : hasCriticalIssues ? (
@@ -140,14 +178,14 @@ const ProfileDataIntegrityPanel: React.FC = () => {
               ) : (
                 <Info className="h-5 w-5 text-blue-500" />
               )}
-              AI-Ready Profile Status
-            </CardTitle>
-            <CardDescription className="mt-1">
+              <h3 className="text-lg font-semibold">AI-Ready Profile Status</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
               {getCompletionMessage()}
-            </CardDescription>
+            </p>
             
             {/* Progress bar */}
-            <div className="mt-3">
+            <div className="mb-3">
               <div className="flex justify-between text-sm text-muted-foreground mb-1">
                 <span>Profile Optimization</span>
                 <span>{completionScore}/100</span>
@@ -178,100 +216,130 @@ const ProfileDataIntegrityPanel: React.FC = () => {
             </Button>
           )}
         </div>
-      </CardHeader>
-      
-      {hasIssues && (
-        <CardContent className="space-y-3">
-          {/* Group issues by severity */}
-          {issues.filter(i => i.severity === 'critical').length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-red-600 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Critical - Required for Core Features
-              </h4>
-              {issues.filter(i => i.severity === 'critical').map((issue, index) => {
-                const Icon = getIssueIcon(issue.field);
-                return (
-                  <Alert key={`critical-${index}`} variant="destructive" className="cursor-pointer hover:bg-red-50" onClick={() => handleSpecificAction(issue)}>
-                    <Icon className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{issue.issue}</div>
-                        <div className="text-sm opacity-80 mt-1">{issue.aiImpact}</div>
-                      </div>
-                      <Badge variant={getSeverityBadgeVariant(issue.severity)}>
-                        {issue.severity}
-                      </Badge>
-                    </AlertDescription>
-                  </Alert>
-                );
-              })}
-            </div>
+      );
+    }
+
+    // Issue slides
+    const { issues: slideIssues, type } = slide;
+    const getSeverityConfig = (type: string) => {
+      switch (type) {
+        case 'critical':
+          return {
+            color: 'text-red-600',
+            icon: AlertTriangle,
+            title: 'Critical - Required for Core Features',
+            bgHover: 'hover:bg-red-50'
+          };
+        case 'important':
+          return {
+            color: 'text-orange-600',
+            icon: Info,
+            title: 'Important - Greatly Improves AI Recommendations',
+            bgHover: 'hover:bg-orange-50'
+          };
+        case 'helpful':
+          return {
+            color: 'text-blue-600',
+            icon: Heart,
+            title: 'Helpful - Nice to Have for Full Experience',
+            bgHover: 'hover:bg-blue-50'
+          };
+        default:
+          return {
+            color: 'text-gray-600',
+            icon: Info,
+            title: 'Issues',
+            bgHover: 'hover:bg-gray-50'
+          };
+      }
+    };
+
+    const config = getSeverityConfig(type);
+    const Icon = config.icon;
+
+    return (
+      <div className="space-y-2">
+        <h4 className={`text-sm font-semibold ${config.color} flex items-center gap-2`}>
+          <Icon className="h-4 w-4" />
+          {config.title}
+        </h4>
+        <div className="space-y-2 max-h-32 overflow-y-auto">
+          {slideIssues.map((issue: any, index: number) => {
+            const IssueIcon = getIssueIcon(issue.field);
+            return (
+              <Alert 
+                key={`${type}-${index}`} 
+                variant={type === 'critical' ? 'destructive' : 'default'}
+                className={`cursor-pointer ${config.bgHover} text-sm`} 
+                onClick={() => handleSpecificAction(issue)}
+              >
+                <IssueIcon className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{issue.issue}</div>
+                    <div className="text-xs opacity-80 mt-1 line-clamp-2">{issue.aiImpact}</div>
+                  </div>
+                  <Badge variant={getSeverityBadgeVariant(issue.severity)} className="ml-2 shrink-0">
+                    {issue.severity}
+                  </Badge>
+                </AlertDescription>
+              </Alert>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <Card className={cn(
+      "border-l-4",
+      completionScore >= 100 ? "border-l-green-500" : 
+      completionScore >= 80 ? "border-l-blue-500" :
+      completionScore >= 60 ? "border-l-yellow-500" : "border-l-red-500"
+    )}>
+      <CardContent className="p-4">
+        <Carousel className="w-full">
+          <CarouselContent>
+            {slides.map((slide, index) => (
+              <CarouselItem key={index}>
+                <div className="h-40 flex flex-col justify-center">
+                  {renderSlideContent(slide)}
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          {slides.length > 1 && (
+            <>
+              <CarouselPrevious className="left-2" />
+              <CarouselNext className="right-2" />
+            </>
           )}
-          
-          {issues.filter(i => i.severity === 'important').length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-orange-600 flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                Important - Greatly Improves AI Recommendations
-              </h4>
-              {issues.filter(i => i.severity === 'important').map((issue, index) => {
-                const Icon = getIssueIcon(issue.field);
-                return (
-                  <Alert key={`important-${index}`} className="cursor-pointer hover:bg-orange-50" onClick={() => handleSpecificAction(issue)}>
-                    <Icon className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{issue.issue}</div>
-                        <div className="text-sm text-muted-foreground mt-1">{issue.aiImpact}</div>
-                      </div>
-                      <Badge variant={getSeverityBadgeVariant(issue.severity)}>
-                        {issue.severity}
-                      </Badge>
-                    </AlertDescription>
-                  </Alert>
-                );
-              })}
-            </div>
-          )}
-          
-          {issues.filter(i => i.severity === 'helpful').length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-blue-600 flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                Helpful - Nice to Have for Full Experience
-              </h4>
-              {issues.filter(i => i.severity === 'helpful').map((issue, index) => {
-                const Icon = getIssueIcon(issue.field);
-                return (
-                  <Alert key={`helpful-${index}`} className="cursor-pointer hover:bg-blue-50" onClick={() => handleSpecificAction(issue)}>
-                    <Icon className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{issue.issue}</div>
-                        <div className="text-sm text-muted-foreground mt-1">{issue.aiImpact}</div>
-                      </div>
-                      <Badge variant={getSeverityBadgeVariant(issue.severity)}>
-                        {issue.severity}
-                      </Badge>
-                    </AlertDescription>
-                  </Alert>
-                );
-              })}
-            </div>
-          )}
-          
-          {(hasCriticalIssues || hasImportantIssues) && (
-            <Alert className="bg-blue-50 border-blue-200">
-              <Brain className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <strong>Why this matters:</strong> A complete profile helps our AI provide personalized gift recommendations, 
-                enables auto-gifting features, and ensures friends can connect with you easily.
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      )}
+        </Carousel>
+        
+        {/* Slide indicators */}
+        {slides.length > 1 && (
+          <div className="flex justify-center mt-3 space-x-1">
+            {slides.map((_, index) => (
+              <div 
+                key={index} 
+                className="w-2 h-2 rounded-full bg-gray-300"
+              />
+            ))}
+          </div>
+        )}
+        
+        {/* Info footer for issue slides */}
+        {(hasCriticalIssues || hasImportantIssues) && (
+          <Alert className="bg-blue-50 border-blue-200 mt-3">
+            <Brain className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 text-xs">
+              <strong>Why this matters:</strong> A complete profile helps our AI provide personalized gift recommendations, 
+              enables auto-gifting features, and ensures friends can connect with you easily.
+            </AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
     </Card>
   );
 };

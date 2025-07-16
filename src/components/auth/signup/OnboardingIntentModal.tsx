@@ -68,7 +68,7 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
                 <span className="font-semibold text-purple-700">Quick Gift (Elyphant will pick a gift for you)</span>
               </span>
               <span className="text-sm md:text-base text-muted-foreground font-normal mt-1">
-                Tell us about the occasion and recipient, we'll handle the rest
+                Tell us about the occasion and recipient, our AI will help pick the perfect gift
               </span>
             </div>
             {suggestedIntent === "quick-gift" && (

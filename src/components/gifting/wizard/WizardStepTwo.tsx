@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,7 @@ const EVENT_TYPES = [
   { value: "custom", label: "Custom Occasion" }
 ];
 
-export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) => {
+export const WizardStepTwo = forwardRef<any, WizardStepTwoProps>(({ data, onNext }, ref) => {
   const [giftingEvents, setGiftingEvents] = useState(
     data.giftingEvents.length > 0 
       ? data.giftingEvents 
@@ -39,6 +39,13 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [autoPopulatedDates, setAutoPopulatedDates] = useState<Set<number>>(new Set());
+
+  // Expose getCurrentData method to parent
+  useImperativeHandle(ref, () => ({
+    getCurrentData: () => ({
+      giftingEvents
+    })
+  }));
 
   const addEvent = () => {
     setGiftingEvents(prev => [
@@ -337,4 +344,4 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
       </div>
     </div>
   );
-};
+});

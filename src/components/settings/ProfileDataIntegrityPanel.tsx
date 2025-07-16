@@ -8,12 +8,14 @@ import { useNavigate } from "react-router-dom";
 import { useFormContext } from "react-hook-form";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
 const ProfileDataIntegrityPanel: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
   
   // Form context might not exist (e.g., when used on dashboard)
   let form;
@@ -42,6 +44,17 @@ const ProfileDataIntegrityPanel: React.FC = () => {
     // Form values may not have the complete address structure
     checkDataIntegrity(false, profile);
   }, [checkDataIntegrity, profile]);
+
+  // Setup carousel API
+  useEffect(() => {
+    if (!api) return;
+    
+    setCurrent(api.selectedScrollSnap());
+    
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
 
   // Determine which settings tab to open based on missing data
   const getTargetSettingsTab = () => {
@@ -299,7 +312,7 @@ const ProfileDataIntegrityPanel: React.FC = () => {
       completionScore >= 60 ? "border-l-yellow-500" : "border-l-red-500"
     )}>
       <CardContent className="p-4">
-        <Carousel className="w-full">
+        <Carousel className="w-full" setApi={setApi}>
           <CarouselContent>
             {slides.map((slide, index) => (
               <CarouselItem key={index}>
@@ -309,21 +322,20 @@ const ProfileDataIntegrityPanel: React.FC = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          {slides.length > 1 && (
-            <>
-              <CarouselPrevious className="left-2" />
-              <CarouselNext className="right-2" />
-            </>
-          )}
         </Carousel>
         
-        {/* Slide indicators */}
+        {/* Interactive slide indicators */}
         {slides.length > 1 && (
-          <div className="flex justify-center mt-3 space-x-1">
+          <div className="flex justify-center mt-3 space-x-2">
             {slides.map((_, index) => (
-              <div 
-                key={index} 
-                className="w-2 h-2 rounded-full bg-gray-300"
+              <button
+                key={index}
+                onClick={() => api?.scrollTo(index)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-200 hover:scale-125",
+                  current === index ? "bg-primary" : "bg-muted-foreground/30"
+                )}
+                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>

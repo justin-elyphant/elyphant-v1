@@ -14,6 +14,7 @@ interface OnboardingIntentModalProps {
 const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   open,
   onSelect,
+  onSkip,
   suggestedIntent,
 }) => {
   const [selectedIntent, setSelectedIntent] = React.useState<"quick-gift" | "browse-shop" | "create-wishlist" | null>(null);
@@ -47,7 +48,7 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   };
 
   return (
-    <Dialog open={open} modal={true}>
+    <Dialog open={open} onOpenChange={(open) => !open && onSkip()}>
       <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl animate-fade-in p-6 max-w-[90vw] w-full">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-xl md:text-2xl font-semibold text-center">

@@ -18,17 +18,17 @@ const QuickGiftCTA = () => {
             <h4 className="font-semibold flex items-center">
               <Zap className="h-5 w-5 mr-2 text-emerald-600 dark:text-emerald-400" />
               <span className="bg-gradient-to-r from-emerald-700 to-cyan-700 bg-clip-text text-transparent">
-                Quick Gift Setup
+                AI Gift Autopilot
               </span>
             </h4>
-            <p className="text-sm text-muted-foreground mt-1">Set up a personalized gift in minutes with our guided wizard</p>
+            <p className="text-sm text-muted-foreground mt-1">Don't know what to get? Our AI will pick, purchase, and deliver the perfect gift automatically</p>
           </div>
           <Button 
             onClick={() => setWizardOpen(true)}
             className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white border-0 shadow-md"
           >
             <Zap className="h-4 w-4 mr-2" />
-            Get Started
+            Automate My Gifts
           </Button>
         </div>
       </div>

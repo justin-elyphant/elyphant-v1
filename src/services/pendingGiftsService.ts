@@ -74,7 +74,8 @@ export const pendingGiftsService = {
     budgetLimit?: number,
     giftSelectionCriteria?: any,
     notificationPreferences?: any,
-    paymentMethodId?: string
+    paymentMethodId?: string,
+    eventId?: string
   ) {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
@@ -86,6 +87,7 @@ export const pendingGiftsService = {
         recipient_id: null, // Will be set when invitation is accepted
         pending_recipient_email: recipientEmail,
         date_type: dateType,
+        event_id: eventId, // Link to the specific event
         budget_limit: budgetLimit,
         gift_selection_criteria: giftSelectionCriteria || {
           source: "ai",

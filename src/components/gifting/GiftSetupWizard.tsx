@@ -9,6 +9,7 @@ import { WizardStepThree } from "./wizard/WizardStepThree";
 import { WizardStepFour } from "./wizard/WizardStepFour";
 import { WizardConfirmation } from "./wizard/WizardConfirmation";
 import { pendingGiftsService } from "@/services/pendingGiftsService";
+import { eventsService } from "@/services/eventsService";
 import { toast } from "sonner";
 
 export interface GiftSetupData {
@@ -137,17 +138,19 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
         finalData.shippingAddress
       );
 
-      // Create events
+      // Create events and auto-gifting rules
       for (const event of finalData.giftingEvents) {
-        await pendingGiftsService.createEventForPending(
-          connection.id,
-          finalData.recipientEmail,
-          event.dateType,
-          event.date,
-          event.isRecurring
-        );
+        // Create the actual event using eventsService
+        const createdEvent = await eventsService.createEvent({
+          connection_id: connection.id,
+          date_type: event.dateType,
+          date: event.date,
+          is_recurring: event.isRecurring,
+          recurring_type: event.isRecurring ? 'yearly' : null,
+          visibility: 'private'
+        });
 
-        // Create auto-gift rule if enabled
+        // Create auto-gift rule if enabled, linking it to the created event
         if (finalData.autoGiftingEnabled) {
           await pendingGiftsService.createAutoGiftRuleForPending(
             connection.id,
@@ -165,7 +168,8 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
               email: true,
               push: false
             },
-            finalData.selectedPaymentMethodId
+            finalData.selectedPaymentMethodId,
+            createdEvent.id // Link the auto-gifting rule to the created event
           );
         }
         

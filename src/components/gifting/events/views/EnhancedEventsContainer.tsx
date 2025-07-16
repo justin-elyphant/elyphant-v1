@@ -1,7 +1,7 @@
 
 import React, { useMemo } from "react";
 import ExportImportDialog from "../export-import/ExportImportDialog";
-import AddEventDialog from "../add-dialog/AddEventDialog";
+import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import EmptyEventsState from "../components/EmptyEventsState";
 import EnhancedEventsToolbar from "./enhanced/EnhancedEventsToolbar";
 import EnhancedEventsFilters from "./enhanced/EnhancedEventsFilters";
@@ -136,7 +136,7 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
         onOpenChange={setIsExportImportOpen}
       />
 
-      <AddEventDialog
+      <GiftSetupWizard
         open={isAddEventOpen}
         onOpenChange={setIsAddEventOpen}
       />

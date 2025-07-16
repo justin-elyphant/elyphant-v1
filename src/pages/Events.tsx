@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import PastEventsContainer from "@/components/gifting/events/past-events/PastEventsContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AddEventDialog from "@/components/gifting/events/add-dialog/AddEventDialog";
+import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
 import AutoGiftExecutionMonitor from "@/components/gifting/auto-gift/AutoGiftExecutionMonitor";
 import UnifiedGiftTimingDashboard from "@/components/gifting/unified/UnifiedGiftTimingDashboard";
@@ -18,7 +18,7 @@ import { UserPlus } from "lucide-react";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 
 const Events = () => {
-  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isGiftWizardOpen, setIsGiftWizardOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
@@ -26,7 +26,7 @@ const Events = () => {
   useEffect(() => {
     const action = searchParams.get("action");
     if (action === "add") {
-      setIsAddEventOpen(true);
+      setIsGiftWizardOpen(true);
       // Clear the action parameter after opening the dialog
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete("action");
@@ -35,8 +35,8 @@ const Events = () => {
   }, [searchParams, setSearchParams]);
 
   const handleAddEvent = () => {
-    console.log("Add event button clicked"); // Debug log
-    setIsAddEventOpen(true);
+    console.log("Set up gifting button clicked"); // Debug log
+    setIsGiftWizardOpen(true);
   };
 
   // Show sign-in prompt if not authenticated
@@ -83,11 +83,11 @@ const Events = () => {
           </div>
           
           <EventsContent onAddEvent={handleAddEvent} />
-          <AddEventDialog 
-            open={isAddEventOpen} 
+          <GiftSetupWizard 
+            open={isGiftWizardOpen} 
             onOpenChange={(open) => {
-              console.log("Dialog open state changed:", open); // Debug log
-              setIsAddEventOpen(open);
+              console.log("Gift wizard open state changed:", open); // Debug log
+              setIsGiftWizardOpen(open);
             }}
           />
         </div>

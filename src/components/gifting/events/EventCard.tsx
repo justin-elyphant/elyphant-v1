@@ -291,17 +291,28 @@ const EventCard = ({
             Send Gift
           </Button>
           
-          <Button 
-            size="sm" 
-            variant={event.autoGiftEnabled ? "outline" : "default"}
-            className="flex-1 sm:flex-none min-h-[44px] touch-manipulation"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAutoGiftToggle();
-            }}
-          >
-            {event.autoGiftEnabled ? "Manage Auto-Gift" : "Enable Auto-Gift"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {event.autoGiftEnabled ? (
+              <Badge variant="secondary" className="text-xs">
+                Auto-Gift Enabled
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                Reminders Only
+              </Badge>
+            )}
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="flex-1 sm:flex-none min-h-[44px] touch-manipulation"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+            >
+              Edit Event
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

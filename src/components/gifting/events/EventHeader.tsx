@@ -28,7 +28,7 @@ const EventHeader = ({
         <h2 className="text-xl sm:text-2xl font-bold">Events</h2>
         <Button onClick={onAddEvent} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
           <Plus className="mr-2 h-4 w-4" />
-          Add Event
+          Set Up Gifting
         </Button>
       </div>
       

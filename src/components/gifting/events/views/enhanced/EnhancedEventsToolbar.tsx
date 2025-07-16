@@ -46,7 +46,7 @@ const EnhancedEventsToolbar = ({
             onClick={onAddEvent}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Event
+            Set Up Gifting
           </Button>
         </div>
       </div>

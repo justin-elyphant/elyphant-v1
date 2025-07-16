@@ -14,6 +14,10 @@ interface EventsContextType {
   setCurrentEvent: (event: ExtendedEventData | null) => void;
   isEditDrawerOpen: boolean;
   setIsEditDrawerOpen: (open: boolean) => void;
+  isGiftWizardOpen: boolean;
+  setIsGiftWizardOpen: (open: boolean) => void;
+  editingEventData: any | null;
+  setEditingEventData: (data: any | null) => void;
   refreshEvents: () => Promise<void>;
   updateEvent: (eventId: string, updates: any) => Promise<void>;
   deleteEvent: (eventId: string, options: any) => Promise<void>;
@@ -32,6 +36,8 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   const [editingEvent, setEditingEvent] = useState<ExtendedEventData | null>(null);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [isGiftWizardOpen, setIsGiftWizardOpen] = useState(false);
+  const [editingEventData, setEditingEventData] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar" | "list">("cards");
   const [selectedEventType, setSelectedEventType] = useState<string>("all");
 
@@ -96,6 +102,10 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentEvent,
     isEditDrawerOpen,
     setIsEditDrawerOpen,
+    isGiftWizardOpen,
+    setIsGiftWizardOpen,
+    editingEventData,
+    setEditingEventData,
     refreshEvents,
     updateEvent,
     deleteEvent,

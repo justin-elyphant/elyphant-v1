@@ -36,7 +36,7 @@ const EmptyEventsState = ({
         {(actionLabel || handleAction) && (
           <Button onClick={handleAction}>
             <Plus className="h-4 w-4 mr-2" />
-            {actionLabel || "Add Event"}
+            {actionLabel || "Set Up Gifting"}
           </Button>
         )}
       </CardContent>

@@ -88,8 +88,17 @@ const SmartGiftingTab = () => {
             <Zap className="h-5 w-5 mr-2 text-emerald-500" />
             Upcoming Events
           </h3>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/events?action=add">Add Event</Link>
+          <GiftSetupWizard 
+            open={setupDialogOpen} 
+            onOpenChange={setSetupDialogOpen}
+          />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setSetupDialogOpen(true)}
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            Set Up Gifting
           </Button>
         </div>
         
@@ -126,14 +135,25 @@ const SmartGiftingTab = () => {
                   <p className="text-sm text-muted-foreground">
                     {event.dateObj ? format(event.dateObj, 'MMM d, yyyy') : event.date}
                   </p>
-                  <Button 
-                    size="sm" 
-                    variant={event.autoGiftEnabled ? "outline" : "default"}
-                    onClick={() => handleSetupAutoGift(event)}
-                    className="h-8 sm:h-7 touch-manipulation"
-                  >
-                    {event.autoGiftEnabled ? "Manage" : "Set Up"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {event.autoGiftEnabled ? (
+                      <Badge variant="secondary" className="text-xs">
+                        Auto-Gift Enabled
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        Reminders Only
+                      </Badge>
+                    )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleSetupAutoGift(event)}
+                      className="h-8 sm:h-7 touch-manipulation"
+                    >
+                      Edit Event
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -145,8 +165,9 @@ const SmartGiftingTab = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Add special occasions to set up automated gifting
             </p>
-            <Button asChild>
-              <Link to="/events?action=add">Add Event</Link>
+            <Button onClick={() => setSetupDialogOpen(true)}>
+              <Zap className="h-4 w-4 mr-2" />
+              Set Up Gifting
             </Button>
           </div>
         )}

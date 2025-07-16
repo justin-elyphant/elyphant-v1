@@ -331,6 +331,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           notification_preferences: Json | null
+          payment_method_id: string | null
           pending_recipient_email: string | null
           privacy_settings: Json | null
           recipient_id: string | null
@@ -351,6 +352,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notification_preferences?: Json | null
+          payment_method_id?: string | null
           pending_recipient_email?: string | null
           privacy_settings?: Json | null
           recipient_id?: string | null
@@ -371,6 +373,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notification_preferences?: Json | null
+          payment_method_id?: string | null
           pending_recipient_email?: string | null
           privacy_settings?: Json | null
           recipient_id?: string | null
@@ -387,6 +390,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "user_special_dates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_gifting_rules_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
           {
@@ -415,6 +425,7 @@ export type Database = {
           default_notification_days: number[] | null
           dynamic_budget_intelligence: Json | null
           email_notifications: boolean | null
+          has_payment_method: boolean | null
           id: string
           notification_preferences: Json | null
           predictive_suggestions: Json | null
@@ -431,6 +442,7 @@ export type Database = {
           default_notification_days?: number[] | null
           dynamic_budget_intelligence?: Json | null
           email_notifications?: boolean | null
+          has_payment_method?: boolean | null
           id?: string
           notification_preferences?: Json | null
           predictive_suggestions?: Json | null
@@ -447,6 +459,7 @@ export type Database = {
           default_notification_days?: number[] | null
           dynamic_budget_intelligence?: Json | null
           email_notifications?: boolean | null
+          has_payment_method?: boolean | null
           id?: string
           notification_preferences?: Json | null
           predictive_suggestions?: Json | null
@@ -1613,6 +1626,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_methods: {
+        Row: {
+          card_type: string
+          created_at: string
+          exp_month: number
+          exp_year: number
+          id: string
+          is_default: boolean
+          last_four: string
+          stripe_payment_method_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_type: string
+          created_at?: string
+          exp_month: number
+          exp_year: number
+          id?: string
+          is_default?: boolean
+          last_four: string
+          stripe_payment_method_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_type?: string
+          created_at?: string
+          exp_month?: number
+          exp_year?: number
+          id?: string
+          is_default?: boolean
+          last_four?: string
+          stripe_payment_method_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       pending_gift_invitations: {
         Row: {

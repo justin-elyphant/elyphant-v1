@@ -27,6 +27,7 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
     recipientName: data.recipientName || "",
     recipientEmail: data.recipientEmail || "",
     relationshipType: data.relationshipType || "friend",
+    recipientBirthYear: data.recipientBirthYear || new Date().getFullYear() - 30,
     shippingAddress: data.shippingAddress || null,
     apartmentUnit: data.shippingAddress?.line2 || ""
   });
@@ -122,26 +123,44 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="relationshipType">Your Relationship *</Label>
-            <Select
-              value={formData.relationshipType}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, relationshipType: value }))}
-            >
-              <SelectTrigger className={errors.relationshipType ? "border-destructive" : ""}>
-                <SelectValue placeholder="Select your relationship" />
-              </SelectTrigger>
-              <SelectContent>
-                {RELATIONSHIP_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.relationshipType && (
-              <p className="text-sm text-destructive">{errors.relationshipType}</p>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="relationshipType">Your Relationship *</Label>
+              <Select
+                value={formData.relationshipType}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, relationshipType: value }))}
+              >
+                <SelectTrigger className={errors.relationshipType ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Select your relationship" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RELATIONSHIP_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.relationshipType && (
+                <p className="text-sm text-destructive">{errors.relationshipType}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="recipientBirthYear">Birth Year (Optional)</Label>
+              <Input
+                id="recipientBirthYear"
+                type="number"
+                placeholder="e.g., 1990"
+                value={formData.recipientBirthYear}
+                onChange={(e) => setFormData(prev => ({ ...prev, recipientBirthYear: Number(e.target.value) }))}
+                min="1920"
+                max={new Date().getFullYear()}
+              />
+              <p className="text-sm text-muted-foreground">
+                Helps us find age-appropriate gifts
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

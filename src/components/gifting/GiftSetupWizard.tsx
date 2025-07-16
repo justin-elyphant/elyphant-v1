@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Gift, Calendar, Heart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Gift, Calendar, Heart, CreditCard } from "lucide-react";
 import { WizardStepOne } from "./wizard/WizardStepOne";
 import { WizardStepTwo } from "./wizard/WizardStepTwo";
 import { WizardStepThree } from "./wizard/WizardStepThree";
+import { WizardStepFour } from "./wizard/WizardStepFour";
 import { WizardConfirmation } from "./wizard/WizardConfirmation";
 import { pendingGiftsService } from "@/services/pendingGiftsService";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ export interface GiftSetupData {
   recipientEmail: string;
   relationshipType: string;
   shippingAddress?: any;
+  recipientBirthYear?: number;
   
   // Step 2: When
   giftingEvents: Array<{
@@ -32,6 +34,11 @@ export interface GiftSetupData {
   giftCategories: string[];
   giftMessage?: string;
   notificationDays: number[];
+  
+  // Step 4: Payment (conditional)
+  hasPaymentMethod?: boolean;
+  skipPaymentSetup?: boolean;
+  autoApproveEnabled?: boolean;
 }
 
 interface GiftSetupWizardProps {
@@ -40,11 +47,19 @@ interface GiftSetupWizardProps {
   initialData?: Partial<GiftSetupData>;
 }
 
-const STEPS = [
-  { number: 1, title: "Who", icon: Heart, description: "Tell us about the gift recipient" },
-  { number: 2, title: "When", icon: Calendar, description: "Set up important dates and occasions" },
-  { number: 3, title: "Preferences", icon: Gift, description: "Configure your gifting preferences" }
-];
+const getSteps = (showPaymentStep: boolean) => {
+  const baseSteps = [
+    { number: 1, title: "Who", icon: Heart, description: "Tell us about the gift recipient" },
+    { number: 2, title: "When", icon: Calendar, description: "Set up important dates and occasions" },
+    { number: 3, title: "Preferences", icon: Gift, description: "Configure your gifting preferences" }
+  ];
+  
+  if (showPaymentStep) {
+    baseSteps.push({ number: 4, title: "Payment", icon: CreditCard, description: "Set up payment for auto-gifting" });
+  }
+  
+  return baseSteps;
+};
 
 export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
   open,
@@ -58,6 +73,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
     recipientName: "",
     recipientEmail: "",
     relationshipType: "friend",
+    recipientBirthYear: new Date().getFullYear() - 30,
     giftingEvents: [],
     autoGiftingEnabled: true,
     scheduledGiftingEnabled: false,
@@ -67,12 +83,17 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
   });
 
   const handleStepComplete = (stepData: Partial<GiftSetupData>) => {
-    setGiftSetupData(prev => ({ ...prev, ...stepData }));
+    const updatedData = { ...giftSetupData, ...stepData };
+    setGiftSetupData(updatedData);
     
-    if (currentStep < 3) {
+    // Determine if we need to show payment step
+    const needsPaymentStep = updatedData.autoGiftingEnabled && currentStep === 3;
+    const maxSteps = needsPaymentStep ? 4 : 3;
+    
+    if (currentStep < maxSteps) {
       setCurrentStep(prev => prev + 1);
     } else {
-      handleFinalSubmit({ ...giftSetupData, ...stepData });
+      handleFinalSubmit(updatedData);
     }
   };
 
@@ -188,12 +209,24 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
             isLoading={isLoading}
           />
         );
+      case 4:
+        return (
+          <WizardStepFour
+            data={giftSetupData}
+            onNext={handleStepComplete}
+            isLoading={isLoading}
+          />
+        );
       default:
         return null;
     }
   };
 
-  const currentStepInfo = STEPS.find(step => step.number === currentStep);
+  // Determine if we need to show payment step based on current data
+  const showPaymentStep = giftSetupData.autoGiftingEnabled;
+  const steps = getSteps(showPaymentStep);
+  const maxSteps = steps.length;
+  const currentStepInfo = steps.find(step => step.number === currentStep);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -208,7 +241,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
         {!isComplete && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
-              {STEPS.map((step) => {
+              {steps.map((step) => {
                 const Icon = step.icon;
                 const isActive = step.number === currentStep;
                 const isCompleted = step.number < currentStep;
@@ -231,11 +264,11 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
               })}
             </div>
             
-            <Progress value={(currentStep / 3) * 100} className="h-2" />
+            <Progress value={(currentStep / maxSteps) * 100} className="h-2" />
             
             {currentStepInfo && (
               <p className="text-sm text-muted-foreground mt-2">
-                Step {currentStep} of 3: {currentStepInfo.description}
+                Step {currentStep} of {maxSteps}: {currentStepInfo.description}
               </p>
             )}
           </div>
@@ -257,7 +290,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
             </Button>
             
             <div className="text-sm text-muted-foreground">
-              {currentStep === 3 
+              {currentStep === maxSteps 
                 ? "Click 'Complete Setup' to finish" 
                 : "Complete this step to continue"
               }

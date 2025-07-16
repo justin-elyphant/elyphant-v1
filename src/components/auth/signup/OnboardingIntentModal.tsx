@@ -65,7 +65,7 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
             <Zap className="w-6 h-6 md:w-7 md:h-7 text-purple-600 flex-shrink-0" />
             <div className="flex flex-col flex-1">
               <span className="text-base md:text-lg font-medium text-foreground">
-                <span className="font-semibold text-purple-700">Quick Gift (Elyphant Picks)</span>
+                <span className="font-semibold text-purple-700">Quick Gift (Elyphant will pick a gift for you)</span>
               </span>
               <span className="text-sm md:text-base text-muted-foreground font-normal mt-1">
                 Tell us about the occasion and recipient, we'll handle the rest

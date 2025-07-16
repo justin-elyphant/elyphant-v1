@@ -1,9 +1,10 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useProducts } from "@/contexts/ProductContext";
 import { findMatchingProducts } from "../utils/findMatchingProducts";
 import { toast } from "sonner";
 import { normalizeProduct } from "@/contexts/ProductContext";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 export const useZincProductSearch = () => {
   const { products, setProducts } = useProducts();
@@ -11,9 +12,88 @@ export const useZincProductSearch = () => {
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoadedDefaults, setHasLoadedDefaults] = useState(false);
   const searchInProgressRef = useRef(false);
   
   const marketplaceProducts = products.filter(p => p.vendor === "Elyphant" || p.vendor === "Amazon via Zinc");
+
+  // Load default products when component mounts (no search term)
+  useEffect(() => {
+    if (!hasLoadedDefaults && !searchTerm && marketplaceProducts.length === 0) {
+      loadDefaultProducts();
+    }
+  }, [hasLoadedDefaults, searchTerm, marketplaceProducts.length]);
+
+  const loadDefaultProducts = async () => {
+    if (searchInProgressRef.current) return;
+    
+    searchInProgressRef.current = true;
+    setIsLoading(true);
+    setError(null);
+    console.log('Loading default marketplace products...');
+    
+    try {
+      const response = await enhancedZincApiService.getDefaultProducts(12);
+      
+      if (response.results && response.results.length > 0) {
+        // Convert Enhanced Zinc API response to Product format
+        const formattedProducts = response.results.map((product: any, index: number) => {
+          return normalizeProduct({
+            product_id: product.product_id || `default-${index}`,
+            id: product.product_id || `default-${index}`,
+            name: product.title || "Best Selling Gift",
+            title: product.title || "Best Selling Gift",
+            price: product.price || 29.99,
+            category: product.category || "Best Sellers",
+            image: product.image || product.main_image || "/placeholder.svg",
+            vendor: "Amazon via Zinc",
+            description: product.description || product.product_description || "Popular gift item recommended for you",
+            rating: product.rating || product.stars || 4.5,
+            reviewCount: product.review_count || product.num_reviews || 100
+          });
+        });
+        
+        // Update products
+        setProducts(prevProducts => [...prevProducts, ...formattedProducts]);
+        setHasLoadedDefaults(true);
+        
+        console.log(`Loaded ${formattedProducts.length} default products`);
+      } else {
+        // Fallback to mock data if API returns no results
+        console.log('No results from default products API, using fallback...');
+        loadFallbackProducts();
+      }
+    } catch (err) {
+      console.error("Error loading default products:", err);
+      loadFallbackProducts();
+    } finally {
+      setIsLoading(false);
+      searchInProgressRef.current = false;
+    }
+  };
+
+  const loadFallbackProducts = () => {
+    // Use mock data as fallback for default products
+    const fallbackProducts = findMatchingProducts("best gifts");
+    const formattedFallback = fallbackProducts.map((product, index) => {
+      return normalizeProduct({
+        product_id: `fallback-${index}`,
+        id: `fallback-${index}`,
+        name: product.title || "Popular Gift",
+        title: product.title || "Popular Gift",
+        price: product.price || 24.99,
+        category: product.category || "Popular",
+        image: product.image || "/placeholder.svg",
+        vendor: "Amazon via Zinc",
+        description: product.description || "Recommended gift item",
+        rating: product.rating || 4.3,
+        reviewCount: product.review_count || 85
+      });
+    });
+    
+    setProducts(prevProducts => [...prevProducts, ...formattedFallback]);
+    setHasLoadedDefaults(true);
+  };
   
   const handleSearch = async (term: string) => {
     if (!term.trim() || searchInProgressRef.current) return;

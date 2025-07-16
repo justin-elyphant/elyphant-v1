@@ -142,6 +142,36 @@ class EnhancedZincApiService {
   }
 
   /**
+   * Get default marketplace products (best sellers and popular items)
+   */
+  async getDefaultProducts(limit: number = 20): Promise<ZincSearchResponse> {
+    console.log('Loading default marketplace products...');
+    
+    try {
+      // Search for best selling gifts as default products
+      const response = await this.searchProducts('best selling gifts', 1, limit);
+      
+      if (response.results && response.results.length > 0) {
+        console.log(`Loaded ${response.results.length} default products`);
+        return response;
+      }
+      
+      // Fallback to popular categories if no best sellers found
+      console.log('No best sellers found, trying popular categories...');
+      const fallbackResponse = await this.searchProducts('popular gifts', 1, limit);
+      
+      return fallbackResponse;
+      
+    } catch (error) {
+      console.error('Error loading default products:', error);
+      return {
+        results: [],
+        error: 'Failed to load default products'
+      };
+    }
+  }
+
+  /**
    * Search products by category
    */
   async searchByCategory(category: string, page: number = 1, limit: number = 20): Promise<ZincSearchResponse> {

@@ -114,7 +114,7 @@ const StreamlinedMarketplaceWrapper = () => {
             <TabsContent value="browse" className="mt-4">
               <div className="flex items-center justify-between">
                 <p className="text-muted-foreground">
-                  Discover perfect gifts with our AI-powered recommendations
+                  Discover best selling gifts and popular items curated just for you
                 </p>
                 <Button 
                   onClick={() => setShowNicole(true)}

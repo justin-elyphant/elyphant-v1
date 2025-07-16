@@ -170,21 +170,83 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : undefined}
-                    onSelect={(date) => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        recipientBirthDate: date ? date.toISOString().split('T')[0] : undefined 
-                      }));
-                    }}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
+                  <div className="p-3 space-y-3">
+                    <div className="flex gap-2">
+                      <Select
+                        value={formData.recipientBirthDate ? new Date(formData.recipientBirthDate).getMonth().toString() : ""}
+                        onValueChange={(month) => {
+                          const currentDate = formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : new Date();
+                          currentDate.setMonth(parseInt(month));
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            recipientBirthDate: currentDate.toISOString().split('T')[0] 
+                          }));
+                        }}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => (
+                            <SelectItem key={i} value={i.toString()}>
+                              {format(new Date(2000, i, 1), "MMMM")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      <Select
+                        value={formData.recipientBirthDate ? new Date(formData.recipientBirthDate).getFullYear().toString() : ""}
+                        onValueChange={(year) => {
+                          const currentDate = formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : new Date();
+                          currentDate.setFullYear(parseInt(year));
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            recipientBirthDate: currentDate.toISOString().split('T')[0] 
+                          }));
+                        }}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue placeholder="Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 124 }, (_, i) => {
+                            const year = new Date().getFullYear() - i;
+                            return (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <CalendarComponent
+                      mode="single"
+                      selected={formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : undefined}
+                      onSelect={(date) => {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          recipientBirthDate: date ? date.toISOString().split('T')[0] : undefined 
+                        }));
+                      }}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      month={formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : undefined}
+                      onMonthChange={(month) => {
+                        if (month) {
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            recipientBirthDate: month.toISOString().split('T')[0] 
+                          }));
+                        }
+                      }}
+                      initialFocus
+                      className={cn("pointer-events-auto")}
+                    />
+                  </div>
                 </PopoverContent>
               </Popover>
               <p className="text-sm text-muted-foreground">

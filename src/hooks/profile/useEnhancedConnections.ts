@@ -7,23 +7,30 @@ import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 export interface EnhancedConnection {
   id: string;
   user_id: string;
-  connected_user_id: string;
+  connected_user_id: string | null;
   relationship_type: string;
   status: string;
   created_at: string;
   data_access_permissions: any;
+  // Pending invitation fields
+  pending_recipient_name?: string;
+  pending_recipient_email?: string;
   // Profile data
   profile_name?: string;
   profile_email?: string;
   profile_image?: string;
   profile_bio?: string;
   profile_username?: string;
+  // Helper fields
+  display_user_id?: string;
+  is_pending_invitation?: boolean;
 }
 
 export const useEnhancedConnections = () => {
   const { user } = useAuth();
   const [connections, setConnections] = useState<EnhancedConnection[]>([]);
   const [pendingRequests, setPendingRequests] = useState<EnhancedConnection[]>([]);
+  const [pendingInvitations, setPendingInvitations] = useState<EnhancedConnection[]>([]);
   const [followers, setFollowers] = useState<EnhancedConnection[]>([]);
   const [following, setFollowing] = useState<EnhancedConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +40,7 @@ export const useEnhancedConnections = () => {
     if (!user) {
       setConnections([]);
       setPendingRequests([]);
+      setPendingInvitations([]);
       setFollowers([]);
       setFollowing([]);
       setLoading(false);
@@ -66,14 +74,32 @@ export const useEnhancedConnections = () => {
         const profile = conn.connected_profile;
         const isUserInitiated = conn.user_id === user.id;
         
+        // Handle both regular connections and pending invitations
+        let profileName = profile?.name;
+        let profileEmail = profile?.email;
+        let profileUsername = profile?.username;
+        
+        // For pending invitations, use the pending recipient data
+        if (conn.status === 'pending_invitation' && conn.pending_recipient_name) {
+          profileName = conn.pending_recipient_name;
+          profileEmail = conn.pending_recipient_email;
+          profileUsername = `@${conn.pending_recipient_name?.toLowerCase().replace(/\s+/g, '')}`;
+        }
+        
+        // Fallback for display when no data is available
+        const fallbackId = conn.connected_user_id || conn.id;
+        const fallbackName = profileName || `User ${fallbackId?.substring(0, 8) || 'Unknown'}`;
+        const fallbackUsername = profileUsername || `@user${fallbackId?.substring(0, 6) || 'unknown'}`;
+        
         return {
           ...conn,
-          profile_name: profile?.name || `User ${conn.connected_user_id.substring(0, 8)}`,
-          profile_email: profile?.email,
+          profile_name: fallbackName,
+          profile_email: profileEmail,
           profile_image: profile?.profile_image,
           profile_bio: profile?.bio,
-          profile_username: profile?.username || `@user${conn.connected_user_id.substring(0, 6)}`,
-          display_user_id: isUserInitiated ? conn.connected_user_id : conn.user_id
+          profile_username: fallbackUsername,
+          display_user_id: isUserInitiated ? conn.connected_user_id : conn.user_id,
+          is_pending_invitation: conn.status === 'pending_invitation'
         };
       });
       
@@ -81,6 +107,11 @@ export const useEnhancedConnections = () => {
       const accepted = enhancedConnections.filter(conn => conn.status === 'accepted');
       const pending = enhancedConnections.filter(conn => 
         conn.status === 'pending' && conn.connected_user_id === user.id
+      );
+      
+      // Pending invitations that the user has sent
+      const invitations = enhancedConnections.filter(conn => 
+        conn.status === 'pending_invitation' && conn.user_id === user.id
       );
       
       // Separate followers and following for follow relationships
@@ -98,6 +129,7 @@ export const useEnhancedConnections = () => {
       
       setConnections(accepted);
       setPendingRequests(pending);
+      setPendingInvitations(invitations);
       setFollowers(followerConnections);
       setFollowing(followingConnections);
     } catch (err) {
@@ -107,6 +139,7 @@ export const useEnhancedConnections = () => {
       // Set empty arrays on error to prevent undefined states
       setConnections([]);
       setPendingRequests([]);
+      setPendingInvitations([]);
       setFollowers([]);
       setFollowing([]);
       
@@ -257,6 +290,7 @@ export const useEnhancedConnections = () => {
   return {
     connections,
     pendingRequests,
+    pendingInvitations,
     followers,
     following,
     loading,

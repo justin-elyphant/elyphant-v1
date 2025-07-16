@@ -108,11 +108,14 @@ const SmartGiftingTab = () => {
             <Zap className="h-5 w-5 mr-2 text-emerald-500" />
             Upcoming Events
           </h3>
-          <GiftSetupWizard 
-            open={setupDialogOpen} 
-            onOpenChange={setSetupDialogOpen}
-            initialData={giftSetupInitialData}
-          />
+          {/* GiftSetupWizard - only for pending invitations */}
+          {selectedEvent?.isPendingInvitation && (
+            <GiftSetupWizard 
+              open={setupDialogOpen} 
+              onOpenChange={setSetupDialogOpen}
+              initialData={giftSetupInitialData}
+            />
+          )}
           <Button 
             variant="outline" 
             size="sm"
@@ -281,8 +284,8 @@ const SmartGiftingTab = () => {
         </div>
       </div>
 
-      {/* Auto-Gift Setup Dialog */}
-      {selectedEvent && (
+      {/* Auto-Gift Setup Dialog - only for regular events */}
+      {selectedEvent && !selectedEvent.isPendingInvitation && (
         <AutoGiftSetupDialog
           open={setupDialogOpen}
           onOpenChange={setSetupDialogOpen}
